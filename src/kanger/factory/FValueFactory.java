@@ -1,12 +1,13 @@
 package kanger.factory;
 
-import kanger.primitives.*;
+import kanger.Mind;
+import kanger.primitives.FValue;
+import kanger.primitives.Function;
 
-import java.util.*;
-
-import kanger.*;
-
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Stack;
 
 public class FValueFactory {
     private FValue root = null;
@@ -45,7 +46,7 @@ public class FValueFactory {
     public FValue find(Function f) {
         for (FValue t = root; t != null; t = t.getNext()) {
             if (f.getId() == t.getFunction().getId()
-                    && t.getValue().getId() == f.getCalculatedResult().getId()
+                    && t.getValue().getId() == f.getResult().getId()
                     && t.isActual()) {
 //                boolean complete = true;
 //                for (TVariable tv : f.getTVariables()) {

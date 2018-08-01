@@ -5,7 +5,6 @@ import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
-import kanger.exception.TValueOutOfOrver;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -133,21 +132,21 @@ public class Function {
         return arguments;
     }
 
-    public Term getCalculatedResult() {
+    public Term getResult() {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
         return arguments.get(range).getValue();
     }
 
-    public Term getResult() {
-        FValue f = mind.getFValues().get(this);
-        if (f != null) {
-            return f.getValue();
-        } else {
-            return null;
-        }
-    }
+//    public Term getResult() {
+//        FValue f = mind.getFValues().get(this);
+//        if (f != null) {
+//            return f.getValue();
+//        } else {
+//            return null;
+//        }
+//    }
 
 //    public void setResult(Domain d, Argument r) {
 //        if (range + 1 > arguments.size()) {

@@ -1,10 +1,12 @@
 package kanger.primitives;
 
-import java.util.*;
+import kanger.Mind;
 
-import kanger.*;
-
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FValue {
     private long id = -1;
@@ -18,7 +20,7 @@ public class FValue {
 
     public FValue(Function f, Mind mind) {
         function = f;
-        value = f.getCalculatedResult();
+        value = f.getResult();
 //        for(Argument a : f.getArguments()){
 //            condition.add(a.getValue().getId());
 //        }

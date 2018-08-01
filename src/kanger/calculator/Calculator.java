@@ -2,9 +2,14 @@ package kanger.calculator;
 
 import kanger.Mind;
 import kanger.compiler.SysOp;
-import kanger.enums.*;
+import kanger.enums.Enums;
+import kanger.enums.LibMode;
+import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
-import kanger.primitives.*;
+import kanger.primitives.Argument;
+import kanger.primitives.Domain;
+import kanger.primitives.Function;
+import kanger.primitives.Predicate;
 
 //TODO: Следать пересчет функций централизованно отдельным проходом
 
@@ -92,7 +97,7 @@ public class Calculator {
             mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
                     + (fu.getResult() != null
                     && fu.isCalculable()
-                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getCalculatedResult() : "")));
+                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : "")));
             mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
 
@@ -169,7 +174,7 @@ public class Calculator {
                 }
             }
 
-            if ("$$".equals(fu.getCalculatedResult())) {
+            if ("$$".equals(fu.getResult())) {
                 return -1;
             }
 

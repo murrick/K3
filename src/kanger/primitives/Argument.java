@@ -177,10 +177,11 @@ public class Argument {
 		if(isTSet()) {
 			return getT().isSubstituted();
 		} else if (isFSet()) {
+            Term t = getF().getResult();
 //			if(getF().isCalculable()) {
 //				return getF().isCalculated();
 //			} else {
-				return getF().getCalculatedResult() != null;
+            return t != null && !"$$".equals(t);
 //			}
 		} else {
 			return !isEmpty() /*&& !getValue().isCVar()*/;

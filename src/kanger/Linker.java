@@ -5,15 +5,15 @@
  */
 package kanger;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
 import kanger.exception.TValueOutOfOrver;
 import kanger.primitives.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author murray
@@ -123,7 +123,7 @@ public class Linker {
                         && !slave.get(level).isEmpty()
                         && (!slave.isDest() || slave.getRight().isQuery())
                         && !master.get(level).getT().contains(slave.get(level).getValue())
-                        ) {
+                ) {
                     try {
                         TValue s = master.get(level).getT().setValue(slave.get(level).getValue());
 //                        mind.getUsed().add(master.get(level).getT());
@@ -143,7 +143,7 @@ public class Linker {
                         && !master.get(level).isEmpty()
                         && (!master.isDest() || master.getRight().isQuery())
                         && !slave.get(level).getT().contains(master.get(level).getValue())
-                        ) {
+                ) {
                     try {
                         TValue s = slave.get(level).getT().setValue(master.get(level).getValue());
 //                        mind.getUsed().add(slave.get(level).getT());
@@ -181,7 +181,7 @@ public class Linker {
                             if (d1.getId() != d2.getId()
                                     && d1.isAntc() != d2.isAntc()
                                     && d1.getPredicate().getId() == d2.getPredicate().getId()
-                                    ) {
+                            ) {
                                 linkDomains(d1, d2, 0, logging, false, false);
                                 linkFunctions(d1, d2, 0, logging, false, false);
                             }
@@ -194,16 +194,14 @@ public class Linker {
                     for (Domain d : sequence) {
                         if (d.isSystem()) {
                             int res = d.execSystem();
-                            if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
-                                for (TVariable t : d.getTVariables(true)) {
-                                    mind.getTValues().get(t).setBlocked();
+                            for (TVariable t : d.getTVariables(true)) {
+                                if (!t.isEmpty()) {
+                                    if (res == 0) {
+                                        mind.getTValues().get(t).setBlocked();
+                                    } else if (res == 1) {
+                                        mind.getTValues().get(t).setClosed();
+                                    }
                                 }
-//                                result = false;
-                            } else if (res == 1) {
-                                for (TVariable t : d.getTVariables(true)) {
-                                    mind.getTValues().get(t).setClosed();
-                                }
-//                                d.setClosed();
                             }
                         }
                     }
@@ -281,16 +279,14 @@ public class Linker {
                 for (Domain d : master.getSequence()) {
                     if (d.isSystem()) {
                         int res = d.execSystem();
-                        if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
-                            for (TVariable t : d.getTVariables(true)) {
-                                mind.getTValues().get(t).setBlocked();
+                        for (TVariable t : d.getTVariables(true)) {
+                            if (!t.isEmpty()) {
+                                if (res == 0) {
+                                    mind.getTValues().get(t).setBlocked();
+                                } else if (res == 1) {
+                                    mind.getTValues().get(t).setClosed();
+                                }
                             }
-//                                result = false;
-                        } else if (res == 1) {
-                            for (TVariable t : d.getTVariables(true)) {
-                                mind.getTValues().get(t).setClosed();
-                            }
-//                                d.setClosed();
                         }
                     }
                 }

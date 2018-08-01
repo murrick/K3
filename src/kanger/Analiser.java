@@ -313,7 +313,7 @@ public class Analiser {
                 } else if (res == 1) {
                     //TODO: Срабатывает временами неверно
                     if (d.isQuery()) {
-//                        result = true;
+                        result = true;
                     }
                     occurrs = true;
                 }
@@ -362,9 +362,10 @@ public class Analiser {
 
         for (Domain d : sequence) {
             if (d.isSystem()) {
-//                for (TVariable tv : d.getTVariables(true)) {
-//                    mind.getValues().add(tv, d);
-//                }
+                //TODO: Было закомментировано почему-то
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
+                }
             } else if (d.isClosed() || d.isQuery()) {
                 if (d.isAntc()) {
                     ant.add(d);
