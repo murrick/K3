@@ -1,19 +1,17 @@
 package kanger.exception;
 
-import kanger.compiler.SysOp;
-
 /**
  * Created by Dmitry Kuznetsov on 30.12.2015.
  */
-public class TValueOutOfOrver extends Exception {
+public class TValueOutOfOrder extends Exception {
     String exceptionMessage = "ERROR";
     String error = "";
     Object object = null;
 
-    public TValueOutOfOrver() {
+    public TValueOutOfOrder() {
     }
 
-    public TValueOutOfOrver(String msg) {
+    public TValueOutOfOrder(String msg) {
         exceptionMessage += ": " + msg;
     }
 

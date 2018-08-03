@@ -1,18 +1,25 @@
 package kanger;
 
-import java.io.*;
-import java.util.*;
-import java.util.zip.*;
-import javax.script.*;
-import kanger.calculator.*;
-import kanger.compiler.*;
-import kanger.enums.*;
-import kanger.exception.*;
+import kanger.calculator.Calculator;
+import kanger.compiler.Compiler;
+import kanger.compiler.PTree;
+import kanger.compiler.Parser;
+import kanger.compiler.SysOp;
+import kanger.enums.Enums;
+import kanger.enums.LogMode;
+import kanger.enums.Tools;
+import kanger.exception.ParseErrorException;
+import kanger.exception.RuntimeErrorException;
 import kanger.factory.*;
 import kanger.primitives.*;
 import kanger.stores.*;
 
-import kanger.compiler.Compiler;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import java.io.*;
+import java.util.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -46,6 +53,7 @@ public class Mind {
     private final Analiser analiser = new Analiser(this);
     private final Compiler compiler = new Compiler(this);
     private final Linker linker = new Linker(this);
+
 
     private volatile boolean changed = false;
     private String sourceFileName = "mind.k";
@@ -219,6 +227,7 @@ public class Mind {
 
 //        clearLinks();
 //        clearQueryStatus();
+
     }
 
     public void clearQueryStatus() {
@@ -275,24 +284,26 @@ public class Mind {
 
     }
 
-
     public void compile(String src) throws ParseErrorException, RuntimeErrorException {
 
         int pos = 0;
         Object[] t = null;
 //        reset();
-        mark();
+//        mark();
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
             compileLine(line);
         }
+
         linker.link(true);
         if (analiser.analiser(true)) {
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             release();
+//            return false;
         } else {
             commit();
+//            return false;
         }
     }
 
@@ -508,7 +519,7 @@ public class Mind {
         }
         //TODO: Загрузка causes
 //        for(Map.Entry<Solution,Long> d: solveLinks.entrySet()) {
-//            d.getKey().setRight(rights.get(d.getValue()));
+//            d.getKey().setRight(rights.createCVar(d.getValue()));
 //        }
         for (Map.Entry<TVariable, Long> d : tVariableLinks.entrySet()) {
             d.getKey().setRight(rights.get(d.getValue()));

@@ -6,7 +6,9 @@ import kanger.enums.DataType;
 import kanger.enums.LibMode;
 import kanger.enums.Tools;
 import kanger.interfaces.IRunnable;
-import kanger.primitives.*;
+import kanger.primitives.Argument;
+import kanger.primitives.Function;
+import kanger.primitives.Term;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -46,7 +48,7 @@ public class Functions {
                         ret = 2;
                     } else {
 
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -70,7 +72,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _sub(arg.get(0).getValue(), mind.getTerms().add(1)).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -94,7 +96,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _bitnot(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -118,7 +120,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _neg(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -142,7 +144,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(0).getValue().compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -151,7 +153,7 @@ public class Functions {
         }
 
         {
-            //TODO: Далее по тексту - добавить  && !arg.get(0).isCVar()
+            //TODO: Далее по тексту - добавить  && !arg.createCVar(0).isCVar()
             put("_add(2)", new SysOp(LibMode.FUNCTION, "_add", 2, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;
@@ -171,7 +173,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _add(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -199,7 +201,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _sub(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -227,7 +229,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _mul(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -255,7 +257,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _div(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -275,7 +277,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _rem(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -299,7 +301,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _bitleft(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -323,7 +325,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _bitright(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -347,7 +349,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _bitxor(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -367,7 +369,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _bitand(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -395,7 +397,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _bitor(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(2).delValue(((Function) o).getOwner());
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -419,7 +421,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _log(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -443,7 +445,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _exp(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -460,10 +462,10 @@ public class Functions {
                     if (!((Function) o).setParameter(0, _pi())) {
                         ret = 0;
                     }
-//                    if (!arg.get(0).isDefined()) {
+//                    if (!arg.createCVar(0).isDefined()) {
 //                        try {
-//                    ((Function)o).setParameter(1, mind.getTerms().add(_pi()));
-//                    } else if (arg.get(0).isDefined() && Tools.sCmp(_pi(), arg.get(0).getValue()) == 0) {
+//                    ((Function)o).setParameter(1, mind.getTerms().createTVar(_pi()));
+//                    } else if (arg.createCVar(0).isDefined() && Tools.sCmp(_pi(), arg.createCVar(0).getValue()) == 0) {
 //                    } else {
 //                        try {
 //                    ((Function)o).setParameter(1, null);
@@ -492,7 +494,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _sin(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -518,7 +520,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _asin(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -544,7 +546,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _cos(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -570,7 +572,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _acos(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -596,7 +598,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _tan(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -622,7 +624,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _atan(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -643,7 +645,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _int(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -664,7 +666,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _round(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -685,7 +687,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _round(arg.get(0).getValue(), null).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -711,7 +713,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _sqrt(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -737,7 +739,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _pow(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -763,7 +765,7 @@ public class Functions {
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _root(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
-//                        arg.get(1).delValue(((Function) o).getOwner());
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -1090,10 +1092,10 @@ public class Functions {
                     if (!((Function) o).setParameter(0, _now())) {
                         ret = 0;
                     }
-//                    if (!arg.get(0).isDefined()) {
+//                    if (!arg.createCVar(0).isDefined()) {
 //                        try {
-//                    ((Function)o).setParameter(1, mind.getTerms().add(_pi()));
-//                    } else if (arg.get(0).isDefined() && Tools.sCmp(_pi(), arg.get(0).getValue()) == 0) {
+//                    ((Function)o).setParameter(1, mind.getTerms().createTVar(_pi()));
+//                    } else if (arg.createCVar(0).isDefined() && Tools.sCmp(_pi(), arg.createCVar(0).getValue()) == 0) {
 //                    } else {
 //                        try {
 //                    ((Function)o).setParameter(1, null);
@@ -1206,7 +1208,7 @@ public class Functions {
     private Term _bitnot(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = new Long(~(long) a.getValue()).doubleValue();
+            res = Long.valueOf((long) a.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1216,7 +1218,7 @@ public class Functions {
     private Term _bitleft(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = new Long((long) a.getValue() << (long) b.getValue()).doubleValue();
+            res = Long.valueOf((long) a.getValue() << (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1226,7 +1228,7 @@ public class Functions {
     private Term _bitright(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = new Long((long) a.getValue() >> (long) b.getValue()).doubleValue();
+            res = Long.valueOf((long) a.getValue() >> (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1236,7 +1238,7 @@ public class Functions {
     private Term _bitxor(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = new Long((long) a.getValue() ^ (long) b.getValue()).doubleValue();
+            res = Long.valueOf((long) a.getValue() ^ (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1246,7 +1248,7 @@ public class Functions {
     private Term _bitand(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = new Long((long) a.getValue() & (long) b.getValue()).doubleValue();
+            res = Long.valueOf((long) a.getValue() & (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1256,7 +1258,7 @@ public class Functions {
     private Term _bitor(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = new Long((long) a.getValue() | (long) b.getValue()).doubleValue();
+            res = Long.valueOf((long) a.getValue() | (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1266,7 +1268,7 @@ public class Functions {
     private Term _bitandnot(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = new Long((long) a.getValue() & ~(long) b.getValue()).doubleValue();
+            res = Long.valueOf((long) a.getValue() & ~(long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }

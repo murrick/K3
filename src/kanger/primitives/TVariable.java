@@ -1,12 +1,14 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
+import kanger.Mind;
+import kanger.enums.Enums;
+import kanger.exception.TValueOutOfOrder;
 
-import kanger.*;
-import kanger.enums.*;
-import kanger.exception.*;
-import kanger.factory.TValueFactory;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -14,11 +16,12 @@ import kanger.factory.TValueFactory;
  * Элемент подстановочной переменной
  */
 public class TVariable {
-    private String name = "";               // Оригинальное подкванторное имя
-    private Term area = null;               // Ссылка на область определения
     private Right right = null;             // Ссылка на правило
     private long id = -1;                   // Идентификатор переменной
     private TVariable next = null;          // Следующая переменная
+
+    private String name = "";               // Оригинальное подкванторное имя
+    private int index = 0;
 
     private Mind mind = null;
 
@@ -29,13 +32,14 @@ public class TVariable {
     public TVariable(DataInputStream dis, Mind mind) throws IOException {
         id = dis.readLong();
         mind.gettVariableLinks().put(this, dis.readLong());
+//        long did = dis.readLong();
+//        if (did != -1) {
+//            area = mind.getTerms().get(did);
+//        } else {
+//            area = null;
+//        }
+        index = dis.readInt();
         long did = dis.readLong();
-        if (did != -1) {
-            area = mind.getTerms().get(did);
-        } else {
-            area = null;
-        }
-        did = dis.readLong();
         right = mind.getRights().get(did);
         name = dis.readUTF();
         this.mind = mind;
@@ -57,12 +61,12 @@ public class TVariable {
         this.id = id;
     }
 
-    public Term getArea() {
-        return area;
+    public int getIndex() {
+        return index;
     }
 
-    public void setArea(Term area) {
-        this.area = area;
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public Term getValue() {
@@ -81,41 +85,41 @@ public class TVariable {
         }
     }
 
-    public TValue setValue(Term value) throws TValueOutOfOrver {
-        if (!isInside(value) && !"$$".equals(value.toString())) {
+    public TValue setValue(Term value) throws TValueOutOfOrder {
+        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
-//                mind.getSubstituted().add(this);
+//                mind.getSubstituted().createTVar(this);
 //            }
             return mind.getTValues().add(this, value);
         } else {
-            throw new TValueOutOfOrver(value.toString());
+            throw new TValueOutOfOrder(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
         }
     }
 
     public void delValue() {
         mind.getTValues().remove(this);
-//        if (mind.getTValues().get(this).isEmpty()) {
-//            mind.getTValues().get(this).setRoot(null);
-//            mind.getSubstituted().add(this);
+//        if (mind.getTValues().createCVar(this).isEmpty()) {
+//            mind.getTValues().createCVar(this).setRoot(null);
+//            mind.getSubstituted().createTVar(this);
 //        }
     }
 
-    //    public TSubst addValue(Term value) throws TValueOutOfOrver {
+    //    public TSubst addValue(Term value) throws TValueOutOfOrder {
 //        if (!mind.getTValues().containsKey(this)) {
 //            mind.getTValues().put(this, new TValue());
 //        }
 //        if (!isInside(value)) {
-//            if (mind.getTValues().get(this).contains(value) == -1) {
-//                mind.getSubstituted().add(id);
+//            if (mind.getTValues().createCVar(this).contains(value) == -1) {
+//                mind.getSubstituted().createTVar(id);
 //            }
-//            return mind.getTValues().get(this).addValue(value);
+//            return mind.getTValues().createCVar(this).addValue(value);
 //        } else {
-//            throw new TValueOutOfOrver(value.toString());
+//            throw new TValueOutOfOrder(value.toString());
 //        }
 //    }
     //    public int getOwner() {
 //        if (mind.getTValues().containsKey(this)) {
-//            return mind.getTValues().get(this).getLevel();
+//            return mind.getTValues().createCVar(this).getLevel();
 //        } else {
 //            return 0;
 //        }
@@ -125,7 +129,7 @@ public class TVariable {
 //        if (!mind.getTValues().containsKey(this)) {
 //            mind.getTValues().put(this, new TValue());
 //        }
-//        mind.getTValues().get(this).setLevel(owner);
+//        mind.getTValues().createCVar(this).setLevel(owner);
 //
 //    }
     public Right getRight() {
@@ -144,7 +148,7 @@ public class TVariable {
         this.next = next;
     }
 
-    public Domain getSrcSolve() {
+    public Set<Long> getSrcSolve() {
         if (mind.getTValues().get(this) != null) {
             return mind.getTValues().get(this).getSrcSolve();
         } else {
@@ -156,19 +160,19 @@ public class TVariable {
 //        if (mind.getTValues().containsKey(this)) {
 //            mind.getTValues().put(this, new TValue());
 //        } else {
-//            mind.getTValues().get(this).setSrcSolve(d);
+//            mind.getTValues().createCVar(this).setSrcSolve(d);
 //        }
 //    }
 
     //    public Domain getSrcValue() {
 //        if (mind.getTValues().containsKey(this)) {
-//            return mind.getTValues().get(this).getSrcSolve();
+//            return mind.getTValues().createCVar(this).getSrcSolve();
 //        } else {
 //            return null;
 //        }
 //    }
 //
-    public Domain getDstSolve() {
+    public Set<Long> getDstSolve() {
         if (mind.getTValues().get(this) != null) {
             return mind.getTValues().get(this).getDstSolve();
         } else {
@@ -180,13 +184,13 @@ public class TVariable {
 //        if (mind.getTValues().containsKey(this)) {
 //            mind.getTValues().put(this, new TValue());
 //        } else {
-//            mind.getTValues().get(this).setDstSolve(d);
+//            mind.getTValues().createCVar(this).setDstSolve(d);
 //        }
 //    }
 
 //    public Domain getDstValue() {
 //        if (mind.getTValues().containsKey(this)) {
-//            return mind.getTValues().get(this).getDstSolve();
+//            return mind.getTValues().createCVar(this).getDstSolve();
 //        } else {
 //            return null;
 //        }
@@ -194,7 +198,7 @@ public class TVariable {
 //
 //    public boolean isDestFor(Domain d) {
 //        if (mind.getTValues().containsKey(this)) {
-//            return mind.getTValues().get(this).isDestFor(d);
+//            return mind.getTValues().createCVar(this).isDestFor(d);
 //        } else {
 //            return false;
 //        }
@@ -213,7 +217,7 @@ public class TVariable {
             case Enums.DEBUG_LEVEL_INFO:
                 return name;
             case Enums.DEBUG_LEVEL_DEBUG:
-                return String.format("%c%d", Enums.TVC, id);
+                return String.format("%c%d", Enums.TVC, index);
             default:
                 return name;
         }
@@ -228,8 +232,8 @@ public class TVariable {
     public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(right.getId());
-//        dos.writeInt(owner);
-        dos.writeLong(area == null ? -1 : area.getId());
+        dos.writeInt(index);
+//        dos.writeLong(area == null ? -1 : area.getId());
         dos.writeLong(right == null ? -1 : right.getId());
         dos.writeUTF(name);
     }
@@ -241,18 +245,21 @@ public class TVariable {
 
     public boolean isInside(Term c) {
 
-        return (c != null
-                && c.isCVar()
+        return (c == null || !c.isCVar()
                 && c.getRight() == getRight()
-                && (getArea() == null || getArea().getId() < c.getId()));
+                && c.getIndex() < c.getIndex());
     }
 
-    public boolean contains(Term value) {
-        return mind.getTValues().find(this, value) != null;
+    //    public boolean contains(Term value) {
+//        return find(value) != null;
+//    }
+//
+    public TValue find(Term value) {
+        return mind.getTValues().find(this, value);
     }
 
     public boolean isEmpty() {
-        return mind.getTValues().isEmpty(this);
+        return mind.getTValues().isEmpty(this) || mind.getTValues().get(this) == null;
     }
 
     public TValue rewind() {
@@ -285,18 +292,18 @@ public class TVariable {
 //        if (!mind.getTValues().containsKey(this)) {
 //            mind.getTValues().put(this, new TValueFactory(mind));
 //        }
-//        mind.getTValues().get(this).mark();
+//        mind.getTValues().createCVar(this).mark();
 //    }
 //
 //    public void release() {
 //        if (mind.getTValues().containsKey(this)) {
-//            mind.getTValues().get(this).release();
+//            mind.getTValues().createCVar(this).release();
 //        }
 //    }
 //
 //    public void commit() {
 //        if (mind.getTValues().containsKey(this)) {
-//            mind.getTValues().get(this).commit();
+//            mind.getTValues().createCVar(this).commit();
 //        }
 //    }
 //
@@ -314,7 +321,7 @@ public class TVariable {
 //        if (!mind.getQueryValues().containsKey(id)) {
 //            mind.getQueryValues().put(id, new HashSet<>());
 //        }
-//        mind.getQueryValues().get(id).add(getValue().getId());
+//        mind.getQueryValues().createCVar(id).createTVar(getValue().getId());
 //    }
 
     public boolean isQuery() {

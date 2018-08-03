@@ -38,10 +38,10 @@ public class Predicates {
                     } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
                         if (arg.get(0).getValue().compareTo(arg.get(1).getValue()) == 0) {
                             i = 1;
-                        } else { //if ((arg.get(0).getValue().isCVar() && arg.get(1).getValue().isCVar()) || (!arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar())) {
+                        } else { //if ((arg.createCVar(0).getValue().isCVar() && arg.createCVar(1).getValue().isCVar()) || (!arg.createCVar(0).getValue().isCVar() && !arg.createCVar(1).getValue().isCVar())) {
                             i = 0;
                         }
-//                        else //if(!arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar())
+//                        else //if(!arg.createCVar(0).getValue().isCVar() && !arg.createCVar(1).getValue().isCVar())
 //                            i = 0;
                     }
                     return i;
@@ -142,7 +142,7 @@ public class Predicates {
                         if (arg.get(0).getValue().isCVar() || arg.get(1).getValue().isCVar()) {
                             i = -1;
                         } else {
-//                            i = maskcmp(arg.get(0).getValue().getTerm().getName(), arg.get(1).getValue().getTerm().getName()) == 0 ? 1 : 0;
+//                            i = maskcmp(arg.createCVar(0).getValue().getTerm().getName(), arg.createCVar(1).getValue().getTerm().getName()) == 0 ? 1 : 0;
                             try {
                                 i = Pattern.matches((String) arg.get(0).getValue().getValue(), (String) arg.get(1).getValue().getValue()) ? 1 : 0;
                             } catch (PatternSyntaxException ex) {

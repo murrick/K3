@@ -7,7 +7,7 @@ package kanger;
 
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
-import kanger.exception.TValueOutOfOrver;
+import kanger.exception.TValueOutOfOrder;
 import kanger.primitives.*;
 
 import java.util.ArrayList;
@@ -63,7 +63,7 @@ public class Linker {
 //            if (logging && occurrs) {
 //                logComparsion(master);
 //                logComparsion(slave);
-//                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                mind.getLog().createTVar(LogMode.ANALIZER, "-------------------------------------------");
 //            }
             return occurrs;
 
@@ -118,42 +118,55 @@ public class Linker {
             for (int i = 0; i <= level; ++i) {
 
                 if (master.get(level).isTSet()
-//                        && !master.get(level).getT().isSubstituted()
-//                        && !master.get(level).isDefined()
+//                        && !master.createCVar(level).getT().isSubstituted()
+//                        && !master.createCVar(level).isDefined()
                         && !slave.get(level).isEmpty()
-                        && (!slave.isDest() || slave.getRight().isQuery())
-                        && !master.get(level).getT().contains(slave.get(level).getValue())
+//                        && master.get(level).isEmpty()
+                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
+//                        && (!master.isDest() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
+//                        && !master.get(level).getT().contains(slave.get(level).getValue())
                 ) {
                     try {
+                        //TValue s = master.get(level).getT().find(slave.get(level).getValue());
+//                        if (s == null) {
                         TValue s = master.get(level).getT().setValue(slave.get(level).getValue());
-//                        mind.getUsed().add(master.get(level).getT());
-                        s.setDstSolve(master);
-                        s.setSrcSolve(slave);
+//                        }
+//                        mind.getUsed().createTVar(master.createCVar(level).getT());
+                        s.addDstSolve(master);
+                        s.addSrcSolve(slave);
                         if (slave.isQuery() || master.isQuery()) {
                             s.setQuery();
                         }
                         occurrsMaster = true;
-                    } catch (TValueOutOfOrver ex) {
+                    } catch (TValueOutOfOrder ex) {
+//                        System.err.println(slave.toString());
+//                        System.err.println(master.toString());
+//                        ex.printStackTrace();
                     }
                 }
 
                 if (slave.get(level).isTSet()
-//                        && !slave.get(level).getT().isSubstituted()
-//                        && !slave.get(level).isDefined()
+//                        && !slave.createCVar(level).getT().isSubstituted()
+//                        && !slave.createCVar(level).isDefined()
                         && !master.get(level).isEmpty()
-                        && (!master.isDest() || master.getRight().isQuery())
-                        && !slave.get(level).getT().contains(master.get(level).getValue())
+//                        && slave.get(level).isEmpty()
+                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
+//                        && (!slave.isDest() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
+//                        && !slave.get(level).getT().contains(master.get(level).getValue())
                 ) {
                     try {
                         TValue s = slave.get(level).getT().setValue(master.get(level).getValue());
-//                        mind.getUsed().add(slave.get(level).getT());
-                        s.setSrcSolve(master);
-                        s.setDstSolve(slave);
+//                        mind.getUsed().createTVar(slave.createCVar(level).getT());
+                        s.addSrcSolve(master);
+                        s.addDstSolve(slave);
                         if (master.isQuery() || slave.isQuery()) {
                             s.setQuery();
                         }
                         occurrsSlave = true;
-                    } catch (TValueOutOfOrver ex) {
+                    } catch (TValueOutOfOrder ex) {
+//                        System.err.println(master.toString());
+//                        System.err.println(slave.toString());
+//                        ex.printStackTrace();
                     }
                 }
             }
@@ -343,12 +356,12 @@ public class Linker {
 //                        int res = d.execSystem();
 //                        if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
 //                            for (TVariable t : d.getTVariables(true)) {
-//                                mind.getTValues().get(t).setBlocked();
+//                                mind.getTValues().createCVar(t).setBlocked();
 //                            }
 //                            result = false;
 //                        } else if (res == 1) {
 //                            for (TVariable t : d.getTVariables(true)) {
-//                                mind.getTValues().get(t).setClosed();
+//                                mind.getTValues().createCVar(t).setClosed();
 //                            }
 //                            d.setClosed();
 //                        }
@@ -361,7 +374,7 @@ public class Linker {
 ////                    int res = d.execSystem();
 ////                    if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
 ////                        for(TVariable t : d.getTVariables(true)) {
-////                            mind.getTValues().get(t).setBlocked();
+////                            mind.getTValues().createCVar(t).setBlocked();
 ////                        }
 ////                        result = false;
 ////                    } else if(res == 1){
@@ -371,10 +384,10 @@ public class Linker {
 ////            }
 //
 //        } else {
-//            TVariable t = tvars.get(tIndex);
+//            TVariable t = tvars.createCVar(tIndex);
 //            TValue v = t.rewind();
 //            if (v != null) {
-//                mind.getSubstituted().add(t);
+//                mind.getSubstituted().createTVar(t);
 //                do {
 //                    mind.getTValues().set(t, v);
 //                    if (!testDomains(tvars, tIndex + 1, master, logging)) {
@@ -517,23 +530,28 @@ public class Linker {
     private boolean logComparsion(Domain d) {
         if (d.isDest()) {
             for (TVariable t : d.getTVariables(true)) {
-                if (t.getDstSolve().getPredicate().getId() == d.getPredicate().getId()) {
-                    boolean found = false;
-                    for (Domain r : t.getUsage()) {
-                        if (d.getId() != r.getId()) {
-                            mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + t.getSrcSolve());
+                if (!t.isEmpty()) {
+                    for (long id : t.getDstSolve()) {
+                        Domain x = mind.getDomains().get(id);
+                        if (x.getPredicate().getId() == d.getPredicate().getId()) {
+                            boolean found = false;
+                            for (Domain r : t.getUsage()) {
+                                if (d.getId() != r.getId()) {
+                                    mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
+                                    found = true;
+                                }
+                            }
+                            if (!found) {
+                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + t.getSrcSolve());
 //                        if (d.getRight().isQuery()) {
 //                            a.getT().getDstSolve().setAcceptor(false);
 //                        }
+                            }
+                            mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
+                            mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + d.toString());
+                            mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + t.getSrcSolve());
+                        }
                     }
-                    mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
-                    mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + d.toString());
-                    mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + t.getSrcSolve());
                 }
             }
             return true;

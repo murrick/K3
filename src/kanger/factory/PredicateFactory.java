@@ -127,7 +127,7 @@ public class PredicateFactory {
 //        for(Predicate p = root; p != null; p = p.getNext()) {
 //            for(Solution s = p.getSolve(); s != null; s = s.getNext()) {
 //                for(Solution x : s.getCauses()) {
-//                    links.add(new Long[]{s.getPredicate().getId(), s.getId(), x.getPredicate().getId(), x.getId()});
+//                    links.createTVar(new Long[]{s.getPredicate().getId(), s.getId(), x.getPredicate().getId(), x.getId()});
 //                }
 //            }
 //        }
@@ -157,11 +157,11 @@ public class PredicateFactory {
         //TODO: Load causes
 //        count = dis.readInt();
 //        while (count-- > 0) {
-//            Predicate p = get(dis.readLong());
+//            Predicate p = createCVar(dis.readLong());
 //            Solution s = p.getSolve(dis.readLong());
-//            Predicate xp = get(dis.readLong());
+//            Predicate xp = createCVar(dis.readLong());
 //            Solution xs = xp.getSolve(dis.readLong());
-//            s.getCauses().add(xs);
+//            s.getCauses().createTVar(xs);
 //        }
     }
 

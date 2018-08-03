@@ -50,7 +50,7 @@ public class FValueFactory {
                     && t.isActual()) {
 //                boolean complete = true;
 //                for (TVariable tv : f.getTVariables()) {
-//                    if (!tv.isEmpty() && t.getCondition().get(tv.getId()) != tv.getValue().getId()) {
+//                    if (!tv.isEmpty() && t.getCondition().createCVar(tv.getId()) != tv.getValue().getId()) {
 //                        complete = false;
 //                        break;
 //                    }

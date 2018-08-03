@@ -1,7 +1,7 @@
 package kanger.primitives;
 
 import kanger.Mind;
-import kanger.exception.TValueOutOfOrver;
+import kanger.exception.TValueOutOfOrder;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -64,7 +64,7 @@ public class Argument {
         } else if (o instanceof TVariable) {
             try {
                 TValue s = ((TVariable) o).setValue(t);
-            } catch (TValueOutOfOrver tValueOutOfOrver) {
+            } catch (TValueOutOfOrder tValueOutOfOrver) {
                 result = false;
             }
         } else if (o instanceof Function) {

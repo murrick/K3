@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.Mind;
+import kanger.primitives.Right;
 import kanger.primitives.TVariable;
 
 import java.io.DataInputStream;
@@ -9,8 +10,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
-
-import kanger.primitives.Right;
 
 /**
  * Created by murray on 25.05.15.
@@ -29,10 +28,10 @@ public class TVariableFactory {
         reset();
     }
 
-    public TVariable add() {
+    public TVariable createTVar() {
         TVariable p = new TVariable(mind);
         p.setId(++lastID);
-        p.setArea(mind.getTerms().getRoot());
+        p.setIndex(mind.getTerms().nextVarIndex());
         p.setRight(mind.getRights().getRoot());
         p.setNext(root);
         root = p;

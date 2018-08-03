@@ -41,12 +41,12 @@ public class Function {
         range = dis.readInt();
         this.mind = mind;
 
-//        f = (FunctionDescriptor) mind.getFunctions().get(id);
+//        f = (FunctionDescriptor) mind.getFunctions().createCVar(id);
 //        line.clear();
 //        int count = dis.readInt();
 //        while (count-- > 0) {
 //            Argument a = new Argument(dis, mind);
-//            line.add(a);
+//            line.createTVar(a);
 //        }
         arguments.clear();
         int count = dis.readInt();
@@ -97,15 +97,15 @@ public class Function {
 //        this.f = f;
 //    }
 //
-//    public void add(Argument t) {
-//        line.add(t);
+//    public void createTVar(Argument t) {
+//        line.createTVar(t);
 //    }
 
-    //    public Argument get(int i) {
+    //    public Argument createCVar(int i) {
 //        if (i == range && range == arguments.size()) {
-//            arguments.add(new Argument());
+//            arguments.createTVar(new Argument());
 //        }
-//        return arguments.get(i);
+//        return arguments.createCVar(i);
 //    }
 //
     public int getRange() {
@@ -140,7 +140,7 @@ public class Function {
     }
 
 //    public Term getResult() {
-//        FValue f = mind.getFValues().get(this);
+//        FValue f = mind.getFValues().createCVar(this);
 //        if (f != null) {
 //            return f.getValue();
 //        } else {
@@ -150,12 +150,12 @@ public class Function {
 
 //    public void setResult(Domain d, Argument r) {
 //        if (range + 1 > arguments.size()) {
-//            arguments.add(new Argument());
+//            arguments.createTVar(new Argument());
 //        }
-//        arguments.get(range).setValue(d, r.getValue());
-////        arguments.get(range).setC(r.getC());
-////        arguments.get(range).setT(r.getT());
-////        arguments.get(range).setF(r.getF());
+//        arguments.createCVar(range).setValue(d, r.getValue());
+////        arguments.createCVar(range).setC(r.getC());
+////        arguments.createCVar(range).setT(r.getT());
+////        arguments.createCVar(range).setF(r.getF());
 //    }
 
     public void setResult(Term r) {
@@ -191,7 +191,7 @@ public class Function {
 //    public boolean isCalculated() {
 //        int i = 0;
 //        for (; i <= range; ++i) {
-//            if (arguments.get(i) == null || !arguments.get(i).isCSet()) {
+//            if (arguments.createCVar(i) == null || !arguments.createCVar(i).isCSet()) {
 //                return false;
 //            }
 //        }
@@ -276,7 +276,7 @@ public class Function {
                 res = " = " + v.getValue();
             }
         }
-        //Argument r = range < arguments.size() ? arguments.get(range) : null;
+        //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
         return s + res;
     }
 
@@ -291,9 +291,9 @@ public class Function {
     //    public void setResult(Term c) {
 //        if(f != null) {
 //            while(f.getRange() >= arguments.size()) {
-//                arguments.add(new TList());
+//                arguments.createTVar(new TList());
 //            }
-//            arguments.get(f.getRange()).setC(c);
+//            arguments.createCVar(f.getRange()).setC(c);
 //        }
 //
 //    }
@@ -326,7 +326,7 @@ public class Function {
 //                return false;
 //            }
 //            for (int i = 0; i < arguments.size(); ++i) {
-//                if (!fo.arguments.get(i).equals(arguments.get(i))) {
+//                if (!fo.arguments.createCVar(i).equals(arguments.createCVar(i))) {
 //                    return false;
 //                }
 //            }
@@ -344,7 +344,7 @@ public class Function {
 
     public boolean isCalculated() {
         FValue f = mind.getFValues().get(this);
-        return f != null; // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().get(this) != null /*|| mind.getCalculated().contains(this)*/;
+        return f != null; // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
     }
 
     public boolean isSubstituted() {

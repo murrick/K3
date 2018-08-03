@@ -16,7 +16,7 @@ public class DictionaryFactory {
 
     private Term root = null;
     private long lastID = 0;
-    private int cCvar = 0;           // Счетчик C-переменных
+    private int varIndex = 0;           // Счетчик C-переменных
 
     private Stack<Object[]> stack = new Stack<>();
 
@@ -51,9 +51,11 @@ public class DictionaryFactory {
         return null;
     }
 
-    public Term get(String name) {
-        String temp = String.format("%c%d", Enums.CVC, ++cCvar);
+    public Term createCVar(String name) {
+        int i = nextVarIndex();
+        String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
+        t.setIndex(i);
         t.setName(name);
         return t;
     }
@@ -83,7 +85,7 @@ public class DictionaryFactory {
     }
 
     public void mark() {
-        stack.push(new Object[]{root, lastID, cCvar});
+        stack.push(new Object[]{root, lastID, varIndex});
     }
 
     public void commit() {
@@ -97,7 +99,7 @@ public class DictionaryFactory {
             Object[] pop = stack.pop();
             Term saved = (Term) pop[0];
             lastID = (long) pop[1];
-            cCvar = (int) pop[2];
+            varIndex = (int) pop[2];
 //            if (root != null && saved != null && root.getId() != saved.getId()) {
 //                for (Term t = root; t != null; t = t.getNext()) {
 //                    if (t.getNext() != null && t.getNext().getId() == saved.getId()) {
@@ -123,7 +125,7 @@ public class DictionaryFactory {
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(lastID);
-        dos.writeInt(cCvar);
+        dos.writeInt(varIndex);
         int count = size();
         dos.writeInt(count);
         for (Term d = root; d != null; d = d.getNext()) {
@@ -134,7 +136,7 @@ public class DictionaryFactory {
     public void readCompiledData(DataInputStream dis) throws IOException, ClassNotFoundException {
         clear();
         lastID = dis.readLong();
-        cCvar = dis.readInt();
+        varIndex = dis.readInt();
         int count = dis.readInt();
         Term a = null, b;
         while (count-- > 0) {
@@ -151,8 +153,12 @@ public class DictionaryFactory {
     public void clear() {
         root = null;
         lastID = 0;
-        cCvar = 0;
+        varIndex = 0;
         stack.clear();
         mark();
+    }
+
+    public int nextVarIndex() {
+        return ++varIndex;
     }
 }

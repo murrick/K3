@@ -1,5 +1,8 @@
 package kanger;
 
+import kanger.exception.ParseErrorException;
+import kanger.exception.RuntimeErrorException;
+
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
@@ -17,11 +20,11 @@ public class Kanger {
 //                "!@x $y father(y,x);\n" +
 //                        "!@x ~father(x,x);\n" +
 //                        "!@x (male(x) || female(x)) && (~male(x) || ~female(x));\n" +
-//                        "!@x ($y daughter(x,y)) -> female(x), issue(x,y);\n" +
-//                        "!@x ($y son(x,y)) -> male(x), issue(x,y);\n" +
-//                        "!@x @y father(x,y) -> male(x), issue(y,x);\n" +
-//                        "!@x @y issue(y,x) -> (male(y) -> son(y,x)), (female(y) -> daughter(y,x));\n" +
-//                        "!@x @y issue(x,y) -> (male(y) -> father(y,x)), (female(y) -> mother(y,x));\n" +
+//                        "!@x ($y daughter(x,y)) -> female(x), child(x,y);\n" +
+//                        "!@x ($y son(x,y)) -> male(x), child(x,y);\n" +
+//                        "!@x @y father(x,y) -> male(x), child(y,x);\n" +
+//                        "!@x @y child(y,x) -> (male(y) -> son(y,x)), (female(y) -> daughter(y,x));\n" +
+//                        "!@x @y child(x,y) -> (male(y) -> father(y,x)), (female(y) -> mother(y,x));\n" +
 //                        "!father(John, Tom);\n" +
 //                        "!daughter(Sarah, John);\n" +
 //                        "!age(John, 37);\n" +
@@ -57,7 +60,7 @@ public class Kanger {
 //                "!@x ~(male(x), female(x));\n" +
 //                "!@x male(x) || female(x);\n"));
 
-//        mind.setText(new StringBuffer("=add(a,b) {add = a+b;};"));
+//        mind.setText(new StringBuffer("=createTVar(a,b) {createTVar = a+b;};"));
 //        if (args.length > 0 && new File(args[0]).exists()) {
 //            if (args[0].endsWith(".e")) {
 //                Screen.loadCompiledFile(mind, args[0]);
@@ -98,6 +101,32 @@ public class Kanger {
 //                    + "!d(v); "
 ////                    + "!d(nn); "
 //                    + "!@x a(x) -> ~n(x); ");
+
+//            mind.mark();
+//            mind.compile("!@x $y father(y,x);\n" +
+//                    "!@x $y mother(y,x);\n" +
+//                    "!@x ~father(x,x);\n" +
+//                    "!@x ~mother(x,x);\n" +
+////                            "!@x (male(x) || female(x));" +
+////                            "!@x ~(male(x) && female(x));" +
+////                            "!@x ($y daughter(x,y)) -> female(x) && child(x,y);\n" +
+////                            "!@x ($y son(x,y)) -> male(x) && child(x,y);\n" +
+//                    "!@x @y father(x,y) -> male(x) && child(y,x);\n" +
+//                    "!@x @y mother(x,y) -> female(x) && child(y,x);\n" +
+//                    "!@x @y child(x,y) -> father(y,x) || mother(y,x);\n" +
+////                    "!@x @y child(y,x) -> (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));\n" +
+////                    "!@x @y child(x,y) -> (male(y) -> father(y,x)) && (female(y) -> mother(y,x));\n" +
+//                    "!father(John, Tom);\n" +
+////                            "!daughter(Sarah, John);\n" +
+////                    "!age(John, 37);\n" +
+////                    "!age(Tom, 12);\n" +
+////                    "!age(Sarah, 4);" +
+////                    "!@x @y @a @b age(x,a), age(y,b), a > b -> older(x,y);\n" +
+////                    "!@x @y @a @b age(x,a), age(y,b), a < b -> younger(x,y);\n"
+//                    "");
+//
+////                System.out.println(mind.getLog().getCurrent(LogMode.ALL).getRecord());
+//                mind.commit();
 //
 //        } catch (ParseErrorException ex) {
 //            Logger.getLogger(Kanger.class.getName()).log(Level.SEVERE, null, ex);
@@ -119,6 +148,18 @@ public class Kanger {
 //            Logger.getLogger(Kanger.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 
+        try {
+            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));\n"
+//                    "!@x ~a(x,x);\n" +
+//                    "!@x $y a(y,x);" +
+//                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z));"
+            );
+        } catch (ParseErrorException e) {
+            e.printStackTrace();
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace();
+        }
+
         Screen.session(mind);
 
 //        mind.compileLine[jhjij("!@x ~a(x) || b(x);");
@@ -129,6 +170,6 @@ public class Kanger {
 //        Compiler c = new Compiler(mind);
 //        c.compileLine(new StringBuffer("!@(x) a(b);"), 0);
     }
-} 
+}
 
 // проверка

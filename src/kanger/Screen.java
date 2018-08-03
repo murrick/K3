@@ -1,5 +1,6 @@
 package kanger;
 
+import jline.ConsoleReader;
 import kanger.compiler.Parser;
 import kanger.compiler.SysOp;
 import kanger.enums.Enums;
@@ -8,16 +9,16 @@ import kanger.enums.LogMode;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
-import jline.ConsoleReader;
 
-//import java.awt.*;
-//import java.awt.datatransfer.Clipboard;
-//import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+
+//import java.awt.*;
+//import java.awt.datatransfer.Clipboard;
+//import java.awt.datatransfer.StringSelection;
 
 /**
  * Created by murray on 28.05.15. $Author: murray $
@@ -297,10 +298,10 @@ public class Screen {
 //        if (list.size() > 0) {
 //            System.out.printf("Predicated added:\n");
 //            for (i = 0; i < list.size(); ++i) {
-//                context.getText().append(context.getHypotesisStore().get(i));
+//                context.getText().append(context.getHypotesisStore().createCVar(i));
 //                context.getText().append("\r");
 //                context.setChanged(true);
-//                System.out.printf("  %3d:\t%s\n", i, context.getHypotesisStore().get(i));
+//                System.out.printf("  %3d:\t%s\n", i, context.getHypotesisStore().createCVar(i));
 //            }
 //        }
 //        return i;
@@ -453,11 +454,11 @@ public class Screen {
 //    public static String formatPred(Predicate p, Solution s) {
 //        String str = String.format("%c%s(", s.isAntc() ? Enums.ANT : Enums.SUC, p.getName());
 //        for (int i = 0; i < p.getRange(); ++i) {
-//            if (s.get(i) != null && s.get(i).getTerm().getType() == Enums.T_STRING) {
+//            if (s.createCVar(i) != null && s.createCVar(i).getTerm().getType() == Enums.T_STRING) {
 //                str += "\"";
 //            }
-//            str += String.format("%s", s.get(i) != null ? s.get(i).getTerm().getName() : "_");
-//            if (s.get(i) != null && s.get(i).getTerm().getType() == Enums.T_STRING) {
+//            str += String.format("%s", s.createCVar(i) != null ? s.createCVar(i).getTerm().getName() : "_");
+//            if (s.createCVar(i) != null && s.createCVar(i).getTerm().getType() == Enums.T_STRING) {
 //                str += "\"";
 //            }
 //
@@ -504,7 +505,7 @@ public class Screen {
             if (v != null) {
                 do {
 //                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
-//                        mind.getSubstituted().add(t);
+//                        mind.getSubstituted().createTVar(t);
                     if (!d.isDest()) {
                         mind.getTValues().set(t, v);
                         showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
@@ -904,12 +905,11 @@ public class Screen {
                     mind.compile(buf.toString());
                     //mind.getAnalyser().analiser(true);
                     Boolean res = mind.query("?");
+                    System.out.println(mind.getLog().getCurrent(LogMode.ALL).getRecord());
                     if (res != null && res) {
-                        System.out.println(mind.getLog().getCurrent(LogMode.ALL).getRecord());
                         System.out.printf("File %s loaded\n", line);
                         return true;
                     } else {
-                        System.out.println(mind.getLog().getCurrent(LogMode.ALL).getRecord());
                         System.out.printf("Use XPLAIN command for analisys\n");
                         return false;
                     }
@@ -943,7 +943,7 @@ public class Screen {
 //            e.printStackTrace();
 //        } finally {
 //            try {
-//                TerminalFactory.get().restore();
+//                TerminalFactory.createCVar().restore();
 //            } catch (Exception e) {
 //                e.printStackTrace();
 //            }
@@ -1081,7 +1081,7 @@ public class Screen {
     }
 
 //    private static void showInsertions(context context) {
-//        for (LogEntry e : (List<LogEntry>) context.getLog().get(LogMode.SAVED)) {
+//        for (LogEntry e : (List<LogEntry>) context.getLog().createCVar(LogMode.SAVED)) {
 //            System.out.println(e.getRecord());
 //        }
 //    }

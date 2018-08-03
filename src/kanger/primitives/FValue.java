@@ -22,7 +22,7 @@ public class FValue {
         function = f;
         value = f.getResult();
 //        for(Argument a : f.getArguments()){
-//            condition.add(a.getValue().getId());
+//            condition.createTVar(a.getValue().getId());
 //        }
         for (TVariable t : f.getTVariables()) {
             condition.put(t.getId(), t.isEmpty() ? -1 : t.getCurrent().getId());
@@ -36,7 +36,7 @@ public class FValue {
         value = mind.getTerms().get(dis.readLong());
         int count = dis.readInt();
         while (--count >= 0) {
-//            condition.add(dis.readLong());
+//            condition.createTVar(dis.readLong());
             condition.put(dis.readLong(), dis.readLong());
         }
         this.mind = mind;
@@ -114,8 +114,8 @@ public class FValue {
 
     public boolean isActual() {
 //        for(int i=0; i<function.getRange(); ++i){
-//            if(function.getArguments().get(i).isEmpty()
-//            || function.getArguments().get(i).getValue().getId() != condition.get(i)){
+//            if(function.getArguments().createCVar(i).isEmpty()
+//            || function.getArguments().createCVar(i).getValue().getId() != condition.createCVar(i)){
 //                return false;
 //            }
 //        }

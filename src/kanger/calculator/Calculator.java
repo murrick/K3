@@ -56,36 +56,36 @@ public class Calculator {
         fu.setBusy(true);
 
 //        for (int i = 0; i <= fu.getRange(); ++i) {
-//            if (!fu.get(i).isEmpty()) {
-//                if (!fu.get(i).getValue().isCVar()) {
-//                    fu.get(i).setValue(fu.get(i).getValue());
+//            if (!fu.createCVar(i).isEmpty()) {
+//                if (!fu.createCVar(i).getValue().isCVar()) {
+//                    fu.createCVar(i).setValue(fu.createCVar(i).getValue());
 //                } else {
-//                    fu.get(i).setValue(null);
+//                    fu.createCVar(i).setValue(null);
 //                }
-//            } else if (fu.get(i).isFSet()) {
-//                fu.get(i).setValue(fu.get(i).getF().getResult());
-//            } else if (fu.get(i).isTSet() && fu.get(i).getT().getOwner() != 0) {
-//                fu.get(i).setValue(fu.get(i).getT().getValue());
+//            } else if (fu.createCVar(i).isFSet()) {
+//                fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
+//            } else if (fu.createCVar(i).isTSet() && fu.createCVar(i).getT().getOwner() != 0) {
+//                fu.createCVar(i).setValue(fu.createCVar(i).getT().getValue());
 //            }
 //        }
 //
         for (int i = 0; i < fu.getRange(); ++i) {
-            if (fu.getArguments().get(i).isFSet() /* && !fu.get(i).getF().isBusy()*/) {
-//                fu.get(i).getF().setResult(fu.get(i).getValue());
+            if (fu.getArguments().get(i).isFSet() /* && !fu.createCVar(i).getF().isBusy()*/) {
+//                fu.createCVar(i).getF().setResult(fu.createCVar(i).getValue());
                 if (calculate(fu.getArguments().get(i).getF()) > 0) {
                     ++flag;
-//                    fu.get(i).setValue(fu.get(i).getF().getResult());
+//                    fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
                 }
             }
         }
 
 //        // Если еще не добавлен элемент результата - добавляем
 //        if (fu.getArguments().size() < fu.getRange() + 1) {
-//            fu.getArguments().add(new Argument());
+//            fu.getArguments().createTVar(new Argument());
 //        }
 //        fu.setResult(result);
 //        Argument tl = new Argument();
-//        arg.add(tl);
+//        arg.createTVar(tl);
 //        tl.setC(result);
         //fu.setA(arg);
 //        if (!fu.isCalculated(arg)) {
@@ -101,15 +101,15 @@ public class Calculator {
             mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
 
-//            flag = (arg.get(i).isCSet()) ? 1 : 0;
+//            flag = (arg.createCVar(i).isCSet()) ? 1 : 0;
 //        flag = (fu.getResult() != null) ? 1 : 0;
 //        if(!fu.isCalculated()) {
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).isFSet()) {
-//                fu.get(i).getF().setResult(fu.get(i).getValue());
+//                fu.createCVar(i).getF().setResult(fu.createCVar(i).getValue());
                 if (calculate(fu.getArguments().get(i).getF()) > 0) {
                     ++flag;
-//                    fu.get(i).setValue(fu.get(i).getF().getResult());
+//                    fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
                 }
             }
         }
@@ -117,8 +117,8 @@ public class Calculator {
 
         //TODO: Хочется разделить функции и логику
 //        for (int i = 0; i <= fu.getRange(); ++i) {
-//            if (fu.get(i).isCSet() && fu.get(i).isTSet() && fu.get(i).getT().getOwner() == 0) {
-//                mind.getAnalyser().tSubstitute(fu.get(i).getT(), fu.get(i).getValue(), level, null);
+//            if (fu.createCVar(i).isCSet() && fu.createCVar(i).isTSet() && fu.createCVar(i).getT().getOwner() == 0) {
+//                mind.getAnalyser().tSubstitute(fu.createCVar(i).getT(), fu.createCVar(i).getValue(), level, null);
 //                flag = 2;
 //            }
 //        }
@@ -126,7 +126,7 @@ public class Calculator {
 //            flag = (fu.getResult() != null) ? 1 : 0;
 //        }
 
-        //func.setResult(arg.get(i).getValue());
+        //func.setResult(arg.createCVar(i).getValue());
         fu.setBusy(false);
         return flag;
     }

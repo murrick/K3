@@ -38,7 +38,7 @@ public class SysOp {
                 int result = 1;
                 String script = "";
 //                Term rval = null;
-//                rval = arg.get(arg.size() - 1).getC();
+//                rval = arg.createCVar(arg.size() - 1).getC();
                 int i = 0;
                 int undefined = 0;
                 for (Argument a : arg) {
@@ -75,7 +75,7 @@ public class SysOp {
                             }
                         }
 //                        if (result != 0 && rval != null) {
-//                            if (rval.compareTo(arg.get(arg.size() - 1).getC()) != 0) {
+//                            if (rval.compareTo(arg.createCVar(arg.size() - 1).getC()) != 0) {
 //                                result = 0;
 //                            }
 //                        }

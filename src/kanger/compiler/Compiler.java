@@ -101,10 +101,19 @@ public class Compiler {
             break;
 
             case Enums.DIS: {
-                Tree x = r.cloneTree(t, !antc);
-                list.add(x);
-                construct(r, t, root.getLeft(), antc, replacements, list);
-                construct(r, x, root.getRight(), antc, replacements, list);
+                if (antc) {
+                    construct(r, t, root.getLeft(), antc, replacements, list);
+                    for (Tree x : list) {
+                        construct(r, x, root.getRight(), antc, replacements, tmp);
+                    }
+                    construct(r, t, root.getRight(), antc, replacements, tmp);
+                    list.addAll(tmp);
+                } else {
+                    Tree x = r.cloneTree(t, !antc);
+                    list.add(x);
+                    construct(r, t, root.getLeft(), antc, replacements, list);
+                    construct(r, x, root.getRight(), antc, replacements, list);
+                }
             }
             break;
 
@@ -148,10 +157,10 @@ public class Compiler {
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
-            p = new Argument(mind.getTVars().add());
+            p = new Argument(mind.getTVars().createTVar());
             p.getT().setName(root.getLeft().getName());
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
-            p = new Argument(mind.getTerms().get(root.getLeft().getName()));
+            p = new Argument(mind.getTerms().createCVar(root.getLeft().getName()));
         }
         replacements.put(root.getLeft().getName(), p);
     }

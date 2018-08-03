@@ -5,13 +5,14 @@ import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
+import kanger.exception.RuntimeErrorException;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.*;
-
-import kanger.exception.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -100,7 +101,7 @@ public class Domain {
 //
 //    public void setAcceptor(boolean on) {
 //        if (on) {
-//            mind.getAcceptorDomains().add(id);
+//            mind.getAcceptorDomains().createTVar(id);
 //        } else {
 //            mind.getAcceptorDomains().remove(id);
 //        }
@@ -108,14 +109,15 @@ public class Domain {
 //
 
 //    public void setQueued() {
-//        mind.getQueuedDomains().add(id);
+//        mind.getQueuedDomains().createTVar(id);
 //    }
 
     public List<Domain> getCauses() {
         List<Domain> list = new ArrayList<>();
         for (TVariable t : getTVariables(true)) {
-            if (t.getDstSolve() != null && t.getSrcSolve() != null && t.getDstSolve().getId() == id && t.getSrcSolve().getId() != id) {
-                list.add(t.getSrcSolve());
+            if (t.getDstSolve() != null && t.getSrcSolve() != null && t.getDstSolve().contains(id) && t.getSrcSolve().contains(id)) {
+                //TODO: Непонятно что тут. Потом
+//                list.add(t.getSrcSolve());
             }
         }
         return list;
@@ -251,7 +253,7 @@ public class Domain {
     }
 
 //    public boolean isDestFor(Domain d) {
-//        return mind.getSources().containsKey(this) && mind.getSources().get(this).contains(d);
+//        return mind.getSources().containsKey(this) && mind.getSources().createCVar(this).contains(d);
 //    }
 //
 //    public void setDestFor(Domain d) {
@@ -261,19 +263,19 @@ public class Domain {
 //        if (!mind.getSources().containsKey(this)) {
 //            mind.getSources().put(this, new HashSet<>());
 //        }
-//        mind.getDestinations().get(d).add(this);
-//        mind.getSources().get(this).add(d);
+//        mind.getDestinations().createCVar(d).createTVar(this);
+//        mind.getSources().createCVar(this).createTVar(d);
 //    }
 
     public boolean isDest() {
         for (TVariable t : getTVariables(false)) {
-            if (!t.isEmpty() && t.getDstSolve() != null && /*contains(t)) {*/ t.getDstSolve().getId() == id) {
+            if (!t.isEmpty() && t.getDstSolve() != null && /*contains(t)) {*/ t.getDstSolve().contains(id)) {
                 return true;
             }
         }
         return false;
         //
-        // return mind.getSources().containsKey(this) && !mind.getSources().get(this).isEmpty();
+        // return mind.getSources().containsKey(this) && !mind.getSources().createCVar(this).isEmpty();
     }
 
     public List<TVariable> getTVariables(boolean full) {
@@ -424,7 +426,7 @@ public class Domain {
 //                if (!mind.getQueryValues().containsKey(t.getId())) {
 //                    mind.getQueryValues().put(t.getId(), new HashSet<>());
 //                }
-//                mind.getQueryValues().get(t.getId()).add(t.getValue().getId());
+//                mind.getQueryValues().createCVar(t.getId()).createTVar(t.getValue().getId());
 //            }
 //        }
 //    }

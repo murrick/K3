@@ -39,7 +39,7 @@ public class TValueFactory {
             root = t;
             t.setId(lastID++);
         }
-//        current.put(tv, t.getId());
+        current.put(tv, t.getId());
         return t;
     }
 

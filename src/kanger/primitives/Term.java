@@ -21,7 +21,9 @@ public class Term implements Comparable {
     private long id = -1;                // Идентификатор
     private Right right = null;          // Ссылка на правило
     private Term next = null;      // Следующая запись
+
     private String name = "";             // Оригинальное имя c-переменной
+    private int index = 0;              // Индекс c-переменной
 
     private Mind mind = null;
 
@@ -77,6 +79,9 @@ public class Term implements Comparable {
                 value = new ObjectInputStream(din).readObject();
                 break;
         }
+
+        name = din.readUTF();
+        index = din.readInt();
 //        sourceLength = din.readInt();
 //        token = din.readUTF();
     }
@@ -177,10 +182,11 @@ public class Term implements Comparable {
     }
 
     public boolean isCVar() {
-        return value != null
-                && type == DataType.STRING
-                && !value.toString().isEmpty()
-                && value.toString().charAt(0) == Enums.CVC;
+        return index > 0;
+//        return value != null
+//                && type == DataType.STRING
+//                && !value.toString().isEmpty()
+//                && value.toString().charAt(0) == Enums.CVC;
     }
 
     public String toString() {
@@ -231,6 +237,8 @@ public class Term implements Comparable {
                 new ObjectOutputStream(dos).writeObject(value);
                 break;
         }
+        dos.writeUTF(name);
+        dos.writeInt(index);
     }
 
     @Override
@@ -255,6 +263,14 @@ public class Term implements Comparable {
         this.name = name;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
     @Override
     public int compareTo(Object x) {
         if (x == null || value == null || !(x instanceof Term) || type != ((Term) x).getType()) {
@@ -265,4 +281,5 @@ public class Term implements Comparable {
         }
 
     }
+
 }

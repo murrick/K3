@@ -4,11 +4,9 @@ import kanger.Mind;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.stores.SolutionsStore;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class Solution {
     private Predicate predicate = null;
@@ -27,7 +25,7 @@ public class Solution {
 
 //        right = d.getRight();
 //        for(Domain x : d.getCauses()) {
-//            Solution s = mind.getSolutions().add(d);
+//            Solution s = mind.getSolutions().createTVar(d);
 //        }
     }
 
@@ -79,14 +77,14 @@ public class Solution {
 //            s += ")";
 //        } else if (op.getRange() == 1) {
 //            if (op.isPost()) {
-//                s += parameters.get(0).toString() + op.getName();
+//                s += parameters.createCVar(0).toString() + op.getName();
 //            } else {
-//                s += op.getName() + parameters.get(0).toString();
+//                s += op.getName() + parameters.createCVar(0).toString();
 //            }
 //        } else {
 //            try {
 //                for (int i = 0; i < op.getRange(); ++i) {
-//                    s += parameters.get(i);
+//                    s += parameters.createCVar(i);
 //                    if (i + 1 < op.getRange()) {
 //                        s += " " + op.getName() + " ";
 //                    }

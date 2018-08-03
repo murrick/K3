@@ -79,7 +79,7 @@ public class LibraryStore {
 //        stores.root = root;
 //        stores.save = root;
 //        for(String key : index.keySet()) {
-//            stores.index.put(key, index.get(key));
+//            stores.index.put(key, index.createCVar(key));
 //        }
 //        return stores;
 //    }
@@ -87,7 +87,7 @@ public class LibraryStore {
 //    public void commit() {
 //        LibraryStore parent = mind.getParent().getLibrary();
 //        for(SysOp op = root; op != null && op != save; op = op.getNext()) {
-//            parent.add(op);
+//            parent.createTVar(op);
 //        }
 //    }
 

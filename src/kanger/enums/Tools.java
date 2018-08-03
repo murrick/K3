@@ -3,8 +3,6 @@ package kanger.enums;
 import kanger.compiler.Parser;
 import kanger.exception.ParseErrorException;
 import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Function;
 import kanger.primitives.TVariable;
 
 import java.text.ParseException;
@@ -257,7 +255,7 @@ public abstract class Tools {
 //        List<Function> list = new ArrayList<>();
 //        for (Argument a : arg) {
 //            if (a.isFSet() && !list.contains(a.getF())) {
-//                list.add(a.getF());
+//                list.createTVar(a.getF());
 //            }
 //        }
 //        return list;

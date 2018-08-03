@@ -7,6 +7,7 @@ import kanger.interfaces.IFactory;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Created by murray on 02.12.16.
@@ -161,10 +162,14 @@ public class Factory implements IFactory {
         int count = dis.readInt();
         while (count-- > 0) {
             try {
-                EntryX e = (EntryX) baseClass.newInstance();
+                EntryX e = (EntryX) baseClass.getDeclaredConstructor().newInstance();
                 e.readCompiledData(dis);
             } catch (InstantiationException | IllegalAccessException e1) {
                 e1.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
             }
 
         }

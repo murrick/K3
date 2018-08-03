@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by murray on 13.12.16.
@@ -15,8 +16,8 @@ public class TValue {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Domain srcSolve = null;
-    private Domain dstSolve = null;
+    private Set<Long> srcSolve = new HashSet<>();
+    private Set<Long> dstSolve = new HashSet<>();
 
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
@@ -40,11 +41,11 @@ public class TValue {
         value = mind.getTerms().get(dis.readLong());
         long sid = dis.readLong();
         if (sid != -1) {
-            srcSolve = mind.getDomains().get(sid);
+//            srcSolve = mind.getDomains().get(sid);
         }
         sid = dis.readLong();
         if (sid != -1) {
-            dstSolve = mind.getDomains().get(sid);
+//            dstSolve = mind.getDomains().get(sid);
         }
         this.mind = mind;
     }
@@ -57,20 +58,20 @@ public class TValue {
         this.value = value;
     }
 
-    public Domain getSrcSolve() {
+    public Set<Long> getSrcSolve() {
         return srcSolve;
     }
 
-    public void setSrcSolve(Domain srcSolve) {
-        this.srcSolve = srcSolve;
+    public void addSrcSolve(Domain srcSolve) {
+        this.srcSolve.add(srcSolve.getId());
     }
 
-    public Domain getDstSolve() {
+    public Set<Long> getDstSolve() {
         return dstSolve;
     }
 
-    public void setDstSolve(Domain dstSolve) {
-        this.dstSolve = dstSolve;
+    public void addDstSolve(Domain dstSolve) {
+        this.dstSolve.add(dstSolve.getId());
     }
 
     public Right getRight() {
@@ -109,8 +110,8 @@ public class TValue {
         dos.writeLong(id);
         dos.writeLong(tVar.getId());
         dos.writeLong(value == null ? -1 : value.getId());
-        dos.writeLong(srcSolve == null ? -1 : srcSolve.getId());
-        dos.writeLong(dstSolve == null ? -1 : dstSolve.getId());
+//        dos.writeLong(srcSolve == null ? -1 : srcSolve.getId());
+//        dos.writeLong(dstSolve == null ? -1 : dstSolve.getId());
     }
 
     @Override
