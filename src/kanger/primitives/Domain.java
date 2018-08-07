@@ -10,9 +10,7 @@ import kanger.exception.RuntimeErrorException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -21,12 +19,12 @@ import java.util.List;
  */
 public class Domain {
 
-    private Predicate predicate = null;                             // Ссылка на описатель предиката
-    private List<Argument> arguments = new ArrayList<>();           // Массив подстановочных переменных
-    private boolean antc = true;                            // ! или ?
-    private Right right;                                    // Ссылка на правило
-    private long id = -1;                                   // id домена
-    private Domain next = null;                             // Следующий элемент
+    private Predicate predicate = null;                         // Ссылка на описатель предиката
+    private List<Argument> arguments = new ArrayList<>();       // Массив подстановочных переменных
+    private boolean antc = true;                                // ! или ?
+    private Right right;                                        // Ссылка на правило
+    private long id = -1;                                       // id домена
+    private Domain next = null;                                 // Следующий элемент
 
     private Mind mind = null;
 
@@ -420,6 +418,27 @@ public class Domain {
         return false;
     }
 
+    public int getVarOrder(int pos) {
+        List<Integer> list = new ArrayList<>();
+        SortedMap<Integer, Integer> sort = new TreeMap<>();
+        for (int i = 0; i < arguments.size(); ++i) {
+            int ix = 0;
+            if (arguments.get(i).isTSet()) {
+                ix = arguments.get(i).getT().getIndex();
+            } else if (arguments.get(i).isCVar()) {
+                ix = arguments.get(i).getValue().getIndex();
+            }
+            list.add(ix);
+            sort.put(ix, ix);
+        }
+        int i = sort.firstKey() == 0 ? 0 : 1;
+        for (Integer e : sort.keySet()) {
+            sort.put(e, i++);
+        }
+        return sort.get(list.get(pos));
+    }
+}
+
 //    public void setQuery() {
 //        if (!right.isQuery()) {
 //            for (TVariable t : getTVariables(true)) {
@@ -430,4 +449,4 @@ public class Domain {
 //            }
 //        }
 //    }
-}
+

@@ -18,7 +18,8 @@ public class Argument {
 //    TVariable t = null;                                 // с-переменная
 //    Function f = null;                                  // либо функция
 
-    Object o = null;
+    private Object o = null;
+    private int order = 0;
 
     public Argument() {
     }
@@ -190,5 +191,13 @@ public class Argument {
 
 	public boolean isCVar() {
         return !isEmpty() && getValue().isCVar();
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 }

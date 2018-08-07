@@ -70,7 +70,7 @@ public class Compiler {
 
             case Enums.AQN:
             case Enums.PQN: {
-                compileQuantor(root, antc, replacements);
+                antc = compileQuantor(root, antc, replacements);
                 construct(r, t, root.getRight(), antc, replacements, list);
             }
             break;
@@ -150,19 +150,22 @@ public class Compiler {
         clones.addAll(list);
     }
 
-    private void compileQuantor(PTree root, boolean antc, Map<String, Argument> replacements) throws ParseErrorException {
-        if (replacements.containsKey(root.getLeft().getName())) {
+    private boolean compileQuantor(PTree root, boolean antc, Map<String, Argument> replacements) throws ParseErrorException {
+        String varName = root.getLeft().getName();
+
+        if (replacements.containsKey(varName)) {
             throw new ParseErrorException(root.getPos(), ParseError.AVAR);
         }
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
             p = new Argument(mind.getTVars().createTVar());
-            p.getT().setName(root.getLeft().getName());
+            p.getT().setName(varName);
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
-            p = new Argument(mind.getTerms().createCVar(root.getLeft().getName()));
+            p = new Argument(mind.getTerms().createCVar(varName));
         }
-        replacements.put(root.getLeft().getName(), p);
+        replacements.put(varName, p);
+        return antc;
     }
 
     private Tree compilePredicate(Tree t, PTree root, boolean antc, Map<String, Argument> replacements) {

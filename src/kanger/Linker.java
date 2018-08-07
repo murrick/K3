@@ -101,12 +101,12 @@ public class Linker {
         if (level >= master.getPredicate().getRange()) {
 
             if (logging && (occurrsMaster || occurrsSlave)) {
-                if (occurrsMaster) {
+//                if (occurrsMaster) {
                     logComparsion(master);
-                }
-                if (occurrsSlave) {
+//                }
+//                if (occurrsSlave) {
                     logComparsion(slave);
-                }
+//                }
                 mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
             return occurrsMaster || occurrsSlave;
@@ -117,19 +117,20 @@ public class Linker {
             //ПОДСТАНОВКИ T-переменных
             for (int i = 0; i <= level; ++i) {
 
-                if (master.get(level).isTSet()
+                if (master.get(i).isTSet()
 //                        && !master.createCVar(level).getT().isSubstituted()
 //                        && !master.createCVar(level).isDefined()
-                        && !slave.get(level).isEmpty()
+                        && !slave.get(i).isEmpty()
 //                        && master.get(level).isEmpty()
-                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
+                        && master.getVarOrder(i) >= slave.getVarOrder(i)
+//                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
 //                        && (!master.isDest() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
 //                        && !master.get(level).getT().contains(slave.get(level).getValue())
                 ) {
                     try {
                         //TValue s = master.get(level).getT().find(slave.get(level).getValue());
 //                        if (s == null) {
-                        TValue s = master.get(level).getT().setValue(slave.get(level).getValue());
+                        TValue s = master.get(i).getT().setValue(slave.get(i).getValue());
 //                        }
 //                        mind.getUsed().createTVar(master.createCVar(level).getT());
                         s.addDstSolve(master);
@@ -145,17 +146,18 @@ public class Linker {
                     }
                 }
 
-                if (slave.get(level).isTSet()
+                if (slave.get(i).isTSet()
 //                        && !slave.createCVar(level).getT().isSubstituted()
 //                        && !slave.createCVar(level).isDefined()
-                        && !master.get(level).isEmpty()
+                        && !master.get(i).isEmpty()
 //                        && slave.get(level).isEmpty()
-                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
+                        && slave.getVarOrder(i) >= master.getVarOrder(i)
+//                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
 //                        && (!slave.isDest() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
 //                        && !slave.get(level).getT().contains(master.get(level).getValue())
                 ) {
                     try {
-                        TValue s = slave.get(level).getT().setValue(master.get(level).getValue());
+                        TValue s = slave.get(i).getT().setValue(master.get(i).getValue());
 //                        mind.getUsed().createTVar(slave.createCVar(level).getT());
                         s.addSrcSolve(master);
                         s.addDstSolve(slave);
@@ -531,8 +533,8 @@ public class Linker {
         if (d.isDest()) {
             for (TVariable t : d.getTVariables(true)) {
                 if (!t.isEmpty()) {
-                    for (long id : t.getDstSolve()) {
-                        Domain x = mind.getDomains().get(id);
+                    for (Domain x : t.getDstSolve()) {
+//                        Domain x = mind.getDomains().get(id);
                         if (x.getPredicate().getId() == d.getPredicate().getId()) {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {

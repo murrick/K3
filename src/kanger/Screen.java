@@ -6,6 +6,7 @@ import kanger.compiler.SysOp;
 import kanger.enums.Enums;
 import kanger.enums.LibMode;
 import kanger.enums.LogMode;
+import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
@@ -196,9 +197,14 @@ public class Screen {
                                 // Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                                 // clipboard.setContents(selec, selec);
                             }
-                            for (String ln : line.split(";")) {
 
-                                Boolean res = mind.getAnalyser().query(line, false);
+                            int pos = 0;
+                            Object[] t = null;
+                            while ((t = Tools.extractLine(line, pos)) != null) {
+                                pos = (int) t[1];
+                                String ln = (String) t[0];
+
+                                Boolean res = mind.getAnalyser().query(ln, false);
                                 if (res != null) {
                                     showLog(mind, LogMode.SOLVES);
                                     showLog(mind, LogMode.VALUES);

@@ -84,6 +84,9 @@ public class ParseErrorException extends Exception {
             case RANGE:
                 exceptionMessage += "Unexpected parametes count";
                 break;
+            case COMMENT:
+                exceptionMessage += "Unclosed comments";
+                break;
             default:
                 exceptionMessage += "Unknown error";
         }

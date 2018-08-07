@@ -17,20 +17,62 @@ public class Parser {
     private static final int DIR_LEFT = 0;
     private static final int DIR_RIGHT = 1;
     private static final Operation[] ops = {
-            /*  1 */new Operation("++", "_inc", 1, 1, 1, false, false), new Operation("--", "_dec", 1, 1, 1, false, false), new Operation("-", "_neg", 1, 1, 1, false, false), new Operation("+", "_val", 1, 1, 1, false, false), new Operation("~~", "_bitnot", 1, 1, 1, false, false),
-            /*  2 */ new Operation("*", "_mul", 2, 2, 0, false, false), new Operation("/", "_div", 2, 2, 0, false, false), new Operation("%", "_rem", 2, 2, 0, false, false),
-            /*  3 */ new Operation("+", "_add", 3, 2, 0, false, false), new Operation("-", "_sub", 3, 2, 0, false, false),
-            /*  3 */ new Operation("<<", "_bitleft", 3, 2, 0, false, false), new Operation(">>", "_bitright", 3, 2, 0, false, false), new Operation("&", "_bitand", 3, 2, 0, false, false),
-            /*  3 */ new Operation("^", "_bitxor", 3, 2, 0, false, false), new Operation("|", "_bitor", 3, 2, 0, false, false),
-            /*  6 */ new Operation(",", "", 6, 2, 0, false, false),
-            /* 10 */ new Operation("~", "", 1, 1, 1, false, false),
-            /* 11 */ new Operation("<", "_lr", 11, 2, 0, false, false), new Operation("<=", "_le", 11, 2, 0, false, false), new Operation(">", "_gr", 11, 2, 0, false, false), new Operation(">=", "_ge", 11, 2, 0, false, false),
-            /* 12 */ new Operation("==", "_eq", 12, 2, 0, false, false), new Operation("=", "_eq", 12, 2, 0, false, false), new Operation("!=", "_ne", 12, 2, 0, false, false), new Operation("<>", "_ne", 12, 2, 0, false, false),
-            /* 13 */ new Operation("&&", "&", 13, 2, 0, false, true),
-            /* 14 */ new Operation("||", "|", 14, 2, 0, false, true),
-            /* 15 */ new Operation("->", "}", 15, 2, 0, false, true),
-            /* 16 */ new Operation("@", "", 16, 1, 1, true, false), new Operation("$", "", 16, 1, 1, true, false),
-            new Operation("", "", 0, 0, 0, false, false),};
+
+            /*  1 */
+            new Operation("++", "_inc", 1, 1, 1, false, false),
+            new Operation("--", "_dec", 1, 1, 1, false, false),
+            new Operation("-", "_neg", 1, 1, 1, false, false),
+            new Operation("+", "_val", 1, 1, 1, false, false),
+            new Operation("~~", "_bitnot", 1, 1, 1, false, false),
+
+            /*  2 */
+            new Operation("*", "_mul", 2, 2, 0, false, false),
+            new Operation("/", "_div", 2, 2, 0, false, false),
+            new Operation("%", "_rem", 2, 2, 0, false, false),
+
+            /*  3 */
+            new Operation("+", "_add", 3, 2, 0, false, false),
+            new Operation("-", "_sub", 3, 2, 0, false, false),
+            new Operation("<<", "_bitleft", 3, 2, 0, false, false),
+            new Operation(">>", "_bitright", 3, 2, 0, false, false),
+            new Operation("&", "_bitand", 3, 2, 0, false, false),
+            new Operation("^", "_bitxor", 3, 2, 0, false, false),
+            new Operation("|", "_bitor", 3, 2, 0, false, false),
+
+            /*  10 */
+
+            /* 11 */
+            new Operation("~", "", 1, 1, 1, false, false),
+
+            /* 12 */
+            new Operation("<=", "_le", 12, 2, 0, false, false),
+            new Operation("<", "_lr", 12, 2, 0, false, false),
+            new Operation(">=", "_ge", 12, 2, 0, false, false),
+            new Operation(">", "_gr", 12, 2, 0, false, false),
+
+            /* 13 */
+            new Operation("==", "_eq", 13, 2, 0, false, false),
+            new Operation("=", "_eq", 13, 2, 0, false, false),
+            new Operation("!=", "_ne", 13, 2, 0, false, false),
+            new Operation("<>", "_ne", 13, 2, 0, false, false),
+
+            /* 14 */
+            new Operation("&&", "&", 14, 2, 0, false, true),
+            new Operation(",", "&", 14, 2, 0, false, false),
+
+            /* 15 */
+            new Operation("||", "|", 15, 2, 0, false, true),
+
+            /* 16 */
+            new Operation("->", "}", 16, 2, 0, false, true),
+
+            /* 17 */
+            new Operation("@", "", 17, 1, 1, true, false),
+            new Operation("$", "", 17, 1, 1, true, false)
+
+            /* 0 */
+//            new Operation("", "", 0, 0, 0, false, false)
+    };
 
     public static boolean isDelimiter(int ch) {
         return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
@@ -48,29 +90,39 @@ public class Parser {
         int ch, c, i;
         String line = "";
 
-        if (ln.isEmpty() || ln.charAt(0) == 0) {
+        if (ln.isEmpty()) {
             return null;
         }
-        ch = ln.charAt(pos);
-        while (pos < ln.length() && isDelimiter(ch = ln.charAt(pos++))) ;
-        if (pos >= ln.length()) {
-            return null;
-        }
-        c = ln.charAt(pos++);
+        while (true) {
+            ch = ln.charAt(pos);
+            while (pos < ln.length() && isDelimiter(ch = ln.charAt(pos++))) ;
+            if (pos >= ln.length()) {
+                return null;
+            }
+            c = ln.charAt(pos++);
 
-        /*
-         * Skip comments
-         */
- /*
-         if(ch == '/' && c=='*'){
-         do{
-         while((ch=*_cs++) && ch != '*');
-         if(ch == '*' && (ch=*_cs++) == '/') break;
-         }
-         while(ch);
-         if(ch) goto again;
-         }
-         */
+            /*
+             * Skip comments
+             */
+
+            if (ch == '/' && c == '*') {
+                do {
+                    while (pos < ln.length() && ln.charAt(pos++) != '*') ;
+                    if (pos < ln.length()) {
+                        c = ln.charAt(pos++);
+                    } else {
+                        throw new ParseErrorException(pos, ParseError.COMMENT);
+                    }
+                } while (c != '/');
+            } else if (ch == '/' && c == '/') {
+                while (pos < ln.length() && ln.charAt(pos) != '\n' && ln.charAt(pos) != '\r') ++pos;
+                if (pos >= ln.length()) {
+                    return null;
+                }
+            } else {
+                break;
+            }
+        }
 
         /*
          * Accept string and character expressions
@@ -109,23 +161,23 @@ public class Parser {
             line += (char) ch;
 
             /* double character operators */
-            for (i = 0; ops[i].getName().length() > 0; ++i) {
+            for (i = 0; i < ops.length; ++i) {
                 if (ops[i].getName().length() > 1 && ops[i].getName().charAt(0) == ch && ops[i].getName().charAt(1) == c) {
                     line += (char) c;
                     break;
                 }
             }
-            if (ops[i].getName().length() == 0) {
+            if (i == ops.length) {
 
                 /* single character operations */
-                for (i = 0; ops[i].getName().length() > 0; ++i) {
+                for (i = 0; i < ops.length; ++i) {
                     if (ops[i].getName().charAt(0) == ch) {
                         --pos;
                         break;
                     }
                 }
 
-                if (ops[i].getName().length() == 0) {
+                if (i == ops.length) {
 
                     --pos;
                     if (isAlpha(ch)) {
@@ -166,14 +218,13 @@ public class Parser {
      * marked as FUNCTION.
      * --------------------------------------------------------
      */
-    private static PTree parse(String ln, int pos, int mode) throws ParseErrorException {
+    private static PTree parse(String ln, int pos /*, int mode*/) throws ParseErrorException {
         String line = "";
-        PTree p, q, r, root, wasq;
+        PTree p, q, r, root, wasq, wasn;
         int i, term;
-        WasWhat was = WasWhat.NOTHING;
 
         term = 0;
-        root = wasq = null;
+        root = wasq = wasn = null;
         do {
             Object[] t = getToken(ln, pos);
             if (t == null) {
@@ -209,7 +260,7 @@ public class Parser {
             p = new PTree();
             p.setNext(DIR_LEFT);
 
-            for (i = 0; ops[i].getName().length() > 0; ++i) {
+            for (i = 0; i < ops.length; ++i) {
                 if (line.equals(ops[i].getName())) {
 
                     if (term == 0 && ops[i].getRange() != 1) {
@@ -228,7 +279,7 @@ public class Parser {
                     /* WAS QUANTOR flag and pointer. Need for correct
                      * definition non-standard quantor syntax
                      */
-                    wasq = ops[i].isPost() ? p : null;
+                    wasq = ops[i].getName().charAt(0) == Enums.PQN || ops[i].getName().charAt(0) == Enums.AQN ? p : null;
 
                     p.setPrior(ops[i].getPrior());
                     p.setNext(ops[i].getRange() > 1 && !ops[i].isPost() ? DIR_RIGHT : DIR_LEFT);
@@ -273,9 +324,6 @@ public class Parser {
                 p.setName(line);
             }
 
-            if (p.getName().charAt(0) == Enums.COMMA && mode == 0) {
-                p.setPrior(17);
-            }
 
 
             /* Check () Calculate
@@ -283,14 +331,18 @@ public class Parser {
              * is just a name, and == 0 if this is
              * databased operation.
              */
+//            if (p.getName().charAt(0) == Enums.COMMA) {
+//                p.setPrior(17);
+//            } else
+
             if (p.getName().charAt(0) == Enums.LB) {
-                if (was == WasWhat.QNT /*|| was == WasWhat.TERM*/) {
-                    throw new ParseErrorException(pos, ParseError.LBRACK);
-                }
+//                if (wasq != null /*was == WasWhat.QNT*/ /*|| was == WasWhat.TERM*/) {
+//                    throw new ParseErrorException(pos, ParseError.LBRACK);
+//                }
                 p.setPrior(0);
 
                 //if(term)
-                p.setRight(parse(ln, pos, term + mode));
+                p.setRight(parse(ln, pos /*, term + mode*/));
                 if (p.getRight() != null) {
                     pos = p.getRight().getPos();
                 } else {
@@ -303,7 +355,6 @@ public class Parser {
                 if (ln.charAt(pos - 1) != Enums.RB) {
                     throw new ParseErrorException(pos, ParseError.BRACKET);
                 }
-                was = WasWhat.TERM;
 
                 /* Set predicate or function for undefined */
 //                if (term != 0) {
@@ -315,6 +366,14 @@ public class Parser {
                     term = 1;
                 }
 
+            } else if (p.getName().charAt(0) == Enums.NOT) {
+                Object[] nextToken = getToken(ln, pos);
+                if (nextToken != null) {
+                    String nextLine = (String) nextToken[0];
+                    if (!nextLine.isEmpty() && (nextLine.charAt(0) == Enums.PQN || nextLine.charAt(0) == Enums.AQN)) {
+                        p.setPrior(17);
+                    }
+                }
             } else {
                 term = p.getPrior() == 0 ? 1 : 0;
             }
@@ -328,6 +387,7 @@ public class Parser {
              * skips all node with same priority value.
              * Inserting node after node which found.
              */
+
             if (root != null) {
 
                 /* Find point for insertion.
@@ -348,10 +408,16 @@ public class Parser {
                 /* Insert new node
                  */
                 if (q == root) {
-                    p.setLeft(root);
+                    if (wasq == null) {
+//                    if (p.getNext() == DIR_LEFT) {
+                        p.setLeft(root);
+                    } else {
+                        p.setRight(root);
+                    }
                     root = p;
                 } else {
                     if (wasq == null) {
+//                    if (p.getNext() == DIR_LEFT) {
                         p.setLeft(q);
                     } else {
                         p.setRight(q);
@@ -362,6 +428,17 @@ public class Parser {
                         r.setRight(p);
                     }
                 }
+
+                /* Correction for quantor expression. Just up one level
+                 * and switch direction
+                 */
+                if (term != 0 && wasq != null) {
+                    p = wasq;
+                    p.setNext(DIR_RIGHT);
+                    wasq = null;
+                    term = 0;
+                }
+
 
                 // Обработка интервалов
                 if (Enums.INTERVALS.containsKey(p.getName().toLowerCase())
@@ -376,15 +453,6 @@ public class Parser {
                     p.setLeft(null);
                 }
 
-                /* Correction for quantor expression. Just up one level
-                 * and switch direction
-                 */
-                if (term != 0 && wasq != null) {
-                    p = wasq;
-                    p.setNext(DIR_RIGHT);
-                    wasq = null;
-                    term = 0;
-                }
 
 
                 /* If node is first in tree -
@@ -393,6 +461,9 @@ public class Parser {
             } else {
                 root = p;
             }
+
+//            wasn = ops[i].getName().charAt(0) == Enums.NOT ? p : null;
+
 
         } while (pos < ln.length());
         return root;
@@ -462,7 +533,7 @@ public class Parser {
     public static PTree parser(String ln) throws ParseErrorException {
         char lastch;
 
-        return squeze(parse(ln, 0, 0));
+        return squeze(parse(ln, 0 /*, 0*/));
 //        return parse(ln, 0, 0);
     }
 
@@ -543,6 +614,8 @@ public class Parser {
 //        String line = ((char)antc) + recursePtree(p, 0) + ";";
 //        return line;
 //    }
+
+
     public static Operation getOp(String o) {
         for (Operation op : ops) {
             if (op.getSubst().equals(o)) {
@@ -557,10 +630,6 @@ public class Parser {
             ++pos;
         }
         return pos;
-    }
-
-    private enum WasWhat {
-        NOTHING, QNT, TERM, INFIX, NOT, VAR, COMMA
     }
 
 }

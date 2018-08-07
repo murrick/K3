@@ -21,7 +21,7 @@ public class TVariable {
     private TVariable next = null;          // Следующая переменная
 
     private String name = "";               // Оригинальное подкванторное имя
-    private int index = 0;
+    private int index = 0;                  // Сквохзной индекс переменной
 
     private Mind mind = null;
 
@@ -148,7 +148,7 @@ public class TVariable {
         this.next = next;
     }
 
-    public Set<Long> getSrcSolve() {
+    public Set<Domain> getSrcSolve() {
         if (mind.getTValues().get(this) != null) {
             return mind.getTValues().get(this).getSrcSolve();
         } else {
@@ -172,7 +172,7 @@ public class TVariable {
 //        }
 //    }
 //
-    public Set<Long> getDstSolve() {
+    public Set<Domain> getDstSolve() {
         if (mind.getTValues().get(this) != null) {
             return mind.getTValues().get(this).getDstSolve();
         } else {

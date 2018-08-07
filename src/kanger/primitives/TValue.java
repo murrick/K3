@@ -16,8 +16,8 @@ public class TValue {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Set<Long> srcSolve = new HashSet<>();
-    private Set<Long> dstSolve = new HashSet<>();
+    private Set<Domain> srcSolve = new HashSet<>();
+    private Set<Domain> dstSolve = new HashSet<>();
 
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
@@ -58,20 +58,20 @@ public class TValue {
         this.value = value;
     }
 
-    public Set<Long> getSrcSolve() {
+    public Set<Domain> getSrcSolve() {
         return srcSolve;
     }
 
     public void addSrcSolve(Domain srcSolve) {
-        this.srcSolve.add(srcSolve.getId());
+        this.srcSolve.add(srcSolve);
     }
 
-    public Set<Long> getDstSolve() {
+    public Set<Domain> getDstSolve() {
         return dstSolve;
     }
 
     public void addDstSolve(Domain dstSolve) {
-        this.dstSolve.add(dstSolve.getId());
+        this.dstSolve.add(dstSolve);
     }
 
     public Right getRight() {
