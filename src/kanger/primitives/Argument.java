@@ -19,7 +19,6 @@ public class Argument {
 //    Function f = null;                                  // либо функция
 
     private Object o = null;
-    private int order = 0;
 
     public Argument() {
     }
@@ -193,11 +192,4 @@ public class Argument {
         return !isEmpty() && getValue().isCVar();
     }
 
-    public int getOrder() {
-        return order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
-    }
 }

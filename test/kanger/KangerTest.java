@@ -6,7 +6,7 @@ import kanger.primitives.Hypotese;
 import kanger.primitives.Solution;
 import kanger.primitives.TMeaning;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 public class KangerTest {
 
@@ -48,12 +48,14 @@ public class KangerTest {
     @org.junit.Test
     public void main() throws ParseErrorException, RuntimeErrorException {
 
-        mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); "
-                + "!a(mmm); "
-                + "!a(nnn); "
-                + "!b(ooo); "
-                + "!d(v); "
-                + "!@x a(x) -> ~n(x); ");
+        mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
+                "!a(mmm); " +
+                "!a(nnn); " +
+                "!b(ooo); " +
+                "!d(v); " +
+                "!@x a(x) -> ~n(x); " +
+                ""
+        );
 
 
         mind.query("?a(nnn);");

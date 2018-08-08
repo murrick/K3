@@ -101,12 +101,12 @@ public class Linker {
         if (level >= master.getPredicate().getRange()) {
 
             if (logging && (occurrsMaster || occurrsSlave)) {
-//                if (occurrsMaster) {
+                if (occurrsMaster) {
                     logComparsion(master);
-//                }
-//                if (occurrsSlave) {
+                }
+                if (occurrsSlave) {
                     logComparsion(slave);
-//                }
+                }
                 mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
             return occurrsMaster || occurrsSlave;
@@ -114,6 +114,18 @@ public class Linker {
         } else {
 
             boolean isQuery = mind.getQuery() != null;
+
+            //TODO: Запрос ?a(xx);
+            if (master.get(level).isEmpty() || slave.get(level).isEmpty()) {
+//                if ("xx".equals(master.get(level).getValue() + "") || "xx".equals(slave.get(level).getValue() + "")) {
+                System.out.println("------" + master.toString() + "\t" + slave.toString());
+//                }
+            }
+
+            if ("xx".equals(master.get(level).getValue() + "") || "xx".equals(slave.get(level).getValue() + "")) {
+                System.out.println("........" + master.toString() + "\t" + slave.toString());
+            }
+
             //ПОДСТАНОВКИ T-переменных
             for (int i = 0; i <= level; ++i) {
 
@@ -121,10 +133,11 @@ public class Linker {
 //                        && !master.createCVar(level).getT().isSubstituted()
 //                        && !master.createCVar(level).isDefined()
                         && !slave.get(i).isEmpty()
-//                        && master.get(level).isEmpty()
+                        && !slave.isDestFor(i, master)
+                        && master.get(i).getT().isEmpty()
                         && master.getVarOrder(i) >= slave.getVarOrder(i)
 //                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
-//                        && (!master.isDest() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
+//                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
 //                        && !master.get(level).getT().contains(slave.get(level).getValue())
                 ) {
                     try {
@@ -133,8 +146,7 @@ public class Linker {
                         TValue s = master.get(i).getT().setValue(slave.get(i).getValue());
 //                        }
 //                        mind.getUsed().createTVar(master.createCVar(level).getT());
-                        s.addDstSolve(master);
-                        s.addSrcSolve(slave);
+                        s.addSolve(i, slave, master);
                         if (slave.isQuery() || master.isQuery()) {
                             s.setQuery();
                         }
@@ -150,17 +162,17 @@ public class Linker {
 //                        && !slave.createCVar(level).getT().isSubstituted()
 //                        && !slave.createCVar(level).isDefined()
                         && !master.get(i).isEmpty()
-//                        && slave.get(level).isEmpty()
+                        && !master.isDestFor(i, slave)
+                        && slave.get(i).getT().isEmpty()
                         && slave.getVarOrder(i) >= master.getVarOrder(i)
 //                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
-//                        && (!slave.isDest() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
+//                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
 //                        && !slave.get(level).getT().contains(master.get(level).getValue())
                 ) {
                     try {
                         TValue s = slave.get(i).getT().setValue(master.get(i).getValue());
 //                        mind.getUsed().createTVar(slave.createCVar(level).getT());
-                        s.addSrcSolve(master);
-                        s.addDstSolve(slave);
+                        s.addSolve(i, master, slave);
                         if (master.isQuery() || slave.isQuery()) {
                             s.setQuery();
                         }
@@ -191,6 +203,15 @@ public class Linker {
                     mind.getClosedValues().clear();
                     mind.getBlockedValues().clear();
 
+                    Set<Domain> sequence = new HashSet<>();
+                    sequence.addAll(master.getSequence());
+                    sequence.addAll(slave.getSequence());
+
+//                    System.out.println();
+//                    for (Domain d : sequence) {
+//                        System.out.println(d);
+//                    }
+
                     for (Domain d1 : master.getSequence()) {
                         for (Domain d2 : slave.getSequence()) {
                             if (d1.getId() != d2.getId()
@@ -203,9 +224,6 @@ public class Linker {
                         }
                     }
 
-                    Set<Domain> sequence = new HashSet<>();
-                    sequence.addAll(master.getSequence());
-                    sequence.addAll(slave.getSequence());
                     for (Domain d : sequence) {
                         if (d.isSystem()) {
                             int res = d.execSystem();
@@ -248,12 +266,19 @@ public class Linker {
             TValue v = t.rewind();
             if (v != null) {
                 mind.getSubstituted().add(t);
+
                 do {
                     mind.getTValues().set(t, v);
                     if (!updateDomains(tvars, tIndex + 1, set, logging)) {
                         result = false;
                     }
                 } while ((v = t.next(v)) != null);
+
+                mind.getTValues().set(t, null);
+                if (!updateDomains(tvars, tIndex + 1, set, logging)) {
+                    result = false;
+                }
+
                 mind.getSubstituted().remove(t);
             } else {
                 if (!updateDomains(tvars, tIndex + 1, set, logging)) {
@@ -530,28 +555,30 @@ public class Linker {
     }
 
     private boolean logComparsion(Domain d) {
-        if (d.isDest()) {
+        if (d.isDestFor()) {
             for (TVariable t : d.getTVariables(true)) {
                 if (!t.isEmpty()) {
-                    for (Domain x : t.getDstSolve()) {
-//                        Domain x = mind.getDomains().get(id);
-                        if (x.getPredicate().getId() == d.getPredicate().getId()) {
+                    for (int i = 0; i < t.getDstSolves().size(); ++i) {
+                        Domain dst = t.getDstSolves().get(i);
+                        Domain src = t.getSrcSolves().get(i);
+
+                        if (dst.getPredicate().getId() == d.getPredicate().getId()) {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
-                                if (d.getId() != r.getId()) {
+                                if (dst.getId() != r.getId()) {
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
                                     found = true;
                                 }
                             }
                             if (!found) {
-                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + t.getSrcSolve());
+                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + src);
 //                        if (d.getRight().isQuery()) {
 //                            a.getT().getDstSolve().setAcceptor(false);
 //                        }
                             }
                             mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
-                            mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + d.toString());
-                            mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + t.getSrcSolve());
+                            mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + dst.toString());
+                            mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + src.toString());
                         }
                     }
                 }

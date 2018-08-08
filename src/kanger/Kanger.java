@@ -1,5 +1,8 @@
 package kanger;
 
+import kanger.exception.ParseErrorException;
+import kanger.exception.RuntimeErrorException;
+
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
@@ -145,17 +148,31 @@ public class Kanger {
 //            Logger.getLogger(Kanger.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 
-//        try {
-//            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));\n"
-////                    "!@x ~a(x,x);\n" +
-////                    "!@x $y a(y,x);" +
+        try {
+
+            mind.compile(
+                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
+                            "!a(mmm); " +
+//                    "!a(nnn); " +
+                            "!b(ppp); " +
+//                            "c(ooo); " +
+//                    "!d(v); " +
+                            "!@x a(x) -> ~n(x); " +
+                            ""
+            );
+
+            mind.compile(
+//                    "!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));\n" +
+//                    "!@x ~a(x,x);\n" +
+//                    "!@x $y a(y,x);" +
 ////                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z));"
-//            );
-//        } catch (ParseErrorException e) {
-//            e.printStackTrace();
-//        } catch (RuntimeErrorException e) {
-//            e.printStackTrace();
-//        }
+                    ""
+            );
+        } catch (ParseErrorException e) {
+            e.printStackTrace();
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace();
+        }
 
         Screen.session(mind);
 

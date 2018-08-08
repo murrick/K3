@@ -498,7 +498,7 @@ public class Screen {
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
         if (tIndex >= tvars.size()) {
-//            if (!d.isDest()) {
+//            if (!d.isDestFor()) {
 //                d.recalculate();
             System.out.printf("\t%s\n", d.toString());
             if (showCauses) {
@@ -512,7 +512,7 @@ public class Screen {
                 do {
 //                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
 //                        mind.getSubstituted().createTVar(t);
-                    if (!d.isDest()) {
+                    if (!d.isDestFor()) {
                         mind.getTValues().set(t, v);
                         showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
                     }
@@ -530,7 +530,7 @@ public class Screen {
             System.out.printf("\tHas not solves\n");
         } else {
             for (Domain s : set) {
-//                if (!s.isDest()) {
+//                if (!s.isDestFor()) {
 //                    mind.getSubstituted().clear();
                 showPredRecurse(mind, s.getTVariables(true), 0, s, showCauses);
 //                }

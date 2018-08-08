@@ -8,6 +8,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -148,9 +149,9 @@ public class TVariable {
         this.next = next;
     }
 
-    public Set<Domain> getSrcSolve() {
+    public List<Domain> getSrcSolves() {
         if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this).getSrcSolve();
+            return mind.getTValues().get(this).getSrcSolves();
         } else {
             return null;
         }
@@ -172,13 +173,47 @@ public class TVariable {
 //        }
 //    }
 //
-    public Set<Domain> getDstSolve() {
+    public List<Domain> getDstSolves() {
         if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this).getDstSolve();
+            return mind.getTValues().get(this).getDstSolves();
         } else {
             return null;
         }
     }
+
+    public int getDstIndex(Domain d) {
+        if (mind.getTValues().get(this) != null) {
+            int pos = mind.getTValues().get(this).getDstSolves().indexOf(d);
+            if (pos != -1) {
+                return mind.getTValues().get(this).getPosSolves().get(pos);
+            } else {
+                return -1;
+            }
+        } else {
+            return -1;
+        }
+    }
+
+    public Domain getSrcSolve(int index) {
+        if (mind.getTValues().get(this) != null) {
+            int pos = mind.getTValues().get(this).getPosSolves().indexOf(index);
+            if (pos != -1) {
+                return mind.getTValues().get(this).getSrcSolves().get(pos);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+//    public List<Integer> getPosSolves() {
+//        if (mind.getTValues().get(this) != null) {
+//            return mind.getTValues().get(this).getPosSolves();
+//        } else {
+//            return null;
+//        }
+//    }
 
 //    public void setDstSolve(Domain d) {
 //        if (mind.getTValues().containsKey(this)) {

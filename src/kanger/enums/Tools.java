@@ -221,7 +221,7 @@ public abstract class Tools {
                 while ((t = Parser.getToken(line, pos)) != null && ((String) t[0]).charAt(0) != Enums.EOLN) {
                     pos = (int) t[1];
                 }
-                if (line.length() < pos || line.charAt(pos) != Enums.EOLN) {
+                if (line.length() < pos || (line.length() != 1 && line.charAt(pos) != Enums.EOLN)) {
                     throw new ParseErrorException(pos, ParseError.EOLN);
                 }
                 ++pos;

@@ -113,7 +113,7 @@ public class Domain {
     public List<Domain> getCauses() {
         List<Domain> list = new ArrayList<>();
         for (TVariable t : getTVariables(true)) {
-            if (t.getDstSolve() != null && t.getSrcSolve() != null && t.getDstSolve().contains(id) && t.getSrcSolve().contains(id)) {
+            if (t.getDstSolves() != null && t.getSrcSolves() != null && t.getDstSolves().contains(id) && t.getSrcSolves().contains(id)) {
                 //TODO: Непонятно что тут. Потом
 //                list.add(t.getSrcSolve());
             }
@@ -198,8 +198,8 @@ public class Domain {
 
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix = isDest() || isQuery() || isBlocked() || isClosed()
-                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isBlocked() ? "B" : "") + " "
+            suffix = isDestFor() || isQuery() || isBlocked() || isClosed()
+                    ? " " + (isDestFor() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isBlocked() ? "B" : "") + " "
                     : "";
         }
         return s + ";" + suffix;
@@ -265,9 +265,19 @@ public class Domain {
 //        mind.getSources().createCVar(this).createTVar(d);
 //    }
 
-    public boolean isDest() {
+    public boolean isDestFor(int index, Domain d) {
+        return index < arguments.size()
+                && arguments.get(index).isTSet()
+                && !arguments.get(index).getT().isEmpty()
+                && arguments.get(index).getT().getDstSolves() != null
+                && arguments.get(index).getT().getDstIndex(this) == index
+                && arguments.get(index).getT().getSrcSolve(index).getId() == d.getId();
+
+    }
+
+    public boolean isDestFor() {
         for (TVariable t : getTVariables(false)) {
-            if (!t.isEmpty() && t.getDstSolve() != null && /*contains(t)) {*/ t.getDstSolve().contains(id)) {
+            if (!t.isEmpty() && t.getDstSolves() != null && /*contains(t)) {*/ t.getDstSolves().contains(this)) {
                 return true;
             }
         }
@@ -436,6 +446,11 @@ public class Domain {
             sort.put(e, i++);
         }
         return sort.get(list.get(pos));
+    }
+
+    @Override
+    public boolean equals(Object d) {
+        return d != null && d instanceof Domain && ((Domain) d).id == id;
     }
 }
 

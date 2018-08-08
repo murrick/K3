@@ -5,8 +5,9 @@ import kanger.Mind;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Created by murray on 13.12.16.
@@ -16,8 +17,9 @@ public class TValue {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Set<Domain> srcSolve = new HashSet<>();
-    private Set<Domain> dstSolve = new HashSet<>();
+    private List<Domain> srcSolve = new ArrayList<>();
+    private List<Domain> dstSolve = new ArrayList<>();
+    private List<Integer> posSolve = new ArrayList<>();
 
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
@@ -58,20 +60,33 @@ public class TValue {
         this.value = value;
     }
 
-    public Set<Domain> getSrcSolve() {
+    public List<Domain> getSrcSolves() {
         return srcSolve;
     }
 
-    public void addSrcSolve(Domain srcSolve) {
-        this.srcSolve.add(srcSolve);
+    public void addSolve(int index, Domain src, Domain dst) {
+        boolean found = false;
+        for (int i = 0; i < srcSolve.size(); ++i) {
+            if (srcSolve.get(i).getId() == src.getId()
+                    && dstSolve.get(i).getId() == dst.getId()
+                    && posSolve.get(i) == index) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            this.srcSolve.add(src);
+            this.dstSolve.add(dst);
+            this.posSolve.add(index);
+        }
     }
 
-    public Set<Domain> getDstSolve() {
+    public List<Domain> getDstSolves() {
         return dstSolve;
     }
 
-    public void addDstSolve(Domain dstSolve) {
-        this.dstSolve.add(dstSolve);
+    public List<Integer> getPosSolves() {
+        return posSolve;
     }
 
     public Right getRight() {

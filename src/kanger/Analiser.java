@@ -129,8 +129,8 @@ public class Analiser {
                         && a.getPredicate().getId() == b.getPredicate().getId()
                         && a.isAntc() != b.isAntc()
 //                        && !a.isPairedWith(b)
-//                        && (!a.isDest() || a.getRight().isQuery() /*|| a.isUsed()*/)
-//                        && (!b.isDest() || b.getRight().isQuery() /*|| b.isUsed()*/)
+//                        && (!a.isDestFor() || a.getRight().isQuery() /*|| a.isUsed()*/)
+//                        && (!b.isDestFor() || b.getRight().isQuery() /*|| b.isUsed()*/)
 //                        && a.isQuery() != b.isQuery()
                 ) {
                     boolean equals = true;
@@ -138,8 +138,8 @@ public class Analiser {
                         Argument xa = a.getArguments().get(i);
                         Argument xb = b.getArguments().get(i);
                         if (!xa.isEmpty() && !xb.isEmpty()
-//                                && (!a.isDest() || xa.getValue().getRight().isQuery() /*|| a.isUsed()*/)
-//                                && (!b.isDest() || xb.getValue().getRight().isQuery() /*|| b.isUsed()*/)
+//                                && (!a.isDestFor() || xa.getValue().getRight().isQuery() /*|| a.isUsed()*/)
+//                                && (!b.isDestFor() || xb.getValue().getRight().isQuery() /*|| b.isUsed()*/)
                                 //                                    && !(xa.isTSet() && xb.isTSet() && xa.getT().getId() == xb.getT().getId())
                                 //                                    && (!xa.isDestFor(b) || a.getRight().isQuery() || b.getRight().isQuery())
                                 //                                    && (!xb.isDestFor(a) || b.getRight().isQuery() || a.getRight().isQuery())
@@ -219,10 +219,11 @@ public class Analiser {
         if (result) {
             for (Domain d : sequence) {
 //                d.recalculate();
-//                if (!d.isClosed() && !d.isDest() /*&& !d.isSystem()*/) {
-                if (!d.isClosed() && !d.isDest()) {
+//                if (!d.isClosed() && !d.isDestFor() /*&& !d.isSystem()*/) {
+                //TODO: Вместо isQuery надо какой-то другой критерий в примере с a(nnn)
+                if (!d.isClosed() && !d.isDestFor() /*&& !d.isQuery()*/) {
                     result = false;
-                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
+                    mind.getHypotesisStore().add(!d.isAntc(), d.getPredicate(), d.getArguments());
 
 //                    if (!d.isQueued()) {
 //                    mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
@@ -244,7 +245,7 @@ public class Analiser {
 
 //                for (Domain d : sequence) {
 //
-//                    if (d.isClosed() || d.isDest() || d.isSystem() || d.isQuery()) {
+//                    if (d.isClosed() || d.isDestFor() || d.isSystem() || d.isQuery()) {
 ////                            if (d.getRight().isQuery()) {
 //                        int sz = mind.getSolutions().size();
 //                        mind.getSolutions().createTVar(d);
@@ -281,6 +282,7 @@ public class Analiser {
 
             Set<Function> fs = new HashSet<>();
             Set<Domain> sd = new HashSet<>();
+//            SortedSet<HypotesisStore> hypotesis = new TreeSet<>();
 
             for (Tree t : set) {
                 for (Tree x : set) {
@@ -291,7 +293,6 @@ public class Analiser {
                     }
                 }
             }
-
 
             for (Tree t : set) {
                 for (Domain d : t.getSequence()) {
@@ -375,7 +376,7 @@ public class Analiser {
                 for (TVariable tv : d.getTVariables(true)) {
                     mind.getValues().add(tv, d);
                 }
-            } else if (d.isClosed() /*|| d.isDest()*/) {
+            } else if (d.isClosed() /*|| d.isDestFor()*/) {
                 if (d.isAntc()) {
                     ant.add(d);
                 } else {
@@ -396,7 +397,8 @@ public class Analiser {
 //                    }
                 }
             } else if (hypotesis /*&& !d.getRight().isQuery()*/) {
-                mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
+                //TODO: Отключил для эксперимента
+//                mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
             }
         }
         for (Domain d : suc) {
@@ -419,7 +421,8 @@ public class Analiser {
         if (hypotesis) {
             for (Domain d : suc) {
                 if (!contains(d, ant) /*&& !d.getRight().isQuery()*/) {
-                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
+                    //TODO: Отключил для эксперимента
+//                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
                 }
             }
         }
@@ -831,8 +834,8 @@ public class Analiser {
                         mind.getSolutions().clear();
                         mind.getValues().clear();
                         //TODO: Нужно ли собирать гипотезы для отрицания? Видимо да!
-                        mind.getHypotesisStore().setAntc(false);
-                        //mind.getHypotesisStore().clear();
+//                        mind.getHypotesisStore().setAntc(false);
+//                        mind.getHypotesisStore().clear();
 
                         mind.mark();
 

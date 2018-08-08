@@ -1,6 +1,8 @@
 package kanger.stores;
 
-import kanger.primitives.*;
+import kanger.primitives.Argument;
+import kanger.primitives.Hypotese;
+import kanger.primitives.Predicate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +10,7 @@ import java.util.List;
 /**
  * Created by murray on 28.05.15.
  */
-public class HypotesisStore {
+public class HypotesisStore implements Comparable<HypotesisStore> {
 
     private List<Hypotese> root = null;
     private boolean enableStore = true;
@@ -20,7 +22,7 @@ public class HypotesisStore {
         if (root == null) {
             root = new ArrayList<>();
         }
-        Hypotese h = find(pred, arg);
+        Hypotese h = find(antc, pred, arg);
         if (h != null) {
             return h;
         } else {
@@ -28,6 +30,23 @@ public class HypotesisStore {
             root.add(h);
             return h;
         }
+
+    }
+
+    public Hypotese add(Hypotese hypotese) {
+        if (!enableStore) {
+            return null;
+        }
+        if (root == null) {
+            root = new ArrayList<>();
+        }
+        Hypotese h = find(hypotese);
+        if (h == null) {
+            h = hypotese;
+            root.add(h);
+            return h;
+        }
+        return h;
 
     }
 
@@ -44,9 +63,9 @@ public class HypotesisStore {
     }
 
 
-    public Hypotese find(Predicate pred, List<Argument> arg) {
+    public Hypotese find(boolean antc, Predicate pred, List<Argument> arg) {
         for (Hypotese h : root) {
-            if (h.getPredicate().equals(pred)) {
+            if (h.getPredicate().equals(pred) && h.isAntc() == antc) {
 
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
@@ -63,6 +82,27 @@ public class HypotesisStore {
         }
         return null;
     }
+
+    public Hypotese find(Hypotese hy) {
+        for (Hypotese h : root) {
+            if (h.getPredicate().equals(hy.getPredicate())) {
+
+                int i = 0;
+                if (hy.getSolve().size() == h.getSolve().size()) {
+                    for (; i < h.getSolve().size(); ++i) {
+                        if (h.getSolve().get(i) != null && hy.getSolve().get(i) != null && !h.getSolve().get(i).equals(hy.getSolve().get(i))) {
+                            break;
+                        }
+                    }
+                }
+                if (i == h.getSolve().size()) {
+                    return h;
+                }
+            }
+        }
+        return null;
+    }
+
 
     public List<Hypotese> getRoot() {
         return root;
@@ -102,4 +142,21 @@ public class HypotesisStore {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof HypotesisStore) || size() != ((HypotesisStore) o).size()) {
+            return false;
+        }
+        for (Hypotese h : ((HypotesisStore) o).getRoot()) {
+            if (find(h) == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int compareTo(HypotesisStore o) {
+        return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
+    }
 }

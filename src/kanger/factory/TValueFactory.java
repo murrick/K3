@@ -239,7 +239,11 @@ public class TValueFactory {
     }
 
     public void set(TVariable tv, TValue v) {
-        current.put(tv, v.getId());
+        if (v == null) {
+            current.remove(tv);
+        } else {
+            current.put(tv, v.getId());
+        }
     }
 
     public void remove(TVariable tv) {
