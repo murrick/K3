@@ -252,3 +252,6 @@ public class Calculator {
     }
 
 }
+
+//TODO: ?$x ((x+3)*15)=965; - не выводит результат
+//TODO: ?$x $y x + y = 12; - выводит TRUE

@@ -169,7 +169,7 @@ public class Argument {
 
     public boolean isDefined() {
         if (isTSet()) {
-            return getT().isSubstituted();
+            return !getT().isEmpty(); //.isSubstituted();
         } else if (isFSet()) {
             Term t = getF().getResult();
 //			if(getF().isCalculable()) {

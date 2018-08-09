@@ -191,6 +191,8 @@ public class Linker {
                             ) {
                                 linkDomains(d1, d2, 0, logging, false, false);
                                 linkFunctions(d1, d2, 0, logging, false, false);
+                            } else if (d1.getId() == d2.getId() && d1.isSystem()) {
+                                linkFunctions(d1, d2, 0, logging, false, false);
                             }
                         }
                     }

@@ -62,15 +62,15 @@ public class KangerTest {
         showResult(true);
         mind.query("?n(nnn);");
         showResult(false);
-        mind.query("?a(nn);");
+        mind.query("?a(xx);");
         showResult(null);
-        mind.query("?b(nn);");
+        mind.query("?b(xx);");
         showResult(null);
-        mind.query("?c(nn);");
+        mind.query("?c(xx);");
         showResult(null);
-        mind.query("?d(nn);");
+        mind.query("?d(xx);");
         showResult(null);
-        mind.query("?n(nn);");
+        mind.query("?n(xx);");
         showResult(null);
         mind.query("?$x c(x);");
         showResult(true);
@@ -96,7 +96,7 @@ public class KangerTest {
         showResult(true);
         mind.query("?$x 12=x-9;");
         showResult(true);
-        mind.query("?$x $y (12+y)*2=256, x=5*y;");
+        mind.query("?$x $y (12+y)*2=256 && x=5*y;");
         showResult(true);
 
 
