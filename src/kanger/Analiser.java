@@ -6,6 +6,7 @@ import kanger.enums.LogMode;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
+import kanger.stores.HypotesisStore;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -221,9 +222,9 @@ public class Analiser {
 //                d.recalculate();
 //                if (!d.isClosed() && !d.isDestFor() /*&& !d.isSystem()*/) {
                 //TODO: Вместо isQuery надо какой-то другой критерий в примере с a(nnn)
-                if (!d.isClosed() && !d.isDestFor() /*&& !d.isQuery()*/) {
+                if (!d.isClosed() && !d.isDest() /*&& !d.isQuery()*/) {
                     result = false;
-                    mind.getHypotesisStore().add(!d.isAntc(), d.getPredicate(), d.getArguments());
+                    mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
 
 //                    if (!d.isQueued()) {
 //                    mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
@@ -596,6 +597,8 @@ public class Analiser {
         boolean storeS = mind.getSolutions().isEnabled();
         boolean storeL = mind.getLog().isEnabled();
 
+        HypotesisStore excludeHypotesis = new HypotesisStore();
+
         mind.getHypotesisStore().enable(!testMode);
         mind.getValues().enable(!testMode);
         mind.getSolutions().enable(!testMode);
@@ -625,6 +628,10 @@ public class Analiser {
             mind.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             res = null;
         } else {
+
+//            excludeHypotesis.clear();
+            excludeHypotesis.addAll(mind.getHypotesisStore().getRoot());
+
 //            mind.mark();
             int key = line.charAt(0);
             switch (key) {
@@ -859,6 +866,7 @@ public class Analiser {
                             mind.getLinker().link(r, true);
 
                             if (analiser(true)) {
+
                                 if (isInsertion) {
                                     mind.removeInsertionRight(r);
                                     List<Right> killedRights = killInsertion(r, key == Enums.WIPE);
@@ -886,7 +894,7 @@ public class Analiser {
                                 }
                             } else if (isInsertion) {
                                 mind.getLog().add(LogMode.ANALIZER, "Result: No predicates was deleted");
-                            } else //                                if (!isInsertion) {
+                            } else { //                                if (!isInsertion) {
                                 //                                    storeHypo();
                                 //                                }
                                 //                                mind.release();
@@ -903,11 +911,15 @@ public class Analiser {
                                 //                                    }
                                 //                                    mind.getHypotesisStore().pack();
                                 //                                }
+
+                                mind.getHypotesisStore().exclude(excludeHypotesis);
+
                                 if (mind.getHypotesisStore().getRoot() != null && mind.getHypotesisStore().size() > 0) {
                                     mind.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypotheses", mind.getHypotesisStore().size()));
                                 } else {
                                     mind.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypotheses.");
                                 }
+                            }
                         }
 
 

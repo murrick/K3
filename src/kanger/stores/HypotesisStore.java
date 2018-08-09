@@ -4,8 +4,7 @@ import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.primitives.Predicate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by murray on 28.05.15.
@@ -15,7 +14,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     private List<Hypotese> root = null;
     private boolean enableStore = true;
 
-    public Hypotese add(boolean antc, Predicate pred, List<Argument> arg) {
+    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, List<Argument> arg) {
         if (!enableStore) {
             return null;
         }
@@ -24,9 +23,13 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
         Hypotese h = find(antc, pred, arg);
         if (h != null) {
+            if (isQuery) {
+                h.setQuery(isQuery);
+            }
             return h;
         } else {
             h = new Hypotese(antc, pred, arg);
+            h.setQuery(isQuery);
             root.add(h);
             return h;
         }
@@ -48,6 +51,15 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
         return h;
 
+    }
+
+    public void addAll(Collection<Hypotese> list) {
+        if (list != null && !list.isEmpty()) {
+            if (root == null) {
+                root = new ArrayList<>();
+            }
+            root.addAll(list);
+        }
     }
 
     public void enable(boolean enable) {
@@ -158,5 +170,22 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     @Override
     public int compareTo(HypotesisStore o) {
         return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
+    }
+
+    public void exclude(HypotesisStore exclude) {
+        if (!isEmpty() && !exclude.isEmpty()) {
+            Set<Hypotese> toDelete = new HashSet<>();
+            for (Hypotese h : exclude.getRoot()) {
+                Hypotese x = find(h);
+                if (x != null) {
+                    toDelete.add(x);
+                }
+            }
+            for (Hypotese h : toDelete) {
+                if (!h.isQuery()) {
+                    root.remove(h);
+                }
+            }
+        }
     }
 }

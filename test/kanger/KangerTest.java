@@ -60,6 +60,8 @@ public class KangerTest {
 
         mind.query("?a(nnn);");
         showResult(true);
+        mind.query("?n(nnn);");
+        showResult(false);
         mind.query("?a(nn);");
         showResult(null);
         mind.query("?b(nn);");
@@ -68,7 +70,11 @@ public class KangerTest {
         showResult(null);
         mind.query("?d(nn);");
         showResult(null);
+        mind.query("?n(nn);");
+        showResult(null);
         mind.query("?$x c(x);");
+        showResult(true);
+        mind.query("?$x d(x);");
         showResult(true);
         mind.query("?a(nn) -> b(nn);");
         showResult(true);

@@ -7,13 +7,9 @@ package kanger;
 
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
-import kanger.exception.TValueOutOfOrder;
 import kanger.primitives.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author murray
@@ -115,85 +111,60 @@ public class Linker {
 
             boolean isQuery = mind.getQuery() != null;
 
-            //TODO: Запрос ?a(xx);
-            if (master.get(level).isEmpty() || slave.get(level).isEmpty()) {
-//                if ("xx".equals(master.get(level).getValue() + "") || "xx".equals(slave.get(level).getValue() + "")) {
-                System.out.println("------" + master.toString() + "\t" + slave.toString());
-//                }
-            }
-
-            if ("xx".equals(master.get(level).getValue() + "") || "xx".equals(slave.get(level).getValue() + "")) {
-                System.out.println("........" + master.toString() + "\t" + slave.toString());
-            }
-
             //ПОДСТАНОВКИ T-переменных
             for (int i = 0; i <= level; ++i) {
 
                 if (master.get(i).isTSet()
-//                        && !master.createCVar(level).getT().isSubstituted()
-//                        && !master.createCVar(level).isDefined()
                         && !slave.get(i).isEmpty()
                         && !slave.isDestFor(i, master)
+//                        && !master.isDestFor(i, slave)
                         && master.get(i).getT().isEmpty()
                         && master.getVarOrder(i) >= slave.getVarOrder(i)
 //                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
 //                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
-//                        && !master.get(level).getT().contains(slave.get(level).getValue())
                 ) {
-                    try {
-                        //TValue s = master.get(level).getT().find(slave.get(level).getValue());
-//                        if (s == null) {
-                        TValue s = master.get(i).getT().setValue(slave.get(i).getValue());
-//                        }
-//                        mind.getUsed().createTVar(master.createCVar(level).getT());
-                        s.addSolve(i, slave, master);
-                        if (slave.isQuery() || master.isQuery()) {
-                            s.setQuery();
-                        }
-                        occurrsMaster = true;
-                    } catch (TValueOutOfOrder ex) {
-//                        System.err.println(slave.toString());
-//                        System.err.println(master.toString());
-//                        ex.printStackTrace();
+                    TValue s;
+                    if (!master.get(i).getT().contains(slave.get(i).getValue())) {
+                        s = master.get(i).getT().setValue(slave.get(i).getValue());
+                    } else {
+                        s = master.get(i).getT().find(slave.get(i).getValue());
                     }
+                    s.addSolve(i, slave, master);
+                    if (slave.isQuery() || master.isQuery()) {
+                        s.setQuery();
+                    }
+                    occurrsMaster = true;
                 }
 
                 if (slave.get(i).isTSet()
-//                        && !slave.createCVar(level).getT().isSubstituted()
-//                        && !slave.createCVar(level).isDefined()
                         && !master.get(i).isEmpty()
                         && !master.isDestFor(i, slave)
+//                        && !slave.isDestFor(i, master)
                         && slave.get(i).getT().isEmpty()
                         && slave.getVarOrder(i) >= master.getVarOrder(i)
 //                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
 //                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
-//                        && !slave.get(level).getT().contains(master.get(level).getValue())
                 ) {
-                    try {
-                        TValue s = slave.get(i).getT().setValue(master.get(i).getValue());
-//                        mind.getUsed().createTVar(slave.createCVar(level).getT());
-                        s.addSolve(i, master, slave);
-                        if (master.isQuery() || slave.isQuery()) {
-                            s.setQuery();
-                        }
-                        occurrsSlave = true;
-                    } catch (TValueOutOfOrder ex) {
-//                        System.err.println(master.toString());
-//                        System.err.println(slave.toString());
-//                        ex.printStackTrace();
+                    TValue s;
+                    if (!slave.get(i).getT().contains(master.get(i).getValue())) {
+                        s = slave.get(i).getT().setValue(master.get(i).getValue());
+                    } else {
+                        s = slave.get(i).getT().find(master.get(i).getValue());
                     }
+                    s.addSolve(i, master, slave);
+                    if (master.isQuery() || slave.isQuery()) {
+                        s.setQuery();
+                    }
+                    occurrsSlave = true;
                 }
             }
             return linkDomains(master, slave, level + 1, logging, occurrsMaster, occurrsSlave);
         }
     }
 
-    public boolean updateDomains(List<TVariable> tvars, int tIndex, Set<Tree> set, boolean logging) throws RuntimeErrorException {
+    public boolean updateDomains(SortedSet<TVariable> tvars, Queue<Tree> set, boolean logging) throws RuntimeErrorException {
         boolean result = true;
-        if (tIndex >= tvars.size()) {
-
-
-//            TValue saveT = mind.getTValues().getRoot();
+        if (tvars.isEmpty()) {
 
             for (Tree master : set) { //query == null ? set : query.getTree()) {
                 for (Tree slave : set) {
@@ -262,26 +233,26 @@ public class Linker {
 
 
         } else {
-            TVariable t = tvars.get(tIndex);
+            TVariable t = tvars.last(); //.get(tIndex);
             TValue v = t.rewind();
             if (v != null) {
                 mind.getSubstituted().add(t);
 
                 do {
                     mind.getTValues().set(t, v);
-                    if (!updateDomains(tvars, tIndex + 1, set, logging)) {
+                    if (!updateDomains(tvars.headSet(t), set, logging)) {
                         result = false;
                     }
                 } while ((v = t.next(v)) != null);
 
                 mind.getTValues().set(t, null);
-                if (!updateDomains(tvars, tIndex + 1, set, logging)) {
+                if (!updateDomains(tvars.headSet(t), set, logging)) {
                     result = false;
                 }
 
                 mind.getSubstituted().remove(t);
             } else {
-                if (!updateDomains(tvars, tIndex + 1, set, logging)) {
+                if (!updateDomains(tvars.headSet(t), set, logging)) {
                     result = false;
                 }
             }
@@ -289,9 +260,9 @@ public class Linker {
         return result;
     }
 
-    public boolean calcFunctions(List<TVariable> tvars, int tIndex, Set<Tree> set, boolean logging) throws RuntimeErrorException {
+    public boolean calcFunctions(SortedSet<TVariable> tvars, Queue<Tree> set, boolean logging) throws RuntimeErrorException {
         boolean result = true;
-        if (tIndex >= tvars.size()) {
+        if (tvars.isEmpty()) {
 
 //            FValue saveF = mind.getFValues().getRoot();
 
@@ -352,19 +323,26 @@ public class Linker {
 ////            }
 
         } else {
-            TVariable t = tvars.get(tIndex);
+            TVariable t = tvars.last();
             TValue v = t.rewind();
             if (v != null) {
                 mind.getSubstituted().add(t);
+
                 do {
                     mind.getTValues().set(t, v);
-                    if (!calcFunctions(tvars, tIndex + 1, set, logging)) {
+                    if (!calcFunctions(tvars.headSet(t), set, logging)) {
                         result = false;
                     }
                 } while ((v = t.next(v)) != null);
+
+                mind.getTValues().set(t, null);
+                if (!updateDomains(tvars.headSet(t), set, logging)) {
+                    result = false;
+                }
+
                 mind.getSubstituted().remove(t);
             } else {
-                if (!calcFunctions(tvars, tIndex + 1, set, logging)) {
+                if (!calcFunctions(tvars.headSet(t), set, logging)) {
                     result = false;
                 }
             }
@@ -447,14 +425,14 @@ public class Linker {
         mind.getSubstituted().clear();
         mind.getCalculated().clear();
 
-        Set<Tree> set;
+        Queue<Tree> set = new LinkedList<>();
         if (r == null) {
-            set = mind.getActualTrees();
+            set.addAll(mind.getActualTrees());
 //            mind.clearQueryStatus();
 //            mind.reset();
             //функции!
         } else {
-            set = r.getActualTrees();
+            set.addAll(r.getActualTrees());
 //            mind.clearQueryStatus();
         }
 
@@ -464,7 +442,7 @@ public class Linker {
 //        mind.getCalculated().clear();
 
 
-        set = mind.getActualTrees();
+        set.addAll(mind.getActualTrees());
 
 //        for (Tree t : set) {
 //            for (Function f : t.getFunctions()) {
@@ -500,7 +478,7 @@ public class Linker {
                 mind.getLog().add(LogMode.ANALIZER, String.format("============= LINKER PASS %03d =============", ++pass));
             }
 
-            Set<TVariable> tset = new HashSet<>();
+            SortedSet<TVariable> tset = new TreeSet<>();
             for (Tree t : set) {
                 tset.addAll(t.getTVariables(true));
 
@@ -515,8 +493,14 @@ public class Linker {
 //                }
 //            }
 
-            if (updateDomains(new ArrayList<>(tset), 0, set, logging))
-                calcFunctions(new ArrayList<>(tset), 0, set, logging);
+            for (int i = 0; i < set.size(); ++i) {
+                if (updateDomains(tset, set, logging)) {
+                    calcFunctions(tset, set, logging);
+                }
+
+                Tree top = set.poll();
+                ((LinkedList<Tree>) set).add(top);
+            }
 
 
 //            for (Tree t: set) {
@@ -555,7 +539,7 @@ public class Linker {
     }
 
     private boolean logComparsion(Domain d) {
-        if (d.isDestFor()) {
+        if (d.isDest()) {
             for (TVariable t : d.getTVariables(true)) {
                 if (!t.isEmpty()) {
                     for (int i = 0; i < t.getDstSolves().size(); ++i) {

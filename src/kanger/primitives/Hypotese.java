@@ -20,9 +20,10 @@ public class Hypotese {
 
     private Predicate predicate = null;
     private List<Term> solve = new ArrayList<>();
-    private boolean antc = true;
     private Set<Right> rights = new HashSet<>();
+    private boolean antc = true;
     private boolean deleted = false;
+    private boolean query = false;
 
     public Hypotese(boolean antc, Predicate predicate, List<Argument> arg) {
         this.predicate = predicate;
@@ -71,6 +72,14 @@ public class Hypotese {
 
     public void setAntc(boolean antc) {
         this.antc = antc;
+    }
+
+    public boolean isQuery() {
+        return query;
+    }
+
+    public void setQuery(boolean query) {
+        this.query = query;
     }
 
     @Override

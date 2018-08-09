@@ -153,10 +153,9 @@ public class Kanger {
             mind.compile(
                     "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                             "!a(mmm); " +
-//                    "!a(nnn); " +
-                            "!b(ppp); " +
-//                            "c(ooo); " +
-//                    "!d(v); " +
+                            "!a(nnn); " +
+                            "!b(ooo); " +
+                            "!d(v); " +
                             "!@x a(x) -> ~n(x); " +
                             ""
             );

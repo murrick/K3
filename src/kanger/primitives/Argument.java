@@ -1,7 +1,6 @@
 package kanger.primitives;
 
 import kanger.Mind;
-import kanger.exception.TValueOutOfOrder;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -62,11 +61,7 @@ public class Argument {
         if (o == null || o instanceof Term) {
             o = t;
         } else if (o instanceof TVariable) {
-            try {
-                TValue s = ((TVariable) o).setValue(t);
-            } catch (TValueOutOfOrder tValueOutOfOrver) {
-                result = false;
-            }
+            TValue s = ((TVariable) o).setValue(t);
         } else if (o instanceof Function) {
             ((Function) o).setResult(t);
             result = true;
@@ -171,24 +166,23 @@ public class Argument {
         }
     }
 
-	
-	
-	public boolean isDefined() {
-		if(isTSet()) {
-			return getT().isSubstituted();
-		} else if (isFSet()) {
+
+    public boolean isDefined() {
+        if (isTSet()) {
+            return getT().isSubstituted();
+        } else if (isFSet()) {
             Term t = getF().getResult();
 //			if(getF().isCalculable()) {
 //				return getF().isCalculated();
 //			} else {
             return t != null && !"$$".equals(t);
 //			}
-		} else {
-			return !isEmpty() /*&& !getValue().isCVar()*/;
-		}
-	}
+        } else {
+            return !isEmpty() /*&& !getValue().isCVar()*/;
+        }
+    }
 
-	public boolean isCVar() {
+    public boolean isCVar() {
         return !isEmpty() && getValue().isCVar();
     }
 

@@ -2,7 +2,6 @@ package kanger.primitives;
 
 import kanger.Mind;
 import kanger.enums.Enums;
-import kanger.exception.TValueOutOfOrder;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -16,7 +15,7 @@ import java.util.Set;
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable {
+public class TVariable implements Comparable<TVariable> {
     private Right right = null;             // Ссылка на правило
     private long id = -1;                   // Идентификатор переменной
     private TVariable next = null;          // Следующая переменная
@@ -86,15 +85,15 @@ public class TVariable {
         }
     }
 
-    public TValue setValue(Term value) throws TValueOutOfOrder {
-        if (/*isInside(value) && */!"$$".equals(value.toString())) {
+    public TValue setValue(Term value) { //throws TValueOutOfOrder {
+//        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
             return mind.getTValues().add(this, value);
-        } else {
-            throw new TValueOutOfOrder(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
-        }
+//        } else {
+//            throw new TValueOutOfOrder(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
+//        }
     }
 
     public void delValue() {
@@ -285,9 +284,9 @@ public class TVariable {
                 && c.getIndex() < c.getIndex());
     }
 
-    //    public boolean contains(Term value) {
-//        return find(value) != null;
-//    }
+    public boolean contains(Term value) {
+        return find(value) != null;
+    }
 //
     public TValue find(Term value) {
         return mind.getTValues().find(this, value);
@@ -367,5 +366,10 @@ public class TVariable {
 
     public boolean isBlocked() {
         return mind.getTValues().get(this) != null && mind.getTValues().get(this).isBlocked();
+    }
+
+    @Override
+    public int compareTo(TVariable o) {
+        return Integer.valueOf(index).compareTo(o.getIndex());
     }
 }

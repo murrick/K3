@@ -512,7 +512,7 @@ public class Screen {
                 do {
 //                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
 //                        mind.getSubstituted().createTVar(t);
-                    if (!d.isDestFor()) {
+                    if (!d.isDest()) {
                         mind.getTValues().set(t, v);
                         showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
                     }

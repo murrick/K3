@@ -198,8 +198,8 @@ public class Domain {
 
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix = isDestFor() || isQuery() || isBlocked() || isClosed()
-                    ? " " + (isDestFor() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isBlocked() ? "B" : "") + " "
+            suffix = isDest() || isQuery() || isBlocked() || isClosed()
+                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isBlocked() ? "B" : "") + " "
                     : "";
         }
         return s + ";" + suffix;
@@ -275,7 +275,7 @@ public class Domain {
 
     }
 
-    public boolean isDestFor() {
+    public boolean isDest() {
         for (TVariable t : getTVariables(false)) {
             if (!t.isEmpty() && t.getDstSolves() != null && /*contains(t)) {*/ t.getDstSolves().contains(this)) {
                 return true;
