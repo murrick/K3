@@ -198,8 +198,8 @@ public class Domain {
 
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix = isDest() || isQuery() || isBlocked() || isClosed()
-                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isBlocked() ? "B" : "") + " "
+            suffix = isDest() || isQuery() || isBlocked() || isClosed() || isUsed()
+                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isBlocked() ? "B" : "") + (isUsed() ? "U" : "") + " "
                     : "";
         }
         return s + ";" + suffix;
@@ -339,8 +339,8 @@ public class Domain {
 
 
     public boolean isUsed() {
-        if (mind.getClosedDomains().containsKey(id)) {
-            for (List<Long> list : mind.getClosedDomains().get(id)) {
+        if (mind.getUsedDomains().containsKey(id)) {
+            for (List<Long> list : mind.getUsedDomains().get(id)) {
                 if (isEqualsArguments(list)) {
                     return true;
                 }

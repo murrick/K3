@@ -61,7 +61,7 @@ public class Mind {
 
     private ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
 
-//    private final Set<Long> queuedDomains = new HashSet<>();
+    //    private final Set<Long> queuedDomains = new HashSet<>();
     private final Set<Long> usedTrees = new HashSet<>();
     private final Set<Long> closedTrees = new HashSet<>();
     private final Set<Long> excludedTrees = new HashSet<>();
@@ -123,8 +123,8 @@ public class Mind {
 
     public TVariableFactory getTVars() {
         return tVars;
-    } 
-    
+    }
+
     public FunctionFactory getFunctions() {
         return functions;
     }
@@ -148,7 +148,7 @@ public class Mind {
     public TValueFactory getTValues() {
         return tValues;
     }
-    
+
     public FValueFactory getFValues() {
         return fValues;
     }
@@ -209,7 +209,7 @@ public class Mind {
         tVars.commit();
         tValues.commit();
         rights.commit();
-        trees.commit(); 
+        trees.commit();
         functions.commit();
         fValues.commit();
     }
@@ -221,7 +221,7 @@ public class Mind {
         tVars.release();
         tValues.release();
         rights.release();
-        trees.release(); 
+        trees.release();
         functions.release();
         fValues.release();
 
@@ -255,7 +255,7 @@ public class Mind {
         tVars.reset();
         tValues.reset();
         rights.reset();
-        trees.reset(); 
+        trees.reset();
         functions.reset();
         fValues.reset();
 
@@ -273,7 +273,7 @@ public class Mind {
         tVars.clear();
         tValues.clear();
         rights.clear();
-        trees.clear(); 
+        trees.clear();
         functions.clear();
         fValues.clear();
 
@@ -663,21 +663,18 @@ public class Mind {
     }
 
     public Right getQuery() {
-        for(Right r = rights.getRoot(); r != null; r = r.getNext()) {
-            if(r.isQuery()) {
+        for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
+            if (r.isQuery()) {
                 return r;
             }
         }
         return null;
     }
 
-    public Set<Tree> getActualTrees() {
-        Set<Tree> set = new HashSet<>();
+    public Queue<Tree> getActualTrees() {
+        Queue<Tree> set = new LinkedList<>();
         for (Right r : getActualRights()) {
-//            if (!r.isQuery()) {
-//for(Right r = getRights().getRoot(); r != null; r=r.getNext()) {
             set.addAll(r.getTree());
-//            }
         }
         return set;
     }

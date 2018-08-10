@@ -8,10 +8,7 @@ import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
 import kanger.stores.HypotesisStore;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 // !@x a(x) -> b(x), @y b(y) -> c(y), @z c(z) -> d(z);
 
@@ -174,8 +171,8 @@ public class Analiser {
                                 mind.getLog().add(LogMode.ANALIZER, "Сoincidence : ");
                                 mind.getLog().add(LogMode.ANALIZER, "\t" + a.toString());
                                 mind.getLog().add(LogMode.ANALIZER, "\t" + b.toString());
-                                a.setUsed();
-                                b.setUsed();
+//                                a.setUsed();
+//                                b.setUsed();
                             }
                             showFalse = true;
 
@@ -221,8 +218,8 @@ public class Analiser {
             for (Domain d : sequence) {
 //                d.recalculate();
 //                if (!d.isClosed() && !d.isDestFor() /*&& !d.isSystem()*/) {
-                //TODO: Вместо isQuery надо какой-то другой критерий в примере с a(nnn)
-                if (!d.isClosed() && !d.isDest() /*&& !d.isQuery()*/) {
+                //TODO: сомневаюсь в && !d.isAntc()
+                if (!d.isClosed() && !d.isDest() && !(d.isSystem() && d.isUsed() && !d.isAntc())) {
                     result = false;
                     mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
 
@@ -277,7 +274,7 @@ public class Analiser {
         return result;
     }
 
-    private boolean recurseTree(List<TVariable> tvars, int tIndex, Set<Tree> set, boolean logging) throws RuntimeErrorException {
+    private boolean recurseTree(List<TVariable> tvars, int tIndex, Queue<Tree> set, boolean logging) throws RuntimeErrorException {
         boolean result = false;
         if (tIndex >= tvars.size()) {
 
@@ -317,17 +314,21 @@ public class Analiser {
 
             boolean occurrs = false;
             for (Domain d : sd) {
-                int res = d.execSystem();
-                if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
-                    result = false;
+                if (d.isUsed() && !d.isAntc()) {
                     occurrs = true;
-                } else if (res == 1) {
-                    //TODO: Срабатывает временами неверно
-                    if (d.isQuery()) {
-                        result = true;
-                    }
-                    occurrs = true;
+                    result = true;
                 }
+//                int res = d.execSystem();
+//                if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
+//                    result = d.isAntc();
+//                    occurrs = true;
+//                } else if (res == 1) {
+//                    //TODO: Срабатывает временами неверно
+////                    if (d.isQuery()) {
+//                        result = !d.isAntc();
+////                    }
+//                    occurrs = true;
+//                }
             }
 
             if (occurrs) {
@@ -372,7 +373,8 @@ public class Analiser {
         Set<Domain> ant = new HashSet<>();
 
         for (Domain d : sequence) {
-            if (d.isSystem()) {
+            //TODO: сомневаюсь в && !d.isAntc()
+            if (d.isSystem() && d.isUsed() && !d.isAntc()) {
                 //TODO: Было закомментировано почему-то
                 for (TVariable tv : d.getTVariables(true)) {
                     mind.getValues().add(tv, d);
@@ -451,7 +453,7 @@ public class Analiser {
         mind.getCalculated().clear();
 
 
-        Set<Tree> set = mind.getActualTrees();
+        Queue<Tree> set = mind.getActualTrees();
         Set<TVariable> tvars = new HashSet<>();
         for (Tree t : set) {
             tvars.addAll(t.getTVariables(true));

@@ -161,11 +161,16 @@ public class Kanger {
             );
 
             mind.compile(
+                    "!@x num(x) && x < 20 -> num(++x);" +
+                            "!num(0);" +
+//                    "!age(Tom,12);" +
+//                            "!age(John,32);" +
+//                            "!age(Mary,3);" +
 //                    "!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));\n" +
 //                    "!@x ~a(x,x);\n" +
 //                    "!@x $y a(y,x);" +
 ////                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z));"
-                    ""
+                            ""
             );
         } catch (ParseErrorException e) {
             e.printStackTrace();

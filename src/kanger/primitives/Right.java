@@ -168,6 +168,7 @@ public class Right {
         return list;
     }
 
+
 //    @Override
 //    public boolean equals(Object o) {
 //        if (o == null || !(o instanceof Right)) {

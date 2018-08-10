@@ -1,15 +1,14 @@
 package kanger.primitives;
 
 import kanger.Mind;
-import kanger.enums.Tools;
-import kanger.exception.RuntimeErrorException;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -179,4 +178,21 @@ public class Tree {
         }
         return list;
     }
+
+    public boolean contains(Domain dom) {
+        for (Domain d : sequence) {
+            if (d.getPredicate().getId() == dom.getPredicate().getId()) {
+                return true;
+            }
+            for (TVariable t : dom.getTVariables(true)) {
+                for (TVariable x : d.getTVariables(true)) {
+                    if (t.getId() == x.getId()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 }

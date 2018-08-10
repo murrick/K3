@@ -200,14 +200,24 @@ public class Linker {
                     for (Domain d : sequence) {
                         if (d.isSystem()) {
                             int res = d.execSystem();
+                            // Проверка полноты предиката
                             for (TVariable t : d.getTVariables(true)) {
-                                if (!t.isEmpty()) {
-                                    if (res == 0) {
-                                        mind.getTValues().get(t).setBlocked();
-                                    } else if (res == 1) {
-                                        mind.getTValues().get(t).setClosed();
-                                    }
+                                if (t.isEmpty()) {
+                                    res = -1;
+                                    break;
                                 }
+                            }
+
+                            if (res == 0 && d.isAntc()) {
+//                                d.setAntc(false);
+                                d.setUsed();
+//                                System.out.println("---- " + res + " " + d.toString());
+//                                        mind.getTValues().get(t).setBlocked();
+                            } else if (res == 1 && !d.isAntc()) {
+//                                d.setAntc(true);
+                                d.setUsed();
+//                                System.out.println("---- " + res + " " + d.toString());
+//                                        mind.getTValues().get(t).setClosed();
                             }
                         }
                     }
@@ -289,20 +299,20 @@ public class Linker {
 //                    }
                 }
 
-                for (Domain d : master.getSequence()) {
-                    if (d.isSystem()) {
-                        int res = d.execSystem();
-                        for (TVariable t : d.getTVariables(true)) {
-                            if (!t.isEmpty()) {
-                                if (res == 0) {
-                                    mind.getTValues().get(t).setBlocked();
-                                } else if (res == 1) {
-                                    mind.getTValues().get(t).setClosed();
-                                }
-                            }
-                        }
-                    }
-                }
+//                for (Domain d : master.getSequence()) {
+//                    if (d.isSystem()) {
+//                        int res = d.execSystem();
+//                        for (TVariable t : d.getTVariables(true)) {
+//                            if (!t.isEmpty()) {
+//                                if (res == 0) {
+//                                    mind.getTValues().get(t).setBlocked();
+//                                } else if (res == 1) {
+//                                    mind.getTValues().get(t).setClosed();
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
 
                 logCommit(logging);
                 mind.getTValues().rollback();
@@ -412,11 +422,40 @@ public class Linker {
 //    }
 
 
+    public Queue<Tree> getActualTrees(Right r) {
+        boolean added = false;
+        Queue<Tree> set = new LinkedList<>();
+        set.addAll(r.getTree());
+
+        do {
+            added = false;
+            Set<Tree> tmp = new HashSet<>();
+            for (Tree t : set) {
+                for (Domain d : t.getSequence()) {
+
+                    for (Right rx = mind.getRights().getRoot(); rx != null; rx = rx.getNext()) {
+                        for (Tree tx : rx.getTree()) {
+                            if (!set.contains(tx) && tx.contains(d)) {
+                                tmp.add(tx);
+                                added = true;
+                            }
+                        }
+                    }
+                }
+            }
+            set.addAll(tmp);
+
+        } while (added);
+        return set;
+    }
+
     public void link(boolean logging) throws RuntimeErrorException {
         link(null, logging);
     }
 
     public void link(Right r, boolean logging) throws RuntimeErrorException {
+
+
         int pass = 0;
 //        if (r == null) {
 //            mind.clearQueryStatus();
@@ -427,44 +466,8 @@ public class Linker {
         mind.getSubstituted().clear();
         mind.getCalculated().clear();
 
-        Queue<Tree> set = new LinkedList<>();
-        if (r == null) {
-            set.addAll(mind.getActualTrees());
-//            mind.clearQueryStatus();
-//            mind.reset();
-            //функции!
-        } else {
-            set.addAll(r.getActualTrees());
-//            mind.clearQueryStatus();
-        }
 
-
-//        Screen.showRights(mind, true);
-//        mind.getSubstituted().clear();
-//        mind.getCalculated().clear();
-
-
-        set.addAll(mind.getActualTrees());
-
-//        for (Tree t : set) {
-//            for (Function f : t.getFunctions()) {
-//                if (f.isCalculated()) {
-//                    f.clearResult();
-//                }
-//            }
-//
-////            for (TVariable tv : t.getTVariables(true)) {
-////                tv.clear();
-////            }
-//        }
-
-//        if (r != null) {
-//            for (Tree t : r.getTree()) {
-//                for (TVariable tv : t.getTVariables(true)) {
-//                    tv.clear();
-//                }
-//            }
-//        }
+        Queue<Tree> set = r != null ? getActualTrees(r) : mind.getActualTrees();
 
 
         TValue saveT = null;
@@ -496,12 +499,14 @@ public class Linker {
 //            }
 
             for (int i = 0; i < set.size(); ++i) {
+
+                mind.getUsedDomains().clear();
                 if (updateDomains(tset, set, logging)) {
                     calcFunctions(tset, set, logging);
                 }
 
                 Tree top = set.poll();
-                ((LinkedList<Tree>) set).add(top);
+                set.add(top);
             }
 
 
