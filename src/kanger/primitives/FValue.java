@@ -20,12 +20,12 @@ public class FValue {
 
     public FValue(Function f, Mind mind) {
         function = f;
-        value = f.getResult();
+        value = f.getArguments().get(f.getRange()).getValue(); //.getResult();
 //        for(Argument a : f.getArguments()){
 //            condition.createTVar(a.getValue().getId());
 //        }
         for (TVariable t : f.getTVariables()) {
-            condition.put(t.getId(), t.isEmpty() ? -1 : t.getCurrent().getId());
+            condition.put(t.getId(), t.getCurrent().getId());
         }
         this.mind = mind;
     }
@@ -130,7 +130,7 @@ public class FValue {
 
     public boolean isClosed() {
         for (long id : condition.values()) {
-            if (!mind.getTValues().get(id).isClosed()) {
+            if (mind.getTValues().get(id) == null || !mind.getTValues().get(id).isClosed()) {
                 return false;
             }
         }
@@ -139,7 +139,7 @@ public class FValue {
 
     public boolean isBlocked() {
         for (long id : condition.values()) {
-            if (mind.getTValues().get(id).isBlocked()) {
+            if (mind.getTValues().get(id) != null && mind.getTValues().get(id).isBlocked()) {
                 return true;
             }
         }

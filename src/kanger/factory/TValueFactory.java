@@ -38,8 +38,12 @@ public class TValueFactory {
             t.setNext(root);
             root = t;
             t.setId(lastID++);
+
         }
-//        current.put(tv, t.getId());
+
+        //TODO: Фиксация текцщего значения подстановки. Правильно ли это?
+        current.put(tv, t.getId());
+
         return t;
     }
 
@@ -158,7 +162,7 @@ public class TValueFactory {
 
 
     public void commit() {
-        if(!stack.empty()) {
+        if (!stack.empty()) {
             stack.pop();
         }
     }
@@ -170,7 +174,7 @@ public class TValueFactory {
             lastID = (long) pop[1];
             root = saved;
         }
-        if(stack.isEmpty()) {
+        if (stack.isEmpty()) {
             mark();
         }
     }

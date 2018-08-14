@@ -161,8 +161,8 @@ public class Kanger {
             );
 
             mind.compile(
-                    "!@x num(x) && x < 20 -> num(++x);" +
-                            "!num(0);" +
+//                    "!@x num(x) && x < 20 -> num(++x);" +
+//                            "!num(0);" +
 //                    "!age(Tom,12);" +
 //                            "!age(John,32);" +
 //                            "!age(Mary,3);" +

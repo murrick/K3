@@ -25,10 +25,14 @@ public class FValueFactory {
     public FValue add(Function f) {
         FValue t = find(f);
         if (t == null) {
-            t = new FValue(f, mind);
-            t.setNext(root);
-            root = t;
-            t.setId(lastID++);
+            if (f.isSubstituted()) {
+                t = new FValue(f, mind);
+                t.setNext(root);
+                root = t;
+                t.setId(lastID++);
+            } else {
+                return null;
+            }
         }
         return t;
     }
@@ -46,7 +50,7 @@ public class FValueFactory {
     public FValue find(Function f) {
         for (FValue t = root; t != null; t = t.getNext()) {
             if (f.getId() == t.getFunction().getId()
-                    && t.getValue().getId() == f.getResult().getId()
+                    && t.getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId()
                     && t.isActual()) {
 //                boolean complete = true;
 //                for (TVariable tv : f.getTVariables()) {
@@ -100,7 +104,7 @@ public class FValueFactory {
 
 
     public void commit() {
-        if(!stack.empty()) {
+        if (!stack.empty()) {
             stack.pop();
         }
     }
@@ -112,12 +116,12 @@ public class FValueFactory {
             lastID = (long) pop[1];
             root = saved;
         }
-        if(stack.isEmpty()) {
+        if (stack.isEmpty()) {
             mark();
         }
     }
 
-//    public void commit() {
+    //    public void commit() {
 //        if (!stack.empty()) {
 //            Object[] pop = stack.pop();
 //            FValue saved = (FValue) pop[0];

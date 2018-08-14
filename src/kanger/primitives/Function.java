@@ -132,21 +132,24 @@ public class Function {
         return arguments;
     }
 
-    public Term getResult() {
-        while (range + 1 > arguments.size()) {
-            arguments.add(new Argument());
-        }
-        return arguments.get(range).getValue();
-    }
-
 //    public Term getResult() {
-//        FValue f = mind.getFValues().createCVar(this);
-//        if (f != null) {
-//            return f.getValue();
-//        } else {
-//            return null;
+//        while (range + 1 > arguments.size()) {
+//            arguments.add(new Argument());
 //        }
+//        return arguments.get(range).getValue();
 //    }
+
+    public Term getResult() {
+        if (isCalculated()) {
+            return mind.getFValues().get(this).getValue();
+        } else {
+            if (arguments.size() - 1 == range) {
+                return arguments.get(range).getValue();
+            } else {
+                return null;
+            }
+        }
+    }
 
 //    public void setResult(Domain d, Argument r) {
 //        if (range + 1 > arguments.size()) {
@@ -269,9 +272,16 @@ public class Function {
         String res = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
             if (v == null) {
-                if (((isCalculable() && isCalculated()) || !isCalculable()) && getResult() != null) {
-                    res = " = " + getResult();
+                if (getResult() != null) {
+                    res = " [= " + getResult() + "]";
                 }
+
+//                if (isCalculable() && isCalculated()) {
+//                    res = " [= " + getResult() + "]";
+//                } else if (!isCalculable() && getResult() != null) {
+//                    res = " [= (" + getResult() + ")]";
+//                    //TODO: Временно подставленный результат. Надо выводить?
+//                }
             } else {
                 res = " = " + v.getValue();
             }

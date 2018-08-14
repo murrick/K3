@@ -32,10 +32,10 @@ public class Linker {
                     if (!f.isCalculated() && f.isCalculable() && !f.isSubstituted()) {
                         if (mind.getCalculator().calculate(f) > 0) {
                             occurrs = true;
-                            mind.getFValues().add(f);
-                            if (logging) {
-                                mind.getLog().add(LogMode.ANALIZER, "Shot function result: " + f.toString());
-                            }
+//                            mind.getFValues().add(f);
+//                            if (logging) {
+//                                mind.getLog().add(LogMode.ANALIZER, "Shot function result: " + f.toString());
+//                            }
                         }
                     }
                 }
@@ -45,10 +45,10 @@ public class Linker {
                     if (!f.isCalculated() && f.isCalculable() && !f.isSubstituted()) {
                         if (mind.getCalculator().calculate(f) > 0) {
                             occurrs = true;
-                            mind.getFValues().add(f);
-                            if (logging) {
-                                mind.getLog().add(LogMode.ANALIZER, "Shot function result: " + f.toString());
-                            }
+//                            mind.getFValues().add(f);
+//                            if (logging) {
+//                                mind.getLog().add(LogMode.ANALIZER, "Shot function result: " + f.toString());
+//                            }
                         }
                     }
                 }
@@ -288,13 +288,14 @@ public class Linker {
                 for (Domain d : master.getSequence()) {
 //                    if (saveF == mind.getFValues().getRoot()) {
                     for (Function f : d.getFunctions()) {
-                        if ((f.isCalculable() || !f.isCalculated()) && f.isSubstituted()) {
-                            f.clearResult();
-                            if (mind.getCalculator().calculate(f) > 0) {
-                                mind.getFValues().add(f);
-                                mind.getLog().add(LogMode.ANALIZER, "Shot function result: " + f.toString());
-                            }
-                        }
+                        mind.getCalculator().calculate(f);
+//                        if ((f.isCalculable() || !f.isCalculated()) && f.isSubstituted()) {
+//                            f.clearResult();
+//                            if (mind.getCalculator().calculate(f) > 0) {
+//                                mind.getFValues().add(f);
+//                                mind.getLog().add(LogMode.ANALIZER, "Shot function result: " + f.toString());
+//                            }
+//                        }
                     }
 //                    }
                 }
@@ -586,9 +587,9 @@ public class Linker {
                 for (TValue t = mind.getTValues().getRoot(); t != mind.getTValues().getMark(); t = t.getNext()) {
                     mind.getLog().add(LogMode.ANALIZER, (t.isClosed() ? "COMMIT:\t" : "RELEASE:\t") + t.toString());
                 }
-                for (FValue t = mind.getFValues().getRoot(); t != mind.getFValues().getMark(); t = t.getNext()) {
-                    mind.getLog().add(LogMode.ANALIZER, (t.isClosed() ? "COMMIT:\t" : "RELEASE:\t") + t.toString());
-                }
+//                for (FValue t = mind.getFValues().getRoot(); t != mind.getFValues().getMark(); t = t.getNext()) {
+//                    mind.getLog().add(LogMode.ANALIZER, (t.isClosed() ? "COMMIT:\t" : "RELEASE:\t") + t.toString());
+//                }
                 mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
         }

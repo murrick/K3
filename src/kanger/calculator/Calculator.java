@@ -75,6 +75,8 @@ public class Calculator {
                 if (calculate(fu.getArguments().get(i).getF()) > 0) {
                     ++flag;
 //                    fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
+                } else {
+                    --flag;
                 }
             }
         }
@@ -92,12 +94,15 @@ public class Calculator {
 //        flag = execute(fu);
         if (execute(fu) == 1) {
             ++flag;
+            mind.getFValues().add(fu);
+            fu.setResult(null);
 //            fu.setCalculated(true);
             mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
             mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
-                    + (fu.getResult() != null
-                    && fu.isCalculable()
-                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : "")));
+//                    + (fu.getResult() != null
+//                    && fu.isCalculable()
+//                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
+            ));
             mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
 
@@ -110,6 +115,8 @@ public class Calculator {
                 if (calculate(fu.getArguments().get(i).getF()) > 0) {
                     ++flag;
 //                    fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
+                } else {
+                    --flag;
                 }
             }
         }
@@ -253,5 +260,5 @@ public class Calculator {
 
 }
 
-//TODO: ?$x ((x+3)*15)=965; - не выводит результат
+//TODO: РЕШЕНО ?$x ((x+3)*15)=965; - не выводит результат
 //TODO: ?$x $y x + y = 12; - выводит TRUE
