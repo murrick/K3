@@ -35,7 +35,7 @@ public class Predicates {
                         if (arg.get(0).setValue(arg.get(1).getValue())) {
                             i = 1;
                         }
-                    } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
+                    } else if (arg.get(0).isCalculated() && arg.get(1).isCalculated()) {
                         if (arg.get(0).getValue().compareTo(arg.get(1).getValue()) == 0) {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue().isCVar() && arg.createCVar(1).getValue().isCVar()) || (!arg.createCVar(0).getValue().isCVar() && !arg.createCVar(1).getValue().isCVar())) {
@@ -55,7 +55,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
+                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc == -1 || rc == 1) {
                             i = 1;
@@ -73,7 +73,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
+                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc > 0 ? 1 : 0;
@@ -89,7 +89,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
+                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc >= 0 ? 1 : 0;
@@ -105,7 +105,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
+                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc < 0 ? 1 : 0;
@@ -121,7 +121,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
+                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc <= 0 ? 1 : 0;
@@ -138,7 +138,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
+                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated()) {
                         if (arg.get(0).getValue().isCVar() || arg.get(1).getValue().isCVar()) {
                             i = -1;
                         } else {

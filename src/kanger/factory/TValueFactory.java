@@ -42,7 +42,9 @@ public class TValueFactory {
         }
 
         //TODO: Фиксация текцщего значения подстановки. Правильно ли это?
-        current.put(tv, t.getId());
+        if (isEmpty(tv)) {
+            current.put(tv, t.getId());
+        }
 
         return t;
     }

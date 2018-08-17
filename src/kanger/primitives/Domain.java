@@ -220,21 +220,18 @@ public class Domain {
         }
     }
 
-    public boolean equalsBase(Object o) {
-        if (o == null || !(o instanceof Domain)) {
+    public boolean equalsBase(Domain o) {
+        if (predicate.getId() != o.getPredicate().getId()) {
             return false;
         }
-        if (!predicate.equals(((Domain) o).predicate)) {
-            return false;
-        }
-        if (arguments.size() != ((Domain) o).arguments.size()) {
+        if (arguments.size() != o.getArguments().size()) {
             return false;
         }
         for (int i = 0; i < arguments.size(); ++i) {
-            if (arguments.get(i).isEmpty() || ((Domain) o).arguments.get(i).isEmpty()) {
+            if (arguments.get(i).isEmpty() || o.getArguments().get(i).isEmpty()) {
                 return false;
             }
-            if (arguments.get(i).getValue().getId() != ((Domain) o).arguments.get(i).getValue().getId()) {
+            if (arguments.get(i).getValue().getId() != o.getArguments().get(i).getValue().getId()) {
                 return false;
             }
         }
@@ -378,7 +375,7 @@ public class Domain {
 //    public boolean recalculate() throws RuntimeErrorException {
 //        boolean occurrs = false;
 //        for (Argument a : arguments) {
-//            if (a.isFSet() /*&& a.getF().isSubstituted()*/) {
+//            if (a.isFSet() /*&& a.getF().isComplete()*/) {
 ////                a.getF().clearResult();
 //                if (mind.getCalculator().calculate(a.getF()) > 0) {
 //                    occurrs = true;
@@ -410,14 +407,14 @@ public class Domain {
         }
     }
 
-    public boolean isSubstituted() {
-        for (TVariable t : getTVariables(true)) {
-            if (!t.isSubstituted() || /*!mind.getUsed().contains(t) ||*/ t.isEmpty()) {
-                return false;
-            }
-        }
-        return true;
-    }
+//    public boolean isComplete() {
+//        for (TVariable t : getTVariables(true)) {
+//            if (!t.isComplete() || /*!mind.getUsed().contains(t) ||*/ t.isEmpty()) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 
     public boolean isBlocked() {
         for (TVariable t : getTVariables(true)) {

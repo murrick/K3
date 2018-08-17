@@ -39,6 +39,22 @@ public class Argument {
         }
     }
 
+    public Term getDirtyValue() {
+        if (o instanceof Term) {
+            return (Term) o;
+        } else if (o instanceof TVariable) {
+            return ((TVariable) o).getValue();
+        } else if (o instanceof Function) {
+            if (isEmpty() && getF().getArguments().size() > getF().getRange()) {
+                return getF().getArguments().get(getF().getRange()).getDirtyValue();
+            } else {
+                return ((Function) o).getResult();
+            }
+        } else {
+            return null;
+        }
+    }
+
     public Term getValue() {
         if (o instanceof Term) {
             return (Term) o;
@@ -169,13 +185,28 @@ public class Argument {
 
     public boolean isDefined() {
         if (isTSet()) {
-            return !getT().isEmpty(); //.isSubstituted();
+            return !getT().isEmpty(); //.isComplete();
         } else if (isFSet()) {
             Term t = getF().getResult();
 //			if(getF().isCalculable()) {
 //				return getF().isCalculated();
 //			} else {
-            return t != null && !"$$".equals(t);
+            return t != null && !"$$".equals(t.toString());
+//			}
+        } else {
+            return !isEmpty() /*&& !getValue().isCVar()*/;
+        }
+    }
+
+    public boolean isCalculated() {
+        if (isTSet()) {
+            return !getT().isEmpty(); //.isComplete();
+        } else if (isFSet()) {
+//            Term t = getF().getResult();
+//			if(getF().isCalculable()) {
+            return getF().isCalculated();
+//			} else {
+//            return t != null && !"$$".equals(t.toString());
 //			}
         } else {
             return !isEmpty() /*&& !getValue().isCVar()*/;

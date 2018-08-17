@@ -25,7 +25,7 @@ public class FValueFactory {
     public FValue add(Function f) {
         FValue t = find(f);
         if (t == null) {
-            if (f.isSubstituted()) {
+            if (f.isDirtyComplete()) {
                 t = new FValue(f, mind);
                 t.setNext(root);
                 root = t;
@@ -39,7 +39,7 @@ public class FValueFactory {
 
     public FValue get(Function f) {
         for (FValue v = root; v != null; v = v.getNext()) {
-            if (v.getFunction().getId() == f.getId() && v.isActual()) {
+            if (v.getFunction().getId() == f.getId() && v.isActual(f)) {
                 return v;
             }
         }
@@ -50,8 +50,8 @@ public class FValueFactory {
     public FValue find(Function f) {
         for (FValue t = root; t != null; t = t.getNext()) {
             if (f.getId() == t.getFunction().getId()
-                    && t.getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId()
-                    && t.isActual()) {
+                    && t.getValue().getId() == f.getArguments().get(f.getRange()).getDirtyValue().getId()
+                    && t.isActual(f)) {
 //                boolean complete = true;
 //                for (TVariable tv : f.getTVariables()) {
 //                    if (!tv.isEmpty() && t.getCondition().createCVar(tv.getId()) != tv.getValue().getId()) {
@@ -157,17 +157,17 @@ public class FValueFactory {
             FValue t = root;
             FValue q = root;
             while (t != null && t != saved) {
-                if (t.isBlocked()) {
-                    if (t == root) {
-                        root = t = q = t.getNext();
-                    } else {
-                        q.setNext(t.getNext());
-                        t = q.getNext();
-                    }
-                } else {
+//                if (t.isBlocked()) {
+//                    if (t == root) {
+//                        root = t = q = t.getNext();
+//                    } else {
+//                        q.setNext(t.getNext());
+//                        t = q.getNext();
+//                    }
+//                } else {
                     q = t;
                     t = t.getNext();
-                }
+//                }
             }
         }
         if (stack.isEmpty()) {

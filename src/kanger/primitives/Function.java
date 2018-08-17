@@ -143,11 +143,12 @@ public class Function {
         if (isCalculated()) {
             return mind.getFValues().get(this).getValue();
         } else {
-            if (arguments.size() - 1 == range) {
-                return arguments.get(range).getValue();
-            } else {
-                return null;
-            }
+            return null;
+//            if (arguments.size() - 1 == range) {
+//                return arguments.get(range).getValue();
+//            } else {
+//                return null;
+//            }
         }
     }
 
@@ -218,22 +219,22 @@ public class Function {
         this.busy = busy;
     }
 
-    private String formatParam(Argument t, FValue v) {
+    private String formatParam(Argument t) {
         Operation op = Parser.getOp(name.toString());
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
         if (t.isFSet()) {
             s += (isOp ? "(" : "") + t.getF().toString() + (isOp ? ")" : "");
         } else if (t.isTSet()) {
-            if (v == null) {
-                s += t.getT().toString();
-            } else {
-                TValue tv = v.getValue(t.getT());
-                s += t.getT().getVarName()
-                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (tv == null ? "" : (":" + tv.getValue().toString())) : "")
-                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && tv != null && tv.isBlocked() ? " (B)" : "");
-
-            }
+//            if (v == null) {
+            s += t.getT().toString();
+//            } else {
+//                TValue tv = v.getValue(t.getT());
+//                s += t.getT().getVarName()
+//                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (tv == null ? "" : (":" + tv.getValue().toString())) : "")
+//                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && tv != null && tv.isBlocked() ? " (B)" : "");
+//
+//            }
         } else if (!t.isEmpty()) {
             s += t.getValue().toString();
         } else {
@@ -242,39 +243,44 @@ public class Function {
         return s;
     }
 
-    public String toString(FValue v) {
-        Operation op = Parser.getOp(name.toString());
-        String s = "";
-        if (op == null || op.getRange() != range) {
-            s = String.format("%s(", name.toString());
-            for (int i = 0; i < range; ++i) {
-                s += formatParam(arguments.get(i), v);
-                if (i + 1 < range) {
-                    s += (char) Enums.COMMA;
-                }
-            }
-            s += ")";
-        } else if (op.getRange() == 1) {
-            if (op.isPost()) {
-                s = formatParam(arguments.get(0), v) + op.getName();
-            } else {
-                s = op.getName() + formatParam(arguments.get(0), v);
-            }
+    public String toString() {
+        if (!isCalculable() && getResult() != null) {
+            return getResult().toString();
         } else {
-            for (int i = 0; i < op.getRange(); ++i) {
-                s += formatParam(arguments.get(i), v);
-                if (i + 1 < op.getRange()) {
-                    s += " " + op.getName() + " ";
+            Operation op = Parser.getOp(name.toString());
+            String s = "";
+            if (op == null || op.getRange() != range) {
+                s = String.format("%s(", name.toString());
+                for (int i = 0; i < range; ++i) {
+                    s += formatParam(arguments.get(i));
+                    if (i + 1 < range) {
+                        s += (char) Enums.COMMA;
+                    }
+                }
+                s += ")";
+            } else if (op.getRange() == 1) {
+                if (op.isPost()) {
+                    s = formatParam(arguments.get(0)) + op.getName();
+                } else {
+                    s = op.getName() + formatParam(arguments.get(0));
+                }
+            } else {
+                for (int i = 0; i < op.getRange(); ++i) {
+                    s += formatParam(arguments.get(i));
+                    if (i + 1 < op.getRange()) {
+                        s += " " + op.getName() + " ";
+                    }
                 }
             }
-        }
 
-        String res = "";
-        if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
-            if (v == null) {
-                if (getResult() != null) {
-                    res = " [= " + getResult() + "]";
-                }
+            String res = "";
+            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+//                if (getResult() != null) {
+                if (isCalculated())
+                    res = " {= " + getResult() + "}";
+                else if (arguments.size() > range && !arguments.get(range).isEmpty())
+                    res = " [= " + arguments.get(range).getValue() + "]";
+//                }
 
 //                if (isCalculable() && isCalculated()) {
 //                    res = " [= " + getResult() + "]";
@@ -282,21 +288,12 @@ public class Function {
 //                    res = " [= (" + getResult() + ")]";
 //                    //TODO: Временно подставленный результат. Надо выводить?
 //                }
-            } else {
-                res = " = " + v.getValue();
             }
+            //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
+            return s + res;
         }
-        //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
-        return s + res;
     }
 
-    public String toString() {
-        if (!isCalculable() && getResult() != null) {
-            return getResult().toString();
-        } else {
-            return toString(null);
-        }
-    }
 
     //    public void setResult(Term c) {
 //        if(f != null) {
@@ -357,9 +354,18 @@ public class Function {
         return f != null; // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
     }
 
-    public boolean isSubstituted() {
-        for (TVariable t : getTVariables()) {
-            if (!t.isSubstituted() || /*!mind.getUsed().contains(t) ||*/ t.isEmpty()) {
+    public boolean isComplete() {
+        for (Argument a : arguments) {
+            if (a.getValue() == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isDirtyComplete() {
+        for (Argument a : arguments) {
+            if (a.getDirtyValue() == null) {
                 return false;
             }
         }

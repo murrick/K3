@@ -92,10 +92,11 @@ public class Calculator {
         //fu.setA(arg);
 //        if (!fu.isCalculated(arg)) {
 //        flag = execute(fu);
-        if (execute(fu) == 1) {
+        int k = execute(fu);
+        if (k == 1 || k == 2) {
             ++flag;
             mind.getFValues().add(fu);
-            fu.setResult(null);
+//            fu.setResult(null);
 //            fu.setCalculated(true);
             mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
             mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
@@ -154,12 +155,23 @@ public class Calculator {
         if (op != null) {
 
             for (Argument a : d.getArguments()) {
-                if (!a.isEmpty() && "$$".equals(a.getValue())) {
+                if (!a.isEmpty() && "$$".equals(a.getValue().toString())) {
                     return -1;
                 }
             }
 
             k = (Integer) op.getProc().run(d);
+
+//            if (k == 1 && "_eq".equals(op.getName())) {
+//                for(Argument a : d.getArguments()) {
+//                    if (a.isFSet()) {
+//                        Function f = a.getF();
+//                        if (calculate(f) <= 0) {
+//                            k = -1;
+//                        }
+//                    }
+//                }
+//            }
         }
         return k;
     }
@@ -259,6 +271,10 @@ public class Calculator {
     }
 
 }
-
+//TODO: РЕШЕНО ?2 > 3;
 //TODO: РЕШЕНО ?$x ((x+3)*15)=965; - не выводит результат
-//TODO: ?$x $y x + y = 12; - выводит TRUE
+//TODO: РЕШЕНО ?$x $y (12+y)*2=256 && x=5*y;
+//TODO: РЕШЕНО ?$x $y x + y = 12; - выводит TRUE
+//TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x);
+//TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x) && x > 5;
+//TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x $y num(x) && num(y) && x + y = 7;

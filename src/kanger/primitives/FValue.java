@@ -5,14 +5,14 @@ import kanger.Mind;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FValue {
     private long id = -1;
     private Term value = null;
-    private Map<Long, Long> condition = new HashMap<>();
-    //    private List<Long> condition = new ArrayList<>();
+    //    private Map<Long, Long> condition = new HashMap<>();
+    private List<Long> condition = new ArrayList<>();
     private Function function = null;
 
     private FValue next = null;
@@ -24,8 +24,11 @@ public class FValue {
 //        for(Argument a : f.getArguments()){
 //            condition.createTVar(a.getValue().getId());
 //        }
-        for (TVariable t : f.getTVariables()) {
-            condition.put(t.getId(), t.getCurrent().getId());
+//        for (TVariable t : f.getTVariables()) {
+//            condition.put(t.getId(), t.getCurrent().getId());
+//        }
+        for (Argument a : f.getArguments()) {
+            condition.add(a.getDirtyValue().getId());
         }
         this.mind = mind;
     }
@@ -37,7 +40,7 @@ public class FValue {
         int count = dis.readInt();
         while (--count >= 0) {
 //            condition.createTVar(dis.readLong());
-            condition.put(dis.readLong(), dis.readLong());
+            condition.add(dis.readLong());
         }
         this.mind = mind;
     }
@@ -58,13 +61,13 @@ public class FValue {
         return value;
     }
 
-    public TValue getValue(TVariable t) {
-        if (condition.containsKey(t.getId())) {
-            return mind.getTValues().get(condition.get(t.getId()));
-        } else {
-            return null;
-        }
-    }
+//    public TValue getValue(TVariable t) {
+//        if (condition.containsKey(t.getId())) {
+//            return mind.getTValues().get(condition.get(t.getId()));
+//        } else {
+//            return null;
+//        }
+//    }
 
 //    public void setCondition(Map<Long, Long> condition) {
 //        this.condition = condition;
@@ -106,48 +109,47 @@ public class FValue {
 //        for(long id : condition){
 //            dos.writeLong(id);
 //        }
-        for (Map.Entry<Long, Long> e : condition.entrySet()) {
-            dos.writeLong(e.getKey());
-            dos.writeLong(e.getValue());
+        for (Long e : condition) {
+            dos.writeLong(e);
         }
     }
 
-    public boolean isActual() {
-//        for(int i=0; i<function.getRange(); ++i){
-//            if(function.getArguments().createCVar(i).isEmpty()
-//            || function.getArguments().createCVar(i).getValue().getId() != condition.createCVar(i)){
+    public boolean isActual(Function f) {
+        for (int i = 0; i < function.getRange(); ++i) {
+            if (function.getArguments().get(i).getDirtyValue() == null
+                    || function.getArguments().get(i).getDirtyValue().getId() != condition.get(i)) {
+                return false;
+            }
+        }
+//        for (Map.Entry<Long, Long> e : condition.entrySet()) {
+//            TVariable tv = mind.getTVars().get(e.getKey());
+//            if (tv == null || tv.isEmpty() || tv.getCurrent().getId() != e.getValue()) {
 //                return false;
 //            }
 //        }
-        for (Map.Entry<Long, Long> e : condition.entrySet()) {
-            TVariable tv = mind.getTVars().get(e.getKey());
-            if (tv == null || tv.isEmpty() || tv.getCurrent().getId() != e.getValue()) {
-                return false;
-            }
-        }
         return true;
     }
 
-    public boolean isClosed() {
-        for (long id : condition.values()) {
-            if (mind.getTValues().get(id) == null || !mind.getTValues().get(id).isClosed()) {
-                return false;
-            }
-        }
-        return true;
-    }
+//    public boolean isClosed() {
+//        for (long id : condition.values()) {
+//            if (mind.getTValues().get(id) == null || !mind.getTValues().get(id).isClosed()) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
+//
+//    public boolean isBlocked() {
+//        for (long id : condition.values()) {
+//            if (mind.getTValues().get(id) != null && mind.getTValues().get(id).isBlocked()) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
-    public boolean isBlocked() {
-        for (long id : condition.values()) {
-            if (mind.getTValues().get(id) != null && mind.getTValues().get(id).isBlocked()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        return function.toString(this);
-    }
+//    @Override
+//    public String toString() {
+//        return function.toString(this);
+//    }
 }

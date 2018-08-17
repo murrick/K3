@@ -14,7 +14,7 @@ import java.util.Date;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable {
+public class Term implements Comparable<Term> {
 
     private DataType type = DataType.VOID;
     private Object value = null;
@@ -271,15 +271,13 @@ public class Term implements Comparable {
         this.index = index;
     }
 
+
     @Override
-    public int compareTo(Object x) {
-        if (x == null || value == null || !(x instanceof Term) || type != ((Term) x).getType()) {
+    public int compareTo(Term o) {
+        if (o == null || value == null || type != o.getType()) {
             return -2;
-        } else {
-            int c = ((Comparable) value).compareTo(((Term) x).getValue());
-            return c > 0 ? 1 : (c < 0 ? -1 : 0);
         }
-
+        int c = ((Comparable) value).compareTo(o.getValue());
+        return c > 0 ? 1 : (c < 0 ? -1 : 0);
     }
-
 }

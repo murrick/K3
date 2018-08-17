@@ -78,20 +78,33 @@ public class Analiser {
 //    }
 
     public boolean checkSequence(Tree t, Tree u, boolean logging) throws RuntimeErrorException {
-        boolean result = false;
 
         List<Domain> sequence = new ArrayList<>();
-        sequence.addAll(t.getSequence());
-        sequence.addAll(u.getSequence());
+        if (t.getId() != u.getId()) {
+            sequence.addAll(t.getSequence());
+            sequence.addAll(u.getSequence());
+        } else {
+            sequence.addAll(t.getSequence());
+        }
 
         mind.getClosedDomains().clear();
 
         boolean showFalse = true;
+
+        // Контроль системных предикатов
+        for (int k = 0; k < sequence.size(); ++k) {
+            Domain a = sequence.get(k);
+            if (a.isSystem() && a.isUsed()) {
+                a.setClosed();
+            }
+        }
+
+        // Основной цикл сравнения последовательности
         for (int k = 0; k < sequence.size(); ++k) {
             Domain a = sequence.get(k);
 
             //TODO: Системные пока отключил
-//            if ((!a.isClosed() || a.getRight().isQuery()) && a.isSystem() && a.isSubstituted()) {
+//            if ((!a.isClosed() || a.getRight().isQuery()) && a.isSystem() && a.isComplete()) {
 //                int res = a.execSystem();
 //                if (res == 1) {
 //                    a.setClosed();
@@ -147,13 +160,9 @@ public class Analiser {
                         }
                     }
                     if (equals) {
-                        result = true;
-
                         if (!a.isClosed() || !b.isClosed() || !t.isUsed() || !u.isUsed()) {
                             a.setClosed();
                             b.setClosed();
-                            t.setUsed();
-                            u.setUsed();
 
 //                            if (a.getRight().isQuery()) {
 //                                mind.getSolutions().createTVar(b.toString());
@@ -163,18 +172,6 @@ public class Analiser {
 //                                mind.getSolutions().createTVar(a.toString());
 //                                mind.getSolutions().createTVar(b.toString());
 //                            }
-                            if (logging) {
-                                mind.getLog().add(LogMode.ANALIZER, "Sequence resolved : ");
-                                for (Domain x : sequence) {
-                                    mind.getLog().add(LogMode.ANALIZER, "\t" + x.toString());
-                                }
-                                mind.getLog().add(LogMode.ANALIZER, "Сoincidence : ");
-                                mind.getLog().add(LogMode.ANALIZER, "\t" + a.toString());
-                                mind.getLog().add(LogMode.ANALIZER, "\t" + b.toString());
-//                                a.setUsed();
-//                                b.setUsed();
-                            }
-                            showFalse = true;
 
 //                            List<TVariable> list;
 //                            if (a.getRight().isQuery()) {
@@ -213,13 +210,42 @@ public class Analiser {
             }
         }
 
+        // Контроль звершенности последовательности
+        boolean result = true;
+        for (int k = 0; k < sequence.size(); ++k) {
+            Domain a = sequence.get(k);
+            if (!a.isClosed() && !a.isDest()) {
+                result = false;
+                break;
+            }
+        }
 
         if (result) {
+
+            t.setUsed();
+            u.setUsed();
+            if (logging) {
+                mind.getLog().add(LogMode.ANALIZER, "Sequence resolved : ");
+                for (Domain x : sequence) {
+                    mind.getLog().add(LogMode.ANALIZER, "\t" + x.toString());
+                }
+                mind.getLog().add(LogMode.ANALIZER, "Сoincidence : ");
+                for (int k = 0; k < sequence.size(); ++k) {
+                    Domain a = sequence.get(k);
+                    if (a.isClosed()) {
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + a.toString());
+                        break;
+                    }
+                }
+            }
+            showFalse = true;
+
+
             for (Domain d : sequence) {
 //                d.recalculate();
 //                if (!d.isClosed() && !d.isDestFor() /*&& !d.isSystem()*/) {
                 //TODO: сомневаюсь в && !d.isAntc()
-                if (!d.isClosed() && !d.isDest() && !(d.isSystem() && d.isUsed() && !d.isAntc())) {
+                if (!d.isClosed() && !d.isDest()/* && !(d.isSystem() && d.isUsed() /*&& !d.isAntc())*/) {
                     result = false;
                     mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
 
@@ -267,9 +293,9 @@ public class Analiser {
             }
         }
 
-        if (!result) {
-            collectResults(true, sequence);
-        }
+//        if (!result) {
+//            collectResults(true, sequence);
+//        }
 
         return result;
     }
@@ -284,7 +310,7 @@ public class Analiser {
 
             for (Tree t : set) {
                 for (Tree x : set) {
-                    if (t.getId() != x.getId() && !x.isExcluded(t)) {
+                    if (!x.isExcluded(t)) {
                         if (checkSequence(t, x, logging)) {
                             result = true;
                         }
@@ -304,7 +330,7 @@ public class Analiser {
 //            mind.getCalculated().clear();
 //
 //            for (Function f : fs) {
-//                if (!f.isCalculable() || f.isSubstituted()) {
+//                if (!f.isCalculable() || f.isComplete()) {
 //                    f.clearResult();
 //                    mind.getCalculator().calculate(f);
 //                }
@@ -314,9 +340,9 @@ public class Analiser {
 
             boolean occurrs = false;
             for (Domain d : sd) {
-                if (d.isUsed() && !d.isAntc()) {
+                if (d.isUsed() /*&& !d.isAntc()*/) {
                     occurrs = true;
-                    result = true;
+//                    result = true;
                 }
 //                int res = d.execSystem();
 //                if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
@@ -373,62 +399,55 @@ public class Analiser {
         Set<Domain> ant = new HashSet<>();
 
         for (Domain d : sequence) {
-            //TODO: сомневаюсь в && !d.isAntc()
-            if (d.isSystem() && d.isUsed() && !d.isAntc()) {
-                //TODO: Было закомментировано почему-то
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }
-            } else if (d.isClosed() /*|| d.isDestFor()*/) {
-                if (d.isAntc()) {
+            if (d.isClosed() && d.isQuery()) {
+                if (d.isSystem()) {
+
+                    mind.getSolutions().add(d);
+                    for (TVariable tv : d.getTVariables(true)) {
+                        mind.getValues().add(tv, d);
+                    }
+                } else if (d.isAntc()) {
                     ant.add(d);
                 } else {
                     suc.add(d);
                 }
             }
         }
+
         for (Domain d : ant) {
             if (contains(d, suc)) {
-                if (!hypotesis) {
-//                    int sz = mind.getSolutions().size();
-                    mind.getSolutions().add(d);
-
-//                    if (sz != mind.getSolutions().size()) {
-                    for (TVariable tv : d.getTVariables(true)) {
-                        mind.getValues().add(tv, d);
-                    }
-//                    }
+                mind.getSolutions().add(d);
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
                 }
-            } else if (hypotesis /*&& !d.getRight().isQuery()*/) {
-                //TODO: Отключил для эксперимента
-//                mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
             }
         }
-        for (Domain d : suc) {
-            if (contains(d, ant)) {
-                if (!hypotesis) {
-//                    int sz = mind.getSolutions().size();
-//                    mind.getSolutions().createTVar(d);
 
-//                    if (sz != mind.getSolutions().size()) {
-                    for (TVariable tv : d.getTVariables(true)) {
-                        mind.getValues().add(tv, d);
-                    }
+//        for (Domain d : suc) {
+//            if (contains(d, ant)) {
+//                if (!hypotesis) {
+////                    int sz = mind.getSolutions().size();
+////                    mind.getSolutions().createTVar(d);
+//
+////                    if (sz != mind.getSolutions().size()) {
+//                    for (TVariable tv : d.getTVariables(true)) {
+//                        mind.getValues().add(tv, d);
 //                    }
-                }
-            }
-//            else if (hypotesis) {
-//                mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
+////                    }
+//                }
 //            }
-        }
-        if (hypotesis) {
-            for (Domain d : suc) {
-                if (!contains(d, ant) /*&& !d.getRight().isQuery()*/) {
-                    //TODO: Отключил для эксперимента
-//                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
-                }
-            }
-        }
+////            else if (hypotesis) {
+////                mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
+////            }
+//        }
+//        if (hypotesis) {
+//            for (Domain d : suc) {
+//                if (!contains(d, ant) /*&& !d.getRight().isQuery()*/) {
+//                    //TODO: Отключил для эксперимента
+////                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
+//                }
+//            }
+//        }
 
         //result = checkSequence(t, logging);
     }
