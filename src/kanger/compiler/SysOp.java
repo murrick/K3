@@ -2,17 +2,17 @@ package kanger.compiler;
 
 import kanger.Mind;
 import kanger.enums.LibMode;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.Argument;
 import kanger.primitives.Domain;
 import kanger.primitives.Function;
 
-//import javax.script.*;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+//import javax.script.*;
 
 /**
  * Created by murray on 27.05.15.
@@ -31,7 +31,7 @@ public class SysOp {
     public SysOp(final Mind mind) {
         proc = new IRunnable() {
             @Override
-            public Object run(Object o) throws RuntimeErrorException {
+            public Object run(Object o) /*throws RuntimeErrorException*/ {
 
                 List<Argument> arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
 

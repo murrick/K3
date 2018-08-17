@@ -130,6 +130,10 @@ public class FValue {
         return true;
     }
 
+    public long getCondition(int index) {
+        return condition.get(index);
+    }
+
 //    public boolean isClosed() {
 //        for (long id : condition.values()) {
 //            if (mind.getTValues().get(id) == null || !mind.getTValues().get(id).isClosed()) {

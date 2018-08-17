@@ -35,7 +35,7 @@ public class Calculator {
      * @param fu
      * @return
      */
-    public int calculate(Function fu) throws RuntimeErrorException {
+    public int calculate(Function fu) /*throws RuntimeErrorException*/ {
 
         //FArg fu = func.getF();
         int flag = 0;
@@ -94,7 +94,7 @@ public class Calculator {
 //        flag = execute(fu);
         int k = execute(fu);
         if (k == 1 || k == 2) {
-            if (!"$$".equals(fu.getArguments().get(fu.getRange()).getValue())) {
+//            if (!"$$".equals(fu.getArguments().get(fu.getRange()).getValue())) {
                 ++flag;
                 mind.getFValues().add(fu);
 //            fu.setResult(null);
@@ -105,14 +105,14 @@ public class Calculator {
 //                    && fu.isCalculable()
 //                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
                 ));
-            } else {
-                mind.getLog().add(LogMode.ANALIZER, "Invalid function result:");
-                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
-//                    + (fu.getResult() != null
-//                    && fu.isCalculable()
-//                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
-                ));
-            }
+//            } else {
+//                mind.getLog().add(LogMode.ANALIZER, "Invalid function result:");
+//                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
+////                    + (fu.getResult() != null
+////                    && fu.isCalculable()
+////                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
+//                ));
+//            }
             mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
 
@@ -164,7 +164,7 @@ public class Calculator {
         if (op != null) {
 
             for (Argument a : d.getArguments()) {
-                if (!a.isEmpty() && "$$".equals(a.getValue().toString())) {
+                if (!a.isEmpty() /*&& "$$".equals(a.getValue().toString())*/) {
                     return -1;
                 }
             }
@@ -185,7 +185,7 @@ public class Calculator {
         return k;
     }
 
-    public int execute(Function fu) throws RuntimeErrorException {
+    public int execute(Function fu) /*throws RuntimeErrorException*/ {
         int k = -1;
         String n = fu.getName() + "(" + fu.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
@@ -196,15 +196,15 @@ public class Calculator {
             }
 
             for (Argument a : fu.getArguments()) {
-                if (!a.isEmpty() && (a.getValue().isCVar() || "$$".equals(a.getValue()))) {
-                    fu.setResult(mind.getTerms().add("$$"));
+                if (!a.isEmpty() && (a.getValue().isCVar() /*|| "$$".equals(a.getValue())*/)) {
+//                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;
                 }
             }
 
-            if ("$$".equals(fu.getResult())) {
-                return -1;
-            }
+//            if ("$$".equals(fu.getResult())) {
+//                return -1;
+//            }
 
             k = (Integer) op.getProc().run(fu);
 //            fu.getArguments().remove(op.getRange());

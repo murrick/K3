@@ -17,7 +17,7 @@ import java.util.*;
  */
 public class Analiser {
 
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
+    private static final boolean DEBUG_DISABLE_FALSE_CHECK = true;
 
     private final Mind mind;
     private boolean isInsertion = false;

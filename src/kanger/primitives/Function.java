@@ -351,7 +351,15 @@ public class Function {
 
     public boolean isCalculated() {
         FValue f = mind.getFValues().get(this);
-        return f != null; // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
+        if (f != null) {
+            for (int i = 0; i < getRange(); ++i) {
+                if (getArguments().get(i).getValue() == null
+                        || getArguments().get(i).getValue().getId() != f.getCondition(i)) {
+                    return false;
+                }
+            }
+        }
+        return f != null && f.isActual(this); // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
     }
 
     public boolean isComplete() {

@@ -191,7 +191,7 @@ public class Argument {
 //			if(getF().isCalculable()) {
 //				return getF().isCalculated();
 //			} else {
-            return t != null && !"$$".equals(t.toString());
+            return t != null /*&& !"$$".equals(t.toString())*/;
 //			}
         } else {
             return !isEmpty() && !getValue().isCVar();

@@ -98,7 +98,7 @@ public class Linker {
     }
 
 
-    private boolean linkDomains(Domain master, Domain slave, int level, boolean logging, boolean occurrsMaster, boolean occurrsSlave) {
+    private boolean linkDomains(Domain master, Domain slave, int level, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) {
 
         if (level >= master.getPredicate().getRange()) {
 
@@ -111,11 +111,12 @@ public class Linker {
                 }
                 mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
-            return occurrsMaster || occurrsSlave;
+            return occurrsSubst;
 
         } else {
 
             boolean isQuery = mind.getQuery() != null;
+
 
             //ПОДСТАНОВКИ T-переменных
             for (int i = 0; i <= level; ++i) {
@@ -133,6 +134,7 @@ public class Linker {
                     TValue s;
                     if (!master.get(i).getT().contains(slave.get(i).getValue())) {
                         s = master.get(i).getT().setValue(slave.get(i).getValue());
+                        occurrsSubst = true;
                     } else {
                         s = master.get(i).getT().find(slave.get(i).getValue());
                     }
@@ -156,6 +158,7 @@ public class Linker {
                     TValue s;
                     if (!slave.get(i).getT().contains(master.get(i).getValue())) {
                         s = slave.get(i).getT().setValue(master.get(i).getValue());
+                        occurrsSubst = true;
                     } else {
                         s = slave.get(i).getT().find(master.get(i).getValue());
                     }
@@ -166,7 +169,23 @@ public class Linker {
                     occurrsSlave = true;
                 }
             }
-            return linkDomains(master, slave, level + 1, logging, occurrsMaster, occurrsSlave);
+
+//            if(occurrsMaster) {
+//                for (Function f : master.getFunctions()) {
+//                    if(!f.isCalculated()) {
+//                        mind.getCalculator().calculate(f);
+//                    }
+//                }
+//            }
+//            if(occurrsSlave) {
+//                for (Function f : slave.getFunctions()) {
+//                    if(!f.isCalculated()) {
+//                        mind.getCalculator().calculate(f);
+//                    }
+//                }
+//            }
+
+            return linkDomains(master, slave, level + 1, logging, occurrsSubst, occurrsMaster, occurrsSlave);
         }
     }
 
@@ -206,7 +225,7 @@ public class Linker {
     }
 
     public boolean updateDomains(SortedSet<TVariable> tvars, Queue<Tree> masterSet, Queue<Tree> slaveSet, boolean logging) throws RuntimeErrorException {
-        boolean result = true;
+        boolean result = false;
 
         if (tvars.isEmpty()) {
             for (Tree master : masterSet) { //query == null ? set : query.getTree()) {
@@ -226,7 +245,9 @@ public class Linker {
                                 ) {
 //                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
 
-                                    linkDomains(d1, d2, 0, logging, false, false);
+                                    if (linkDomains(d1, d2, 0, logging, false, false, false)) {
+                                        result = true;
+                                    }
                                     linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
 
 //                                } else if (d1.getId() == d2.getId() && d1.isSystem()) {
@@ -247,7 +268,7 @@ public class Linker {
                     } else {
 //                        mind.getTValues().release();
 //                        mind.getFValues().release();
-                        result = false;
+//                        result = false;
                     }
                 }
             }
@@ -259,8 +280,8 @@ public class Linker {
 
                 do {
                     mind.getTValues().set(t, v);
-                    if (!updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
-                        result = false;
+                    if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
+                        result = true;
                     }
                 } while ((v = t.next(v)) != null);
 
@@ -271,8 +292,8 @@ public class Linker {
 
                 mind.getSubstituted().remove(t);
             } else {
-                if (!updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
-                    result = false;
+                if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
+                    result = true;
                 }
             }
         }
@@ -519,7 +540,7 @@ public class Linker {
                 mind.getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
-                boolean res = updateDomains(tset, master, slave, logging);
+                while (updateDomains(tset, master, slave, logging)) ;
                 calcFunctions(tset, slave, logging);
 //                if (!res) {
 //                    break;
