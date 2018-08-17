@@ -194,7 +194,7 @@ public class Argument {
             return t != null && !"$$".equals(t.toString());
 //			}
         } else {
-            return !isEmpty() /*&& !getValue().isCVar()*/;
+            return !isEmpty() && !getValue().isCVar();
         }
     }
 

@@ -94,16 +94,25 @@ public class Calculator {
 //        flag = execute(fu);
         int k = execute(fu);
         if (k == 1 || k == 2) {
-            ++flag;
-            mind.getFValues().add(fu);
+            if (!"$$".equals(fu.getArguments().get(fu.getRange()).getValue())) {
+                ++flag;
+                mind.getFValues().add(fu);
 //            fu.setResult(null);
 //            fu.setCalculated(true);
-            mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
-            mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
+                mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
+                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
 //                    + (fu.getResult() != null
 //                    && fu.isCalculable()
 //                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
-            ));
+                ));
+            } else {
+                mind.getLog().add(LogMode.ANALIZER, "Invalid function result:");
+                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
+//                    + (fu.getResult() != null
+//                    && fu.isCalculable()
+//                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
+                ));
+            }
             mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
 
@@ -272,10 +281,14 @@ public class Calculator {
 
 }
 //TODO: РЕШЕНО ?2 > 3;
+//TODO: РЕШЕНО ?2 < 3;
+//TODO: РЕШЕНО ?2 = 3;
+//TODO: РЕШЕНО ?2 = 2;
+//TODO: РЕШЕНО ?$x x=5;
+//TODO: РЕШЕНО ?~$x x=5;
 //TODO: РЕШЕНО ?$x ((x+3)*15)=965; - не выводит результат
 //TODO: РЕШЕНО ?$x $y (12+y)*2=256 && x=5*y;
 //TODO: РЕШЕНО ?$x $y x + y = 12; - выводит TRUE
-//TODO: ?$x x=5;
 //TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x);
 //TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x) && x > 5;
 //TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x $y num(x) && num(y) && x + y = 7;

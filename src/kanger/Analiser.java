@@ -94,7 +94,7 @@ public class Analiser {
         // Контроль системных предикатов
         for (int k = 0; k < sequence.size(); ++k) {
             Domain a = sequence.get(k);
-            if (a.isSystem() && a.isUsed()) {
+            if (a.isSystem() && a.isUsed() /*&& !a.isAntc()*/) {
                 a.setClosed();
             }
         }
@@ -230,11 +230,9 @@ public class Analiser {
                     mind.getLog().add(LogMode.ANALIZER, "\t" + x.toString());
                 }
                 mind.getLog().add(LogMode.ANALIZER, "Сoincidence : ");
-                for (int k = 0; k < sequence.size(); ++k) {
-                    Domain a = sequence.get(k);
-                    if (a.isClosed()) {
-                        mind.getLog().add(LogMode.ANALIZER, "\t" + a.toString());
-                        break;
+                for (Domain x : sequence) {
+                    if (x.isClosed()) {
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + x.toString());
                     }
                 }
             }
