@@ -275,6 +275,7 @@ public class Calculator {
 //TODO: РЕШЕНО ?$x ((x+3)*15)=965; - не выводит результат
 //TODO: РЕШЕНО ?$x $y (12+y)*2=256 && x=5*y;
 //TODO: РЕШЕНО ?$x $y x + y = 12; - выводит TRUE
+//TODO: ?$x x=5;
 //TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x);
 //TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x) && x > 5;
 //TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x $y num(x) && num(y) && x + y = 7;

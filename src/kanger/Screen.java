@@ -1,6 +1,6 @@
 package kanger;
 
-import jline.ConsoleReader;
+//import jline.ConsoleReader;
 import kanger.compiler.Parser;
 import kanger.compiler.SysOp;
 import kanger.enums.Enums;
@@ -33,14 +33,14 @@ public class Screen {
     public static void session(Mind mind) {
         boolean stop = false;
 
-        ConsoleReader reader = null;
-        if (LINE_EDITOR_ENABLE) {
-            try {
-                reader = new ConsoleReader();
-            } catch (IOException e) {
-                LINE_EDITOR_ENABLE = false;
-            }
-        }
+//        ConsoleReader reader = null;
+//        if (LINE_EDITOR_ENABLE) {
+//            try {
+//                reader = new ConsoleReader();
+//            } catch (IOException e) {
+//                LINE_EDITOR_ENABLE = false;
+//            }
+//        }
 
 //        String ss = "!@x (a(x) || b(x)) -> c(x);";
 //        for(int i=0; i<ss.length(); ++i){
@@ -53,19 +53,19 @@ public class Screen {
         while (!stop) {
             String line = "";
             try {
-                if (LINE_EDITOR_ENABLE && reader != null) {
-                    try {
-                        Character c = 0;
-                        System.out.printf("\n: ");
-                        line = reader.readLine(c);
-                    } catch (IOException e) {
-                        LINE_EDITOR_ENABLE = false;
-                    }
-                }
-                if (!LINE_EDITOR_ENABLE || reader == null) {
+//                if (LINE_EDITOR_ENABLE && reader != null) {
+//                    try {
+//                        Character c = 0;
+//                        System.out.printf("\n: ");
+//                        line = reader.readLine(c);
+//                    } catch (IOException e) {
+//                        LINE_EDITOR_ENABLE = false;
+//                    }
+//                }
+//                if (!LINE_EDITOR_ENABLE || reader == null) {
                     System.out.printf("\n: ");
                     line = new Scanner(System.in).nextLine();
-                }
+//                }
                 if (line == null) {
                     line = "";
                 }

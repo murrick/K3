@@ -14,8 +14,8 @@ import kanger.factory.*;
 import kanger.primitives.*;
 import kanger.stores.*;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
+//import javax.script.ScriptEngine;
+//import javax.script.ScriptEngineManager;
 import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -59,7 +59,7 @@ public class Mind {
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
 
-    private ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
+//    private ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
 
     //    private final Set<Long> queuedDomains = new HashSet<>();
     private final Set<Long> usedTrees = new HashSet<>();
@@ -532,9 +532,9 @@ public class Mind {
 
     }
 
-    public ScriptEngine getScryptEngine() {
-        return scryptEngine;
-    }
+//    public ScriptEngine getScryptEngine() {
+//        return scryptEngine;
+//    }
 
     public Boolean query(String line) throws ParseErrorException, RuntimeErrorException {
         querySource = line;

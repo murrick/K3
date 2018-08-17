@@ -8,7 +8,7 @@ import kanger.primitives.Argument;
 import kanger.primitives.Domain;
 import kanger.primitives.Function;
 
-import javax.script.ScriptException;
+//import javax.script.*;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class SysOp {
                 for (Argument a : arg) {
                     String var = params.get(i);
                     if (arg.get(i).getValue() != null) {
-                        mind.getScryptEngine().put(var, arg.get(i).getValue().getValue());
+//                        mind.getScryptEngine().put(var, arg.get(i).getValue().getValue());
                     } else {
                         ++undefined;
                         if (i + 1 == arg.size() && !scripts.isEmpty()) {
@@ -60,28 +60,28 @@ public class SysOp {
                 if (undefined > 1) {
                     result = 0;
                 } else {
-                    try {
+//                    try {
 
-                        mind.getScryptEngine().put("kanger", mind);
-                        mind.getScryptEngine().eval(script);
+//                        mind.getScryptEngine().put("kanger", mind);
+//                        mind.getScryptEngine().eval(script);
                         i = 0;
                         for (String var : params) {
-                            Object val = mind.getScryptEngine().get(var);
-                            if (val == null) {
-                                result = 0;
-                                arg.get(i++).delValue();
-                            } else {
-                                arg.get(i++).setValue(mind.getTerms().add(val));
-                            }
+//                            Object val = mind.getScryptEngine().get(var);
+//                            if (val == null) {
+//                                result = 0;
+//                                arg.get(i++).delValue();
+//                            } else {
+//                                arg.get(i++).setValue(mind.getTerms().add(val));
+//                            }
                         }
 //                        if (result != 0 && rval != null) {
 //                            if (rval.compareTo(arg.createCVar(arg.size() - 1).getC()) != 0) {
 //                                result = 0;
 //                            }
 //                        }
-                    } catch (ScriptException ex) {
-                        throw new RuntimeErrorException(SysOp.this, ex.getMessage());
-                    }
+//                    } catch (ScriptException ex) {
+//                        throw new RuntimeErrorException(SysOp.this, ex.getMessage());
+//                    }
                 }
                 return result;
             }
