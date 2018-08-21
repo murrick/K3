@@ -121,6 +121,13 @@ public class Linker {
             //ПОДСТАНОВКИ T-переменных
             for (int i = 0; i <= level; ++i) {
 
+//                if("xx".equals(master.get(i).getValue() + "")) {
+//                    System.out.println("m: " + master);
+//                }
+//                if("xx".equals(slave.get(i).getValue() + "")) {
+//                    System.out.println("s: " + slave);
+//                }
+
                 if (master.get(i).isTSet()
                         && !slave.get(i).isEmpty()
                         && !slave.isDestFor(i, master)
@@ -196,14 +203,35 @@ public class Linker {
                 int res = d.execSystem();
 
                 // Проверка полноты предиката
-                for (TVariable t : d.getTVariables(true)) {
-                    if (t.isEmpty()) {
+                for (Argument a : d.getArguments()) {
+                    if (!a.isCalculated()) {
                         res = -2;
                         break;
                     }
+//                    if (
+//                            (a.isTSet() && a.getT().isEmpty())
+//                                    || (a.isFSet() && !a.getF().isCalculated())
+//                    ) {
+//                        res = -2;
+//                        break;
+//                    }
                 }
 
-                //TODO: Убрал контроль антецедента
+//                for (TVariable t : d.getTVariables(true)) {
+//                    if (t.isEmpty()) {
+//                        res = -2;
+//                        break;
+//                    }
+//                }
+//
+//                //
+//                for (Function f : d.getFunctions()) {
+//                    if (!f.isCalculated()) {
+//                        res = -2;
+//                        break;
+//                    }
+//                }
+
                 if (res == 0) {
                     if (d.isAntc()) {
                         d.setUsed();
@@ -239,6 +267,8 @@ public class Linker {
 
                         for (Domain d1 : master.getSequence()) {
                             for (Domain d2 : slave.getSequence()) {
+
+
                                 if (d1.getId() != d2.getId()
                                         && d1.isAntc() != d2.isAntc()
                                         && d1.getPredicate().getId() == d2.getPredicate().getId()
@@ -246,6 +276,18 @@ public class Linker {
 //                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
 
                                     if (linkDomains(d1, d2, 0, logging, false, false, false)) {
+
+//                                        for(Argument ma : d1.getArguments()) {
+//                                            if ("xx".equals(ma.getValue() + "")) {
+//                                                System.out.println("m: " + d1);
+//                                            }
+//                                        }
+//                                        for(Argument sl : d2.getArguments()) {
+//                                            if ("xx".equals(sl.getValue() + "")) {
+//                                                System.out.println("s: " + d2);
+//                                            }
+//                                        }
+
                                         result = true;
                                     }
                                     linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
@@ -266,6 +308,7 @@ public class Linker {
 //                            result = false;
 //                        }
                     } else {
+//                        System.out.println("!!");
 //                        mind.getTValues().release();
 //                        mind.getFValues().release();
 //                        result = false;
@@ -279,6 +322,11 @@ public class Linker {
                 mind.getSubstituted().add(t);
 
                 do {
+
+//                    if("xx".equals(v.getValue() + "")) {
+//                        System.out.println("v: " + v);
+//                    }
+
                     mind.getTValues().set(t, v);
                     if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
                         result = true;
@@ -496,14 +544,15 @@ public class Linker {
         mind.getCalculated().clear();
 
 
-        Queue<Tree> slave = r != null ? getActualTrees(r) : mind.getActualTrees();
+        //TODO: Нужно сделать динамический сет
+        Queue<Tree> slave = /*r != null ? getActualTrees(r) :*/ mind.getActualTrees();
         Queue<Tree> master;
-        if (r != null) {
-            master = new LinkedList<>();
-            master.addAll(r.getTree());
-        } else {
+//        if (r != null) {
+//            master = new LinkedList<>();
+//            master.addAll(r.getTree());
+//        } else {
             master = slave;
-        }
+//        }
 
 
         TValue saveT = null;

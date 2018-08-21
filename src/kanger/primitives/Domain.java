@@ -309,7 +309,11 @@ public class Domain {
     private List<Long> convertArguments() {
         List<Long> list = new ArrayList<>();
         for (int i = 0; i < predicate.getRange(); ++i) {
-            list.add(arguments.get(i).getValue().getId());
+            try {
+                list.add(arguments.get(i).getValue().getId());
+            } catch (Exception x) {
+                System.out.println(i);
+            }
         }
         return list;
     }

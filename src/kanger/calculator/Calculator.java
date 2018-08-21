@@ -95,16 +95,16 @@ public class Calculator {
         int k = execute(fu);
         if (k == 1 || k == 2) {
 //            if (!"$$".equals(fu.getArguments().get(fu.getRange()).getValue())) {
-                ++flag;
-                mind.getFValues().add(fu);
+            ++flag;
+            mind.getFValues().add(fu);
 //            fu.setResult(null);
 //            fu.setCalculated(true);
-                mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
-                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
+            mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
+            mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
 //                    + (fu.getResult() != null
 //                    && fu.isCalculable()
 //                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
-                ));
+            ));
 //            } else {
 //                mind.getLog().add(LogMode.ANALIZER, "Invalid function result:");
 //                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
@@ -163,11 +163,11 @@ public class Calculator {
         SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
         if (op != null) {
 
-            for (Argument a : d.getArguments()) {
-                if (!a.isEmpty() /*&& "$$".equals(a.getValue().toString())*/) {
-                    return -1;
-                }
-            }
+//            for (Argument a : d.getArguments()) {
+//                if (a.isEmpty() && !a.isTSet() && !a.isFSet()/*&& "$$".equals(a.getValue().toString())*/) {
+//                    return -1;
+//                }
+//            }
 
             k = (Integer) op.getProc().run(d);
 
@@ -280,15 +280,43 @@ public class Calculator {
     }
 
 }
+
+
+//TODO: РЕШЕНО !@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));          ? (a(z) && c(z)) -> d(z);
+//TODO: РЕШЕНО !@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));          ? b(z) -> d(z);
+//TODO: РЕШЕНО !@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e (z);  ? $x f(x);
+
+//TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ?$x @y a(x,y);
+//TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ? ~($x @y a(x,y));
+//TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ?@x $y a(y,x);
+//TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ?$x @y a(x,y);
+//TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ?~($x ~($y a(y,x)));
+
+
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nnn);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?n(nnn);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(xx);          -- ЛИШНИЕ ГИПОТЕЗЫ прибить в фазе первого линка
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?b(xx);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?c(xx);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?d(xx);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?n(xx);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x c(x);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x d(x);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nn) -> b(nn);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nn) -> c(nn);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nn) -> d(nn);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x a(x) && d(x);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x a(x) || d(x);
+
 //TODO: РЕШЕНО ?2 > 3;
 //TODO: РЕШЕНО ?2 < 3;
 //TODO: РЕШЕНО ?2 = 3;
 //TODO: РЕШЕНО ?2 = 2;
 //TODO: РЕШЕНО ?$x x=5;
 //TODO: РЕШЕНО ?~$x x=5;
-//TODO: РЕШЕНО ?$x ((x+3)*15)=965; - не выводит результат
+//TODO: РЕШЕНО ?$x ((x+3)*15)=965; --- не выводит результат
 //TODO: РЕШЕНО ?$x $y (12+y)*2=256 && x=5*y;
-//TODO: РЕШЕНО ?$x $y x + y = 12; - выводит TRUE
-//TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x);
-//TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x) && x > 5;
-//TODO: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x $y num(x) && num(y) && x + y = 7;
+//TODO: РЕШЕНО ?$x $y x + y = 12; --- выводит TRUE
+//TODO: РЕШЕНО !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x);      --- ВКЛЮЧАЕТ 10
+//TODO: РЕШЕНО !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x) && x > 5;
+//TODO: РЕШЕНО !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x $y num(x) && num(y) && x + y = 7;

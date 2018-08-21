@@ -35,11 +35,12 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && !arg.get(0).isCVar() && !arg.get(1).isDefined()) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _add(arg.get(0).getValue(), mind.getTerms().add(1)).compareTo(arg.get(1).getValue()) != 0)) {
                         if (!((Function) o).setParameter(1, _add(arg.get(0).getValue(), mind.getTerms().add(1)))) {
                             ret = 0;
                         }
-                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(1).isCVar()) {
+                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (!((Function) o).setParameter(0, _sub(arg.get(1).getValue(), mind.getTerms().add(1)))) {
                             ret = 0;
                         }
@@ -60,11 +61,12 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && !arg.get(0).isCVar() && !arg.get(1).isDefined()) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _sub(arg.get(0).getValue(), mind.getTerms().add(1)).compareTo(arg.get(1).getValue()) != 0)) {
                         if (!((Function) o).setParameter(1, _sub(arg.get(0).getValue(), mind.getTerms().add(1)))) {
                             ret = 0;
                         }
-                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(1).isCVar()) {
+                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (!((Function) o).setParameter(0, _add(arg.get(1).getValue(), mind.getTerms().add(1)))) {
                             ret = 0;
                         }
@@ -84,7 +86,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && !arg.get(0).isCVar() && !arg.get(1).isDefined()) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _bitnot(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) != 0)) {
                         if (!((Function) o).setParameter(1, _bitnot(arg.get(0).getValue()))) {
                             ret = 0;
                         }
@@ -108,7 +111,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && !arg.get(0).isCVar() && !arg.get(1).isDefined()) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _neg(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) != 0)) {
                         if (!((Function) o).setParameter(1, _neg(arg.get(0).getValue()))) {
                             ret = 0;
                         }
@@ -132,7 +136,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && !arg.get(0).isCVar() && !arg.get(1).isDefined()) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(0).getValue().compareTo(arg.get(1).getValue()) != 0)) {
                         if (!((Function) o).setParameter(1, arg.get(0).getValue())) {
                             ret = 0;
                         }
@@ -157,7 +162,9 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined()) {
+                    if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                            && _add(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) != 0)) {
                         if (!((Function) o).setParameter(2, _add(arg.get(0).getValue(), arg.get(1).getValue()))) {
                             ret = 0;
                         }
@@ -186,7 +193,9 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined()) {
+                    if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                            && _sub(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) != 0)) {
                         if (!((Function) o).setParameter(2, _sub(arg.get(0).getValue(), arg.get(1).getValue()))) {
                             ret = 0;
                         }
@@ -198,7 +207,8 @@ public class Functions {
                         if (!((Function) o).setParameter(1, _sub(arg.get(0).getValue(), arg.get(2).getValue()))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && _sub(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                            && _sub(arg.get(0).getValue(), arg.get(1).getValue()).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
 //                        arg.createCVar(2).delValue(((Function) o).getOwner());
@@ -209,6 +219,7 @@ public class Functions {
             }));
         }
 
+        //TODO: Закончить с перезаписью результата в случае неверного
         {
             put("_mul(2)", new SysOp(LibMode.FUNCTION, "_mul", 2, new IRunnable() {
                 public Object run(Object o) {

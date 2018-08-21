@@ -73,16 +73,17 @@ public class Argument {
 //
 
     public boolean setValue(Term t) {
-        boolean result = true;
         if (o == null || o instanceof Term) {
             o = t;
         } else if (o instanceof TVariable) {
-            TValue s = ((TVariable) o).setValue(t);
+            if (((TVariable) o).find(t) != null) {
+            } else {
+                TValue s = ((TVariable) o).setValue(t);
+            }
         } else if (o instanceof Function) {
             ((Function) o).setResult(t);
-            result = true;
         }
-        return result;
+        return true;
     }
 
     public void delValue() {
@@ -184,18 +185,8 @@ public class Argument {
 
 
     public boolean isDefined() {
-        if (isTSet()) {
-            return !getT().isEmpty(); //.isComplete();
-        } else if (isFSet()) {
-            Term t = getF().getResult();
-//			if(getF().isCalculable()) {
-//				return getF().isCalculated();
-//			} else {
-            return t != null /*&& !"$$".equals(t.toString())*/;
-//			}
-        } else {
-            return !isEmpty() && !getValue().isCVar();
-        }
+        Term t = getValue();
+        return t != null && !t.isCVar();
     }
 
     public boolean isCalculated() {

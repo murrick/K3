@@ -14,12 +14,13 @@ import kanger.factory.*;
 import kanger.primitives.*;
 import kanger.stores.*;
 
-//import javax.script.ScriptEngine;
-//import javax.script.ScriptEngineManager;
 import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+//import javax.script.ScriptEngine;
+//import javax.script.ScriptEngineManager;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -631,26 +632,27 @@ public class Mind {
         return closedValues;
     }
 
+    //TODO: Для отладки все закоментил
     public Set<Right> getActualRights() {
         Set<Right> set = new HashSet<>();
-        if (substituted.isEmpty() && calculated.isEmpty()) {
-            for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
-                set.add(r);
-            }
-        } else {
-            if (tVars.size() > 0) {
-                for (TVariable t : substituted) {
-
-                    for (Domain d : t.getUsage()) {
-                        set.addAll(d.getPredicate().getRights());
-                    }
-
-                }
-            }
-//            for (Function f : calculated) {
-//                set.addAll(f.getOwner().getPredicate().getRights());
-//            }
+//        if (substituted.isEmpty() && calculated.isEmpty()) {
+        for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
+            set.add(r);
         }
+//        } else {
+//            if (tVars.size() > 0) {
+//                for (TVariable t : substituted) {
+//
+//                    for (Domain d : t.getUsage()) {
+//                        set.addAll(d.getPredicate().getRights());
+//                    }
+//
+//                }
+//            }
+////            for (Function f : calculated) {
+////                set.addAll(f.getOwner().getPredicate().getRights());
+////            }
+//        }
         return set;
     }
 
@@ -678,4 +680,15 @@ public class Mind {
         }
         return set;
     }
+
+
+    //TODO: Написать тест по списку из калькулятора!
+    //TODO: Формирование гипотез: !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(xx);          -- ЛИШНИЕ ГИПОТЕЗЫ прибить в фазе первого линка
+    //TODO: Ограничить область опредедения: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x);      --- ВКЛЮЧАЕТ 10
+    //TODO: Вывод гипотез группами. При нескольких вариантах это возможно
+    //TODO: Вывод результатов по группам, группа - один проход, варианты решений - группами в Storage
+    //TODO: Mind - наследование вместо всяких mark/release
+    //TODO: Оптимизация!!!!
 }
+
+

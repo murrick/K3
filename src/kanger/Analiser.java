@@ -17,7 +17,7 @@ import java.util.*;
  */
 public class Analiser {
 
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = true;
+    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
 
     private final Mind mind;
     private boolean isInsertion = false;
@@ -193,9 +193,9 @@ public class Analiser {
 //                                    }
 //                                }
 //                            }
-                            if (logging) {
-                                mind.getLog().add(LogMode.ANALIZER, "===========================================");
-                            }
+//                            if (logging) {
+//                                mind.getLog().add(LogMode.ANALIZER, "===========================================");
+//                            }
                         } else {
                             showFalse = false;
                         }
@@ -211,11 +211,11 @@ public class Analiser {
         }
 
         // Контроль звершенности последовательности
-        boolean result = true;
+        boolean result = false;
         for (int k = 0; k < sequence.size(); ++k) {
             Domain a = sequence.get(k);
-            if (!a.isClosed() && !a.isDest()) {
-                result = false;
+            if (a.isClosed()) {
+                result = true;
                 break;
             }
         }
@@ -251,14 +251,19 @@ public class Analiser {
 //                    mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
                     if (showFalse) {
                         if (logging) {
+                            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                             mind.getLog().add(LogMode.ANALIZER, "NOT in condition: " + d.toString());
-                            mind.getLog().add(LogMode.ANALIZER, "===========================================");
                         }
                     }
                 }
 //                }
 
             }
+
+            if (logging) {
+                mind.getLog().add(LogMode.ANALIZER, "===========================================");
+            }
+
             if (result) {
                 t.setClosed(true);
                 u.setClosed(true);
@@ -355,9 +360,9 @@ public class Analiser {
 //                }
             }
 
-            if (occurrs) {
-                collectResults(!result, sd);
-            }
+//            if (occurrs) {
+//                collectResults(!result, sd);
+//            }
 
 
         } else {
@@ -398,28 +403,28 @@ public class Analiser {
 
         for (Domain d : sequence) {
             if (d.isClosed() && d.isQuery()) {
-                if (d.isSystem()) {
+//                if (d.isSystem()) {
 
                     mind.getSolutions().add(d);
                     for (TVariable tv : d.getTVariables(true)) {
                         mind.getValues().add(tv, d);
                     }
-                } else if (d.isAntc()) {
-                    ant.add(d);
-                } else {
-                    suc.add(d);
-                }
+//                } else if (d.isAntc()) {
+//                    ant.add(d);
+//                } else {
+//                    suc.add(d);
+//                }
             }
         }
 
-        for (Domain d : ant) {
-            if (contains(d, suc)) {
-                mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }
-            }
-        }
+//        for (Domain d : ant) {
+//            if (contains(d, suc)) {
+//                mind.getSolutions().add(d);
+//                for (TVariable tv : d.getTVariables(true)) {
+//                    mind.getValues().add(tv, d);
+//                }
+//            }
+//        }
 
 //        for (Domain d : suc) {
 //            if (contains(d, ant)) {
