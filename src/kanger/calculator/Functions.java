@@ -1170,7 +1170,6 @@ public class Functions {
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
             res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
         } else {
-            //TODO: Слетает на С-переменных
             res = a.getValue().toString().replace(b.getValue().toString(), "");
         }
         return mind.getTerms().add(res);

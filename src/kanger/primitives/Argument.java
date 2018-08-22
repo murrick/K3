@@ -79,6 +79,7 @@ public class Argument {
             if (((TVariable) o).find(t) != null) {
             } else {
                 TValue s = ((TVariable) o).setValue(t);
+                s.setClosed();
             }
         } else if (o instanceof Function) {
             ((Function) o).setResult(t);

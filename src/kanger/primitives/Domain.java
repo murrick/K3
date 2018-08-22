@@ -198,8 +198,8 @@ public class Domain {
 
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix = isDest() || isQuery() || isBlocked() || isClosed() || isUsed()
-                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isBlocked() ? "B" : "") + (isUsed() ? "U" : "") + " "
+            suffix = isDest() || isQuery() || isClosed() || isUsed()
+                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isUsed() ? "U" : "") + " "
                     : "";
         }
         return s + ";" + suffix;
@@ -420,14 +420,14 @@ public class Domain {
 //        return true;
 //    }
 
-    public boolean isBlocked() {
-        for (TVariable t : getTVariables(true)) {
-            if (t.isBlocked()) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    public boolean isBlocked() {
+//        for (TVariable t : getTVariables(true)) {
+//            if (t.isBlocked()) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     public int getVarOrder(int pos) {
         List<Integer> list = new ArrayList<>();

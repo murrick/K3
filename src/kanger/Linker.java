@@ -141,6 +141,7 @@ public class Linker {
                     TValue s;
                     if (!master.get(i).getT().contains(slave.get(i).getValue())) {
                         s = master.get(i).getT().setValue(slave.get(i).getValue());
+                        s.setClosed();
                         occurrsSubst = true;
                     } else {
                         s = master.get(i).getT().find(slave.get(i).getValue());
@@ -165,6 +166,7 @@ public class Linker {
                     TValue s;
                     if (!slave.get(i).getT().contains(master.get(i).getValue())) {
                         s = slave.get(i).getT().setValue(master.get(i).getValue());
+                        s.setClosed();
                         occurrsSubst = true;
                     } else {
                         s = slave.get(i).getT().find(master.get(i).getValue());
@@ -300,8 +302,8 @@ public class Linker {
 
 //                        if (checkSystem(logging, master) && checkSystem(logging, slave)) {
                         logCommit(logging);
-                        mind.getTValues().rollback();
-                        mind.getFValues().rollback();
+                        mind.getTValues().commit();
+                        mind.getFValues().commit();
 //                        } else {
 //                            mind.getFValues().release();
 //                            mind.getFValues().release();
@@ -319,8 +321,6 @@ public class Linker {
             TVariable t = tvars.last(); //.get(tIndex);
             TValue v = t.rewind();
             if (v != null) {
-                mind.getSubstituted().add(t);
-
                 do {
 
 //                    if("xx".equals(v.getValue() + "")) {
@@ -338,7 +338,6 @@ public class Linker {
 //                    result = false;
 //                }
 
-                mind.getSubstituted().remove(t);
             } else {
                 if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
                     result = true;
@@ -392,8 +391,8 @@ public class Linker {
 //                }
 
                 logCommit(logging);
-                mind.getTValues().rollback();
-                mind.getFValues().rollback();
+                mind.getTValues().commit();
+                mind.getFValues().commit();
 
             }
 
@@ -415,7 +414,6 @@ public class Linker {
             TVariable t = tvars.last();
             TValue v = t.rewind();
             if (v != null) {
-                mind.getSubstituted().add(t);
 
                 do {
                     mind.getTValues().set(t, v);
@@ -429,7 +427,6 @@ public class Linker {
 //                    result = false;
 //                }
 
-                mind.getSubstituted().remove(t);
             } else {
                 if (!calcFunctions(tvars.headSet(t), set, logging)) {
                     result = false;
@@ -540,10 +537,6 @@ public class Linker {
 //        }
 
 //        mind.getExcludedTrees().clear();
-        mind.getSubstituted().clear();
-        mind.getCalculated().clear();
-
-
         //TODO: Нужно сделать динамический сет
         Queue<Tree> slave = /*r != null ? getActualTrees(r) :*/ mind.getActualTrees();
         Queue<Tree> master;
@@ -551,16 +544,13 @@ public class Linker {
 //            master = new LinkedList<>();
 //            master.addAll(r.getTree());
 //        } else {
-            master = slave;
+        master = slave;
 //        }
 
 
         TValue saveT = null;
         FValue saveF = null;
         do {
-            mind.getSubstituted().clear();
-            mind.getCalculated().clear();
-
             saveT = mind.getTValues().getRoot();
             saveF = mind.getFValues().getRoot();
 
@@ -677,7 +667,9 @@ public class Linker {
         if (logging) {
             if (mind.getTValues().getRoot() != mind.getTValues().getMark() || mind.getFValues().getRoot() != mind.getFValues().getMark()) {
                 for (TValue t = mind.getTValues().getRoot(); t != mind.getTValues().getMark(); t = t.getNext()) {
-                    mind.getLog().add(LogMode.ANALIZER, (t.isClosed() ? "COMMIT:\t" : "RELEASE:\t") + t.toString());
+                    if (t.isClosed()) {
+                        mind.getLog().add(LogMode.ANALIZER, "CLOSED:\t" + t.toString());
+                    }
                 }
 //                for (FValue t = mind.getFValues().getRoot(); t != mind.getFValues().getMark(); t = t.getNext()) {
 //                    mind.getLog().add(LogMode.ANALIZER, (t.isClosed() ? "COMMIT:\t" : "RELEASE:\t") + t.toString());

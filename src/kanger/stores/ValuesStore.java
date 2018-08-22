@@ -4,6 +4,7 @@ import kanger.Mind;
 import kanger.primitives.Domain;
 import kanger.primitives.TMeaning;
 import kanger.primitives.TVariable;
+import kanger.primitives.Term;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,16 @@ public class ValuesStore {
 
     public TMeaning get(int index) {
         return root.get(index);
+    }
+
+    public List<Term> getValues(String name) {
+        List<Term> list = new ArrayList<>();
+        for (TMeaning t : root) {
+            if (name == null || name.equals(t.getVariable().getName())) {
+                list.add(t.getValue());
+            }
+        }
+        return list;
     }
 
     public int find(TMeaning s) {

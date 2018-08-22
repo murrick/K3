@@ -17,9 +17,9 @@ public class TValue {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private List<Domain> srcSolve = new ArrayList<>();
-    private List<Domain> dstSolve = new ArrayList<>();
-    private List<Integer> posSolve = new ArrayList<>();
+    private List<Domain> srcSolves = new ArrayList<>();
+    private List<Domain> dstSolves = new ArrayList<>();
+    private List<Integer> posSolves = new ArrayList<>();
 
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
@@ -43,11 +43,11 @@ public class TValue {
         value = mind.getTerms().get(dis.readLong());
         long sid = dis.readLong();
         if (sid != -1) {
-//            srcSolve = mind.getDomains().get(sid);
+//            srcSolves = mind.getDomains().get(sid);
         }
         sid = dis.readLong();
         if (sid != -1) {
-//            dstSolve = mind.getDomains().get(sid);
+//            dstSolves = mind.getDomains().get(sid);
         }
         this.mind = mind;
     }
@@ -61,32 +61,32 @@ public class TValue {
     }
 
     public List<Domain> getSrcSolves() {
-        return srcSolve;
+        return srcSolves;
     }
 
     public void addSolve(int index, Domain src, Domain dst) {
         boolean found = false;
-        for (int i = 0; i < srcSolve.size(); ++i) {
-            if (srcSolve.get(i).getId() == src.getId()
-                    && dstSolve.get(i).getId() == dst.getId()
-                    && posSolve.get(i) == index) {
+        for (int i = 0; i < srcSolves.size(); ++i) {
+            if (srcSolves.get(i).getId() == src.getId()
+                    && dstSolves.get(i).getId() == dst.getId()
+                    && posSolves.get(i) == index) {
                 found = true;
                 break;
             }
         }
         if (!found) {
-            this.srcSolve.add(src);
-            this.dstSolve.add(dst);
-            this.posSolve.add(index);
+            this.srcSolves.add(src);
+            this.dstSolves.add(dst);
+            this.posSolves.add(index);
         }
     }
 
     public List<Domain> getDstSolves() {
-        return dstSolve;
+        return dstSolves;
     }
 
     public List<Integer> getPosSolves() {
-        return posSolve;
+        return posSolves;
     }
 
     public Right getRight() {
@@ -125,8 +125,8 @@ public class TValue {
         dos.writeLong(id);
         dos.writeLong(tVar.getId());
         dos.writeLong(value == null ? -1 : value.getId());
-//        dos.writeLong(srcSolve == null ? -1 : srcSolve.getId());
-//        dos.writeLong(dstSolve == null ? -1 : dstSolve.getId());
+//        dos.writeLong(srcSolves == null ? -1 : srcSolves.getId());
+//        dos.writeLong(dstSolves == null ? -1 : dstSolves.getId());
     }
 
     @Override
@@ -141,17 +141,17 @@ public class TValue {
         mind.getQueryValues().get(tVar.getId()).add(id);
     }
 
-    public void setBlocked() {
-        if (!mind.getBlockedValues().containsKey(tVar.getId())) {
-            mind.getBlockedValues().put(tVar.getId(), new HashSet<>());
-        }
-        mind.getBlockedValues().get(tVar.getId()).add(id);
-    }
-
-    public boolean isBlocked() {
-        return mind.getBlockedValues().containsKey(tVar.getId()) && mind.getBlockedValues().get(tVar.getId()).contains(id);
-    }
-
+    //    public void setBlocked() {
+//        if (!mind.getBlockedValues().containsKey(tVar.getId())) {
+//            mind.getBlockedValues().put(tVar.getId(), new HashSet<>());
+//        }
+//        mind.getBlockedValues().get(tVar.getId()).add(id);
+//    }
+//
+//    public boolean isBlocked() {
+//        return mind.getBlockedValues().containsKey(tVar.getId()) && mind.getBlockedValues().get(tVar.getId()).contains(id);
+//    }
+//
     public void setClosed() {
         if (!mind.getClosedValues().containsKey(tVar.getId())) {
             mind.getClosedValues().put(tVar.getId(), new HashSet<>());

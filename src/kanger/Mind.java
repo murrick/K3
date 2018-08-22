@@ -27,34 +27,30 @@ import java.util.zip.GZIPOutputStream;
  */
 public class Mind {
 
-    private final DictionaryFactory terms = new DictionaryFactory(this);                      // Словарь констант
-    private final PredicateFactory predicates = new PredicateFactory(this);                   // Предикаты
-    private final DomainFactory domains = new DomainFactory(this);                            // Список доменов
-    private final RightFactory rights = new RightFactory(this);                               // Список правил
-    private final TreeFactory trees = new TreeFactory(this);                               // Список секвенций
+    private final DictionaryFactory terms = new DictionaryFactory(this);                    // Словарь констант
+    private final PredicateFactory predicates = new PredicateFactory(this);                 // Предикаты
+    private final DomainFactory domains = new DomainFactory(this);                          // Список доменов
+    private final RightFactory rights = new RightFactory(this);                             // Список правил
+    private final TreeFactory trees = new TreeFactory(this);                                // Список секвенций
 
-    private final TVariableFactory tVars = new TVariableFactory(this);                    // t-переменные
-    private final TValueFactory tValues = new TValueFactory(this);
-    private final FunctionFactory functions = new FunctionFactory(this);
-    private final FValueFactory fValues = new FValueFactory(this);
+    private final TVariableFactory tVars = new TVariableFactory(this);                      // t-переменные
+    private final TValueFactory tValues = new TValueFactory(this);                          // Подставленные значения
 
+    private final FunctionFactory functions = new FunctionFactory(this);                    // Функции
+    private final FValueFactory fValues = new FValueFactory(this);                          // Решения функций
 
-    private final HypotesisStore hypotesis = new HypotesisStore();                    // Список гипотез
-    private final LogStore log = new LogStore(this);                                      // Протокол вывода
-    private final SolutionsStore solves = new SolutionsStore(this);                             // Список пешений
-    private final ValuesStore values = new ValuesStore(this);                             // Список величин
+    private final HypotesisStore hypotesis = new HypotesisStore();                                // Список гипотез
+    private final SolutionsStore solves = new SolutionsStore(this);                         // Список решений
+    private final ValuesStore values = new ValuesStore(this);                               // Список значений
 
-    private final LibraryStore library = new LibraryStore(this);
+    private final LogStore log = new LogStore(this);                                        // Протокол вывода
 
-    private final Set<TVariable> substituted = new HashSet<>();
-    private final Set<TVariable> used = new HashSet<>();
-    private final Set<Function> calculated = new HashSet<>();
+    private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
 
-    private final Calculator calculator = new Calculator(this);
-    private final Analiser analiser = new Analiser(this);
-    private final Compiler compiler = new Compiler(this);
-    private final Linker linker = new Linker(this);
-
+    private final Calculator calculator = new Calculator(this);                             // Калькулятор
+    private final Analiser analiser = new Analiser(this);                                   // Анализатор
+    private final Compiler compiler = new Compiler(this);                                   // Компилятор
+    private final Linker linker = new Linker(this);                                         // Линкер
 
     private volatile boolean changed = false;
     private String sourceFileName = "mind.k";
@@ -602,18 +598,6 @@ public class Mind {
 
     public Set<Long> getActiveRights() {
         return activeRights;
-    }
-
-    public Set<TVariable> getSubstituted() {
-        return substituted;
-    }
-
-    public Set<TVariable> getUsed() {
-        return substituted;
-    }
-
-    public Set<Function> getCalculated() {
-        return calculated;
     }
 
     public Set<Long> getExcludedTrees() {

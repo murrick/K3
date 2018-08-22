@@ -16,6 +16,22 @@ public class Solution {
     private Right right = null;
     private List<Solution> causes = new ArrayList<>();
 
+    public Solution(Mind mind, boolean antc, Object predicate, Object... params) {
+        this.antc = antc;
+        if (predicate instanceof Predicate) {
+            this.predicate = (Predicate) predicate;
+        } else {
+            this.predicate = mind.getPredicates().add(predicate.toString(), params.length);
+        }
+        for (Object p : params) {
+            if (p instanceof Term) {
+                parameters.add((Term) p);
+            } else {
+                parameters.add(mind.getTerms().add(p));
+            }
+        }
+    }
+
     public Solution(Domain d, Mind mind) {
         predicate = d.getPredicate();
         antc = d.isAntc();

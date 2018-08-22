@@ -368,7 +368,6 @@ public class Analiser {
         } else {
             TVariable t = tvars.get(tIndex);
             TValue v = t.rewind();
-            mind.getSubstituted().add(t);
             if (v != null) {
                 do {
                     mind.getTValues().set(t, v);
@@ -381,7 +380,6 @@ public class Analiser {
                     result = true;
                 }
             }
-            mind.getSubstituted().remove(t);
         }
 
         return result;
@@ -402,10 +400,26 @@ public class Analiser {
         Set<Domain> ant = new HashSet<>();
 
         for (Domain d : sequence) {
-            if (d.isClosed() && d.isQuery()) {
+            if (d.isClosed() && d.getRight().isQuery()) {
 //                if (d.isSystem()) {
 
-                    mind.getSolutions().add(d);
+                mind.getSolutions().add(d);
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
+                }
+//                } else if (d.isAntc()) {
+//                    ant.add(d);
+//                } else {
+//                    suc.add(d);
+//                }
+            }
+        }
+
+        for (Domain d : sequence) {
+            if (d.isClosed() && d.isQuery() && !d.getRight().isQuery()) {
+//                if (d.isSystem()) {
+
+//                    mind.getSolutions().add(d);
                     for (TVariable tv : d.getTVariables(true)) {
                         mind.getValues().add(tv, d);
                     }
@@ -470,10 +484,6 @@ public class Analiser {
         if (logging) {
             mind.getLog().add(LogMode.ANALIZER, "============= ANALISER ====================");
         }
-
-        mind.getSubstituted().clear();
-        mind.getCalculated().clear();
-
 
         Queue<Tree> set = mind.getActualTrees();
         Set<TVariable> tvars = new HashSet<>();

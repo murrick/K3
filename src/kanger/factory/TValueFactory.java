@@ -66,7 +66,7 @@ public class TValueFactory {
         if (root == null) {
             return null;
         }
-        if (root.getTVar().getId() == tv.getId() && !root.isBlocked()) {
+        if (root.getTVar().getId() == tv.getId() /*&& !root.isBlocked()*/) {
             return root;
         } else {
             TValue v = next(tv, root);
@@ -99,7 +99,7 @@ public class TValueFactory {
             return null;
         }
         for (v = v.getNext(); v != null; v = v.getNext()) {
-            if (v.getTVar().getId() == tv.getId() && !v.isBlocked()) {
+            if (v.getTVar().getId() == tv.getId() /*&& !v.isBlocked()*/) {
                 return v;
             }
         }
@@ -208,32 +208,32 @@ public class TValueFactory {
 //        }
 //    }
 
-    public void rollback() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            TValue saved = (TValue) pop[0];
-//            lastID = (long) pop[1];
-
-            TValue t = root;
-            TValue q = root;
-            while (t != null && t != saved) {
-                if (t.isBlocked()) {
-                    if (t == root) {
-                        root = t = q = t.getNext();
-                    } else {
-                        q.setNext(t.getNext());
-                        t = q.getNext();
-                    }
-                } else {
-                    q = t;
-                    t = t.getNext();
-                }
-            }
-        }
-        if (stack.isEmpty()) {
-            mark();
-        }
-    }
+//    public void rollback() {
+//        if (!stack.empty()) {
+//            Object[] pop = stack.pop();
+//            TValue saved = (TValue) pop[0];
+////            lastID = (long) pop[1];
+//
+////            TValue t = root;
+////            TValue q = root;
+////            while (t != null && t != saved) {
+//////                if (t.isBlocked()) {
+//////                    if (t == root) {
+//////                        root = t = q = t.getNext();
+//////                    } else {
+//////                        q.setNext(t.getNext());
+//////                        t = q.getNext();
+//////                    }
+//////                } else {
+////                    q = t;
+////                    t = t.getNext();
+//////                }
+////            }
+//        }
+//        if (stack.isEmpty()) {
+//            mark();
+//        }
+//    }
 
     public TValue getMark() {
         if (!stack.empty()) {

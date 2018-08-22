@@ -251,7 +251,7 @@ public class TVariable implements Comparable<TVariable> {
             case Enums.DEBUG_LEVEL_INFO:
                 return name;
             case Enums.DEBUG_LEVEL_DEBUG:
-                return String.format("%c%d", Enums.TVC, index);
+                return String.format("[%s]%c%d", name, Enums.TVC, index);
             default:
                 return name;
         }
@@ -259,8 +259,7 @@ public class TVariable implements Comparable<TVariable> {
 
     @Override
     public String toString() {
-        return getVarName() + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "")
-                + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && !isEmpty() && mind.getTValues().get(this).isBlocked() ? " (B)" : "");
+        return getVarName() + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
     }
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {
@@ -347,10 +346,6 @@ public class TVariable implements Comparable<TVariable> {
 //        }
 //    }
 //
-    public boolean isSubstituted() {
-        return mind.getSubstituted().contains(this) /*|| mind.getUsed().contains(this)*/;
-    }
-
 //    public void setQuery() {
 //        if (!mind.getQueryValues().containsKey(id)) {
 //            mind.getQueryValues().put(id, new HashSet<>());
@@ -364,9 +359,9 @@ public class TVariable implements Comparable<TVariable> {
                 && mind.getQueryValues().get(id).contains(getCurrent().getId());
     }
 
-    public boolean isBlocked() {
-        return mind.getTValues().get(this) != null && mind.getTValues().get(this).isBlocked();
-    }
+//    public boolean isBlocked() {
+//        return mind.getTValues().get(this) != null && mind.getTValues().get(this).isBlocked();
+//    }
 
     @Override
     public int compareTo(TVariable o) {

@@ -11,8 +11,6 @@ import kanger.primitives.Domain;
 import kanger.primitives.Function;
 import kanger.primitives.Predicate;
 
-//TODO: Следать пересчет функций централизованно отдельным проходом
-
 /**
  * Created by murray on 27.05.15.
  */
@@ -132,18 +130,6 @@ public class Calculator {
         }
 //        }
 
-        //TODO: Хочется разделить функции и логику
-//        for (int i = 0; i <= fu.getRange(); ++i) {
-//            if (fu.createCVar(i).isCSet() && fu.createCVar(i).isTSet() && fu.createCVar(i).getT().getOwner() == 0) {
-//                mind.getAnalyser().tSubstitute(fu.createCVar(i).getT(), fu.createCVar(i).getValue(), level, null);
-//                flag = 2;
-//            }
-//        }
-//        } else {
-//            flag = (fu.getResult() != null) ? 1 : 0;
-//        }
-
-        //func.setResult(arg.createCVar(i).getValue());
         fu.setBusy(false);
         return flag;
     }
@@ -293,20 +279,11 @@ public class Calculator {
 //TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ?~($x ~($y a(y,x)));
 
 
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nnn);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?n(nnn);
 //TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(xx);          -- ЛИШНИЕ ГИПОТЕЗЫ прибить в фазе первого линка
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?b(xx);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?c(xx);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?d(xx);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?n(xx);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x c(x);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x d(x);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nn) -> b(nn);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nn) -> c(nn);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?a(nn) -> d(nn);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x a(x) && d(x);
-//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?$x a(x) || d(x);
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?b(xx);          -- ЛИШНИЕ ГИПОТЕЗЫ прибить в фазе первого линка
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?c(xx);          -- ЛИШНИЕ ГИПОТЕЗЫ прибить в фазе первого линка
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?d(xx);          -- ЛИШНИЕ ГИПОТЕЗЫ прибить в фазе первого линка
+//TODO: РЕШЕНО !(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); !@x a(x) -> ~n(x); !a(nnn); !b(ooo); !d(v);      ?n(xx);          -- ЛИШНИЕ ГИПОТЕЗЫ прибить в фазе первого линка
 
 //TODO: РЕШЕНО ?2 > 3;
 //TODO: РЕШЕНО ?2 < 3;

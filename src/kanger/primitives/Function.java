@@ -166,12 +166,6 @@ public class Function {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
-        if ((r == null && arguments.get(range).getValue() != null)
-                || (r != null && arguments.get(range).getValue() == null)
-                || (r != null && arguments.get(range).getValue() != null
-                && r.getId() != arguments.get(range).getValue().getId())) {
-            mind.getCalculated().add(this);
-        }
         arguments.get(range).setValue(r);
     }
 
@@ -181,12 +175,6 @@ public class Function {
 //            s.setSolves(owner, owner);
 //            return true;
 //        } else {
-
-        if ((arguments.get(i).isEmpty() && r != null)
-                || !arguments.get(i).isEmpty() && r == null
-                || (!arguments.get(i).isEmpty() && r != null && arguments.get(i).getValue().getId() != r.getId())) {
-            mind.getCalculated().add(this);
-        }
 
         return arguments.get(i).setValue(r);
 //        }

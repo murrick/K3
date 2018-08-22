@@ -148,32 +148,32 @@ public class FValueFactory {
 //        }
 //    }
 //
-    public void rollback() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            FValue saved = (FValue) pop[0];
-//            lastID = (long) pop[1];
-
-            FValue t = root;
-            FValue q = root;
-            while (t != null && t != saved) {
-//                if (t.isBlocked()) {
-//                    if (t == root) {
-//                        root = t = q = t.getNext();
-//                    } else {
-//                        q.setNext(t.getNext());
-//                        t = q.getNext();
-//                    }
-//                } else {
-                    q = t;
-                    t = t.getNext();
-//                }
-            }
-        }
-        if (stack.isEmpty()) {
-            mark();
-        }
-    }
+//    public void rollback() {
+//        if (!stack.empty()) {
+//            Object[] pop = stack.pop();
+//            FValue saved = (FValue) pop[0];
+////            lastID = (long) pop[1];
+//
+//            FValue t = root;
+//            FValue q = root;
+//            while (t != null && t != saved) {
+////                if (t.isBlocked()) {
+////                    if (t == root) {
+////                        root = t = q = t.getNext();
+////                    } else {
+////                        q.setNext(t.getNext());
+////                        t = q.getNext();
+////                    }
+////                } else {
+//                    q = t;
+//                    t = t.getNext();
+////                }
+//            }
+//        }
+//        if (stack.isEmpty()) {
+//            mark();
+//        }
+//    }
 
 
     public int size() {

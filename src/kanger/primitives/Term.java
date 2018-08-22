@@ -243,8 +243,15 @@ public class Term implements Comparable<Term> {
 
     @Override
     public boolean equals(Object t) {
-        return !(t == null || !(t instanceof Term)) && ((Term) t).id == id;
-//        return !(t == null || value == null || !(t instanceof Term) || type != ((Term) t).getType()) && value.equals(((Term) t).getValue());
+        if (t instanceof Term) {
+            return ((Term) t).id == id;
+        } else if (value == null && t == null) {
+            return true;
+        } else if (value == null || t == null) {
+            return false;
+        } else {
+            return value.equals(t);
+        }
     }
 
     public Object getValue() {

@@ -5,6 +5,7 @@
  */
 package kanger.primitives;
 
+import kanger.Mind;
 import kanger.enums.Enums;
 
 import java.util.ArrayList;
@@ -24,6 +25,22 @@ public class Hypotese {
     private boolean antc = true;
     private boolean deleted = false;
     private boolean query = false;
+
+    public Hypotese(Mind mind, boolean antc, Object predicate, Object... params) {
+        this.antc = antc;
+        if (predicate instanceof Predicate) {
+            this.predicate = (Predicate) predicate;
+        } else {
+            this.predicate = mind.getPredicates().add(predicate.toString(), params.length);
+        }
+        for (Object p : params) {
+            if (p instanceof Term) {
+                solve.add((Term) p);
+            } else {
+                solve.add(mind.getTerms().add(p));
+            }
+        }
+    }
 
     public Hypotese(boolean antc, Predicate predicate, List<Argument> arg) {
         this.predicate = predicate;
@@ -121,6 +138,24 @@ public class Hypotese {
         tmp += ");";
         line += tmp;
         return line;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if ((o instanceof Hypotese)
+                && ((Hypotese) o).getPredicate().getId() == predicate.getId()
+                && ((Hypotese) o).isAntc() == isAntc()
+                && ((Hypotese) o).getSolve().size() == solve.size()) {
+            for (int i = 0; i < solve.size(); ++i) {
+                if (solve.get(i) != null
+                        && ((Hypotese) o).getSolve().get(i) != null
+                        && ((Hypotese) o).getSolve().get(i).getId() != solve.get(i).getId()) {
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
 }
