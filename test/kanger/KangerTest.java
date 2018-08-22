@@ -111,6 +111,9 @@ public class KangerTest {
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
+        if (mind.getHypotesisStore().getRoot().size() != 4) {
+            fail("Expected 4 hypotesis");
+        }
         System.out.println("OK");
         System.out.println("====================================================");
     }
@@ -137,6 +140,9 @@ public class KangerTest {
         s = new Hypotese(mind, false, "d", "xx");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
+        }
+        if (mind.getHypotesisStore().getRoot().size() != 3) {
+            fail("Expected 3 hypotesis");
         }
         System.out.println("OK");
         System.out.println("====================================================");
@@ -165,6 +171,9 @@ public class KangerTest {
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
+        if (mind.getHypotesisStore().getRoot().size() != 3) {
+            fail("Expected 3 hypotesis");
+        }
         System.out.println("OK");
         System.out.println("====================================================");
     }
@@ -192,6 +201,9 @@ public class KangerTest {
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
+        if (mind.getHypotesisStore().getRoot().size() != 3) {
+            fail("Expected 3 hypotesis");
+        }
         System.out.println("OK");
         System.out.println("====================================================");
     }
@@ -210,6 +222,9 @@ public class KangerTest {
         Hypotese s = new Hypotese(mind, true, "a", "xx");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
+        }
+        if (mind.getHypotesisStore().getRoot().size() != 1) {
+            fail("Expected 1 hypotesis");
         }
         System.out.println("OK");
         System.out.println("====================================================");

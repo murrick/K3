@@ -44,8 +44,8 @@ public class TMeaning {
         return o != null
                 && value != null
                 && (o instanceof TMeaning)
-//                && ((TMeaning) o).getVariable().getId() == variable.getId()
-                && ((TMeaning) o).getVariable().getName().equals(variable.getName())
+                && ((TMeaning) o).getVariable().getId() == variable.getId()
+//                && ((TMeaning) o).getVariable().getName().equals(variable.getName())
                 && ((TMeaning) o).getValue().getId() == value.getId();
     }
 }

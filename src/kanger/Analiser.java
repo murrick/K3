@@ -245,7 +245,7 @@ public class Analiser {
                 //TODO: сомневаюсь в && !d.isAntc()
                 if (!d.isClosed() && !d.isDest()/* && !(d.isSystem() && d.isUsed() /*&& !d.isAntc())*/) {
                     result = false;
-                    mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                    mind.getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
 
 //                    if (!d.isQueued()) {
 //                    mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
@@ -718,8 +718,8 @@ public class Analiser {
                         mind.getLog().add(LogMode.ANALIZER, r);
                         mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
 
-                        //mind.getLinker().link(r, true);
-                        mind.getLinker().link(true);
+                        mind.getLinker().link(r, true);
+//                        mind.getLinker().link(true);
                         if (analiser(true)) {
                             mind.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
                             mind.release();
