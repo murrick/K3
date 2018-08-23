@@ -773,10 +773,10 @@ public class KangerTest {
             fail("Expected: x=5.0, y = 4.0");
         }
         if (!exists("x", 6.0) || !exists("y", 1.0)) {
-            fail("Expected: x=0.0, y = 7.0");
+            fail("Expected: x=6.0, y = 1.0");
         }
         if (!exists("x", 7.0) || !exists("y", 0.0)) {
-            fail("Expected: x=0.0, y = 7.0");
+            fail("Expected: x=7.0, y = 0.0");
         }
         if (mind.getValues().getValues("x").size() != 8) {
             fail("Expected x 8 solves");
