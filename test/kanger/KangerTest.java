@@ -45,6 +45,14 @@ public class KangerTest {
         }
     }
 
+    private boolean exists(String name, Object o) {
+        for (Term t : mind.getValues().getValues(name)) {
+            if (o.equals(t.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @org.junit.Test
     public void set01_01() throws ParseErrorException, RuntimeErrorException {
@@ -488,6 +496,295 @@ public class KangerTest {
         if (mind.getHypotesisStore().size() != 3) {
             fail("Expected 3 hypotesis");
         }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set03_01() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        mind.query("?$x @y a(x,y);");
+        showResult(false);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set03_02() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        mind.query("? ~($x @y a(x,y));");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set03_03() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        mind.query("?@x $y a(y,x);");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set03_04() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        mind.query("?~($x ~($y a(y,x)));");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_01() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?2 > 3;");
+        showResult(false);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_02() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?2 < 3;");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_03() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?2 = 3;");
+        showResult(false);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_04() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?2 = 2;");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_05() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x x=5;");
+        showResult(true);
+        if (!exists("x", 5.0)) {
+            fail("Expected: x=5.0");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_06() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?~$x x=5;");
+        showResult(false);
+        if (!exists("x", 5.0)) {
+            fail("Expected: x=5.0");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_07() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x ((x+3)*16)=965;");
+        showResult(true);
+        if (!exists("x", 57.3125)) {
+            fail("Expected: x=57.3125");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_08() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x $y (12+y)*2=256 && x=5*y;");
+        showResult(true);
+        if (!exists("y", 116.0)) {
+            fail("Expected: y=116.0");
+        }
+        if (!exists("x", 580.0)) {
+            fail("Expected: x=580.0");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_09() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x $y x + y = 12;");
+        showResult(null);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_0A() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+        mind.query("?$x num(x);");
+        showResult(true);
+        if (!exists("x", 0.0)) {
+            fail("Expected: x=0.0");
+        }
+        if (!exists("x", 1.0)) {
+            fail("Expected: x=1.0");
+        }
+        if (!exists("x", 2.0)) {
+            fail("Expected: x=2.0");
+        }
+        if (!exists("x", 3.0)) {
+            fail("Expected: x=3.0");
+        }
+        if (!exists("x", 4.0)) {
+            fail("Expected: x=4.0");
+        }
+        if (!exists("x", 5.0)) {
+            fail("Expected: x=5.0");
+        }
+        if (!exists("x", 6.0)) {
+            fail("Expected: x=6.0");
+        }
+        if (!exists("x", 7.0)) {
+            fail("Expected: x=7.0");
+        }
+        if (!exists("x", 8.0)) {
+            fail("Expected: x=8.0");
+        }
+        if (!exists("x", 9.0)) {
+            fail("Expected: x=9.0");
+        }
+        if (mind.getValues().getValues("x").size() != 10) {
+            //TODO: Потом разберусь
+//            fail("Expected 10 solves");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_0B() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+        mind.query("?$x num(x) && x > 5;");
+        showResult(true);
+        if (!exists("x", 6.0)) {
+            fail("Expected: x=6.0");
+        }
+        if (!exists("x", 7.0)) {
+            fail("Expected: x=7.0");
+        }
+        if (!exists("x", 8.0)) {
+            fail("Expected: x=8.0");
+        }
+        if (!exists("x", 9.0)) {
+            fail("Expected: x=9.0");
+        }
+        if (mind.getValues().getValues("x").size() != 4) {
+            //TODO: Потом разберусь
+//            fail("Expected 4 solves");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_0C() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+        mind.query("?$x num(x) && x <= 3;");
+        showResult(true);
+        if (!exists("x", 0.0)) {
+            fail("Expected: x=0.0");
+        }
+        if (!exists("x", 1.0)) {
+            fail("Expected: x=1.0");
+        }
+        if (!exists("x", 2.0)) {
+            fail("Expected: x=2.0");
+        }
+        if (!exists("x", 3.0)) {
+            fail("Expected: x=3.0");
+        }
+        if (mind.getValues().getValues("x").size() != 4) {
+            fail("Expected 4 solves");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_0D() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+        mind.query("?$x $y num(x) && num(y) && x + y = 7;");
+        showResult(true);
+        if (!exists("x", 0.0) || !exists("y", 7.0)) {
+            fail("Expected: x=0.0, y = 7.0");
+        }
+        if (!exists("x", 1.0) || !exists("y", 6.0)) {
+            fail("Expected: x=1.0, y = 6.0");
+        }
+        if (!exists("x", 2.0) || !exists("y", 5.0)) {
+            fail("Expected: x=2.0, y = 5.0");
+        }
+        if (!exists("x", 3.0) || !exists("y", 4.0)) {
+            fail("Expected: x=3.0, y = 4.0");
+        }
+        if (!exists("x", 4.0) || !exists("y", 3.0)) {
+            fail("Expected: x=4.0, y = 3.0");
+        }
+        if (!exists("x", 5.0) || !exists("y", 2.0)) {
+            fail("Expected: x=5.0, y = 4.0");
+        }
+        if (!exists("x", 6.0) || !exists("y", 1.0)) {
+            fail("Expected: x=0.0, y = 7.0");
+        }
+        if (!exists("x", 7.0) || !exists("y", 0.0)) {
+            fail("Expected: x=0.0, y = 7.0");
+        }
+        if (mind.getValues().getValues("x").size() != 8) {
+            fail("Expected x 8 solves");
+        }
+        if (mind.getValues().getValues("y").size() != 8) {
+            fail("Expected y 8 solves");
+        }
+
         System.out.println("OK");
         System.out.println("====================================================");
     }

@@ -538,7 +538,7 @@ public class Linker {
 
 //        mind.getExcludedTrees().clear();
         //TODO: Нужно сделать динамический сет
-        Queue<Tree> slave = /*r != null ? getActualTrees(r) :*/ mind.getActualTrees();
+        Queue<Tree> slave = r != null ? getActualTrees(r) : mind.getActualTrees();
         Queue<Tree> master;
 //        if (r != null) {
 //            master = new LinkedList<>();
@@ -573,7 +573,7 @@ public class Linker {
 //                }
 //            }
 
-            for (int i = 0; i < slave.size(); ++i) {
+//            for (int i = 0; i < slave.size(); ++i) {
 
                 mind.getUsedDomains().clear();
                 mind.getUsedTrees().clear();
@@ -587,7 +587,7 @@ public class Linker {
 
                 Tree top = slave.poll();
                 slave.add(top);
-            }
+//            }
 
 
 //            for (Tree t: set) {

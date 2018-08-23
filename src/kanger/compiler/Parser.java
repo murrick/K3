@@ -535,6 +535,9 @@ public class Parser {
     public static PTree parser(String ln) throws ParseErrorException {
         char lastch;
 
+        if (!ln.isEmpty() && ln.trim().charAt(ln.trim().length() - 1) != Enums.EOLN) {
+            throw new ParseErrorException(ln.trim().length() - 1, ParseError.EOLN);
+        }
         return squeze(parse(ln, 0 /*, 0*/));
 //        return parse(ln, 0, 0);
     }
