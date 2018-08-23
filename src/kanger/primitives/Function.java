@@ -264,18 +264,11 @@ public class Function {
             String res = "";
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
 //                if (getResult() != null) {
-                if (isCalculated())
+                if (isCalculated()) {
                     res = " {= " + getResult() + "}";
-                else if (arguments.size() > range && !arguments.get(range).isEmpty())
+                } else if (arguments.size() > range && !arguments.get(range).isEmpty()) {
                     res = " [= " + arguments.get(range).getValue() + "]";
-//                }
-
-//                if (isCalculable() && isCalculated()) {
-//                    res = " [= " + getResult() + "]";
-//                } else if (!isCalculable() && getResult() != null) {
-//                    res = " [= (" + getResult() + ")]";
-//                    //TODO: Временно подставленный результат. Надо выводить?
-//                }
+                }
             }
             //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
             return s + res;

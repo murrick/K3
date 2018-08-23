@@ -157,7 +157,6 @@ public class Functions {
         }
 
         {
-            //TODO: Далее по тексту - добавить  && !arg.createCVar(0).isCVar()
             put("_add(2)", new SysOp(LibMode.FUNCTION, "_add", 2, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;

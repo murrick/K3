@@ -2,9 +2,9 @@ package kanger.stores;
 
 import kanger.Mind;
 import kanger.Screen;
+import kanger.enums.LogMode;
 import kanger.primitives.LogEntry;
 import kanger.primitives.Right;
-import kanger.enums.LogMode;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,6 +17,7 @@ public class LogStore {
 
     private List<LogEntry> root = null;
     private boolean enableLogging = true;
+    //    private boolean mirroring = true;
     private Mind mind = null;
 
     public LogStore(Mind mind) {
@@ -43,6 +44,9 @@ public class LogStore {
             }
             log = new LogEntry(m, s);
             root.add(log);
+//            if(mirroring) {
+//                System.out.println(log.getRecord());
+//            }
         }
         return log;
     }

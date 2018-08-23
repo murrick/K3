@@ -132,7 +132,6 @@ public class Linker {
                         && !slave.get(i).isEmpty()
                         && !slave.isDestFor(i, master)
 //                        && !master.isDestFor(i, slave)
-                        //TODO: Это для отладки num(++) отключено
 //                        && master.get(i).getT().isEmpty()
                         && master.getVarOrder(i) >= slave.getVarOrder(i)
 //                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
@@ -157,7 +156,6 @@ public class Linker {
                         && !master.get(i).isEmpty()
                         && !master.isDestFor(i, slave)
 //                        && !slave.isDestFor(i, master)
-                        //TODO: Это для отладки num(++) отключено
 //                        && slave.get(i).getT().isEmpty()
                         && slave.getVarOrder(i) >= master.getVarOrder(i)
 //                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())

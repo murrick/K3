@@ -240,15 +240,10 @@ public class Analiser {
 
 
             for (Domain d : sequence) {
-//                d.recalculate();
-//                if (!d.isClosed() && !d.isDestFor() /*&& !d.isSystem()*/) {
-                //TODO: сомневаюсь в && !d.isAntc()
-                if (!d.isClosed() && !d.isDest()/* && !(d.isSystem() && d.isUsed() /*&& !d.isAntc())*/) {
+                if (!d.isClosed() && !d.isDest()) {
                     result = false;
                     mind.getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
 
-//                    if (!d.isQueued()) {
-//                    mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
                     if (showFalse) {
                         if (logging) {
                             mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
@@ -460,7 +455,6 @@ public class Analiser {
 //        if (hypotesis) {
 //            for (Domain d : suc) {
 //                if (!contains(d, ant) /*&& !d.getRight().isQuery()*/) {
-//                    //TODO: Отключил для эксперимента
 ////                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
 //                }
 //            }
@@ -595,13 +589,13 @@ public class Analiser {
 //        mind.mark();
         return rr;
 
-//        List<Right> todo = new ArrayList<>();
+//        List<Right> todoo = new ArrayList<>();
 //        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
 //            if (r.equals(target)) {
-//                todo.createTVar(r);
+//                todoo.createTVar(r);
 //            }
 //        }
-//        for (Right r : todo) {
+//        for (Right r : todoo) {
 //            mind.removeInsertionRight(r);
 //        }
     }
