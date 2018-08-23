@@ -26,6 +26,8 @@ import java.util.zip.GZIPOutputStream;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Mind {
+    
+    
 
     private final DictionaryFactory terms = new DictionaryFactory(this);                    // Словарь констант
     private final PredicateFactory predicates = new PredicateFactory(this);                 // Предикаты
@@ -69,7 +71,7 @@ public class Mind {
     private final Map<Long, Set<Long>> blockedValues = new HashMap<>();
     private final Map<Long, Set<Long>> closedValues = new HashMap<>();
 
-    private Set<Long> activeRights = new HashSet<>();
+    
 
     //    private Set<Long> acceptorDomains = new HashSet<>();
 //    private Set<Long> markAcceptor = new HashSet<>();
@@ -596,9 +598,7 @@ public class Mind {
 //        return queuedDomains;
 //    }
 
-    public Set<Long> getActiveRights() {
-        return activeRights;
-    }
+    
 
     public Set<Long> getExcludedTrees() {
         return excludedTrees;

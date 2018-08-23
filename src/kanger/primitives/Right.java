@@ -99,17 +99,7 @@ public class Right {
         return x;
     }
 
-    public boolean isActive() {
-        return mind.getActiveRights().contains(id);
-    }
 
-    public void setActive(boolean active) {
-        if (active) {
-            mind.getActiveRights().add(id);
-        } else {
-            mind.getActiveRights().remove(id);
-        }
-    }
 
     public Set<Right> getActualRights() {
         Set<Right> set = new HashSet<>();
