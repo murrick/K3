@@ -268,10 +268,6 @@ public class Calculator {
 }
 
 
-//TODO: РЕШЕНО !@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));          ? (a(z) && c(z)) -> d(z);
-//TODO: РЕШЕНО !@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));          ? b(z) -> d(z);
-//TODO: РЕШЕНО !@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e (z);  ? $x f(x);
-
 //TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ?$x @y a(x,y);
 //TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ? ~($x @y a(x,y));
 //TODO: РЕШЕНО !@x ~a(x,x); !@x $y a(y,x);         ?@x $y a(y,x);

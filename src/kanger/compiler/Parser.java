@@ -352,7 +352,9 @@ public class Parser {
 //                    // Функция ранга 0
 //                    ++pos;
 //                }
-                if (ln.charAt(pos - 1) != Enums.RB) {
+                if (pos + 1 == ln.length() && ln.charAt(pos) != Enums.EOLN) {
+                    throw new ParseErrorException(pos, ParseError.EOLN);
+                } else if (ln.charAt(pos - 1) != Enums.RB) {
                     throw new ParseErrorException(pos, ParseError.BRACKET);
                 }
 

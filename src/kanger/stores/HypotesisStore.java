@@ -181,9 +181,12 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
                     toDelete.add(x);
                 }
             }
-            for (Hypotese h : toDelete) {
-                if (!h.isQuery()) {
-                    root.remove(h);
+            //Если не остается гипотез кроме базовых - оставляем базовые
+            if (toDelete.size() < root.size()) {
+                for (Hypotese h : toDelete) {
+                    if (!h.isQuery()) {
+                        root.remove(h);
+                    }
                 }
             }
         }

@@ -47,7 +47,7 @@ public class KangerTest {
 
 
     @org.junit.Test
-    public void set01() throws ParseErrorException, RuntimeErrorException {
+    public void set01_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -66,7 +66,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set02() throws ParseErrorException, RuntimeErrorException {
+    public void set01_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -85,7 +85,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set03() throws ParseErrorException, RuntimeErrorException {
+    public void set01_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -119,7 +119,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04() throws ParseErrorException, RuntimeErrorException {
+    public void set01_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -149,7 +149,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set05() throws ParseErrorException, RuntimeErrorException {
+    public void set01_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -179,7 +179,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set06() throws ParseErrorException, RuntimeErrorException {
+    public void set01_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -209,7 +209,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set07() throws ParseErrorException, RuntimeErrorException {
+    public void set01_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -231,7 +231,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set08() throws ParseErrorException, RuntimeErrorException {
+    public void set01_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -257,7 +257,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set09() throws ParseErrorException, RuntimeErrorException {
+    public void set01_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -287,7 +287,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set0A() throws ParseErrorException, RuntimeErrorException {
+    public void set01_0A() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -309,7 +309,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set0B() throws ParseErrorException, RuntimeErrorException {
+    public void set01_0B() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -334,7 +334,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set0C() throws ParseErrorException, RuntimeErrorException {
+    public void set01_0C() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -362,7 +362,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set0D() throws ParseErrorException, RuntimeErrorException {
+    public void set01_0D() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -384,7 +384,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set0E() throws ParseErrorException, RuntimeErrorException {
+    public void set01_0E() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -408,6 +408,85 @@ public class KangerTest {
         }
         if (mind.getValues().getValues("x").size() != 3) {
             fail("Expected 3 solves");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set02_01() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
+        mind.query("? (a(z) && c(z)) -> d(z);");
+        showResult(true);
+        Solution s = new Solution(mind, false, "a", "z");
+        if (!mind.getSolutions().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Solution(mind, false, "c", "z");
+        if (!mind.getSolutions().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Solution(mind, true, "d", "z");
+        if (!mind.getSolutions().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set02_02() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
+        mind.query("?b(z) -> d(z);");
+        showResult(null);
+        Hypotese s = new Hypotese(mind, true, "c", "z");
+        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Hypotese(mind, true, "a", "z");
+        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Hypotese(mind, true, "e", "z");
+        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Hypotese(mind, false, "f", "z");
+        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        if (mind.getHypotesisStore().size() != 4) {
+            fail("Expected 4 hypotesis");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set02_03() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
+        mind.query("?$x f(x);");
+        showResult(null);
+        Hypotese s = new Hypotese(mind, true, "a", "z");
+        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Hypotese(mind, true, "b", "z");
+        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Hypotese(mind, false, "f", "z");
+        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        if (mind.getHypotesisStore().size() != 3) {
+            fail("Expected 3 hypotesis");
         }
         System.out.println("OK");
         System.out.println("====================================================");
