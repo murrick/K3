@@ -159,6 +159,14 @@ public class Kanger {
 //                            "!@x a(x) -> ~n(x); " +
                             ""
             );
+            mind.compile(
+                    "!@x ~father(x,x);" +
+                            "!@x $y father(y,x);" +
+                            "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
+//                    "!@x male(x) || female(x);" +
+                            "!father(John,Tom);" +
+                            "!daughter(Mary,John);" +
+                            "");
 
             mind.compile(
 //                    "!@x num(x) && x < 20 -> num(++x);" +

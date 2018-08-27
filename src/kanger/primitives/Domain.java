@@ -429,15 +429,38 @@ public class Domain {
 //        return false;
 //    }
 
+    public int getTVarCount() {
+        int cnt = 0;
+        for (int i = 0; i < arguments.size(); ++i) {
+            if (arguments.get(i).isTSet()) {
+                ++cnt;
+            }
+        }
+        return cnt;
+    }
+
+    public int getCVarCount() {
+        int cnt = 0;
+        for (int i = 0; i < arguments.size(); ++i) {
+            if (!arguments.get(i).isTSet() && arguments.get(i).isCVar()) {
+                ++cnt;
+            }
+        }
+        return cnt;
+    }
+
     public int getVarOrder(int pos) {
         List<Integer> list = new ArrayList<>();
         SortedMap<Integer, Integer> sort = new TreeMap<>();
+        int plains = 0;
         for (int i = 0; i < arguments.size(); ++i) {
             int ix = 0;
             if (arguments.get(i).isTSet()) {
                 ix = arguments.get(i).getT().getIndex();
             } else if (arguments.get(i).isCVar()) {
                 ix = arguments.get(i).getValue().getIndex();
+            } else {
+                ++plains;
             }
             list.add(ix);
             sort.put(ix, ix);
@@ -446,13 +469,16 @@ public class Domain {
         for (Integer e : sort.keySet()) {
             sort.put(e, i++);
         }
-        return sort.get(list.get(pos));
+        return plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0;
     }
 
     @Override
     public boolean equals(Object d) {
         return d != null && d instanceof Domain && ((Domain) d).id == id;
     }
+
+//    public int getValOrder(int i) {
+//    }
 }
 
 //    public void setQuery() {

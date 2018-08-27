@@ -415,9 +415,9 @@ public class Analiser {
 //                if (d.isSystem()) {
 
 //                    mind.getSolutions().add(d);
-                    for (TVariable tv : d.getTVariables(true)) {
-                        mind.getValues().add(tv, d);
-                    }
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
+                }
 //                } else if (d.isAntc()) {
 //                    ant.add(d);
 //                } else {
@@ -471,6 +471,8 @@ public class Analiser {
 //        List<TVariable> vars = t.getTVariables(true);
 //        return recurseTree(t, vars, 0, logging);
 //    }
+
+
     public boolean analiser(boolean logging) throws RuntimeErrorException {
         boolean result = false;
         int counter = 0;
@@ -479,7 +481,11 @@ public class Analiser {
             mind.getLog().add(LogMode.ANALIZER, "============= ANALISER ====================");
         }
 
-        Queue<Tree> set = mind.getActualTrees();
+        Queue<Tree> set = new LinkedList<>();
+        for (Right rx = mind.getRights().getRoot(); rx != null; rx = rx.getNext()) {
+            set.addAll(rx.getTree());
+        }
+
         Set<TVariable> tvars = new HashSet<>();
         for (Tree t : set) {
             tvars.addAll(t.getTVariables(true));
@@ -560,7 +566,16 @@ public class Analiser {
     private List<Right> killInsertion(Right target, boolean withRelatedRights) {
         int flag = 0;
         mind.reset();
-        mind.clearQueryStatus();
+
+        mind.getUsedTrees().clear();
+        mind.getClosedTrees().clear();
+        mind.getExcludedTrees().clear();
+
+        mind.getUsedDomains().clear();
+        mind.getClosedDomains().clear();
+        mind.getQueryValues().clear();
+
+//        mind.clearQueryStatus();
 
         List<Right> rr = new ArrayList<>();
 
@@ -637,8 +652,16 @@ public class Analiser {
         mind.getValues().clear();
         mind.getHypotesisStore().clear();
 
+        mind.getUsedTrees().clear();
+        mind.getClosedTrees().clear();
+        mind.getExcludedTrees().clear();
+
+        mind.getUsedDomains().clear();
+        mind.getClosedDomains().clear();
+        mind.getQueryValues().clear();
+
 //        mind.reset();
-        mind.clearQueryStatus();
+//        mind.clearQueryStatus();
 //        mind.clearLinks();
 //        mind.mark();
 
@@ -646,13 +669,19 @@ public class Analiser {
 //        mind.release();
 //        isHypotheses = false;
         isInsertion = false;
+        long queryStart = System.currentTimeMillis();
 
         mind.getLog().add(LogMode.ANALIZER, "============= CHECKING ===================");
+        long start = System.currentTimeMillis();
         mind.getLinker().link(true);
+        System.out.println("* CHECKING Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0));
         mind.mark();
 //        mind.mark();
 
-        if (analiser(true)) {
+        start = System.currentTimeMillis();
+        Boolean ar = analiser(true);
+        System.out.println("* CHECKING Analise time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+        if (ar) {
             mind.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             res = null;
         } else {
@@ -697,7 +726,15 @@ public class Analiser {
 //                        mind.release();
 //                        analiser();
 
-                    mind.clearQueryStatus();
+//                    mind.clearQueryStatus();
+
+                    mind.getUsedTrees().clear();
+                    mind.getClosedTrees().clear();
+                    mind.getExcludedTrees().clear();
+
+                    mind.getUsedDomains().clear();
+                    mind.getClosedDomains().clear();
+                    mind.getQueryValues().clear();
 
                     mind.getSolutions().clear();
                     mind.getValues().clear();
@@ -712,9 +749,14 @@ public class Analiser {
                         mind.getLog().add(LogMode.ANALIZER, r);
                         mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
 
+                        start = System.currentTimeMillis();
                         mind.getLinker().link(r, true);
-//                        mind.getLinker().link(true);
-                        if (analiser(true)) {
+                        System.out.println("* ACCEPTING Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+
+                        start = System.currentTimeMillis();
+                        ar = analiser(true);
+                        System.out.println("* ACCEPTING Analise time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+                        if (ar) {
                             mind.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
                             mind.release();
                             res = null;
@@ -788,13 +830,24 @@ public class Analiser {
 
 //                        mind.getLog().clear();
 
+//                        mind.getTValues().mark();
+//                        mind.getFValues().mark();
+
                         if (!DEBUG_DISABLE_FALSE_CHECK) {
 
                             mind.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
 
 //
 //                            analiser(false);
-                            mind.clearQueryStatus();
+//                            mind.clearQueryStatus();
+
+                            mind.getUsedTrees().clear();
+                            mind.getClosedTrees().clear();
+                            mind.getExcludedTrees().clear();
+
+                            mind.getUsedDomains().clear();
+                            mind.getClosedDomains().clear();
+                            mind.getQueryValues().clear();
 
                             mind.getSolutions().clear();
                             mind.getValues().clear();
@@ -815,9 +868,14 @@ public class Analiser {
 //                                mind.getRights().release();
 //                                mind.getTrees().release();
 //                                mind.getDomains().release();
+                                start = System.currentTimeMillis();
                                 mind.getLinker().link(r, true);
+                                System.out.println("* FALSE CHK Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0));
 
-                                if (analiser(true)) {
+                                start = System.currentTimeMillis();
+                                ar = analiser(true);
+                                System.out.println("* FALSE CHK Analise time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+                                if (ar) {
                                     mind.getLog().add(LogMode.ANALIZER, "Result: FALSE");
                                     logResult();
                                     res = false;
@@ -864,7 +922,15 @@ public class Analiser {
 //                                mind.clearQueryStatus();
 //                                mind.getLinker().link(true);
 
-                        mind.clearQueryStatus();
+//                        mind.clearQueryStatus();
+
+                        mind.getUsedTrees().clear();
+                        mind.getClosedTrees().clear();
+                        mind.getExcludedTrees().clear();
+
+                        mind.getUsedDomains().clear();
+                        mind.getClosedDomains().clear();
+                        mind.getQueryValues().clear();
 
                         mind.getSolutions().clear();
                         mind.getValues().clear();
@@ -891,9 +957,14 @@ public class Analiser {
 //                            if (!isInsertion) {
 //                                isHypotheses = true;
 //                            }
+                            start = System.currentTimeMillis();
                             mind.getLinker().link(r, true);
+                            System.out.println("* TRUE CHK Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0));
 
-                            if (analiser(true)) {
+                            start = System.currentTimeMillis();
+                            ar = analiser(true);
+                            System.out.println("* TRUE CHK Analise time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+                            if (ar) {
 
                                 if (isInsertion) {
                                     mind.removeInsertionRight(r);
@@ -964,19 +1035,21 @@ public class Analiser {
         mind.getSolutions().enable(storeS);
         mind.getLog().enable(storeL);
 
+        System.out.println("* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
+
         return res;
     }
 
     private void logResult() {
         if (mind.getSolutions().size() > 0) {
-            mind.getLog().add(LogMode.SOLVES, "Solves:");
+            mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
             for (Solution log : mind.getSolutions().getRoot()) {
                 mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i, log.toString()));
             }
         }
         if (mind.getValues().size() > 0) {
-            mind.getLog().add(LogMode.VALUES, "Values:");
+            mind.getLog().add(LogMode.VALUES, "Values(" + mind.getValues().size() + "):");
             int i = 0;
             for (TMeaning log : mind.getValues().getRoot()) {
                 mind.getLog().add(LogMode.VALUES, String.format("\tSolution %03d: %s", ++i, log.toString()));

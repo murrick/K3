@@ -31,7 +31,7 @@ public class TVariable implements Comparable<TVariable> {
 
     public TVariable(DataInputStream dis, Mind mind) throws IOException {
         id = dis.readLong();
-        mind.gettVariableLinks().put(this, dis.readLong());
+        mind.getTVariableLinks().put(this, dis.readLong());
 //        long did = dis.readLong();
 //        if (did != -1) {
 //            area = mind.getTerms().get(did);

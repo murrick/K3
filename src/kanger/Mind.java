@@ -81,7 +81,7 @@ public class Mind {
 
     private Boolean queryResult = null;
     private String querySource = "";
-    private transient volatile int currentLevel = 0;
+    //    private transient volatile int currentLevel = 0;
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
 
     public Mind() {
@@ -152,13 +152,13 @@ public class Mind {
         return fValues;
     }
 
-    public int getCurrentLevel() {
-        return currentLevel;
-    }
+//    public int getCurrentLevel() {
+//        return currentLevel;
+//    }
 
-    public void setCurrentLevel(int currentLevel) {
-        this.currentLevel = currentLevel;
-    }
+//    public void setCurrentLevel(int currentLevel) {
+//        this.currentLevel = currentLevel;
+//    }
 
     public void clearSavedResults() {
         solves.clear();
@@ -229,23 +229,23 @@ public class Mind {
 
     }
 
-    public void clearQueryStatus() {
-        usedTrees.clear();
-        closedTrees.clear();
-        excludedTrees.clear();
-
-        usedDomains.clear();
-        closedDomains.clear();
-        queryValues.clear();
-//        blockedValues.clear();
-//        closedValues.clear();
-
-//        acceptorDomains.clear();
-//        queuedDomains.clear();
-
-//        sources.clear();
-//        destinations.clear();
-    }
+//    public void clearQueryStatus() {
+//        usedTrees.clear();
+//        closedTrees.clear();
+//        excludedTrees.clear();
+//
+//        usedDomains.clear();
+//        closedDomains.clear();
+//        queryValues.clear();
+////        blockedValues.clear();
+////        closedValues.clear();
+//
+////        acceptorDomains.clear();
+////        queuedDomains.clear();
+//
+////        sources.clear();
+////        destinations.clear();
+//    }
 
     public void reset() {
         terms.reset();
@@ -295,8 +295,15 @@ public class Mind {
             compileLine(line);
         }
 
+        long start = System.currentTimeMillis();
         linker.link(true);
-        if (analiser.analiser(true)) {
+        System.out.println("* COMPILING Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+
+        start = System.currentTimeMillis();
+        Boolean ar = analiser.analiser(true);
+        System.out.println("* COMPILING Analise time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+
+        if (ar) {
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             release();
 //            return false;
@@ -339,23 +346,23 @@ public class Mind {
         return r;
     }
 
-    private boolean containsTVariables(Right r) {
-        for (TVariable t = tVars.getRoot(); t != null; t = t.getNext()) {
-            if (t.getRight() == r) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    private boolean containsTVariables(Right r) {
+//        for (TVariable t = tVars.getRoot(); t != null; t = t.getNext()) {
+//            if (t.getRight() == r) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
-    private boolean containsCVariables(Right r) {
-        for (Term t = terms.getRoot(); t != null; t = t.getNext()) {
-            if (t.isCVar() && t.getRight() == r) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    private boolean containsCVariables(Right r) {
+//        for (Term t = terms.getRoot(); t != null; t = t.getNext()) {
+//            if (t.isCVar() && t.getRight() == r) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     /**
      * Удаление правила из дерева вывода
@@ -556,7 +563,7 @@ public class Mind {
     //    public Map<Solution, Long> getSolveLinks() {
 //        return solveLinks;
 //    }
-    public Map<TVariable, Long> gettVariableLinks() {
+    public Map<TVariable, Long> getTVariableLinks() {
         return tVariableLinks;
     }
 
@@ -617,28 +624,28 @@ public class Mind {
     }
 
     //TODO: Для отладки все закоментил
-    public Set<Right> getActualRights() {
-        Set<Right> set = new HashSet<>();
-//        if (substituted.isEmpty() && calculated.isEmpty()) {
-        for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
-            set.add(r);
-        }
-//        } else {
-//            if (tVars.size() > 0) {
-//                for (TVariable t : substituted) {
-//
-//                    for (Domain d : t.getUsage()) {
-//                        set.addAll(d.getPredicate().getRights());
-//                    }
-//
-//                }
-//            }
-////            for (Function f : calculated) {
-////                set.addAll(f.getOwner().getPredicate().getRights());
-////            }
+//    public Set<Right> getActualRights() {
+//        Set<Right> set = new HashSet<>();
+////        if (substituted.isEmpty() && calculated.isEmpty()) {
+//        for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
+//            set.add(r);
 //        }
-        return set;
-    }
+////        } else {
+////            if (tVars.size() > 0) {
+////                for (TVariable t : substituted) {
+////
+////                    for (Domain d : t.getUsage()) {
+////                        set.addAll(d.getPredicate().getRights());
+////                    }
+////
+////                }
+////            }
+//////            for (Function f : calculated) {
+//////                set.addAll(f.getOwner().getPredicate().getRights());
+//////            }
+////        }
+//        return set;
+//    }
 
     public String getQuerySource() {
         return querySource;
@@ -657,13 +664,13 @@ public class Mind {
         return null;
     }
 
-    public Queue<Tree> getActualTrees() {
-        Queue<Tree> set = new LinkedList<>();
-        for (Right r : getActualRights()) {
-            set.addAll(r.getTree());
-        }
-        return set;
-    }
+//    public Queue<Tree> getActualTrees() {
+//        Queue<Tree> set = new LinkedList<>();
+//        for (Right r : getActualRights()) {
+//            set.addAll(r.getTree());
+//        }
+//        return set;
+//    }
 
 
     //TODO: Ограничить область опредедения: !num(0); !@x num(x) && x < 10 -> num(++x);      ?$x num(x);      --- ВКЛЮЧАЕТ 10

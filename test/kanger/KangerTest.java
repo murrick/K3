@@ -19,27 +19,27 @@ public class KangerTest {
     }
 
     private void showResult(Boolean assertResult) {
-            System.out.println("Query: " + mind.getQuerySource());
-            System.out.println("Result: " + mind.getQueryResult());
-            if (!mind.getSolutions().isEmpty()) {
-                System.out.println("Solves:");
-                for (Solution s : mind.getSolutions().getRoot()) {
-                    System.out.println("\t" + s);
-                }
+        System.out.println("Query: " + mind.getQuerySource());
+        System.out.println("Result: " + mind.getQueryResult());
+        if (!mind.getSolutions().isEmpty()) {
+            System.out.println("Solves (" + mind.getSolutions().size() + "):");
+            for (Solution s : mind.getSolutions().getRoot()) {
+                System.out.println("\t" + s);
             }
-            if (!mind.getValues().isEmpty()) {
-                System.out.println("Values:");
-                for (TMeaning s : mind.getValues().getRoot()) {
-                    System.out.println("\t" + s);
-                }
+        }
+        if (!mind.getValues().isEmpty()) {
+            System.out.println("Values: (" + mind.getValues().size() + ")");
+            for (TMeaning s : mind.getValues().getRoot()) {
+                System.out.println("\t" + s);
             }
-            if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {
-                System.out.println("Hypotesis:");
-                for (Hypotese s : mind.getHypotesisStore().getRoot()) {
-                    System.out.println("\t" + s);
-                }
+        }
+        if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {
+            System.out.println("Hypotesis (" + mind.getHypotesisStore().size() + "):");
+            for (Hypotese s : mind.getHypotesisStore().getRoot()) {
+                System.out.println("\t" + s);
             }
-            System.out.println("----------------------------------------------------");
+        }
+        System.out.println("----------------------------------------------------");
         if (mind.getQueryResult() != assertResult) {
             fail("Expeced: " + assertResult);
         }
@@ -545,6 +545,39 @@ public class KangerTest {
     }
 
     @org.junit.Test
+    public void set03_05() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        mind.query("?@x a(G, x);");
+        showResult(false);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set03_06() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        mind.query("?$x a(x, A);");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set03_07() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        mind.query("?~$x a(x, A);");
+        showResult(false);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
     public void set04_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
@@ -747,6 +780,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
+    //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
     @org.junit.Test
     public void set04_0D() throws ParseErrorException, RuntimeErrorException {
 
@@ -787,6 +821,26 @@ public class KangerTest {
 
         System.out.println("OK");
         System.out.println("====================================================");
+//        if (mind.getLog().size() > 0) {
+//            for (LogEntry log : mind.getLog().getRoot()) {
+//                System.out.println(log.getRecord());
+//            }
+////            System.out.println();
+//        }
+
     }
 
+    @org.junit.Test
+    public void set05_01() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
+                "!@x male(x) || female(x);" +
+                "!father(John,Tom);" +
+                "!daughter(Mary,John);");
+        mind.query("?$x male(x);");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
 }

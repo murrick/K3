@@ -119,7 +119,9 @@ public class Linker {
 
 
             //ПОДСТАНОВКИ T-переменных
-            for (int i = 0; i <= level; ++i) {
+            //TODO: Не уверен что не надо проходить каждый раз заново. Надо проверить на длинных запросах
+//            for (int i = 0; i <= level; ++i) {
+            int i = level;
 
 //                if("xx".equals(master.get(i).getValue() + "")) {
 //                    System.out.println("m: " + master);
@@ -133,7 +135,7 @@ public class Linker {
                         && !slave.isDestFor(i, master)
 //                        && !master.isDestFor(i, slave)
 //                        && master.get(i).getT().isEmpty()
-                        && master.getVarOrder(i) >= slave.getVarOrder(i)
+                        && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
 //                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
                 ) {
@@ -157,7 +159,7 @@ public class Linker {
                         && !master.isDestFor(i, slave)
 //                        && !slave.isDestFor(i, master)
 //                        && slave.get(i).getT().isEmpty()
-                        && slave.getVarOrder(i) >= master.getVarOrder(i)
+                        && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
 //                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
                 ) {
@@ -175,7 +177,7 @@ public class Linker {
                     }
                     occurrsSlave = true;
                 }
-            }
+//            }
 
 //            if(occurrsMaster) {
 //                for (Function f : master.getFunctions()) {
@@ -497,27 +499,31 @@ public class Linker {
     public Queue<Tree> getActualTrees(Right r) {
         boolean added = false;
         Queue<Tree> set = new LinkedList<>();
-        set.addAll(r.getTree());
 
-        do {
-            added = false;
-            Set<Tree> tmp = new HashSet<>();
-            for (Tree t : set) {
-                for (Domain d : t.getSequence()) {
-
-                    for (Right rx = mind.getRights().getRoot(); rx != null; rx = rx.getNext()) {
-                        for (Tree tx : rx.getTree()) {
-                            if (!set.contains(tx) && tx.contains(d)) {
-                                tmp.add(tx);
-                                added = true;
+        if (r != null) {
+            set.addAll(r.getTree());
+            do {
+                added = false;
+                Set<Tree> tmp = new HashSet<>();
+                for (Tree t : set) {
+                    for (Domain d : t.getSequence()) {
+                        for (Right rx = mind.getRights().getRoot(); rx != null; rx = rx.getNext()) {
+                            for (Tree tx : rx.getTree()) {
+                                if (!set.contains(tx) && tx.contains(d)) {
+                                    tmp.add(tx);
+                                    added = true;
+                                }
                             }
                         }
                     }
                 }
+                set.addAll(tmp);
+            } while (added);
+        } else {
+            for (Right rx = mind.getRights().getRoot(); rx != null; rx = rx.getNext()) {
+                set.addAll(rx.getTree());
             }
-            set.addAll(tmp);
-
-        } while (added);
+        }
         return set;
     }
 
@@ -536,7 +542,7 @@ public class Linker {
 
 //        mind.getExcludedTrees().clear();
         //TODO: Нужно сделать динамический сет
-        Queue<Tree> slave = r != null ? getActualTrees(r) : mind.getActualTrees();
+        Queue<Tree> slave = getActualTrees(r);
         Queue<Tree> master;
 //        if (r != null) {
 //            master = new LinkedList<>();
@@ -573,18 +579,18 @@ public class Linker {
 
 //            for (int i = 0; i < slave.size(); ++i) {
 
-                mind.getUsedDomains().clear();
-                mind.getUsedTrees().clear();
+            mind.getUsedDomains().clear();
+            mind.getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
-                while (updateDomains(tset, master, slave, logging)) ;
-                calcFunctions(tset, slave, logging);
+            while (updateDomains(tset, master, slave, logging)) ;
+            calcFunctions(tset, slave, logging);
 //                if (!res) {
 //                    break;
 //                }
 
-                Tree top = slave.poll();
-                slave.add(top);
+//            Tree top = slave.poll();
+//            slave.add(top);
 //            }
 
 
@@ -677,3 +683,6 @@ public class Linker {
         }
     }
 }
+
+
+//TODO: ?$x a(x,G); - НЕ СХОДИТСЯ! Из за ранга
