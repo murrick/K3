@@ -122,14 +122,14 @@ public class Analiser {
 //                }
 //            }
 
-            if (a.isClosed() /*|| a.isExcluded()*/) {
+            if (a.isClosed() || (a.isExcluded() && !a.isStored())) {
                 continue;
             }
 
             for (int j = k + 1; j < sequence.size(); ++j) {
                 Domain b = sequence.get(j);
 
-                if (b.isClosed() /*|| b.isExcluded()*/) {
+                if (b.isClosed() || (b.isExcluded() && !b.isStored())) {
                     continue;
                 }
 
@@ -340,12 +340,12 @@ public class Analiser {
 
 //            mind.getSubstituted().clear();
 
-            boolean occurrs = false;
-            for (Domain d : sd) {
-                if (d.isUsed() /*&& !d.isAntc()*/) {
-                    occurrs = true;
+//            boolean occurrs = false;
+//            for (Domain d : sd) {
+//                if (d.isUsed() /*&& !d.isAntc()*/) {
+//                    occurrs = true;
 //                    result = true;
-                }
+//                }
 //                int res = d.execSystem();
 //                if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
 //                    result = d.isAntc();
@@ -357,7 +357,7 @@ public class Analiser {
 ////                    }
 //                    occurrs = true;
 //                }
-            }
+//            }
 
 //            if (occurrs) {
 //                collectResults(!result, sd);

@@ -149,10 +149,11 @@ public class Linker {
                     s = master.get(i).getT().setValue(slave.get(i).getValue());
                     s.setClosed();
                     occurrsSubst = true;
+                    //TODO: Перенес
+                    s.addSolve(i, slave, master);
                 } else {
                     s = master.get(i).getT().find(slave.get(i).getValue());
                 }
-                s.addSolve(i, slave, master);
                 if (slave.isQuery() || master.isQuery()) {
                     s.setQuery();
                 }
@@ -175,10 +176,11 @@ public class Linker {
                     s = slave.get(i).getT().setValue(master.get(i).getValue());
                     s.setClosed();
                     occurrsSubst = true;
+                    //TODO: Перенес
+                    s.addSolve(i, master, slave);
                 } else {
                     s = slave.get(i).getT().find(master.get(i).getValue());
                 }
-                s.addSolve(i, master, slave);
                 if (master.isQuery() || slave.isQuery()) {
                     s.setQuery();
                 }
@@ -268,14 +270,18 @@ public class Linker {
             for (Tree master : masterSet) { //query == null ? set : query.getTree()) {
                 for (Tree slave : slaveSet) {
 
+
                     if (checkSystem(logging, master) && checkSystem(logging, slave)) {
                         mind.getTValues().mark();
                         mind.getFValues().mark();
                         mind.getClosedValues().clear();
                         mind.getBlockedValues().clear();
 
+
                         for (Domain d1 : master.getSequence()) {
+                            if (d1.isExcluded()) continue;
                             for (Domain d2 : slave.getSequence()) {
+                                if (d2.isExcluded()) continue;
 
 
                                 if (d1.getId() != d2.getId()
@@ -300,8 +306,11 @@ public class Linker {
 //                                        }
 
                                         result = true;
+                                        linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+                                    } else {
+                                        linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
                                     }
-                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+
 
 //                                } else if (d1.getId() == d2.getId() && d1.isSystem()) {
 //                                    linkFunctions(d1, d2, 0, logging, false, false);
@@ -318,14 +327,18 @@ public class Linker {
 //                            mind.getFValues().release();
 //                            result = false;
 //                        }
+
                     } else {
 //                        System.out.println("!!");
 //                        mind.getTValues().release();
 //                        mind.getFValues().release();
 //                        result = false;
                     }
+                    updateDatabase(master, logging);
+                    updateDatabase(slave, logging);
                 }
             }
+
         } else {
             TVariable t = tvars.last(); //.get(tIndex);
             TValue v = t.rewind();
@@ -537,6 +550,12 @@ public class Linker {
     }
 
     public void link(boolean logging) throws RuntimeErrorException {
+        mind.getUsedDomains().clear();
+        mind.getExcludedDomains().clear();
+        mind.getProducedDomains().clear();
+//        mind.getStoredDomains().clear();
+        mind.getUsedTrees().clear();
+
         link(null, logging);
     }
 
@@ -563,6 +582,8 @@ public class Linker {
 
         TValue saveT = null;
         FValue saveF = null;
+
+
         do {
             saveT = mind.getTValues().getRoot();
             saveF = mind.getFValues().getRoot();
@@ -588,13 +609,17 @@ public class Linker {
 
 //            for (int i = 0; i < slave.size(); ++i) {
 
-            mind.getUsedDomains().clear();
-            mind.getExcludedDomains().clear();
-            mind.getUsedTrees().clear();
+//            mind.getUsedDomains().clear();
+//            mind.getExcludedDomains().clear();
+//            mind.getProducedDomains().clear();
+//            mind.getStoredDomains().clear();
+//            mind.getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
             while (updateDomains(tset, master, slave, logging)) ;
             calcFunctions(tset, slave, logging);
+
+
 //                if (!res) {
 //                    break;
 //                }
@@ -639,6 +664,34 @@ public class Linker {
 
     }
 
+    private Domain updateDatabase(Tree tree, boolean logging) {
+        Domain produced = null;
+        if (tree.getSequence().size() == 1 && tree.getSequence().get(0).getTVariables(true).size() == 0) {
+            produced = tree.getSequence().get(0);
+        } else {
+            for (Domain d : tree.getSequence()) {
+                if (d.isProduced()) {
+                    if (produced == null) {
+                        produced = d;
+                    } else {
+                        produced = null;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (produced != null && !produced.isStored() && produced.getPredicate().containsSolve(produced) == null) {
+            produced.setStored();
+            if (logging) {
+                mind.getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
+            }
+        }
+
+        return produced;
+    }
+
+
     private void logBlocked(boolean logging, Domain d) {
         if (logging) {
             mind.getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
@@ -654,14 +707,19 @@ public class Linker {
                         Domain dst = t.getDstSolves().get(i);
                         Domain src = t.getSrcSolves().get(i);
 
-                        if (!src.getRight().isQuery()) src.setExcluded();
+                        //TODO: Не уверен, но нужно контролировать только целевые предикаты. НО! А если подстановка в обе стороны??
+
+//                        if (!src.getRight().isQuery()) src.setExcluded();
                         if (!dst.getRight().isQuery()) dst.setExcluded();
+//                        dst.setExcluded();
 
                         if (dst.getPredicate().getId() == d.getPredicate().getId()) {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
-                                if (dst.getId() != r.getId() && mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+                                //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
+                                if (dst.getId() != r.getId() && !r.isDest() && !r.isProduced()) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
                                     //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
+                                    r.setProduced();
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
                                     found = true;
                                     result = true;

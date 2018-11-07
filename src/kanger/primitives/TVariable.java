@@ -85,14 +85,14 @@ public class TVariable implements Comparable<TVariable> {
         }
     }
 
-    public TValue setValue(Term value) { //throws TValueOutOfOrder {
+    public TValue setValue(Term value) { //throws TValueOutOfOrderException {
 //        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
             return mind.getTValues().add(this, value);
 //        } else {
-//            throw new TValueOutOfOrder(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
+//            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
 //        }
     }
 
@@ -104,7 +104,7 @@ public class TVariable implements Comparable<TVariable> {
 //        }
     }
 
-    //    public TSubst addValue(Term value) throws TValueOutOfOrder {
+    //    public TSubst addValue(Term value) throws TValueOutOfOrderException {
 //        if (!mind.getTValues().containsKey(this)) {
 //            mind.getTValues().put(this, new TValue());
 //        }
@@ -114,7 +114,7 @@ public class TVariable implements Comparable<TVariable> {
 //            }
 //            return mind.getTValues().createCVar(this).addValue(value);
 //        } else {
-//            throw new TValueOutOfOrder(value.toString());
+//            throw new TValueOutOfOrderException(value.toString());
 //        }
 //    }
     //    public int getOwner() {

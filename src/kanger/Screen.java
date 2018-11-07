@@ -1,6 +1,7 @@
 package kanger;
 
 //import jline.ConsoleReader;
+
 import kanger.compiler.Parser;
 import kanger.compiler.SysOp;
 import kanger.enums.Enums;
@@ -63,8 +64,8 @@ public class Screen {
 //                    }
 //                }
 //                if (!LINE_EDITOR_ENABLE || reader == null) {
-                    System.out.printf("\n: ");
-                    line = new Scanner(System.in).nextLine();
+                System.out.printf("\n: ");
+                line = new Scanner(System.in).nextLine();
 //                }
                 if (line == null) {
                     line = "";
@@ -498,12 +499,12 @@ public class Screen {
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
         if (tIndex >= tvars.size()) {
-//            if (!d.isDestFor()) {
+            if (d.isStored()) {
 //                d.recalculate();
-            System.out.printf("\t%s\n", d.toString());
-            if (showCauses) {
-                showCauses(mind, d, 0);
-//                }
+                System.out.printf("\t%s\n", d.toString());
+                if (showCauses) {
+                    showCauses(mind, d, 0);
+                }
             }
         } else {
             TVariable t = tvars.get(tIndex);
@@ -512,10 +513,10 @@ public class Screen {
                 do {
 //                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
 //                        mind.getSubstituted().createTVar(t);
-                    if (!d.isDest()) {
-                        mind.getTValues().set(t, v);
-                        showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
-                    }
+//                    if (!d.isDest()) {
+                    mind.getTValues().set(t, v);
+                    showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
+//                    }
                 } while ((v = t.next(v)) != null);
             } else {
                 showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);

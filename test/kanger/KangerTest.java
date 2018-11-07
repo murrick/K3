@@ -354,13 +354,13 @@ public class KangerTest {
         showResult(true);
         Term term = mind.getTerms().add("nn");
         if (!mind.getValues().getValues("x").contains(term)) {
-            fail("Expected: " + term);
+            fail("Expected x: " + term);
         }
         if (!mind.getValues().getValues("y").contains(term)) {
-            fail("Expected: " + term);
+            fail("Expected y: " + term);
         }
         if (!mind.getValues().getValues("z").contains(term)) {
-            fail("Expected: " + term);
+            fail("Expected z: " + term);
         }
         if (mind.getValues().getValues("x").size() != 1 || mind.getValues().getValues("y").size() != 1 || mind.getValues().getValues("z").size() != 1) {
             fail("Expected 3 solve");
@@ -834,7 +834,7 @@ public class KangerTest {
     public void set05_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+        mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?a(nnn);");
         showResult(true);
@@ -846,7 +846,7 @@ public class KangerTest {
     public void set05_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+        mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?b(nnn);");
         showResult(false);
@@ -858,7 +858,7 @@ public class KangerTest {
     public void set05_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+        mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?$x a(x);");
         showResult(true);
@@ -870,7 +870,7 @@ public class KangerTest {
     public void set05_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+        mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?$x b(x);");
         showResult(null);

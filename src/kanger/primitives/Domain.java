@@ -5,6 +5,7 @@ import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
+import kanger.exception.ParametersIncompleteException;
 import kanger.exception.RuntimeErrorException;
 
 import java.io.DataInputStream;
@@ -113,9 +114,13 @@ public class Domain {
     public List<Domain> getCauses() {
         List<Domain> list = new ArrayList<>();
         for (TVariable t : getTVariables(true)) {
-            if (t.getDstSolves() != null && t.getSrcSolves() != null && t.getDstSolves().contains(id) && t.getSrcSolves().contains(id)) {
-                //TODO: Непонятно что тут. Потом
-//                list.add(t.getSrcSolve());
+            if (!t.isEmpty()) {
+                for (int i = 0; i < t.getSrcSolves().size(); ++i) {
+//                    if(t.getDstSolves().get(i).getId() == getId()) {
+                    Domain src = t.getSrcSolves().get(i);
+                    list.add(src);
+//                    }
+                }
             }
         }
         return list;
@@ -198,8 +203,15 @@ public class Domain {
 
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix = isDest() || isQuery() || isClosed() || isUsed()
-                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isUsed() ? "U" : "") + (isExcluded() ? "X" : "") + " "
+            suffix = isDest() || isQuery() || isClosed() || isUsed() || isExcluded() || isProduced() || isStored()
+                    ? " " + (isDest() ? "A" : "") +
+                    (isQuery() ? "Q" : "") +
+                    (isClosed() ? "C" : "") +
+                    (isUsed() ? "U" : "") +
+                    (isExcluded() ? "X" : "") +
+                    (isProduced() ? "P" : "") +
+                    (isStored() ? "B" : "") +
+                    " "
                     : "";
         }
         return s + ";" + suffix;
@@ -306,13 +318,14 @@ public class Domain {
         return true;
     }
 
-    private List<Long> convertArguments() {
+    private List<Long> convertArguments() throws ParametersIncompleteException {
         List<Long> list = new ArrayList<>();
         for (int i = 0; i < predicate.getRange(); ++i) {
             try {
                 list.add(arguments.get(i).getValue().getId());
             } catch (Exception x) {
-                System.out.println(i);
+                throw new ParametersIncompleteException("Incomplete args: " + predicate.toString() + " : " + i);
+                //System.out.println(i);
             }
         }
         return list;
@@ -334,7 +347,11 @@ public class Domain {
             mind.getClosedDomains().put(id, new HashSet<>());
         }
         if (!isClosed()) {
-            mind.getClosedDomains().get(id).add(convertArguments());
+            try {
+                mind.getClosedDomains().get(id).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
         }
     }
 
@@ -355,7 +372,11 @@ public class Domain {
             mind.getUsedDomains().put(id, new HashSet<>());
         }
         if (!isClosed()) {
-            mind.getUsedDomains().get(id).add(convertArguments());
+            try {
+                mind.getUsedDomains().get(id).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
         }
     }
 
@@ -376,7 +397,59 @@ public class Domain {
             mind.getExcludedDomains().put(id, new HashSet<>());
         }
         if (!isExcluded()) {
-            mind.getExcludedDomains().get(id).add(convertArguments());
+            try {
+                mind.getExcludedDomains().get(id).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean isProduced() {
+        if (mind.getProducedDomains().containsKey(id)) {
+            for (List<Long> list : mind.getProducedDomains().get(id)) {
+                if (isEqualsArguments(list)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void setProduced() {
+        if (!mind.getProducedDomains().containsKey(id)) {
+            mind.getProducedDomains().put(id, new HashSet<>());
+        }
+        if (!isProduced()) {
+            try {
+                mind.getProducedDomains().get(id).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean isStored() {
+        if (mind.getStoredDomains().containsKey(id)) {
+            for (List<Long> list : mind.getStoredDomains().get(id)) {
+                if (isEqualsArguments(list)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void setStored() {
+        if (!mind.getStoredDomains().containsKey(id)) {
+            mind.getStoredDomains().put(id, new HashSet<>());
+        }
+        if (!isStored()) {
+            try {
+                mind.getStoredDomains().get(id).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
         }
     }
 
@@ -450,25 +523,25 @@ public class Domain {
 //        return false;
 //    }
 
-    public int getTVarCount() {
-        int cnt = 0;
-        for (int i = 0; i < arguments.size(); ++i) {
-            if (arguments.get(i).isTSet()) {
-                ++cnt;
-            }
-        }
-        return cnt;
-    }
-
-    public int getCVarCount() {
-        int cnt = 0;
-        for (int i = 0; i < arguments.size(); ++i) {
-            if (!arguments.get(i).isTSet() && arguments.get(i).isCVar()) {
-                ++cnt;
-            }
-        }
-        return cnt;
-    }
+//    public int getTVarCount() {
+//        int cnt = 0;
+//        for (int i = 0; i < arguments.size(); ++i) {
+//            if (arguments.get(i).isTSet()) {
+//                ++cnt;
+//            }
+//        }
+//        return cnt;
+//    }
+//
+//    public int getCVarCount() {
+//        int cnt = 0;
+//        for (int i = 0; i < arguments.size(); ++i) {
+//            if (!arguments.get(i).isTSet() && arguments.get(i).isCVar()) {
+//                ++cnt;
+//            }
+//        }
+//        return cnt;
+//    }
 
     public int getVarOrder(int pos) {
         List<Integer> list = new ArrayList<>();

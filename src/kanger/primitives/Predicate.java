@@ -5,9 +5,7 @@ import kanger.Mind;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -78,64 +76,83 @@ public class Predicate {
 
     public Set<Domain> getSolves() {
         Set<Domain> set = new HashSet<>();
+//        for(long id : mind.getProducedDomains().keySet()) {
+//            Domain d = mind.getDomains().get(id);
+//            if(d.getPredicate().getId() == getId()) {
+//                for(List<Long> args : mind.getProducedDomains().get(id)) {
+//                    Solution s = new Solution(mind, d.isAntc(), d.getPredicate(), d.getArguments());
+//                    set.add(s);
+//                }
+//            }
+//        }
+
         for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-            if(this.equals(d.getPredicate())) {
+            if (getId() == d.getPredicate().getId()) {
                 set.add(d);
             }
         }
         return set;
     }
 
-    public boolean checkSolves() {
-        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-            if(this.equals(d.getPredicate())) {
-                for(Domain q = mind.getDomains().getRoot(); q != null; q = d.getNext()) {
-                    if(this.equals(q.getPredicate())) {
-                        for(int i=0; i<d.getPredicate().getRange(); ++i) {
-                            if(!d.getArguments().get(i).isEmpty()
-                                && !q.getArguments().get(i).isEmpty()
-                            && d.getArguments().get(i).getValue().getId() == q.getArguments().get(i).getValue().getId()) {
-                                return true;
-                            }
-                        }
-                    }
-                }
+    public Domain containsSolve(Domain d) {
+        for (Domain x : getSolves()) {
+            if (x.isStored() && d.equalsBase(x)) {
+                return x;
             }
         }
-        return false;
+        return null;
     }
 
-    public Set<Right> getRights() {
-        Set<Right> set = new HashSet<>();
-        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-            if(d.getPredicate().getId() == id) {
-                set.add(d.getRight());
-            }
-        }
-        return set;
-    }
+//    public boolean checkSolves() {
+//        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+//            if(getId() == d.getPredicate().getId()) {
+//                for(Domain q = mind.getDomains().getRoot(); q != null; q = d.getNext()) {
+//                    if(getId() == q.getPredicate().getId()) {
+//                        for(int i=0; i<d.getPredicate().getRange(); ++i) {
+//                            if(!d.getArguments().get(i).isEmpty()
+//                                && !q.getArguments().get(i).isEmpty()
+//                            && d.getArguments().get(i).getValue().getId() == q.getArguments().get(i).getValue().getId()) {
+//                                return true;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return false;
+//    }
+
+//    public Set<Right> getRights() {
+//        Set<Right> set = new HashSet<>();
+//        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+//            if(d.getPredicate().getId() == id) {
+//                set.add(d.getRight());
+//            }
+//        }
+//        return set;
+//    }
 
     @Override
     public String toString() {
         return name + "(" + range + ")";
     }
 
-    @Override
-    public boolean equals(Object t) {
-        return !(t == null || !(t instanceof Predicate)) && ((Predicate) t).id == id;
-    }
+//    @Override
+//    public boolean equals(Object t) {
+//        return !(t == null || !(t instanceof Predicate)) && ((Predicate) t).id == id;
+//    }
 
-    public List<TVariable> getTVariables(boolean full) {
-        List<TVariable> list = new ArrayList<>();
-        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-            if(d.getPredicate().id == id) {
-                for(TVariable t : d.getTVariables(full)) {
-                    if(!list.contains(t)) {
-                        list.add(t);
-                    }
-                }
-            }
-        }
-        return list;
-    }
+//    public List<TVariable> getTVariables(boolean full) {
+//        List<TVariable> list = new ArrayList<>();
+//        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+//            if(d.getPredicate().id == id) {
+//                for(TVariable t : d.getTVariables(full)) {
+//                    if(!list.contains(t)) {
+//                        list.add(t);
+//                    }
+//                }
+//            }
+//        }
+//        return list;
+//    }
 }

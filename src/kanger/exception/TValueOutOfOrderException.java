@@ -3,15 +3,15 @@ package kanger.exception;
 /**
  * Created by Dmitry Kuznetsov on 30.12.2015.
  */
-public class TValueOutOfOrder extends Exception {
+public class TValueOutOfOrderException extends Exception {
     String exceptionMessage = "ERROR";
     String error = "";
     Object object = null;
 
-    public TValueOutOfOrder() {
+    public TValueOutOfOrderException() {
     }
 
-    public TValueOutOfOrder(String msg) {
+    public TValueOutOfOrderException(String msg) {
         exceptionMessage += ": " + msg;
     }
 

@@ -157,8 +157,10 @@ public class Kanger {
 //                            "!b(ooo); " +
 //                            "!d(v); " +
 //                            "!@x a(x) -> ~n(x); " +
-                    "!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
-                            "!a(nn);"
+                    "!@x (a(x) || b(x)); " +
+                            "!@y ~(a(y) && b(y));" +
+                            "!a(nn);" +
+                            ""
             );
             mind.compile(
 //                    "!@x ~father(x,x);" +

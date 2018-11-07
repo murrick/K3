@@ -77,7 +77,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
 
     public Hypotese find(boolean antc, Predicate pred, List<Argument> arg) {
         for (Hypotese h : root) {
-            if (h.getPredicate().equals(pred) && h.isAntc() == antc) {
+            if (h.getPredicate().getId() == pred.getId() && h.isAntc() == antc) {
 
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
@@ -97,7 +97,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
 
     public Hypotese find(Hypotese hy) {
         for (Hypotese h : root) {
-            if (h.getPredicate().equals(hy.getPredicate())) {
+            if (h.getPredicate().getId() == hy.getPredicate().getId()) {
 
                 int i = 0;
                 if (hy.getSolve().size() == h.getSolve().size()) {
