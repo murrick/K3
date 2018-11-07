@@ -103,13 +103,16 @@ public class Linker {
         if (level >= master.getPredicate().getRange()) {
 
             if (occurrsMaster || occurrsSlave) {
+                boolean result = false;
                 if (occurrsMaster) {
-                    logComparsion(logging, master);
+                    result = logComparsion(logging, master) || result;
                 }
                 if (occurrsSlave) {
-                    logComparsion(logging, slave);
+                    result = logComparsion(logging, slave) || result;
                 }
-                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                if (result) {
+                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                }
             }
             return occurrsSubst;
 
@@ -130,53 +133,57 @@ public class Linker {
 //                    System.out.println("s: " + slave);
 //                }
 
-                if (master.get(i).isTSet()
-                        && !slave.get(i).isEmpty()
-                        && !slave.isDestFor(i, master)
+            if (master.get(i).isTSet()
+                    && !slave.get(i).isEmpty()
+                    && !slave.isDestFor(i, master)
 //                        && !master.isDestFor(i, slave)
+
 //                        && master.get(i).getT().isEmpty()
-                        && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
+
+                    && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
 //                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
-                ) {
-                    TValue s;
-                    if (!master.get(i).getT().contains(slave.get(i).getValue())) {
-                        s = master.get(i).getT().setValue(slave.get(i).getValue());
-                        s.setClosed();
-                        occurrsSubst = true;
-                    } else {
-                        s = master.get(i).getT().find(slave.get(i).getValue());
-                    }
-                    s.addSolve(i, slave, master);
-                    if (slave.isQuery() || master.isQuery()) {
-                        s.setQuery();
-                    }
-                    occurrsMaster = true;
+            ) {
+                TValue s;
+                if (!master.get(i).getT().contains(slave.get(i).getValue())) {
+                    s = master.get(i).getT().setValue(slave.get(i).getValue());
+                    s.setClosed();
+                    occurrsSubst = true;
+                } else {
+                    s = master.get(i).getT().find(slave.get(i).getValue());
                 }
+                s.addSolve(i, slave, master);
+                if (slave.isQuery() || master.isQuery()) {
+                    s.setQuery();
+                }
+                occurrsMaster = true;
+            }
 
-                if (slave.get(i).isTSet()
-                        && !master.get(i).isEmpty()
-                        && !master.isDestFor(i, slave)
+            if (slave.get(i).isTSet()
+                    && !master.get(i).isEmpty()
+                    && !master.isDestFor(i, slave)
 //                        && !slave.isDestFor(i, master)
+
 //                        && slave.get(i).getT().isEmpty()
-                        && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
+
+                    && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
 //                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
-                ) {
-                    TValue s;
-                    if (!slave.get(i).getT().contains(master.get(i).getValue())) {
-                        s = slave.get(i).getT().setValue(master.get(i).getValue());
-                        s.setClosed();
-                        occurrsSubst = true;
-                    } else {
-                        s = slave.get(i).getT().find(master.get(i).getValue());
-                    }
-                    s.addSolve(i, master, slave);
-                    if (master.isQuery() || slave.isQuery()) {
-                        s.setQuery();
-                    }
-                    occurrsSlave = true;
+            ) {
+                TValue s;
+                if (!slave.get(i).getT().contains(master.get(i).getValue())) {
+                    s = slave.get(i).getT().setValue(master.get(i).getValue());
+                    s.setClosed();
+                    occurrsSubst = true;
+                } else {
+                    s = slave.get(i).getT().find(master.get(i).getValue());
                 }
+                s.addSolve(i, master, slave);
+                if (master.isQuery() || slave.isQuery()) {
+                    s.setQuery();
+                }
+                occurrsSlave = true;
+            }
 //            }
 
 //            if(occurrsMaster) {
@@ -274,6 +281,8 @@ public class Linker {
                                 if (d1.getId() != d2.getId()
                                         && d1.isAntc() != d2.isAntc()
                                         && d1.getPredicate().getId() == d2.getPredicate().getId()
+//                                        && !d1.isExcluded()
+//                                        && !d2.isExcluded()
                                 ) {
 //                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
 
@@ -580,6 +589,7 @@ public class Linker {
 //            for (int i = 0; i < slave.size(); ++i) {
 
             mind.getUsedDomains().clear();
+            mind.getExcludedDomains().clear();
             mind.getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
@@ -635,7 +645,8 @@ public class Linker {
         }
     }
 
-    private void logComparsion(boolean logging, Domain d) {
+    private boolean logComparsion(boolean logging, Domain d) {
+        boolean result = false;
         if (logging && d.isDest()) {
             for (TVariable t : d.getTVariables(true)) {
                 if (!t.isEmpty()) {
@@ -643,28 +654,39 @@ public class Linker {
                         Domain dst = t.getDstSolves().get(i);
                         Domain src = t.getSrcSolves().get(i);
 
+                        if (!src.getRight().isQuery()) src.setExcluded();
+                        if (!dst.getRight().isQuery()) dst.setExcluded();
+
                         if (dst.getPredicate().getId() == d.getPredicate().getId()) {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
-                                if (dst.getId() != r.getId()) {
+                                if (dst.getId() != r.getId() && mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+                                    //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
                                     found = true;
+                                    result = true;
                                 }
                             }
-                            if (!found) {
-                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + src);
+//                            if (!found) {
+//                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + src);
+
 //                        if (d.getRight().isQuery()) {
 //                            a.getT().getDstSolve().setAcceptor(false);
 //                        }
+
+
+//                            }
+                            if (found) {
+                                mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
+                                mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + dst.toString());
+                                mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + src.toString());
                             }
-                            mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
-                            mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + dst.toString());
-                            mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + src.toString());
                         }
                     }
                 }
             }
         }
+        return result;
     }
 
     private void logCommit(boolean logging) {

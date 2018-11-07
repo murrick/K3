@@ -122,14 +122,14 @@ public class Analiser {
 //                }
 //            }
 
-            if (a.isClosed()) {
+            if (a.isClosed() /*|| a.isExcluded()*/) {
                 continue;
             }
 
             for (int j = k + 1; j < sequence.size(); ++j) {
                 Domain b = sequence.get(j);
 
-                if (b.isClosed()) {
+                if (b.isClosed() /*|| b.isExcluded()*/) {
                     continue;
                 }
 
@@ -154,6 +154,8 @@ public class Analiser {
                                 //                                    && !(xa.isTSet() && xb.isTSet() && xa.getT().getId() == xb.getT().getId())
                                 //                                    && (!xa.isDestFor(b) || a.getRight().isQuery() || b.getRight().isQuery())
                                 //                                    && (!xb.isDestFor(a) || b.getRight().isQuery() || a.getRight().isQuery())
+//                                && !a.isDestFor(i, b)
+//                                && !b.isDestFor(i, a)
                                 && xa.getValue().getId() == xb.getValue().getId()) {
                         } else {
                             equals = false;
@@ -308,11 +310,13 @@ public class Analiser {
 
             for (Tree t : set) {
                 for (Tree x : set) {
-                    if (!x.isExcluded(t)) {
-                        if (checkSequence(t, x, logging)) {
-                            result = true;
-                        }
+//TODO: Это исключение ветвления. Не очень понимаю зачем это. Убрал
+//                    if (!x.isExcluded(t)) {
+
+                    if (checkSequence(t, x, logging)) {
+                        result = true;
                     }
+//                    }
                 }
             }
 

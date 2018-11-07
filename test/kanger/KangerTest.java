@@ -834,13 +834,48 @@ public class KangerTest {
     public void set05_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
-                "!@x male(x) || female(x);" +
-                "!father(John,Tom);" +
-                "!daughter(Mary,John);");
-        mind.query("?$x male(x);");
+        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+                "!a(nnn);");
+        mind.query("?a(nnn);");
         showResult(true);
         System.out.println("OK");
         System.out.println("====================================================");
     }
+
+    @org.junit.Test
+    public void set05_02() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+                "!a(nnn);");
+        mind.query("?b(nnn);");
+        showResult(false);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set05_03() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+                "!a(nnn);");
+        mind.query("?$x a(x);");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set05_04() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x (a(x) || b(x)) && (~a(x) || ~b(x));" +
+                "!a(nnn);");
+        mind.query("?$x b(x);");
+        showResult(null);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
 }

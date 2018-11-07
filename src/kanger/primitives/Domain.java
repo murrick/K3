@@ -199,7 +199,7 @@ public class Domain {
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
             suffix = isDest() || isQuery() || isClosed() || isUsed()
-                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isUsed() ? "U" : "") + " "
+                    ? " " + (isDest() ? "A" : "") + (isQuery() ? "Q" : "") + (isClosed() ? "C" : "") + (isUsed() ? "U" : "") + (isExcluded() ? "X" : "") + " "
                     : "";
         }
         return s + ";" + suffix;
@@ -356,6 +356,27 @@ public class Domain {
         }
         if (!isClosed()) {
             mind.getUsedDomains().get(id).add(convertArguments());
+        }
+    }
+
+
+    public boolean isExcluded() {
+        if (mind.getExcludedDomains().containsKey(id)) {
+            for (List<Long> list : mind.getExcludedDomains().get(id)) {
+                if (isEqualsArguments(list)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void setExcluded() {
+        if (!mind.getExcludedDomains().containsKey(id)) {
+            mind.getExcludedDomains().put(id, new HashSet<>());
+        }
+        if (!isExcluded()) {
+            mind.getExcludedDomains().get(id).add(convertArguments());
         }
     }
 

@@ -51,6 +51,15 @@ public class LogStore {
         return log;
     }
 
+    public LogEntry find(LogMode m, String s) {
+        for (LogEntry e : root) {
+            if (e.getType() == m && s.equals(e.getRecord())) {
+                return e;
+            }
+        }
+        return null;
+    }
+
     public LogEntry add(LogMode m, String s) {
         if (!enableLogging) {
             return null;

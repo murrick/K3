@@ -67,6 +67,7 @@ public class Mind {
 
     private final Map<Long, Set<List<Long>>> closedDomains = new HashMap<>();
     private final Map<Long, Set<List<Long>>> usedDomains = new HashMap<>();
+    private final Map<Long, Set<List<Long>>> excludedDomains = new HashMap<>();
     private final Map<Long, Set<Long>> queryValues = new HashMap<>();
     private final Map<Long, Set<Long>> blockedValues = new HashMap<>();
     private final Map<Long, Set<Long>> closedValues = new HashMap<>();
@@ -569,6 +570,10 @@ public class Mind {
 
     public Map<Long, Set<List<Long>>> getUsedDomains() {
         return usedDomains;
+    }
+
+    public Map<Long, Set<List<Long>>> getExcludedDomains() {
+        return excludedDomains;
     }
 
     public Set<Long> getUsedTrees() {
