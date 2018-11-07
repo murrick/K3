@@ -84,7 +84,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?n(nnn);");
         showResult(false);
-        Solution s = new Solution(mind, false, "a", "nnn");
+        Solution s = new Solution(mind, false, "n", "nnn");
         if (!mind.getSolutions().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -382,7 +382,7 @@ public class KangerTest {
         showResult(true);
         Term term = mind.getTerms().add("nnn");
         if (!mind.getValues().getValues("x").contains(term)) {
-            fail("Expected: " + term);
+            fail("Expected x: " + term);
         }
         if (mind.getValues().getValues("x").size() != 1) {
             fail("Expected 1 solve");

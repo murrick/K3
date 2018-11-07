@@ -609,11 +609,11 @@ public class Linker {
 
 //            for (int i = 0; i < slave.size(); ++i) {
 
-//            mind.getUsedDomains().clear();
-//            mind.getExcludedDomains().clear();
-//            mind.getProducedDomains().clear();
+            mind.getUsedDomains().clear();
+            mind.getExcludedDomains().clear();
+            mind.getProducedDomains().clear();
 //            mind.getStoredDomains().clear();
-//            mind.getUsedTrees().clear();
+            mind.getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
             while (updateDomains(tset, master, slave, logging)) ;

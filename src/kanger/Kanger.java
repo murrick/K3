@@ -150,6 +150,12 @@ public class Kanger {
 
         try {
 
+//            mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
+//                    "!@x a(x) -> ~n(x); " +
+//                    "!a(nnn); " +
+//                    "!b(ooo); " +
+//                    "!d(v);");
+
             mind.compile(
 //                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
 //                            "!a(mmm); " +
@@ -157,9 +163,9 @@ public class Kanger {
 //                            "!b(ooo); " +
 //                            "!d(v); " +
 //                            "!@x a(x) -> ~n(x); " +
-                    "!@x (a(x) || b(x)); " +
-                            "!@y ~(a(y) && b(y));" +
-                            "!a(nn);" +
+//                    "!@x (a(x) || b(x)); " +
+//                            "!@y ~(a(y) && b(y));" +
+//                            "!a(nn);" +
                             ""
             );
             mind.compile(
@@ -185,6 +191,10 @@ public class Kanger {
 ////                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z));"
                     ""
             );
+
+            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
+            mind.query("? (a(z) && c(z)) -> d(z);");
+
         } catch (ParseErrorException e) {
             e.printStackTrace();
         } catch (RuntimeErrorException e) {
