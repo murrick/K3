@@ -355,8 +355,8 @@ public class TVariable implements Comparable<TVariable> {
 
     public boolean isQuery() {
         return !isEmpty()
-                && mind.getQueryValues().containsKey(id)
-                && mind.getQueryValues().get(id).contains(getCurrent().getId());
+                && mind.getQueryValues().containsKey(this)
+                && mind.getQueryValues().get(this).contains(getCurrent());
     }
 
 //    public boolean isBlocked() {

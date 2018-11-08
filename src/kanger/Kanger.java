@@ -179,21 +179,13 @@ public class Kanger {
 //                            "!daughter(Mary,John);" +
                     "");
 
-            mind.compile(
-//                    "!@x num(x) && x < 20 -> num(++x);" +
-//                            "!num(0);" +
-//                    "!age(Tom,12);" +
-//                            "!age(John,32);" +
-//                            "!age(Mary,3);" +
-//                    "!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));\n" +
-//                    "!@x ~a(x,x);\n" +
-//                    "!@x $y a(y,x);" +
-////                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z));"
-                    ""
-            );
+            mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
+                    "!@x a(x) -> ~n(x); " +
+                    "!a(nnn); " +
+                    "!b(ooo); " +
+                    "!d(v);");
+//            mind.query("?b(xx);");
 
-            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
-            mind.query("? (a(z) && c(z)) -> d(z);");
 
         } catch (ParseErrorException e) {
             e.printStackTrace();

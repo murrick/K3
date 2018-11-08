@@ -71,7 +71,7 @@ public class Mind {
     private final Map<Long, Set<List<Long>>> producedDomains = new HashMap<>();
     private final Map<Long, Set<List<Long>>> storedDomains = new HashMap<>();
 
-    private final Map<Long, Set<Long>> queryValues = new HashMap<>();
+    private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<Long, Set<Long>> blockedValues = new HashMap<>();
     private final Map<Long, Set<Long>> closedValues = new HashMap<>();
 
@@ -627,7 +627,7 @@ public class Mind {
         return excludedTrees;
     }
 
-    public Map<Long, Set<Long>> getQueryValues() {
+    public Map<TVariable, Set<TValue>> getQueryValues() {
         return queryValues;
     }
 

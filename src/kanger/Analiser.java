@@ -290,12 +290,20 @@ public class Analiser {
 //                    }
 //                }
             } else {
+//                collectResults(true,sequence);
             }
         }
 
-//        if (!result) {
+        if (!result) {
+            for (Domain d : sequence) {
+                if (d.isStored() && d.isQuery()) {
+//                    System.out.println(d.toString());
+                    mind.getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+
+                }
+            }
 //            collectResults(true, sequence);
-//        }
+        }
 
         return result;
     }
@@ -398,7 +406,10 @@ public class Analiser {
         Set<Domain> suc = new HashSet<>();
         Set<Domain> ant = new HashSet<>();
 
+//        System.out.println("--------------------------");
         for (Domain d : sequence) {
+//            System.out.println(d);
+
             if (d.isClosed() && d.getRight().isQuery()) {
 //                if (d.isSystem()) {
 
@@ -465,6 +476,7 @@ public class Analiser {
 //        }
 
         //result = checkSequence(t, logging);
+
     }
 
     //    public boolean analiseTree(Tree t, boolean logging) throws RuntimeErrorException {

@@ -135,10 +135,10 @@ public class TValue {
     }
 
     public void setQuery() {
-        if (!mind.getQueryValues().containsKey(tVar.getId())) {
-            mind.getQueryValues().put(tVar.getId(), new HashSet<>());
+        if (!mind.getQueryValues().containsKey(tVar)) {
+            mind.getQueryValues().put(tVar, new HashSet<>());
         }
-        mind.getQueryValues().get(tVar.getId()).add(id);
+        mind.getQueryValues().get(tVar).add(this);
     }
 
     //    public void setBlocked() {
@@ -163,4 +163,8 @@ public class TValue {
         return mind.getClosedValues().containsKey(tVar.getId()) && mind.getClosedValues().get(tVar.getId()).contains(id);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && obj instanceof TValue && ((TValue) obj).getId() == id;
+    }
 }

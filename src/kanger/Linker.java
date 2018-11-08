@@ -136,6 +136,7 @@ public class Linker {
             if (master.get(i).isTSet()
                     && !slave.get(i).isEmpty()
                     && !slave.isDestFor(i, master)
+                    && !slave.isExcluded()
 //                        && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getT().isEmpty()
@@ -151,11 +152,12 @@ public class Linker {
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, slave, master);
-                } else {
-                    s = master.get(i).getT().find(slave.get(i).getValue());
-                }
-                if (slave.isQuery() || master.isQuery()) {
-                    s.setQuery();
+//                } else {
+//                    s = master.get(i).getT().find(slave.get(i).getValue());
+//                }
+                    if (slave.isQuery() || master.isQuery()) {
+                        s.setQuery();
+                    }
                 }
                 occurrsMaster = true;
             }
@@ -163,6 +165,7 @@ public class Linker {
             if (slave.get(i).isTSet()
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
+                    && !master.isExcluded()
 //                        && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getT().isEmpty()
@@ -178,11 +181,12 @@ public class Linker {
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, master, slave);
-                } else {
-                    s = slave.get(i).getT().find(master.get(i).getValue());
-                }
-                if (master.isQuery() || slave.isQuery()) {
-                    s.setQuery();
+//                } else {
+//                    s = slave.get(i).getT().find(master.get(i).getValue());
+//                }
+                    if (master.isQuery() || slave.isQuery()) {
+                        s.setQuery();
+                    }
                 }
                 occurrsSlave = true;
             }
@@ -279,9 +283,9 @@ public class Linker {
 
 
                         for (Domain d1 : master.getSequence()) {
-                            if (d1.isExcluded()) continue;
+//                            if (d1.isExcluded()) continue;
                             for (Domain d2 : slave.getSequence()) {
-                                if (d2.isExcluded()) continue;
+//                                if (d2.isExcluded()) continue;
 
 
                                 if (d1.getId() != d2.getId()
@@ -550,11 +554,11 @@ public class Linker {
     }
 
     public void link(boolean logging) throws RuntimeErrorException {
-        mind.getUsedDomains().clear();
-        mind.getExcludedDomains().clear();
-        mind.getProducedDomains().clear();
+//        mind.getUsedDomains().clear();
+//        mind.getExcludedDomains().clear();
+//        mind.getProducedDomains().clear();
 //        mind.getStoredDomains().clear();
-        mind.getUsedTrees().clear();
+//        mind.getUsedTrees().clear();
 
         link(null, logging);
     }
@@ -583,6 +587,13 @@ public class Linker {
         TValue saveT = null;
         FValue saveF = null;
 
+        if (r == null) {
+            mind.getStoredDomains().clear();
+            mind.getExcludedDomains().clear();
+            mind.getProducedDomains().clear();
+//            mind.getQueryValues().clear();
+        }
+
 
         do {
             saveT = mind.getTValues().getRoot();
@@ -610,8 +621,8 @@ public class Linker {
 //            for (int i = 0; i < slave.size(); ++i) {
 
             mind.getUsedDomains().clear();
-            mind.getExcludedDomains().clear();
-            mind.getProducedDomains().clear();
+//            mind.getExcludedDomains().clear();
+//            mind.getProducedDomains().clear();
 //            mind.getStoredDomains().clear();
             mind.getUsedTrees().clear();
 
@@ -662,6 +673,13 @@ public class Linker {
 
 //        } while (mind.getSubstituted().size() > 0 || mind.getCalculated().size() > 0);
 
+        if (r == null) {
+//            mind.getStoredDomains().clear();
+//            mind.getExcludedDomains().clear();
+            mind.getProducedDomains().clear();
+//            mind.getQueryValues().clear();
+        }
+
     }
 
     private Domain updateDatabase(Tree tree, boolean logging) {
@@ -685,6 +703,7 @@ public class Linker {
             produced.setStored();
             if (logging) {
                 mind.getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
+                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
         }
 
@@ -710,14 +729,15 @@ public class Linker {
                         //TODO: Не уверен, но нужно контролировать только целевые предикаты. НО! А если подстановка в обе стороны??
 
 //                        if (!src.getRight().isQuery()) src.setExcluded();
-                        if (!dst.getRight().isQuery()) dst.setExcluded();
+//                        if (!dst.getRight().isQuery())
+                        dst.setExcluded();
 //                        dst.setExcluded();
 
                         if (dst.getPredicate().getId() == d.getPredicate().getId()) {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
                                 //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
-                                if (dst.getId() != r.getId() && !r.isDest() && !r.isProduced()) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+                                if (dst.getId() != r.getId() && !r.isDest() && !r.isProduced() && !r.isStored()) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
                                     //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
                                     r.setProduced();
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
