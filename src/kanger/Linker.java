@@ -149,6 +149,8 @@ public class Linker {
                 if (!master.get(i).getT().contains(slave.get(i).getValue())) {
                     s = master.get(i).getT().setValue(slave.get(i).getValue());
                     s.setClosed();
+
+                    System.out.println("Closed: " + master.get(i).getT());
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, slave, master);
@@ -178,6 +180,7 @@ public class Linker {
                 if (!slave.get(i).getT().contains(master.get(i).getValue())) {
                     s = slave.get(i).getT().setValue(master.get(i).getValue());
                     s.setClosed();
+                    System.out.println("Closed: " + master.get(i).getT());
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, master, slave);
@@ -274,12 +277,14 @@ public class Linker {
             for (Tree master : masterSet) { //query == null ? set : query.getTree()) {
                 for (Tree slave : slaveSet) {
 
+                    mind.getClosedValues().clear();
+                    mind.getBlockedValues().clear();
 
                     if (checkSystem(logging, master) && checkSystem(logging, slave)) {
                         mind.getTValues().mark();
                         mind.getFValues().mark();
-                        mind.getClosedValues().clear();
-                        mind.getBlockedValues().clear();
+//                        mind.getClosedValues().clear();
+//                        mind.getBlockedValues().clear();
 
 
                         for (Domain d1 : master.getSequence()) {
@@ -591,6 +596,7 @@ public class Linker {
             mind.getStoredDomains().clear();
             mind.getExcludedDomains().clear();
             mind.getProducedDomains().clear();
+            mind.getUsedDomains().clear();
 //            mind.getQueryValues().clear();
         }
 
@@ -620,7 +626,7 @@ public class Linker {
 
 //            for (int i = 0; i < slave.size(); ++i) {
 
-            mind.getUsedDomains().clear();
+//            mind.getUsedDomains().clear();
 //            mind.getExcludedDomains().clear();
 //            mind.getProducedDomains().clear();
 //            mind.getStoredDomains().clear();
@@ -684,8 +690,21 @@ public class Linker {
 
     private Domain updateDatabase(Tree tree, boolean logging) {
         Domain produced = null;
-        if (tree.getSequence().size() == 1 && tree.getSequence().get(0).getTVariables(true).size() == 0) {
-            produced = tree.getSequence().get(0);
+        if (tree.getSequence().size() == 1) {
+            if (tree.getSequence().get(0).getTVariables(true).size() == 0) {
+                produced = tree.getSequence().get(0);
+            } else {
+                boolean complete = true;
+                for (TVariable t : tree.getSequence().get(0).getTVariables(true)) {
+                    if (t.isEmpty() || !t.getCurrent().isClosed()) {
+                        complete = false;
+                        break;
+                    }
+                }
+                if (complete) {
+                    produced = tree.getSequence().get(0);
+                }
+            }
         } else {
             for (Domain d : tree.getSequence()) {
                 if (d.isProduced()) {

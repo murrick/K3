@@ -77,15 +77,15 @@ public class Analiser {
 //        return result;
 //    }
 
-    public boolean checkSequence(Tree t, Tree u, boolean logging) throws RuntimeErrorException {
+    public boolean checkSequence(List<Domain> sequence, boolean logging) throws RuntimeErrorException {
 
-        List<Domain> sequence = new ArrayList<>();
-        if (t.getId() != u.getId()) {
-            sequence.addAll(t.getSequence());
-            sequence.addAll(u.getSequence());
-        } else {
-            sequence.addAll(t.getSequence());
-        }
+//        List<Domain> sequence = new ArrayList<>();
+//        if (t.getId() != u.getId()) {
+//            sequence.addAll(t.getSequence());
+//            sequence.addAll(u.getSequence());
+//        } else {
+//            sequence.addAll(t.getSequence());
+//        }
 
         mind.getClosedDomains().clear();
 
@@ -94,7 +94,7 @@ public class Analiser {
         // Контроль системных предикатов
         for (int k = 0; k < sequence.size(); ++k) {
             Domain a = sequence.get(k);
-            if (a.isSystem() && a.isUsed() /*&& !a.isAntc()*/) {
+            if (/*a.isSystem() &&*/ a.isUsed() /*&& !a.isAntc()*/) {
                 a.setClosed();
             }
         }
@@ -162,7 +162,7 @@ public class Analiser {
                         }
                     }
                     if (equals) {
-                        if (!a.isClosed() || !b.isClosed() || !t.isUsed() || !u.isUsed()) {
+                        if (!a.isClosed() || !b.isClosed() /*|| !t.isUsed() || !u.isUsed()*/) {
                             a.setClosed();
                             b.setClosed();
 
@@ -216,6 +216,9 @@ public class Analiser {
         boolean result = false;
         for (int k = 0; k < sequence.size(); ++k) {
             Domain a = sequence.get(k);
+//            if(a.isQuery()) {
+//                System.out.println("qqq " + a);
+//            }
             if (a.isClosed()) {
                 result = true;
                 break;
@@ -224,8 +227,8 @@ public class Analiser {
 
         if (result) {
 
-            t.setUsed();
-            u.setUsed();
+//            t.setUsed();
+//            u.setUsed();
             if (logging) {
                 mind.getLog().add(LogMode.ANALIZER, "Sequence resolved : ");
                 for (Domain x : sequence) {
@@ -262,8 +265,8 @@ public class Analiser {
             }
 
             if (result) {
-                t.setClosed(true);
-                u.setClosed(true);
+//                t.setClosed(true);
+//                u.setClosed(true);
                 collectResults(false, sequence);
 
 
@@ -316,17 +319,25 @@ public class Analiser {
             Set<Domain> sd = new HashSet<>();
 //            SortedSet<HypotesisStore> hypotesis = new TreeSet<>();
 
-            for (Tree t : set) {
-                for (Tree x : set) {
+            List<Domain> dataBase = new ArrayList<>();
+            for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+                if (d.isStored()) {
+                    dataBase.add(d);
+                }
+            }
+
+//            for (Tree t : set) {
+//                for (Tree x : set) {
 //TODO: Это исключение ветвления. Не очень понимаю зачем это. Убрал
 //                    if (!x.isExcluded(t)) {
 
-                    if (checkSequence(t, x, logging)) {
+            //TODO: Заменить на контроль базы данных!!!!!!!!!!!!
+            if (checkSequence(dataBase, logging)) {
                         result = true;
-                    }
+//                    }
 //                    }
                 }
-            }
+//            }
 
             for (Tree t : set) {
                 for (Domain d : t.getSequence()) {

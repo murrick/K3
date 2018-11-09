@@ -371,7 +371,7 @@ public class Domain {
         if (!mind.getUsedDomains().containsKey(id)) {
             mind.getUsedDomains().put(id, new HashSet<>());
         }
-        if (!isClosed()) {
+        if (!isUsed()) {
             try {
                 mind.getUsedDomains().get(id).add(convertArguments());
             } catch (ParametersIncompleteException e) {
