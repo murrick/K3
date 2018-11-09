@@ -582,7 +582,7 @@ public class Linker {
 //        } else {
         master = slave;
 //        }
-
+//todo добвалять produced
 
         TValue saveT = null;
         FValue saveF = null;
@@ -673,12 +673,12 @@ public class Linker {
 
 //        } while (mind.getSubstituted().size() > 0 || mind.getCalculated().size() > 0);
 
-        if (r == null) {
+//        if (r == null) {
 //            mind.getStoredDomains().clear();
 //            mind.getExcludedDomains().clear();
-            mind.getProducedDomains().clear();
+//            mind.getProducedDomains().clear();
 //            mind.getQueryValues().clear();
-        }
+//        }
 
     }
 
