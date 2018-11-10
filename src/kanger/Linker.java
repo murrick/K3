@@ -150,7 +150,7 @@ public class Linker {
                     s = master.get(i).getT().setValue(slave.get(i).getValue());
                     s.setClosed();
 
-                    System.out.println("Closed: " + master.get(i).getT());
+//                    System.out.println("Closed: " + master.get(i).getT());
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, slave, master);
@@ -180,7 +180,7 @@ public class Linker {
                 if (!slave.get(i).getT().contains(master.get(i).getValue())) {
                     s = slave.get(i).getT().setValue(master.get(i).getValue());
                     s.setClosed();
-                    System.out.println("Closed: " + master.get(i).getT());
+//                    System.out.println("Closed: " + slave.get(i).getT());
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, master, slave);
@@ -293,12 +293,19 @@ public class Linker {
 //                                if (d2.isExcluded()) continue;
 
 
+
                                 if (d1.getId() != d2.getId()
                                         && d1.isAntc() != d2.isAntc()
                                         && d1.getPredicate().getId() == d2.getPredicate().getId()
 //                                        && !d1.isExcluded()
 //                                        && !d2.isExcluded()
                                 ) {
+
+//                                    if(d1.isQuery() || d2.isQuery()) {
+//                                        System.out.println("d1: " + d1);
+//                                        System.out.println("d2: " + d2);
+//                                    }
+
 //                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
 
                                     if (linkDomains(d1, d2, 0, logging, false, false, false)) {
@@ -312,6 +319,10 @@ public class Linker {
 //                                            if ("xx".equals(sl.getValue() + "")) {
 //                                                System.out.println("s: " + d2);
 //                                            }
+//                                        }
+
+//                                        if(d1.isQuery() || d2.isQuery()) {
+//                                            System.out.println("!");
 //                                        }
 
                                         result = true;
@@ -691,12 +702,13 @@ public class Linker {
     private Domain updateDatabase(Tree tree, boolean logging) {
         Domain produced = null;
         if (tree.getSequence().size() == 1) {
+
             if (tree.getSequence().get(0).getTVariables(true).size() == 0) {
                 produced = tree.getSequence().get(0);
             } else {
                 boolean complete = true;
                 for (TVariable t : tree.getSequence().get(0).getTVariables(true)) {
-                    if (t.isEmpty() || !t.getCurrent().isClosed()) {
+                    if (t.isEmpty() /*|| !t.getCurrent().isClosed()*/) {
                         complete = false;
                         break;
                     }
@@ -718,7 +730,11 @@ public class Linker {
             }
         }
 
-        if (produced != null && !produced.isStored() && produced.getPredicate().containsSolve(produced) == null) {
+        if (produced != null && !produced.isStored()) {
+            Domain solve = produced.getPredicate().containsSolve(produced);
+            if (produced.isQuery()) {
+//                System.out.println("produced: " + produced);
+            }
             produced.setStored();
             if (logging) {
                 mind.getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());

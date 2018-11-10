@@ -300,7 +300,7 @@ public class TVariable implements Comparable<TVariable> {
     }
 
     public TValue next(TValue v) {
-        return mind.getTValues().next(this, v);
+        return mind.getTValues().next(v);
     }
 
 //    public TValue rewindTop() {

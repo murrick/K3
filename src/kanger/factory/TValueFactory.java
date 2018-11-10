@@ -62,20 +62,18 @@ public class TValueFactory {
     }
 
 
+    // Мотаем в обратную сторону
     public TValue rewind(TVariable tv) {
         if (root == null) {
             return null;
         }
-        if (root.getTVar().getId() == tv.getId() /*&& !root.isBlocked()*/) {
-            return root;
-        } else {
-            TValue v = next(tv, root);
-            if (v == null) {
-                return null;
-            } else {
-                return v;
+        TValue n = null;
+        for (TValue x = root; x != null; x = x.getNext()) {
+            if (x.getTVar().getId() == tv.getId()) {
+                n = x;
             }
         }
+        return n;
     }
 
     //    public TValue rewindTop(TVariable tv) {
@@ -94,16 +92,22 @@ public class TValueFactory {
 //        }
 //    }
 //
-    public TValue next(TVariable tv, TValue v) {
+    public TValue next(TValue v) {
         if (root == null) {
             return null;
         }
-        for (v = v.getNext(); v != null; v = v.getNext()) {
-            if (v.getTVar().getId() == tv.getId() /*&& !v.isBlocked()*/) {
-                return v;
+        TValue n = null;
+        for (TValue x = root; x != null; x = x.getNext()) {
+            if (x.getTVar().getId() == v.getTVar().getId()) {
+                if (x.getId() != v.getId()) {
+                    n = x;
+                } else {
+                    break;
+                }
             }
+
         }
-        return null;
+        return n;
     }
 
     //    public TValue nextTop(TVariable tv, TValue v) {
