@@ -179,12 +179,20 @@ public class Kanger {
 //                            "!daughter(Mary,John);" +
                     "");
 
-            mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
-                    "!@x a(x) -> ~n(x); " +
-                    "!a(nnn); " +
-                    "!b(ooo); " +
-                    "!d(v);");
+//            mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
+//                    "!@x a(x) -> ~n(x); " +
+//                    "!a(nnn); " +
+//                    "!b(ooo); " +
+//                    "!d(v);");
 //            mind.query("?b(xx);");
+
+//            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
+//            mind.query("? (a(z) && c(z)) -> d(z);");
+//            mind.query("?b(z) -> d(z);");
+
+            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
+                    "!a(nnn);");
+
 
 
         } catch (ParseErrorException e) {

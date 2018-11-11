@@ -5,6 +5,7 @@
  */
 package kanger;
 
+import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
@@ -160,6 +161,13 @@ public class Linker {
                     if (slave.isQuery() || master.isQuery()) {
                         s.setQuery();
                     }
+                } else {
+                    s = master.get(i).getT().find(slave.get(i).getValue());
+                    s.setClosed();
+                    s.addSolve(i, slave, master);
+//                    if (slave.isQuery() || master.isQuery()) {
+//                        s.setQuery();
+//                    }
                 }
                 occurrsMaster = true;
             }
@@ -190,6 +198,13 @@ public class Linker {
                     if (master.isQuery() || slave.isQuery()) {
                         s.setQuery();
                     }
+                } else {
+                    s = slave.get(i).getT().setValue(master.get(i).getValue());
+                    s.setClosed();
+                    s.addSolve(i, master, slave);
+//                    if (master.isQuery() || slave.isQuery()) {
+//                        s.setQuery();
+//                    }
                 }
                 occurrsSlave = true;
             }
@@ -291,7 +306,6 @@ public class Linker {
 //                            if (d1.isExcluded()) continue;
                             for (Domain d2 : slave.getSequence()) {
 //                                if (d2.isExcluded()) continue;
-
 
 
                                 if (d1.getId() != d2.getId()
@@ -608,9 +622,9 @@ public class Linker {
             mind.getExcludedDomains().clear();
             mind.getProducedDomains().clear();
             mind.getUsedDomains().clear();
-//            mind.getQueryValues().clear();
         }
 
+//        mind.getQueryValues().clear();
 
         do {
             saveT = mind.getTValues().getRoot();
@@ -730,16 +744,43 @@ public class Linker {
             }
         }
 
-        if (produced != null && !produced.isStored()) {
-            Domain solve = produced.getPredicate().containsSolve(produced);
-            if (produced.isQuery()) {
+        if (produced != null) {
+            if (!produced.isStored()) {
+//                Domain solve = produced.getPredicate().containsSolve(produced);
+//            if (produced.isQuery()) {
 //                System.out.println("produced: " + produced);
+//            }
+                produced.setStored();
+                if (logging) {
+                    mind.getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
+                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                }
             }
-            produced.setStored();
-            if (logging) {
-                mind.getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
-                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+        } else {
+
+            boolean excluded = true;
+            for (Domain d : tree.getSequence()) {
+                if (!d.isExcluded()) {
+                    excluded = false;
+                    break;
+                }
             }
+            if (excluded) {
+                boolean occurs = false;
+                for (Domain d : tree.getSequence()) {
+                    if (!d.isStored()/* && !d.isExcluded()*/) {
+                        d.setStored();
+                        occurs = true;
+                        if (logging) {
+                            mind.getLog().add(LogMode.ANALIZER, "DB record: " + d.toString());
+                        }
+                    }
+                }
+                if (logging && occurs) {
+                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                }
+            }
+
         }
 
         return produced;
@@ -754,7 +795,8 @@ public class Linker {
 
     private boolean logComparsion(boolean logging, Domain d) {
         boolean result = false;
-        if (logging && d.isDest()) {
+        //TODO: Отвязать от лога функционал (setProduced)
+        if (logging /*&& d.isDest()*/) {
             for (TVariable t : d.getTVariables(true)) {
                 if (!t.isEmpty()) {
                     for (int i = 0; i < t.getDstSolves().size(); ++i) {
@@ -772,7 +814,7 @@ public class Linker {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
                                 //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
-                                if (dst.getId() != r.getId() && !r.isDest() && !r.isProduced() && !r.isStored()) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+                                if (dst.getId() != r.getId() /*&& !r.isDest()*/ && !r.isProduced() /*&& !r.isStored()*/) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
                                     //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
                                     r.setProduced();
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
@@ -804,10 +846,18 @@ public class Linker {
 
     private void logCommit(boolean logging) {
         if (logging) {
-            if (mind.getTValues().getRoot() != mind.getTValues().getMark() || mind.getFValues().getRoot() != mind.getFValues().getMark()) {
+            if (mind.getTValues().getRoot() != mind.getTValues().getMark() /*|| mind.getFValues().getRoot() != mind.getFValues().getMark()*/) {
                 for (TValue t = mind.getTValues().getRoot(); t != mind.getTValues().getMark(); t = t.getNext()) {
                     if (t.isClosed()) {
                         mind.getLog().add(LogMode.ANALIZER, "CLOSED:\t" + t.toString());
+                        mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getTVar().getRight().toString());
+                        for (int i = 0; i < t.getPosSolves().size(); ++i) {
+                            int saveDebugLevel = mind.getDebugLevel();
+                            mind.setDebugLevel(saveDebugLevel & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
+                            mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + t.getDstSolves().get(i).toString());
+                            mind.setDebugLevel(saveDebugLevel);
+                            mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + t.getSrcSolves().get(i).toString());
+                        }
                     }
                 }
 //                for (FValue t = mind.getFValues().getRoot(); t != mind.getFValues().getMark(); t = t.getNext()) {

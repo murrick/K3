@@ -499,7 +499,7 @@ public class Screen {
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
         if (tIndex >= tvars.size()) {
-            if (d.isStored()) {
+            if (d.isStored() /*|| (d.isExcluded() && d.isQuery())*/) {
 //                d.recalculate();
                 System.out.printf("\t%s\n", d.toString());
                 if (showCauses) {

@@ -161,7 +161,7 @@ public class Analiser {
 //            if (result) {
 //                t.setClosed(true);
 //                u.setClosed(true);
-            collectResults(false, coincidence);
+//            collectResults(false, coincidence);
 
 
 //                for (Domain d : sequence) {
@@ -190,12 +190,21 @@ public class Analiser {
 //                collectResults(true,sequence);
 //            }
         } else {
+            boolean occurs = false;
             for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-                if (d.isStored() && d.isQuery()) {
-//                    System.out.println(d.toString());
+                //TODO: Тут коллизия какая-то. Пока не знаю как разрешить
+                if (d.isStored() && d.isQuery() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+//                if ((!d.isStored() && !d.isExcluded()) && d.isQuery() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                    if (logging) {
+                        mind.getLog().add(LogMode.ANALIZER, "Hypotesis: " + d.toString());
+                    }
+                    occurs = true;
                     mind.getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
 
                 }
+            }
+            if (logging && occurs) {
+                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
         }
 
@@ -209,16 +218,16 @@ public class Analiser {
         boolean result = false;
         if (tIndex >= tvars.size()) {
 
-            Set<Function> fs = new HashSet<>();
-            Set<Domain> sd = new HashSet<>();
+//            Set<Function> fs = new HashSet<>();
+//            Set<Domain> sd = new HashSet<>();
 //            SortedSet<HypotesisStore> hypotesis = new TreeSet<>();
 
-            List<Domain> dataBase = new ArrayList<>();
-            for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-                if (d.isStored()) {
-                    dataBase.add(d);
-                }
-            }
+//            List<Domain> dataBase = new ArrayList<>();
+//            for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+//                if (d.isStored()) {
+//                    dataBase.add(d);
+//                }
+//            }
 
 //            for (Tree t : set) {
 //                for (Tree x : set) {
@@ -228,19 +237,20 @@ public class Analiser {
             //TODO: Заменить на контроль базы данных!!!!!!!!!!!!
             if (checkSequence(logging)) {
                 result = true;
+                collectResults();
 //                    }
 //                    }
             }
 //            }
 
-            for (Tree t : set) {
-                for (Domain d : t.getSequence()) {
-                    fs.addAll(d.getFunctions());
-                    if (d.isSystem()) {
-                        sd.add(d);
-                    }
-                }
-            }
+//            for (Tree t : set) {
+//                for (Domain d : t.getSequence()) {
+//                    fs.addAll(d.getFunctions());
+//                    if (d.isSystem()) {
+//                        sd.add(d);
+//                    }
+//                }
+//            }
 
 //            mind.getCalculated().clear();
 //
@@ -306,21 +316,25 @@ public class Analiser {
         return false;
     }
 
-    private void collectResults(boolean hypotesis, Iterable<Domain> sequence) throws RuntimeErrorException {
+    private void collectResults() {
 
         Set<Domain> suc = new HashSet<>();
         Set<Domain> ant = new HashSet<>();
 
 //        System.out.println("--------------------------");
-        for (Domain d : sequence) {
-//            System.out.println(d);
+//        for (Domain d : sequence) {
+        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
 
-            if (d.isClosed() && d.getRight().isQuery()) {
+            if (d.isClosed() /*|| (d.isStored() && d.isQuery()) || (d.isExcluded() && d.isQuery()) *//*|| (d.isStored() && d.isProduced())) && d.getRight().isQuery()*/) {
+//                System.out.println(d);
 //                if (d.isSystem()) {
 
                 mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
+//                if (d.isClosed() && d.isExcluded()) {
+                if (d.isQuery()) {
+                    for (TVariable tv : d.getTVariables(true)) {
+                        mind.getValues().add(tv, d);
+                    }
                 }
 //                } else if (d.isAntc()) {
 //                    ant.add(d);
@@ -330,21 +344,21 @@ public class Analiser {
             }
         }
 
-        for (Domain d : sequence) {
-            if (d.isClosed() && d.isQuery() && !d.getRight().isQuery()) {
-//                if (d.isSystem()) {
-
+//        for (Domain d : sequence) {
+//            if ((d.isClosed() || d.isExcluded()  || (d.isStored() && d.isProduced())) && d.isQuery() && !d.getRight().isQuery()) {
+////                if (d.isSystem()) {
+//
 //                    mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }
-//                } else if (d.isAntc()) {
-//                    ant.add(d);
-//                } else {
-//                    suc.add(d);
+//                for (TVariable tv : d.getTVariables(true)) {
+//                    mind.getValues().add(tv, d);
 //                }
-            }
-        }
+////                } else if (d.isAntc()) {
+////                    ant.add(d);
+////                } else {
+////                    suc.add(d);
+////                }
+//            }
+//        }
 
 //        for (Domain d : ant) {
 //            if (contains(d, suc)) {
@@ -597,6 +611,9 @@ public class Analiser {
         long start = System.currentTimeMillis();
         mind.getLinker().link(true);
         System.out.println("* CHECKING Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+
+        //TODO: Поменял местами с концом
+        mind.release();
         mind.mark();
 //        mind.mark();
 
@@ -943,8 +960,8 @@ public class Analiser {
                             }
                         }
 
-
-                        mind.release();
+//TODO: Померял местами с началом
+//                        mind.release();
 
                     }
                     break;
