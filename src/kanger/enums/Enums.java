@@ -1,6 +1,5 @@
 package kanger.enums;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -37,6 +36,10 @@ public class Enums {
     public static final long INTERVAL_MONTH = -1L;
     public static final long INTERVAL_YEAR = -2L;
     public static final Map<String, Long> INTERVALS = new LinkedHashMap<String, Long>() {
+        {
+            put("..", 0L);
+        }
+
         {
             put("ms", 1L);
         }

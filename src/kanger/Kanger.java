@@ -191,10 +191,10 @@ public class Kanger {
 //            mind.query("?b(z) -> d(z);");
 //            mind.query("?$x f(x);");
 
-            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
-                    "!a(nnn);" +
-                    ""
-            );
+//            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
+//                    "!a(nnn);" +
+//                    ""
+//            );
 
 //            mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
 //            mind.query("?$x num(x);");

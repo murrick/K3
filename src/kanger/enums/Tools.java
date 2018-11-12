@@ -70,13 +70,19 @@ public abstract class Tools {
         return isNum(ch) && !ch.contains(".");
     }
 
+    //TODO !!!добавить численные/произвольные интервалы и множества. Операции IN, ~IN, +, -, ()
+    //
     public static boolean isInterval(String ch) {
-        String[] s = ch.split(" ");
-        for (int i = 0; i < s.length; ++i) {
-            if (i + 1 < s.length && isInt(s[i]) && Enums.INTERVALS.keySet().contains(s[i + 1].toLowerCase())) {
-                ++i;
-            } else {
-                return false;
+        if (ch.contains("..")) {
+            return ch.split("\\.\\.").length == 2;
+        } else {
+            String[] s = ch.split(" ");
+            for (int i = 0; i < s.length; ++i) {
+                if (i + 1 < s.length && isInt(s[i]) && Enums.INTERVALS.keySet().contains(s[i + 1].toLowerCase())) {
+                    ++i;
+                } else {
+                    return false;
+                }
             }
         }
         return true;

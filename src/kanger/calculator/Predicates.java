@@ -1,11 +1,14 @@
 package kanger.calculator;
 
 import kanger.compiler.SysOp;
+import kanger.enums.DataType;
 import kanger.enums.LibMode;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.Argument;
 import kanger.primitives.Domain;
+import kanger.primitives.Term;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +128,31 @@ public class Predicates {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc <= 0 ? 1 : 0;
+                        }
+                    }
+                    return i;
+                }
+            }));
+        }
+
+        {
+            put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new IRunnable() {
+                public Object run(Object o) {
+                    int i = -1;
+                    List<Argument> arg = ((Domain) o).getArguments();
+                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
+                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
+                                && arg.get(1).getValue().getValue() instanceof Collection
+                                && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
+
+                            Term min = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0];
+                            Term max = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1];
+                            int rc = min.compareTo(max);
+                            int rcmin = arg.get(0).getValue().compareTo(min);
+                            int rcmax = arg.get(0).getValue().compareTo(max);
+                            if (rcmin != -2 && rcmax != -2 && rc != -2) {
+                                i = (rc > 0 ? (rcmin >= 0 && rcmax < 0) : (rcmin <= 0 && rcmax > 0)) ? 1 : 0;
+                            }
                         }
                     }
                     return i;

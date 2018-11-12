@@ -7,7 +7,10 @@ import kanger.enums.Tools;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -52,8 +55,8 @@ public class Term implements Comparable<Term> {
 
     public Term(Object str, Mind mind) {
 //        sourceLength = str.length();
-        construct(str);
         this.mind = mind;
+        construct(str);
     }
 
     public Term(DataInputStream din, Mind mind) throws IOException, ClassNotFoundException {
@@ -111,7 +114,7 @@ public class Term implements Comparable<Term> {
                             value = d;
                         } else if (Tools.isInterval(token)) {
                             type = DataType.INTERVAL;
-                            value = token;
+                            value = conatructInterval(token);
                         } else {
                             type = DataType.STRING;
                             value = token;
@@ -121,7 +124,7 @@ public class Term implements Comparable<Term> {
                         value = d;
                     } else if (Tools.isInterval(token)) {
                         type = DataType.INTERVAL;
-                        value = token;
+                        value = conatructInterval(token);
                     } else if (Tools.isFloat(token)) {
                         type = DataType.NUMERIC;
                         value = Double.parseDouble(token);
@@ -146,6 +149,21 @@ public class Term implements Comparable<Term> {
                 type = DataType.TERM;
                 value = o;
             }
+        }
+    }
+
+    private Object conatructInterval(String ch) {
+        if (ch.contains("..")) {
+            List<Term> list = new ArrayList<>();
+            for (String s : ch.split("\\.\\.")) {
+                if (!s.trim().isEmpty()) {
+                    Term t = mind.getTerms().add(new Term(s, mind));
+                    list.add(t);
+                }
+            }
+            return list;
+        } else {
+            return ch;
         }
     }
 
@@ -189,19 +207,31 @@ public class Term implements Comparable<Term> {
 //                && value.toString().charAt(0) == Enums.CVC;
     }
 
+    public String formatValue() {
+        if (type == DataType.INTERVAL) {
+            if (value instanceof Collection && ((Collection) value).size() == 2) {
+                return "{" + ((Collection) value).toArray()[0].toString() + ".." + ((Collection) value).toArray()[1].toString() + "}";
+            } else {
+                return value.toString();
+            }
+        } else {
+            return value.toString();
+        }
+    }
+
     public String toString() {
         if (value != null) {
             if (isCVar()) {
                 switch (mind.getDebugLevel() & 0x00FF) {
                     case Enums.DEBUG_LEVEL_DEBUG:
-                        return value.toString();
+                        return formatValue();
                     default:
                         return name;
                 }
             } else if (type == DataType.DATE) {
                 return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format((Date) value);
             } else {
-                return value.toString();
+                return formatValue();
             }
         } else {
             return "";
