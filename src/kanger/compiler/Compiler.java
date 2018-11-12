@@ -175,6 +175,16 @@ public class Compiler {
         if (root.isSystem()) {
             // системный предикат
             // ПРОВЕРКА НЛ LB НЕ НУЖНА! Т.К. ОНА ОБРАБАТЫВАЕТСЯ
+            if ("_in".equals(root.getName())) {
+                if (root.getRight() != null && "_neg".equals(root.getRight().getName())) {
+                    root.setRight(root.getRight().getLeft());
+                    root.getRight().setName("-" + root.getRight().getName());
+                }
+                if (root.getLeft() != null && "_neg".equals(root.getLeft().getName()) && root.getLeft().getLeft().getName().contains("..")) {
+                    root.setLeft(root.getLeft().getLeft());
+                    root.getLeft().setName("-" + root.getLeft().getName());
+                }
+            }
             parseArgs(d, arg, root, 0, replacements);
             pred = mind.getPredicates().add(root.getName(), arg.size());
         } else if (root.getLeft() == null) {

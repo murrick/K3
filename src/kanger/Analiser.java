@@ -228,7 +228,7 @@ public class Analiser {
 
     private boolean updateHypotesis(List<Domain> sequence, boolean logging) {
         boolean occurs = false;
-
+        boolean append = false;
 //        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
 //            TODO: Тут коллизия какая-то. Пока не знаю как разрешить
 //            if (d.isComplete() && d.isStored() && d.isQuery() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
@@ -250,13 +250,19 @@ public class Analiser {
         List<Domain> coincidence = new ArrayList<>();
         List<Domain> discrepancies = new ArrayList<>();
         for (Domain d : sequence) {
-            if (d.isComplete() && !d.isClosed() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+            if (d.isComplete() && !d.isClosed()) {
                 if (!d.isExcluded() && !d.isStored()) {
-                    coincidence.add(d);
+                    append = true;
+                    if (!d.isSystem() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                        coincidence.add(d);
+                    }
                 } else {
                     occurs = true;
                     if (d.isQuery() && d.isProduced() && !d.isExcluded()) {
-                        discrepancies.add(d);
+                        append = true;
+                        if (!d.isSystem() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                            discrepancies.add(d);
+                        }
                     }
                 }
             }
@@ -287,7 +293,7 @@ public class Analiser {
             }
         }
 
-        return !coincidence.isEmpty();
+        return append;
     }
 
     private boolean recurseTree(List<TVariable> tvars, int tIndex, Queue<Tree> set, boolean logging) throws RuntimeErrorException {

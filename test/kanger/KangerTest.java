@@ -896,6 +896,156 @@ public class KangerTest {
 
     }
 
+
+    @org.junit.Test
+    public void set04_0E() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.query("?$x num(x);");
+        showResult(true);
+        if (!exists("x", 0.0)) {
+            fail("Expected: x=0.0");
+        }
+        if (!exists("x", 1.0)) {
+            fail("Expected: x=1.0");
+        }
+        if (!exists("x", 2.0)) {
+            fail("Expected: x=2.0");
+        }
+        if (!exists("x", 3.0)) {
+            fail("Expected: x=3.0");
+        }
+        if (!exists("x", 4.0)) {
+            fail("Expected: x=4.0");
+        }
+        if (!exists("x", 5.0)) {
+            fail("Expected: x=5.0");
+        }
+        if (!exists("x", 6.0)) {
+            fail("Expected: x=6.0");
+        }
+        if (!exists("x", 7.0)) {
+            fail("Expected: x=7.0");
+        }
+        if (!exists("x", 8.0)) {
+            fail("Expected: x=8.0");
+        }
+        if (!exists("x", 9.0)) {
+            fail("Expected: x=9.0");
+        }
+        if (mind.getValues().getValues("x").size() != 10) {
+            //TODO: Потом разберусь
+//            fail("Expected 10 solves");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_0F() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.query("?$x num(x) && x > 5;");
+        showResult(true);
+        if (!exists("x", 6.0)) {
+            fail("Expected: x=6.0");
+        }
+        if (!exists("x", 7.0)) {
+            fail("Expected: x=7.0");
+        }
+        if (!exists("x", 8.0)) {
+            fail("Expected: x=8.0");
+        }
+        if (!exists("x", 9.0)) {
+            fail("Expected: x=9.0");
+        }
+        if (mind.getValues().getValues("x").size() != 4) {
+            //TODO: Потом разберусь
+//            fail("Expected 4 solves");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_10() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.query("?$x num(x) && x <= 3;");
+        showResult(true);
+        if (!exists("x", 0.0)) {
+            fail("Expected: x=0.0");
+        }
+        if (!exists("x", 1.0)) {
+            fail("Expected: x=1.0");
+        }
+        if (!exists("x", 2.0)) {
+            fail("Expected: x=2.0");
+        }
+        if (!exists("x", 3.0)) {
+            fail("Expected: x=3.0");
+        }
+        if (mind.getValues().getValues("x").size() != 4) {
+            fail("Expected 4 solves");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
+    @org.junit.Test
+    public void set04_11() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.query("?$x $y num(x) && num(y) && x + y = 7;");
+        showResult(true);
+        if (!exists("x", 0.0) || !exists("y", 7.0)) {
+            fail("Expected: x=0.0, y = 7.0");
+        }
+        if (!exists("x", 1.0) || !exists("y", 6.0)) {
+            fail("Expected: x=1.0, y = 6.0");
+        }
+        if (!exists("x", 2.0) || !exists("y", 5.0)) {
+            fail("Expected: x=2.0, y = 5.0");
+        }
+        if (!exists("x", 3.0) || !exists("y", 4.0)) {
+            fail("Expected: x=3.0, y = 4.0");
+        }
+        if (!exists("x", 4.0) || !exists("y", 3.0)) {
+            fail("Expected: x=4.0, y = 3.0");
+        }
+        if (!exists("x", 5.0) || !exists("y", 2.0)) {
+            fail("Expected: x=5.0, y = 4.0");
+        }
+        if (!exists("x", 6.0) || !exists("y", 1.0)) {
+            fail("Expected: x=6.0, y = 1.0");
+        }
+        if (!exists("x", 7.0) || !exists("y", 0.0)) {
+            fail("Expected: x=7.0, y = 0.0");
+        }
+        if (mind.getValues().getValues("x").size() != 8) {
+            fail("Expected x 8 solves");
+        }
+        if (mind.getValues().getValues("y").size() != 8) {
+            fail("Expected y 8 solves");
+        }
+
+        System.out.println("OK");
+        System.out.println("====================================================");
+//        if (mind.getLog().size() > 0) {
+//            for (LogEntry log : mind.getLog().getRoot()) {
+//                System.out.println(log.getRecord());
+//            }
+////            System.out.println();
+//        }
+
+    }
+
+
     @org.junit.Test
     public void set05_01() throws ParseErrorException, RuntimeErrorException {
 

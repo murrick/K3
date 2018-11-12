@@ -10,10 +10,7 @@ import kanger.primitives.Argument;
 import kanger.primitives.Function;
 import kanger.primitives.Term;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by murray on 18.01.17.
@@ -36,15 +33,15 @@ public class Functions {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
-                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _add(arg.get(0).getValue(), mind.getTerms().add(1)).compareTo(arg.get(1).getValue()) != 0)) {
-                        if (!((Function) o).setParameter(1, _add(arg.get(0).getValue(), mind.getTerms().add(1)))) {
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _inc(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) != 0)) {
+                        if (!((Function) o).setParameter(1, _inc(arg.get(0).getValue()))) {
                             ret = 0;
                         }
                     } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
-                        if (!((Function) o).setParameter(0, _sub(arg.get(1).getValue(), mind.getTerms().add(1)))) {
+                        if (!((Function) o).setParameter(0, _dec(arg.get(1).getValue()))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _add(arg.get(0).getValue(), mind.getTerms().add(1)).compareTo(arg.get(1).getValue()) == 0) {
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _inc(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
 
@@ -62,15 +59,15 @@ public class Functions {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
-                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _sub(arg.get(0).getValue(), mind.getTerms().add(1)).compareTo(arg.get(1).getValue()) != 0)) {
-                        if (!((Function) o).setParameter(1, _sub(arg.get(0).getValue(), mind.getTerms().add(1)))) {
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && _dec(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) != 0)) {
+                        if (!((Function) o).setParameter(1, _dec(arg.get(0).getValue()))) {
                             ret = 0;
                         }
                     } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
-                        if (!((Function) o).setParameter(0, _add(arg.get(1).getValue(), mind.getTerms().add(1)))) {
+                        if (!((Function) o).setParameter(0, _inc(arg.get(1).getValue()))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _sub(arg.get(0).getValue(), mind.getTerms().add(1)).compareTo(arg.get(1).getValue()) == 0) {
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _dec(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
                         ret = 2;
                     } else {
 //                        arg.createCVar(1).delValue(((Function) o).getOwner());
@@ -1158,6 +1155,26 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
+    protected Term _inc(Term a) {
+        Object res;
+        if (a.getType() == DataType.NUMERIC) {
+            res = (double) a.getValue() + 1;
+        } else {
+            res = a.getValue();
+        }
+        return mind.getTerms().add(res);
+    }
+
+    protected Term _dec(Term a) {
+        Object res;
+        if (a.getType() == DataType.NUMERIC) {
+            res = (double) a.getValue() - 1;
+        } else {
+            res = a.getValue();
+        }
+        return mind.getTerms().add(res);
+    }
+
     private Term _sub(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
@@ -1208,6 +1225,11 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = -(double) a.getValue();
+        } else if (a.getType() == DataType.INTERVAL && a.getValue() instanceof Collection && ((Collection) a.getValue()).size() == 2) {
+            List<Term> list = new ArrayList<>();
+            list.add(_neg((Term) ((Collection) a.getValue()).toArray()[0]));
+            list.add((Term) ((Collection) a.getValue()).toArray()[0]);
+            res = list;
         } else {
             res = (double) 0;
         }

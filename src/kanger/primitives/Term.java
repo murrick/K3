@@ -210,7 +210,7 @@ public class Term implements Comparable<Term> {
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {
-                return "{" + ((Collection) value).toArray()[0].toString() + ".." + ((Collection) value).toArray()[1].toString() + "}";
+                return ((Collection) value).toArray()[0].toString() + ".." + ((Collection) value).toArray()[1].toString();
             } else {
                 return value.toString();
             }
@@ -314,7 +314,28 @@ public class Term implements Comparable<Term> {
         if (o == null || value == null || type != o.getType()) {
             return -2;
         }
-        int c = ((Comparable) value).compareTo(o.getValue());
+        int c;
+        if (type == DataType.INTERVAL && value instanceof Collection) {
+            if (o.getValue() instanceof Collection) {
+                if (((Collection) value).size() != ((Collection) o.getValue()).size()) {
+                    return -2;
+                } else {
+                    c = 0;
+                    Object[] a = ((Collection) value).toArray();
+                    Object[] b = ((Collection) o.getValue()).toArray();
+                    for (int i = 0; i < a.length; ++i) {
+                        c = ((Comparable) a[i]).compareTo(b[i]);
+                        if (c != 0) {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                return -2;
+            }
+        } else {
+            c = ((Comparable) value).compareTo(o.getValue());
+        }
         return c > 0 ? 1 : (c < 0 ? -1 : 0);
     }
 }

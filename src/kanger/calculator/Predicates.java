@@ -1,5 +1,6 @@
 package kanger.calculator;
 
+import kanger.Mind;
 import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
@@ -19,6 +20,9 @@ import java.util.regex.PatternSyntaxException;
  * Created by murray on 18.01.17.
  */
 public class Predicates {
+
+
+    private Mind mind = null;
     private final Map<String, SysOp> sysOps = new HashMap<String, SysOp>() {
 
         /// Системные предикаты
@@ -140,19 +144,45 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
+                    if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
 
                             Term min = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0];
                             Term max = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1];
+                            Term cur = min;
                             int rc = min.compareTo(max);
-                            int rcmin = arg.get(0).getValue().compareTo(min);
-                            int rcmax = arg.get(0).getValue().compareTo(max);
-                            if (rcmin != -2 && rcmax != -2 && rc != -2) {
-                                i = (rc > 0 ? (rcmin >= 0 && rcmax < 0) : (rcmin <= 0 && rcmax > 0)) ? 1 : 0;
+                            while (true) {
+                                if (arg.get(0).setValue(cur)) {
+                                    i = 1;
+                                    Term next = rc < 0
+                                            ? mind.getCalculator().getFunctions()._inc(cur)
+                                            : mind.getCalculator().getFunctions()._dec(cur);
+                                    if (next.getId() == cur.getId()) {
+                                        if (arg.get(0).setValue(max)) {
+                                            i = 1;
+                                        }
+                                        break;
+                                    } else if (rc < 0 && next.compareTo(max) > 0) {
+                                        break;
+                                    } else if (rc > 0 && next.compareTo(max) < 0) {
+                                        break;
+                                    } else {
+                                        cur = next;
+                                    }
+                                } else {
+                                    break;
+                                }
                             }
+                        }
+                    } else if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
+                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
+                                && arg.get(1).getValue().getValue() instanceof Collection
+                                && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
+                            i = _in(arg.get(0).getValue(),
+                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0],
+                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1]) ? 1 : 0;
                         }
                     }
                     return i;
@@ -185,7 +215,33 @@ public class Predicates {
 
     };
 
+    public Predicates(Mind mind) {
+        this.mind = mind;
+    }
+
     public Map<String, SysOp> getSysOps() {
         return sysOps;
+    }
+
+    public boolean _in(Term cur, Term min, Term max) {
+        int rcmin = -2;
+        int rcmax = -2;
+        int i = -1;
+        int rc = min.compareTo(max);
+        if (cur.getType() == DataType.INTERVAL && cur.getValue() instanceof Collection && ((Collection) cur.getValue()).size() == 2) {
+            Term xmin = (Term) ((Collection) cur.getValue()).toArray()[0];
+            Term xmax = (Term) ((Collection) cur.getValue()).toArray()[1];
+            int xrc = xmin.compareTo(xmax);
+            rcmin = rc == xrc ? xmin.compareTo(min) : xmin.compareTo(max);
+            rcmax = rc == xrc ? xmax.compareTo(max) : xmax.compareTo(min);
+        } else {
+            rcmin = cur.compareTo(min);
+            rcmax = cur.compareTo(max);
+        }
+        if (rcmin != -2 && rcmax != -2 && rc != -2) {
+            return (rc < 0 ? (rcmin >= 0 && rcmax <= 0) : (rcmin <= 0 && rcmax >= 0));
+        } else {
+            return false;
+        }
     }
 }

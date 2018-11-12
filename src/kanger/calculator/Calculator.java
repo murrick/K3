@@ -22,7 +22,7 @@ public class Calculator {
 
     public Calculator(Mind mind) {
         this.mind = mind;
-        predicates = new Predicates();
+        predicates = new Predicates(mind);
         functions = new Functions(mind);
     }
 
@@ -265,5 +265,12 @@ public class Calculator {
         return mind.getLibrary().remove(key);
     }
 
+    public Functions getFunctions() {
+        return functions;
+    }
+
+    public Predicates getPredicates() {
+        return predicates;
+    }
 }
 

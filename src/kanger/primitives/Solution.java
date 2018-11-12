@@ -163,7 +163,7 @@ public class Solution {
             } else if (parameters.get(i) != null) {
                 tmp += parameters.get(i).toString();
             }
-            if (i + 1 < predicate.getRange()) {
+            if (i + 1 < predicate.getRange() && mid.isEmpty()) {
                 tmp += ",";
             }
 
