@@ -166,7 +166,7 @@ public class Kanger {
 //                    "!@x (a(x) || b(x)); " +
 //                            "!@y ~(a(y) && b(y));" +
 //                            "!a(nn);" +
-                            ""
+                    ""
             );
             mind.compile(
 //                    "!@x ~father(x,x);" +
@@ -189,10 +189,15 @@ public class Kanger {
 //            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
 //            mind.query("? (a(z) && c(z)) -> d(z);");
 //            mind.query("?b(z) -> d(z);");
+//            mind.query("?$x f(x);");
 
             mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
-                    "!a(nnn);");
+                    "!a(nnn);" +
+                    ""
+            );
 
+//            mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+//            mind.query("?$x num(x);");
 
 
         } catch (ParseErrorException e) {

@@ -716,24 +716,14 @@ public class Linker {
     private Domain updateDatabase(Tree tree, boolean logging) {
         Domain produced = null;
         if (tree.getSequence().size() == 1) {
-
             if (tree.getSequence().get(0).getTVariables(true).size() == 0) {
                 produced = tree.getSequence().get(0);
-            } else {
-                boolean complete = true;
-                for (TVariable t : tree.getSequence().get(0).getTVariables(true)) {
-                    if (t.isEmpty() /*|| !t.getCurrent().isClosed()*/) {
-                        complete = false;
-                        break;
-                    }
-                }
-                if (complete) {
-                    produced = tree.getSequence().get(0);
-                }
+            } else if (tree.getSequence().get(0).isComplete()) {
+                produced = tree.getSequence().get(0);
             }
         } else {
             for (Domain d : tree.getSequence()) {
-                if (d.isProduced()) {
+                if (d.isProduced() /*&& !d.isExcluded()*/) {
                     if (produced == null) {
                         produced = d;
                     } else {
@@ -768,7 +758,7 @@ public class Linker {
             if (excluded) {
                 boolean occurs = false;
                 for (Domain d : tree.getSequence()) {
-                    if (!d.isStored()/* && !d.isExcluded()*/) {
+                    if (!d.isStored() /*&& !d.isExcluded()*/) {
                         d.setStored();
                         occurs = true;
                         if (logging) {
@@ -814,7 +804,7 @@ public class Linker {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
                                 //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
-                                if (dst.getId() != r.getId() /*&& !r.isDest()*/ && !r.isProduced() /*&& !r.isStored()*/) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+                                if (dst.getId() != r.getId() && !r.isExcluded() && !r.isProduced() /*&& !r.isStored()*/) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
                                     //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
                                     r.setProduced();
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());

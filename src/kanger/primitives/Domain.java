@@ -571,6 +571,17 @@ public class Domain {
         return d != null && d instanceof Domain && ((Domain) d).id == id;
     }
 
+    public boolean isComplete() {
+        boolean complete = true;
+        for (TVariable t : getTVariables(true)) {
+            if (t.isEmpty() /*|| !t.getCurrent().isClosed()*/) {
+                complete = false;
+                break;
+            }
+        }
+        return complete;
+    }
+
 //    public int getValOrder(int i) {
 //    }
 }
