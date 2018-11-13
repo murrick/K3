@@ -199,9 +199,11 @@ public class Analiser {
             }
 
 
-            boolean at = updateHypotesis(t.getSequence(), logging);
-            boolean au = updateHypotesis(u.getSequence(), logging);
-            if (at || au) {
+            boolean at = collectHypotesis(t.getSequence(), logging);
+            if (t.getId() != u.getId()) {
+                at = collectHypotesis(u.getSequence(), logging) || at;
+            }
+            if (at) {
                 result = false;
             }
 
@@ -218,15 +220,15 @@ public class Analiser {
 
 
         } else {
-            updateHypotesis(t.getSequence(), logging);
-            updateHypotesis(u.getSequence(), logging);
+            collectHypotesis(t.getSequence(), logging);
+            collectHypotesis(u.getSequence(), logging);
         }
 
 
         return result;
     }
 
-    private boolean updateHypotesis(List<Domain> sequence, boolean logging) {
+    private boolean collectHypotesis(List<Domain> sequence, boolean logging) {
         boolean occurs = false;
         boolean append = false;
 //        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
@@ -258,7 +260,7 @@ public class Analiser {
                     }
                 } else {
                     occurs = true;
-                    if (d.isQuery() && d.isProduced() && !d.isExcluded()) {
+                    if ((d.isQuery() || d.isStored()) && d.isProduced() && !d.isExcluded()) {
                         append = true;
                         if (!d.isSystem() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                             discrepancies.add(d);
@@ -368,12 +370,12 @@ public class Analiser {
 
 //            mind.getSubstituted().clear();
 
-            boolean occurrs = false;
-            for (Domain d : sd) {
-                if (d.isUsed() /*&& !d.isAntc()*/) {
-                    occurrs = true;
+//            boolean occurrs = false;
+//            for (Domain d : sd) {
+//                if (d.isUsed() /*&& !d.isAntc()*/) {
+//                    occurrs = true;
 //                    result = true;
-                }
+//                }
 //                int res = d.execSystem();
 //                if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
 //                    result = d.isAntc();
@@ -385,7 +387,7 @@ public class Analiser {
 ////                    }
 //                    occurrs = true;
 //                }
-            }
+//            }
 
 //            if (occurrs) {
 //                collectResults(!result, sd);

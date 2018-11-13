@@ -280,6 +280,17 @@ public class Linker {
                         logBlocked(logging, d);
                     }
                 }
+
+                if (d.isUsed()) {
+                    for (TVariable t : d.getTVariables(true)) {
+                        for (Domain x : t.getUsage()) {
+                            if (d.getId() != x.getId() && !x.isProduced()) {
+                                x.setProduced();
+                            }
+                        }
+                    }
+                }
+
             }
         }
         return !block;
@@ -741,6 +752,9 @@ public class Linker {
 //                System.out.println("produced: " + produced);
 //            }
                 produced.setStored();
+//                if(produced.isExcluded()) {
+//                    produced.setUsed();
+//                }
                 if (logging) {
                     mind.getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
                     mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
@@ -760,6 +774,9 @@ public class Linker {
                 for (Domain d : tree.getSequence()) {
                     if (!d.isStored() /*&& !d.isExcluded()*/) {
                         d.setStored();
+//                        if(d.isExcluded()) {
+//                            d.setUsed();
+//                        }
                         occurs = true;
                         if (logging) {
                             mind.getLog().add(LogMode.ANALIZER, "DB record: " + d.toString());
