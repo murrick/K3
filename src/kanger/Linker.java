@@ -285,6 +285,7 @@ public class Linker {
                     for (TVariable t : d.getTVariables(true)) {
                         for (Domain x : t.getUsage()) {
                             if (d.getId() != x.getId() && !x.isProduced()) {
+                                x.setCalculated();
                                 x.setProduced();
                             }
                         }
@@ -632,6 +633,7 @@ public class Linker {
             mind.getStoredDomains().clear();
             mind.getExcludedDomains().clear();
             mind.getProducedDomains().clear();
+            mind.getCalculatedDomains().clear();
             mind.getUsedDomains().clear();
         }
 
@@ -734,7 +736,7 @@ public class Linker {
             }
         } else {
             for (Domain d : tree.getSequence()) {
-                if (d.isProduced() /*&& !d.isExcluded()*/) {
+                if (d.isComplete() && d.isProduced() && !(d.isCalculated() && d.isExcluded()) /*&& !d.isStored()*/ /*&& !d.isExcluded()*/ && !d.isUsed() /*&& !d.isDest()*/) {
                     if (produced == null) {
                         produced = d;
                     } else {

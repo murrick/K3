@@ -70,6 +70,7 @@ public class Mind {
     private final Map<Long, Set<List<Long>>> excludedDomains = new HashMap<>();
     private final Map<Long, Set<List<Long>>> producedDomains = new HashMap<>();
     private final Map<Long, Set<List<Long>>> storedDomains = new HashMap<>();
+    private final Map<Long, Set<List<Long>>> calculatedDomains = new HashMap<>();
 
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<Long, Set<Long>> blockedValues = new HashMap<>();
@@ -581,6 +582,10 @@ public class Mind {
 
     public Map<Long, Set<List<Long>>> getProducedDomains() {
         return producedDomains;
+    }
+
+    public Map<Long, Set<List<Long>>> getCalculatedDomains() {
+        return calculatedDomains;
     }
 
     public Map<Long, Set<List<Long>>> getStoredDomains() {

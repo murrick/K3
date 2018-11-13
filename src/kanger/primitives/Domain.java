@@ -203,7 +203,7 @@ public class Domain {
 
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix = isDest() || isQuery() || isClosed() || isUsed() || isExcluded() || isProduced() || isStored()
+            suffix = isDest() || isQuery() || isClosed() || isUsed() || isExcluded() || isProduced() || isStored() || isCalculated()
                     ? " " + (isDest() ? "A" : "") +
                     (isQuery() ? "Q" : "") +
                     (isClosed() ? "C" : "") +
@@ -211,6 +211,7 @@ public class Domain {
                     (isExcluded() ? "X" : "") +
                     (isProduced() ? "P" : "") +
                     (isStored() ? "B" : "") +
+                    (isCalculated() ? "S" : "") +
                     " "
                     : "";
         }
@@ -423,6 +424,30 @@ public class Domain {
         if (!isProduced()) {
             try {
                 mind.getProducedDomains().get(id).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean isCalculated() {
+        if (mind.getCalculatedDomains().containsKey(id)) {
+            for (List<Long> list : mind.getCalculatedDomains().get(id)) {
+                if (isEqualsArguments(list)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void setCalculated() {
+        if (!mind.getCalculatedDomains().containsKey(id)) {
+            mind.getCalculatedDomains().put(id, new HashSet<>());
+        }
+        if (!isCalculated()) {
+            try {
+                mind.getCalculatedDomains().get(id).add(convertArguments());
             } catch (ParametersIncompleteException e) {
 //                e.printStackTrace();
             }

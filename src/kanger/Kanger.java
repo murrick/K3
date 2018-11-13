@@ -196,10 +196,10 @@ public class Kanger {
 //                    ""
 //            );
 
-//            mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+            mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);"
 //            mind.query("?$x num(x);");
 
-            mind.compile("!@x x in 0..10 -> num(x);"
+//            mind.compile("!@x x in 0..10 -> num(x);"
 //            mind.query("?$x num(x);"
             );
 
