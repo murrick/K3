@@ -135,9 +135,12 @@ public class Linker {
 //                }
 
             if (master.get(i).isTSet()
+                    && master.get(i).isEmpty()
                     && !slave.get(i).isEmpty()
                     && !slave.isDestFor(i, master)
-                    && !slave.isExcluded()
+                    && slave.isStored() //!slave.isExcluded()
+
+//                    && !slave.isStored()
 //                        && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getT().isEmpty()
@@ -155,27 +158,30 @@ public class Linker {
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, slave, master);
-//                } else {
-//                    s = master.get(i).getT().find(slave.get(i).getValue());
-//                }
-                    if (slave.isQuery() || master.isQuery()) {
-                        s.setQuery();
-                    }
                 } else {
                     s = master.get(i).getT().find(slave.get(i).getValue());
-                    s.setClosed();
-                    s.addSolve(i, slave, master);
-//                    if (slave.isQuery() || master.isQuery()) {
-//                        s.setQuery();
-//                    }
+                    mind.getTValues().set(slave.get(i).getT(), s);
                 }
+                if (slave.isQuery() || master.isQuery()) {
+                    s.setQuery();
+                }
+//                } else {
+//                    s = master.get(i).getT().find(slave.get(i).getValue());
+//                    s.setClosed();
+//                    s.addSolve(i, slave, master);
+////                    if (slave.isQuery() || master.isQuery()) {
+////                        s.setQuery();
+////                    }
+//                }
                 occurrsMaster = true;
-            }
 
-            if (slave.get(i).isTSet()
+            } else if (slave.get(i).isTSet()
+
+                    && slave.get(i).isEmpty()
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
-                    && !master.isExcluded()
+                    && master.isStored() //!master.isExcluded()
+//                    && !master.isStored()
 //                        && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getT().isEmpty()
@@ -192,21 +198,26 @@ public class Linker {
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, master, slave);
-//                } else {
-//                    s = slave.get(i).getT().find(master.get(i).getValue());
-//                }
-                    if (master.isQuery() || slave.isQuery()) {
-                        s.setQuery();
-                    }
                 } else {
-                    s = slave.get(i).getT().setValue(master.get(i).getValue());
-                    s.setClosed();
-                    s.addSolve(i, master, slave);
-//                    if (master.isQuery() || slave.isQuery()) {
-//                        s.setQuery();
-//                    }
+                    s = slave.get(i).getT().find(master.get(i).getValue());
+                    mind.getTValues().set(slave.get(i).getT(), s);
                 }
+                if (master.isQuery() || slave.isQuery()) {
+                    s.setQuery();
+                }
+//                } else {
+//                    s = slave.get(i).getT().setValue(master.get(i).getValue());
+//                    s.setClosed();
+//                    s.addSolve(i, master, slave);
+////                    if (master.isQuery() || slave.isQuery()) {
+////                        s.setQuery();
+////                    }
+//                }
                 occurrsSlave = true;
+
+            } else if (slave.get(i).isEmpty() || master.get(i).isEmpty() || slave.get(i).getValue().getId() != master.get(i).getValue().getId()) {
+                occurrsSlave = false;
+                return false;
             }
 //            }
 
@@ -334,6 +345,7 @@ public class Linker {
 
 //                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
 
+                                    mind.getTValues().mark();
                                     if (linkDomains(d1, d2, 0, logging, false, false, false)) {
 
 //                                        for(Argument ma : d1.getArguments()) {
@@ -353,9 +365,14 @@ public class Linker {
 
                                         result = true;
                                         linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+                                        mind.getTValues().commit();
+
                                     } else {
-                                        linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+                                        mind.getTValues().release();
                                     }
+//                                    else {
+//                                        linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+//                                    }
 
 
 //                                } else if (d1.getId() == d2.getId() && d1.isSystem()) {
@@ -389,22 +406,19 @@ public class Linker {
             TVariable t = tvars.last(); //.get(tIndex);
             TValue v = t.rewind();
             if (v != null) {
+
+                TValue savedValue = v;
+                mind.getTValues().set(t, null);
+                if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
+                    result = true;
+                }
+
                 do {
-
-//                    if("xx".equals(v.getValue() + "")) {
-//                        System.out.println("v: " + v);
-//                    }
-
                     mind.getTValues().set(t, v);
                     if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
                         result = true;
                     }
                 } while ((v = t.next(v)) != null);
-
-//                mind.getTValues().set(t, null);
-//                if (!updateDomains(tvars.headSet(t), set, logging)) {
-//                    result = false;
-//                }
 
             } else {
                 if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
@@ -729,10 +743,9 @@ public class Linker {
     private Domain updateDatabase(Tree tree, boolean logging) {
         Domain produced = null;
         if (tree.getSequence().size() == 1) {
-            if (tree.getSequence().get(0).getTVariables(true).size() == 0) {
-                produced = tree.getSequence().get(0);
-            } else if (tree.getSequence().get(0).isComplete()) {
-                produced = tree.getSequence().get(0);
+            produced = tree.getSequence().get(0);
+            if (!produced.isComplete() || produced.isStored() || produced.isExcluded()) {
+                produced = null;
             }
         } else {
             for (Domain d : tree.getSequence()) {
@@ -744,11 +757,15 @@ public class Linker {
                         break;
                     }
                 }
+                if (!d.isProduced() && !d.isExcluded() && !d.isCalculated() && !d.isStored()) {
+                    produced = null;
+                    break;
+                }
             }
         }
 
         if (produced != null) {
-            if (!produced.isStored()) {
+            if (!produced.isStored() /*&& !produced.getRight().isQuery()*/) {
 //                Domain solve = produced.getPredicate().containsSolve(produced);
 //            if (produced.isQuery()) {
 //                System.out.println("produced: " + produced);
@@ -766,7 +783,7 @@ public class Linker {
 
             boolean excluded = true;
             for (Domain d : tree.getSequence()) {
-                if (!d.isExcluded()) {
+                if (!d.isExcluded() && !d.isStored()) {
                     excluded = false;
                     break;
                 }
@@ -774,7 +791,7 @@ public class Linker {
             if (excluded) {
                 boolean occurs = false;
                 for (Domain d : tree.getSequence()) {
-                    if (!d.isStored() /*&& !d.isExcluded()*/) {
+                    if (!d.isStored() && !d.isExcluded()/*&& !d.getRight().isQuery()*/) {
                         d.setStored();
 //                        if(d.isExcluded()) {
 //                            d.setUsed();
@@ -802,6 +819,8 @@ public class Linker {
         }
     }
 
+    //TODO: Гипозезы помечать флагом, а не собирать отдельно
+
     private boolean logComparsion(boolean logging, Domain d) {
         boolean result = false;
         //TODO: Отвязать от лога функционал (setProduced)
@@ -822,8 +841,11 @@ public class Linker {
                         if (dst.getPredicate().getId() == d.getPredicate().getId()) {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
-                                //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
-                                if (dst.getId() != r.getId() && !r.isExcluded() && !r.isProduced() /*&& !r.isStored()*/) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+                                //TODO: isDest сомнитеьно. Аесли двусторонняя подстановка?
+                                if (dst.getId() != r.getId()
+                                        && r.isComplete()
+                                        && !r.isExcluded()
+                                        && !r.isProduced() /*&& !r.isStored()*/) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
                                     //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
                                     r.setProduced();
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
@@ -842,6 +864,11 @@ public class Linker {
 //                            }
                             if (found) {
                                 mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
+                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
+                                    mind.getLog().add(LogMode.ANALIZER, "...........................................");
+                                    mind.getLog().add(LogMode.ANALIZER, t.getRight());
+                                    mind.getLog().add(LogMode.ANALIZER, "...........................................");
+                                }
                                 mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + dst.toString());
                                 mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + src.toString());
                             }
@@ -860,6 +887,11 @@ public class Linker {
                     if (t.isClosed()) {
                         mind.getLog().add(LogMode.ANALIZER, "CLOSED:\t" + t.toString());
                         mind.getLog().add(LogMode.ANALIZER, "From right  : " + t.getTVar().getRight().toString());
+                        if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
+                            mind.getLog().add(LogMode.ANALIZER, "...........................................");
+                            mind.getLog().add(LogMode.ANALIZER, t.getTVar().getRight());
+                            mind.getLog().add(LogMode.ANALIZER, "...........................................");
+                        }
                         for (int i = 0; i < t.getPosSolves().size(); ++i) {
                             int saveDebugLevel = mind.getDebugLevel();
                             mind.setDebugLevel(saveDebugLevel & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));

@@ -171,13 +171,16 @@ public class Kanger {
             mind.compile(
 //                    "!@x ~father(x,x);" +
 //                            "!@x $y father(y,x);" +
-//                            "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
-//                            "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
-//                            "!@x (male(x) || female(x)); !@x ~(male(x) && female(x));"+
+                    "!@x @y father(x,y) -> male(x), child(y,x), " +
+                            " (male(y) -> son(y,x)), (female(y) -> daughter(y,x));" +
+                            "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
+                            "!@x @y (son(x,y) -> male(x), child(x,y)), (daughter(x,y) -> female(x), child(x,y));" +
+                            "!@x (male(x) || female(x)); " +
+                            "!@x ~(male(x) && female(x));" +
 //                                    "!male(Tom);" +
-//                            "!father(John,Tom);" +
-//                            "!daughter(Mary,John);" +
-                    "");
+                            "!father(John,Tom);" +
+                            "!daughter(Mary,John);" +
+                            "");
 
 //            mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
 //                    "!@x a(x) -> ~n(x); " +
@@ -196,12 +199,13 @@ public class Kanger {
 //                    ""
 //            );
 
-            mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);"
+//            mind.compile(
+//                    "!num(0); !@x num(x) && x < 10 -> num(++x);"
 //            mind.query("?$x num(x);");
 
 //            mind.compile("!@x x in 0..10 -> num(x);"
 //            mind.query("?$x num(x);"
-            );
+//            );
 
 
         } catch (ParseErrorException e) {

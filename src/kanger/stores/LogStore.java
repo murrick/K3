@@ -68,13 +68,16 @@ public class LogStore {
             root = new ArrayList<>();
             root.add(new LogEntry(LogMode.ANALIZER, "LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
         }
-        LogEntry log = null;
-        log = new LogEntry(m, s);
+        if (root == null) {
+            root = new ArrayList<>();
+            root.add(new LogEntry(LogMode.ANALIZER, "LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
+        }
+        LogEntry log = new LogEntry(m, s);
         root.add(log);
-        
+
 //        System.out.println(log.getRecord());
-        
-        
+
+
         return log;
     }
 

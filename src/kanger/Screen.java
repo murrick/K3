@@ -604,8 +604,8 @@ public class Screen {
     //
 //
     public static List<List<String>> formatTree(Mind mind, Right r) {
-        int save = mind.getDebugLevel();
-        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
+//        int save = mind.getDebugLevel();
+//        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
         List<List<String>> list = new ArrayList<>();
         int depth = 0;
         for (Tree t : r.getTree()) {
@@ -639,7 +639,7 @@ public class Screen {
             }
 //            }
         }
-        mind.setDebugLevel(save);
+//        mind.setDebugLevel(save);
         return list;
     }
 
@@ -1092,4 +1092,6 @@ public class Screen {
 //            System.out.println(e.getRecord());
 //        }
 //    }
+    //TODO: Повторять вывод в случае добавления в БД
+    //TODO: Сделать стек для ДБ
 }

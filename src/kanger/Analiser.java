@@ -199,10 +199,11 @@ public class Analiser {
             }
 
 
-            boolean at = collectHypotesis(t.getSequence(), logging);
-            if (t.getId() != u.getId()) {
-                at = collectHypotesis(u.getSequence(), logging) || at;
-            }
+            boolean at = collectHypotesis(sequence, logging, false, true);
+//            boolean at = collectHypotesis(t.getSequence(), logging, false);
+//            if (t.getId() != u.getId()) {
+//                at = collectHypotesis(u.getSequence(), logging, false) || at;
+//            }
             if (at) {
                 result = false;
             }
@@ -220,15 +221,20 @@ public class Analiser {
 
 
         } else {
-            collectHypotesis(t.getSequence(), logging);
-            collectHypotesis(u.getSequence(), logging);
+//            boolean at = collectHypotesis(sequence, logging, true, false);
+
+//            at = collectHypotesis(sequence, logging, true, true);
+//            boolean at = collectHypotesis(t.getSequence(), logging, true);
+//            if (t.getId() != u.getId()) {
+//                at = collectHypotesis(u.getSequence(), logging, true) || at;
+//            }
         }
 
 
         return result;
     }
 
-    private boolean collectHypotesis(List<Domain> sequence, boolean logging) {
+    private boolean collectHypotesis(List<Domain> sequence, boolean logging, boolean logSequence, boolean isCondition) {
         boolean occurs = false;
         boolean append = false;
 //        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
@@ -253,6 +259,7 @@ public class Analiser {
         List<Domain> discrepancies = new ArrayList<>();
         for (Domain d : sequence) {
             if (d.isComplete() && !d.isClosed()) {
+//                if (isCondition) {
                 if (!d.isExcluded() && !d.isStored()) {
                     append = true;
                     if (!d.isSystem() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
@@ -260,19 +267,33 @@ public class Analiser {
                     }
                 } else {
                     occurs = true;
-                    if ((d.isQuery() || d.isStored()) && d.isProduced() && !d.isExcluded()) {
-                        append = true;
-                        if (!d.isSystem() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                            discrepancies.add(d);
+
+//                } else {
+                    if (d.isStored() || d.isQuery()) {
+                        if ((d.isStored() || d.isQuery()) && d.isProduced() && !d.isExcluded()) {
+                            append = true;
+                            if (!d.isSystem() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                                discrepancies.add(d);
+                            }
                         }
                     }
                 }
+
+//                }
             }
         }
 
 
         if (occurs) {
             if (!coincidence.isEmpty()) {
+                if (logging && logSequence) {
+                    mind.getLog().add(LogMode.ANALIZER, "Sequence failed : ");
+                    for (Domain x : sequence) {
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + x.toString());
+                    }
+                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                }
+
                 for (Domain d : coincidence) {
                     if (logging) {
                         mind.getLog().add(LogMode.ANALIZER, "Not in condition: " + d.toString());
@@ -283,6 +304,13 @@ public class Analiser {
                     mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
             } else if (!discrepancies.isEmpty()) {
+                if (logging && logSequence) {
+                    mind.getLog().add(LogMode.ANALIZER, "Sequence failed : ");
+                    for (Domain x : sequence) {
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + x.toString());
+                    }
+                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                }
                 for (Domain d : discrepancies) {
                     if (logging) {
                         mind.getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());

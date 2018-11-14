@@ -87,7 +87,7 @@ public class Mind {
     private Boolean queryResult = null;
     private String querySource = "";
     //    private transient volatile int currentLevel = 0;
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES /*| Enums.DEBUG_OPTION_RIGHTS*/);
 
     public Mind() {
         reset();

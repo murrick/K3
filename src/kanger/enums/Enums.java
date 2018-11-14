@@ -156,5 +156,5 @@ public class Enums {
 
     public static final int DEBUG_OPTION_VALUES = 0x100;
     public static final int DEBUG_OPTION_STATUS = 0x200;
-
+    public static final int DEBUG_OPTION_RIGHTS = 0x400;
 }
