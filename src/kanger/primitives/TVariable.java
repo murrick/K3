@@ -15,7 +15,7 @@ import java.util.Set;
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable implements Comparable<TVariable> {
+public class TVariable implements Comparable<Object> {
     private Right right = null;             // Ссылка на правило
     private long id = -1;                   // Идентификатор переменной
     private TVariable next = null;          // Следующая переменная
@@ -85,12 +85,16 @@ public class TVariable implements Comparable<TVariable> {
         }
     }
 
+    public TValue setCurrent(TValue v) {
+        return mind.getTValues().set(this, v);
+    }
+
     public TValue setValue(Term value) { //throws TValueOutOfOrderException {
 //        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
-            return mind.getTValues().add(this, value);
+        return mind.getTValues().add(this, value);
 //        } else {
 //            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
 //        }
@@ -286,7 +290,8 @@ public class TVariable implements Comparable<TVariable> {
     public boolean contains(Term value) {
         return find(value) != null;
     }
-//
+
+    //
     public TValue find(Term value) {
         return mind.getTValues().find(this, value);
     }
@@ -364,7 +369,9 @@ public class TVariable implements Comparable<TVariable> {
 //    }
 
     @Override
-    public int compareTo(TVariable o) {
-        return Integer.valueOf(index).compareTo(o.getIndex());
+    public int compareTo(Object o) {
+        return o instanceof TVariable
+                ? Integer.valueOf(index).compareTo(((TVariable) o).getIndex())
+                : Integer.valueOf(index).compareTo(((Term) o).getIndex());
     }
 }

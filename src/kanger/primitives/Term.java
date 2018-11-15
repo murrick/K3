@@ -17,7 +17,7 @@ import java.util.List;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Term> {
+public class Term implements Comparable<Object> {
 
     private DataType type = DataType.VOID;
     private Object value = null;
@@ -273,15 +273,16 @@ public class Term implements Comparable<Term> {
 
     @Override
     public boolean equals(Object t) {
-        if (t instanceof Term) {
-            return ((Term) t).id == id;
-        } else if (value == null && t == null) {
-            return true;
-        } else if (value == null || t == null) {
-            return false;
-        } else {
-            return value.equals(t);
-        }
+        return t != null && t instanceof Term && ((Term) t).getId() == id;
+//        if (t instanceof Term) {
+//            return ((Term) t).id == id;
+//        } else if (value == null && t == null) {
+//            return true;
+//        } else if (value == null || t == null) {
+//            return false;
+//        } else {
+//            return value.equals(t);
+//        }
     }
 
     public Object getValue() {
@@ -310,32 +311,39 @@ public class Term implements Comparable<Term> {
 
 
     @Override
-    public int compareTo(Term o) {
-        if (o == null || value == null || type != o.getType()) {
-            return -2;
-        }
-        int c;
-        if (type == DataType.INTERVAL && value instanceof Collection) {
-            if (o.getValue() instanceof Collection) {
-                if (((Collection) value).size() != ((Collection) o.getValue()).size()) {
-                    return -2;
-                } else {
-                    c = 0;
-                    Object[] a = ((Collection) value).toArray();
-                    Object[] b = ((Collection) o.getValue()).toArray();
-                    for (int i = 0; i < a.length; ++i) {
-                        c = ((Comparable) a[i]).compareTo(b[i]);
-                        if (c != 0) {
-                            break;
+    public int compareTo(Object oo) {
+        if (oo instanceof Term) {
+            Term o = (Term) oo;
+
+            if (o == null || value == null || type != o.getType()) {
+                return -2;
+            } else if (isCVar() && o.isCVar()) {
+                return Integer.valueOf(index).compareTo(o.getIndex());
+            } else if (type == DataType.INTERVAL && value instanceof Collection) {
+                if (o.getValue() instanceof Collection) {
+                    if (((Collection) value).size() != ((Collection) o.getValue()).size()) {
+                        return -2;
+                    } else {
+                        int c = 0;
+                        Object[] a = ((Collection) value).toArray();
+                        Object[] b = ((Collection) o.getValue()).toArray();
+                        for (int i = 0; i < a.length; ++i) {
+                            c = ((Comparable) a[i]).compareTo(b[i]);
+                            if (c != 0) {
+                                break;
+                            }
                         }
+                        return c;
                     }
+                } else {
+                    return -2;
                 }
             } else {
-                return -2;
+                return ((Comparable) value).compareTo(o.getValue());
             }
+//            return c > 0 ? 1 : (c < 0 ? -1 : 0);
         } else {
-            c = ((Comparable) value).compareTo(o.getValue());
+            return Integer.valueOf(index).compareTo(((TVariable) oo).getIndex());
         }
-        return c > 0 ? 1 : (c < 0 ? -1 : 0);
     }
 }

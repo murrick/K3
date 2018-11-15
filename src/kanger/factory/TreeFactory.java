@@ -6,6 +6,8 @@ import kanger.primitives.Tree;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -23,6 +25,23 @@ public class TreeFactory {
     public TreeFactory(Mind mind) {
         this.mind = mind;
         reset();
+    }
+
+    public void transaction(TreeFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+    }
+
+    public void commit(TreeFactory base) {
+        List<Tree> list = new ArrayList();
+        for (Tree p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (Tree p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+        }
     }
 
     public Tree add() {

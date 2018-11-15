@@ -8,9 +8,7 @@ import kanger.primitives.Term;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -30,6 +28,23 @@ public class TValueFactory {
         reset();
     }
 
+    public void transaction(TValueFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+    }
+
+    public void commit(TValueFactory base) {
+        List<TValue> list = new ArrayList();
+        for (TValue p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (TValue p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+        }
+    }
+
     public TValue add(TVariable tv, Term o) {
         TValue t = find(tv, o);
         if (t == null) {
@@ -42,9 +57,9 @@ public class TValueFactory {
         }
 
         //TODO: Фиксация текцщего значения подстановки. Правильно ли это?
-        if (isEmpty(tv)) {
+//        if (isEmpty(tv)) {
             current.put(tv, t.getId());
-        }
+//        }
 
         return t;
     }
@@ -248,12 +263,13 @@ public class TValueFactory {
         }
     }
 
-    public void set(TVariable tv, TValue v) {
+    public TValue set(TVariable tv, TValue v) {
         if (v == null) {
             current.remove(tv);
         } else {
             current.put(tv, v.getId());
         }
+        return v;
     }
 
     public void remove(TVariable tv) {

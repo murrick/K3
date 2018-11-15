@@ -7,6 +7,9 @@ import kanger.primitives.Term;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -25,6 +28,27 @@ public class DictionaryFactory {
     public DictionaryFactory(Mind mind) {
         this.mind = mind;
         reset();
+    }
+
+    public void transaction(DictionaryFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+        varIndex = base.varIndex;
+    }
+
+    public void commit(DictionaryFactory base, Collection vars) {
+        List<Term> list = new ArrayList();
+        for (Term p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (Term p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+            if (p.isCVar()) {
+                vars.add(p);
+            }
+        }
     }
 
     public Term add(Object o) {
@@ -78,7 +102,7 @@ public class DictionaryFactory {
     }
 
     public void reset() {
-        while(stack.size() > 1) {
+        while (stack.size() > 1) {
             stack.pop();
         }
         release();
@@ -89,13 +113,13 @@ public class DictionaryFactory {
     }
 
     public void commit() {
-        if(!stack.empty()) {
+        if (!stack.empty()) {
             stack.pop();
         }
     }
 
     public void release() {
-        if(!stack.empty()) {
+        if (!stack.empty()) {
             Object[] pop = stack.pop();
             Term saved = (Term) pop[0];
             lastID = (long) pop[1];
@@ -110,7 +134,7 @@ public class DictionaryFactory {
 //            }
             root = saved;
         }
-        if(stack.empty()) {
+        if (stack.empty()) {
             mark();
         }
     }
@@ -161,4 +185,5 @@ public class DictionaryFactory {
     public int nextVarIndex() {
         return ++varIndex;
     }
+
 }

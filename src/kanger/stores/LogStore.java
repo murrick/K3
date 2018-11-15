@@ -17,11 +17,30 @@ public class LogStore {
 
     private List<LogEntry> root = null;
     private boolean enableLogging = true;
-    //    private boolean mirroring = true;
     private Mind mind = null;
 
     public LogStore(Mind mind) {
         this.mind = mind;
+    }
+
+    public void commit(LogStore base) {
+        if (!enableLogging) {
+            return;
+        }
+        if (!base.isEmpty()) {
+            if (root == null) {
+                root = new ArrayList<>();
+                root.add(new LogEntry(LogMode.ANALIZER, "LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
+            }
+            if (base.getRoot() != null) {
+                root.addAll(base.getRoot());
+                root.add(new LogEntry(LogMode.ANALIZER, "LOG COMMITED AT " + new Date(System.currentTimeMillis()) + " --"));
+            }
+        }
+    }
+
+    private boolean isEmpty() {
+        return root == null || root.isEmpty();
     }
 
     public LogEntry add(LogMode m, Right r) {
@@ -71,10 +90,10 @@ public class LogStore {
         LogEntry log = null;
         log = new LogEntry(m, s);
         root.add(log);
-        
+
 //        System.out.println(log.getRecord());
-        
-        
+
+
         return log;
     }
 

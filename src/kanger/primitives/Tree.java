@@ -50,11 +50,11 @@ public class Tree {
     }
 
     public boolean isUsed() {
-        return mind.getUsedTrees().contains(id);
+        return mind.getUsedTrees().contains(this);
     }
 
     public void setUsed() {
-        mind.getUsedTrees().add(id);
+        mind.getUsedTrees().add(this);
     }
 
     public long getId() {
@@ -148,26 +148,26 @@ public class Tree {
     }
 
     public boolean isClosed() {
-        return mind.getClosedTrees().contains(id);
+        return mind.getClosedTrees().contains(this);
     }
 
     public void setClosed(boolean closed) {
         if (closed) {
-            mind.getClosedTrees().add(id);
+            mind.getClosedTrees().add(this);
         } else {
-            mind.getClosedTrees().remove(id);
+            mind.getClosedTrees().remove(this);
         }
     }
 
     public boolean isExcluded() {
-        return mind.getExcludedTrees().contains(id);
+        return mind.getExcludedTrees().contains(this);
     }
 
     public void setExcluded(boolean excluded) {
         if (excluded) {
-            mind.getExcludedTrees().add(id);
+            mind.getExcludedTrees().add(this);
         } else {
-            mind.getExcludedTrees().remove(id);
+            mind.getExcludedTrees().remove(this);
         }
     }
 

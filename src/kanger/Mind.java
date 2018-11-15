@@ -26,28 +26,28 @@ import java.util.zip.GZIPOutputStream;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Mind {
-    
-    
+    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
+    private final DatabaseFactory database = new DatabaseFactory(this);                     // База данных
 
     private final DictionaryFactory terms = new DictionaryFactory(this);                    // Словарь констант
     private final PredicateFactory predicates = new PredicateFactory(this);                 // Предикаты
     private final DomainFactory domains = new DomainFactory(this);                          // Список доменов
     private final RightFactory rights = new RightFactory(this);                             // Список правил
     private final TreeFactory trees = new TreeFactory(this);                                // Список секвенций
+    private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
 
     private final TVariableFactory tVars = new TVariableFactory(this);                      // t-переменные
     private final TValueFactory tValues = new TValueFactory(this);                          // Подставленные значения
 
     private final FunctionFactory functions = new FunctionFactory(this);                    // Функции
     private final FValueFactory fValues = new FValueFactory(this);                          // Решения функций
+    private final Set<Tree> usedTrees = new HashSet<>();
 
     private final HypotesisStore hypotesis = new HypotesisStore();                                // Список гипотез
     private final SolutionsStore solves = new SolutionsStore(this);                         // Список решений
     private final ValuesStore values = new ValuesStore(this);                               // Список значений
 
     private final LogStore log = new LogStore(this);                                        // Протокол вывода
-
-    private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
 
     private final Calculator calculator = new Calculator(this);                             // Калькулятор
     private final Analiser analiser = new Analiser(this);                                   // Анализатор
@@ -57,40 +57,45 @@ public class Mind {
     private volatile boolean changed = false;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
-
-//    private ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
-
-    //    private final Set<Long> queuedDomains = new HashSet<>();
-    private final Set<Long> usedTrees = new HashSet<>();
-    private final Set<Long> closedTrees = new HashSet<>();
-    private final Set<Long> excludedTrees = new HashSet<>();
-
-    private final Map<Long, Set<List<Long>>> closedDomains = new HashMap<>();
-    private final Map<Long, Set<List<Long>>> usedDomains = new HashMap<>();
-    private final Map<Long, Set<List<Long>>> excludedDomains = new HashMap<>();
-    private final Map<Long, Set<List<Long>>> producedDomains = new HashMap<>();
-    private final Map<Long, Set<List<Long>>> storedDomains = new HashMap<>();
-    private final Map<Long, Set<List<Long>>> calculatedDomains = new HashMap<>();
+    private final Set<Tree> closedTrees = new HashSet<>();
+    private final Set<Tree> excludedTrees = new HashSet<>();
+    private final Map<Domain, Set<List<Term>>> closedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Term>>> usedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Term>>> excludedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Term>>> producedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Term>>> calculatedDomains = new HashMap<>();
+    private final Map<TVariable, Set<TValue>> blockedValues = new HashMap<>();
 
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
-    private final Map<Long, Set<Long>> blockedValues = new HashMap<>();
-    private final Map<Long, Set<Long>> closedValues = new HashMap<>();
+    private final Map<TVariable, Set<TValue>> closedValues = new HashMap<>();
+    private boolean isInsertion = false;
 
-    
-
-    //    private Set<Long> acceptorDomains = new HashSet<>();
-//    private Set<Long> markAcceptor = new HashSet<>();
     private transient Map<Term, Long> dictionaryLinks = null;
     private transient Map<Domain, Long> domainLinks = null;
     private transient Map<TVariable, Long> tVariableLinks = null;
 
     private Boolean queryResult = null;
     private String querySource = "";
-    //    private transient volatile int currentLevel = 0;
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
+
 
     public Mind() {
         reset();
+    }
+
+    public Mind(Mind root) {
+        terms.transaction(root.getTerms());
+        predicates.transaction(root.getPredicates());
+        domains.transaction(root.getDomains());
+        rights.transaction(root.getRights());
+        trees.transaction(root.getTrees());
+        database.transaction(root.getDatabase());
+        tVars.transaction(root.getTVars());
+        tValues.transaction(root.getTValues());
+        functions.transaction(root.getFunctions());
+        fValues.transaction(root.getFValues());
+
+//        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
     }
 
     public int getDebugLevel() {
@@ -103,6 +108,10 @@ public class Mind {
 
     public DictionaryFactory getTerms() {
         return terms;
+    }
+
+    public DatabaseFactory getDatabase() {
+        return database;
     }
 
     public PredicateFactory getPredicates() {
@@ -157,19 +166,6 @@ public class Mind {
         return fValues;
     }
 
-//    public int getCurrentLevel() {
-//        return currentLevel;
-//    }
-
-//    public void setCurrentLevel(int currentLevel) {
-//        this.currentLevel = currentLevel;
-//    }
-
-    public void clearSavedResults() {
-        solves.clear();
-        values.clear();
-    }
-
     public boolean isChanged() {
         return changed;
     }
@@ -178,83 +174,40 @@ public class Mind {
         changed = b;
     }
 
-    public Calculator getCalculator() {
-        return calculator;
+    public void commit(Mind m) {
+        SortedSet vars = new TreeSet<>();
+        terms.commit(m.getTerms(), vars);
+        tVars.commit(m.getTVars(), vars);
+        tValues.commit(m.getTValues());
+        fValues.commit(m.getFValues());
+        predicates.commit(m.getPredicates());
+        domains.commit(m.getDomains());
+        database.commit(m.getDatabase());
+        rights.commit(m.getRights());
+        trees.commit(m.getTrees());
+        functions.commit(m.getFunctions());
+
+        log.commit(m.getLog());
+        solves.commit(m.getSolutions());
+        values.commit(m.getValues());
+
+        for (Object o : vars) {
+            int i = terms.nextVarIndex();
+            if (o instanceof Term) {
+                String temp = String.format("%c%d", Enums.CVC, i);
+                ((Term) o).setIndex(i);
+                ((Term) o).setValue(temp);
+            } else {
+                ((TVariable) o).setIndex(i);
+            }
+        }
     }
 
-    public Analiser getAnalyser() {
-        return analiser;
-    }
-
-    public Object getCompiler() {
-        return compiler;
-    }
-
-    public Linker getLinker() {
-        return linker;
-    }
-
-    public void mark() {
-        terms.mark();
-        predicates.mark();
-        domains.mark();
-        rights.mark();
-        trees.mark();
-        tVars.mark();
-        tValues.mark();
-        functions.mark();
-        fValues.mark();
-    }
-
-    public void commit() {
-        terms.commit();
-        predicates.commit();
-        domains.commit();
-        tVars.commit();
-        tValues.commit();
-        rights.commit();
-        trees.commit();
-        functions.commit();
-        fValues.commit();
-    }
-
-    public void release() {
-        terms.release();
-        predicates.release();
-        domains.release();
-        tVars.release();
-        tValues.release();
-        rights.release();
-        trees.release();
-        functions.release();
-        fValues.release();
-
-//        clearLinks();
-//        clearQueryStatus();
-
-    }
-
-//    public void clearQueryStatus() {
-//        usedTrees.clear();
-//        closedTrees.clear();
-//        excludedTrees.clear();
-//
-//        usedDomains.clear();
-//        closedDomains.clear();
-//        queryValues.clear();
-////        blockedValues.clear();
-////        closedValues.clear();
-//
-////        acceptorDomains.clear();
-////        queuedDomains.clear();
-//
-////        sources.clear();
-////        destinations.clear();
-//    }
 
     public void reset() {
         terms.reset();
         predicates.reset();
+        database.reset();
         domains.reset();
         tVars.reset();
         tValues.reset();
@@ -273,6 +226,7 @@ public class Mind {
     public void clear() {
         terms.clear();
         predicates.clear();
+        database.clear();
         domains.clear();
         tVars.clear();
         tValues.clear();
@@ -288,33 +242,38 @@ public class Mind {
 
     }
 
-    public void compile(String src) throws ParseErrorException, RuntimeErrorException {
+    public void link(boolean logging) throws RuntimeErrorException {
+        linker.link(logging);
+    }
+
+    public void link(Right r, boolean logging) throws RuntimeErrorException {
+        linker.link(r, logging);
+    }
+
+    public Boolean analise(boolean logging) throws RuntimeErrorException {
+        return analiser.analise(logging);
+    }
+
+    public boolean compile(String src) throws ParseErrorException, RuntimeErrorException {
 
         int pos = 0;
         Object[] t = null;
-//        reset();
-//        mark();
+        Mind m = new Mind(this);
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
-            compileLine(line);
+            m.compileLine(line);
         }
 
-        long start = System.currentTimeMillis();
-        linker.link(true);
-        System.out.println("* COMPILING Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0));
-
-        start = System.currentTimeMillis();
-        Boolean ar = analiser.analiser(true);
-        System.out.println("* COMPILING Analise time \t" + ((System.currentTimeMillis() - start) / 1000.0));
+        m.link(true);
+        Boolean ar = m.analise(true);
 
         if (ar) {
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-            release();
-//            return false;
+            return false;
         } else {
-            commit();
-//            return false;
+            commit(m);
+            return true;
         }
     }
 
@@ -326,7 +285,7 @@ public class Mind {
         switch (line.charAt(0)) {
             case Enums.FOO:
                 r = Parser.implement(line, this);
-                calculator.register((SysOp) r);
+                library.add((SysOp) r);
                 break;
             case Enums.INS:
             case Enums.ANT:
@@ -340,34 +299,13 @@ public class Mind {
         }
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
-            r = compiler.compileLine(p, suc);
+            r = new Compiler(this).compileLine(p, suc);
             ((Right) r).setOrig(orig);
-
-//            if (!containsTVariables((Right) r) || containsCVariables((Right) r)) {
-//                removeRightRecord((Right) r);
-//            }
         }
 
         return r;
     }
 
-//    private boolean containsTVariables(Right r) {
-//        for (TVariable t = tVars.getRoot(); t != null; t = t.getNext()) {
-//            if (t.getRight() == r) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
-//    private boolean containsCVariables(Right r) {
-//        for (Term t = terms.getRoot(); t != null; t = t.getNext()) {
-//            if (t.isCVar() && t.getRight() == r) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 
     /**
      * Удаление правила из дерева вывода
@@ -480,7 +418,7 @@ public class Mind {
     }
 
     public void writeCompiledData(OutputStream os) throws IOException, RuntimeErrorException {
-        analiser.analiser(true);
+        analise(true);
 
         DataOutputStream dos = new DataOutputStream(os);
         dos.writeInt(19640207);
@@ -549,7 +487,7 @@ public class Mind {
 
     public Boolean query(String line) throws ParseErrorException, RuntimeErrorException {
         querySource = line;
-        queryResult = analiser.query(line, false);
+        queryResult = query(line, false);
         return queryResult;
     }
 
@@ -572,35 +510,35 @@ public class Mind {
         return tVariableLinks;
     }
 
-    public Map<Long, Set<List<Long>>> getUsedDomains() {
+    public Map<Domain, Set<List<Term>>> getUsedDomains() {
         return usedDomains;
     }
 
-    public Map<Long, Set<List<Long>>> getExcludedDomains() {
+    public Map<Domain, Set<List<Term>>> getExcludedDomains() {
         return excludedDomains;
     }
 
-    public Map<Long, Set<List<Long>>> getProducedDomains() {
+    public Map<Domain, Set<List<Term>>> getProducedDomains() {
         return producedDomains;
     }
 
-    public Map<Long, Set<List<Long>>> getCalculatedDomains() {
+    public Map<Domain, Set<List<Term>>> getCalculatedDomains() {
         return calculatedDomains;
     }
 
-    public Map<Long, Set<List<Long>>> getStoredDomains() {
-        return storedDomains;
-    }
+//    public Map<Long, Set<List<Long>>> getStoredDomains() {
+//        return storedDomains;
+//    }
 
-    public Set<Long> getUsedTrees() {
+    public Set<Tree> getUsedTrees() {
         return usedTrees;
     }
 
-    public Map<Long, Set<List<Long>>> getClosedDomains() {
+    public Map<Domain, Set<List<Term>>> getClosedDomains() {
         return closedDomains;
     }
 
-    public Set<Long> getClosedTrees() {
+    public Set<Tree> getClosedTrees() {
         return closedTrees;
     }
 
@@ -626,9 +564,8 @@ public class Mind {
 //        return queuedDomains;
 //    }
 
-    
 
-    public Set<Long> getExcludedTrees() {
+    public Set<Tree> getExcludedTrees() {
         return excludedTrees;
     }
 
@@ -636,11 +573,11 @@ public class Mind {
         return queryValues;
     }
 
-    public Map<Long, Set<Long>> getBlockedValues() {
+    public Map<TVariable, Set<TValue>> getBlockedValues() {
         return blockedValues;
     }
 
-    public Map<Long, Set<Long>> getClosedValues() {
+    public Map<TVariable, Set<TValue>> getClosedValues() {
         return closedValues;
     }
 
@@ -685,6 +622,22 @@ public class Mind {
         return null;
     }
 
+    public boolean isSystem(Predicate p) {
+        return calculator.exists(p);
+    }
+
+    public boolean isSystem(Function f) {
+        return calculator.exists(f);
+    }
+
+    public int executeSystem(Domain d) {
+        return calculator.execute(d);
+    }
+
+    public int executeSystem(Function f) {
+        return calculator.execute(f);
+    }
+
 //    public Queue<Tree> getActualTrees() {
 //        Queue<Tree> set = new LinkedList<>();
 //        for (Right r : getActualRights()) {
@@ -699,6 +652,305 @@ public class Mind {
     //TODO: Вывод результатов по группам, группа - один проход, варианты решений - группами в Storage
     //TODO: Mind - наследование вместо всяких mark/release
     //TODO: Оптимизация!!!!
+
+
+    /////////////////////////////////////
+    private String invert(String line) {
+        if (line.charAt(0) == Enums.ANT) {
+            return String.format("%c%s", Enums.SUC, line.substring(1));
+        } else {
+            return String.format("%c%s", Enums.ANT, line.substring(1));
+        }
+    }
+
+    private String resign(int sign, String line) {
+        return String.format("%c%s", sign, line.substring(1));
+    }
+
+    public boolean isInsertion() {
+        return isInsertion;
+    }
+
+    public Boolean query(String line, boolean testMode) throws ParseErrorException, RuntimeErrorException {
+        Boolean res = null;
+
+        boolean storeH = getHypotesisStore().isEnabled();
+        boolean storeV = getValues().isEnabled();
+        boolean storeS = getSolutions().isEnabled();
+        boolean storeL = getLog().isEnabled();
+
+        HypotesisStore excludeHypotesis = new HypotesisStore();
+
+        getHypotesisStore().enable(!testMode);
+        getValues().enable(!testMode);
+        getSolutions().enable(!testMode);
+        getLog().enable(!testMode);
+
+        getLog().clear();
+        getSolutions().clear();
+        getValues().clear();
+        getHypotesisStore().clear();
+
+        isInsertion = false;
+        long queryStart = System.currentTimeMillis();
+
+        getLog().add(LogMode.ANALIZER, "============= CHECKING ===================");
+
+        Boolean ar = analise(true);
+        if (ar) {
+            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+            res = null;
+        } else {
+            excludeHypotesis.addAll(getHypotesisStore().getRoot());
+            int key = line.charAt(0);
+            switch (key) {
+
+                case Enums.INS:
+                    isInsertion = true;
+                    line = resign(Enums.ANT, line);
+
+                case Enums.ANT: {
+                    getLog().add(LogMode.ANALIZER, "============= ACCEPTING ===================");
+
+                    Mind m = new Mind(this);
+                    Right r = (Right) m.compileLine(line);
+//                    r.setQuery(true);
+
+                    if (r != null) {
+                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+                        m.getLog().add(LogMode.ANALIZER, r);
+                        m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+
+                        m.link(r, true);
+                        ar = m.analise(true);
+                        if (ar) {
+                            m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
+                            res = null;
+                        } else {
+                            res = true;
+                            if (!isInsertion) {
+                                m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
+                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
+                                commit(m);
+                                setChanged(true);
+                            } else {
+                                removeInsertionRight(r);
+                                if (m.getHypotesisStore().size() != 0) {
+                                    m.getLog().add(LogMode.SAVED, "Predicates added:");
+                                    int i = 0;
+                                    for (Hypotese s : (List<Hypotese>) m.getHypotesisStore().getRoot()) {
+                                        //TODO: Тут надо использовать Domain а не Hypotese
+                                        //TODO: Добавление предикаторв в базу добавить!
+//                                        mind.getText().append(String.format("%c%s", Enums.ANT, s.toString()) + "\r");
+//                                        mind.getSolutions().createTVar(String.format("%c%s", Enums.ANT, s.toString()));
+                                        m.getLog().add(LogMode.SAVED, String.format("\tSolution %03d: \t%s", ++i, String.format("%c%s", Enums.ANT, s.toString())));
+                                    }
+                                }
+                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New solves: " + m.getHypotesisStore().size());
+                            }
+
+                            m.commit(m);
+                            setChanged(true);
+                        }
+                    }
+                }
+                break;
+
+                case Enums.DEL:
+                case Enums.WIPE:
+                    SysOp op = calculator.find(line);
+                    if (op != null) {
+                        if (getLibrary().remove(op.toString())) {
+                            getLog().add(LogMode.ANALIZER, "SUCCESS: Function removed: " + op.toString());
+                        } else {
+                            getLog().add(LogMode.ANALIZER, "WARNING: Unable to remove function: " + op.toString());
+                        }
+                        break;
+                    } else {
+                        isInsertion = true;
+                        line = resign(Enums.SUC, line);
+                    }
+
+                case Enums.SUC: {
+                    if (line.length() == 1) {
+                        getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+                        res = true;
+                    } else if (!isInsertion) {
+
+                        if (!DEBUG_DISABLE_FALSE_CHECK) {
+
+                            Mind m = new Mind(this);
+                            m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
+
+                            Right r = (Right) m.compileLine(invert(line));
+
+                            if (r != null) {
+                                r.setQuery(true);
+
+                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+                                m.getLog().add(LogMode.ANALIZER, r);
+                                m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+
+                                m.link(r, true);
+
+                                ar = m.analise(true);
+                                if (ar) {
+                                    m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
+                                    logResult(m);
+                                    res = false;
+                                }
+                            }
+
+                        }
+                    }
+
+                    if (res == null) {
+
+                        Mind m = new Mind(this);
+                        m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
+
+                        Right r = (Right) m.compileLine(line);
+                        if (r != null) {
+
+                            r.setQuery(true);
+                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+                            m.getLog().add(LogMode.ANALIZER, r);
+                            m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+
+                            m.link(r, true);
+                            ar = m.analise(true);
+                            if (ar) {
+
+                                if (isInsertion) {
+                                    m.removeInsertionRight(r);
+                                    List<Right> killedRights = killInsertion(m, r, key == Enums.WIPE);
+                                    if (m.getHypotesisStore().size() != 0) {
+                                        m.getLog().add(LogMode.SAVED, "Predicates deleted:");
+                                        int i = 0;
+                                        for (Hypotese s : (List<Hypotese>) m.getHypotesisStore().getRoot()) {
+                                            //TODO: Тут надо использовать Domain а не Hypotese
+                                            //TODO: Удаление предикаторв из базы добавить!
+//                                            mind.getText().append(String.format("%c%s", Enums.ANT, s.toString()) + "\r");
+//                                            mind.getSolutions().createTVar(String.format("%c%s", Enums.ANT, s.toString()));
+                                            m.getLog().add(LogMode.SAVED, String.format("\tSolution %03d: \t%s", ++i, String.format("%c%s", Enums.ANT, s.toString())));
+                                        }
+                                    }
+                                    if (killedRights.size() != 0) {
+                                        m.getLog().add(LogMode.SAVED, "Rights deleted:");
+                                        for (Right rr : killedRights) {
+                                            m.getLog().add(LogMode.SAVED, String.format("\tRight %03d: \t%s", rr.getId(), rr.getOrig()));
+                                        }
+                                    }
+                                    m.getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted solves: " + m.getHypotesisStore().size());
+
+                                } else {
+                                    m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
+                                    logResult(m);
+                                    res = true;
+                                }
+                            } else if (isInsertion) {
+                                m.getLog().add(LogMode.ANALIZER, "Result: No predicates was deleted");
+                            } else {
+
+                                m.getHypotesisStore().exclude(excludeHypotesis);
+
+                                if (m.getHypotesisStore().getRoot() != null && m.getHypotesisStore().size() > 0) {
+                                    m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypotheses", m.getHypotesisStore().size()));
+                                } else {
+                                    m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypotheses.");
+                                }
+                            }
+                        }
+
+//TODO: Померял местами с началом
+//                        mind.release();
+
+                    }
+                    break;
+                }
+            }
+        }
+
+        getHypotesisStore().enable(storeH);
+        getValues().enable(storeV);
+        getSolutions().enable(storeS);
+        getLog().enable(storeL);
+
+        System.out.println("* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
+
+        return res;
+    }
+
+    private void logResult(Mind mind) {
+        if (mind.getSolutions().size() > 0) {
+            mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
+            int i = 0;
+            for (Solution log : mind.getSolutions().getRoot()) {
+                mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i, log.toString()));
+            }
+        }
+        if (mind.getValues().size() > 0) {
+            mind.getLog().add(LogMode.VALUES, "Values(" + mind.getValues().size() + "):");
+            int i = 0;
+            for (TMeaning log : mind.getValues().getRoot()) {
+                mind.getLog().add(LogMode.VALUES, String.format("\tSolution %03d: %s", ++i, log.toString()));
+            }
+        }
+
+    }
+
+    private List<Right> killInsertion(Mind mind, Right target, boolean withRelatedRights) {
+        int flag = 0;
+        mind.reset();
+
+        mind.getUsedTrees().clear();
+        mind.getClosedTrees().clear();
+        mind.getExcludedTrees().clear();
+
+        mind.getUsedDomains().clear();
+        mind.getClosedDomains().clear();
+        mind.getQueryValues().clear();
+
+//        mind.clearQueryStatus();
+
+        List<Right> rr = new ArrayList<>();
+
+        if (mind.getHypotesisStore().size() > 0) {
+            for (Hypotese h : (List<Hypotese>) mind.getHypotesisStore().getRoot()) {
+//                h.getPredicate().deleteSolve(h.getSolve());
+                if (withRelatedRights) {
+
+                    for (Right r : h.getRights()) {
+                        rr.add(r);
+                        mind.removeInsertionRight(r);
+                    }
+                }
+            }
+        }
+//        else if (target.getWidth() == 1 && target.getHeight() == 1) {
+//            Solution s = target.getT().getD().getPredicate().deleteSolve(target.getT().getD().getArguments());
+//            if (withRelatedRights && s != null) {
+//                if (s.getRight() != null) {
+//                    rr.createTVar(s.getRight());
+//                    mind.removeInsertionRight(s.getRight());
+//                }
+//            }
+//        }
+
+//        mind.mark();
+        return rr;
+
+//        List<Right> todoo = new ArrayList<>();
+//        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+//            if (r.equals(target)) {
+//                todoo.createTVar(r);
+//            }
+//        }
+//        for (Right r : todoo) {
+//            mind.removeInsertionRight(r);
+//        }
+    }
+
 }
 
 

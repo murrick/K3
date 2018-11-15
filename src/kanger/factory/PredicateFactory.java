@@ -27,6 +27,23 @@ public class PredicateFactory {
         reset();
     }
 
+    public void transaction(PredicateFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+    }
+
+    public void commit(PredicateFactory base) {
+        List<Predicate> list = new ArrayList();
+        for (Predicate p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (Predicate p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+        }
+    }
+
     public Predicate add(String line, int range) {
         Predicate p = (Predicate) find(line, range);
         if (p != null) {
@@ -62,6 +79,10 @@ public class PredicateFactory {
 
     public Predicate getRoot() {
         return root;
+    }
+
+    public void setRoot(Predicate root) {
+        this.root = root;
     }
 
     public void reset() {

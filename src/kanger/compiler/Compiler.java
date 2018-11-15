@@ -26,7 +26,8 @@ public class Compiler {
     public Right compileLine(PTree root, boolean antc) throws ParseErrorException, RuntimeErrorException {
 
         //mind.getReplacements().reset();
-        mind.clearSavedResults();
+        mind.getSolutions().clear();
+        mind.getValues().clear();
         Right r = mind.getRights().add();
 
 //        NodeFactory n = new NodeFactory();
@@ -35,7 +36,8 @@ public class Compiler {
         Tree t = mind.getTrees().add();
         r.getTree().add(t);
         construct(r, t, root, antc, new HashMap<String, Argument>(), new ArrayList<Tree>());
-        mind.clearSavedResults();
+        mind.getSolutions().clear();
+        mind.getValues().clear();
 
 //        r.setT(t);
 

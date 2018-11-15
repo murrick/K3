@@ -5,6 +5,7 @@
  */
 package kanger;
 
+import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
@@ -23,14 +24,14 @@ public class Linker {
         this.mind = mind;
     }
 
-    private boolean linkFunctions(Domain master, Domain slave, int level, boolean logging, Set<Function> selected) throws RuntimeErrorException {
+    private boolean linkFunctions(Domain master, Domain slave, int level, boolean logging, Set<Function> selected) {
 
         if (level >= master.getPredicate().getRange()) {
 
             boolean occurrs = false;
             for (Function f : selected) {
                 if (!f.isCalculated() && f.isCalculable() /*&& !f.isComplete()*/) {
-                    if (mind.getCalculator().calculate(f) > 0) {
+                    if (new Calculator(mind).calculate(f) > 0) {
                         occurrs = true;
 //                            mind.getFValues().add(f);
 //                            if (logging) {
@@ -431,7 +432,7 @@ public class Linker {
                 for (Domain d : master.getSequence()) {
 //                    if (saveF == mind.getFValues().getRoot()) {
                     for (Function f : d.getFunctions()) {
-                        mind.getCalculator().calculate(f);
+                        new Calculator(mind).calculate(f);
 //                        if ((f.isCalculable() || !f.isCalculated()) && f.isComplete()) {
 //                            f.clearResult();
 //                            if (mind.getCalculator().calculate(f) > 0) {
@@ -596,17 +597,25 @@ public class Linker {
     }
 
     public void link(boolean logging) throws RuntimeErrorException {
-//        mind.getUsedDomains().clear();
-//        mind.getExcludedDomains().clear();
-//        mind.getProducedDomains().clear();
-//        mind.getStoredDomains().clear();
-//        mind.getUsedTrees().clear();
+        mind.getUsedTrees().clear();
+        mind.getClosedTrees().clear();
+        mind.getExcludedTrees().clear();
+
+        mind.getClosedDomains().clear();
+        mind.getUsedDomains().clear();
+        mind.getExcludedDomains().clear();
+        mind.getProducedDomains().clear();
+        mind.getCalculatedDomains().clear();
+
+        mind.getSolutions().clear();
+        mind.getValues().clear();
 
         link(null, logging);
     }
 
     public void link(Right r, boolean logging) throws RuntimeErrorException {
 
+        long start = System.currentTimeMillis();
 
         int pass = 0;
 //        if (r == null) {
@@ -629,13 +638,6 @@ public class Linker {
         TValue saveT = null;
         FValue saveF = null;
 
-        if (r == null) {
-            mind.getStoredDomains().clear();
-            mind.getExcludedDomains().clear();
-            mind.getProducedDomains().clear();
-            mind.getCalculatedDomains().clear();
-            mind.getUsedDomains().clear();
-        }
 
 //        mind.getQueryValues().clear();
 
@@ -723,6 +725,10 @@ public class Linker {
 //            mind.getProducedDomains().clear();
 //            mind.getQueryValues().clear();
 //        }
+
+        if (logging) {
+            mind.getLog().add(LogMode.ANALIZER, "* Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
+        }
 
     }
 

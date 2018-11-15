@@ -7,9 +7,7 @@ import kanger.primitives.TVariable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -26,6 +24,24 @@ public class TVariableFactory {
     public TVariableFactory(Mind mind) {
         this.mind = mind;
         reset();
+    }
+
+    public void transaction(TVariableFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+    }
+
+    public void commit(TVariableFactory base, Collection vars) {
+        List<TVariable> list = new ArrayList();
+        for (TVariable p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (TVariable p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+            vars.add(p);
+        }
     }
 
     public TVariable createTVar() {

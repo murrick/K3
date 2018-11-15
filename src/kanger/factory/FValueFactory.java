@@ -7,6 +7,8 @@ import kanger.primitives.Function;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 public class FValueFactory {
@@ -20,6 +22,23 @@ public class FValueFactory {
     public FValueFactory(Mind mind) {
         this.mind = mind;
         reset();
+    }
+
+    public void transaction(FValueFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+    }
+
+    public void commit(FValueFactory base) {
+        List<FValue> list = new ArrayList();
+        for (FValue p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (FValue p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+        }
     }
 
     public FValue add(Function f) {

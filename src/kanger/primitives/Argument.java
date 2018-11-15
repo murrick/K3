@@ -13,10 +13,6 @@ import java.io.IOException;
  */
 public class Argument {
 
-//    Term c = null;                                // Может быть ЛИБО т-переменная, либо
-//    TVariable t = null;                                 // с-переменная
-//    Function f = null;                                  // либо функция
-
     private Object o = null;
 
     public Argument() {
@@ -44,6 +40,8 @@ public class Argument {
             return (Term) o;
         } else if (o instanceof TVariable) {
             return ((TVariable) o).getValue();
+        } else if (o instanceof TValue) {
+            return ((TValue) o).getValue();
         } else if (o instanceof Function) {
             if (isEmpty() && getF().getArguments().size() > getF().getRange()) {
                 return getF().getArguments().get(getF().getRange()).getDirtyValue();
@@ -60,6 +58,8 @@ public class Argument {
             return (Term) o;
         } else if (o instanceof TVariable) {
             return ((TVariable) o).getValue();
+        } else if (o instanceof TValue) {
+            return ((TValue) o).getValue();
         } else if (o instanceof Function) {
             return ((Function) o).getResult();
         } else {
@@ -76,6 +76,14 @@ public class Argument {
         if (o == null || o instanceof Term) {
             o = t;
         } else if (o instanceof TVariable) {
+            TValue s = ((TVariable) o).find(t);
+            if (s != null) {
+            } else {
+                s = ((TVariable) o).setValue(t);
+                s.setClosed();
+            }
+            ((TVariable) o).setCurrent(s);
+        } else if (o instanceof TVariable) {
             if (((TVariable) o).find(t) != null) {
             } else {
                 TValue s = ((TVariable) o).setValue(t);
@@ -88,7 +96,7 @@ public class Argument {
     }
 
     public void delValue() {
-        if (o == null || o instanceof Term) {
+        if (o == null || o instanceof Term || o instanceof TValue) {
             o = null;
         } else if (o instanceof TVariable) {
             ((TVariable) o).delValue();
@@ -112,6 +120,10 @@ public class Argument {
 
     public boolean isTSet() {
         return o instanceof TVariable;
+    }
+
+    public boolean isVSet() {
+        return o instanceof TValue;
     }
 
     public boolean isFSet() {

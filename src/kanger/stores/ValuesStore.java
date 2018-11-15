@@ -23,6 +23,18 @@ public class ValuesStore {
         this.mind = mind;
     }
 
+    public void commit(ValuesStore base) {
+        if (!enableStore) {
+            return;
+        }
+        if (!base.isEmpty()) {
+            if (root == null) {
+                root = new ArrayList<>();
+            }
+            root.addAll(base.getRoot());
+        }
+    }
+
     public TMeaning add(TVariable t, Domain d) {
         if(!enableStore) {
             return null;

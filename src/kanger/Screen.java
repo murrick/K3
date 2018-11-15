@@ -140,7 +140,7 @@ public class Screen {
                             if (h != null) {
 //                                System.out.println(": " + h);
                                 System.out.println();
-                                Boolean res = mind.getAnalyser().query(h, false);
+                                Boolean res = mind.query(h, false);
                                 if (res != null) {
                                     showLog(mind, LogMode.SOLVES);
                                     showLog(mind, LogMode.VALUES);
@@ -205,16 +205,16 @@ public class Screen {
                                 pos = (int) t[1];
                                 String ln = (String) t[0];
 
-                                Boolean res = mind.getAnalyser().query(ln, false);
+                                Boolean res = mind.query(ln, false);
                                 if (res != null) {
                                     showLog(mind, LogMode.SOLVES);
                                     showLog(mind, LogMode.VALUES);
-                                } else if (mind.getAnalyser().isInsertion()) {
+                                } else if (mind.isInsertion()) {
                                     showLog(mind, LogMode.SAVED);
                                 }
                                 LogEntry lastLine = mind.getLog().getCurrent(LogMode.ANALIZER);
                                 System.out.println(lastLine.getRecord());
-                                if (res == null && !mind.getAnalyser().isInsertion()) {
+                                if (res == null && !mind.isInsertion()) {
                                     showHypo(mind);
                                 }
                             }
@@ -581,7 +581,7 @@ public class Screen {
 //
     public static void showBase(Mind mind, boolean showCauses, String param) throws RuntimeErrorException {
         for (Predicate p = mind.getPredicates().getRoot(); p != null; p = p.getNext()) {
-            if (!p.getSolves().isEmpty() && !mind.getCalculator().exists(p) && (param == null || param.equals(p.getName()))) {
+            if (!p.getSolves().isEmpty() && !mind.isSystem(p) && (param == null || param.equals(p.getName()))) {
                 showPred(mind, p, showCauses);
                 System.out.printf("\n");
             }
@@ -1069,7 +1069,7 @@ public class Screen {
         try {
             dis = new FileInputStream(new File(line));
             mind.readCompiledData(dis);
-            mind.getAnalyser().analiser(true);
+            mind.analise(true);
             System.out.printf("File %s loaded\n", line);
             return true;
         } catch (Exception ex) {

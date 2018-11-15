@@ -30,6 +30,23 @@ public class RightFactory {
         reset();
     }
 
+    public void transaction(RightFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+    }
+
+    public void commit(RightFactory base) {
+        List<Right> list = new ArrayList();
+        for (Right p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (Right p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+        }
+    }
+
     public Right add() {
         Right p = new Right(mind);
         p.setId(++lastID);

@@ -1,9 +1,15 @@
-package kanger.factory; 
+package kanger.factory;
 
-import java.util.*;
-import kanger.*;
-import kanger.primitives.*;
-import java.io.*;
+import kanger.Mind;
+import kanger.primitives.Domain;
+import kanger.primitives.Function;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 public class FunctionFactory { 
 
@@ -17,8 +23,25 @@ public class FunctionFactory {
     public FunctionFactory(Mind mind) {
         this.mind = mind;
         reset();
-    } 
-    
+    }
+
+    public void transaction(FunctionFactory base) {
+        root = base.root;
+        lastID = base.lastID;
+    }
+
+    public void commit(FunctionFactory base) {
+        List<Function> list = new ArrayList();
+        for (Function p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+            list.add(0, p);
+        }
+        for (Function p : list) {
+            p.setNext(root);
+            root = p;
+            p.setId(lastID++);
+        }
+    }
+
     public Function add(Domain owner) {
         Function p = new Function(owner, mind);
         p.setId(++lastID);

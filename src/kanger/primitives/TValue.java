@@ -153,14 +153,14 @@ public class TValue {
 //    }
 //
     public void setClosed() {
-        if (!mind.getClosedValues().containsKey(tVar.getId())) {
-            mind.getClosedValues().put(tVar.getId(), new HashSet<>());
+        if (!mind.getClosedValues().containsKey(tVar)) {
+            mind.getClosedValues().put(tVar, new HashSet<>());
         }
-        mind.getClosedValues().get(tVar.getId()).add(id);
+        mind.getClosedValues().get(tVar).add(this);
     }
 
     public boolean isClosed() {
-        return mind.getClosedValues().containsKey(tVar.getId()) && mind.getClosedValues().get(tVar.getId()).contains(id);
+        return mind.getClosedValues().containsKey(tVar) && mind.getClosedValues().get(tVar).contains(this);
     }
 
     @Override

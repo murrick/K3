@@ -157,8 +157,8 @@ public class Predicates {
                                 if (arg.get(0).setValue(cur)) {
                                     i = 1;
                                     Term next = rc < 0
-                                            ? mind.getCalculator().getFunctions()._inc(cur)
-                                            : mind.getCalculator().getFunctions()._dec(cur);
+                                            ? new Calculator(mind).getFunctions()._inc(cur)
+                                            : new Calculator(mind).getFunctions()._dec(cur);
                                     if (next.getId() == cur.getId()) {
                                         if (arg.get(0).setValue(max)) {
                                             i = 1;

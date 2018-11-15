@@ -21,6 +21,18 @@ public class SolutionsStore {
         this.mind = mind;
     }
 
+    public void commit(SolutionsStore base) {
+        if (!enableStore) {
+            return;
+        }
+        if (!base.isEmpty()) {
+            if (root == null) {
+                root = new ArrayList<>();
+            }
+            root.addAll(base.getRoot());
+        }
+    }
+
     public Solution add(Domain d) {
         if (!enableStore) {
             return null;
