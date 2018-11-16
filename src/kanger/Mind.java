@@ -77,10 +77,9 @@ public class Mind {
     private Boolean queryResult = null;
     private String querySource = "";
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
-
-
+   
     public Mind() {
-        reset();
+        clear();
     }
 
     public Mind(Mind root) {
@@ -201,26 +200,6 @@ public class Mind {
                 ((TVariable) o).setIndex(i);
             }
         }
-    }
-
-
-    public void reset() {
-        terms.reset();
-        predicates.reset();
-        database.reset();
-        domains.reset();
-        tVars.reset();
-        tValues.reset();
-        rights.reset();
-        trees.reset();
-        functions.reset();
-        fValues.reset();
-
-        solves.clear();
-        values.clear();
-        hypotesis.clear();
-//        log.clear();
-
     }
 
     public void clear() {
@@ -390,7 +369,7 @@ public class Mind {
     }
 
     public void removeInsertionRight(Right r) {
-        reset();
+        clear();
 
         removeTVarRecords(r);
         removeCVarRecords(r);
@@ -901,7 +880,7 @@ public class Mind {
 
     private List<Right> killInsertion(Mind mind, Right target, boolean withRelatedRights) {
         int flag = 0;
-        mind.reset();
+        mind.clear();
 
         mind.getUsedTrees().clear();
         mind.getClosedTrees().clear();

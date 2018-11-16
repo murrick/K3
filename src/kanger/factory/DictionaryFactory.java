@@ -27,13 +27,14 @@ public class DictionaryFactory {
 
     public DictionaryFactory(Mind mind) {
         this.mind = mind;
-        reset();
+        clear();
     }
 
     public void transaction(DictionaryFactory base) {
         root = base.root;
         lastID = base.lastID;
         varIndex = base.varIndex;
+        mark();
     }
 
     public void commit(DictionaryFactory base, Collection vars) {
@@ -99,13 +100,6 @@ public class DictionaryFactory {
 
     public void setRoot(Term o) {
         root = o;
-    }
-
-    public void reset() {
-        while (stack.size() > 1) {
-            stack.pop();
-        }
-        release();
     }
 
     public void mark() {
@@ -175,11 +169,9 @@ public class DictionaryFactory {
     }
 
     public void clear() {
-        root = null;
-        lastID = 0;
-        varIndex = 0;
-        stack.clear();
-        mark();
+        do{
+            release();
+        } while(stack.size() > 1);
     }
 
     public int nextVarIndex() {
