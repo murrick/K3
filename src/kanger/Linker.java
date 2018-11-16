@@ -12,6 +12,7 @@ import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
 
 import java.util.*;
+import kanger.exception.*;
 
 /**
  * @author murray
@@ -100,7 +101,7 @@ public class Linker {
     }
 
 
-    private boolean linkDomains(Domain master, Domain slave, int level, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) {
+    private boolean linkDomains(Domain master, Domain slave, int level, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) throws SubstitutionException {
 
         if (level >= master.getPredicate().getRange()) {
 
@@ -171,9 +172,8 @@ public class Linker {
 //                    }
                 }
                 occurrsMaster = true;
-            }
-
-            if (slave.get(i).isTSet()
+                
+            } else if (slave.get(i).isTSet()
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
                     && !master.isExcluded()
@@ -208,6 +208,9 @@ public class Linker {
 //                    }
                 }
                 occurrsSlave = true;
+                
+            } else if(slave.get(i).isEmpty() || master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                throw new SubstitutionException(master + " > " + slave);
             }
 //            }
 
@@ -229,7 +232,8 @@ public class Linker {
             return linkDomains(master, slave, level + 1, logging, occurrsSubst, occurrsMaster, occurrsSlave);
         }
     }
-
+   
+    
     public boolean checkSystem(boolean logging, Tree tree) {
         boolean block = false;
         for (Domain d : tree.getSequence()) {
@@ -334,7 +338,9 @@ public class Linker {
 //                                    }
 
 //                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
-
+                                    
+                                try { 
+                                    mind.getTValues().mark();
                                     if (linkDomains(d1, d2, 0, logging, false, false, false)) {
 
 //                                        for(Argument ma : d1.getArguments()) {
@@ -357,6 +363,10 @@ public class Linker {
                                     } else {
                                         linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
                                     }
+                                    mind.getTValues().commit();
+                                } catch (SubstitutionException e) {
+                                    mind.getTValues().release();
+                                }
 
 
 //                                } else if (d1.getId() == d2.getId() && d1.isSystem()) {
