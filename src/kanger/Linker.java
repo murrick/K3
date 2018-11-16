@@ -9,10 +9,10 @@ import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
+import kanger.exception.SubstitutionException;
 import kanger.primitives.*;
 
 import java.util.*;
-import kanger.exception.*;
 
 /**
  * @author murray
@@ -106,12 +106,18 @@ public class Linker {
         if (level >= master.getPredicate().getRange()) {
 
             if (occurrsMaster || occurrsSlave) {
+
+                for (Term t : solves) {
+                    System.out.print("  " + t);
+                }
+                System.out.println("  " + master + " " + slave);
                 boolean result = false;
                 if (occurrsMaster) {
                     master.setExcluded(solves);
                     result = logComparsion(logging, master) || result;
                 }
                 if (occurrsSlave) {
+                    slave.setExcluded(solves);
                     result = logComparsion(logging, slave) || result;
                 }
                 if (result) {
@@ -131,7 +137,7 @@ public class Linker {
             int i = level;
 
 //                if("xx".equals(master.get(i).getValue() + "")) {
-//                    System.out.println("m: " + master);
+//            System.out.println("m: " + master + " s:" + slave);
 //                }
 //                if("xx".equals(slave.get(i).getValue() + "")) {
 //                    System.out.println("s: " + slave);
@@ -139,8 +145,8 @@ public class Linker {
 
             if (master.get(i).isTSet()
                     && !slave.get(i).isEmpty()
-                    && !slave.isDestFor(i, master)
-                    && !slave.isExcluded()
+//                    && !slave.isDestFor(i, master)
+                    && !slave.isExcluded(solves)
 //                        && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getT().isEmpty()
@@ -174,11 +180,13 @@ public class Linker {
                 }
                 solves[i] = s.getValue();
                 occurrsMaster = true;
-                
-            } else if (slave.get(i).isTSet()
+
+            }
+
+            if (slave.get(i).isTSet()
                     && !master.get(i).isEmpty()
-                    && !master.isDestFor(i, slave)
-                    && !master.isExcluded()
+//                    && !master.isDestFor(i, slave)
+                    && !master.isExcluded(solves)
 //                        && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getT().isEmpty()
@@ -211,8 +219,10 @@ public class Linker {
                 }
                 solves[i] = s.getValue();
                 occurrsSlave = true;
-                
-            } else if(slave.get(i).isEmpty() || master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+
+            }
+
+            if ((!occurrsSlave && !occurrsSlave && (slave.get(i).isEmpty() || master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId()))) {
                 throw new SubstitutionException(master + " > " + slave);
             }
 //            }
@@ -235,8 +245,8 @@ public class Linker {
             return linkDomains(master, slave, level + 1, solves, logging, occurrsSubst, occurrsMaster, occurrsSlave);
         }
     }
-   
-    
+
+
     public boolean checkSystem(boolean logging, Tree tree) {
         boolean block = false;
         for (Domain d : tree.getSequence()) {
@@ -305,7 +315,7 @@ public class Linker {
         return !block;
     }
 
-    public boolean updateDomains(SortedSet<TVariable> tvars, Queue<Tree> masterSet, Queue<Tree> slaveSet, boolean logging) throws RuntimeErrorException {
+    public boolean updateDomains(SortedSet<TVariable> tvars, Queue<Tree> masterSet, Queue<Tree> slaveSet, int level, boolean logging) {
         boolean result = false;
 
         if (tvars.isEmpty()) {
@@ -341,10 +351,10 @@ public class Linker {
 //                                    }
 
 //                                    linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
-                                    
-                                try { 
-                                    mind.getTValues().mark();
-                                    if (linkDomains(d1, d2, 0, logging, false, false, false)) {
+
+                                    try {
+                                        mind.getTValues().mark();
+                                        if (linkDomains(d1, d2, 0, new Term[d1.getPredicate().getRange()], logging, false, false, false)) {
 
 //                                        for(Argument ma : d1.getArguments()) {
 //                                            if ("xx".equals(ma.getValue() + "")) {
@@ -361,15 +371,15 @@ public class Linker {
 //                                            System.out.println("!");
 //                                        }
 
-                                        result = true;
-                                        linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
-                                    } else {
-                                        linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+                                            result = true;
+                                            linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+                                        } else {
+                                            linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
+                                        }
+                                        mind.getTValues().commit();
+                                    } catch (SubstitutionException e) {
+                                        mind.getTValues().release();
                                     }
-                                    mind.getTValues().commit();
-                                } catch (SubstitutionException e) {
-                                    mind.getTValues().release();
-                                }
 
 
 //                                } else if (d1.getId() == d2.getId() && d1.isSystem()) {
@@ -405,12 +415,13 @@ public class Linker {
             if (v != null) {
                 do {
 
+                    for (int i = 0; i < level; ++i) System.out.print("  ");
 //                    if("xx".equals(v.getValue() + "")) {
-//                        System.out.println("v: " + v);
+                    System.out.println("v: " + v);
 //                    }
 
                     mind.getTValues().set(t, v);
-                    if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
+                    if (updateDomains(tvars.headSet(t), masterSet, slaveSet, ++level, logging)) {
                         result = true;
                     }
                     mind.getTValues().set(t, v);
@@ -422,7 +433,7 @@ public class Linker {
 //                }
 
             } else {
-                if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
+                if (updateDomains(tvars.headSet(t), masterSet, slaveSet, ++level, logging)) {
                     result = true;
                 }
             }
@@ -688,7 +699,7 @@ public class Linker {
             mind.getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
-            while (updateDomains(tset, master, slave, logging)) ;
+            while (updateDomains(tset, master, slave, 0, logging)) ;
             calcFunctions(tset, slave, logging);
 
 
@@ -837,7 +848,7 @@ public class Linker {
 
 //                        if (!src.getRight().isQuery()) src.setExcluded();
 //                        if (!dst.getRight().isQuery())
-                        dst.setExcluded();
+//                        dst.setExcluded();
 //                        dst.setExcluded();
 
                         if (dst.getPredicate().getId() == d.getPredicate().getId()) {

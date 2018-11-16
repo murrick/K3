@@ -26,7 +26,7 @@ import java.util.zip.GZIPOutputStream;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Mind {
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
+    private static final boolean DEBUG_DISABLE_FALSE_CHECK = true;
     private final DatabaseFactory database = new DatabaseFactory(this);                     // База данных
 
     private final DictionaryFactory terms = new DictionaryFactory(this);                    // Словарь констант

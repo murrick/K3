@@ -315,9 +315,18 @@ public class Domain {
         return list;
     }
 
-    private boolean isEqualsArguments(Iterable<Term> params) {
+    private boolean isEqualsArguments(List<Term> params) {
         for (int i = 0; i < predicate.getRange(); ++i) {
             if (arguments.get(i).isEmpty() || arguments.get(i).getValue().getId() != params.get(i).getId()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isEqualsArguments(Term[] solves, List<Term> params) {
+        for (int i = 0; i < predicate.getRange(); ++i) {
+            if (solves[i] == null || solves[i].getId() != params.get(i).getId()) {
                 return false;
             }
         }
@@ -385,11 +394,11 @@ public class Domain {
             }
         }
     }
-   
-    public boolean isExcluded(Iterable<Term> args) {
+
+    public boolean isExcluded(Term[] args) {
         if (mind.getExcludedDomains().containsKey(this)) {
             for (List<Term> list : mind.getExcludedDomains().get(this)) {
-                if (isEqualsArguments(args)) {
+                if (isEqualsArguments(args, list)) {
                     return true;
                 }
             }
@@ -408,7 +417,7 @@ public class Domain {
         return false;
     }
 
-    public void setExcluded(Iterable<Term> args) {
+    public void setExcluded(Term[] args) {
         if (!mind.getExcludedDomains().containsKey(this)) {
             mind.getExcludedDomains().put(this, new HashSet<>());
         }
@@ -416,9 +425,9 @@ public class Domain {
             List<Term> arguments = new ArrayList<>();
             for(Term t : args) {
                 arguments.add(t);
-            }           
-            
-        if (!isExcluded())  {
+            }
+
+        if (!isExcluded(args)) {
             mind.getExcludedDomains().get(this).add(arguments);
         }
     }
