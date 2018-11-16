@@ -27,12 +27,13 @@ public class DatabaseFactory {
 
     public DatabaseFactory(Mind mind) {
         this.mind = mind;
-        reset();
+        clear();
     }
 
     public void transaction(DatabaseFactory base) {
         root = base.root;
         lastID = base.lastID;
+        mark();
     }
 
     public void commit(DatabaseFactory base) {
@@ -125,18 +126,10 @@ public class DatabaseFactory {
         root = o;
     }
 
-    public void reset() {
-        while (stack.size() > 1) {
-            stack.pop();
-        }
-        release();
-    }
-
     public void clear() {
-        root = null;
-        lastID = 0;
-        stack.clear();
-        mark();
+        do{
+            release();
+        } while(stack.size() > 1);
     }
 
     public void mark() {
