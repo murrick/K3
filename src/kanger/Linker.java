@@ -101,13 +101,14 @@ public class Linker {
     }
 
 
-    private boolean linkDomains(Domain master, Domain slave, int level, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) throws SubstitutionException {
+    private boolean linkDomains(Domain master, Domain slave, int level, Term[] solves, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) throws SubstitutionException {
 
         if (level >= master.getPredicate().getRange()) {
 
             if (occurrsMaster || occurrsSlave) {
                 boolean result = false;
                 if (occurrsMaster) {
+                    master.setExcluded(solves);
                     result = logComparsion(logging, master) || result;
                 }
                 if (occurrsSlave) {
@@ -167,10 +168,11 @@ public class Linker {
                     s = master.get(i).getT().find(slave.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, slave, master);
-//                    if (slave.isQuery() || master.isQuery()) {
-//                        s.setQuery();
-//                    }
+                    if (slave.isQuery() || master.isQuery()) {
+                        s.setQuery();
+                    }
                 }
+                solves[i] = s.getValue();
                 occurrsMaster = true;
                 
             } else if (slave.get(i).isTSet()
@@ -203,10 +205,11 @@ public class Linker {
                     s = slave.get(i).getT().find(master.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, master, slave);
-//                    if (master.isQuery() || slave.isQuery()) {
-//                        s.setQuery();
-//                    }
+                    if (master.isQuery() || slave.isQuery()) {
+                        s.setQuery();
+                    }
                 }
+                solves[i] = s.getValue();
                 occurrsSlave = true;
                 
             } else if(slave.get(i).isEmpty() || master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
@@ -229,7 +232,7 @@ public class Linker {
 //                }
 //            }
 
-            return linkDomains(master, slave, level + 1, logging, occurrsSubst, occurrsMaster, occurrsSlave);
+            return linkDomains(master, slave, level + 1, solves, logging, occurrsSubst, occurrsMaster, occurrsSlave);
         }
     }
    

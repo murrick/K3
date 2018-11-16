@@ -315,7 +315,7 @@ public class Domain {
         return list;
     }
 
-    private boolean isEqualsArguments(List<Term> params) {
+    private boolean isEqualsArguments(Iterable<Term> params) {
         for (int i = 0; i < predicate.getRange(); ++i) {
             if (arguments.get(i).isEmpty() || arguments.get(i).getValue().getId() != params.get(i).getId()) {
                 return false;
@@ -385,7 +385,17 @@ public class Domain {
             }
         }
     }
-
+   
+    public boolean isExcluded(Iterable<Term> args) {
+        if (mind.getExcludedDomains().containsKey(this)) {
+            for (List<Term> list : mind.getExcludedDomains().get(this)) {
+                if (isEqualsArguments(args)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     public boolean isExcluded() {
         if (mind.getExcludedDomains().containsKey(this)) {
@@ -398,16 +408,18 @@ public class Domain {
         return false;
     }
 
-    public void setExcluded() {
+    public void setExcluded(Iterable<Term> args) {
         if (!mind.getExcludedDomains().containsKey(this)) {
             mind.getExcludedDomains().put(this, new HashSet<>());
         }
-        if (!isExcluded()) {
-            try {
-                mind.getExcludedDomains().get(this).add(convertArguments());
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
+        
+            List<Term> arguments = new ArrayList<>();
+            for(Term t : args) {
+                arguments.add(t);
+            }           
+            
+        if (!isExcluded())  {
+            mind.getExcludedDomains().get(this).add(arguments);
         }
     }
 

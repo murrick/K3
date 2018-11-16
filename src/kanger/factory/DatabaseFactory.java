@@ -85,7 +85,7 @@ public class DatabaseFactory {
             if (p.isAntc() == antc && p.getPredicate() == pred && p.getPredicate().getRange() == pred.getRange() && !p.getArguments().isEmpty()) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {
-                    if (p.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                    if (!p.get(i).isEmpty() && !arg.get(i).isEmpty() && p.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
                         break;
                     }
                 }
