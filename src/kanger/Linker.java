@@ -149,7 +149,7 @@ public class Linker {
             ) {
                 TValue s;
                 if (!master.get(i).getT().contains(slave.get(i).getValue())) {
-                    s = master.get(i).getT().setValue(slave.get(i).getValue());
+                    s = master.get(i).getT().addValue(slave.get(i).getValue());
                     s.setClosed();
 
 //                    System.out.println("Closed: " + master.get(i).getT());
@@ -187,7 +187,7 @@ public class Linker {
             ) {
                 TValue s;
                 if (!slave.get(i).getT().contains(master.get(i).getValue())) {
-                    s = slave.get(i).getT().setValue(master.get(i).getValue());
+                    s = slave.get(i).getT().addValue(master.get(i).getValue());
                     s.setClosed();
 //                    System.out.println("Closed: " + slave.get(i).getT());
                     occurrsSubst = true;
@@ -200,7 +200,7 @@ public class Linker {
                         s.setQuery();
                     }
                 } else {
-                    s = slave.get(i).getT().setValue(master.get(i).getValue());
+                    s = slave.get(i).getT().find(master.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, master, slave);
 //                    if (master.isQuery() || slave.isQuery()) {
@@ -400,6 +400,7 @@ public class Linker {
                     if (updateDomains(tvars.headSet(t), masterSet, slaveSet, logging)) {
                         result = true;
                     }
+                    mind.getTValues().set(t, v);
                 } while ((v = t.next(v)) != null);
 
 //                mind.getTValues().set(t, null);
@@ -489,6 +490,7 @@ public class Linker {
                     if (!calcFunctions(tvars.headSet(t), set, logging)) {
                         result = false;
                     }
+                    mind.getTValues().set(t, v);
                 } while ((v = t.next(v)) != null);
 
 //                mind.getTValues().set(t, null);

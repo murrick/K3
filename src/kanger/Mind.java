@@ -186,9 +186,9 @@ public class Mind {
         trees.commit(m.getTrees());
         functions.commit(m.getFunctions());
 
-        log.commit(m.getLog());
-        solves.commit(m.getSolutions());
-        values.commit(m.getValues());
+//        log.commit(m.getLog());
+//        solves.commit(m.getSolutions());
+//        values.commit(m.getValues());
 
         for (Object o : vars) {
             int i = terms.nextVarIndex();
@@ -252,6 +252,9 @@ public class Mind {
             return false;
         } else {
             commit(m);
+
+            log.commit(m.getLog());
+
             return true;
         }
     }
@@ -751,6 +754,9 @@ public class Mind {
                     }
 
                 case Enums.SUC: {
+
+                    hypotesis.clear();
+
                     if (line.length() == 1) {
                         getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
                         res = true;
@@ -776,8 +782,13 @@ public class Mind {
                                 if (ar) {
                                     m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
                                     logResult(m);
+                                    solves.commit(m.getSolutions());
+                                    values.commit(m.getValues());
                                     res = false;
+                                } else {
+                                    hypotesis.commit(m.getHypotesisStore());
                                 }
+                                log.commit(m.getLog());
                             }
 
                         }
@@ -825,20 +836,24 @@ public class Mind {
                                 } else {
                                     m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
                                     logResult(m);
+                                    solves.commit(m.getSolutions());
+                                    values.commit(m.getValues());
                                     res = true;
                                 }
                             } else if (isInsertion) {
                                 m.getLog().add(LogMode.ANALIZER, "Result: No predicates was deleted");
                             } else {
 
-                                m.getHypotesisStore().exclude(excludeHypotesis);
+                                hypotesis.commit(m.getHypotesisStore());
+                                hypotesis.exclude(excludeHypotesis);
 
-                                if (m.getHypotesisStore().getRoot() != null && m.getHypotesisStore().size() > 0) {
-                                    m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypotheses", m.getHypotesisStore().size()));
+                                if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
+                                    m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));
                                 } else {
-                                    m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypotheses.");
+                                    m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
                                 }
                             }
+                            log.commit(m.getLog());
                         }
 
 //TODO: Померял местами с началом
@@ -855,7 +870,7 @@ public class Mind {
         getSolutions().enable(storeS);
         getLog().enable(storeL);
 
-        System.out.println("* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
+        getLog().add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
 
         return res;
     }

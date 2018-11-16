@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.Mind;
+import kanger.enums.LogMode;
 import kanger.primitives.Argument;
 import kanger.primitives.Domain;
 import kanger.primitives.Predicate;
@@ -27,7 +28,6 @@ public class DatabaseFactory {
 
     public DatabaseFactory(Mind mind) {
         this.mind = mind;
-        clear();
     }
 
     public void transaction(DatabaseFactory base) {
@@ -107,15 +107,51 @@ public class DatabaseFactory {
         return null;
     }
 
-    public boolean check() {
+    public boolean check(boolean logging) {
+        boolean result = false;
         for (Domain p = root; p != null; p = p.getNext()) {
             for (Domain q = p.getNext(); q != null; q = q.getNext()) {
                 if (p.equalsBase(q) && p.isAntc() != q.isAntc()) {
-                    return true;
+
+                    mind.getSolutions().add(p);
+                    for (Domain parent : p.getParents()) {
+                        for (int i = 0; i < parent.getPredicate().getRange(); ++i) {
+                            if (parent.get(i).isTSet()) {
+                                if (parent.get(i).getT().contains(p.get(i).getValue())) {
+                                    parent.get(i).getT().setValue(p.get(i).getValue());
+                                    mind.getValues().add(parent.get(i).getT(), parent);
+                                }
+                            } else if (parent.get(i).isFSet()) {
+                                //TODO: Добавить обработку функций
+                            }
+                        }
+                    }
+
+                    mind.getSolutions().add(q);
+                    for (Domain parent : q.getParents()) {
+                        for (int i = 0; i < parent.getPredicate().getRange(); ++i) {
+                            if (parent.get(i).isTSet()) {
+                                if (parent.get(i).getT().contains(q.get(i).getValue())) {
+                                    parent.get(i).getT().setValue(q.get(i).getValue());
+                                    mind.getValues().add(parent.get(i).getT(), parent);
+                                }
+                            } else if (parent.get(i).isFSet()) {
+                                //TODO: Добавить обработку функций
+                            }
+                        }
+                    }
+
+                    if (logging) {
+                        mind.getLog().add(LogMode.ANALIZER, "Database coincidence : ");
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
+                        mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                    }
+                    result = true;
                 }
             }
         }
-        return false;
+        return result;
     }
 
     public Domain getRoot() {
@@ -147,14 +183,6 @@ public class DatabaseFactory {
             Object[] pop = stack.pop();
             Domain saved = (Domain) pop[0];
             lastID = (long) pop[1];
-//            if (root != null && saved != null && root.getId() != saved.getId()) {
-//                for (Domain t = root; t != null; t = t.getNext()) {
-//                    if (t.getNext() != null && t.getNext().getId() == saved.getId()) {
-//                        t.setNext(null);
-//                        break;
-//                    }
-//                }
-//            }
             root = saved;
         }
         if (stack.empty()) {

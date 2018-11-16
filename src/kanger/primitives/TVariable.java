@@ -94,7 +94,20 @@ public class TVariable implements Comparable<Object> {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
-        return mind.getTValues().add(this, value);
+        TValue v = mind.getTValues().add(this, value);
+        return mind.getTValues().set(this, v);
+//        } else {
+//            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
+//        }
+    }
+
+    public TValue addValue(Term value) { //throws TValueOutOfOrderException {
+//        if (/*isInside(value) && */!"$$".equals(value.toString())) {
+//            if (mind.getTValues().find(this, value) == null) {
+//                mind.getSubstituted().createTVar(this);
+//            }
+        TValue v = mind.getTValues().add(this, value);
+        return v;
 //        } else {
 //            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
 //        }

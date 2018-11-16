@@ -30,11 +30,11 @@ public class LogStore {
         if (!base.isEmpty()) {
             if (root == null) {
                 root = new ArrayList<>();
-                root.add(new LogEntry(LogMode.ANALIZER, "LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
+                root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
             }
             if (base.getRoot() != null) {
                 root.addAll(base.getRoot());
-                root.add(new LogEntry(LogMode.ANALIZER, "LOG COMMITED AT " + new Date(System.currentTimeMillis()) + " --"));
+                root.add(new LogEntry(LogMode.TIMING, "* LOG COMMITED AT " + new Date(System.currentTimeMillis()) + " --"));
             }
         }
     }
@@ -49,7 +49,7 @@ public class LogStore {
         }
         if (root == null) {
             root = new ArrayList<>();
-            root.add(new LogEntry(LogMode.ANALIZER, "LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
+            root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
         }
         LogEntry log = null;
         List<List<String>> net = Screen.formatTree(mind, r);
@@ -85,7 +85,7 @@ public class LogStore {
         }
         if (root == null) {
             root = new ArrayList<>();
-            root.add(new LogEntry(LogMode.ANALIZER, "LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
+            root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
         }
         LogEntry log = null;
         log = new LogEntry(m, s);

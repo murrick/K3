@@ -14,6 +14,18 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     private List<Hypotese> root = null;
     private boolean enableStore = true;
 
+    public void commit(HypotesisStore base) {
+        if (!enableStore) {
+            return;
+        }
+        if (!base.isEmpty()) {
+            if (root == null) {
+                root = new ArrayList<>();
+            }
+            root.addAll(base.getRoot());
+        }
+    }
+
     public Hypotese add(boolean antc, boolean isQuery, Predicate pred, List<Argument> arg) {
         if (!enableStore) {
             return null;

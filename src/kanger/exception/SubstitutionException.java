@@ -3,15 +3,15 @@ package kanger.exception;
 /**
  * Created by Dmitry Kuznetsov on 30.12.2015.
  */
-public class ParametersIncompleteException extends Exception {
+public class SubstitutionException extends Exception {
     String exceptionMessage = "ERROR";
     String error = "";
     Object object = null;
 
-    public ParametersIncompleteException() {
+    public SubstitutionException() {
     }
 
-    public ParametersIncompleteException(String msg) {
+    public SubstitutionException(String msg) {
         exceptionMessage += ": " + msg;
     }
 

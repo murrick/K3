@@ -27,12 +27,12 @@ public class RightFactory {
 
     public RightFactory(Mind mind) {
         this.mind = mind;
-        reset();
     }
 
     public void transaction(RightFactory base) {
         root = base.root;
         lastID = base.lastID;
+        mark();
     }
 
     public void commit(RightFactory base) {
@@ -72,54 +72,22 @@ public class RightFactory {
         root = o;
     }
 
-    public void reset() {
-        while(stack.size() > 1) {
-            stack.pop();
-        }
-        release();
-    }
-
     public void clear() {
-        root = null;
-        lastID = 0;
-        stack.clear();
-        mark();
+        while(stack.size() > 1) {
+            release();
+        }
+        ;
     }
 
-//    public void init() {
-//        for (Right r = root; r != null; r = r.getNext()) {
-//            for (Tree t = r.getT(); t != null; t = t.getRight()) {
-//                for (Tree u = t; u != null; u = u.getDown()) {
-//                    u.setCuted(0);
-//                    u.setClosed(false);
-//                }
-//            }
-//        }
-//    }
-
-    public void mark() {
+    private void mark() {
         stack.push(new Object[]{root, lastID});
     }
 
-    public void commit() {
-        if(!stack.empty()) {
-            stack.pop();
-        }
-    }
-
-    public void release() {
+    private void release() {
         if (!stack.empty()) {
             Object[] pop = stack.pop();
             Right saved = (Right) pop[0];
             lastID = (long) pop[1];
-//            if (root != null && saved != null && root.getId() != saved.getId()) {
-//                for (Right t = root; t != null; t = t.getNext()) {
-//                    if (t.getNext() != null && t.getNext().getId() == saved.getId()) {
-//                        t.setNext(null);
-//                        break;
-//                    }
-//                }
-//            }
             root = saved;
         }
         if(stack.isEmpty()) {

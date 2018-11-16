@@ -25,12 +25,12 @@ public class TValueFactory {
 
     public TValueFactory(Mind mind) {
         this.mind = mind;
-        reset();
     }
 
     public void transaction(TValueFactory base) {
         root = base.root;
         lastID = base.lastID;
+        mark();
     }
 
     public void commit(TValueFactory base) {
@@ -58,7 +58,7 @@ public class TValueFactory {
 
         //TODO: Фиксация текцщего значения подстановки. Правильно ли это?
 //        if (isEmpty(tv)) {
-            current.put(tv, t.getId());
+//            current.put(tv, t.getId());
 //        }
 
         return t;
@@ -89,6 +89,22 @@ public class TValueFactory {
             }
         }
         return n;
+    }
+
+    public boolean isMarked(TValue v) {
+        if (stack.isEmpty() || stack.peek()[0] == null) {
+            return false;
+        } else if (v.getId() == ((TValue) stack.peek()[0]).getId()) {
+            return true;
+        }
+        for (TValue x = root; x != null; x = x.getNext()) {
+            if (x.getId() == ((TValue) stack.peek()[0]).getId()) {
+                return true;
+            } else if (v.getId() == x.getId()) {
+                return false;
+            }
+        }
+        return false;
     }
 
     //    public TValue rewindTop(TVariable tv) {
@@ -163,18 +179,11 @@ public class TValueFactory {
         root = o;
     }
 
-    public void reset() {
-        while (stack.size() > 1) {
-            stack.pop();
-        }
-        release();
-    }
-
     public void clear() {
-        root = null;
-        lastID = 0;
-        stack.clear();
-        mark();
+        while (stack.size() > 1) {
+            release();
+        }
+        ;
     }
 
     public void mark() {
@@ -183,7 +192,7 @@ public class TValueFactory {
 
 
     public void commit() {
-        if (!stack.empty()) {
+        if (stack.size() > 1) {
             stack.pop();
         }
     }
@@ -200,59 +209,6 @@ public class TValueFactory {
         }
     }
 
-//    public void commit() {
-//        if (!stack.empty()) {
-//            Object[] pop = stack.pop();
-//            TValue saved = (TValue) pop[0];
-//            lastID = (long) pop[1];
-//
-//            TValue t = root;
-//            TValue q = root;
-//            while (t != null && t != saved) {
-//                if (!t.isClosed()) {
-//                    if (t == root) {
-//                        root = t = q = t.getNext();
-//                    } else {
-//                        q.setNext(t.getNext());
-//                        t = q.getNext();
-//                    }
-//                } else {
-//                    q = t;
-//                    t = t.getNext();
-//                }
-//            }
-//        }
-//        if (stack.isEmpty()) {
-//            mark();
-//        }
-//    }
-
-//    public void rollback() {
-//        if (!stack.empty()) {
-//            Object[] pop = stack.pop();
-//            TValue saved = (TValue) pop[0];
-////            lastID = (long) pop[1];
-//
-////            TValue t = root;
-////            TValue q = root;
-////            while (t != null && t != saved) {
-//////                if (t.isBlocked()) {
-//////                    if (t == root) {
-//////                        root = t = q = t.getNext();
-//////                    } else {
-//////                        q.setNext(t.getNext());
-//////                        t = q.getNext();
-//////                    }
-//////                } else {
-////                    q = t;
-////                    t = t.getNext();
-//////                }
-////            }
-//        }
-//        if (stack.isEmpty()) {
-//            mark();
-//        }
-//    }
 
     public TValue getMark() {
         if (!stack.empty()) {

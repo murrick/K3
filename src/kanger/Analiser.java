@@ -209,7 +209,7 @@ public class Analiser {
             if (result) {
                 t.setClosed(true);
                 u.setClosed(true);
-                collectResults(false, coincidence);
+                collectResults(coincidence);
             }
 
 
@@ -417,7 +417,7 @@ public class Analiser {
         return false;
     }
 
-    private void collectResults(boolean hypotesis, Iterable<Domain> sequence) throws RuntimeErrorException {
+    private void collectResults(Iterable<Domain> sequence) throws RuntimeErrorException {
 
         Set<Domain> suc = new HashSet<>();
         Set<Domain> ant = new HashSet<>();
@@ -543,7 +543,14 @@ public class Analiser {
         mind.getUsedTrees().clear();
         mind.getClosedDomains().clear();
 
-        result = recurseTree(new ArrayList<>(tvars), 0, set, logging);
+        if (mind.getDatabase().check(logging)) {
+            for (Tree t : set) {
+                collectResults(t.getSequence());
+            }
+            result = true;
+        } else {
+
+            result = recurseTree(new ArrayList<>(tvars), 0, set, logging);
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
 //            if (analiseTree(t, logging)) {
@@ -578,8 +585,9 @@ public class Analiser {
 //            }
 //        } while (countClosed != mind.getClosedTrees().size() || countUsed != mind.getUsedTrees().size());
 
+        }
         if (logging) {
-            mind.getLog().add(LogMode.ANALIZER, "* Analising time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
+            mind.getLog().add(LogMode.TIMING, "* Analising time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
         }
 
         return result;

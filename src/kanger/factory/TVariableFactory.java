@@ -23,12 +23,12 @@ public class TVariableFactory {
 
     public TVariableFactory(Mind mind) {
         this.mind = mind;
-        reset();
     }
 
     public void transaction(TVariableFactory base) {
         root = base.root;
         lastID = base.lastID;
+        mark();
     }
 
     public void commit(TVariableFactory base, Collection vars) {
@@ -81,43 +81,22 @@ public class TVariableFactory {
         root = o;
     }
 
-    public void reset() {
-        while(stack.size() > 1) {
-            stack.pop();
-        }
-        release();
-    }
-
     public void clear() {
-        root = null;
-        lastID = 0;
-        stack.clear();
-        mark();
+        while(stack.size() > 1) {
+            release();
+        }
+        ;
     }
 
-    public void mark() {
+    private void mark() {
         stack.push(new Object[]{root, lastID});
     }
 
-    public void commit() {
-        if(!stack.empty()) {
-            stack.pop();
-        }
-    }
-
-    public void release() {
+    private void release() {
         if (!stack.empty()) {
             Object[] pop = stack.pop();
             TVariable saved = (TVariable) pop[0];
             lastID = (long) pop[1];
-//            if (root != null && saved != null && root.getId() != saved.getId()) {
-//                for (TVariable t = root; t != null; t = t.getNext()) {
-//                    if (t.getNext() != null && t.getNext().getId() == saved.getId()) {
-//                        t.setNext(null);
-//                        break;
-//                    }
-//                }
-//            }
             root = saved;
         }
         if(stack.isEmpty()) {

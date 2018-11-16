@@ -86,7 +86,7 @@ public class Predicate {
 //            }
 //        }
 
-        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d = mind.getDatabase().getRoot(); d != null; d = d.getNext()) {
             if (getId() == d.getPredicate().getId()) {
                 set.add(d);
             }

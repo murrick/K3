@@ -21,12 +21,12 @@ public class FValueFactory {
 
     public FValueFactory(Mind mind) {
         this.mind = mind;
-        reset();
     }
 
     public void transaction(FValueFactory base) {
         root = base.root;
         lastID = base.lastID;
+        mark();
     }
 
     public void commit(FValueFactory base) {
@@ -103,18 +103,11 @@ public class FValueFactory {
         root = o;
     }
 
-    public void reset() {
-        while (stack.size() > 1) {
-            stack.pop();
-        }
-        release();
-    }
-
     public void clear() {
-        root = null;
-        lastID = 0;
-        stack.clear();
-        mark();
+        while (stack.size() > 1) {
+            release();
+        }
+        ;
     }
 
     public void mark() {
@@ -123,7 +116,7 @@ public class FValueFactory {
 
 
     public void commit() {
-        if (!stack.empty()) {
+        if (stack.size() > 1) {
             stack.pop();
         }
     }
