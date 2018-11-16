@@ -106,6 +106,17 @@ public class DatabaseFactory {
         return null;
     }
 
+    public boolean check() {
+        for (Domain p = root; p != null; p = p.getNext()) {
+            for (Domain q = p.getNext(); q != null; q = q.getNext()) {
+                if (p.equalsBase(q) && p.isAntc() != q.isAntc()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public Domain getRoot() {
         return root;
     }
