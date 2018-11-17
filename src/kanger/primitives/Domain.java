@@ -148,9 +148,9 @@ public class Domain {
 //    for (TList t : d.getArguments()) {
 //        String name = "_";
 //        if (t.isCSet()) name = t.getC().toString();
-//        else if (t.isFSet() && t.getF().getResult() != null)
-//            name = t.getF().toString(); // + "=" + t.getF().getResult().toString();
-//        else if (t.isTSet() && t.getT().getOwner() != 0) name = t.getT().getValue().getTerm().getName();
+//        else if (t.isFunction() && t.getFunction().getResult() != null)
+//            name = t.getFunction().toString(); // + "=" + t.getFunction().getResult().toString();
+//        else if (t.isTVariable() && t.getTVariable().getOwner() != 0) name = t.getTVariable().getValue().getTerm().getName();
 //        s += name;
 //        if (i + 1 != d.getPredicate().getRange()) {
 //            s += String.format("%c", Enums.COMMA);
@@ -503,9 +503,9 @@ public class Domain {
 //    public boolean recalculate() throws RuntimeErrorException {
 //        boolean occurrs = false;
 //        for (Argument a : arguments) {
-//            if (a.isFSet() /*&& a.getF().isComplete()*/) {
-////                a.getF().clearResult();
-//                if (mind.getCalculator().calculate(a.getF()) > 0) {
+//            if (a.isFunction() /*&& a.getFunction().isComplete()*/) {
+////                a.getFunction().clearResult();
+//                if (mind.getCalculator().calculate(a.getFunction()) > 0) {
 //                    occurrs = true;
 //                }
 //            }
@@ -556,7 +556,7 @@ public class Domain {
 //    public int getTVarCount() {
 //        int cnt = 0;
 //        for (int i = 0; i < arguments.size(); ++i) {
-//            if (arguments.get(i).isTSet()) {
+//            if (arguments.get(i).isTVariable()) {
 //                ++cnt;
 //            }
 //        }
@@ -566,7 +566,7 @@ public class Domain {
 //    public int getCVarCount() {
 //        int cnt = 0;
 //        for (int i = 0; i < arguments.size(); ++i) {
-//            if (!arguments.get(i).isTSet() && arguments.get(i).isCVar()) {
+//            if (!arguments.get(i).isTVariable() && arguments.get(i).isCVariable()) {
 //                ++cnt;
 //            }
 //        }

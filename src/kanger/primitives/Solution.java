@@ -142,7 +142,7 @@ public class Solution {
             range = op.getRange();
         }
         for (i = 0; i < predicate.getRange(); ++i) {
-            if (parameters.get(i) != null && parameters.get(i).isCVar()) {
+            if (parameters.get(i) != null && parameters.get(i).isCVariable()) {
                 String qnt = "";
                 int id = Integer.parseInt(parameters.get(i).toString().substring(1));
                 for (j = 0; j < ccnt; ++j) {

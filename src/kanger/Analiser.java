@@ -144,7 +144,7 @@ public class Analiser {
                         if (!xa.isEmpty() && !xb.isEmpty()
 //                                && (!a.isDestFor() || xa.getValue().getRight().isQuery() /*|| a.isUsed()*/)
 //                                && (!b.isDestFor() || xb.getValue().getRight().isQuery() /*|| b.isUsed()*/)
-                                //                                    && !(xa.isTSet() && xb.isTSet() && xa.getT().getId() == xb.getT().getId())
+                                //                                    && !(xa.isTVariable() && xb.isTVariable() && xa.getTVariable().getId() == xb.getTVariable().getId())
                                 //                                    && (!xa.isDestFor(b) || a.getRight().isQuery() || b.getRight().isQuery())
                                 //                                    && (!xb.isDestFor(a) || b.getRight().isQuery() || a.getRight().isQuery())
                                 && xa.getValue().getId() == xb.getValue().getId()) {

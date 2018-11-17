@@ -58,7 +58,7 @@ public class FValueFactory {
 
     public FValue get(Function f) {
         for (FValue v = root; v != null; v = v.getNext()) {
-            if (v.getFunction().getId() == f.getId() && v.isActual(f)) {
+            if (v.getFunc().getId() == f.getId() && v.isActual(f)) {
                 return v;
             }
         }
@@ -68,7 +68,7 @@ public class FValueFactory {
 
     public FValue find(Function f) {
         for (FValue t = root; t != null; t = t.getNext()) {
-            if (f.getId() == t.getFunction().getId()
+            if (f.getId() == t.getFunc().getId()
                     && t.getValue().getId() == f.getArguments().get(f.getRange()).getDirtyValue().getId()
                     && t.isActual(f)) {
 //                boolean complete = true;

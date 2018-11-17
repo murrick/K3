@@ -58,7 +58,7 @@ public class Linker {
             //ПОДСТАНОВКИ Результатов функций
 //            for (int i = 0; i <= level; ++i) {
 
-//            if (master.get(level).isFSet() && !master.get(level).getF().getName().toString().equals("_add")) {
+//            if (master.get(level).isFunction() && !master.get(level).getFunction().getName().toString().equals("_add")) {
 //                System.out.println(master);
 //            }
 
@@ -76,7 +76,7 @@ public class Linker {
                 }
             }
 
-//            if (slave.get(level).isFSet() && !slave.get(level).getF().getName().toString().equals("_add")) {
+//            if (slave.get(level).isFunction() && !slave.get(level).getFunction().getName().toString().equals("_add")) {
 //                System.out.println(slave);
 //            }
 
@@ -149,10 +149,10 @@ public class Linker {
                     && !slave.isExcluded()
 //                        && !master.isDestFor(i, slave)
 
-//                        && master.get(i).getT().isEmpty()
+//                        && master.get(i).getTVariable().isEmpty()
 
                     && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
-//                        && (!slave.get(level).getValue().isCVar() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getT().getIndex())
+//                        && (!slave.get(level).getValue().isCVariable() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getTVariable().getIndex())
 //                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
             ) {
                 TValue s;
@@ -160,12 +160,12 @@ public class Linker {
                     s = master.get(i).getT().addValue(slave.get(i).getValue());
                     s.setClosed();
 
-//                    System.out.println("Closed: " + master.get(i).getT());
+//                    System.out.println("Closed: " + master.get(i).getTVariable());
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, slave, master);
 //                } else {
-//                    s = master.get(i).getT().find(slave.get(i).getValue());
+//                    s = master.get(i).getTVariable().find(slave.get(i).getValue());
 //                }
                     if (slave.isQuery() || master.isQuery()) {
                         s.setQuery();
@@ -189,22 +189,22 @@ public class Linker {
                     && !master.isExcluded()
 //                        && !slave.isDestFor(i, master)
 
-//                        && slave.get(i).getT().isEmpty()
+//                        && slave.get(i).getTVariable().isEmpty()
 
                     && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
-//                        && (!master.get(level).getValue().isCVar() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getT().getIndex())
+//                        && (!master.get(level).getValue().isCVariable() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getTVariable().getIndex())
 //                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
             ) {
                 TValue s;
                 if (!slave.get(i).getT().contains(master.get(i).getValue())) {
                     s = slave.get(i).getT().addValue(master.get(i).getValue());
                     s.setClosed();
-//                    System.out.println("Closed: " + slave.get(i).getT());
+//                    System.out.println("Closed: " + slave.get(i).getTVariable());
                     occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, master, slave);
 //                } else {
-//                    s = slave.get(i).getT().find(master.get(i).getValue());
+//                    s = slave.get(i).getTVariable().find(master.get(i).getValue());
 //                }
                     if (master.isQuery() || slave.isQuery()) {
                         s.setQuery();
@@ -260,8 +260,8 @@ public class Linker {
                         break;
                     }
 //                    if (
-//                            (a.isTSet() && a.getT().isEmpty())
-//                                    || (a.isFSet() && !a.getF().isCalculated())
+//                            (a.isTVariable() && a.getTVariable().isEmpty())
+//                                    || (a.isFunction() && !a.getFunction().isCalculated())
 //                    ) {
 //                        res = -2;
 //                        break;
@@ -867,7 +867,7 @@ public class Linker {
 //                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + src);
 
 //                        if (d.getRight().isQuery()) {
-//                            a.getT().getDstSolve().setAcceptor(false);
+//                            a.getTVariable().getDstSolve().setAcceptor(false);
 //                        }
 
 

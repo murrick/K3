@@ -1,11 +1,17 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.compiler.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
+import kanger.Mind;
+import kanger.compiler.Operation;
+import kanger.compiler.Parser;
+import kanger.enums.Enums;
+import kanger.enums.Tools;
+import kanger.interfaces.IValue;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
@@ -86,7 +92,7 @@ public class Function implements IValue {
     }
 
 
-//    public FunctionDescriptor getF() {
+//    public FunctionDescriptor getFunction() {
 //        return f;
 //    }
 //
@@ -149,14 +155,23 @@ public class Function implements IValue {
         }
     }
 
+    @Override
+    public Term getDirtyValue() {
+        if (isEmpty() && getArguments().size() > getRange()) {
+            return getArguments().get(getRange()).getDirtyValue();
+        } else {
+            return getValue();
+        }
+    }
+
 //    public void setResult(Domain d, Argument r) {
 //        if (range + 1 > arguments.size()) {
 //            arguments.createTVar(new Argument());
 //        }
 //        arguments.createCVar(range).setValue(d, r.getValue());
 ////        arguments.createCVar(range).setC(r.getC());
-////        arguments.createCVar(range).setT(r.getT());
-////        arguments.createCVar(range).setF(r.getF());
+////        arguments.createCVar(range).setT(r.getTVariable());
+////        arguments.createCVar(range).setF(r.getFunction());
 //    }
 
     public Object setValue(Term r) {
@@ -215,8 +230,8 @@ public class Function implements IValue {
 //            if (v == null) {
             s += t.getT().toString();
 //            } else {
-//                TValue tv = v.getValue(t.getT());
-//                s += t.getT().getVarName()
+//                TValue tv = v.getValue(t.getTVariable());
+//                s += t.getTVariable().getVarName()
 //                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (tv == null ? "" : (":" + tv.getValue().toString())) : "")
 //                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && tv != null && tv.isBlocked() ? " (B)" : "");
 //
@@ -365,57 +380,61 @@ public class Function implements IValue {
 
     @Override
     public boolean isEmpty() {
-        // TODO: Implement this method
         return getValue() == null;
     }
 
     @Override
-    public boolean isTSet() {
-        // TODO: Implement this method
+    public boolean isTVariable() {
         return false;
     }
 
     @Override
-    public boolean isFSet() {
-        // TODO: Implement this method
+    public boolean isFunction() {
         return true;
     }
 
     @Override
-    public boolean isVSet() {
-        // TODO: Implement this method
+    public boolean isTValue() {
         return false;
     }
 
     @Override
     public boolean isTerm() {
-        // TODO: Implement this method
         return false;
     }
 
     @Override
-    public boolean isCVar() {
-        // TODO: Implement this method
-        return !isEmpty() && getValue().isCVar();
+    public boolean isFValue() {
+        return false;
     }
 
     @Override
-    public TVariable getT() {
-        // TODO: Implement this method
+    public boolean isCVariable() {
+        return !isEmpty() && getValue().isCVariable();
+    }
+
+    @Override
+    public boolean isDefined() {
+        return false;
+    }
+
+    @Override
+    public TVariable getTVariable() {
         return null;
     }
 
     @Override
-    public Function getF() {
-        // TODO: Implement this method
+    public Function getFunction() {
         return this;
     }
 
     @Override
-    public TValue getV() {
-        // TODO: Implement this method
+    public TValue getTValue() {
         return null;
     }
-    
 
+    @Override
+    public FValue getFValue() {
+        return null;
+    }
 }

@@ -45,7 +45,7 @@ public class DictionaryFactory {
             p.setNext(root);
             root = p;
             p.setId(lastID++);
-            if (p.isCVar()) {
+            if (p.isCVariable()) {
                 vars.add(p);
             }
         }

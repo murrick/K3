@@ -1,10 +1,15 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
+import kanger.Mind;
+import kanger.enums.Enums;
+import kanger.interfaces.IValue;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -74,6 +79,11 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public Term getDirtyValue() {
+        return getValue();
     }
 
     public TValue getCurrent() {
@@ -294,7 +304,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 
     public boolean isInside(Term c) {
 
-        return (c == null || !c.isCVar()
+        return (c == null || !c.isCVariable()
                 && c.getRight() == getRight()
                 && c.getIndex() < c.getIndex());
     }
@@ -388,17 +398,17 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
    
     @Override
-    public boolean isTSet() {
+    public boolean isTVariable() {
         return true;
     }
 
     @Override
-    public boolean isFSet() {
+    public boolean isFunction() {
         return false;
     }
 
     @Override
-    public boolean isVSet() {
+    public boolean isTValue() {
         return false;
     }
 
@@ -408,22 +418,43 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     @Override
-    public boolean isCVar() {
-        return !isEmpty() && getValue().isCVar();
+    public boolean isFValue() {
+        return false;
     }
 
     @Override
-    public TVariable getT() {
+    public boolean isCVariable() {
+        return !isEmpty() && getValue().isCVariable();
+    }
+
+    @Override
+    public boolean isDefined() {
+        Term t = getValue();
+        return t != null && !t.isCVariable();
+    }
+
+    @Override
+    public boolean isCalculated() {
+        return !isEmpty();
+    }
+
+    @Override
+    public TVariable getTVariable() {
         return null;
     }
 
     @Override
-    public Function getF() {
+    public Function getFunction() {
         return null;
     }
 
     @Override
-    public TValue getV() {
+    public TValue getTValue() {
+        return null;
+    }
+
+    @Override
+    public FValue getFValue() {
         return null;
     }
 }

@@ -260,8 +260,8 @@ public abstract class Tools {
 //    public static List<Function> getFunctions(List<Argument> arg) {
 //        List<Function> list = new ArrayList<>();
 //        for (Argument a : arg) {
-//            if (a.isFSet() && !list.contains(a.getF())) {
-//                list.createTVar(a.getF());
+//            if (a.isFunction() && !list.contains(a.getFunction())) {
+//                list.createTVar(a.getFunction());
 //            }
 //        }
 //        return list;

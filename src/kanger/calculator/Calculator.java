@@ -34,7 +34,7 @@ public class Calculator {
      */
     public int calculate(Function fu) /*throws RuntimeErrorException*/ {
 
-        //FArg fu = func.getF();
+        //FArg fu = func.getFunction();
         int flag = 0;
 
         if (fu == null) {
@@ -54,24 +54,24 @@ public class Calculator {
 
 //        for (int i = 0; i <= fu.getRange(); ++i) {
 //            if (!fu.createCVar(i).isEmpty()) {
-//                if (!fu.createCVar(i).getValue().isCVar()) {
+//                if (!fu.createCVar(i).getValue().isCVariable()) {
 //                    fu.createCVar(i).setValue(fu.createCVar(i).getValue());
 //                } else {
 //                    fu.createCVar(i).setValue(null);
 //                }
-//            } else if (fu.createCVar(i).isFSet()) {
-//                fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
-//            } else if (fu.createCVar(i).isTSet() && fu.createCVar(i).getT().getOwner() != 0) {
-//                fu.createCVar(i).setValue(fu.createCVar(i).getT().getValue());
+//            } else if (fu.createCVar(i).isFunction()) {
+//                fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
+//            } else if (fu.createCVar(i).isTVariable() && fu.createCVar(i).getTVariable().getOwner() != 0) {
+//                fu.createCVar(i).setValue(fu.createCVar(i).getTVariable().getValue());
 //            }
 //        }
 //
         for (int i = 0; i < fu.getRange(); ++i) {
-            if (fu.getArguments().get(i).isFSet() /* && !fu.createCVar(i).getF().isBusy()*/) {
-//                fu.createCVar(i).getF().setResult(fu.createCVar(i).getValue());
+            if (fu.getArguments().get(i).isFSet() /* && !fu.createCVar(i).getFunction().isBusy()*/) {
+//                fu.createCVar(i).getFunction().setResult(fu.createCVar(i).getValue());
                 if (calculate(fu.getArguments().get(i).getF()) > 0) {
                     ++flag;
-//                    fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
+//                    fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
                 } else {
                     --flag;
                 }
@@ -118,10 +118,10 @@ public class Calculator {
 //        if(!fu.isCalculated()) {
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).isFSet()) {
-//                fu.createCVar(i).getF().setResult(fu.createCVar(i).getValue());
+//                fu.createCVar(i).getFunction().setResult(fu.createCVar(i).getValue());
                 if (calculate(fu.getArguments().get(i).getF()) > 0) {
                     ++flag;
-//                    fu.createCVar(i).setValue(fu.createCVar(i).getF().getResult());
+//                    fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
                 } else {
                     --flag;
                 }
@@ -149,7 +149,7 @@ public class Calculator {
         if (op != null) {
 
 //            for (Argument a : d.getArguments()) {
-//                if (a.isEmpty() && !a.isTSet() && !a.isFSet()/*&& "$$".equals(a.getValue().toString())*/) {
+//                if (a.isEmpty() && !a.isTVariable() && !a.isFunction()/*&& "$$".equals(a.getValue().toString())*/) {
 //                    return -1;
 //                }
 //            }
@@ -158,8 +158,8 @@ public class Calculator {
 
 //            if (k == 1 && "_eq".equals(op.getName())) {
 //                for(Argument a : d.getArguments()) {
-//                    if (a.isFSet()) {
-//                        Function f = a.getF();
+//                    if (a.isFunction()) {
+//                        Function f = a.getFunction();
 //                        if (calculate(f) <= 0) {
 //                            k = -1;
 //                        }
@@ -181,7 +181,7 @@ public class Calculator {
             }
 
             for (Argument a : fu.getArguments()) {
-                if (!a.isEmpty() && (a.getValue().isCVar() /*|| "$$".equals(a.getValue())*/)) {
+                if (!a.isEmpty() && (a.getValue().isCVariable() /*|| "$$".equals(a.getValue())*/)) {
 //                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;
                 }

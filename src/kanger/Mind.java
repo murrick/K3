@@ -359,7 +359,7 @@ public class Mind {
     private void removeCVarRecords(Right r) {
         Term o = null;
         for (Term t = terms.getRoot(); t != null; t = t.getNext()) {
-            if (t.getRight() == r && t.isCVar()) {
+            if (t.getRight() == r && t.isCVariable()) {
                 if (o == null) {
                     terms.setRoot(t.getNext());
                 } else {
@@ -922,7 +922,7 @@ public class Mind {
             }
         }
 //        else if (target.getWidth() == 1 && target.getHeight() == 1) {
-//            Solution s = target.getT().getD().getPredicate().deleteSolve(target.getT().getD().getArguments());
+//            Solution s = target.getTVariable().getD().getPredicate().deleteSolve(target.getTVariable().getD().getArguments());
 //            if (withRelatedRights && s != null) {
 //                if (s.getRight() != null) {
 //                    rr.createTVar(s.getRight());

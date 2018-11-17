@@ -110,7 +110,7 @@ public class Hypotese {
         String line = (antc ? "" : String.format("%c",Enums.NOT));
         String tmp = predicate.getName() + "(";
         for (i = 0; i < predicate.getRange(); ++i) {
-            if (solve.get(i) != null && solve.get(i).isCVar()) {
+            if (solve.get(i) != null && solve.get(i).isCVariable()) {
                 String qnt = "";
                 int id = Integer.parseInt(solve.get(i).toString().substring(1));
                 for (j = 0; j < ccnt; ++j) {

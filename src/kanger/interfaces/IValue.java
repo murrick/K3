@@ -1,7 +1,6 @@
 package kanger.interfaces;
 
 
-import kanger.primitives.Term;
 import kanger.primitives.*;
 
 /**
@@ -11,25 +10,35 @@ public interface IValue<T> {
 
     Term getValue();
 
+    Term getDirtyValue();
+
     T setValue(Term term);
 
     boolean isEmpty();
 
-    void clear()
-   
-    boolean isTSet();
-   
-    boolean isFSet();
-   
-    boolean isVSet();
+    void clear();
+
+    boolean isTVariable();
+
+    boolean isFunction();
+
+    boolean isTValue();
    
     boolean isTerm();
-   
-    boolean isCVar();
-   
-    TVariable getT();
-   
-    Function getF();
-   
-    TValue getV();
+
+    boolean isFValue();
+
+    boolean isCVariable();
+
+    boolean isDefined();
+
+    boolean isCalculated();
+
+    TVariable getTVariable();
+
+    Function getFunction();
+
+    TValue getTValue();
+
+    FValue getFValue();
 }

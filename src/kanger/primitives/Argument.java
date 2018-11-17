@@ -72,6 +72,7 @@ public class Argument {
 //    }
 //
 
+    //TODO: Тут разобраться. Для IValue
     public boolean setValue(Term t) {
         if (o == null || o instanceof Term) {
             o = t;
@@ -152,8 +153,8 @@ public class Argument {
 //            Argument a = (Argument) x;
 //            if ((o instanceof Term)
 //                    && ((o == null && a.o == null)
-//                    || (o != null && a.o != null && ((!((Term) o).isCVar() && a.o.equals(o))
-//                    || (((Term) o).isCVar() && ((Term) a.o).isCVar()))))) {
+//                    || (o != null && a.o != null && ((!((Term) o).isCVariable() && a.o.equals(o))
+//                    || (((Term) o).isCVariable() && ((Term) a.o).isCVariable()))))) {
 //                return true;
 //
 //            } else if ((o instanceof Function)
@@ -171,11 +172,11 @@ public class Argument {
 //    }
 
 //    public boolean isDestFor(Domain d) {
-////        return isTSet() && getT().isDestFor(d);
-//        if (isTSet())
-//            return getT().isDestFor(d);
-//        else if (isFSet()) {
-//            for (TVariable t : getF().getTVariables()) {
+////        return isTVariable() && getTVariable().isDestFor(d);
+//        if (isTVariable())
+//            return getTVariable().isDestFor(d);
+//        else if (isFunction()) {
+//            for (TVariable t : getFunction().getTVariables()) {
 //                if (t.isDestFor(d)) {
 //                    return true;
 //                }
@@ -199,26 +200,26 @@ public class Argument {
 
     public boolean isDefined() {
         Term t = getValue();
-        return t != null && !t.isCVar();
+        return t != null && !t.isCVariable();
     }
 
     public boolean isCalculated() {
         if (isTSet()) {
             return !getT().isEmpty(); //.isComplete();
         } else if (isFSet()) {
-//            Term t = getF().getResult();
-//			if(getF().isCalculable()) {
+//            Term t = getFunction().getResult();
+//			if(getFunction().isCalculable()) {
             return getF().isCalculated();
 //			} else {
 //            return t != null && !"$$".equals(t.toString());
 //			}
         } else {
-            return !isEmpty() /*&& !getValue().isCVar()*/;
+            return !isEmpty() /*&& !getValue().isCVariable()*/;
         }
     }
 
     public boolean isCVar() {
-        return !isEmpty() && getValue().isCVar();
+        return !isEmpty() && getValue().isCVariable();
     }
 
 }

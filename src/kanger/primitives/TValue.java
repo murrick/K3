@@ -1,9 +1,14 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.interfaces.*;
+import kanger.Mind;
+import kanger.interfaces.IValue;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by murray on 13.12.16.
@@ -51,6 +56,11 @@ public class TValue implements IValue {
 
     public Term getValue() {
         return value;
+    }
+
+    @Override
+    public Term getDirtyValue() {
+        return getValue();
     }
 
     public Object setValue(Term value) {
@@ -177,17 +187,17 @@ public class TValue implements IValue {
     }
 
     @Override
-    public boolean isTSet() {
+    public boolean isTVariable() {
         return false;
     }
 
     @Override
-    public boolean isFSet() {
+    public boolean isFunction() {
         return false;
     }
 
     @Override
-    public boolean isVSet() {
+    public boolean isTValue() {
         return true;
     }
 
@@ -197,24 +207,45 @@ public class TValue implements IValue {
     }
 
     @Override
-    public boolean isCVar() {
-        return !isEmpty() && getValue().isCVar();
+    public boolean isFValue() {
+        return false;
     }
 
     @Override
-    public TVariable getT() {
+    public boolean isCVariable() {
+        return !isEmpty() && getValue().isCVariable();
+    }
+
+    @Override
+    public boolean isDefined() {
+        Term t = getValue();
+        return t != null && !t.isCVariable();
+    }
+
+    @Override
+    public boolean isCalculated() {
+        return !isEmpty();
+    }
+
+    @Override
+    public TVariable getTVariable() {
         return null;
     }
 
     @Override
-    public Function getF() {
+    public Function getFunction() {
         return null;
     }
 
     @Override
-    public TValue getV() {
+    public TValue getTValue() {
         return this;
     }
 
-    
+    @Override
+    public FValue getFValue() {
+        return null;
+    }
+
+
 }

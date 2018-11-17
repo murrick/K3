@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.Mind;
+import kanger.interfaces.IValue;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -8,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FValue {
+public class FValue implements IValue {
     private long id = -1;
     private Term value = null;
     //    private Map<Long, Long> condition = new HashMap<>();
@@ -53,12 +54,89 @@ public class FValue {
         return id;
     }
 
-    public void setValue(Term value) {
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    public Term setValue(Term value) {
         this.value = value;
+        return value;
+    }
+
+    @Override
+    public void clear() {
+        value = null;
+    }
+
+    @Override
+    public boolean isTVariable() {
+        return false;
+    }
+
+    @Override
+    public boolean isFunction() {
+        return false;
+    }
+
+    @Override
+    public boolean isTValue() {
+        return false;
+    }
+
+    @Override
+    public boolean isTerm() {
+        return false;
+    }
+
+    @Override
+    public boolean isFValue() {
+        return true;
+    }
+
+    @Override
+    public boolean isCVariable() {
+        return !isEmpty() && getValue().isCVariable();
+    }
+
+    @Override
+    public boolean isDefined() {
+        Term t = getValue();
+        return t != null && !t.isCVariable();
+    }
+
+    @Override
+    public boolean isCalculated() {
+        return !isEmpty();
+    }
+
+    @Override
+    public TVariable getTVariable() {
+        return null;
+    }
+
+    @Override
+    public Function getFunction() {
+        return null;
+    }
+
+    @Override
+    public TValue getTValue() {
+        return null;
+    }
+
+    @Override
+    public FValue getFValue() {
+        return this;
     }
 
     public Term getValue() {
         return value;
+    }
+
+    @Override
+    public Term getDirtyValue() {
+        return getValue();
     }
 
 //    public TValue getValue(TVariable t) {
@@ -81,7 +159,7 @@ public class FValue {
         this.function = function;
     }
 
-    public Function getFunction() {
+    public Function getFunc() {
         return function;
     }
 

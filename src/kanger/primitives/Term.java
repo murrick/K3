@@ -1,11 +1,17 @@
 package kanger.primitives;
 
+import kanger.Mind;
+import kanger.enums.DataType;
+import kanger.enums.Enums;
+import kanger.enums.Tools;
+import kanger.interfaces.IValue;
+
 import java.io.*;
-import java.text.*;
-import java.util.*;
-import kanger.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -195,12 +201,22 @@ public class Term implements IValue, Comparable<Object> {
         this.next = next;
     }
 
-    public boolean isCVar() {
+    public boolean isCVariable() {
         return index > 0;
 //        return value != null
 //                && type == DataType.STRING
 //                && !value.toString().isEmpty()
 //                && value.toString().charAt(0) == Enums.CVC;
+    }
+
+    @Override
+    public boolean isDefined() {
+        return !isCVariable();
+    }
+
+    @Override
+    public boolean isCalculated() {
+        return !isEmpty();
     }
 
     public String formatValue() {
@@ -217,7 +233,7 @@ public class Term implements IValue, Comparable<Object> {
 
     public String toString() {
         if (value != null) {
-            if (isCVar()) {
+            if (isCVariable()) {
                 switch (mind.getDebugLevel() & 0x00FF) {
                     case Enums.DEBUG_LEVEL_DEBUG:
                         return formatValue();
@@ -313,7 +329,7 @@ public class Term implements IValue, Comparable<Object> {
 
             if (o == null || value == null || type != o.getType()) {
                 return -2;
-            } else if (isCVar() && o.isCVar()) {
+            } else if (isCVariable() && o.isCVariable()) {
                 return Integer.valueOf(index).compareTo(o.getIndex());
             } else if (type == DataType.INTERVAL && value instanceof Collection) {
                 if (o.getVal() instanceof Collection) {
@@ -349,6 +365,11 @@ public class Term implements IValue, Comparable<Object> {
     }
 
     @Override
+    public Term getDirtyValue() {
+        return this;
+    }
+
+    @Override
     public Object setValue(Term term) {
         return null;
     }
@@ -364,17 +385,17 @@ public class Term implements IValue, Comparable<Object> {
     }
 
     @Override
-    public boolean isTSet() {
+    public boolean isTVariable() {
         return false;
     }
 
     @Override
-    public boolean isFSet() {
+    public boolean isFunction() {
         return false;
     }
 
     @Override
-    public boolean isVSet() {
+    public boolean isTValue() {
         return false;
     }
 
@@ -384,19 +405,29 @@ public class Term implements IValue, Comparable<Object> {
     }
 
     @Override
-    public TVariable getT() {
+    public boolean isFValue() {
+        return false;
+    }
+
+    @Override
+    public TVariable getTVariable() {
         return null;
     }
 
     @Override
-    public Function getF() {
+    public Function getFunction() {
         return null;
     }
 
     @Override
-    public TValue getV() {
+    public TValue getTValue() {
         return null;
     }
 
-    
+    @Override
+    public FValue getFValue() {
+        return null;
+    }
+
+
 }
