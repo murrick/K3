@@ -46,7 +46,7 @@ public class Argument {
             if (isEmpty() && getF().getArguments().size() > getF().getRange()) {
                 return getF().getArguments().get(getF().getRange()).getDirtyValue();
             } else {
-                return ((Function) o).getResult();
+                return ((Function) o).getValue();
             }
         } else {
             return null;
@@ -61,7 +61,7 @@ public class Argument {
         } else if (o instanceof TValue) {
             return ((TValue) o).getValue();
         } else if (o instanceof Function) {
-            return ((Function) o).getResult();
+            return ((Function) o).getValue();
         } else {
             return null;
         }
@@ -90,7 +90,7 @@ public class Argument {
                 s.setClosed();
             }
         } else if (o instanceof Function) {
-            ((Function) o).setResult(t);
+            ((Function) o).setValue(t);
         }
         return true;
     }
@@ -99,9 +99,9 @@ public class Argument {
         if (o == null || o instanceof Term || o instanceof TValue) {
             o = null;
         } else if (o instanceof TVariable) {
-            ((TVariable) o).delValue();
+            ((TVariable) o).clear();
         } else if (o instanceof Function) {
-            ((Function) o).clearResult();
+            ((Function) o).clear();
         }
     }
 

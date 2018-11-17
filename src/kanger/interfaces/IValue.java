@@ -2,17 +2,34 @@ package kanger.interfaces;
 
 
 import kanger.primitives.Term;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 02.12.16.
  */
-public interface IValue {
+public interface IValue<T> {
 
     Term getValue();
 
-    void setValue(Term term);
+    T setValue(Term term);
 
     boolean isEmpty();
 
-    void clear();
+    void clear()
+   
+    boolean isTSet();
+   
+    boolean isFSet();
+   
+    boolean isVSet();
+   
+    boolean isTerm();
+   
+    boolean isCVar();
+   
+    TVariable getT();
+   
+    Function getF();
+   
+    TValue getV();
 }

@@ -66,7 +66,7 @@ public class Linker {
                 if (!slave.get(level).isEmpty()
                         && master.get(level).getF().isCalculable()
                         && !master.get(level).getF().isComplete()) {
-                    master.get(level).getF().setResult(slave.get(level).getValue());
+                    master.get(level).getF().setValue(slave.get(level).getValue());
                     selected.add(master.get(level).getF());
                 } else if (master.get(level).getF().isCalculable()
                         && master.get(level).getF().isComplete()) {
@@ -84,7 +84,7 @@ public class Linker {
                 if (!master.get(level).isEmpty()
                         && slave.get(level).getF().isCalculable()
                         && !slave.get(level).getF().isComplete()) {
-                    slave.get(level).getF().setResult(slave.get(level).getValue());
+                    slave.get(level).getF().setValue(slave.get(level).getValue());
                     selected.add(slave.get(level).getF());
                 } else if (slave.get(level).getF().isCalculable()
                         && slave.get(level).getF().isComplete()) {
@@ -145,8 +145,8 @@ public class Linker {
 
             if (master.get(i).isTSet()
                     && !slave.get(i).isEmpty()
-//                    && !slave.isDestFor(i, master)
-                    && !slave.isExcluded(solves)
+                    && !slave.isDestFor(i, master)
+                    && !slave.isExcluded()
 //                        && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getT().isEmpty()
@@ -185,8 +185,8 @@ public class Linker {
 
             if (slave.get(i).isTSet()
                     && !master.get(i).isEmpty()
-//                    && !master.isDestFor(i, slave)
-                    && !master.isExcluded(solves)
+                    && !master.isDestFor(i, slave)
+                    && !master.isExcluded()
 //                        && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getT().isEmpty()

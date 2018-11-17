@@ -1,21 +1,20 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.enums.Enums;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable implements Comparable<Object> {
+public class TVariable implements IValue<TValue>, Comparable<Object> {
+
+
+    
     private Right right = null;             // Ссылка на правило
     private long id = -1;                   // Идентификатор переменной
     private TVariable next = null;          // Следующая переменная
@@ -113,7 +112,7 @@ public class TVariable implements Comparable<Object> {
 //        }
     }
 
-    public void delValue() {
+    public void clear() {
         mind.getTValues().remove(this);
 //        if (mind.getTValues().createCVar(this).isEmpty()) {
 //            mind.getTValues().createCVar(this).setRoot(null);
@@ -386,5 +385,45 @@ public class TVariable implements Comparable<Object> {
         return o instanceof TVariable
                 ? Integer.valueOf(index).compareTo(((TVariable) o).getIndex())
                 : Integer.valueOf(index).compareTo(((Term) o).getIndex());
+    }
+   
+    @Override
+    public boolean isTSet() {
+        return true;
+    }
+
+    @Override
+    public boolean isFSet() {
+        return false;
+    }
+
+    @Override
+    public boolean isVSet() {
+        return false;
+    }
+
+    @Override
+    public boolean isTerm() {
+        return false;
+    }
+
+    @Override
+    public boolean isCVar() {
+        return !isEmpty() && getValue().isCVar();
+    }
+
+    @Override
+    public TVariable getT() {
+        return null;
+    }
+
+    @Override
+    public Function getF() {
+        return null;
+    }
+
+    @Override
+    public TValue getV() {
+        return null;
     }
 }

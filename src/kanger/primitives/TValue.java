@@ -1,18 +1,15 @@
 package kanger.primitives;
 
-import kanger.Mind;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.interfaces.*;
 
 /**
  * Created by murray on 13.12.16.
  */
-public class TValue {
+public class TValue implements IValue {
+
 
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
@@ -56,8 +53,9 @@ public class TValue {
         return value;
     }
 
-    public void setValue(Term value) {
+    public Object setValue(Term value) {
         this.value = value;
+        return value;
     }
 
     public List<Domain> getSrcSolves() {
@@ -167,4 +165,56 @@ public class TValue {
     public boolean equals(Object obj) {
         return obj != null && obj instanceof TValue && ((TValue) obj).getId() == id;
     }
+   
+    @Override
+    public boolean isEmpty() {
+        return getValue() == null;
+    }
+
+    @Override
+    public void clear() {
+        setValue(null);
+    }
+
+    @Override
+    public boolean isTSet() {
+        return false;
+    }
+
+    @Override
+    public boolean isFSet() {
+        return false;
+    }
+
+    @Override
+    public boolean isVSet() {
+        return true;
+    }
+
+    @Override
+    public boolean isTerm() {
+        return false;
+    }
+
+    @Override
+    public boolean isCVar() {
+        return !isEmpty() && getValue().isCVar();
+    }
+
+    @Override
+    public TVariable getT() {
+        return null;
+    }
+
+    @Override
+    public Function getF() {
+        return null;
+    }
+
+    @Override
+    public TValue getV() {
+        return this;
+    }
+
+    
 }

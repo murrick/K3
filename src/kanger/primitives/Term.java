@@ -1,23 +1,19 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.enums.DataType;
-import kanger.enums.Enums;
-import kanger.enums.Tools;
-
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.text.*;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Object> {
+public class Term implements IValue, Comparable<Object> {
+
 
     private DataType type = DataType.VOID;
     private Object value = null;
@@ -285,11 +281,11 @@ public class Term implements Comparable<Object> {
 //        }
     }
 
-    public Object getValue() {
+    public Object getVal() {
         return value;
     }
 
-    public void setValue(Object value) {
+    public void setVal(Object value) {
         this.value = value;
     }
 
@@ -320,13 +316,13 @@ public class Term implements Comparable<Object> {
             } else if (isCVar() && o.isCVar()) {
                 return Integer.valueOf(index).compareTo(o.getIndex());
             } else if (type == DataType.INTERVAL && value instanceof Collection) {
-                if (o.getValue() instanceof Collection) {
-                    if (((Collection) value).size() != ((Collection) o.getValue()).size()) {
+                if (o.getVal() instanceof Collection) {
+                    if (((Collection) value).size() != ((Collection) o.getVal()).size()) {
                         return -2;
                     } else {
                         int c = 0;
                         Object[] a = ((Collection) value).toArray();
-                        Object[] b = ((Collection) o.getValue()).toArray();
+                        Object[] b = ((Collection) o.getVal()).toArray();
                         for (int i = 0; i < a.length; ++i) {
                             c = ((Comparable) a[i]).compareTo(b[i]);
                             if (c != 0) {
@@ -339,11 +335,68 @@ public class Term implements Comparable<Object> {
                     return -2;
                 }
             } else {
-                return ((Comparable) value).compareTo(o.getValue());
+                return ((Comparable) value).compareTo(o.getVal());
             }
 //            return c > 0 ? 1 : (c < 0 ? -1 : 0);
         } else {
             return Integer.valueOf(index).compareTo(((TVariable) oo).getIndex());
         }
     }
+    
+    @Override
+    public Term getValue() {
+        return this;
+    }
+
+    @Override
+    public Object setValue(Term term) {
+        return null;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null;
+    }
+
+    @Override
+    public void clear() {
+        value = null;
+    }
+
+    @Override
+    public boolean isTSet() {
+        return false;
+    }
+
+    @Override
+    public boolean isFSet() {
+        return false;
+    }
+
+    @Override
+    public boolean isVSet() {
+        return false;
+    }
+
+    @Override
+    public boolean isTerm() {
+        return true;
+    }
+
+    @Override
+    public TVariable getT() {
+        return null;
+    }
+
+    @Override
+    public Function getF() {
+        return null;
+    }
+
+    @Override
+    public TValue getV() {
+        return null;
+    }
+
+    
 }

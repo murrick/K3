@@ -195,7 +195,7 @@ public class Mind {
             if (o instanceof Term) {
                 String temp = String.format("%c%d", Enums.CVC, i);
                 ((Term) o).setIndex(i);
-                ((Term) o).setValue(temp);
+                ((Term) o).setVal(temp);
             } else {
                 ((TVariable) o).setIndex(i);
             }

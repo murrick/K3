@@ -1,23 +1,20 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.compiler.Operation;
-import kanger.compiler.Parser;
-import kanger.enums.Enums;
-import kanger.enums.Tools;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.compiler.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
  * <p>
  * Домен для функции. Может быть рекурсивным на уровне структуры TList.
  */
-public class Function {
+public class Function implements IValue {
+
+
 
     private Term name = null;
     private int range = 0;
@@ -139,7 +136,7 @@ public class Function {
 //        return arguments.get(range).getValue();
 //    }
 
-    public Term getResult() {
+    public Term getValue() {
         if (isCalculated()) {
             return mind.getFValues().get(this).getValue();
         } else {
@@ -162,11 +159,12 @@ public class Function {
 ////        arguments.createCVar(range).setF(r.getF());
 //    }
 
-    public void setResult(Term r) {
+    public Object setValue(Term r) {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
         arguments.get(range).setValue(r);
+        return arguments.get(range);
     }
 
     public boolean setParameter(int i, Term r) {
@@ -232,8 +230,8 @@ public class Function {
     }
 
     public String toString() {
-        if (!isCalculable() && getResult() != null) {
-            return getResult().toString();
+        if (!isCalculable() && getValue() != null) {
+            return getValue().toString();
         } else {
             Operation op = Parser.getOp(name.toString());
             String s = "";
@@ -265,7 +263,7 @@ public class Function {
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
 //                if (getResult() != null) {
                 if (isCalculated()) {
-                    res = " {= " + getResult() + "}";
+                    res = " {= " + getValue() + "}";
                 } else if (arguments.size() > range && !arguments.get(range).isEmpty()) {
                     res = " [= " + arguments.get(range).getValue() + "]";
                 }
@@ -322,8 +320,8 @@ public class Function {
 //        }
 //    }
 
-    public void clearResult() {
-        setResult(null);
+    public void clear() {
+        setValue(null);
     }
 
     public List<TVariable> getTVariables() {
@@ -364,5 +362,60 @@ public class Function {
     public boolean isCalculable() {
         return Tools.getTVariables(arguments, true).size() > 0;
     }
+
+    @Override
+    public boolean isEmpty() {
+        // TODO: Implement this method
+        return getValue() == null;
+    }
+
+    @Override
+    public boolean isTSet() {
+        // TODO: Implement this method
+        return false;
+    }
+
+    @Override
+    public boolean isFSet() {
+        // TODO: Implement this method
+        return true;
+    }
+
+    @Override
+    public boolean isVSet() {
+        // TODO: Implement this method
+        return false;
+    }
+
+    @Override
+    public boolean isTerm() {
+        // TODO: Implement this method
+        return false;
+    }
+
+    @Override
+    public boolean isCVar() {
+        // TODO: Implement this method
+        return !isEmpty() && getValue().isCVar();
+    }
+
+    @Override
+    public TVariable getT() {
+        // TODO: Implement this method
+        return null;
+    }
+
+    @Override
+    public Function getF() {
+        // TODO: Implement this method
+        return this;
+    }
+
+    @Override
+    public TValue getV() {
+        // TODO: Implement this method
+        return null;
+    }
+    
 
 }

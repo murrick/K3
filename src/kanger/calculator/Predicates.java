@@ -146,11 +146,11 @@ public class Predicates {
                     List<Argument> arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
-                                && arg.get(1).getValue().getValue() instanceof Collection
-                                && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
+                                && arg.get(1).getValue().getVal() instanceof Collection
+                                && ((Collection) arg.get(1).getValue().getVal()).size() == 2) {
 
-                            Term min = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0];
-                            Term max = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1];
+                            Term min = (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[0];
+                            Term max = (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[1];
                             Term cur = min;
                             int rc = min.compareTo(max);
                             while (true) {
@@ -178,11 +178,11 @@ public class Predicates {
                         }
                     } else if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVar() && !arg.get(1).getValue().isCVar()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
-                                && arg.get(1).getValue().getValue() instanceof Collection
-                                && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
+                                && arg.get(1).getValue().getVal() instanceof Collection
+                                && ((Collection) arg.get(1).getValue().getVal()).size() == 2) {
                             i = _in(arg.get(0).getValue(),
-                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0],
-                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1]) ? 1 : 0;
+                                    (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[0],
+                                    (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[1]) ? 1 : 0;
                         }
                     }
                     return i;
@@ -202,7 +202,7 @@ public class Predicates {
                         } else {
 //                            i = maskcmp(arg.createCVar(0).getValue().getTerm().getName(), arg.createCVar(1).getValue().getTerm().getName()) == 0 ? 1 : 0;
                             try {
-                                i = Pattern.matches((String) arg.get(0).getValue().getValue(), (String) arg.get(1).getValue().getValue()) ? 1 : 0;
+                                i = Pattern.matches((String) arg.get(0).getValue().getVal(), (String) arg.get(1).getValue().getVal()) ? 1 : 0;
                             } catch (PatternSyntaxException ex) {
                                 System.err.println("Regexp error: " + ex.getDescription());
                             }
@@ -228,9 +228,9 @@ public class Predicates {
         int rcmax = -2;
         int i = -1;
         int rc = min.compareTo(max);
-        if (cur.getType() == DataType.INTERVAL && cur.getValue() instanceof Collection && ((Collection) cur.getValue()).size() == 2) {
-            Term xmin = (Term) ((Collection) cur.getValue()).toArray()[0];
-            Term xmax = (Term) ((Collection) cur.getValue()).toArray()[1];
+        if (cur.getType() == DataType.INTERVAL && cur.getVal() instanceof Collection && ((Collection) cur.getVal()).size() == 2) {
+            Term xmin = (Term) ((Collection) cur.getVal()).toArray()[0];
+            Term xmax = (Term) ((Collection) cur.getVal()).toArray()[1];
             int xrc = xmin.compareTo(xmax);
             rcmin = rc == xrc ? xmin.compareTo(min) : xmin.compareTo(max);
             rcmax = rc == xrc ? xmax.compareTo(max) : xmax.compareTo(min);
