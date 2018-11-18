@@ -205,7 +205,7 @@ public class Domain {
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
 //            suffix = " " + mind.getId();
             suffix += isDest() || isQuery() || isClosed() || isUsed() || isExcluded() || isProduced() || isStored() || isCalculated()
-                ? ":" + (isDest() ? "A" : "") +
+                ? " " + (isDest() ? "A" : "") +
                 (isQuery() ? "Q" : "") +
                 (isClosed() ? "C" : "") +
                 (isUsed() ? "U" : "") +

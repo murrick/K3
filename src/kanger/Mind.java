@@ -53,6 +53,7 @@ public class Mind {
     private Compiler compiler = null;                                   // Компилятор
 
     private volatile boolean changed = false;
+    
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
     private final Set<Tree> closedTrees = new HashSet<>();
@@ -281,10 +282,11 @@ public class Mind {
         functions.clear();
         fValues.clear();
 
-//        log.clear();
         solves.clear();
         values.clear();
         hypotesis.clear();
+        
+        log.clear();
 
     }
 
@@ -658,7 +660,7 @@ public class Mind {
         return querySource;
     }
 
-    public Boolean getQueryResult() {
+    public Object getQueryResult() {
         return queryResult;
     }
 
