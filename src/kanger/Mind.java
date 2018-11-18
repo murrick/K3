@@ -32,37 +32,32 @@ public class Mind {
     private Mind next = null;
     private User user = null;
     
-    private final DatabaseFactory database = new DatabaseFactory(user);                     // База данных
-    private final DictionaryFactory terms = new DictionaryFactory(user);                    // Словарь констант
-    private final PredicateFactory predicates = new PredicateFactory(user);                 // Предикаты
-    private final DomainFactory domains = new DomainFactory(user);                          // Список доменов
-    private final RightFactory rights = new RightFactory(user);                             // Список правил
-    private final TreeFactory trees = new TreeFactory(user);                                // Список секвенций
-    private final LibraryStore library = new LibraryStore(user);                            // Системная библиотека функций и предикатов
-
-    private final TVariableFactory tVars = new TVariableFactory(user);                      // t-переменные
-    private final TValueFactory tValues = new TValueFactory(user);                          // Подставленные значения
-
-    private final FunctionFactory functions = new FunctionFactory(user);                    // Функции
-    private final FValueFactory fValues = new FValueFactory(user);                          // Решения функций
     private final Set<Tree> usedTrees = new HashSet<>();
-
-    private final HypotesisStore hypotesis = new HypotesisStore();                                // Список гипотез
-    private final SolutionsStore solves = new SolutionsStore(user);                         // Список решений
-    private final ValuesStore values = new ValuesStore(user);                               // Список значений
-
-    private final LogStore log = new LogStore(this);                                        // Протокол вывода
-
-    private final Calculator calculator = new Calculator(user);                             // Калькулятор
-    private final Analiser analiser = new Analiser(user);                                   // Анализатор
-    private final Compiler compiler = new Compiler(user);                                   // Компилятор
-    private final Linker linker = new Linker(user);                                         // Линкер
+    private DatabaseFactory database = null;                     // База данных
+    private DictionaryFactory terms = null;                    // Словарь констант
+    private PredicateFactory predicates = null;                 // Предикаты
+    private DomainFactory domains = null;                          // Список доменов
+    private RightFactory rights = null;                             // Список правил
+    private TreeFactory trees = null;                                // Список секвенций
+    private LibraryStore library = null;                            // Системная библиотека функций и предикатов
+    private TVariableFactory tVars = null;                      // t-переменные
+    private TValueFactory tValues = null;                          // Подставленные значения
+    private FunctionFactory functions = null;                    // Функции
+    private FValueFactory fValues = null;                          // Решения функций
+    private HypotesisStore hypotesis = null;                                // Список гипотез
+    private SolutionsStore solves = null;                         // Список решений
+    private ValuesStore values = null;                               // Список значений
+    private LogStore log = null;                                        // Протокол вывода
+    private Calculator calculator = null;                             // Калькулятор
+    private Analiser analiser = null;                                   // Анализатор
+    private Compiler compiler = null;                                   // Компилятор
 
     private volatile boolean changed = false;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
     private final Set<Tree> closedTrees = new HashSet<>();
     private final Set<Tree> excludedTrees = new HashSet<>();
+    private Linker linker = null;                                         // Линкер
     private final Map<Domain, Set<List<Term>>> closedDomains = new HashMap<>();
     private final Map<Domain, Set<List<Term>>> usedDomains = new HashMap<>();
     private final Map<Domain, Set<List<Term>>> excludedDomains = new HashMap<>();
@@ -81,10 +76,11 @@ public class Mind {
     private Boolean queryResult = null;
     private String querySource = "";
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
-   
+
     public Mind(User user) {
         this.user = user;
         user.setMind(this);
+        init();
         clear();
     }
 
@@ -93,7 +89,8 @@ public class Mind {
         next = root;
         user = root.getUser();
         user.setMind(this);
-                
+        init();
+
         terms.transaction(root.getTerms());
         predicates.transaction(root.getPredicates());
         domains.transaction(root.getDomains());
@@ -104,9 +101,37 @@ public class Mind {
         tValues.transaction(root.getTValues());
         functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
-        
+
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
+    }
+
+    private void init() {
+        database = new DatabaseFactory(user);                     // База данных
+        terms = new DictionaryFactory(user);                    // Словарь констант
+        predicates = new PredicateFactory(user);                 // Предикаты
+        domains = new DomainFactory(user);                          // Список доменов
+        rights = new RightFactory(user);                             // Список правил
+        trees = new TreeFactory(user);                                // Список секвенций
+        library = new LibraryStore(user);                            // Системная библиотека функций и предикатов
+
+        tVars = new TVariableFactory(user);                      // t-переменные
+        tValues = new TValueFactory(user);                          // Подставленные значения
+
+        functions = new FunctionFactory(user);                    // Функции
+        fValues = new FValueFactory(user);                          // Решения функций
+
+        hypotesis = new HypotesisStore();                                // Список гипотез
+        solves = new SolutionsStore(user);                         // Список решений
+        values = new ValuesStore(user);                               // Список значений
+
+        log = new LogStore(this);                                        // Протокол вывода
+
+        calculator = new Calculator(user);                             // Калькулятор
+        analiser = new Analiser(user);                                   // Анализатор
+        compiler = new Compiler(user);                                   // Компилятор
+        linker = new Linker(user);                                         // Линкер
+
     }
 
     public void setUser(User user) {

@@ -11,11 +11,13 @@ import static org.junit.Assert.fail;
 
 public class KangerTest {
 
+    User user;
     Mind mind;
 
     @org.junit.Before
     public void setUp() throws Exception {
-        mind = new Mind();
+        user = new User();
+        mind = new Mind(user);
     }
 
     private void showResult(Boolean assertResult) {
@@ -65,7 +67,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?a(nnn);");
         showResult(true);
-        Solution s = new Solution(mind, false, "a", "nnn");
+        Solution s = new Solution(user, true, "a", "nnn");
         if (!mind.getSolutions().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -84,7 +86,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?n(nnn);");
         showResult(false);
-        Solution s = new Solution(mind, true, "n", "nnn");
+        Solution s = new Solution(user, true, "n", "nnn");
         if (!mind.getSolutions().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -104,27 +106,27 @@ public class KangerTest {
         mind.query("?a(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(mind, false, "c", "xx");
+            Hypotese s = new Hypotese(user, false, "c", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, false, "b", "xx");
+            s = new Hypotese(user, false, "b", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, false, "d", "xx");
+            s = new Hypotese(user, false, "d", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, true, "n", "xx");
+            s = new Hypotese(user, true, "n", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(mind, true, "a", "xx");
+//            s = new Hypotese(user, true, "a", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(mind, false, "a", "xx");
+//            s = new Hypotese(user, false, "a", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -150,23 +152,23 @@ public class KangerTest {
         mind.query("?b(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(mind, false, "c", "xx");
+            Hypotese s = new Hypotese(user, false, "c", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, true, "a", "xx");
+            s = new Hypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, false, "d", "xx");
+            s = new Hypotese(user, false, "d", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(mind, true, "b", "xx");
+//            s = new Hypotese(user, true, "b", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(mind, false, "b", "xx");
+//            s = new Hypotese(user, false, "b", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -192,23 +194,23 @@ public class KangerTest {
         mind.query("?c(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(mind, true, "b", "xx");
+            Hypotese s = new Hypotese(user, true, "b", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, true, "a", "xx");
+            s = new Hypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, false, "d", "xx");
+            s = new Hypotese(user, false, "d", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(mind, true, "c", "xx");
+//            s = new Hypotese(user, true, "c", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(mind, false, "c", "xx");
+//            s = new Hypotese(user, false, "c", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -234,23 +236,23 @@ public class KangerTest {
         mind.query("?d(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(mind, true, "b", "xx");
+            Hypotese s = new Hypotese(user, true, "b", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, true, "a", "xx");
+            s = new Hypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(mind, true, "c", "xx");
+            s = new Hypotese(user, true, "c", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(mind, true, "d", "xx");
+//            s = new Hypotese(user, true, "d", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(mind, false, "d", "xx");
+//            s = new Hypotese(user, false, "d", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -276,15 +278,15 @@ public class KangerTest {
         mind.query("?n(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(mind, true, "a", "xx");
+            Hypotese s = new Hypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().getRoot().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(mind, true, "n", "xx");
+//            s = new Hypotese(user, true, "n", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(mind, false, "n", "xx");
+//            s = new Hypotese(user, false, "n", "xx");
 //            if (!mind.getHypotesisStore().getRoot().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -494,15 +496,15 @@ public class KangerTest {
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
         showResult(true);
-        Solution s = new Solution(mind, false, "a", "z");
+        Solution s = new Solution(user, false, "a", "z");
         if (!mind.getSolutions().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Solution(mind, false, "c", "z");
+        s = new Solution(user, false, "c", "z");
         if (!mind.getSolutions().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Solution(mind, true, "d", "z");
+        s = new Solution(user, true, "d", "z");
         if (!mind.getSolutions().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -517,19 +519,19 @@ public class KangerTest {
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("?b(z) -> d(z);");
         showResult(null);
-        Hypotese s = new Hypotese(mind, true, "c", "z");
+        Hypotese s = new Hypotese(user, true, "c", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Hypotese(mind, true, "a", "z");
+        s = new Hypotese(user, true, "a", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Hypotese(mind, true, "e", "z");
+        s = new Hypotese(user, true, "e", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Hypotese(mind, false, "f", "z");
+        s = new Hypotese(user, false, "f", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -547,15 +549,15 @@ public class KangerTest {
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
         mind.query("?$x f(x);");
         showResult(null);
-        Hypotese s = new Hypotese(mind, true, "a", "z");
+        Hypotese s = new Hypotese(user, true, "a", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Hypotese(mind, true, "b", "z");
+        s = new Hypotese(user, true, "b", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Hypotese(mind, false, "f", "z");
+        s = new Hypotese(user, false, "f", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
