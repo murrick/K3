@@ -36,6 +36,10 @@ public class Predicate {
         this.mind = mind;
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     public String getName() {
         return name;
     }

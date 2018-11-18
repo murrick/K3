@@ -26,9 +26,12 @@ import java.util.zip.GZIPOutputStream;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Mind {
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = true;
+    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false; 
+    
+    private int id = 0;
+    private Mind next = null;
+    
     private final DatabaseFactory database = new DatabaseFactory(this);                     // База данных
-
     private final DictionaryFactory terms = new DictionaryFactory(this);                    // Словарь констант
     private final PredicateFactory predicates = new PredicateFactory(this);                 // Предикаты
     private final DomainFactory domains = new DomainFactory(this);                          // Список доменов
@@ -93,8 +96,27 @@ public class Mind {
         tValues.transaction(root.getTValues());
         functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
+        
+        id = root.getId() + 1;
+        next = root;
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setNext(Mind next) {
+        this.next = next;
+    }
+
+    public Mind getNext() {
+        return next;
     }
 
     public int getDebugLevel() {

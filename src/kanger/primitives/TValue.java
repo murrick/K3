@@ -54,6 +54,10 @@ public class TValue implements IValue {
         this.mind = mind;
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     public Term getValue() {
         return value;
     }

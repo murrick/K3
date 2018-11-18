@@ -59,6 +59,10 @@ public class Function implements IValue {
         }
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     public void setId(long id) {
         this.id = id;
     }

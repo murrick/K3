@@ -49,6 +49,10 @@ public class Domain {
         }
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     public Predicate getPredicate() {
         return predicate;
     }
@@ -208,17 +212,18 @@ public class Domain {
 
         String suffix = "";
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix = isDest() || isQuery() || isClosed() || isUsed() || isExcluded() || isProduced() || isStored() || isCalculated()
-                    ? " " + (isDest() ? "A" : "") +
-                    (isQuery() ? "Q" : "") +
-                    (isClosed() ? "C" : "") +
-                    (isUsed() ? "U" : "") +
-                    (isExcluded() ? "X" : "") +
-                    (isProduced() ? "P" : "") +
-                    (isStored() ? "B" : "") +
-                    (isCalculated() ? "S" : "") +
-                    " "
-                    : "";
+//            suffix = " " + mind.getId();
+            suffix += isDest() || isQuery() || isClosed() || isUsed() || isExcluded() || isProduced() || isStored() || isCalculated()
+                ? ":" + (isDest() ? "A" : "") +
+                (isQuery() ? "Q" : "") +
+                (isClosed() ? "C" : "") +
+                (isUsed() ? "U" : "") +
+                (isExcluded() ? "X" : "") +
+                (isProduced() ? "P" : "") +
+                (isStored() ? "B" : "") +
+                (isCalculated() ? "S" : "") +
+                " "
+                : "";
         }
         return s + ";" + suffix;
     }
@@ -282,11 +287,11 @@ public class Domain {
 
     public boolean isDestFor(int index, Domain d) {
         return index < arguments.size()
-                && arguments.get(index).isTSet()
-                && !arguments.get(index).getT().isEmpty()
-                && arguments.get(index).getT().getDstSolves() != null
-                && arguments.get(index).getT().getDstIndex(this) == index
-                && arguments.get(index).getT().getSrcSolve(index).getId() == d.getId();
+            && arguments.get(index).isTSet()
+            && !arguments.get(index).getT().isEmpty()
+            && arguments.get(index).getT().getDstSolves() != null
+            && arguments.get(index).getT().getDstIndex(this) == index
+            && arguments.get(index).getT().getSrcSolve(index).getId() == d.getId();
 
     }
 
@@ -395,7 +400,7 @@ public class Domain {
         }
     }
 
-    public boolean isExcluded(Term[] args) {
+    public boolean isExcluded(Term[] args) { 
         if (mind.getExcludedDomains().containsKey(this)) {
             for (List<Term> list : mind.getExcludedDomains().get(this)) {
                 if (isEqualsArguments(args, list)) {
@@ -418,14 +423,15 @@ public class Domain {
     }
 
     public void setExcluded(Term[] args) {
+             
         if (!mind.getExcludedDomains().containsKey(this)) {
             mind.getExcludedDomains().put(this, new HashSet<>());
         }
-        
-            List<Term> arguments = new ArrayList<>();
-            for(Term t : args) {
-                arguments.add(t);
-            }
+
+        List<Term> arguments = new ArrayList<>();
+        for (Term t : args) {
+            arguments.add(t);
+        }
 
         if (!isExcluded(args)) {
             mind.getExcludedDomains().get(this).add(arguments);
@@ -604,12 +610,25 @@ public class Domain {
     public boolean isComplete() {
         boolean complete = true;
         for (TVariable t : getTVariables(true)) {
-            if (t.isEmpty() /*|| !t.getCurrent().isClosed()*/) {
+            if (t.isEmpty()) {
                 complete = false;
                 break;
             }
         }
         return complete;
+    } 
+
+    public void apply(Domain p) {
+        for (int i = 0; i < predicate.getRange(); ++i) {
+            if (arguments.get(i).isTSet()) {
+                if (arguments.get(i).getT().contains(p.get(i).getValue())) {
+                    arguments.get(i).getT().setValue(p.get(i).getValue());
+//                                    mind.getValues().add(parent.get(i).getT(), parent);
+                }
+            } else if (arguments.get(i).isFSet()) {
+                //TODO: Добавить обработку функций
+            }
+        }
     }
 
 //    public int getValOrder(int i) {

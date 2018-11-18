@@ -36,6 +36,7 @@ public class FunctionFactory {
             list.add(0, p);
         }
         for (Function p : list) {
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);

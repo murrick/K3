@@ -42,6 +42,10 @@ public class Tree {
         }
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     public void setGenerated(boolean generated) {
         this.generated = generated;
     }
@@ -204,4 +208,23 @@ public class Tree {
         return false;
     }
 
+//    public boolean equalsBase(Tree t) {
+//        if(t == null || !(t instanceof Tree) || t.getSequence().size() != sequence.size()) {
+//            return false;
+//        } else {
+//            for(Domain d : t.getSequence()) {
+//                boolean found = false;
+//                for(Domain x : sequence) {
+//                    if(x.isAntc() == d.isAntc() && x.equalsBase(d)) {
+//                        found = true;
+//                        break;
+//                    }
+//                } 
+//                if(!found) {
+//                    return false;
+//                }
+//            } 
+//            return true;
+//        }
+//    }
 }

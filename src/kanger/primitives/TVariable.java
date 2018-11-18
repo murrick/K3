@@ -49,6 +49,10 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         this.mind = mind;
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     public String getName() {
         return name;
     }

@@ -34,7 +34,8 @@ public class FValueFactory {
         for (FValue p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (FValue p : list) {
+        for (FValue p : list) { 
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);

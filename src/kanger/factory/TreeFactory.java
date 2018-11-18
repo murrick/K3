@@ -38,6 +38,7 @@ public class TreeFactory {
             list.add(0, p);
         }
         for (Tree p : list) {
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);

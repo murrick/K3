@@ -42,6 +42,7 @@ public class DictionaryFactory {
             list.add(0, p);
         }
         for (Term p : list) {
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);

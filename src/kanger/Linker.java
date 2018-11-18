@@ -31,7 +31,7 @@ public class Linker {
 
             boolean occurrs = false;
             for (Function f : selected) {
-                if (!f.isCalculated() && f.isCalculable() /*&& !f.isComplete()*/) {
+                if (!f.isCalculated() && f.isCalculable()) {
                     if (new Calculator(mind).calculate(f) > 0) {
                         occurrs = true;
 //                            mind.getFValues().add(f);
@@ -64,12 +64,12 @@ public class Linker {
 
             if (master.get(level).isFSet() && !master.get(level).getF().isCalculated()) {
                 if (!slave.get(level).isEmpty()
-                        && master.get(level).getF().isCalculable()
-                        && !master.get(level).getF().isComplete()) {
+                    && master.get(level).getF().isCalculable()
+                    && !master.get(level).getF().isComplete()) {
                     master.get(level).getF().setValue(slave.get(level).getValue());
                     selected.add(master.get(level).getF());
                 } else if (master.get(level).getF().isCalculable()
-                        && master.get(level).getF().isComplete()) {
+                           && master.get(level).getF().isComplete()) {
                     selected.add(master.get(level).getF());
                 } else if (!master.get(level).getF().isCalculable()) {
                     selected.add(master.get(level).getF());
@@ -82,12 +82,12 @@ public class Linker {
 
             if (slave.get(level).isFSet() && !slave.get(level).getF().isCalculated()) {
                 if (!master.get(level).isEmpty()
-                        && slave.get(level).getF().isCalculable()
-                        && !slave.get(level).getF().isComplete()) {
+                    && slave.get(level).getF().isCalculable()
+                    && !slave.get(level).getF().isComplete()) {
                     slave.get(level).getF().setValue(slave.get(level).getValue());
                     selected.add(slave.get(level).getF());
                 } else if (slave.get(level).getF().isCalculable()
-                        && slave.get(level).getF().isComplete()) {
+                           && slave.get(level).getF().isComplete()) {
                     selected.add(slave.get(level).getF());
                 } else if (!slave.get(level).getF().isCalculable()) {
                     selected.add(slave.get(level).getF());
@@ -140,17 +140,17 @@ public class Linker {
 //                }
 
             if (master.get(i).isTSet()
-                    && !slave.get(i).isEmpty()
-                    && !slave.isDestFor(i, master)
-                    && !slave.isExcluded()
+                && !slave.get(i).isEmpty()
+                && !slave.isDestFor(i, master)
+                && !slave.isExcluded()
 //                        && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getTVariable().isEmpty()
 
-                    && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
+                && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!slave.get(level).getValue().isCVariable() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getTVariable().getIndex())
 //                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
-            ) {
+                ) {
                 TValue s;
                 if (!master.get(i).getT().contains(slave.get(i).getValue())) {
                     s = master.get(i).getT().addValue(slave.get(i).getValue());
@@ -180,17 +180,17 @@ public class Linker {
             }
 
             if (slave.get(i).isTSet()
-                    && !master.get(i).isEmpty()
-                    && !master.isDestFor(i, slave)
-                    && !master.isExcluded()
+                && !master.get(i).isEmpty()
+                && !master.isDestFor(i, slave)
+                && !master.isExcluded()
 //                        && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getTVariable().isEmpty()
 
-                    && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
+                && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!master.get(level).getValue().isCVariable() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getTVariable().getIndex())
 //                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
-            ) {
+                ) {
                 TValue s;
                 if (!slave.get(i).getT().contains(master.get(i).getValue())) {
                     s = slave.get(i).getT().addValue(master.get(i).getValue());
@@ -335,11 +335,11 @@ public class Linker {
 
 
                                 if (d1.getId() != d2.getId()
-                                        && d1.isAntc() != d2.isAntc()
-                                        && d1.getPredicate().getId() == d2.getPredicate().getId()
+                                    && d1.isAntc() != d2.isAntc()
+                                    && d1.getPredicate().getId() == d2.getPredicate().getId()
 //                                        && !d1.isExcluded()
 //                                        && !d2.isExcluded()
-                                ) {
+                                    ) {
 
 //                                    if(d1.isQuery() || d2.isQuery()) {
 //                                        System.out.println("d1: " + d1);
@@ -662,7 +662,7 @@ public class Linker {
         do {
             slave = getActualTrees(r);
             master = slave;
-            
+
             saveT = mind.getTValues().getRoot();
             saveF = mind.getFValues().getRoot();
             saveB = mind.getDatabase().getRoot();
@@ -764,7 +764,7 @@ public class Linker {
             }
         } else {
             for (Domain d : tree.getSequence()) {
-                if (d.isComplete() && d.isProduced() && !(d.isCalculated() && d.isExcluded()) /*&& !d.isStored()*/ /*&& !d.isExcluded()*/ && !d.isUsed() /*&& !d.isDest()*/) {
+                if (d.isComplete() && d.isProduced() && !(d.isCalculated() && d.isExcluded()) /*&& !d.isStored()*/ /*&& !d.isExcluded()*/ && !d.isUsed()) {
                     if (produced == null) {
                         produced = d;
                     } else {
@@ -781,16 +781,34 @@ public class Linker {
 //            if (produced.isQuery()) {
 //                System.out.println("produced: " + produced);
 //            }
+
+                int save = mind.getDebugLevel();
+                mind.setDebugLevel(0);
                 Domain d = produced.setStored();
-                Right r = mind.getRights().add();
-                Tree t = mind.getTrees().add();
-                t.setRight(r);
-                t.setGenerated(true);
-                d.setRight(r);
-                t.getSequence().add(d);
-                r.getTree().add(t);
-                r.setGenerated(true);
-                
+                String origin = d.toString(); 
+                mind.setDebugLevel(save);
+
+                boolean found = false;
+                for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+                    if (origin.equals(r.getOrig())) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Right r = mind.getRights().add();
+                    Tree t = mind.getTrees().add();
+                    t.setRight(r);
+                    t.setGenerated(true);
+                    d.setRight(r);
+                    t.getSequence().add(d);
+                    r.getTree().add(t);
+                    r.setGenerated(true);
+                    r.setOrig(origin); 
+                }
+
+
 //                if(produced.isExcluded()) {
 //                    produced.setUsed();
 //                }
@@ -811,7 +829,7 @@ public class Linker {
             if (excluded) {
                 boolean occurs = false;
                 for (Domain d : tree.getSequence()) {
-                    if (!d.isStored() /*&& !d.isExcluded()*/) {
+                    if (!d.isStored()) {
                         d.setStored();
 //                        if(d.isExcluded()) {
 //                            d.setUsed();
@@ -842,7 +860,7 @@ public class Linker {
     private boolean logComparsion(boolean logging, Domain d) {
         boolean result = false;
         //TODO: Отвязать от лога функционал (setProduced)
-        if (logging /*&& d.isDest()*/) {
+        if (logging) {
             for (TVariable t : d.getTVariables(true)) {
                 if (!t.isEmpty()) {
                     for (int i = 0; i < t.getDstSolves().size(); ++i) {
@@ -860,7 +878,7 @@ public class Linker {
                             boolean found = false;
                             for (Domain r : t.getUsage()) {
                                 //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
-                                if (dst.getId() != r.getId() && !r.isExcluded() && !r.isProduced() /*&& !r.isStored()*/) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+                                if (dst.getId() != r.getId() && !r.isExcluded() && !r.isProduced()) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
                                     //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
                                     r.setProduced();
                                     mind.getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
@@ -892,7 +910,7 @@ public class Linker {
 
     private void logCommit(boolean logging) {
         if (logging) {
-            if (mind.getTValues().getRoot() != mind.getTValues().getMark() /*|| mind.getFValues().getRoot() != mind.getFValues().getMark()*/) {
+            if (mind.getTValues().getRoot() != mind.getTValues().getMark()) {
                 for (TValue t = mind.getTValues().getRoot(); t != mind.getTValues().getMark(); t = t.getNext()) {
                     if (t.isClosed()) {
                         mind.getLog().add(LogMode.ANALIZER, "CLOSED:\t" + t.toString());

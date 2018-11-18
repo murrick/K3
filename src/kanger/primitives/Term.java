@@ -91,6 +91,10 @@ public class Term implements IValue, Comparable<Object> {
 //        token = din.readUTF();
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     private void construct(Object o) {
         value = null;
         if (o instanceof Number) {
@@ -430,4 +434,6 @@ public class Term implements IValue, Comparable<Object> {
     }
 
 
-}
+} 
+
+//TODO ТИП данных blob

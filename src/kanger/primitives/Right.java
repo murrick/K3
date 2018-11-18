@@ -40,6 +40,10 @@ public class Right {
         this.mind = mind;
     }
 
+    public void setMind(Mind mind) {
+        this.mind = mind;
+    }
+
     public void setGenerated(boolean generated) {
         this.generated = generated;
     }
@@ -166,6 +170,23 @@ public class Right {
         }
         return list;
     }
+    
+//    public boolean equalsBase(Right r) { 
+//        if(r == null || !(r instanceof Right)) { 
+//            return false;
+//        } else { 
+//            if(r.getTree().size() != tree.size()) { 
+//                return false;
+//            } else { 
+//                for(Tree t : r.getTree()) {
+//                    boolean found = false;
+//                    for(Tree x : tree) {
+//                        
+//                    }
+//                }
+//            }
+//        }
+//    }
 
 
 //    @Override

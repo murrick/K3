@@ -190,14 +190,14 @@ public class Screen {
 //                                incomplete = line;
 //                                line = "";
 //                            } else {
-                            if (LINE_EDITOR_ENABLE) {
+//                            if (LINE_EDITOR_ENABLE) {
 //                                reader.getHistory().getHistoryList().remove(0);
 //                                reader.getHistory().addToHistory(line);
-                            } else {
+//                            } else {
                                 // StringSelection selec = new StringSelection(line);
                                 // Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                                 // clipboard.setContents(selec, selec);
-                            }
+//                            }
 
                             int pos = 0;
                             Object[] t = null;
@@ -491,6 +491,7 @@ public class Screen {
         if (!list.isEmpty()) {
             System.out.printf("\t    %sRight: %s\n", indent, s.getRight().getOrig());
             for (Domain d : list) {
+                d.apply(s);
                 System.out.printf("\t    %sCause: %s\n", indent, d.toString());
                 showCauses(mind, d, level + 1);
             }
@@ -502,8 +503,11 @@ public class Screen {
             if (d.isStored() /*|| (d.isExcluded() && d.isQuery())*/) {
 //                d.recalculate();
                 System.out.printf("\t%s\n", d.toString());
-                if (showCauses) {
-                    showCauses(mind, d, 0);
+                if (showCauses) { 
+                    for(Domain parent : d.getParents()) { 
+                        parent.apply(d);
+                        showCauses(mind, parent, 0); 
+                    }
                 }
             }
         } else {
@@ -665,7 +669,7 @@ public class Screen {
                 System.out.printf("\n -- Right %03d%s: %s\n", r.getId(), r.isGenerated() ? " G" : "", r.getOrig());
                 showTree(mind, r);
             } else {
-                System.out.printf("Right %03d: %s\n", r.getId(), r.getOrig());
+                System.out.printf("Right %03d%s: %s\n", r.getId(), r.isGenerated() ? " G" : "", r.getOrig());
             }
         }
     }

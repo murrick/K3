@@ -39,6 +39,7 @@ public class TValueFactory {
             list.add(0, p);
         }
         for (TValue p : list) {
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);

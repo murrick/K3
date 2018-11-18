@@ -37,7 +37,8 @@ public class PredicateFactory {
         for (Predicate p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (Predicate p : list) {
+        for (Predicate p : list) { 
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);

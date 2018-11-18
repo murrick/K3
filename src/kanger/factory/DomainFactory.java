@@ -40,7 +40,8 @@ public class DomainFactory {
         for (Domain p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (Domain p : list) {
+        for (Domain p : list) { 
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);

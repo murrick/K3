@@ -34,7 +34,8 @@ public class DatabaseFactory {
         for (Domain p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (Domain p : list) {
+        for (Domain p : list) { 
+            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -100,60 +101,7 @@ public class DatabaseFactory {
         return null;
     }
 
-    public boolean check(boolean logging) {
-        boolean result = false;
-        Set<Domain> sequence = new HashSet<>();
-        for (Domain p = root; p != null; p = p.getNext()) {
-            for (Domain q = p.getNext(); q != null; q = q.getNext()) {
-                if (p.equalsBase(q) && p.isAntc() != q.isAntc()) {
-//                    sequence.add(p);
-//                    sequence.add(q);
-                   
-                    if(!p.getRight().isQuery() || q.getRight().isQuery()) {
-                    mind.getSolutions().add(p);
-                    for (Domain parent : p.getParents()) {
-                        for (int i = 0; i < parent.getPredicate().getRange(); ++i) {
-                            if (parent.get(i).isTSet()) {
-                                if (parent.get(i).getT().contains(p.get(i).getValue())) {
-                                    parent.get(i).getT().setValue(p.get(i).getValue());
-                                    mind.getValues().add(parent.get(i).getT(), parent);
-                                }
-                            } else if (parent.get(i).isFSet()) {
-                                //TODO: Добавить обработку функций
-                            }
-                        }
-                    }
-                    }
-                   
-                    if(!q.getRight().isQuery() || p.getRight().isQuery()) {
-                    mind.getSolutions().add(q);
-                    for (Domain parent : q.getParents()) {
-                        for (int i = 0; i < parent.getPredicate().getRange(); ++i) {
-                            if (parent.get(i).isTSet()) {
-                                if (parent.get(i).getT().contains(q.get(i).getValue())) {
-                                    parent.get(i).getT().setValue(q.get(i).getValue());
-                                    mind.getValues().add(parent.get(i).getT(), parent);
-                                }
-                            } else if (parent.get(i).isFSet()) {
-                                //TODO: Добавить обработку функций
-                            }
-                        }
-                    }
-                    }
-
-                    if (logging) {
-                        mind.getLog().add(LogMode.ANALIZER, "Database coincidence : ");
-                        mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                        mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
-                        mind.getLog().add(LogMode.ANALIZER, "===========================================");
-                    }
-                    result = true;
-                }
-            }
-        }
-//        collectResults(sequence);
-        return result;
-    }
+    
 
     public Domain getRoot() {
         return root;
@@ -223,118 +171,5 @@ public class DatabaseFactory {
         }
     }
    
-    private Domain contains(Domain d, Set<Domain> set) {
-        for (Domain x : set) {
-            if (x.equalsBase(d)) {
-                return x;
-            }
-        }
-        return null;
-    }
     
-   
-    public void collectResults(Iterable<Domain> sequence) {
-
-        Set<Domain> suc = new HashSet<>();
-        Set<Domain> ant = new HashSet<>();
-
-        for (Domain d : sequence) {
-            if (d.isClosed()) {
-
-//                mind.getSolutions().add(d);
-//                for (TVariable tv : d.getTVariables(true)) {
-//                    mind.getValues().add(tv, d);
-//                }
-
-                if (d.isAntc()) {
-                    ant.add(d);
-                } else {
-                    suc.add(d);
-                }
-            }
-        }
-
-//        for (Domain d : sequence) {
-//            if (d.isClosed() && d.isQuery() && !d.getRight().isQuery()) {
-////                if (d.isSystem()) {
-//
-////                    mind.getSolutions().add(d);
-//                for (TVariable tv : d.getTVariables(true)) {
-//                    mind.getValues().add(tv, d);
-//                }
-////                } else if (d.isAntc()) {
-////                    ant.add(d);
-////                } else {
-////                    suc.add(d);
-////                }
-//            }
-//        }
-
-        for (Domain d : ant) {
-            Domain q = contains(d, suc);
-            if (q == null) {
-                mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }
-            } else if(!d.getRight().isQuery()) {
-                mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }     
-            } else if(!q.getRight().isQuery()) {
-                mind.getSolutions().add(q);
-                for (TVariable tv : q.getTVariables(true)) {
-                    mind.getValues().add(tv, q);
-                }    
-            } else {
-                mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }     
-                mind.getSolutions().add(q);
-                for (TVariable tv : q.getTVariables(true)) {
-                    mind.getValues().add(tv, q);
-                }    
-            }         
-        }
-        for (Domain d : suc) {
-            Domain q = contains(d, ant);
-            if (q == null) {
-                mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }
-            }
-        }
-
-//        for (Domain d : suc) {
-//            if (contains(d, ant)) {
-//                if (!hypotesis) {
-////                    int sz = mind.getSolutions().size();
-////                    mind.getSolutions().createTVar(d);
-//
-////                    if (sz != mind.getSolutions().size()) {
-//                    for (TVariable tv : d.getTVariables(true)) {
-//                        mind.getValues().add(tv, d);
-//                    }
-////                    }
-//                }
-//            }
-////            else if (hypotesis) {
-////                mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
-////            }
-//        }
-//        if (hypotesis) {
-//            for (Domain d : suc) {
-//                if (!contains(d, ant) /*&& !d.getRight().isQuery()*/) {
-////                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
-//                }
-//            }
-//        }
-
-        //result = checkSequence(t, logging);
-
-    }
-
 }
