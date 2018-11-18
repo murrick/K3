@@ -610,7 +610,7 @@ public class Screen {
         int depth = 0;
         for (Tree t : r.getTree()) {
             List<String> v = new ArrayList<>();
-            v.add((t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (!t.getExcludes().isEmpty() ? "X" : ""));
+            v.add( (t.isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (!t.getExcludes().isEmpty() ? "X" : ""));
             list.add(v);
             int len = 0;
             for (Domain d : t.getSequence()) {
@@ -662,7 +662,7 @@ public class Screen {
 //        int i = 0;
         for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
             if (showTree || r.getOrig().isEmpty()) {
-                System.out.printf("\n -- Right %03d: %s\n", r.getId(), r.getOrig());
+                System.out.printf("\n -- Right %03d%s: %s\n", r.getId(), r.isGenerated() ? " G" : "", r.getOrig());
                 showTree(mind, r);
             } else {
                 System.out.printf("Right %03d: %s\n", r.getId(), r.getOrig());

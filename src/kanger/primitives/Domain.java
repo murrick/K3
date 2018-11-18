@@ -484,8 +484,8 @@ public class Domain {
         return mind.getDatabase().find(this) != null;
     }
 
-    public void setStored() {
-        mind.getDatabase().add(this);
+    public Domain setStored() {
+        return mind.getDatabase().add(this);
     }
 
 

@@ -23,6 +23,7 @@ public class Tree {
     private Right right = null;
 
     private Set<Long> excludes = new HashSet<>();
+    private boolean generated = false;
 
     private Mind mind = null;
 
@@ -39,6 +40,14 @@ public class Tree {
         while (count-- > 0) {
             sequence.add(mind.getDomains().get(dis.readLong()));
         }
+    }
+
+    public void setGenerated(boolean generated) {
+        this.generated = generated;
+    }
+
+    public boolean isGenerated() {
+        return generated;
     }
 
     public Set<Long> getExcludes() {

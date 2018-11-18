@@ -21,7 +21,8 @@ public class Right {
     private long id = -1;                       // ID Правила
     private Right next = null;                  // Следующее правило
     private String orig = "";                   // Оригинальная строка
-    private boolean query = false;            // Вновь введенное правило
+    private boolean query = false;             // Вновь введенное правило
+    private boolean generated = false;         // Правило добавлено в процессе выводс
 
     private Mind mind = null;
 
@@ -37,6 +38,14 @@ public class Right {
             tree.add(new Tree(dis, mind));
         }
         this.mind = mind;
+    }
+
+    public void setGenerated(boolean generated) {
+        this.generated = generated;
+    }
+
+    public boolean isGenerated() {
+        return generated;
     }
 
     public List<Tree> getTree() {

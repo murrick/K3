@@ -107,10 +107,6 @@ public class Linker {
 
             if (occurrsMaster || occurrsSlave) {
 
-                for (Term t : solves) {
-                    System.out.print("  " + t);
-                }
-                System.out.println("  " + master + " " + slave);
                 boolean result = false;
                 if (occurrsMaster) {
                     master.setExcluded(solves);
@@ -415,11 +411,6 @@ public class Linker {
             if (v != null) {
                 do {
 
-                    for (int i = 0; i < level; ++i) System.out.print("  ");
-//                    if("xx".equals(v.getValue() + "")) {
-                    System.out.println("v: " + v);
-//                    }
-
                     mind.getTValues().set(t, v);
                     if (updateDomains(tvars.headSet(t), masterSet, slaveSet, ++level, logging)) {
                         result = true;
@@ -663,13 +654,18 @@ public class Linker {
 
         TValue saveT = null;
         FValue saveF = null;
+        Domain saveB = null;
 
 
 //        mind.getQueryValues().clear();
 
         do {
+            slave = getActualTrees(r);
+            master = slave;
+            
             saveT = mind.getTValues().getRoot();
             saveF = mind.getFValues().getRoot();
+            saveB = mind.getDatabase().getRoot();
 
             if (logging) {
                 mind.getLog().add(LogMode.ANALIZER, String.format("============= LINKER PASS %03d =============", ++pass));
@@ -738,7 +734,7 @@ public class Linker {
 
 //            set = mind.getActualTrees();
 
-        } while (saveT != mind.getTValues().getRoot() || saveF != mind.getFValues().getRoot());
+        } while (saveT != mind.getTValues().getRoot() || saveF != mind.getFValues().getRoot() || saveB != mind.getDatabase().getRoot());
 
         mind.getClosedValues().clear();
         mind.getBlockedValues().clear();
@@ -785,7 +781,16 @@ public class Linker {
 //            if (produced.isQuery()) {
 //                System.out.println("produced: " + produced);
 //            }
-                produced.setStored();
+                Domain d = produced.setStored();
+                Right r = mind.getRights().add();
+                Tree t = mind.getTrees().add();
+                t.setRight(r);
+                t.setGenerated(true);
+                d.setRight(r);
+                t.getSequence().add(d);
+                r.getTree().add(t);
+                r.setGenerated(true);
+                
 //                if(produced.isExcluded()) {
 //                    produced.setUsed();
 //                }

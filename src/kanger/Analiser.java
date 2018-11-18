@@ -209,7 +209,7 @@ public class Analiser {
             if (result) {
                 t.setClosed(true);
                 u.setClosed(true);
-                collectResults(coincidence);
+                mind.getDatabase().collectResults(coincidence);
             }
 
 
@@ -408,89 +408,8 @@ public class Analiser {
         return result;
     }
 
-    private boolean contains(Domain d, Set<Domain> set) {
-        for (Domain x : set) {
-            if (x.equalsBase(d)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void collectResults(Iterable<Domain> sequence) throws RuntimeErrorException {
-
-        Set<Domain> suc = new HashSet<>();
-        Set<Domain> ant = new HashSet<>();
-
-        for (Domain d : sequence) {
-            if (d.isClosed() && d.getRight().isQuery()) {
-//                if (d.isSystem()) {
-
-                mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }
-//                } else if (d.isAntc()) {
-//                    ant.add(d);
-//                } else {
-//                    suc.add(d);
-//                }
-            }
-        }
-
-        for (Domain d : sequence) {
-            if (d.isClosed() && d.isQuery() && !d.getRight().isQuery()) {
-//                if (d.isSystem()) {
-
-//                    mind.getSolutions().add(d);
-                for (TVariable tv : d.getTVariables(true)) {
-                    mind.getValues().add(tv, d);
-                }
-//                } else if (d.isAntc()) {
-//                    ant.add(d);
-//                } else {
-//                    suc.add(d);
-//                }
-            }
-        }
-
-//        for (Domain d : ant) {
-//            if (contains(d, suc)) {
-//                mind.getSolutions().add(d);
-//                for (TVariable tv : d.getTVariables(true)) {
-//                    mind.getValues().add(tv, d);
-//                }
-//            }
-//        }
-
-//        for (Domain d : suc) {
-//            if (contains(d, ant)) {
-//                if (!hypotesis) {
-////                    int sz = mind.getSolutions().size();
-////                    mind.getSolutions().createTVar(d);
-//
-////                    if (sz != mind.getSolutions().size()) {
-//                    for (TVariable tv : d.getTVariables(true)) {
-//                        mind.getValues().add(tv, d);
-//                    }
-////                    }
-//                }
-//            }
-////            else if (hypotesis) {
-////                mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
-////            }
-//        }
-//        if (hypotesis) {
-//            for (Domain d : suc) {
-//                if (!contains(d, ant) /*&& !d.getRight().isQuery()*/) {
-////                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
-//                }
-//            }
-//        }
-
-        //result = checkSequence(t, logging);
-
-    }
+    
+    
 
     //    public boolean analiseTree(Tree t, boolean logging) throws RuntimeErrorException {
 //        mind.getClosedDimains().clear();
@@ -545,7 +464,7 @@ public class Analiser {
 
         if (mind.getDatabase().check(logging)) {
             for (Tree t : set) {
-                collectResults(t.getSequence());
+                mind.getDatabase().collectResults(t.getSequence());
             }
             result = true;
         } else {

@@ -1,18 +1,11 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.enums.LogMode;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Predicate;
-import kanger.primitives.Right;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
+import kanger.exception.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -109,10 +102,14 @@ public class DatabaseFactory {
 
     public boolean check(boolean logging) {
         boolean result = false;
+        Set<Domain> sequence = new HashSet<>();
         for (Domain p = root; p != null; p = p.getNext()) {
             for (Domain q = p.getNext(); q != null; q = q.getNext()) {
                 if (p.equalsBase(q) && p.isAntc() != q.isAntc()) {
-
+//                    sequence.add(p);
+//                    sequence.add(q);
+                   
+                    if(!p.getRight().isQuery() || q.getRight().isQuery()) {
                     mind.getSolutions().add(p);
                     for (Domain parent : p.getParents()) {
                         for (int i = 0; i < parent.getPredicate().getRange(); ++i) {
@@ -126,7 +123,9 @@ public class DatabaseFactory {
                             }
                         }
                     }
-
+                    }
+                   
+                    if(!q.getRight().isQuery() || p.getRight().isQuery()) {
                     mind.getSolutions().add(q);
                     for (Domain parent : q.getParents()) {
                         for (int i = 0; i < parent.getPredicate().getRange(); ++i) {
@@ -140,6 +139,7 @@ public class DatabaseFactory {
                             }
                         }
                     }
+                    }
 
                     if (logging) {
                         mind.getLog().add(LogMode.ANALIZER, "Database coincidence : ");
@@ -151,6 +151,7 @@ public class DatabaseFactory {
                 }
             }
         }
+//        collectResults(sequence);
         return result;
     }
 
@@ -220,6 +221,120 @@ public class DatabaseFactory {
             }
             a = b;
         }
+    }
+   
+    private Domain contains(Domain d, Set<Domain> set) {
+        for (Domain x : set) {
+            if (x.equalsBase(d)) {
+                return x;
+            }
+        }
+        return null;
+    }
+    
+   
+    public void collectResults(Iterable<Domain> sequence) {
+
+        Set<Domain> suc = new HashSet<>();
+        Set<Domain> ant = new HashSet<>();
+
+        for (Domain d : sequence) {
+            if (d.isClosed()) {
+
+//                mind.getSolutions().add(d);
+//                for (TVariable tv : d.getTVariables(true)) {
+//                    mind.getValues().add(tv, d);
+//                }
+
+                if (d.isAntc()) {
+                    ant.add(d);
+                } else {
+                    suc.add(d);
+                }
+            }
+        }
+
+//        for (Domain d : sequence) {
+//            if (d.isClosed() && d.isQuery() && !d.getRight().isQuery()) {
+////                if (d.isSystem()) {
+//
+////                    mind.getSolutions().add(d);
+//                for (TVariable tv : d.getTVariables(true)) {
+//                    mind.getValues().add(tv, d);
+//                }
+////                } else if (d.isAntc()) {
+////                    ant.add(d);
+////                } else {
+////                    suc.add(d);
+////                }
+//            }
+//        }
+
+        for (Domain d : ant) {
+            Domain q = contains(d, suc);
+            if (q == null) {
+                mind.getSolutions().add(d);
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
+                }
+            } else if(!d.getRight().isQuery()) {
+                mind.getSolutions().add(d);
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
+                }     
+            } else if(!q.getRight().isQuery()) {
+                mind.getSolutions().add(q);
+                for (TVariable tv : q.getTVariables(true)) {
+                    mind.getValues().add(tv, q);
+                }    
+            } else {
+                mind.getSolutions().add(d);
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
+                }     
+                mind.getSolutions().add(q);
+                for (TVariable tv : q.getTVariables(true)) {
+                    mind.getValues().add(tv, q);
+                }    
+            }         
+        }
+        for (Domain d : suc) {
+            Domain q = contains(d, ant);
+            if (q == null) {
+                mind.getSolutions().add(d);
+                for (TVariable tv : d.getTVariables(true)) {
+                    mind.getValues().add(tv, d);
+                }
+            }
+        }
+
+//        for (Domain d : suc) {
+//            if (contains(d, ant)) {
+//                if (!hypotesis) {
+////                    int sz = mind.getSolutions().size();
+////                    mind.getSolutions().createTVar(d);
+//
+////                    if (sz != mind.getSolutions().size()) {
+//                    for (TVariable tv : d.getTVariables(true)) {
+//                        mind.getValues().add(tv, d);
+//                    }
+////                    }
+//                }
+//            }
+////            else if (hypotesis) {
+////                mind.getHypotesisStore().createTVar(d.getPredicate(), d.getArguments());
+////            }
+//        }
+//        if (hypotesis) {
+//            for (Domain d : suc) {
+//                if (!contains(d, ant) /*&& !d.getRight().isQuery()*/) {
+////                    mind.getHypotesisStore().add(true, d.getPredicate(), d.getArguments());
+//                }
+//            }
+//        }
+
+        //result = checkSequence(t, logging);
+
     }
 
 }
