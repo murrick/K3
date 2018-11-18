@@ -286,7 +286,7 @@ public class Mind {
         values.clear();
         hypotesis.clear();
         
-        log.clear();
+//        log.clear();
 
     }
 

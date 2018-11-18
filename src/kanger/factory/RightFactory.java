@@ -68,7 +68,6 @@ public class RightFactory {
         while(stack.size() > 1) {
             release();
         }
-        ;
     }
 
     private void mark() {

@@ -7,7 +7,8 @@ import kanger.primitives.*;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Kanger {
-    private static Mind mind = new Mind(new User());
+    private static Mind mindRoot = new Mind(new User());
+    private static Mind mind;
     
     public static void main(String[] args) {
 
@@ -208,9 +209,16 @@ public class Kanger {
 //
 //            new Linker(mind).link(true);
             
-            set01_01();
-            set01_02();
-            set01_03();
+            mind = mindRoot;
+            
+//            mind = new Mind(mindRoot); set01_01(); mindRoot.rollback();
+//            mind = new Mind(mindRoot); set01_02(); mindRoot.rollback();
+//            mind = new Mind(mindRoot); 
+            set01_03(); 
+//            mindRoot.rollback();
+//            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();
+            
+//            mindRoot.getLog().commit(mind.getLog());
 
         } catch (ParseErrorException e) {
             e.printStackTrace();
@@ -218,7 +226,7 @@ public class Kanger {
             e.printStackTrace();
         }
 
-        Screen.session(mind);
+        Screen.session(mindRoot);
 
 //        mind.compileLine[jhjij("!@x ~a(x) || b(x);");
 //        mind.compileLine("!@x ~a(x) -> b(x);");

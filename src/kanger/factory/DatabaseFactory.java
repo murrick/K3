@@ -111,9 +111,9 @@ public class DatabaseFactory {
     }
 
     public void clear() {
-        do{
+        while(stack.size() > 1){
             release();
-        } while(stack.size() > 1);
+        }
     }
 
     public void mark() {
