@@ -1,28 +1,23 @@
 package kanger.calculator;
 
-import kanger.Mind;
-import kanger.compiler.SysOp;
-import kanger.enums.Enums;
-import kanger.enums.LibMode;
-import kanger.enums.LogMode;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Function;
-import kanger.primitives.Predicate;
+import kanger.*;
+import kanger.compiler.*;
+import kanger.enums.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 27.05.15.
  */
 public class Calculator {
 
-    private Mind mind = null;
+    private User user = null;
     private Functions functions;
     private Predicates predicates;
 
-    public Calculator(Mind mind) {
-        this.mind = mind;
-        predicates = new Predicates(mind);
-        functions = new Functions(mind);
+    public Calculator(User user) {
+        this.user = user;
+        predicates = new Predicates(user);
+        functions = new Functions(user);
     }
 
 
@@ -93,11 +88,11 @@ public class Calculator {
         if (k == 1 || k == 2) {
 //            if (!"$$".equals(fu.getArguments().get(fu.getRange()).getValue())) {
             ++flag;
-            mind.getFValues().add(fu);
+            user.getMind().getFValues().add(fu);
 //            fu.setResult(null);
 //            fu.setCalculated(true);
-            mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
-            mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
+            user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
+            user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
 //                    + (fu.getResult() != null
 //                    && fu.isCalculable()
 //                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
@@ -110,7 +105,7 @@ public class Calculator {
 ////                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
 //                ));
 //            }
-            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
 
 //            flag = (arg.createCVar(i).isCSet()) ? 1 : 0;
@@ -145,7 +140,7 @@ public class Calculator {
     public int execute(Domain d) {
         int k = -1;
         String n = d.getPredicate().getName() + "(" + d.getPredicate().getRange() + ")";
-        SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
+        SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         if (op != null) {
 
 //            for (Argument a : d.getArguments()) {
@@ -173,7 +168,7 @@ public class Calculator {
     public int execute(Function fu) /*throws RuntimeErrorException*/ {
         int k = -1;
         String n = fu.getName() + "(" + fu.getRange() + ")";
-        SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
+        SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         if (op != null) {
 
             if (op.getRange() + 1 > fu.getArguments().size()) {
@@ -199,13 +194,13 @@ public class Calculator {
 
     public boolean exists(Predicate p) {
         String n = p.getName() + "(" + p.getRange() + ")";
-        SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
+        SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         return op != null && op.getMode() == LibMode.PREDICATE;
     }
 
     public boolean exists(Function f) {
         String n = f.getName() + "(" + f.getRange() + ")";
-        SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
+        SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         return op != null && functions.getSysOps().get(n).getMode() == LibMode.FUNCTION;
     }
 
@@ -216,16 +211,16 @@ public class Calculator {
         else if (functions.getSysOps().containsKey(n))
             return functions.getSysOps().get(n);
         else
-            return mind.getLibrary().find(n);
+            return user.getMind().getLibrary().find(n);
     }
 
     public SysOp find(Object o) {
         if (o instanceof Predicate) {
             String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
-            return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
+            return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         } else if (o instanceof Function) {
             String n = ((Function) o).getName() + "(" + ((Function) o).getRange() + ")";
-            return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
+            return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         } else {
             String key = o.toString();
             SysOp op = findOp(key);
@@ -261,7 +256,7 @@ public class Calculator {
 //    }
 
     public boolean unregister(String key) {
-        return mind.getLibrary().remove(key);
+        return user.getMind().getLibrary().remove(key);
     }
 
     public Functions getFunctions() {

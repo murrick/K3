@@ -1,10 +1,8 @@
 package kanger.stores;
 
-import kanger.Mind;
-import kanger.compiler.SysOp;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import kanger.*;
+import kanger.compiler.*;
 
 /**
  * Created by Dmitry Kuznetsov on 25.01.2016.
@@ -13,10 +11,10 @@ public class LibraryStore {
     private SysOp root = null;
     private SysOp save = null;
     private Map<String, SysOp> index = new HashMap<>();
-    private Mind mind = null;
+    private User user = null;
 
-    public LibraryStore(Mind mind) {
-        this.mind = mind;
+    public LibraryStore(User user) {
+        this.user = user;
     }
 
     public SysOp add(SysOp s) {

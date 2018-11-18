@@ -1,14 +1,8 @@
 package kanger.primitives;
 
-import kanger.Mind;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import kanger.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -25,25 +19,21 @@ public class Tree {
     private Set<Long> excludes = new HashSet<>();
     private boolean generated = false;
 
-    private Mind mind = null;
+    private User user = null;
 
     //    private boolean closed = false;
 //    private boolean used = false;
-    public Tree(Mind mind) {
-        this.mind = mind;
+    public Tree(User user) {
+        this.user = user;
     }
 
-    public Tree(DataInputStream dis, Mind mind) throws IOException {
-        this.mind = mind;
+    public Tree(DataInputStream dis, User user) throws IOException {
+        this.user = user;
         id = dis.readLong();
         int count = dis.readInt();
         while (count-- > 0) {
-            sequence.add(mind.getDomains().get(dis.readLong()));
+            sequence.add(user.getMind().getDomains().get(dis.readLong()));
         }
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
     }
 
     public void setGenerated(boolean generated) {
@@ -63,11 +53,11 @@ public class Tree {
     }
 
     public boolean isUsed() {
-        return mind.getUsedTrees().contains(this);
+        return user.getMind().getUsedTrees().contains(this);
     }
 
     public void setUsed() {
-        mind.getUsedTrees().add(this);
+        user.getMind().getUsedTrees().add(this);
     }
 
     public long getId() {
@@ -97,7 +87,7 @@ public class Tree {
 
     @Override
     public Tree clone() {
-        Tree t = mind.getTrees().add();
+        Tree t = user.getMind().getTrees().add();
         t.setRight(right);
         t.sequence.addAll(sequence);
         t.excludes.addAll(excludes);
@@ -161,26 +151,26 @@ public class Tree {
     }
 
     public boolean isClosed() {
-        return mind.getClosedTrees().contains(this);
+        return user.getMind().getClosedTrees().contains(this);
     }
 
     public void setClosed(boolean closed) {
         if (closed) {
-            mind.getClosedTrees().add(this);
+            user.getMind().getClosedTrees().add(this);
         } else {
-            mind.getClosedTrees().remove(this);
+            user.getMind().getClosedTrees().remove(this);
         }
     }
 
     public boolean isExcluded() {
-        return mind.getExcludedTrees().contains(this);
+        return user.getMind().getExcludedTrees().contains(this);
     }
 
     public void setExcluded(boolean excluded) {
         if (excluded) {
-            mind.getExcludedTrees().add(this);
+            user.getMind().getExcludedTrees().add(this);
         } else {
-            mind.getExcludedTrees().remove(this);
+            user.getMind().getExcludedTrees().remove(this);
         }
     }
 

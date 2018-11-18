@@ -30,32 +30,33 @@ public class Mind {
     
     private int id = 0;
     private Mind next = null;
+    private User user = null;
     
-    private final DatabaseFactory database = new DatabaseFactory(this);                     // База данных
-    private final DictionaryFactory terms = new DictionaryFactory(this);                    // Словарь констант
-    private final PredicateFactory predicates = new PredicateFactory(this);                 // Предикаты
-    private final DomainFactory domains = new DomainFactory(this);                          // Список доменов
-    private final RightFactory rights = new RightFactory(this);                             // Список правил
-    private final TreeFactory trees = new TreeFactory(this);                                // Список секвенций
-    private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
+    private final DatabaseFactory database = new DatabaseFactory(user);                     // База данных
+    private final DictionaryFactory terms = new DictionaryFactory(user);                    // Словарь констант
+    private final PredicateFactory predicates = new PredicateFactory(user);                 // Предикаты
+    private final DomainFactory domains = new DomainFactory(user);                          // Список доменов
+    private final RightFactory rights = new RightFactory(user);                             // Список правил
+    private final TreeFactory trees = new TreeFactory(user);                                // Список секвенций
+    private final LibraryStore library = new LibraryStore(user);                            // Системная библиотека функций и предикатов
 
-    private final TVariableFactory tVars = new TVariableFactory(this);                      // t-переменные
-    private final TValueFactory tValues = new TValueFactory(this);                          // Подставленные значения
+    private final TVariableFactory tVars = new TVariableFactory(user);                      // t-переменные
+    private final TValueFactory tValues = new TValueFactory(user);                          // Подставленные значения
 
-    private final FunctionFactory functions = new FunctionFactory(this);                    // Функции
-    private final FValueFactory fValues = new FValueFactory(this);                          // Решения функций
+    private final FunctionFactory functions = new FunctionFactory(user);                    // Функции
+    private final FValueFactory fValues = new FValueFactory(user);                          // Решения функций
     private final Set<Tree> usedTrees = new HashSet<>();
 
     private final HypotesisStore hypotesis = new HypotesisStore();                                // Список гипотез
-    private final SolutionsStore solves = new SolutionsStore(this);                         // Список решений
-    private final ValuesStore values = new ValuesStore(this);                               // Список значений
+    private final SolutionsStore solves = new SolutionsStore(user);                         // Список решений
+    private final ValuesStore values = new ValuesStore(user);                               // Список значений
 
     private final LogStore log = new LogStore(this);                                        // Протокол вывода
 
-    private final Calculator calculator = new Calculator(this);                             // Калькулятор
-    private final Analiser analiser = new Analiser(this);                                   // Анализатор
-    private final Compiler compiler = new Compiler(this);                                   // Компилятор
-    private final Linker linker = new Linker(this);                                         // Линкер
+    private final Calculator calculator = new Calculator(user);                             // Калькулятор
+    private final Analiser analiser = new Analiser(user);                                   // Анализатор
+    private final Compiler compiler = new Compiler(user);                                   // Компилятор
+    private final Linker linker = new Linker(user);                                         // Линкер
 
     private volatile boolean changed = false;
     private String sourceFileName = "mind.k";
@@ -81,11 +82,18 @@ public class Mind {
     private String querySource = "";
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
    
-    public Mind() {
+    public Mind(User user) {
+        this.user = user;
+        user.setMind(this);
         clear();
     }
 
     public Mind(Mind root) {
+        id = root.getId() + 1;
+        next = root;
+        user = root.getUser();
+        user.setMind(this);
+                
         terms.transaction(root.getTerms());
         predicates.transaction(root.getPredicates());
         domains.transaction(root.getDomains());
@@ -97,10 +105,16 @@ public class Mind {
         functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
         
-        id = root.getId() + 1;
-        next = root;
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public void setId(int id) {
@@ -222,6 +236,12 @@ public class Mind {
                 ((TVariable) o).setIndex(i);
             }
         }
+        
+        user.setMind(this);
+    }
+    
+    public void rollback() {
+        user.setMind(this);
     }
 
     public void clear() {
@@ -270,13 +290,13 @@ public class Mind {
         Boolean ar = m.analise(true);
 
         if (ar) {
+            rollback();
+            log.commit(m.getLog());
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             return false;
         } else {
             commit(m);
-
             log.commit(m.getLog());
-
             return true;
         }
     }
@@ -303,7 +323,7 @@ public class Mind {
         }
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
-            r = new Compiler(this).compileLine(p, suc);
+            r = new Compiler(user).compileLine(p, suc);
             ((Right) r).setOrig(orig);
         }
 
@@ -728,6 +748,8 @@ public class Mind {
                         m.link(r, true);
                         ar = m.analise(true);
                         if (ar) {
+                            rollback();
+                            log.commit(m.getLog());
                             m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
                             res = null;
                         } else {
@@ -756,6 +778,8 @@ public class Mind {
                             m.commit(m);
                             setChanged(true);
                         }
+                    } else {
+                        rollback();
                     }
                 }
                 break;
@@ -811,7 +835,10 @@ public class Mind {
                                     hypotesis.commit(m.getHypotesisStore());
                                 }
                                 log.commit(m.getLog());
+                            
+                                
                             }
+                            rollback();
 
                         }
                     }
@@ -877,6 +904,7 @@ public class Mind {
                             }
                             log.commit(m.getLog());
                         }
+                        rollback();
 
 //TODO: Померял местами с началом
 //                        mind.release();

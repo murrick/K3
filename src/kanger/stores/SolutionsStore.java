@@ -1,11 +1,8 @@
 package kanger.stores;
 
-import kanger.Mind;
-import kanger.primitives.Domain;
-import kanger.primitives.Solution;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 28.05.15.
@@ -15,10 +12,10 @@ public class SolutionsStore {
     private List<Solution> root = null;
     private boolean enableStore = true;
 
-    private Mind mind = null;
+    private User user = null;
 
-    public SolutionsStore(Mind mind) {
-        this.mind = mind;
+    public SolutionsStore(User user) {
+        this.user = user;
     }
 
     public void commit(SolutionsStore base) {
@@ -40,7 +37,7 @@ public class SolutionsStore {
         if (root == null) {
             root = new ArrayList<>();
         }
-        Solution s = new Solution(d, mind);
+        Solution s = new Solution(d);
         if (!root.contains(s)) {
             root.add(s);
         } else {

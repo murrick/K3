@@ -1,14 +1,9 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.interfaces.IValue;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.interfaces.*;
 
 /**
  * Created by murray on 13.12.16.
@@ -26,23 +21,23 @@ public class TValue implements IValue {
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
 
-    private Mind mind = null;
+    private User user = null;
 
 
-    public TValue(Mind mind) {
-        this.mind = mind;
+    public TValue(User user) {
+        this.user = user;
     }
 
-    public TValue(TVariable tv, Term t, Mind mind) {
-        this.mind = mind;
+    public TValue(TVariable tv, Term t, User user) {
+        this.user = user;
         this.tVar = tv;
         this.value = t;
     }
 
-    public TValue(DataInputStream dis, Mind mind) throws IOException {
+    public TValue(DataInputStream dis, User user) throws IOException {
         id = dis.readLong();
-        tVar = mind.getTVars().get(dis.readLong());
-        value = mind.getTerms().get(dis.readLong());
+        tVar = user.getMind().getTVars().get(dis.readLong());
+        value = user.getMind().getTerms().get(dis.readLong());
         long sid = dis.readLong();
         if (sid != -1) {
 //            srcSolves = mind.getDomains().get(sid);
@@ -51,13 +46,10 @@ public class TValue implements IValue {
         if (sid != -1) {
 //            dstSolves = mind.getDomains().get(sid);
         }
-        this.mind = mind;
+        this.user = user;
     }
 
-    public void setMind(Mind mind) {
-        this.mind = mind;
-    }
-
+    
     public Term getValue() {
         return value;
     }
@@ -147,10 +139,10 @@ public class TValue implements IValue {
     }
 
     public void setQuery() {
-        if (!mind.getQueryValues().containsKey(tVar)) {
-            mind.getQueryValues().put(tVar, new HashSet<>());
+        if (!user.getMind().getQueryValues().containsKey(tVar)) {
+            user.getMind().getQueryValues().put(tVar, new HashSet<>());
         }
-        mind.getQueryValues().get(tVar).add(this);
+        user.getMind().getQueryValues().get(tVar).add(this);
     }
 
     //    public void setBlocked() {
@@ -165,14 +157,14 @@ public class TValue implements IValue {
 //    }
 //
     public void setClosed() {
-        if (!mind.getClosedValues().containsKey(tVar)) {
-            mind.getClosedValues().put(tVar, new HashSet<>());
+        if (!user.getMind().getClosedValues().containsKey(tVar)) {
+            user.getMind().getClosedValues().put(tVar, new HashSet<>());
         }
-        mind.getClosedValues().get(tVar).add(this);
+        user.getMind().getClosedValues().get(tVar).add(this);
     }
 
     public boolean isClosed() {
-        return mind.getClosedValues().containsKey(tVar) && mind.getClosedValues().get(tVar).contains(this);
+        return user.getMind().getClosedValues().containsKey(tVar) && user.getMind().getClosedValues().get(tVar).contains(this);
     }
 
     @Override

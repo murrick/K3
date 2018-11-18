@@ -1,17 +1,11 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.compiler.Operation;
-import kanger.compiler.Parser;
-import kanger.enums.Enums;
-import kanger.enums.Tools;
-import kanger.interfaces.IValue;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.compiler.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
@@ -31,18 +25,18 @@ public class Function implements IValue {
     private Function next = null;
     private Domain owner = null;
     private int index = -1;
-    private Mind mind = null;
+    private User user = null;
 
-    public Function(Domain owner, Mind mind) {
+    public Function(Domain owner, User user) {
         this.owner = owner;
-        this.mind = mind;
+        this.user = user;
     }
 
-    public Function(DataInputStream dis, Mind mind) throws IOException {
+    public Function(DataInputStream dis, User user) throws IOException {
         long id = dis.readLong();
-        name = mind.getTerms().get(id);
+        name = user.getMind().getTerms().get(id);
         range = dis.readInt();
-        this.mind = mind;
+        this.user = user;
 
 //        f = (FunctionDescriptor) mind.getFunctions().createCVar(id);
 //        line.clear();
@@ -54,13 +48,9 @@ public class Function implements IValue {
         arguments.clear();
         int count = dis.readInt();
         while (count-- > 0) {
-            Argument a = new Argument(dis, mind);
+            Argument a = new Argument(dis, user);
             arguments.add(a);
         }
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
     }
 
     public void setId(long id) {
@@ -148,7 +138,7 @@ public class Function implements IValue {
 
     public Term getValue() {
         if (isCalculated()) {
-            return mind.getFValues().get(this).getValue();
+            return user.getMind().getFValues().get(this).getValue();
         } else {
             return null;
 //            if (arguments.size() - 1 == range) {
@@ -279,7 +269,7 @@ public class Function implements IValue {
             }
 
             String res = "";
-            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+            if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
 //                if (getResult() != null) {
                 if (isCalculated()) {
                     res = " {= " + getValue() + "}";
@@ -348,7 +338,7 @@ public class Function implements IValue {
     }
 
     public boolean isCalculated() {
-        FValue f = mind.getFValues().get(this);
+        FValue f = user.getMind().getFValues().get(this);
         if (f != null) {
             for (int i = 0; i < getRange(); ++i) {
                 if (getArguments().get(i).getValue() == null

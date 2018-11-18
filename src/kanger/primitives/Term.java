@@ -1,17 +1,11 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.enums.DataType;
-import kanger.enums.Enums;
-import kanger.enums.Tools;
-import kanger.interfaces.IValue;
-
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.text.*;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -30,10 +24,10 @@ public class Term implements IValue, Comparable<Object> {
     private String name = "";             // Оригинальное имя c-переменной
     private int index = 0;              // Индекс c-переменной
 
-    private Mind mind = null;
+    private User user = null;
 
-    public Term(Mind mind) {
-        this.mind = mind;
+    public Term(User user) {
+        this.user = user;
     }
 
 //    public Term(StringBuffer str, int pos) throws ParseErrorException {
@@ -55,16 +49,16 @@ public class Term implements IValue, Comparable<Object> {
 //        construct(str.substring(c, stop));
 //    }
 
-    public Term(Object str, Mind mind) {
+    public Term(Object str, User user) {
 //        sourceLength = str.length();
-        this.mind = mind;
+        this.user = user;
         construct(str);
     }
 
-    public Term(DataInputStream din, Mind mind) throws IOException, ClassNotFoundException {
+    public Term(DataInputStream din, User user) throws IOException, ClassNotFoundException {
         id = din.readLong();
-        this.mind = mind;
-        mind.getDictionaryLinks().put(this, din.readLong());
+        this.user = user;
+        user.getMind().getDictionaryLinks().put(this, din.readLong());
         int typeIndex = din.readInt();
         type = DataType.values()[typeIndex];
         switch (type) {
@@ -89,10 +83,6 @@ public class Term implements IValue, Comparable<Object> {
         index = din.readInt();
 //        sourceLength = din.readInt();
 //        token = din.readUTF();
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
     }
 
     private void construct(Object o) {
@@ -163,7 +153,7 @@ public class Term implements IValue, Comparable<Object> {
             List<Term> list = new ArrayList<>();
             for (String s : ch.split("\\.\\.")) {
                 if (!s.trim().isEmpty()) {
-                    Term t = mind.getTerms().add(new Term(s, mind));
+                    Term t = user.getMind().getTerms().add(new Term(s, user));
                     list.add(t);
                 }
             }
@@ -238,7 +228,7 @@ public class Term implements IValue, Comparable<Object> {
     public String toString() {
         if (value != null) {
             if (isCVariable()) {
-                switch (mind.getDebugLevel() & 0x00FF) {
+                switch (user.getMind().getDebugLevel() & 0x00FF) {
                     case Enums.DEBUG_LEVEL_DEBUG:
                         return formatValue();
                     default:

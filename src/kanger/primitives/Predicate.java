@@ -1,12 +1,8 @@
 package kanger.primitives;
 
-import kanger.Mind;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import kanger.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -23,21 +19,17 @@ public class Predicate {
     private long id = -1;                   // Идентификатор
     private Predicate next = null;          // Следующий предикат
 
-    private Mind mind = null;
+    private User user = null;
 
-    public Predicate(Mind mind) {
-        this.mind = mind;
+    public Predicate(User user) {
+        this.user = user;
     }
 
-    public Predicate(DataInputStream dis, Mind mind) throws IOException {
+    public Predicate(DataInputStream dis, User user) throws IOException {
         id = dis.readLong();
         name = dis.readUTF();
         range = dis.readInt();
-        this.mind = mind;
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
+        this.user = user;
     }
 
     public String getName() {
@@ -90,7 +82,7 @@ public class Predicate {
 //            }
 //        }
 
-        for (Domain d = mind.getDatabase().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d = user.getMind().getDatabase().getRoot(); d != null; d = d.getNext()) {
             if (getId() == d.getPredicate().getId()) {
                 set.add(d);
             }

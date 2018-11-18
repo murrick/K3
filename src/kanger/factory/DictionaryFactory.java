@@ -1,16 +1,10 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.enums.Enums;
-import kanger.primitives.Term;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -23,10 +17,10 @@ public class DictionaryFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public DictionaryFactory(Mind mind) {
-        this.mind = mind;
+    public DictionaryFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(DictionaryFactory base) {
@@ -42,7 +36,6 @@ public class DictionaryFactory {
             list.add(0, p);
         }
         for (Term p : list) {
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -57,17 +50,17 @@ public class DictionaryFactory {
         if (p != null) {
             return p;
         } else {
-            p = new Term(o, mind);
+            p = new Term(o, user);
             p.setNext(root);
             root = p;
-            p.setRight(mind.getRights().getRoot());
+            p.setRight(user.getMind().getRights().getRoot());
             p.setId(lastID++);
             return p;
         }
     }
 
     public Term find(Object o) {
-        Term t = new Term(o, mind);
+        Term t = new Term(o, user);
         for (Term dic = root; dic != null; dic = dic.getNext()) {
             if (dic.compareTo(t) == 0) {
                 return dic;
@@ -144,7 +137,7 @@ public class DictionaryFactory {
         int count = dis.readInt();
         Term a = null, b;
         while (count-- > 0) {
-            b = new Term(dis, mind);
+            b = new Term(dis, user);
             if (a != null) {
                 a.setNext(b);
             } else {

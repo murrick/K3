@@ -5,13 +5,10 @@
  */
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.enums.Enums;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
 
 /**
  *
@@ -26,18 +23,18 @@ public class Hypotese {
     private boolean deleted = false;
     private boolean query = false;
 
-    public Hypotese(Mind mind, boolean antc, Object predicate, Object... params) {
+    public Hypotese(User user, boolean antc, Object predicate, Object... params) {
         this.antc = antc;
         if (predicate instanceof Predicate) {
             this.predicate = (Predicate) predicate;
         } else {
-            this.predicate = mind.getPredicates().add(predicate.toString(), params.length);
+            this.predicate = user.getMind().getPredicates().add(predicate.toString(), params.length);
         }
         for (Object p : params) {
             if (p instanceof Term) {
                 solve.add((Term) p);
             } else {
-                solve.add(mind.getTerms().add(p));
+                solve.add(user.getMind().getTerms().add(p));
             }
         }
     }

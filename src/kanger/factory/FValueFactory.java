@@ -1,15 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.FValue;
-import kanger.primitives.Function;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 public class FValueFactory {
     private FValue root = null;
@@ -17,10 +11,10 @@ public class FValueFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public FValueFactory(Mind mind) {
-        this.mind = mind;
+    public FValueFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(FValueFactory base) {
@@ -35,7 +29,6 @@ public class FValueFactory {
             list.add(0, p);
         }
         for (FValue p : list) { 
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -46,7 +39,7 @@ public class FValueFactory {
         FValue t = find(f);
         if (t == null) {
             if (f.isDirtyComplete()) {
-                t = new FValue(f, mind);
+                t = new FValue(f, user);
                 t.setNext(root);
                 root = t;
                 t.setId(lastID++);
@@ -212,7 +205,7 @@ public class FValueFactory {
         int count = dis.readInt();
         FValue a = null, b;
         while (count-- > 0) {
-            b = new FValue(dis, mind);
+            b = new FValue(dis, user);
             if (a != null) {
                 a.setNext(b);
             } else {

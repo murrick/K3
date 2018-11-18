@@ -1,14 +1,8 @@
 package kanger.primitives;
 
-import kanger.Mind;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import kanger.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -24,24 +18,20 @@ public class Right {
     private boolean query = false;             // Вновь введенное правило
     private boolean generated = false;         // Правило добавлено в процессе выводс
 
-    private Mind mind = null;
+    private User user = null;
 
-    public Right(Mind mind) {
-        this.mind = mind;
+    public Right(User user) {
+        this.user = user;
     }
 
-    public Right(DataInputStream dis, Mind mind) throws IOException {
+    public Right(DataInputStream dis, User user) throws IOException {
         id = dis.readLong();
         orig = dis.readUTF();
         int count = dis.readInt();
         while (count-- > 0) {
-            tree.add(new Tree(dis, mind));
+            tree.add(new Tree(dis, user));
         }
-        this.mind = mind;
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
+        this.user = user;
     }
 
     public void setGenerated(boolean generated) {
@@ -117,12 +107,12 @@ public class Right {
     public Set<Right> getActualRights() {
         Set<Right> set = new HashSet<>();
         Set<Predicate> preds = new HashSet<>();
-        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
             if (d.getRight().getId() == id) {
                 preds.add(d.getPredicate());
             }
         }
-        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
             if (d.getRight().getId() != id && preds.contains(d.getPredicate())) {
                 set.add(d.getRight());
             }
@@ -133,12 +123,12 @@ public class Right {
     public Set<Tree> getActualTrees() {
         Set<Tree> set = new HashSet<>();
         Set<Predicate> preds = new HashSet<>();
-        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
             if (d.getRight().getId() == id) {
                 preds.add(d.getPredicate());
             }
         }
-        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
+        for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
             for (Domain d : t.getSequence()) {
                 if (preds.contains(d.getPredicate())) {
                     set.add(t);

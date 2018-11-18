@@ -17,10 +17,10 @@ public class DatabaseFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public DatabaseFactory(Mind mind) {
-        this.mind = mind;
+    public DatabaseFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(DatabaseFactory base) {
@@ -35,7 +35,6 @@ public class DatabaseFactory {
             list.add(0, p);
         }
         for (Domain p : list) { 
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -54,7 +53,7 @@ public class DatabaseFactory {
         if (p != null) {
             return p;
         } else {
-            p = new Domain(mind);
+            p = new Domain(user);
             p.setNext(root);
             p.setPredicate(pred);
             p.setAntc(antc);
@@ -161,7 +160,7 @@ public class DatabaseFactory {
         int count = dis.readInt();
         Domain a = null, b;
         while (count-- > 0) {
-            b = new Domain(dis, mind);
+            b = new Domain(dis, user);
             if (a == null) {
                 root = b;
             } else {

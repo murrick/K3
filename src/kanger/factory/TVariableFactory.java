@@ -1,13 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.Right;
-import kanger.primitives.TVariable;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -19,10 +15,10 @@ public class TVariableFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public TVariableFactory(Mind mind) {
-        this.mind = mind;
+    public TVariableFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(TVariableFactory base) {
@@ -37,7 +33,6 @@ public class TVariableFactory {
             list.add(0, p);
         }
         for (TVariable p : list) {
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -46,10 +41,10 @@ public class TVariableFactory {
     }
 
     public TVariable createTVar() {
-        TVariable p = new TVariable(mind);
+        TVariable p = new TVariable(user);
         p.setId(++lastID);
-        p.setIndex(mind.getTerms().nextVarIndex());
-        p.setRight(mind.getRights().getRoot());
+        p.setIndex(user.getMind().getTerms().nextVarIndex());
+        p.setRight(user.getMind().getRights().getRoot());
         p.setNext(root);
         root = p;
         return p;
@@ -128,7 +123,7 @@ public class TVariableFactory {
         int count = dis.readInt();
         TVariable a = null, b;
         while (count-- > 0) {
-            b = new TVariable(dis, mind);
+            b = new TVariable(dis, user);
             if (a == null) {
                 root = b;
             } else {

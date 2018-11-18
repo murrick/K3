@@ -1,26 +1,21 @@
 package kanger.calculator;
 
-import kanger.Mind;
-import kanger.compiler.SysOp;
-import kanger.enums.DataType;
-import kanger.enums.LibMode;
-import kanger.enums.Tools;
-import kanger.interfaces.IRunnable;
-import kanger.primitives.Argument;
-import kanger.primitives.Function;
-import kanger.primitives.Term;
-
 import java.util.*;
+import kanger.*;
+import kanger.compiler.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 18.01.17.
  */
 public class Functions {
 
-    private Mind mind = null;
+    private User user = null;
 
-    public Functions(Mind mind) {
-        this.mind = mind;
+    public Functions(User user) {
+        this.user = user;
     }
 
     private final Map<String, SysOp> sysOps = new HashMap<String, SysOp>() {
@@ -471,7 +466,7 @@ public class Functions {
                     }
 //                    if (!arg.createCVar(0).isDefined()) {
 //                        try {
-//                    ((Function)o).setParameter(1, mind.getTerms().createTVar(_pi()));
+//                    ((Function)o).setParameter(1, user.getMind().getTerms().createTVar(_pi()));
 //                    } else if (arg.createCVar(0).isDefined() && Tools.sCmp(_pi(), arg.createCVar(0).getValue()) == 0) {
 //                    } else {
 //                        try {
@@ -713,7 +708,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
-                        if (!((Function) o).setParameter(0, _pow(arg.get(1).getValue(), mind.getTerms().add(2)))) {
+                        if (!((Function) o).setParameter(0, _pow(arg.get(1).getValue(), user.getMind().getTerms().add(2)))) {
 
                             ret = 0;
                         }
@@ -739,7 +734,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (!arg.get(0).isDefined() && arg.get(2).isDefined()) {
-                        if (!((Function) o).setParameter(0, _root(arg.get(2).getValue(), mind.getTerms().add(1)))) {
+                        if (!((Function) o).setParameter(0, _root(arg.get(2).getValue(), user.getMind().getTerms().add(1)))) {
 
                             ret = 0;
                         }
@@ -765,7 +760,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (!arg.get(0).isDefined() && arg.get(2).isDefined()) {
-                        if (!((Function) o).setParameter(0, _pow(arg.get(2).getValue(), mind.getTerms().add(1)))) {
+                        if (!((Function) o).setParameter(0, _pow(arg.get(2).getValue(), user.getMind().getTerms().add(1)))) {
 
                             ret = 0;
                         }
@@ -791,7 +786,7 @@ public class Functions {
                     Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
 
                     if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, mind.getTerms().add((double) src.length()))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add((double) src.length()))) {
                             ret = 0;
                         }
                     } else {
@@ -812,12 +807,12 @@ public class Functions {
                     String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getVal() : null;
 
                     if (src != null && pos != null && result == null) {
-                        if (!((Function) o).setParameter(2, mind.getTerms().add(pos - 1 >= src.length() ? "" : src.substring(pos.intValue() - 1)))) {
+                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(pos - 1 >= src.length() ? "" : src.substring(pos.intValue() - 1)))) {
                             ret = 0;
                         }
                     } else if (src != null && pos == null && result != null) {
                         pos = (double) src.indexOf(result);
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(pos))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos))) {
                             ret = 0;
                         }
                     } else {
@@ -845,7 +840,7 @@ public class Functions {
                                 len = (double) src.length();
                             }
                         }
-                        if (!((Function) o).setParameter(3, mind.getTerms().add(src.substring(pos.intValue() - 1, pos.intValue() - 1 + len.intValue())))) {
+                        if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.substring(pos.intValue() - 1, pos.intValue() - 1 + len.intValue())))) {
                             ret = 0;
                         }
 
@@ -853,12 +848,12 @@ public class Functions {
                         pos = (double) src.indexOf(result);
                         len = (double) result.length();
                         if (arg.get(1).getValue() == null) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(pos + 1))) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos + 1))) {
                                 ret = 0;
                             }
                         }
                         if (arg.get(2).getValue() == null) {
-                            if (!((Function) o).setParameter(2, mind.getTerms().add(len))) {
+                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(len))) {
                                 ret = 0;
                             }
                         }
@@ -883,12 +878,12 @@ public class Functions {
                         if (pos > src.length()) {
                             pos = (double) src.length();
                         }
-                        if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(0, pos.intValue())))) {
+                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(0, pos.intValue())))) {
                             ret = 0;
                         }
                     } else if (src != null && pos == null && result != null) {
                         pos = (double) result.length();
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(pos))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos))) {
                             ret = 0;
                         }
                     } else {
@@ -912,12 +907,12 @@ public class Functions {
                         if (pos > src.length()) {
                             pos = (double) src.length();
                         }
-                        if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(src.length() - pos.intValue())))) {
+                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(src.length() - pos.intValue())))) {
                             ret = 0;
                         }
                     } else if (src != null && pos == null && result != null) {
                         pos = (double) result.length();
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(pos))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos))) {
                             ret = 0;
                         }
                     } else {
@@ -937,7 +932,7 @@ public class Functions {
                     String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
 
                     if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(src.trim()))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.trim()))) {
                             ret = 0;
                         }
                     } else {
@@ -957,7 +952,7 @@ public class Functions {
                     String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
 
                     if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(src.toUpperCase()))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toUpperCase()))) {
                             ret = 0;
                         }
                     } else {
@@ -977,7 +972,7 @@ public class Functions {
                     String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
 
                     if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(src.toLowerCase()))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toLowerCase()))) {
                             ret = 0;
                         }
                     } else {
@@ -998,12 +993,12 @@ public class Functions {
                     Double result = arg.get(2).getValue() != null ? (Double) arg.get(2).getValue().getVal() : null;
 
                     if (src != null && sample != null && result == null) {
-                        if (!((Function) o).setParameter(2, mind.getTerms().add((src.indexOf(sample) + 1)))) {
+                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add((src.indexOf(sample) + 1)))) {
                             ret = 0;
                         }
                     } else if (src != null && sample == null && result != null) {
                         if (result - 1 >= 0 && result - 1 < src.length()) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(src.substring(result.intValue() - 1)))) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.substring(result.intValue() - 1)))) {
                                 ret = 0;
                             }
                         }
@@ -1026,11 +1021,11 @@ public class Functions {
                     String result = arg.get(3).getValue() != null ? (String) arg.get(3).getValue().getVal() : null;
 
                     if (src != null && target != null && replacement != null && result == null) {
-                        if (!((Function) o).setParameter(3, mind.getTerms().add(src.replace(target, replacement)))) {
+                        if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.replace(target, replacement)))) {
                             ret = 0;
                         }
                     } else if (src == null && target != null && replacement != null && result != null) {
-                        if (!((Function) o).setParameter(0, mind.getTerms().add(result.replace(replacement, target)))) {
+                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(result.replace(replacement, target)))) {
                             ret = 0;
                         }
                     } else {
@@ -1050,11 +1045,11 @@ public class Functions {
                     String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
 
                     if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(String.format("%c", src.intValue())))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(String.format("%c", src.intValue())))) {
                             ret = 0;
                         }
                     } else if (src == null && result != null) {
-                        if (!((Function) o).setParameter(0, mind.getTerms().add(result.charAt(0)))) {
+                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(result.charAt(0)))) {
                             ret = 0;
                         }
                     } else {
@@ -1074,11 +1069,11 @@ public class Functions {
                     Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
 
                     if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(src.charAt(0)))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.charAt(0)))) {
                             ret = 0;
                         }
                     } else if (src == null && result != null) {
-                        if (!((Function) o).setParameter(0, mind.getTerms().add(String.format("%c", result.intValue())))) {
+                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(String.format("%c", result.intValue())))) {
                             ret = 0;
                         }
                     } else {
@@ -1101,7 +1096,7 @@ public class Functions {
                     }
 //                    if (!arg.createCVar(0).isDefined()) {
 //                        try {
-//                    ((Function)o).setParameter(1, mind.getTerms().createTVar(_pi()));
+//                    ((Function)o).setParameter(1, user.getMind().getTerms().createTVar(_pi()));
 //                    } else if (arg.createCVar(0).isDefined() && Tools.sCmp(_pi(), arg.createCVar(0).getValue()) == 0) {
 //                    } else {
 //                        try {
@@ -1122,7 +1117,7 @@ public class Functions {
                     List<Argument> arg = ((Function) o).getArguments();
 
                     if (arg.get(0).isDefined() && !arg.get(1).isDefined()) {
-                        if (!((Function) o).setParameter(1, mind.getTerms().add(arg.get(0).getValue().getType().name().toLowerCase()))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(arg.get(0).getValue().getType().name().toLowerCase()))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(0).getValue().getType().name().toLowerCase().equals(arg.get(1).getValue().toString().toLowerCase())) {
@@ -1152,7 +1147,7 @@ public class Functions {
         } else {
             res = a.getVal().toString() + b.getVal().toString();
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     protected Term _inc(Term a) {
@@ -1162,7 +1157,7 @@ public class Functions {
         } else {
             res = a.getVal();
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     protected Term _dec(Term a) {
@@ -1172,7 +1167,7 @@ public class Functions {
         } else {
             res = a.getVal();
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _sub(Term a, Term b) {
@@ -1188,7 +1183,7 @@ public class Functions {
         } else {
             res = a.getVal().toString().replace(b.getVal().toString(), "");
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _mul(Term a, Term b) {
@@ -1198,7 +1193,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _div(Term a, Term b) {
@@ -1208,7 +1203,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _rem(Term a, Term b) {
@@ -1218,7 +1213,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _neg(Term a) {
@@ -1233,7 +1228,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _bitnot(Term a) {
@@ -1243,7 +1238,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _bitleft(Term a, Term b) {
@@ -1253,7 +1248,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _bitright(Term a, Term b) {
@@ -1263,7 +1258,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _bitxor(Term a, Term b) {
@@ -1273,7 +1268,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _bitand(Term a, Term b) {
@@ -1283,7 +1278,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _bitor(Term a, Term b) {
@@ -1293,7 +1288,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _bitandnot(Term a, Term b) {
@@ -1303,7 +1298,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _log(Term a) {
@@ -1313,7 +1308,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _exp(Term a) {
@@ -1323,12 +1318,12 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _pi() {
         Object res = Math.PI;
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _sin(Term a) {
@@ -1338,7 +1333,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _asin(Term a) {
@@ -1348,7 +1343,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _cos(Term a) {
@@ -1358,7 +1353,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _acos(Term a) {
@@ -1368,7 +1363,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _tan(Term a) {
@@ -1378,7 +1373,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _atan(Term a) {
@@ -1388,7 +1383,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _abs(Term a) {
@@ -1398,7 +1393,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _int(Term a) {
@@ -1408,7 +1403,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _round(Term a, Term b) {
@@ -1426,7 +1421,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _sqrt(Term a) {
@@ -1436,7 +1431,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _pow(Term a, Term b) {
@@ -1446,7 +1441,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _root(Term a, Term b) {
@@ -1456,12 +1451,12 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
     private Term _now() {
         Object res = new Date(System.currentTimeMillis());
-        return mind.getTerms().add(res);
+        return user.getMind().getTerms().add(res);
     }
 
 }

@@ -1,15 +1,10 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.enums.Enums;
-import kanger.interfaces.IValue;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -27,15 +22,15 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     private String name = "";               // Оригинальное подкванторное имя
     private int index = 0;                  // Сквохзной индекс переменной
 
-    private Mind mind = null;
+    private User user = null;
 
-    public TVariable(Mind mind) {
-        this.mind = mind;
+    public TVariable(User user) {
+        this.user = user;
     }
 
-    public TVariable(DataInputStream dis, Mind mind) throws IOException {
+    public TVariable(DataInputStream dis, User user) throws IOException {
         id = dis.readLong();
-        mind.getTVariableLinks().put(this, dis.readLong());
+        user.getMind().getTVariableLinks().put(this, dis.readLong());
 //        long did = dis.readLong();
 //        if (did != -1) {
 //            area = mind.getTerms().get(did);
@@ -44,13 +39,9 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //        }
         index = dis.readInt();
         long did = dis.readLong();
-        right = mind.getRights().get(did);
+        right = user.getMind().getRights().get(did);
         name = dis.readUTF();
-        this.mind = mind;
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
+        this.user = user;
     }
 
     public String getName() {
@@ -78,8 +69,8 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     public Term getValue() {
-        if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this).getValue();
+        if (user.getMind().getTValues().get(this) != null) {
+            return user.getMind().getTValues().get(this).getValue();
         } else {
             return null;
         }
@@ -91,15 +82,15 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     public TValue getCurrent() {
-        if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this);
+        if (user.getMind().getTValues().get(this) != null) {
+            return user.getMind().getTValues().get(this);
         } else {
             return null;
         }
     }
 
     public TValue setCurrent(TValue v) {
-        return mind.getTValues().set(this, v);
+        return user.getMind().getTValues().set(this, v);
     }
 
     public TValue setValue(Term value) { //throws TValueOutOfOrderException {
@@ -107,8 +98,8 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
-        TValue v = mind.getTValues().add(this, value);
-        return mind.getTValues().set(this, v);
+        TValue v = user.getMind().getTValues().add(this, value);
+        return user.getMind().getTValues().set(this, v);
 //        } else {
 //            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
 //        }
@@ -119,7 +110,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
-        TValue v = mind.getTValues().add(this, value);
+        TValue v = user.getMind().getTValues().add(this, value);
         return v;
 //        } else {
 //            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
@@ -127,7 +118,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     public void clear() {
-        mind.getTValues().remove(this);
+        user.getMind().getTValues().remove(this);
 //        if (mind.getTValues().createCVar(this).isEmpty()) {
 //            mind.getTValues().createCVar(this).setRoot(null);
 //            mind.getSubstituted().createTVar(this);
@@ -179,8 +170,8 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     public List<Domain> getSrcSolves() {
-        if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this).getSrcSolves();
+        if (user.getMind().getTValues().get(this) != null) {
+            return user.getMind().getTValues().get(this).getSrcSolves();
         } else {
             return null;
         }
@@ -203,18 +194,18 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //    }
 //
     public List<Domain> getDstSolves() {
-        if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this).getDstSolves();
+        if (user.getMind().getTValues().get(this) != null) {
+            return user.getMind().getTValues().get(this).getDstSolves();
         } else {
             return null;
         }
     }
 
     public int getDstIndex(Domain d) {
-        if (mind.getTValues().get(this) != null) {
-            int pos = mind.getTValues().get(this).getDstSolves().indexOf(d);
+        if (user.getMind().getTValues().get(this) != null) {
+            int pos = user.getMind().getTValues().get(this).getDstSolves().indexOf(d);
             if (pos != -1) {
-                return mind.getTValues().get(this).getPosSolves().get(pos);
+                return user.getMind().getTValues().get(this).getPosSolves().get(pos);
             } else {
                 return -1;
             }
@@ -224,10 +215,10 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     public Domain getSrcSolve(int index) {
-        if (mind.getTValues().get(this) != null) {
-            int pos = mind.getTValues().get(this).getPosSolves().indexOf(index);
+        if (user.getMind().getTValues().get(this) != null) {
+            int pos = user.getMind().getTValues().get(this).getPosSolves().indexOf(index);
             if (pos != -1) {
-                return mind.getTValues().get(this).getSrcSolves().get(pos);
+                return user.getMind().getTValues().get(this).getSrcSolves().get(pos);
             } else {
                 return null;
             }
@@ -277,7 +268,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //    }
 //
     public String getVarName() {
-        switch (mind.getDebugLevel() & 0x00FF) {
+        switch (user.getMind().getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_INFO:
                 return name;
             case Enums.DEBUG_LEVEL_DEBUG:
@@ -289,7 +280,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 
     @Override
     public String toString() {
-        return getVarName() + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
+        return getVarName() + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
     }
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {
@@ -319,19 +310,19 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 
     //
     public TValue find(Term value) {
-        return mind.getTValues().find(this, value);
+        return user.getMind().getTValues().find(this, value);
     }
 
     public boolean isEmpty() {
-        return mind.getTValues().isEmpty(this) || mind.getTValues().get(this) == null;
+        return user.getMind().getTValues().isEmpty(this) || user.getMind().getTValues().get(this) == null;
     }
 
     public TValue rewind() {
-        return mind.getTValues().rewind(this);
+        return user.getMind().getTValues().rewind(this);
     }
 
     public TValue next(TValue v) {
-        return mind.getTValues().next(v);
+        return user.getMind().getTValues().next(v);
     }
 
 //    public TValue rewindTop() {
@@ -344,7 +335,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 
     public Set<Domain> getUsage() {
         Set<Domain> set = new HashSet<>();
-        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
             if (d.contains(this)) {
                 set.add(d);
             }
@@ -386,8 +377,8 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 
     public boolean isQuery() {
         return !isEmpty()
-                && mind.getQueryValues().containsKey(this)
-                && mind.getQueryValues().get(this).contains(getCurrent());
+            && user.getMind().getQueryValues().containsKey(this)
+            && user.getMind().getQueryValues().get(this).contains(getCurrent());
     }
 
 //    public boolean isBlocked() {

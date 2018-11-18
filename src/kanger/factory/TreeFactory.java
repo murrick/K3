@@ -1,14 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.Tree;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -20,10 +15,10 @@ public class TreeFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public TreeFactory(Mind mind) {
-        this.mind = mind;
+    public TreeFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(TreeFactory base) {
@@ -38,7 +33,6 @@ public class TreeFactory {
             list.add(0, p);
         }
         for (Tree p : list) {
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -46,9 +40,9 @@ public class TreeFactory {
     }
 
     public Tree add() {
-        Tree p = new Tree(mind);
+        Tree p = new Tree(user);
         p.setId(++lastID);
-        p.setRight(mind.getRights().getRoot());
+        p.setRight(user.getMind().getRights().getRoot());
         p.setNext(root);
         root = p;
         return p;
@@ -116,7 +110,7 @@ public class TreeFactory {
         int count = dis.readInt();
         Tree a = null, b;
         while (count-- > 0) {
-            b = new Tree(dis, mind);
+            b = new Tree(dis, user);
             if (a == null) {
                 root = b;
             } else {

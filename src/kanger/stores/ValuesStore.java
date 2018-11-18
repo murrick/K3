@@ -1,13 +1,8 @@
 package kanger.stores;
 
-import kanger.Mind;
-import kanger.primitives.Domain;
-import kanger.primitives.TMeaning;
-import kanger.primitives.TVariable;
-import kanger.primitives.Term;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 28.05.15.
@@ -17,10 +12,10 @@ public class ValuesStore {
     private List<TMeaning> root = null;
     private boolean enableStore = true;
 
-    private Mind mind = null;
+    private User user = null;
 
-    public ValuesStore(Mind mind) {
-        this.mind = mind;
+    public ValuesStore(User user) {
+        this.user = user;
     }
 
     public void commit(ValuesStore base) {
@@ -43,7 +38,7 @@ public class ValuesStore {
             root = new ArrayList<>();
         }
         TMeaning m = new TMeaning(t);
-        m.setSolution(mind.getSolutions().add(d));
+        m.setSolution(user.getMind().getSolutions().add(d));
         if (!root.contains(m)) {
             root.add(m);
         } else {

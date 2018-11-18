@@ -1,17 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Predicate;
-import kanger.primitives.Right;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -23,10 +15,10 @@ public class DomainFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public DomainFactory(Mind mind) {
-        this.mind = mind;
+    public DomainFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(DomainFactory base) {
@@ -41,7 +33,6 @@ public class DomainFactory {
             list.add(0, p);
         }
         for (Domain p : list) { 
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -50,7 +41,7 @@ public class DomainFactory {
 
 
     public Domain add(Right r) {
-        Domain p = new Domain(mind);
+        Domain p = new Domain(user);
         p.setNext(root);
         p.setRight(r);
         p.setId(lastID++);
@@ -64,7 +55,7 @@ public class DomainFactory {
         if (p != null) {
             return p;
         } else {
-            p = new Domain(mind);
+            p = new Domain(user);
             p.setNext(root);
             p.setPredicate(pred);
             p.setAntc(antc);
@@ -162,7 +153,7 @@ public class DomainFactory {
         int count = dis.readInt();
         Domain a = null, b;
         while (count-- > 0) {
-            b = new Domain(dis, mind);
+            b = new Domain(dis, user);
             if (a == null) {
                 root = b;
             } else {

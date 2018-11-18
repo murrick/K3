@@ -1,10 +1,7 @@
 package kanger.primitives;
 
-import kanger.Mind;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
+import kanger.*;
 
 /**
  * Created by murray on 26.05.15.
@@ -22,16 +19,16 @@ public class Argument {
         o = d;
     }
 
-    public Argument(DataInputStream dis, Mind mind) throws IOException {
+    public Argument(DataInputStream dis, User user) throws IOException {
         int flags = dis.readInt();
         if (flags == 1) {
             long id = dis.readLong();
-            o = mind.getTerms().get(id);
+            o = user.getMind().getTerms().get(id);
         } else if (flags == 2) {
             long id = dis.readLong();
-            o = mind.getTVars().get(id);
+            o = user.getMind().getTVars().get(id);
         } else if (flags == 3) {
-            o = new Function(dis, mind);
+            o = new Function(dis, user);
         }
     }
 

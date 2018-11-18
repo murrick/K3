@@ -10,7 +10,8 @@ public class Kanger {
 
     public static void main(String[] args) {
 
-        Mind mind = new Mind();
+        Mind mind = new Mind(new User());
+        
 //        new LibraryStrings(mind);
 //        new LibraryMath(mind);
 

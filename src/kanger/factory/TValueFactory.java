@@ -1,14 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.TValue;
-import kanger.primitives.TVariable;
-import kanger.primitives.Term;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -21,10 +16,10 @@ public class TValueFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public TValueFactory(Mind mind) {
-        this.mind = mind;
+    public TValueFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(TValueFactory base) {
@@ -39,7 +34,6 @@ public class TValueFactory {
             list.add(0, p);
         }
         for (TValue p : list) {
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -49,7 +43,7 @@ public class TValueFactory {
     public TValue add(TVariable tv, Term o) {
         TValue t = find(tv, o);
         if (t == null) {
-            t = new TValue(tv, o, mind);
+            t = new TValue(tv, o, user);
             t.setTVar(tv);
             t.setNext(root);
             root = t;
@@ -270,7 +264,7 @@ public class TValueFactory {
         int count = dis.readInt();
         TValue a = null, b;
         while (count-- > 0) {
-            b = new TValue(dis, mind);
+            b = new TValue(dis, user);
             if (a != null) {
                 a.setNext(b);
             } else {

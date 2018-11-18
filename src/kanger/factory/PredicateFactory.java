@@ -1,14 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.Predicate;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -20,10 +15,10 @@ public class PredicateFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public PredicateFactory(Mind mind) {
-        this.mind = mind;
+    public PredicateFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(PredicateFactory base) {
@@ -38,7 +33,6 @@ public class PredicateFactory {
             list.add(0, p);
         }
         for (Predicate p : list) { 
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -50,7 +44,7 @@ public class PredicateFactory {
         if (p != null) {
             return p;
         } else {
-            p = new Predicate(mind);
+            p = new Predicate(user);
             p.setId(lastID++);
             p.setNext(root);
             p.setRange(range);
@@ -147,7 +141,7 @@ public class PredicateFactory {
         int count = dis.readInt();
         Predicate a = null, b;
         while (count-- > 0) {
-            b = new Predicate(dis, mind);
+            b = new Predicate(dis, user);
             if (a == null) {
                 root = b;
             } else {

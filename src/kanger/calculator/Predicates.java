@@ -1,20 +1,12 @@
 package kanger.calculator;
 
-import kanger.Mind;
-import kanger.compiler.SysOp;
-import kanger.enums.DataType;
-import kanger.enums.LibMode;
-import kanger.interfaces.IRunnable;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Term;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import java.util.*;
+import java.util.regex.*;
+import kanger.*;
+import kanger.compiler.*;
+import kanger.enums.*;
+import kanger.interfaces.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 18.01.17.
@@ -22,7 +14,7 @@ import java.util.regex.PatternSyntaxException;
 public class Predicates {
 
 
-    private Mind mind = null;
+    private User user = null;
     private final Map<String, SysOp> sysOps = new HashMap<String, SysOp>() {
 
         /// Системные предикаты
@@ -157,8 +149,8 @@ public class Predicates {
                                 if (arg.get(0).setValue(cur)) {
                                     i = 1;
                                     Term next = rc < 0
-                                            ? new Calculator(mind).getFunctions()._inc(cur)
-                                            : new Calculator(mind).getFunctions()._dec(cur);
+                                            ? new Calculator(user).getFunctions()._inc(cur)
+                                            : new Calculator(user).getFunctions()._dec(cur);
                                     if (next.getId() == cur.getId()) {
                                         if (arg.get(0).setValue(max)) {
                                             i = 1;
@@ -215,8 +207,8 @@ public class Predicates {
 
     };
 
-    public Predicates(Mind mind) {
-        this.mind = mind;
+    public Predicates(User user) {
+        this.user = user;
     }
 
     public Map<String, SysOp> getSysOps() {

@@ -1,12 +1,9 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.compiler.Operation;
-import kanger.compiler.Parser;
-import kanger.enums.Enums;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import kanger.*;
+import kanger.compiler.*;
+import kanger.enums.*;
 
 public class Solution {
     private Predicate predicate = null;
@@ -16,23 +13,23 @@ public class Solution {
     private Right right = null;
     private List<Solution> causes = new ArrayList<>();
 
-    public Solution(Mind mind, boolean antc, Object predicate, Object... params) {
+    public Solution(User user, boolean antc, Object predicate, Object... params) {
         this.antc = antc;
         if (predicate instanceof Predicate) {
             this.predicate = (Predicate) predicate;
         } else {
-            this.predicate = mind.getPredicates().add(predicate.toString(), params.length);
+            this.predicate = user.getMind().getPredicates().add(predicate.toString(), params.length);
         }
         for (Object p : params) {
             if (p instanceof Term) {
                 parameters.add((Term) p);
             } else {
-                parameters.add(mind.getTerms().add(p));
+                parameters.add(user.getMind().getTerms().add(p));
             }
         }
     }
 
-    public Solution(Domain d, Mind mind) {
+    public Solution(Domain d) {
         predicate = d.getPredicate();
         antc = d.isAntc();
         for (Argument a : d.getArguments()) {

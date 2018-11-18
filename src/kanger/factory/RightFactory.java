@@ -1,17 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Right;
-import kanger.primitives.Tree;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -23,10 +15,10 @@ public class RightFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user = null;
 
-    public RightFactory(Mind mind) {
-        this.mind = mind;
+    public RightFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(RightFactory base) {
@@ -41,7 +33,6 @@ public class RightFactory {
             list.add(0, p);
         }
         for (Right p : list) { 
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -49,7 +40,7 @@ public class RightFactory {
     }
 
     public Right add() {
-        Right p = new Right(mind);
+        Right p = new Right(user);
         p.setId(++lastID);
         p.setNext(root);
         root = p;
@@ -118,7 +109,7 @@ public class RightFactory {
         int count = dis.readInt();
         Right a = null, b;
         while (count-- > 0) {
-            b = new Right(dis, mind);
+            b = new Right(dis, user);
             if (a == null) {
                 root = b;
             } else {
@@ -130,12 +121,12 @@ public class RightFactory {
 
     public void add(Domain d) {
         Right r = add();
-        Tree t = mind.getTrees().add();
+        Tree t = user.getMind().getTrees().add();
         r.getTree().add(t);
         List<Argument> arg = new ArrayList<>();
         for (Argument a : d.getArguments()) {
             arg.add(new Argument(a.getValue()));
         }
-        t.getSequence().add(mind.getDomains().add(d.getPredicate(), d.isAntc(), arg, r));
+        t.getSequence().add(user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), arg, r));
     }
 }

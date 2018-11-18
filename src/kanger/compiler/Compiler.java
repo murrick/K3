@@ -1,43 +1,37 @@
 package kanger.compiler;
 
-import kanger.Mind;
-import kanger.enums.Enums;
-import kanger.enums.ParseError;
-import kanger.exception.ParseErrorException;
-import kanger.exception.RuntimeErrorException;
+import java.util.*;
+import kanger.*;
+import kanger.enums.*;
+import kanger.exception.*;
 import kanger.primitives.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by murray on 25.05.15.
  */
 public class Compiler {
 
-    private Mind mind;
+    private User user;
 
-    public Compiler(Mind mind) {
-        this.mind = mind;
+    public Compiler(User user) {
+        this.user = user;
     }
 
     public Right compileLine(PTree root, boolean antc) throws ParseErrorException, RuntimeErrorException {
 
         //mind.getReplacements().reset();
-        mind.getSolutions().clear();
-        mind.getValues().clear();
-        Right r = mind.getRights().add();
+        user.getMind().getSolutions().clear();
+        user.getMind().getValues().clear();
+        Right r = user.getMind().getRights().add();
 
 //        NodeFactory n = new NodeFactory();
 //        construct(n, root, antc, Node.STILL);
 //        t = recurseTree(n.getRoot());
-        Tree t = mind.getTrees().add();
+        Tree t = user.getMind().getTrees().add();
         r.getTree().add(t);
         construct(r, t, root, antc, new HashMap<String, Argument>(), new ArrayList<Tree>());
-        mind.getSolutions().clear();
-        mind.getValues().clear();
+        user.getMind().getSolutions().clear();
+        user.getMind().getValues().clear();
 
 //        r.setT(t);
 
@@ -161,17 +155,17 @@ public class Compiler {
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
-            p = new Argument(mind.getTVars().createTVar());
+            p = new Argument(user.getMind().getTVars().createTVar());
             p.getT().setName(varName);
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
-            p = new Argument(mind.getTerms().createCVar(varName));
+            p = new Argument(user.getMind().getTerms().createCVar(varName));
         }
         replacements.put(varName, p);
         return antc;
     }
 
     private Tree compilePredicate(Tree t, PTree root, boolean antc, Map<String, Argument> replacements) {
-        Domain d = mind.getDomains().add(mind.getRights().getRoot());
+        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
         List<Argument> arg = new ArrayList<>();
         Predicate pred = null;
         if (root.isSystem()) {
@@ -188,12 +182,12 @@ public class Compiler {
                 }
             }
             parseArgs(d, arg, root, 0, replacements);
-            pred = mind.getPredicates().add(root.getName(), arg.size());
+            pred = user.getMind().getPredicates().add(root.getName(), arg.size());
         } else if (root.getLeft() == null) {
-            pred = mind.getPredicates().add(root.getName(), 0);
+            pred = user.getMind().getPredicates().add(root.getName(), 0);
         } else {
             parseArgs(d, arg, root.getRight(), 1, replacements);
-            pred = mind.getPredicates().add(root.getLeft().getName(), arg.size());
+            pred = user.getMind().getPredicates().add(root.getLeft().getName(), arg.size());
         }
         d.setPredicate(pred);
         d.setAntc(antc);
@@ -213,10 +207,10 @@ public class Compiler {
             } else {
                 // системная функция
 
-                Function f = mind.getFunctions().add(d); //new Function(mind);
+                Function f = user.getMind().getFunctions().add(d); //new Function(mind);
                 parseArgs(d, f.getArguments(), root.getLeft(), level + 1, replacements);
                 parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-                f.setName(mind.getTerms().add(root.getName()));
+                f.setName(user.getMind().getTerms().add(root.getName()));
                 f.setRange(f.getArguments().size());
                 Argument t = new Argument(f);
                 arg.add(t);
@@ -226,16 +220,16 @@ public class Compiler {
             parseArgs(d, arg, root.getRight(), level + 1, replacements);
         } else if (root.getName().charAt(0) == Enums.LB) {
             // вложенная функция
-            Function f = mind.getFunctions().add(d); //new Function(mind);
+            Function f = user.getMind().getFunctions().add(d); //new Function(mind);
             parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-            f.setName(mind.getTerms().add(root.getLeft().getName()));
+            f.setName(user.getMind().getTerms().add(root.getLeft().getName()));
             f.setRange(f.getArguments().size());
             Argument t = new Argument(f);
             arg.add(t);
         } else {
             Argument t;
             if ((t = replacements.get(root.getName())) == null) {
-                t = new Argument(mind.getTerms().add(root.getName()));
+                t = new Argument(user.getMind().getTerms().add(root.getName()));
             }
             arg.add(t);
         }

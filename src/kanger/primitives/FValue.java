@@ -1,13 +1,9 @@
 package kanger.primitives;
 
-import kanger.Mind;
-import kanger.interfaces.IValue;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.interfaces.*;
 
 public class FValue implements IValue {
     private long id = -1;
@@ -17,9 +13,9 @@ public class FValue implements IValue {
     private Function function = null;
 
     private FValue next = null;
-    private Mind mind = null;
+    private User user = null;
 
-    public FValue(Function f, Mind mind) {
+    public FValue(Function f, User user) {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue(); //.getResult();
 //        for(Argument a : f.getArguments()){
@@ -31,19 +27,19 @@ public class FValue implements IValue {
         for (Argument a : f.getArguments()) {
             condition.add(a.getDirtyValue().getId());
         }
-        this.mind = mind;
+        this.user = user;
     }
 
-    public FValue(DataInputStream dis, Mind mind) throws IOException {
+    public FValue(DataInputStream dis, User user) throws IOException {
         id = dis.readLong();
-        function = mind.getFunctions().get(dis.readLong());
-        value = mind.getTerms().get(dis.readLong());
+        function = user.getMind().getFunctions().get(dis.readLong());
+        value = user.getMind().getTerms().get(dis.readLong());
         int count = dis.readInt();
         while (--count >= 0) {
 //            condition.createTVar(dis.readLong());
             condition.add(dis.readLong());
         }
-        this.mind = mind;
+        this.user = user;
     }
 
     public void setId(long id) {
@@ -169,14 +165,6 @@ public class FValue implements IValue {
 
     public FValue getNext() {
         return next;
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
-    }
-
-    public Mind getMind() {
-        return mind;
     }
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {

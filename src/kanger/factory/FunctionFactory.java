@@ -1,15 +1,9 @@
 package kanger.factory;
 
-import kanger.Mind;
-import kanger.primitives.Domain;
-import kanger.primitives.Function;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import kanger.*;
+import kanger.primitives.*;
 
 public class FunctionFactory { 
 
@@ -18,10 +12,10 @@ public class FunctionFactory {
 
     private Stack<Object[]> stack = new Stack<>();
 
-    private Mind mind = null;
+    private User user= null;
 
-    public FunctionFactory(Mind mind) {
-        this.mind = mind;
+    public FunctionFactory(User user) {
+        this.user = user;
     }
 
     public void transaction(FunctionFactory base) {
@@ -36,7 +30,6 @@ public class FunctionFactory {
             list.add(0, p);
         }
         for (Function p : list) {
-            p.setMind(mind);
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -44,7 +37,7 @@ public class FunctionFactory {
     }
 
     public Function add(Domain owner) {
-        Function p = new Function(owner, mind);
+        Function p = new Function(owner, user);
         p.setId(++lastID);
         p.setNext(root);
         root = p;
@@ -114,7 +107,7 @@ public class FunctionFactory {
         int count = dis.readInt();
         Function a = null, b;
         while (count-- > 0) {
-            b = new Function(dis, mind);
+            b = new Function(dis, user);
             if (a == null) {
                 root = b;
             } else {
