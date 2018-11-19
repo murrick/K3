@@ -820,7 +820,7 @@ public class Linker {
 
             boolean excluded = true;
             for (Domain d : tree.getSequence()) {
-                if (!d.isExcluded() || d.isStored()) {
+                if (!d.isExcluded()) {
                     excluded = false;
                     break;
                 }

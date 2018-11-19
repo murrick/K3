@@ -194,7 +194,7 @@ public class Analiser {
 
 
             for (Domain d : sequence) {
-                if (d.isComplete() && !d.isClosed()/* && !d.isExcluded() && !d.isStored()*/) {
+                if (d.isComplete() && !d.isClosed() /*&& !d.isExcluded() */ && !d.isStored()) {
                     result = false;
                     if (user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
                         user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
@@ -491,14 +491,17 @@ public class Analiser {
         user.getMind().getSolutions().clear();
         user.getMind().getValues().clear();
 
-        if (check(logging)) {
+//        if (check(logging)) {
 //            for (Tree t : set) {
 //                mind.getDatabase().collectResults(t.getSequence());
 //            }
-            result = true;
-        } else {
+//            result = true;
+//        } else {
 
             result = recurseTree(new ArrayList<>(tvars), 0, set, logging);
+        if (!result) {
+            result = check(logging);
+        }
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
 //            if (analiseTree(t, logging)) {
@@ -533,7 +536,7 @@ public class Analiser {
 //            }
 //        } while (countClosed != mind.getClosedTrees().size() || countUsed != mind.getUsedTrees().size());
 
-        }
+//        }
         if (logging) {
             user.getMind().getLog().add(LogMode.TIMING, "* Analising time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
         }

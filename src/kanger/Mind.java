@@ -174,6 +174,8 @@ public class Mind {
         user.setMind(this);
         log.commit(m.getLog());
 
+        queryResult = (Boolean) m.getQueryResult();
+//        querySource = m.getQuerySource();
     }
 
     public void rollback(Mind m) {
@@ -183,6 +185,9 @@ public class Mind {
 
         solves.commit(m.getSolutions());
         values.commit(m.getValues());
+
+        queryResult = (Boolean) m.getQueryResult();
+//        querySource = m.getQuerySource();
     }
 
     public void clear() {
