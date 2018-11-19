@@ -26,56 +26,64 @@ import java.util.zip.GZIPOutputStream;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Mind {
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false; 
-    
+    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
+
     private int id = 0;
     private Mind next = null;
     private User user = null;
-    
-    private final Set<Tree> usedTrees = new HashSet<>();
+
     private DatabaseFactory database = null;                     // База данных
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
     private RightFactory rights = null;                             // Список правил
     private TreeFactory trees = null;                                // Список секвенций
-    private LibraryStore library = null;                            // Системная библиотека функций и предикатов
     private TVariableFactory tVars = null;                      // t-переменные
     private TValueFactory tValues = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
+    private final Set<Tree> usedTrees = new HashSet<>();
+    //    private final Map<Domain, Set<List<Term>>> excludedDomains = new HashMap<>();
+//    private final Map<Domain, Set<List<Term>>> producedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Term>>> calculatedDomains = new HashMap<>();
+    private DatabaseFactory excludedDomains = null;                     // Варианты подстановок
+
     private HypotesisStore hypotesis = null;                                // Список гипотез
+    private DatabaseFactory producedDomains = null;                     // Производные
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
     private LogStore log = null;                                        // Протокол вывода
+
     private Calculator calculator = null;                             // Калькулятор
     private Analiser analiser = null;                                   // Анализатор
     private Compiler compiler = null;                                   // Компилятор
+    private LibraryStore library = null;                            // Системная библиотека функций и предикатов
 
-    private volatile boolean changed = false;
-    
-    private String sourceFileName = "mind.k";
-    private String compiledFileName = "mind.e";
+
     private final Set<Tree> closedTrees = new HashSet<>();
     private final Set<Tree> excludedTrees = new HashSet<>();
-    private Linker linker = null;                                         // Линкер
+    private HypotesisStore excluded = null;                                // Список исключенных гипотез
+
     private final Map<Domain, Set<List<Term>>> closedDomains = new HashMap<>();
     private final Map<Domain, Set<List<Term>>> usedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Term>>> excludedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Term>>> producedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Term>>> calculatedDomains = new HashMap<>();
-    private final Map<TVariable, Set<TValue>> blockedValues = new HashMap<>();
+    private Linker linker = null;                                         // Линкер
 
+    private final Map<TVariable, Set<TValue>> blockedValues = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariable, Set<TValue>> closedValues = new HashMap<>();
+
     private boolean isInsertion = false;
 
     private transient Map<Term, Long> dictionaryLinks = null;
     private transient Map<Domain, Long> domainLinks = null;
     private transient Map<TVariable, Long> tVariableLinks = null;
-
+    private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
+    private String sourceFileName = "mind.k";
+    private String compiledFileName = "mind.e";
+
+
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
 
     public Mind(User user) {
@@ -103,7 +111,6 @@ public class Mind {
         functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
 
-
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
     }
 
@@ -122,7 +129,11 @@ public class Mind {
         functions = new FunctionFactory(user);                    // Функции
         fValues = new FValueFactory(user);                          // Решения функций
 
+        excludedDomains = new DatabaseFactory(user);
+        producedDomains = new DatabaseFactory(user);
+
         hypotesis = new HypotesisStore();                                // Список гипотез
+        excluded = new HypotesisStore();                                // Список исключенных гипотез
         solves = new SolutionsStore(user);                         // Список решений
         values = new ValuesStore(user);                               // Список значений
 
@@ -132,8 +143,68 @@ public class Mind {
         analiser = new Analiser(user);                                   // Анализатор
         compiler = new Compiler(user);                                   // Компилятор
         linker = new Linker(user);                                         // Линкер
+    }
+
+    public void commit(Mind m) {
+        SortedSet vars = new TreeSet<>();
+        terms.commit(m.getTerms(), vars);
+        tVars.commit(m.getTVars(), vars);
+        tValues.commit(m.getTValues());
+        fValues.commit(m.getFValues());
+        predicates.commit(m.getPredicates());
+        domains.commit(m.getDomains());
+        database.commit(m.getDatabase());
+        rights.commit(m.getRights());
+        trees.commit(m.getTrees());
+        functions.commit(m.getFunctions());
+        excludedDomains.commit(m.getExcludedDomains());
+        producedDomains.commit(m.getProducedDomains());
+
+//        log.commit(m.getLog());
+//        solves.commit(m.getSolutions());
+//        values.commit(m.getValues());
+
+        for (Object o : vars) {
+            int i = terms.nextVarIndex();
+            if (o instanceof Term) {
+                String temp = String.format("%c%d", Enums.CVC, i);
+                ((Term) o).setIndex(i);
+                ((Term) o).setVal(temp);
+            } else {
+                ((TVariable) o).setIndex(i);
+            }
+        }
+
+        user.setMind(this);
+    }
+
+    public void rollback() {
+        user.setMind(this);
+    }
+
+    public void clear() {
+        terms.clear();
+        predicates.clear();
+        database.clear();
+        domains.clear();
+        tVars.clear();
+        tValues.clear();
+        rights.clear();
+        trees.clear();
+        functions.clear();
+        fValues.clear();
+        excludedDomains.clear();
+        producedDomains.clear();
+
+        solves.clear();
+        values.clear();
+        hypotesis.clear();
+        excluded.clear();
+
+//        log.clear();
 
     }
+
 
     public void setUser(User user) {
         this.user = user;
@@ -211,6 +282,10 @@ public class Mind {
         return hypotesis;
     }
 
+    public HypotesisStore getExcludedHypotesis() {
+        return excluded;
+    }
+
     public LogStore getLog() {
         return log;
     }
@@ -233,61 +308,6 @@ public class Mind {
 
     public void setChanged(boolean b) {
         changed = b;
-    }
-
-    public void commit(Mind m) {
-        SortedSet vars = new TreeSet<>();
-        terms.commit(m.getTerms(), vars);
-        tVars.commit(m.getTVars(), vars);
-        tValues.commit(m.getTValues());
-        fValues.commit(m.getFValues());
-        predicates.commit(m.getPredicates());
-        domains.commit(m.getDomains());
-        database.commit(m.getDatabase());
-        rights.commit(m.getRights());
-        trees.commit(m.getTrees());
-        functions.commit(m.getFunctions());
-
-//        log.commit(m.getLog());
-//        solves.commit(m.getSolutions());
-//        values.commit(m.getValues());
-
-        for (Object o : vars) {
-            int i = terms.nextVarIndex();
-            if (o instanceof Term) {
-                String temp = String.format("%c%d", Enums.CVC, i);
-                ((Term) o).setIndex(i);
-                ((Term) o).setVal(temp);
-            } else {
-                ((TVariable) o).setIndex(i);
-            }
-        }
-        
-        user.setMind(this);
-    }
-    
-    public void rollback() {
-        user.setMind(this);
-    }
-
-    public void clear() {
-        terms.clear();
-        predicates.clear();
-        database.clear();
-        domains.clear();
-        tVars.clear();
-        tValues.clear();
-        rights.clear();
-        trees.clear();
-        functions.clear();
-        fValues.clear();
-
-        solves.clear();
-        values.clear();
-        hypotesis.clear();
-        
-//        log.clear();
-
     }
 
     public void link(boolean logging) throws RuntimeErrorException {
@@ -316,14 +336,15 @@ public class Mind {
         m.link(true);
         Boolean ar = m.analise(true);
 
+        excluded.clear();
+        log.commit(m.getLog());
         if (ar) {
             rollback();
-            log.commit(m.getLog());
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             return false;
         } else {
             commit(m);
-            log.commit(m.getLog());
+            excluded.commit(m.getHypotesisStore());
             return true;
         }
     }
@@ -565,11 +586,11 @@ public class Mind {
         return usedDomains;
     }
 
-    public Map<Domain, Set<List<Term>>> getExcludedDomains() {
+    public DatabaseFactory getExcludedDomains() {
         return excludedDomains;
     }
 
-    public Map<Domain, Set<List<Term>>> getProducedDomains() {
+    public DatabaseFactory getProducedDomains() {
         return producedDomains;
     }
 
@@ -730,8 +751,6 @@ public class Mind {
         boolean storeS = getSolutions().isEnabled();
         boolean storeL = getLog().isEnabled();
 
-        HypotesisStore excludeHypotesis = new HypotesisStore();
-
         getHypotesisStore().enable(!testMode);
         getValues().enable(!testMode);
         getSolutions().enable(!testMode);
@@ -747,12 +766,25 @@ public class Mind {
 
         getLog().add(LogMode.ANALIZER, "============= CHECKING ===================");
 
-        Boolean ar = analise(true);
+        Mind m = new Mind(this);
+//        excluded.clear();
+//        m.link(true);
+        Boolean ar = m.analise(true);
+        rollback();
+        excluded.commit(m.getHypotesisStore());
+
         if (ar) {
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             res = null;
         } else {
-            excludeHypotesis.addAll(getHypotesisStore().getRoot());
+
+
+            if (!excluded.isEmpty()) {
+                for (Hypotese h : excluded.getRoot()) {
+                    getLog().add(LogMode.ANALIZER, "Hypotesis excluded: " + h.toString());
+                }
+                getLog().add(LogMode.ANALIZER, "------------------------------------------");
+            }
             int key = line.charAt(0);
             switch (key) {
 
@@ -763,7 +795,7 @@ public class Mind {
                 case Enums.ANT: {
                     getLog().add(LogMode.ANALIZER, "============= ACCEPTING ===================");
 
-                    Mind m = new Mind(this);
+                    m = new Mind(this);
                     Right r = (Right) m.compileLine(line);
 //                    r.setQuery(true);
 
@@ -776,35 +808,38 @@ public class Mind {
                         ar = m.analise(true);
                         if (ar) {
                             rollback();
-                            log.commit(m.getLog());
                             m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
                             res = null;
                         } else {
-                            res = true;
-                            if (!isInsertion) {
-                                m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
-                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
-                                commit(m);
-                                setChanged(true);
-                            } else {
-                                removeInsertionRight(r);
-                                if (m.getHypotesisStore().size() != 0) {
-                                    m.getLog().add(LogMode.SAVED, "Predicates added:");
-                                    int i = 0;
-                                    for (Hypotese s : (List<Hypotese>) m.getHypotesisStore().getRoot()) {
-                                        //TODO: Тут надо использовать Domain а не Hypotese
-                                        //TODO: Добавление предикаторв в базу добавить!
-//                                        mind.getText().append(String.format("%c%s", Enums.ANT, s.toString()) + "\r");
-//                                        mind.getSolutions().createTVar(String.format("%c%s", Enums.ANT, s.toString()));
-                                        m.getLog().add(LogMode.SAVED, String.format("\tSolution %03d: \t%s", ++i, String.format("%c%s", Enums.ANT, s.toString())));
-                                    }
-                                }
-                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New solves: " + m.getHypotesisStore().size());
-                            }
+                            commit(m);
+                            excluded.commit(m.getHypotesisStore());
 
-                            m.commit(m);
+//                            if (!isInsertion) {
+                            m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
+                            m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
                             setChanged(true);
+                            res = true;
+//                            } else {
+//                                removeInsertionRight(r);
+//                                if (m.getHypotesisStore().size() != 0) {
+//                                    m.getLog().add(LogMode.SAVED, "Predicates added:");
+//                                    int i = 0;
+//                                    for (Hypotese s : (List<Hypotese>) m.getHypotesisStore().getRoot()) {
+//                                        //TODO: Тут надо использовать Domain а не Hypotese
+//                                        //TODO: Добавление предикаторв в базу добавить!
+////                                        mind.getText().append(String.format("%c%s", Enums.ANT, s.toString()) + "\r");
+////                                        mind.getSolutions().createTVar(String.format("%c%s", Enums.ANT, s.toString()));
+//                                        m.getLog().add(LogMode.SAVED, String.format("\tSolution %03d: \t%s", ++i, String.format("%c%s", Enums.ANT, s.toString())));
+//                                    }
+//                                }
+//                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New solves: " + m.getHypotesisStore().size());
                         }
+                        log.commit(m.getLog());
+
+//                        excluded.commit();
+//                        commit(m);
+//                        setChanged(true);
+//                    }
                     } else {
                         rollback();
                     }
@@ -837,7 +872,7 @@ public class Mind {
 
                         if (!DEBUG_DISABLE_FALSE_CHECK) {
 
-                            Mind m = new Mind(this);
+                            m = new Mind(this);
                             m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
 
                             Right r = (Right) m.compileLine(invert(line));
@@ -862,8 +897,8 @@ public class Mind {
                                     hypotesis.commit(m.getHypotesisStore());
                                 }
                                 log.commit(m.getLog());
-                            
-                                
+
+
                             }
                             rollback();
 
@@ -872,7 +907,7 @@ public class Mind {
 
                     if (res == null) {
 
-                        Mind m = new Mind(this);
+                        m = new Mind(this);
                         m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
 
                         Right r = (Right) m.compileLine(line);
@@ -921,7 +956,7 @@ public class Mind {
                             } else {
 
                                 hypotesis.commit(m.getHypotesisStore());
-                                hypotesis.exclude(excludeHypotesis);
+                                hypotesis.exclude(excluded);
 
                                 if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
                                     m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));

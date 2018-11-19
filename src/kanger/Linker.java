@@ -106,14 +106,18 @@ public class Linker {
         if (level >= master.getPredicate().getRange()) {
 
             if (occurrsMaster || occurrsSlave) {
+                List<Argument> args = new ArrayList<>();
+                for (Term t : solves) {
+                    args.add(new Argument(t));
+                }
 
                 boolean result = false;
                 if (occurrsMaster) {
-                    master.setExcluded(solves);
+                    master.setExcluded(args);
                     result = logComparsion(logging, master) || result;
                 }
                 if (occurrsSlave) {
-                    slave.setExcluded(solves);
+                    slave.setExcluded(args);
                     result = logComparsion(logging, slave) || result;
                 }
                 if (result) {
@@ -163,7 +167,7 @@ public class Linker {
 //                } else {
 //                    s = master.get(i).getTVariable().find(slave.get(i).getValue());
 //                }
-                    if (slave.isQuery() || master.isQuery()) {
+                    if (slave.isQuery() /*|| master.isQuery()*/) {
                         s.setQuery();
                     }
                 } else {
@@ -209,7 +213,7 @@ public class Linker {
                     s = slave.get(i).getT().find(master.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, master, slave);
-                    if (master.isQuery() || slave.isQuery()) {
+                    if (master.isQuery() /*|| slave.isQuery()*/) {
                         s.setQuery();
                     }
                 }
@@ -295,7 +299,7 @@ public class Linker {
                     }
                 }
 
-                if (d.isUsed()) {
+                if (d.isUsed() && d.isComplete()) {
                     for (TVariable t : d.getTVariables(true)) {
                         for (Domain x : t.getUsage()) {
                             if (d.getId() != x.getId() && !x.isProduced()) {
@@ -614,18 +618,13 @@ public class Linker {
     }
 
     public void link(boolean logging) throws RuntimeErrorException {
-        user.getMind().getUsedTrees().clear();
-        user.getMind().getClosedTrees().clear();
         user.getMind().getExcludedTrees().clear();
 
-        user.getMind().getClosedDomains().clear();
         user.getMind().getUsedDomains().clear();
-        user.getMind().getExcludedDomains().clear();
-        user.getMind().getProducedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
 
-        user.getMind().getSolutions().clear();
-        user.getMind().getValues().clear();
+        user.getMind().getExcludedDomains().clear();
+        user.getMind().getProducedDomains().clear();
 
         link(null, logging);
     }
@@ -692,7 +691,7 @@ public class Linker {
 //            mind.getExcludedDomains().clear();
 //            mind.getProducedDomains().clear();
 //            mind.getStoredDomains().clear();
-            user.getMind().getUsedTrees().clear();
+//            user.getMind().getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
             while (updateDomains(tset, master, slave, 0, logging)) ;

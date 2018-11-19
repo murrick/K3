@@ -1,9 +1,17 @@
 package kanger.factory;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.primitives.Argument;
+import kanger.primitives.Domain;
+import kanger.primitives.Predicate;
+import kanger.primitives.Right;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
@@ -32,7 +40,7 @@ public class DomainFactory {
         for (Domain p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (Domain p : list) { 
+        for (Domain p : list) {
             p.setNext(root);
             root = p;
             p.setId(lastID++);

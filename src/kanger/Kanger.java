@@ -1,7 +1,11 @@
 package kanger;
 
-import kanger.exception.*;
-import kanger.primitives.*;
+import kanger.exception.ParseErrorException;
+import kanger.exception.RuntimeErrorException;
+import kanger.primitives.Hypotese;
+import kanger.primitives.Solution;
+import kanger.primitives.TMeaning;
+import kanger.primitives.Term;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -210,12 +214,12 @@ public class Kanger {
 //            new Linker(mind).link(true);
             
             mind = mindRoot;
-            
-//            mind = new Mind(mindRoot); set01_01(); mindRoot.rollback();
-//            mind = new Mind(mindRoot); set01_02(); mindRoot.rollback();
-//            mind = new Mind(mindRoot); 
-            set01_03(); 
-//            mindRoot.rollback();
+
+//            set01_01();
+//            set01_02();
+//            set01_03();
+//            set01_04();
+            set01_05();
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();
             
 //            mindRoot.getLog().commit(mind.getLog());
