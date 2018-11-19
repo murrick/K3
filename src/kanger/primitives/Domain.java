@@ -318,17 +318,12 @@ public class Domain {
     }
 
     private boolean isEqualsArguments(List<Term> params) {
-        for (int i = 0; i < predicate.getRange(); ++i) {
-            if (arguments.get(i).isEmpty() || arguments.get(i).getValue().getId() != params.get(i).getId()) {
-                return false;
-            }
-        }
-        return true;
+        return isEqualsArguments(arguments, params);
     }
 
-    private boolean isEqualsArguments(Term[] solves, List<Term> params) {
+    private boolean isEqualsArguments(List<Argument> solves, List<Term> params) {
         for (int i = 0; i < predicate.getRange(); ++i) {
-            if (solves[i] == null || solves[i].getId() != params.get(i).getId()) {
+            if (!solves.get(i).isEmpty() && solves.get(i).getValue().getId() != params.get(i).getId()) {
                 return false;
             }
         }
@@ -336,10 +331,14 @@ public class Domain {
     }
 
     private List<Term> convertArguments() throws ParametersIncompleteException {
+        return convertArguments(arguments);
+    }
+
+    private List<Term> convertArguments(List<Argument> args) throws ParametersIncompleteException {
         List<Term> list = new ArrayList<>();
         for (int i = 0; i < predicate.getRange(); ++i) {
             try {
-                list.add(arguments.get(i).getValue());
+                list.add(args.get(i).getValue());
             } catch (Exception x) {
                 throw new ParametersIncompleteException("Incomplete args: " + predicate.toString() + " : " + i);
                 //System.out.println(i);
@@ -398,32 +397,74 @@ public class Domain {
     }
 
     public boolean isExcluded(List<Argument> args) {
-        return user.getMind().getExcludedDomains().find(predicate, antc, args) != null;
+        if (user.getMind().getExcludedDomains().containsKey(this)) {
+            for (List<Term> list : user.getMind().getExcludedDomains().get(this)) {
+                if (isEqualsArguments(args, list)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public boolean isExcluded() {
-        return user.getMind().getExcludedDomains().find(predicate, antc, arguments) != null;
+        if (user.getMind().getExcludedDomains().containsKey(this)) {
+            for (List<Term> list : user.getMind().getExcludedDomains().get(this)) {
+                if (isEqualsArguments(list)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void setExcluded(List<Argument> args) {
-        if (!isExcluded(args)) {
-            user.getMind().getExcludedDomains().add(predicate, antc, args, right);
+        if (!user.getMind().getExcludedDomains().containsKey(this)) {
+            user.getMind().getExcludedDomains().put(this, new HashSet<>());
+        }
+        if (!isUsed()) {
+            try {
+                user.getMind().getExcludedDomains().get(this).add(convertArguments(args));
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
         }
     }
 
     public void setExcluded() {
-        if (!isExcluded()) {
-            user.getMind().getExcludedDomains().add(predicate, antc, arguments, right);
+        if (!user.getMind().getExcludedDomains().containsKey(this)) {
+            user.getMind().getExcludedDomains().put(this, new HashSet<>());
+        }
+        if (!isUsed()) {
+            try {
+                user.getMind().getExcludedDomains().get(this).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
         }
     }
 
     public boolean isProduced() {
-        return user.getMind().getProducedDomains().find(predicate, antc, arguments) != null;
+        if (user.getMind().getProducedDomains().containsKey(this)) {
+            for (List<Term> list : user.getMind().getProducedDomains().get(this)) {
+                if (isEqualsArguments(list)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void setProduced() {
-        if (!isProduced()) {
-            user.getMind().getProducedDomains().add(predicate, antc, arguments, right);
+        if (!user.getMind().getProducedDomains().containsKey(this)) {
+            user.getMind().getProducedDomains().put(this, new HashSet<>());
+        }
+        if (!isUsed()) {
+            try {
+                user.getMind().getProducedDomains().get(this).add(convertArguments());
+            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+            }
         }
     }
 

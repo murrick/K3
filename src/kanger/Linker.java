@@ -763,7 +763,7 @@ public class Linker {
             }
         } else {
             for (Domain d : tree.getSequence()) {
-                if (d.isComplete() && d.isProduced() && !(d.isCalculated() && d.isExcluded()) /*&& !d.isStored()*/ /*&& !d.isExcluded()*/ && !d.isUsed()) {
+                if (d.isComplete() && d.isProduced() && !(d.isCalculated() && !d.isExcluded()) /*&& !d.isStored()*/ /*&& !d.isExcluded()*/ && !d.isUsed()) {
                     if (produced == null) {
                         produced = d;
                     } else {
@@ -820,7 +820,7 @@ public class Linker {
 
             boolean excluded = true;
             for (Domain d : tree.getSequence()) {
-                if (!d.isExcluded()) {
+                if (!d.isExcluded() || d.isStored()) {
                     excluded = false;
                     break;
                 }

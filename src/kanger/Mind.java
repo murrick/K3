@@ -42,20 +42,17 @@ public class Mind {
     private TValueFactory tValues = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
+
     private final Set<Tree> usedTrees = new HashSet<>();
-    //    private final Map<Domain, Set<List<Term>>> excludedDomains = new HashMap<>();
-//    private final Map<Domain, Set<List<Term>>> producedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Term>>> calculatedDomains = new HashMap<>();
-    private DatabaseFactory excludedDomains = null;                     // Варианты подстановок
 
     private HypotesisStore hypotesis = null;                                // Список гипотез
-    private DatabaseFactory producedDomains = null;                     // Производные
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
     private LogStore log = null;                                        // Протокол вывода
 
     private Calculator calculator = null;                             // Калькулятор
     private Analiser analiser = null;                                   // Анализатор
+    private final Map<Domain, Set<List<Term>>> excludedDomains = new HashMap<>();
     private Compiler compiler = null;                                   // Компилятор
     private LibraryStore library = null;                            // Системная библиотека функций и предикатов
 
@@ -66,7 +63,10 @@ public class Mind {
 
     private final Map<Domain, Set<List<Term>>> closedDomains = new HashMap<>();
     private final Map<Domain, Set<List<Term>>> usedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Term>>> producedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Term>>> calculatedDomains = new HashMap<>();
     private Linker linker = null;                                         // Линкер
+
 
     private final Map<TVariable, Set<TValue>> blockedValues = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
@@ -77,6 +77,7 @@ public class Mind {
     private transient Map<Term, Long> dictionaryLinks = null;
     private transient Map<Domain, Long> domainLinks = null;
     private transient Map<TVariable, Long> tVariableLinks = null;
+
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
@@ -129,9 +130,6 @@ public class Mind {
         functions = new FunctionFactory(user);                    // Функции
         fValues = new FValueFactory(user);                          // Решения функций
 
-        excludedDomains = new DatabaseFactory(user);
-        producedDomains = new DatabaseFactory(user);
-
         hypotesis = new HypotesisStore();                                // Список гипотез
         excluded = new HypotesisStore();                                // Список исключенных гипотез
         solves = new SolutionsStore(user);                         // Список решений
@@ -157,8 +155,6 @@ public class Mind {
         rights.commit(m.getRights());
         trees.commit(m.getTrees());
         functions.commit(m.getFunctions());
-        excludedDomains.commit(m.getExcludedDomains());
-        producedDomains.commit(m.getProducedDomains());
 
 //        log.commit(m.getLog());
 //        solves.commit(m.getSolutions());
@@ -176,10 +172,17 @@ public class Mind {
         }
 
         user.setMind(this);
+        log.commit(m.getLog());
+
     }
 
-    public void rollback() {
+    public void rollback(Mind m) {
+
         user.setMind(this);
+        log.commit(m.getLog());
+
+        solves.commit(m.getSolutions());
+        values.commit(m.getValues());
     }
 
     public void clear() {
@@ -193,8 +196,6 @@ public class Mind {
         trees.clear();
         functions.clear();
         fValues.clear();
-        excludedDomains.clear();
-        producedDomains.clear();
 
         solves.clear();
         values.clear();
@@ -336,14 +337,13 @@ public class Mind {
         m.link(true);
         Boolean ar = m.analise(true);
 
-        excluded.clear();
-        log.commit(m.getLog());
         if (ar) {
-            rollback();
+            rollback(m);
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             return false;
         } else {
             commit(m);
+            excluded.clear();
             excluded.commit(m.getHypotesisStore());
             return true;
         }
@@ -586,11 +586,11 @@ public class Mind {
         return usedDomains;
     }
 
-    public DatabaseFactory getExcludedDomains() {
+    public Map<Domain, Set<List<Term>>> getExcludedDomains() {
         return excludedDomains;
     }
 
-    public DatabaseFactory getProducedDomains() {
+    public Map<Domain, Set<List<Term>>> getProducedDomains() {
         return producedDomains;
     }
 
@@ -766,17 +766,17 @@ public class Mind {
 
         getLog().add(LogMode.ANALIZER, "============= CHECKING ===================");
 
-        Mind m = new Mind(this);
+//        Mind m = new Mind(this);
 //        excluded.clear();
 //        m.link(true);
-        Boolean ar = m.analise(true);
-        rollback();
-        excluded.commit(m.getHypotesisStore());
+//        Boolean ar = m.analise(true);
+//        rollback();
+//        excluded.commit(m.getHypotesisStore());
 
-        if (ar) {
-            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-            res = null;
-        } else {
+//        if (ar) {
+//            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+//            res = null;
+//        } else {
 
 
             if (!excluded.isEmpty()) {
@@ -795,7 +795,7 @@ public class Mind {
                 case Enums.ANT: {
                     getLog().add(LogMode.ANALIZER, "============= ACCEPTING ===================");
 
-                    m = new Mind(this);
+                    Mind m = new Mind(this);
                     Right r = (Right) m.compileLine(line);
 //                    r.setQuery(true);
 
@@ -805,9 +805,9 @@ public class Mind {
                         m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
 
                         m.link(r, true);
-                        ar = m.analise(true);
+                        boolean ar = m.analise(true);
                         if (ar) {
-                            rollback();
+                            rollback(m);
                             m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
                             res = null;
                         } else {
@@ -834,14 +834,9 @@ public class Mind {
 //                                }
 //                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New solves: " + m.getHypotesisStore().size());
                         }
-                        log.commit(m.getLog());
-
-//                        excluded.commit();
-//                        commit(m);
-//                        setChanged(true);
 //                    }
                     } else {
-                        rollback();
+                        rollback(m);
                     }
                 }
                 break;
@@ -872,7 +867,7 @@ public class Mind {
 
                         if (!DEBUG_DISABLE_FALSE_CHECK) {
 
-                            m = new Mind(this);
+                            Mind m = new Mind(this);
                             m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
 
                             Right r = (Right) m.compileLine(invert(line));
@@ -886,28 +881,26 @@ public class Mind {
 
                                 m.link(r, true);
 
-                                ar = m.analise(true);
+                                boolean ar = m.analise(true);
                                 if (ar) {
                                     m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
                                     logResult(m);
-                                    solves.commit(m.getSolutions());
-                                    values.commit(m.getValues());
+//                                    solves.commit(m.getSolutions());
+//                                    values.commit(m.getValues());
                                     res = false;
                                 } else {
                                     hypotesis.commit(m.getHypotesisStore());
                                 }
-                                log.commit(m.getLog());
-
 
                             }
-                            rollback();
+                            rollback(m);
 
                         }
                     }
 
                     if (res == null) {
 
-                        m = new Mind(this);
+                        Mind m = new Mind(this);
                         m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
 
                         Right r = (Right) m.compileLine(line);
@@ -919,7 +912,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
 
                             m.link(r, true);
-                            ar = m.analise(true);
+                            boolean ar = m.analise(true);
                             if (ar) {
 
                                 if (isInsertion) {
@@ -947,8 +940,8 @@ public class Mind {
                                 } else {
                                     m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
                                     logResult(m);
-                                    solves.commit(m.getSolutions());
-                                    values.commit(m.getValues());
+//                                    solves.commit(m.getSolutions());
+//                                    values.commit(m.getValues());
                                     res = true;
                                 }
                             } else if (isInsertion) {
@@ -964,9 +957,8 @@ public class Mind {
                                     m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
                                 }
                             }
-                            log.commit(m.getLog());
                         }
-                        rollback();
+                        rollback(m);
 
 //TODO: Померял местами с началом
 //                        mind.release();
@@ -975,7 +967,7 @@ public class Mind {
                     break;
                 }
             }
-        }
+//        }
 
         getHypotesisStore().enable(storeH);
         getValues().enable(storeV);
