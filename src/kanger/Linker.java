@@ -163,7 +163,7 @@ public class Linker {
 //                } else {
 //                    s = master.get(i).getTVariable().find(slave.get(i).getValue());
 //                }
-                    if (slave.isQuery() || master.isQuery()) {
+                    if (slave.isQuery() /*|| master.isQuery()*/) {
                         s.setQuery();
                     }
                 } else {
@@ -209,7 +209,7 @@ public class Linker {
                     s = slave.get(i).getT().find(master.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, master, slave);
-                    if (master.isQuery() || slave.isQuery()) {
+                    if (master.isQuery() /*|| slave.isQuery()*/) {
                         s.setQuery();
                     }
                 }
