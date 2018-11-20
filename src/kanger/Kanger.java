@@ -5,7 +5,7 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.Hypotese;
 import kanger.primitives.Solution;
-import kanger.primitives.TMeaning;
+import kanger.primitives.TValue;
 import kanger.primitives.Term;
 
 import java.util.ArrayList;
@@ -947,7 +947,7 @@ public class Kanger {
         }
         */
 
-        Mind mind = (Mind) set02.get(0).run("set02_01");
+        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
         Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();
@@ -994,7 +994,7 @@ public class Kanger {
         }
         if (!mind.getValues().isEmpty()) {
             System.out.println("Values: (" + mind.getValues().size() + ")");
-            for (TMeaning s : mind.getValues().getRoot()) {
+            for (TValue s : mind.getValues().getRoot()) {
                 System.out.println("\t" + s);
             }
         }

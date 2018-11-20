@@ -4,7 +4,7 @@ import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Hypotese;
 import kanger.primitives.Solution;
-import kanger.primitives.TMeaning;
+import kanger.primitives.TValue;
 import kanger.primitives.Term;
 
 import static org.junit.Assert.fail;
@@ -31,7 +31,7 @@ public class KangerTest {
         }
         if (!mind.getValues().isEmpty()) {
             System.out.println("Values: (" + mind.getValues().size() + ")");
-            for (TMeaning s : mind.getValues().getRoot()) {
+            for (TValue s : mind.getValues().getRoot()) {
                 System.out.println("\t" + s);
             }
         }
@@ -448,11 +448,15 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?$x a(x) && d(x);");
         showResult(true);
-        Term term = mind.getTerms().add("nnn");
-        if (!mind.getValues().getValues("x").contains(term)) {
-            fail("Expected x: " + term);
-        }
-        if (mind.getValues().getValues("x").size() != 1) {
+        if (!mind.getValues().isEmpty()) {
+            Term term = mind.getTerms().add("nnn");
+            if (!mind.getValues().getValues("x").contains(term)) {
+                fail("Expected x: " + term);
+            }
+            if (mind.getValues().getValues("x").size() != 1) {
+                fail("Expected 1 solve");
+            }
+        } else {
             fail("Expected 1 solve");
         }
         System.out.println("OK");

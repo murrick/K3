@@ -165,6 +165,8 @@ public class Domain {
             s += t.getF().toString();
         } else if (t.isTSet()) {
             s += t.getT().toString();
+        } else if (t.isVSet()) {
+            s += t.getV().toString();
         } else if (!t.isEmpty()) {
             s += t.getValue().toString();
         } else {

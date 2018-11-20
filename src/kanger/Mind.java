@@ -995,7 +995,7 @@ public class Mind {
         if (mind.getValues().size() > 0) {
             mind.getLog().add(LogMode.VALUES, "Values(" + mind.getValues().size() + "):");
             int i = 0;
-            for (TMeaning log : mind.getValues().getRoot()) {
+            for (TValue log : mind.getValues().getRoot()) {
                 mind.getLog().add(LogMode.VALUES, String.format("\tSolution %03d: %s", ++i, log.toString()));
             }
         }

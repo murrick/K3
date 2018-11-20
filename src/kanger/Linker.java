@@ -499,11 +499,11 @@ public class Linker {
                 }
             }
 
-            if (/*found && */logging) {
-                if (!found) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "CONFIRMED: " + t.toString());
-                }
-                for (Domain slave : t.getSrcSolves()) {
+            if (found && logging) {
+//                if (!found) {
+//                    user.getMind().getLog().add(LogMode.ANALIZER, "CONFIRMED: " + t.toString());
+//                }
+                for (Domain slave : t.getSrcSolves(master)) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
                     if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");

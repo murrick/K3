@@ -7,6 +7,7 @@ import kanger.interfaces.IValue;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -177,6 +178,20 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     public List<Domain> getSrcSolves() {
         if (user.getMind().getTValues().get(this) != null) {
             return user.getMind().getTValues().get(this).getSrcSolves();
+        } else {
+            return null;
+        }
+    }
+
+    public List<Domain> getSrcSolves(Domain slave) {
+        if (user.getMind().getTValues().get(this) != null) {
+            List<Domain> list = new ArrayList<>();
+            for (Domain d : user.getMind().getTValues().get(this).getSrcSolves()) {
+                if (d.equalsBase(slave)) {
+                    list.add(d);
+                }
+            }
+            return list;
         } else {
             return null;
         }

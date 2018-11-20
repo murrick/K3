@@ -1,9 +1,7 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.primitives.Domain;
-import kanger.primitives.TMeaning;
-import kanger.primitives.TVariable;
+import kanger.primitives.TValue;
 import kanger.primitives.Term;
 
 import java.util.ArrayList;
@@ -14,7 +12,7 @@ import java.util.List;
  */
 public class ValuesStore {
 
-    private List<TMeaning> root = null;
+    private List<TValue> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -36,15 +34,32 @@ public class ValuesStore {
         }
     }
 
-    public TMeaning add(TVariable t, Domain d) {
+//    public TValue add(TVariable t) {
+//        if(!enableStore) {
+//            return null;
+//        }
+//        if (root == null) {
+//            root = new ArrayList<>();
+//        }
+//        TValue m = t.getCurrent();
+////        m.setSolution(user.getMind().getSolutions().add(d));
+//        if (!root.contains(m)) {
+//            root.add(m);
+//        } else {
+//            m = root.get(root.indexOf(m));
+//        }
+//        return m;
+//    }
+
+    public TValue add(TValue t) {
         if(!enableStore) {
             return null;
         }
         if (root == null) {
             root = new ArrayList<>();
         }
-        TMeaning m = new TMeaning(t);
-        m.setSolution(user.getMind().getSolutions().add(d));
+        TValue m = t;
+//        m.setSolution(user.getMind().getSolutions().add(d));
         if (!root.contains(m)) {
             root.add(m);
         } else {
@@ -61,25 +76,25 @@ public class ValuesStore {
         return enableStore;
     }
 
-    public TMeaning get(int index) {
+    public TValue get(int index) {
         return root.get(index);
     }
 
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
-        for (TMeaning t : root) {
-            if (name == null || name.equals(t.getVariable().getName())) {
+        for (TValue t : root) {
+            if (name == null || name.equals(t.getTVar().getName())) {
                 list.add(t.getValue());
             }
         }
         return list;
     }
 
-    public int find(TMeaning s) {
+    public int find(TValue s) {
         return root.indexOf(s);
     }
 
-    public List<TMeaning> getRoot() {
+    public List<TValue> getRoot() {
         return root;
     }
 
