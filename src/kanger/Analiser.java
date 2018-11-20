@@ -181,12 +181,12 @@ public class Analiser {
 
         if (result) {
 
-            t.setUsed();
-            u.setUsed();
+//            t.setUsed();
+//            u.setUsed();
 
             boolean show = false;
             for (Domain d : sequence) {
-                if (d.isComplete() && !d.isClosed() /*&& !d.isExcluded() */ && !d.isStored()) {
+                if (d.isComplete() && !d.isClosed() && !(d.isExcluded() && d.isQuery()) && !d.isStored()) {
                     result = false;
                     if (user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
                         show = true;

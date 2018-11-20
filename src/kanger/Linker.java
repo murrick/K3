@@ -166,14 +166,14 @@ public class Linker {
 //                } else {
 //                    s = master.get(i).getTVariable().find(slave.get(i).getValue());
 //                }
-                    if (slave.isQuery() /*|| master.isQuery()*/) {
+                    if (slave.isQuery() || master.getRight().isQuery()) {
                         s.setQuery();
                     }
                 } else {
                     s = master.get(i).getT().find(slave.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, slave, master);
-                    if (slave.isQuery() /*|| master.isQuery()*/) {
+                    if (slave.isQuery() || master.getRight().isQuery()) {
                         s.setQuery();
                     }
                 }
@@ -205,14 +205,14 @@ public class Linker {
 //                } else {
 //                    s = slave.get(i).getTVariable().find(master.get(i).getValue());
 //                }
-                    if (master.isQuery() /*|| slave.isQuery()*/) {
+                    if (master.isQuery() || slave.getRight().isQuery()) {
                         s.setQuery();
                     }
                 } else {
                     s = slave.get(i).getT().find(master.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, master, slave);
-                    if (master.isQuery() /*|| slave.isQuery()*/) {
+                    if (master.isQuery() || slave.getRight().isQuery()) {
                         s.setQuery();
                     }
                 }
@@ -221,7 +221,7 @@ public class Linker {
 
             }
 
-            if ((!occurrsSlave && !occurrsSlave && (slave.get(i).isEmpty() || master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId()))) {
+            if ((!occurrsSlave && !occurrsMaster && (slave.get(i).isEmpty() || master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId()))) {
                 throw new SubstitutionException(master + " > " + slave);
             }
 //            }
@@ -369,6 +369,9 @@ public class Linker {
 //                                        if(d1.isQuery() || d2.isQuery()) {
 //                                            System.out.println("!");
 //                                        }
+
+                                            master.setUsed();
+                                            slave.setUsed();
 
                                             result = true;
                                             linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
@@ -616,6 +619,24 @@ public class Linker {
         return set;
     }
 
+    public Queue<Tree> getUsedTrees(Right r) {
+        Queue<Tree> set = new LinkedList<>();
+
+        if (r != null) {
+            set.addAll(r.getTree());
+            for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
+                if (t.isUsed()) {
+                    set.add(t);
+                }
+            }
+        } else {
+            for (Right rx = user.getMind().getRights().getRoot(); rx != null; rx = rx.getNext()) {
+                set.addAll(rx.getTree());
+            }
+        }
+        return set;
+    }
+
     public void link(boolean logging) throws RuntimeErrorException {
         user.getMind().getExcludedTrees().clear();
 
@@ -641,13 +662,14 @@ public class Linker {
 //        mind.getExcludedTrees().clear();
         //TODO: Нужно сделать динамический сет
         Queue<Tree> slave = getActualTrees(r);
-        Queue<Tree> master;
+        Queue<Tree> master = getUsedTrees(r);
 //        if (r != null) {
 //            master = new LinkedList<>();
 //            master.addAll(r.getTree());
 //        } else {
-        master = slave;
+//            master = slave;
 //        }
+
 //todo добвалять produced
 
         TValue saveT = null;
@@ -658,8 +680,8 @@ public class Linker {
 //        mind.getQueryValues().clear();
 
         do {
-            slave = getActualTrees(r);
-            master = slave;
+//            slave = getActualTrees(r);
+//            master = slave;
 
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
@@ -672,10 +694,9 @@ public class Linker {
             SortedSet<TVariable> tset = new TreeSet<>();
             for (Tree t : slave) {
                 tset.addAll(t.getTVariables(true));
-
-//                for(Function f: t.getFunctions()) {~
-//                    f.clearResult();
-//                }
+            }
+            for (Tree t : master) {
+                tset.addAll(t.getTVariables(true));
             }
 
 //            if (r != null) {
@@ -731,6 +752,10 @@ public class Linker {
 //            }
 
 //            set = mind.getActualTrees();
+            slave = getActualTrees(r);
+            master = getUsedTrees(r);
+//            master = slave;
+
 
         }
         while (saveT != user.getMind().getTValues().getRoot() || saveF != user.getMind().getFValues().getRoot() || saveB != user.getMind().getDatabase().getRoot());
@@ -852,43 +877,48 @@ public class Linker {
 
     private boolean markProduced(Domain master, Domain slave, List<Argument> solves, boolean logging) {
         boolean result = false;
-        if (!master.isStored(solves)) {
-            master.setExcluded(solves);
-            for (TVariable t : master.getTVariables(true)) {
-                boolean found = false;
-                for (Domain r : t.getUsage()) {
-                    if (master.getId() != r.getId() && !r.isExcluded(solves) && !r.isProduced(solves) && !r.isStored(solves)) {
-                        r.setProduced(solves);
-                        found = true;
-                        result = true;
-                        if (logging) {
-                            try {
+
+        try {
+            List<Argument> saveMaster = master.convertArguments();
+            List<Argument> saveSlave = slave.convertArguments();
+
+            slave.apply(solves);
+            master.apply(solves);
+
+            if (!master.isStored()) {
+                master.setExcluded();
+                for (TVariable t : master.getTVariables(true)) {
+                    boolean found = false;
+                    for (Domain r : t.getUsage()) {
+
+                        List<Argument> saveR = r.convertArguments();
+                        r.apply(solves);
+
+                        if (master.getId() != r.getId() && !r.isExcluded() && !r.isProduced() && !r.isStored()) {
+                            r.setProduced();
+                            found = true;
+                            result = true;
+                            if (logging) {
                                 List<Argument> save = r.convertArguments();
-                                r.apply(solves);
                                 user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
-                                r.apply(save);
-                            } catch (ParametersIncompleteException e) {
-                                e.printStackTrace();
                             }
                         }
+
+                        r.apply(saveR);
                     }
-                }
-                if (found && logging) {
-                    try {
-                        List<Argument> saveMaster = master.convertArguments();
-                        List<Argument> saveSlave = slave.convertArguments();
-                        master.apply(solves);
-                        slave.apply(solves);
+                    if (found && logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave.toString());
-                        master.apply(saveMaster);
-                        slave.apply(saveSlave);
-                    } catch (ParametersIncompleteException e) {
-                        e.printStackTrace();
                     }
                 }
             }
+
+            master.apply(saveMaster);
+            slave.apply(saveSlave);
+
+        } catch (ParametersIncompleteException e) {
+            e.printStackTrace(System.err);
         }
         return result;
     }

@@ -1,8 +1,14 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
+import kanger.User;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -50,6 +56,15 @@ public class Tree {
 
     public List<Domain> getSequence() {
         return sequence;
+    }
+
+    public boolean isProduced(List<Argument> args) {
+        for (Domain d : sequence) {
+            if (d.isProduced(args)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isUsed() {
