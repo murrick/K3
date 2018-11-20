@@ -823,7 +823,7 @@ public class Kanger {
             set01.get(i).run("set01_" + String.format("%02X", i + 1));
         }
 
-        Mind mind = (Mind) set01.get(4).run("set01_05");
+        Mind mind = (Mind) set01.get(2).run("set01_03");
         Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();

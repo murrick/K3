@@ -797,7 +797,8 @@ public class Linker {
             Right r = user.getMind().getRights().add();
             Tree t = user.getMind().getTrees().add();
             t.setRight(r);
-            t.setGenerated(true);
+            t.setGenerated();
+            t.setUsed();
             d.setRight(r);
             t.getSequence().add(d);
             r.getTree().add(t);

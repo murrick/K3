@@ -42,8 +42,8 @@ public class Tree {
         }
     }
 
-    public void setGenerated(boolean generated) {
-        this.generated = generated;
+    public void setGenerated() {
+        this.generated = true;
     }
 
     public boolean isGenerated() {
