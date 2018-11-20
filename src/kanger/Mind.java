@@ -85,7 +85,7 @@ public class Mind {
     private String compiledFileName = "mind.e";
 
 
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES /*| Enums.DEBUG_OPTION_RIGHTS*/);
 
     public Mind(User user) {
         this.user = user;

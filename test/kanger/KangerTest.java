@@ -86,7 +86,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?n(nnn);");
         showResult(false);
-        Solution s = new Solution(user, true, "n", "nnn");
+        Solution s = new Solution(user, false, "n", "nnn");
         if (!mind.getSolutions().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }

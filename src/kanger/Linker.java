@@ -8,7 +8,6 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
-import kanger.exception.ParametersIncompleteException;
 import kanger.exception.RuntimeErrorException;
 import kanger.exception.SubstitutionException;
 import kanger.primitives.*;
@@ -112,16 +111,18 @@ public class Linker {
                     args.add(new Argument(t));
                 }
 
-                boolean result = false;
+//                boolean result = false;
                 if (occurrsMaster) {
-                    result = markProduced(master, slave, args, logging) || result;
+                    master.setExcluded(args);
+//                    result = markProduced(master, slave, args, logging) || result;
                 }
                 if (occurrsSlave) {
-                    result = markProduced(slave, master, args, logging) || result;
+                    slave.setExcluded(args);
+//                    result = markProduced(slave, master, args, logging) || result;
                 }
-                if (result) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                }
+//                if (result) {
+//                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                }
             }
             return occurrsSubst;
 
@@ -438,6 +439,85 @@ public class Linker {
         return result;
     }
 
+    public boolean produceDomains(SortedSet<TVariable> tvars, Queue<Tree> masterSet, Queue<Tree> slaveSet, int level, boolean logging) {
+        boolean result = false;
+
+        if (tvars.isEmpty()) {
+            Set<Tree> set = new HashSet<>();
+            set.addAll(masterSet);
+            set.addAll(slaveSet);
+
+            for (Tree tree : set) {
+                for (Domain d : tree.getSequence()) {
+                    if (!d.isStored() && d.isExcluded()) {
+                        markProduced(d, logging);
+                    }
+                }
+            }
+
+
+        } else {
+            TVariable t = tvars.last(); //.get(tIndex);
+            TValue v = t.rewind();
+            if (v != null) {
+                do {
+
+                    user.getMind().getTValues().set(t, v);
+                    if (produceDomains(tvars.headSet(t), masterSet, slaveSet, ++level, logging)) {
+                        result = true;
+                    }
+                    user.getMind().getTValues().set(t, v);
+                } while ((v = t.next(v)) != null);
+
+//                mind.getTValues().set(t, null);
+//                if (!updateDomains(tvars.headSet(t), set, logging)) {
+//                    result = false;
+//                }
+
+            } else {
+                if (produceDomains(tvars.headSet(t), masterSet, slaveSet, ++level, logging)) {
+                    result = true;
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean markProduced(Domain master, boolean logging) {
+        boolean result = false;
+
+        for (TVariable t : master.getTVariables(true)) {
+            boolean found = false;
+            for (Domain r : t.getUsage()) {
+                if (master.getId() != r.getId() && !r.isExcluded() && !r.isProduced() && !r.isStored()) {
+                    r.setProduced();
+                    found = true;
+                    result = true;
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
+                    }
+                }
+            }
+
+            if (/*found && */logging) {
+                if (!found) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "CONFIRMED: " + t.toString());
+                }
+                for (Domain slave : t.getSrcSolves()) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
+                    if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                        user.getMind().getLog().add(LogMode.ANALIZER, t.getRight());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                    }
+                    user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master.toString());
+                    user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave.toString());
+                }
+            }
+        }
+        return result;
+    }
+
     public boolean calcFunctions(SortedSet<TVariable> tvars, Queue<Tree> set, boolean logging) throws RuntimeErrorException {
         boolean result = true;
         if (tvars.isEmpty()) {
@@ -714,7 +794,10 @@ public class Linker {
 //            user.getMind().getUsedTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
-            while (updateDomains(tset, master, slave, 0, logging)) ;
+            while (updateDomains(tset, master, slave, 0, logging)) {
+                produceDomains(tset, master, slave, 0, logging);
+            }
+            ;
             calcFunctions(tset, slave, logging);
 
 
@@ -846,7 +929,7 @@ public class Linker {
 
             boolean excluded = true;
             for (Domain d : tree.getSequence()) {
-                if (!d.isComplete() || !d.isExcluded() || !d.isStored()) {
+                if (!d.isComplete() || !d.isExcluded() || d.isStored()) {
                     excluded = false;
                     break;
                 }
@@ -876,53 +959,6 @@ public class Linker {
         }
     }
 
-    private boolean markProduced(Domain master, Domain slave, List<Argument> solves, boolean logging) {
-        boolean result = false;
-
-        try {
-            List<Argument> saveMaster = master.convertArguments();
-            List<Argument> saveSlave = slave.convertArguments();
-
-            slave.apply(solves);
-            master.apply(solves);
-
-            if (!master.isStored()) {
-                master.setExcluded();
-                for (TVariable t : master.getTVariables(true)) {
-                    boolean found = false;
-                    for (Domain r : t.getUsage()) {
-
-                        List<Argument> saveR = r.convertArguments();
-                        r.apply(solves);
-
-                        if (master.getId() != r.getId() && !r.isExcluded() && !r.isProduced() && !r.isStored()) {
-                            r.setProduced();
-                            found = true;
-                            result = true;
-                            if (logging) {
-                                List<Argument> save = r.convertArguments();
-                                user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
-                            }
-                        }
-
-                        r.apply(saveR);
-                    }
-                    if (found && logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
-                        user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master.toString());
-                        user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave.toString());
-                    }
-                }
-            }
-
-            master.apply(saveMaster);
-            slave.apply(saveSlave);
-
-        } catch (ParametersIncompleteException e) {
-            e.printStackTrace(System.err);
-        }
-        return result;
-    }
 
 //    private boolean logComparsion(Domain d, List<Argument> solves, boolean logging) {
 //        boolean result = false;

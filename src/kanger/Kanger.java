@@ -617,6 +617,125 @@ public class Kanger {
         }
     };
 
+
+    private static List<IRunnable> set02 = new ArrayList<IRunnable>() {
+        {
+            add(new IRunnable() {
+                @Override
+                public Object run(Object o) {
+                    System.out.println("set02_01");
+                    Mind mind = new Mind(mindRoot);
+                    try {
+                        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
+                        mind.query("? (a(z) && c(z)) -> d(z);");
+                        showResult(o, mind, true);
+                        Solution s = new Solution(mind.getUser(), false, "a", "z");
+                        if (!mind.getSolutions().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        s = new Solution(mind.getUser(), false, "c", "z");
+                        if (!mind.getSolutions().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        s = new Solution(mind.getUser(), true, "d", "z");
+                        if (!mind.getSolutions().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        System.out.println("OK");
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.commit(mind);
+                    }
+                    return mind;
+
+                }
+            });
+        }
+
+        {
+            add(new IRunnable() {
+                @Override
+                public Object run(Object o) {
+                    System.out.println("set02_02");
+                    Mind mind = new Mind(mindRoot);
+                    try {
+                        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
+                        mind.query("?b(z) -> d(z);");
+                        showResult(o, mind, null);
+                        Hypotese s = new Hypotese(mind.getUser(), true, "c", "z");
+                        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        s = new Hypotese(mind.getUser(), true, "a", "z");
+                        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        s = new Hypotese(mind.getUser(), true, "e", "z");
+                        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        s = new Hypotese(mind.getUser(), false, "f", "z");
+                        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        if (mind.getHypotesisStore().size() != 4) {
+                            fail("Expected 4 hypotesis");
+                        }
+                        System.out.println("OK");
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.commit(mind);
+                    }
+                    return mind;
+
+                }
+            });
+        }
+
+        {
+            add(new IRunnable() {
+                @Override
+                public Object run(Object o) {
+                    System.out.println("set02_03");
+                    Mind mind = new Mind(mindRoot);
+                    try {
+                        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
+                        mind.query("?$x f(x);");
+                        showResult(o, mind, null);
+                        Hypotese s = new Hypotese(mind.getUser(), true, "a", "z");
+                        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        s = new Hypotese(mind.getUser(), true, "b", "z");
+                        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        s = new Hypotese(mind.getUser(), false, "f", "z");
+                        if (!mind.getHypotesisStore().getRoot().contains(s)) {
+                            fail("Expected: " + s.toString());
+                        }
+                        if (mind.getHypotesisStore().size() != 3) {
+                            fail("Expected 3 hypotesis");
+                        }
+                        System.out.println("OK");
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.commit(mind);
+                    }
+                    return mind;
+
+                }
+            });
+        }
+
+    };
+
     public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
 
 
@@ -789,13 +908,10 @@ public class Kanger {
 //                    "");
 
 //        Mind mind = new Mind(mindRoot);
-//            mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
-//                            "!@x a(x) -> ~n(x); " +
-//                            "!a(nnn); " +
-//                            "!b(ooo); " +
-//                            "!d(v);" +
-//                    "");
-//            mind.query("?b(xx);");
+//        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
+//        mind.query("? (a(z) && c(z)) -> d(z);");
+//        Screen.session(mind);
+
 //
 ////            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
 ////            mind.query("? (a(z) && c(z)) -> d(z);");
@@ -819,11 +935,19 @@ public class Kanger {
 
 //            mind = mindRoot;
 
+        /*
         for (int i = 0; i < set01.size(); ++i) {
-            set01.get(i).run("set01_" + String.format("%02X", i + 1));
+            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
+//            Screen.session(mind);
         }
 
-        Mind mind = (Mind) set01.get(2).run("set01_03");
+        for (int i = 0; i < set02.size(); ++i) {
+            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
+            Screen.session(mind);
+        }
+        */
+
+        Mind mind = (Mind) set02.get(0).run("set02_01");
         Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();

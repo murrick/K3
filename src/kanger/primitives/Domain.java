@@ -323,7 +323,7 @@ public class Domain {
 
     private boolean isEqualsArguments(List<Argument> solves, List<Argument> params) {
         for (int i = 0; i < predicate.getRange(); ++i) {
-            if (!solves.get(i).isEmpty() && solves.get(i).getValue().getId() != params.get(i).getValue().getId()) {
+            if (!solves.get(i).isEmpty() && !params.get(i).isEmpty() && solves.get(i).getValue().getId() != params.get(i).getValue().getId()) {
                 return false;
             }
         }
