@@ -1,10 +1,15 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
+import kanger.User;
+import kanger.enums.Enums;
+import kanger.interfaces.IValue;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -98,7 +103,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
-        TValue v = user.getMind().getTValues().add(this, value);
+        TValue v = value == null ? null : user.getMind().getTValues().add(this, value);
         return user.getMind().getTValues().set(this, v);
 //        } else {
 //            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));

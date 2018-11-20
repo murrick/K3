@@ -142,8 +142,10 @@ public class Analiser {
                         Argument xa = a.getArguments().get(i);
                         Argument xb = b.getArguments().get(i);
                         if (!xa.isEmpty() && !xb.isEmpty()
-                            && !a.isDestFor(i, b)
-                            && !b.isDestFor(i, a)
+//                                && !(a.isExcluded() && !b.isProduced())
+//                                && !(b.isExcluded() && !a.isProduced())
+//                                && !a.isDestFor(i, b)
+//                                && !b.isDestFor(i, a)
                                 //&& (!a.isDestFor() || xa.getValue().getRight().isQuery() /*|| a.isUsed()*/)
 //                                && (!b.isDestFor() || xb.getValue().getRight().isQuery() /*|| b.isUsed()*/)
                                 //                                    && !(xa.isTVariable() && xb.isTVariable() && xa.getTVariable().getId() == xb.getTVariable().getId())
@@ -181,7 +183,29 @@ public class Analiser {
 
             t.setUsed();
             u.setUsed();
-            if (logging) {
+
+            boolean show = false;
+            for (Domain d : sequence) {
+                if (d.isComplete() && !d.isClosed() /*&& !d.isExcluded() */ && !d.isStored()) {
+                    result = false;
+                    if (user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
+                        show = true;
+                        user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+//                        if (logging) {
+//                            user.getMind().getLog().add(LogMode.ANALIZER, "NOT in condition: " + d.toString());
+//                            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                        }
+                    }
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "NOT in condition: " + d.toString());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                    }
+                }
+//                }
+
+            }
+
+            if (logging /*&& (result || show)*/) {
                 user.getMind().getLog().add(LogMode.ANALIZER, "Sequence resolved : ");
                 for (Domain x : sequence) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "\t" + x.toString());
@@ -192,23 +216,10 @@ public class Analiser {
                         user.getMind().getLog().add(LogMode.ANALIZER, "\t" + x.toString());
                     }
                 }
+                user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
             }
 
 
-            for (Domain d : sequence) {
-                if (d.isComplete() && !d.isClosed() /*&& !d.isExcluded() */ && !d.isStored()) {
-                    result = false;
-                    if (user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
-                        user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                            user.getMind().getLog().add(LogMode.ANALIZER, "NOT in condition: " + d.toString());
-                        }
-                    }
-                }
-//                }
-
-            }
 //            boolean at = collectHypotesis(t.getSequence(), logging);
 //            if (t.getId() != u.getId()) {
 //                at = collectHypotesis(u.getSequence(), logging) || at;
@@ -219,7 +230,6 @@ public class Analiser {
 
 
             if (logging) {
-                user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
             }
 
             if (result) {
@@ -232,12 +242,15 @@ public class Analiser {
         } else {
             for (int k = 0; k < sequence.size(); ++k) {
                 Domain d = sequence.get(k);
-                if (d.isComplete() && !d.isClosed() && (d.isQuery() || !d.isStored()) && d.isProduced() && !d.isExcluded() && user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
+//                if(d.isQuery() && (d.isExcluded() || d.isProduced()) && d.isStored()) {
+//                    System.out.println(d);
+//                }
+                if (d.isComplete() && !d.isClosed() && ((d.isQuery() || !d.isStored()) /*|| d.isQuery() || d.isStored()*/) && (d.isProduced() || d.isExcluded()) && (d.isProduced() || d.isStored()) && user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
 //                    if (/*(d.isQuery() || d.isStored()) &&*/ d.isProduced() && !d.isExcluded()) {
                     user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                     }
 //                    }
                 }
@@ -500,7 +513,7 @@ public class Analiser {
 //            result = true;
 //        } else {
 
-            result = recurseTree(new ArrayList<>(tvars), 0, set, logging);
+        result = recurseTree(new ArrayList<>(tvars), 0, set, logging);
         if (!result) {
             result = check(logging);
         }

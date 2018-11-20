@@ -8,6 +8,7 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
+import kanger.exception.ParametersIncompleteException;
 import kanger.exception.RuntimeErrorException;
 import kanger.exception.SubstitutionException;
 import kanger.primitives.*;
@@ -64,12 +65,12 @@ public class Linker {
 
             if (master.get(level).isFSet() && !master.get(level).getF().isCalculated()) {
                 if (!slave.get(level).isEmpty()
-                    && master.get(level).getF().isCalculable()
-                    && !master.get(level).getF().isComplete()) {
+                        && master.get(level).getF().isCalculable()
+                        && !master.get(level).getF().isComplete()) {
                     master.get(level).getF().setValue(slave.get(level).getValue());
                     selected.add(master.get(level).getF());
                 } else if (master.get(level).getF().isCalculable()
-                           && master.get(level).getF().isComplete()) {
+                        && master.get(level).getF().isComplete()) {
                     selected.add(master.get(level).getF());
                 } else if (!master.get(level).getF().isCalculable()) {
                     selected.add(master.get(level).getF());
@@ -82,12 +83,12 @@ public class Linker {
 
             if (slave.get(level).isFSet() && !slave.get(level).getF().isCalculated()) {
                 if (!master.get(level).isEmpty()
-                    && slave.get(level).getF().isCalculable()
-                    && !slave.get(level).getF().isComplete()) {
+                        && slave.get(level).getF().isCalculable()
+                        && !slave.get(level).getF().isComplete()) {
                     slave.get(level).getF().setValue(slave.get(level).getValue());
                     selected.add(slave.get(level).getF());
                 } else if (slave.get(level).getF().isCalculable()
-                           && slave.get(level).getF().isComplete()) {
+                        && slave.get(level).getF().isComplete()) {
                     selected.add(slave.get(level).getF());
                 } else if (!slave.get(level).getF().isCalculable()) {
                     selected.add(slave.get(level).getF());
@@ -113,12 +114,10 @@ public class Linker {
 
                 boolean result = false;
                 if (occurrsMaster) {
-                    master.setExcluded(args);
-                    result = logComparsion(logging, master) || result;
+                    result = markProduced(master, slave, args, logging) || result;
                 }
                 if (occurrsSlave) {
-                    slave.setExcluded(args);
-                    result = logComparsion(logging, slave) || result;
+                    result = markProduced(slave, master, args, logging) || result;
                 }
                 if (result) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
@@ -144,17 +143,17 @@ public class Linker {
 //                }
 
             if (master.get(i).isTSet()
-                && !slave.get(i).isEmpty()
-                && !slave.isDestFor(i, master)
-                && !slave.isExcluded()
-//                        && !master.isDestFor(i, slave)
+                    && !slave.get(i).isEmpty()
+                    && !slave.isDestFor(i, master)
+                    && !slave.isExcluded()
+                    && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getTVariable().isEmpty()
 
-                && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
+                    && master.getVarOrder(i) >= slave.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!slave.get(level).getValue().isCVariable() || !master.isAntc() || slave.get(level).getValue().getIndex() < master.get(level).getTVariable().getIndex())
 //                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
-                ) {
+            ) {
                 TValue s;
                 if (!master.get(i).getT().contains(slave.get(i).getValue())) {
                     s = master.get(i).getT().addValue(slave.get(i).getValue());
@@ -184,17 +183,17 @@ public class Linker {
             }
 
             if (slave.get(i).isTSet()
-                && !master.get(i).isEmpty()
-                && !master.isDestFor(i, slave)
-                && !master.isExcluded()
-//                        && !slave.isDestFor(i, master)
+                    && !master.get(i).isEmpty()
+                    && !master.isDestFor(i, slave)
+                    && !master.isExcluded()
+                    && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getTVariable().isEmpty()
 
-                && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
+                    && slave.getVarOrder(i) >= master.getVarOrder(i) //|| slave.getTVarCount() != master.getTVarCount() || slave.getCVarCount() != master.getCVarCount())
 //                        && (!master.get(level).getValue().isCVariable() || !slave.isAntc() || master.get(level).getValue().getIndex() < slave.get(level).getTVariable().getIndex())
 //                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
-                ) {
+            ) {
                 TValue s;
                 if (!slave.get(i).getT().contains(master.get(i).getValue())) {
                     s = slave.get(i).getT().addValue(master.get(i).getValue());
@@ -339,11 +338,11 @@ public class Linker {
 
 
                                 if (d1.getId() != d2.getId()
-                                    && d1.isAntc() != d2.isAntc()
-                                    && d1.getPredicate().getId() == d2.getPredicate().getId()
+                                        && d1.isAntc() != d2.isAntc()
+                                        && d1.getPredicate().getId() == d2.getPredicate().getId()
 //                                        && !d1.isExcluded()
 //                                        && !d2.isExcluded()
-                                    ) {
+                                ) {
 
 //                                    if(d1.isQuery() || d2.isQuery()) {
 //                                        System.out.println("d1: " + d1);
@@ -733,7 +732,8 @@ public class Linker {
 
 //            set = mind.getActualTrees();
 
-        } while (saveT != user.getMind().getTValues().getRoot() || saveF != user.getMind().getFValues().getRoot() || saveB != user.getMind().getDatabase().getRoot());
+        }
+        while (saveT != user.getMind().getTValues().getRoot() || saveF != user.getMind().getFValues().getRoot() || saveB != user.getMind().getDatabase().getRoot());
 
         user.getMind().getClosedValues().clear();
         user.getMind().getBlockedValues().clear();
@@ -751,6 +751,40 @@ public class Linker {
             user.getMind().getLog().add(LogMode.ANALIZER, "* Linking time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
         }
 
+    }
+
+    private boolean addToDatabase(Domain produced, boolean logging) {
+        int save = user.getMind().getDebugLevel();
+        user.getMind().setDebugLevel(0);
+        Domain d = produced.setStored();
+        String origin = d.toString();
+        user.getMind().setDebugLevel(save);
+
+        boolean found = false;
+        for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
+            if (origin.equals(r.getOrig())) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            Right r = user.getMind().getRights().add();
+            Tree t = user.getMind().getTrees().add();
+            t.setRight(r);
+            t.setGenerated(true);
+            d.setRight(r);
+            t.getSequence().add(d);
+            r.getTree().add(t);
+            r.setGenerated(true);
+            r.setOrig(origin);
+        }
+        if (logging) {
+            user.getMind().getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
+            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+        }
+
+        return !found;
     }
 
     private Domain updateDatabase(Tree tree, boolean logging) {
@@ -780,47 +814,13 @@ public class Linker {
 //            if (produced.isQuery()) {
 //                System.out.println("produced: " + produced);
 //            }
-
-                int save = user.getMind().getDebugLevel();
-                user.getMind().setDebugLevel(0);
-                Domain d = produced.setStored();
-                String origin = d.toString(); 
-                user.getMind().setDebugLevel(save);
-
-                boolean found = false;
-                for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
-                    if (origin.equals(r.getOrig())) {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    Right r = user.getMind().getRights().add();
-                    Tree t = user.getMind().getTrees().add();
-                    t.setRight(r);
-                    t.setGenerated(true);
-                    d.setRight(r);
-                    t.getSequence().add(d);
-                    r.getTree().add(t);
-                    r.setGenerated(true);
-                    r.setOrig(origin); 
-                }
-
-
-//                if(produced.isExcluded()) {
-//                    produced.setUsed();
-//                }
-                if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
-                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                }
+                addToDatabase(produced, logging);
             }
         } else {
 
             boolean excluded = true;
             for (Domain d : tree.getSequence()) {
-                if (!d.isExcluded()) {
+                if (!d.isComplete() || !d.isExcluded() || !d.isStored()) {
                     excluded = false;
                     break;
                 }
@@ -829,14 +829,8 @@ public class Linker {
                 boolean occurs = false;
                 for (Domain d : tree.getSequence()) {
                     if (!d.isStored()) {
-                        d.setStored();
-//                        if(d.isExcluded()) {
-//                            d.setUsed();
-//                        }
                         occurs = true;
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB record: " + d.toString());
-                        }
+                        addToDatabase(d, logging);
                     }
                 }
                 if (logging && occurs) {
@@ -856,56 +850,101 @@ public class Linker {
         }
     }
 
-    private boolean logComparsion(boolean logging, Domain d) {
+    private boolean markProduced(Domain master, Domain slave, List<Argument> solves, boolean logging) {
         boolean result = false;
-        //TODO: Отвязать от лога функционал (setProduced)
-        if (logging) {
-            for (TVariable t : d.getTVariables(true)) {
-                if (!t.isEmpty()) {
-                    for (int i = 0; i < t.getDstSolves().size(); ++i) {
-                        Domain dst = t.getDstSolves().get(i);
-                        Domain src = t.getSrcSolves().get(i);
-
-                        //TODO: Не уверен, но нужно контролировать только целевые предикаты. НО! А если подстановка в обе стороны??
-
-//                        if (!src.getRight().isQuery()) src.setExcluded();
-//                        if (!dst.getRight().isQuery())
-//                        dst.setExcluded();
-//                        dst.setExcluded();
-
-                        if (dst.getPredicate().getId() == d.getPredicate().getId()) {
-                            boolean found = false;
-                            for (Domain r : t.getUsage()) {
-                                //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
-                                if (dst.getId() != r.getId() && !r.isExcluded() && !r.isProduced()) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
-                                    //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
-                                    r.setProduced();
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
-                                    found = true;
-                                    result = true;
-                                }
-                            }
-//                            if (!found) {
-//                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + src);
-
-//                        if (d.getRight().isQuery()) {
-//                            a.getTVariable().getDstSolve().setAcceptor(false);
-//                        }
-
-
-//                            }
-                            if (found) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
-                                user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + dst.toString());
-                                user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + src.toString());
+        if (!master.isStored(solves)) {
+            master.setExcluded(solves);
+            for (TVariable t : master.getTVariables(true)) {
+                boolean found = false;
+                for (Domain r : t.getUsage()) {
+                    if (master.getId() != r.getId() && !r.isExcluded(solves) && !r.isProduced(solves) && !r.isStored(solves)) {
+                        r.setProduced(solves);
+                        found = true;
+                        result = true;
+                        if (logging) {
+                            try {
+                                List<Argument> save = r.convertArguments();
+                                r.apply(solves);
+                                user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
+                                r.apply(save);
+                            } catch (ParametersIncompleteException e) {
+                                e.printStackTrace();
                             }
                         }
+                    }
+                }
+                if (found && logging) {
+                    try {
+                        List<Argument> saveMaster = master.convertArguments();
+                        List<Argument> saveSlave = slave.convertArguments();
+                        master.apply(solves);
+                        slave.apply(solves);
+                        user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master.toString());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave.toString());
+                        master.apply(saveMaster);
+                        slave.apply(saveSlave);
+                    } catch (ParametersIncompleteException e) {
+                        e.printStackTrace();
                     }
                 }
             }
         }
         return result;
     }
+
+//    private boolean logComparsion(Domain d, List<Argument> solves, boolean logging) {
+//        boolean result = false;
+//        d.setExcluded(solves);
+//
+//        //TODO: Отвязать от лога функционал (setProduced)
+//        if (logging) {
+//            for (TVariable t : d.getTVariables(true)) {
+//                if (!t.isEmpty()) {
+//                    for (int i = 0; i < t.getDstSolves().size(); ++i) {
+//                        Domain dst = t.getDstSolves().get(i);
+//                        Domain src = t.getSrcSolves().get(i);
+//
+//                        //TODO: Не уверен, но нужно контролировать только целевые предикаты. НО! А если подстановка в обе стороны??
+//
+////                        if (!src.getRight().isQuery()) src.setExcluded();
+////                        if (!dst.getRight().isQuery())
+////                        dst.setExcluded();
+////                        dst.setExcluded();
+//
+//                        if (dst.getPredicate().getId() == d.getPredicate().getId()) {
+//                            boolean found = false;
+//                            for (Domain r : t.getUsage()) {
+//                                //TODO: usDest сомнитеьно. Аесли двусторонняя подстановка?
+//                                if (dst.getId() != r.getId() && !r.isExcluded(solves) && !r.isProduced(solves) && !r.isStored(solves)) { //&& mind.getLog().find(LogMode.ANALIZER, "Result: " + r.toString()) == null) {
+//                                    //TODO: ! Помечать как produced. В дальнейшем использовать для подстановок. Не выводить в ллог уже помеченные
+//                                    r.setProduced(solves);
+//                                    user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
+//                                    found = true;
+//                                    result = true;
+//                                }
+//                            }
+////                            if (!found) {
+////                                mind.getLog().add(LogMode.ANALIZER, "Confirmed: " + src);
+//
+////                        if (d.getRight().isQuery()) {
+////                            a.getTVariable().getDstSolve().setAcceptor(false);
+////                        }
+//
+//
+////                            }
+//                            if (found) {
+//                                user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
+//                                user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + dst.toString());
+//                                user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + src.toString());
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return result;
+//    }
 
     private void logCommit(boolean logging) {
         if (logging) {

@@ -52,7 +52,6 @@ public class Mind {
 
     private Calculator calculator = null;                             // Калькулятор
     private Analiser analiser = null;                                   // Анализатор
-    private final Map<Domain, Set<List<Term>>> excludedDomains = new HashMap<>();
     private Compiler compiler = null;                                   // Компилятор
     private LibraryStore library = null;                            // Системная библиотека функций и предикатов
 
@@ -61,10 +60,11 @@ public class Mind {
     private final Set<Tree> excludedTrees = new HashSet<>();
     private HypotesisStore excluded = null;                                // Список исключенных гипотез
 
-    private final Map<Domain, Set<List<Term>>> closedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Term>>> usedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Term>>> producedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Term>>> calculatedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Argument>>> closedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Argument>>> usedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Argument>>> producedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Argument>>> calculatedDomains = new HashMap<>();
+    private final Map<Domain, Set<List<Argument>>> excludedDomains = new HashMap<>();
     private Linker linker = null;                                         // Линкер
 
 
@@ -587,19 +587,19 @@ public class Mind {
         return tVariableLinks;
     }
 
-    public Map<Domain, Set<List<Term>>> getUsedDomains() {
+    public Map<Domain, Set<List<Argument>>> getUsedDomains() {
         return usedDomains;
     }
 
-    public Map<Domain, Set<List<Term>>> getExcludedDomains() {
+    public Map<Domain, Set<List<Argument>>> getExcludedDomains() {
         return excludedDomains;
     }
 
-    public Map<Domain, Set<List<Term>>> getProducedDomains() {
+    public Map<Domain, Set<List<Argument>>> getProducedDomains() {
         return producedDomains;
     }
 
-    public Map<Domain, Set<List<Term>>> getCalculatedDomains() {
+    public Map<Domain, Set<List<Argument>>> getCalculatedDomains() {
         return calculatedDomains;
     }
 
@@ -611,7 +611,7 @@ public class Mind {
         return usedTrees;
     }
 
-    public Map<Domain, Set<List<Term>>> getClosedDomains() {
+    public Map<Domain, Set<List<Argument>>> getClosedDomains() {
         return closedDomains;
     }
 

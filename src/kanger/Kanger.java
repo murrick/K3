@@ -1,5 +1,6 @@
 package kanger;
 
+import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.Hypotese;
@@ -22,9 +23,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_01");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_01");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -37,12 +38,13 @@ public class Kanger {
                             fail(o + " Expected: " + s.toString());
                         }
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -51,9 +53,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_02");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_02");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -66,12 +68,13 @@ public class Kanger {
                             fail(o + " Expected: " + s.toString());
                         }
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -80,9 +83,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_03");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_03");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -122,12 +125,13 @@ public class Kanger {
                         } else {
                             fail(o + " Expected 4 hypotesis");
                         }
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -136,9 +140,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_04");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_04");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -168,18 +172,19 @@ public class Kanger {
 //                fail(o + " Expected: " + s.toString());
 //            }
                             if (mind.getHypotesisStore().getRoot().size() != 3) {
-                                fail(o + " Expected3 hypotesis");
+                                fail(o + " Expected 3 hypotesis");
                             }
                             System.out.println("OK");
                         } else {
-                            fail(o + " Expected3 hypotesis");
+                            fail(o + " Expected 3 hypotesis");
                         }
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -188,9 +193,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_05");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_05");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -220,18 +225,19 @@ public class Kanger {
 //                fail(o + " Expected: " + s.toString());
 //            }
                             if (mind.getHypotesisStore().getRoot().size() != 3) {
-                                fail(o + " Expected3 hypotesis");
+                                fail(o + " Expected 3 hypotesis");
                             }
                             System.out.println("OK");
                         } else {
-                            fail(o + " Expected3 hypotesis");
+                            fail(o + " Expected 3 hypotesis");
                         }
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -272,11 +278,11 @@ public class Kanger {
 //                fail(o + " Expected: " + s.toString());
 //            }
                             if (mind.getHypotesisStore().getRoot().size() != 3) {
-                                fail(o + " Expected3 hypotesis");
+                                fail(o + " Expected 3 hypotesis");
                             }
                             System.out.println("OK");
                         } else {
-                            fail(o + " Expected3 hypotesis");
+                            fail(o + " Expected 3 hypotesis");
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -293,9 +299,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_07");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_07");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -317,18 +323,19 @@ public class Kanger {
 //                fail(o + " Expected: " + s.toString());
 //            }
                             if (mind.getHypotesisStore().getRoot().size() != 1) {
-                                fail(o + " Expected1 hypotesis");
+                                fail(o + " Expected 1 hypotesis");
                             }
                             System.out.println("OK");
                         } else {
-                            fail(o + " Expected1 hypotesis");
+                            fail(o + " Expected 1 hypotesis");
                         }
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -337,9 +344,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_08");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_08");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -356,15 +363,16 @@ public class Kanger {
                             fail(o + " Expected: " + term);
                         }
                         if (mind.getValues().getValues("x").size() != 2) {
-                            fail(o + " Expected2 solves");
+                            fail(o + " Expected 2 solves");
                         }
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -374,9 +382,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_09");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_09");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -397,15 +405,16 @@ public class Kanger {
                             fail(o + " Expected: " + term);
                         }
                         if (mind.getValues().getValues("x").size() != 3) {
-                            fail(o + " Expected3 solves");
+                            fail(o + " Expected 3 solves");
                         }
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -415,9 +424,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_0A");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_0A");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -435,12 +444,13 @@ public class Kanger {
          }
          */
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -450,9 +460,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_0B");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_0B");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -473,12 +483,13 @@ public class Kanger {
          }
          */
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -488,9 +499,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_0C");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_0C");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -514,12 +525,13 @@ public class Kanger {
          }
          */
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
@@ -539,18 +551,23 @@ public class Kanger {
                                 "!d(v);");
                         mind.query("?$x a(x) && d(x);");
                         showResult(o, mind, true);
-                        Term term = mind.getTerms().add("nnn");
-                        if (!mind.getValues().getValues("x").contains(term)) {
-                            fail(o + " Expectedx: " + term);
+                        if (!mind.getValues().isEmpty()) {
+                            Term term = mind.getTerms().add("nnn");
+                            if (!mind.getValues().getValues("x").contains(term)) {
+                                fail(o + " Expected x: " + term);
+                            }
+                            if (mind.getValues().getValues("x").size() != 1) {
+                                fail(o + " Expected 1 solve");
+                            }
+                            System.out.println("OK");
+                        } else {
+                            fail(o + " Expected 1 solve");
                         }
-                        if (mind.getValues().getValues("x").size() != 1) {
-                            fail(o + " Expected1 solve");
-                        }
-                        System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
                     return mind;
                 }
@@ -562,9 +579,9 @@ public class Kanger {
             add(new IRunnable() {
                 @Override
                 public Object run(Object o) {
+                    System.out.println("set01_0E");
+                    Mind mind = new Mind(mindRoot);
                     try {
-                        System.out.println("set01_0E");
-                        Mind mind = new Mind(mindRoot);
                         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                                 "!@x a(x) -> ~n(x); " +
                                 "!a(nnn); " +
@@ -585,21 +602,22 @@ public class Kanger {
                             fail(o + " Expected: " + term);
                         }
                         if (mind.getValues().getValues("x").size() != 3) {
-                            fail(o + " Expected3 solves");
+                            fail(o + " Expected 3 solves");
                         }
                         System.out.println("OK");
-                        System.out.println("====================================================");
-                        mindRoot.rollback(mind);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        System.out.println("====================================================");
+                        mindRoot.rollback(mind);
                     }
-                    return mindRoot.getQueryResult();
+                    return mind;
                 }
             });
         }
     };
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
 
 
 //        new LibraryStrings(mind);
@@ -770,12 +788,14 @@ public class Kanger {
 //                            "!daughter(Mary,John);" +
 //                    "");
 
+//        Mind mind = new Mind(mindRoot);
 //            mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
 //                            "!@x a(x) -> ~n(x); " +
 //                            "!a(nnn); " +
 //                            "!b(ooo); " +
 //                            "!d(v);" +
-////            mind.query("?b(xx);");
+//                    "");
+//            mind.query("?b(xx);");
 //
 ////            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
 ////            mind.query("? (a(z) && c(z)) -> d(z);");
@@ -800,10 +820,11 @@ public class Kanger {
 //            mind = mindRoot;
 
 //        for (int i = 0; i < set01.size(); ++i) {
-//            set01.get(i).run(i);
+//            set01.get(i).run("set01_" + String.format("%02X",i+1));
 //        }
 
-        Mind mind = (Mind) set01.get(12).run(12);
+        Mind mind = (Mind) set01.get(12).run("set01_0D");
+        Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();
 
@@ -815,7 +836,6 @@ public class Kanger {
 //            e.printStackTrace();
 //        }
 
-        Screen.session(mind);
 
 //        mind.compileLine[jhjij("!@x ~a(x) || b(x);");
 //        mind.compileLine("!@x ~a(x) -> b(x);");
