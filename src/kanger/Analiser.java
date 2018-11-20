@@ -142,7 +142,9 @@ public class Analiser {
                         Argument xa = a.getArguments().get(i);
                         Argument xb = b.getArguments().get(i);
                         if (!xa.isEmpty() && !xb.isEmpty()
-//                                && (!a.isDestFor() || xa.getValue().getRight().isQuery() /*|| a.isUsed()*/)
+                            && !a.isDestFor(i, b)
+                            && !b.isDestFor(i, a)
+                                //&& (!a.isDestFor() || xa.getValue().getRight().isQuery() /*|| a.isUsed()*/)
 //                                && (!b.isDestFor() || xb.getValue().getRight().isQuery() /*|| b.isUsed()*/)
                                 //                                    && !(xa.isTVariable() && xb.isTVariable() && xa.getTVariable().getId() == xb.getTVariable().getId())
                                 //                                    && (!xa.isDestFor(b) || a.getRight().isQuery() || b.getRight().isQuery())
