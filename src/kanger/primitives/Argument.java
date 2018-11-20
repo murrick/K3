@@ -1,7 +1,10 @@
 package kanger.primitives;
 
-import java.io.*;
-import kanger.*;
+import kanger.User;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 /**
  * Created by murray on 26.05.15.
@@ -105,6 +108,10 @@ public class Argument {
 
     public TVariable getT() {
         return isTSet() ? (TVariable) o : null;
+    }
+
+    public TValue getV() {
+        return isVSet() ? (TValue) o : null;
     }
 
     public Function getF() {

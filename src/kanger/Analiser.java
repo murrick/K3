@@ -193,13 +193,27 @@ public class Analiser {
             }
 
 
-            boolean at = collectHypotesis(t.getSequence(), logging);
-            if (t.getId() != u.getId()) {
-                at = collectHypotesis(u.getSequence(), logging) || at;
+            for (Domain d : sequence) {
+                if (d.isComplete() && !d.isClosed() /*&& !d.isExcluded() */ && !d.isStored()) {
+                    result = false;
+                    if (user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
+                        user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                            user.getMind().getLog().add(LogMode.ANALIZER, "NOT in condition: " + d.toString());
+                        }
+                    }
+                }
+//                }
+
             }
-            if (at) {
-                result = false;
-            }
+//            boolean at = collectHypotesis(t.getSequence(), logging);
+//            if (t.getId() != u.getId()) {
+//                at = collectHypotesis(u.getSequence(), logging) || at;
+//            }
+//            if (at) {
+//                result = false;
+//            }
 
 
             if (logging) {
@@ -214,83 +228,97 @@ public class Analiser {
 
 
         } else {
-            collectHypotesis(t.getSequence(), logging);
-            collectHypotesis(u.getSequence(), logging);
+            for (int k = 0; k < sequence.size(); ++k) {
+                Domain d = sequence.get(k);
+                if (d.isComplete() && !d.isClosed() && (d.isQuery() || !d.isStored()) && d.isProduced() && !d.isExcluded() && user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
+//                    if (/*(d.isQuery() || d.isStored()) &&*/ d.isProduced() && !d.isExcluded()) {
+                    user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                    }
+//                    }
+                }
+            }
+
+
+//            collectHypotesis(t.getSequence(), logging);
+//            collectHypotesis(u.getSequence(), logging);
         }
 
 
         return result;
     }
 
-    private boolean collectHypotesis(List<Domain> sequence, boolean logging) {
-        boolean occurs = false;
-        boolean append = false;
-//        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-//            TODO: Тут коллизия какая-то. Пока не знаю как разрешить
-//            if (d.isComplete() && d.isStored() && d.isQuery() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-//                if ((!d.isStored() && !d.isExcluded()) && d.isQuery() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-//                if (logging) {
-//                    mind.getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
-//                }
-//                occurs = true;
-//                mind.getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+//    private boolean collectHypotesis(List<Domain> sequence, boolean logging) {
+//        boolean occurs = false;
+//        boolean append = false;
+////        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
+////            TODO: Тут коллизия какая-то. Пока не знаю как разрешить
+////            if (d.isComplete() && d.isStored() && d.isQuery() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+////                if ((!d.isStored() && !d.isExcluded()) && d.isQuery() && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+////                if (logging) {
+////                    mind.getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+////                }
+////                occurs = true;
+////                mind.getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+////
+////            }
+////        }
 //
+////        if (logging && occurs) {
+////            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+////        }
+//
+//        occurs = false;
+//        List<Domain> coincidence = new ArrayList<>();
+//        List<Domain> discrepancies = new ArrayList<>();
+//        for (Domain d : sequence) {
+//            if (d.isComplete() && !d.isClosed()) {
+//                if (!d.isExcluded() && !d.isStored()) {
+//                    append = true;
+//                    if (!d.isSystem() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+//                        coincidence.add(d);
+//                    }
+//                } else {
+//                    occurs = true;
+//                    if ((d.isQuery() || d.isStored()) && d.isProduced() && !d.isExcluded()) {
+//                        append = true;
+//                        if (!d.isSystem() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+//                            discrepancies.add(d);
+//                        }
+//                    }
+//                }
 //            }
 //        }
-
-//        if (logging && occurs) {
-//            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//
+//
+//        if (occurs) {
+//            if (!coincidence.isEmpty()) {
+//                for (Domain d : coincidence) {
+//                    if (logging) {
+//                        user.getMind().getLog().add(LogMode.ANALIZER, "Not in condition: " + d.toString());
+//                    }
+//                    user.getMind().getHypotesisStore().add(!d.isAntc(), false, d.getPredicate(), d.getArguments());
+//                }
+//                if (logging) {
+//                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                }
+//            } else if (!discrepancies.isEmpty()) {
+//                for (Domain d : discrepancies) {
+//                    if (logging) {
+//                        user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+//                    }
+//                    user.getMind().getHypotesisStore().add(!d.isAntc(), false, d.getPredicate(), d.getArguments());
+//                }
+//                if (logging) {
+//                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                }
+//            }
 //        }
-
-        occurs = false;
-        List<Domain> coincidence = new ArrayList<>();
-        List<Domain> discrepancies = new ArrayList<>();
-        for (Domain d : sequence) {
-            if (d.isComplete() && !d.isClosed()) {
-                if (!d.isExcluded() && !d.isStored()) {
-                    append = true;
-                    if (!d.isSystem() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                        coincidence.add(d);
-                    }
-                } else {
-                    occurs = true;
-                    if ((d.isQuery() || d.isStored()) && d.isProduced() && !d.isExcluded()) {
-                        append = true;
-                        if (!d.isSystem() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                            discrepancies.add(d);
-                        }
-                    }
-                }
-            }
-        }
-
-
-        if (occurs) {
-            if (!coincidence.isEmpty()) {
-                for (Domain d : coincidence) {
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Not in condition: " + d.toString());
-                    }
-                    user.getMind().getHypotesisStore().add(!d.isAntc(), false, d.getPredicate(), d.getArguments());
-                }
-                if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                }
-            } else if (!discrepancies.isEmpty()) {
-                for (Domain d : discrepancies) {
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
-                    }
-                    user.getMind().getHypotesisStore().add(!d.isAntc(), false, d.getPredicate(), d.getArguments());
-                }
-                if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                }
-            }
-        }
-
-        return append;
-    }
+//
+//        return append;
+//    }
 
     private boolean recurseTree(List<TVariable> tvars, int tIndex, Queue<Tree> set, boolean logging) throws RuntimeErrorException {
         boolean result = false;
@@ -408,8 +436,6 @@ public class Analiser {
         return result;
     }
 
-    
-    
 
     //    public boolean analiseTree(Tree t, boolean logging) throws RuntimeErrorException {
 //        mind.getClosedDimains().clear();
@@ -460,16 +486,22 @@ public class Analiser {
 //        mind.getClosedDimains().clear();
 //        mind.getQueuedDomains().clear();
         user.getMind().getUsedTrees().clear();
+        user.getMind().getClosedTrees().clear();
         user.getMind().getClosedDomains().clear();
+        user.getMind().getSolutions().clear();
+        user.getMind().getValues().clear();
 
-        if (check(logging)) {
+//        if (check(logging)) {
 //            for (Tree t : set) {
 //                mind.getDatabase().collectResults(t.getSequence());
 //            }
-            result = true;
-        } else {
+//            result = true;
+//        } else {
 
             result = recurseTree(new ArrayList<>(tvars), 0, set, logging);
+        if (!result) {
+            result = check(logging);
+        }
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
 //            if (analiseTree(t, logging)) {
@@ -504,7 +536,7 @@ public class Analiser {
 //            }
 //        } while (countClosed != mind.getClosedTrees().size() || countUsed != mind.getUsedTrees().size());
 
-        }
+//        }
         if (logging) {
             user.getMind().getLog().add(LogMode.TIMING, "* Analising time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
         }
@@ -547,10 +579,10 @@ public class Analiser {
             if (d.isClosed()) {
 
 //                mind.getSolutions().add(d); 
-                if(d.isQuery()) { 
-                for (TVariable tv : d.getTVariables(true)) {
-                    user.getMind().getValues().add(tv, d);
-                } 
+                if (d.isQuery()) {
+                    for (TVariable tv : d.getTVariables(true)) {
+                        user.getMind().getValues().add(tv, d);
+                    }
                 }
 
                 if (d.isAntc()) {
@@ -584,12 +616,12 @@ public class Analiser {
 //                for (TVariable tv : d.getTVariables(true)) {
 //                    mind.getValues().add(tv, d);
 //                }
-            } else if(!d.isQuery()) {
+            } else if (!d.isQuery()) {
                 user.getMind().getSolutions().add(d);
 //                for (TVariable tv : d.getTVariables(true)) {
 //                    mind.getValues().add(tv, d);
 //                }     
-            } else if(!q.isQuery()) {
+            } else if (!q.isQuery()) {
                 user.getMind().getSolutions().add(q);
 //                for (TVariable tv : q.getTVariables(true)) {
 //                    mind.getValues().add(tv, q);
@@ -603,7 +635,7 @@ public class Analiser {
 //                for (TVariable tv : q.getTVariables(true)) {
 //                    mind.getValues().add(tv, q);
 //                }    
-            }         
+            }
         }
         for (Domain d : suc) {
             Domain q = contains(d, ant);
@@ -642,7 +674,7 @@ public class Analiser {
 
         //result = checkSequence(t, logging);
 
-    } 
+    }
 
     public boolean check(boolean logging) {
         boolean result = false;
@@ -666,7 +698,7 @@ public class Analiser {
 //                    if(!q.getRight().isQuery() || p.getRight().isQuery()) {
 //                    mind.getSolutions().add(q);
                     for (Domain parent : q.getParents()) {
-                        parent.apply(q); 
+                        parent.apply(q);
                         parent.setClosed();
                         sequence.add(parent);
                     }
@@ -677,7 +709,7 @@ public class Analiser {
                         user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "\t" + q.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
-                    } 
+                    }
                     collectResults(sequence);
                     result = true;
                 }
@@ -686,5 +718,5 @@ public class Analiser {
 
         return result;
     }
-    
+
 }

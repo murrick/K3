@@ -1,10 +1,16 @@
 package kanger.compiler;
 
-import java.util.*;
-import kanger.*;
-import kanger.enums.*;
-import kanger.exception.*;
+import kanger.User;
+import kanger.enums.Enums;
+import kanger.enums.ParseError;
+import kanger.exception.ParseErrorException;
+import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by murray on 25.05.15.
@@ -20,8 +26,8 @@ public class Compiler {
     public Right compileLine(PTree root, boolean antc) throws ParseErrorException, RuntimeErrorException {
 
         //mind.getReplacements().reset();
-        user.getMind().getSolutions().clear();
-        user.getMind().getValues().clear();
+//        user.getMind().getSolutions().clear();
+//        user.getMind().getValues().clear();
         Right r = user.getMind().getRights().add();
 
 //        NodeFactory n = new NodeFactory();
@@ -30,8 +36,8 @@ public class Compiler {
         Tree t = user.getMind().getTrees().add();
         r.getTree().add(t);
         construct(r, t, root, antc, new HashMap<String, Argument>(), new ArrayList<Tree>());
-        user.getMind().getSolutions().clear();
-        user.getMind().getValues().clear();
+//        user.getMind().getSolutions().clear();
+//        user.getMind().getValues().clear();
 
 //        r.setT(t);
 

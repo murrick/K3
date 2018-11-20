@@ -1,8 +1,13 @@
 package kanger.stores;
 
-import java.util.*;
-import kanger.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.primitives.Domain;
+import kanger.primitives.TMeaning;
+import kanger.primitives.TVariable;
+import kanger.primitives.Term;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by murray on 28.05.15.
@@ -22,6 +27,7 @@ public class ValuesStore {
         if (!enableStore) {
             return;
         }
+        clear();
         if (!base.isEmpty()) {
             if (root == null) {
                 root = new ArrayList<>();

@@ -4,7 +4,10 @@ import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.primitives.Predicate;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by murray on 28.05.15.
@@ -22,7 +25,9 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             if (root == null) {
                 root = new ArrayList<>();
             }
-            root.addAll(base.getRoot());
+            for (Hypotese h : base.getRoot()) {
+                add(h);
+            }
         }
     }
 
@@ -65,14 +70,14 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
 
     }
 
-    public void addAll(Collection<Hypotese> list) {
-        if (list != null && !list.isEmpty()) {
-            if (root == null) {
-                root = new ArrayList<>();
-            }
-            root.addAll(list);
-        }
-    }
+//    public void addAll(Collection<Hypotese> list) {
+//        if (list != null && !list.isEmpty()) {
+//            if (root == null) {
+//                root = new ArrayList<>();
+//            }
+//            root.addAll(list);
+//        }
+//    }
 
     public void enable(boolean enable) {
         enableStore = enable;
@@ -87,12 +92,12 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese find(boolean antc, Predicate pred, List<Argument> arg) {
+    public Hypotese find(Boolean antc, Predicate pred, List<Argument> arg) {
         if (root == null) {
             return null;
         }
         for (Hypotese h : root) {
-            if (h.getPredicate().getId() == pred.getId() && h.isAntc() == antc) {
+            if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == antc)) {
 
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
@@ -193,10 +198,9 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     public void exclude(HypotesisStore exclude) {
         if (!isEmpty() && !exclude.isEmpty()) {
             Set<Hypotese> toDelete = new HashSet<>();
-            for (Hypotese h : exclude.getRoot()) {
-                Hypotese x = find(h);
-                if (x != null) {
-                    toDelete.add(x);
+            for (Hypotese h : root) {
+                if (exclude.find(h) != null) {
+                    toDelete.add(h);
                 }
             }
             //Если не остается гипотез кроме базовых - оставляем базовые
