@@ -112,6 +112,8 @@ public class Mind {
         functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
 
+        debugLevel = root.getDebugLevel();
+
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
     }
 

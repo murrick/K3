@@ -265,14 +265,26 @@ public class Domain {
         if (slave.getPredicate().getId() == predicate.getId() && slave.isAntc() != antc) {
             success = true;
             for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
-                if (
-                        slave.get(i).isEmpty() || arguments.get(i).isEmpty()
-                                || slave.get(i).getValue().getId() != arguments.get(i).getValue().getId()
-                                || (slave.get(i).isTSet() && arguments.get(i).isTSet()
-                                && slave.get(i).getT().getId() == arguments.get(i).getT().getId())) {
+                if (slave.get(i).isEmpty() || arguments.get(i).isEmpty()
+                        || slave.get(i).getValue().getId() != arguments.get(i).getValue().getId()
+                        || (slave.get(i).isTSet() && arguments.get(i).isTSet()
+                        && slave.get(i).getT().getId() == arguments.get(i).getT().getId())) {
                     success = false;
                     break;
                 }
+
+//                    if (isDestFor(i, slave) || slave.isDestFor(i, this)) {
+//                        success = false;
+//                        break;
+//                    } else {
+
+//                if (get(i).isVSet() && slave.get(i).isVSet() && get(i).getV().isRelativeFor(slave.get(i).getV())) {
+//                    success = false;
+//                    break;
+//                }
+
+//TODO: Разобраться с isDestFor для предикатов. Использовать для операций с БД добавленные правила вместо
+//                    }
             }
         }
         return success;

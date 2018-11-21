@@ -1,9 +1,14 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.interfaces.*;
+import kanger.User;
+import kanger.interfaces.IValue;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by murray on 13.12.16.
@@ -166,6 +171,21 @@ public class TValue implements IValue {
     public boolean isClosed() {
         return user.getMind().getClosedValues().containsKey(tVar) && user.getMind().getClosedValues().get(tVar).contains(this);
     }
+
+    public boolean isRelativeFor(TValue slave) {
+        for (Domain m : dstSolves) {
+            if (slave.getSrcSolves().contains(m)) {
+                return true;
+            }
+        }
+        for (Domain m : srcSolves) {
+            if (slave.getDstSolves().contains(m)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     @Override
     public boolean equals(Object obj) {

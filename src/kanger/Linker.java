@@ -148,7 +148,7 @@ public class Linker {
                     && !slave.get(i).isEmpty()
                     && !slave.isDestFor(i, master)
                     && !slave.isExcluded()
-                    && !master.isDestFor(i, slave)
+//                    && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getTVariable().isEmpty()
 
@@ -190,7 +190,7 @@ public class Linker {
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
                     && !master.isExcluded()
-                    && !slave.isDestFor(i, master)
+//                    && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getTVariable().isEmpty()
 
