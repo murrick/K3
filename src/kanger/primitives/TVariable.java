@@ -20,7 +20,6 @@ import java.util.Set;
 public class TVariable implements IValue<TValue>, Comparable<Object> {
 
 
-    
     private Right right = null;             // Ссылка на правило
     private long id = -1;                   // Идентификатор переменной
     private TVariable next = null;          // Следующая переменная
@@ -187,8 +186,20 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         if (user.getMind().getTValues().get(this) != null) {
             List<Domain> list = new ArrayList<>();
             for (Domain d : user.getMind().getTValues().get(this).getSrcSolves()) {
-                if (d.equalsBase(slave)) {
-                    list.add(d);
+                if (slave.getPredicate().getId() == d.getPredicate().getId() && slave.isAntc() != d.isAntc()) {
+                    boolean success = true;
+                    for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                        if (
+                                slave.get(i).isEmpty() || d.get(i).isEmpty()
+                                        || slave.get(i).getValue().getId() != d.get(i).getValue().getId()
+                                        || (slave.get(i).isTSet() && d.get(i).isTSet() && slave.get(i).getT().getId() == d.get(i).getT().getId())) {
+                            success = false;
+                            break;
+                        }
+                    }
+                    if (success) {
+                        list.add(d);
+                    }
                 }
             }
             return list;
@@ -397,8 +408,8 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 
     public boolean isQuery() {
         return !isEmpty()
-            && user.getMind().getQueryValues().containsKey(this)
-            && user.getMind().getQueryValues().get(this).contains(getCurrent());
+                && user.getMind().getQueryValues().containsKey(this)
+                && user.getMind().getQueryValues().get(this).contains(getCurrent());
     }
 
 //    public boolean isBlocked() {
@@ -411,7 +422,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
                 ? Integer.valueOf(index).compareTo(((TVariable) o).getIndex())
                 : Integer.valueOf(index).compareTo(((Term) o).getIndex());
     }
-   
+
     @Override
     public boolean isTVariable() {
         return true;

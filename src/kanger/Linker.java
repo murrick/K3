@@ -161,7 +161,6 @@ public class Linker {
                     s.setClosed();
 
 //                    System.out.println("Closed: " + master.get(i).getTVariable());
-                    occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, slave, master);
 //                } else {
@@ -170,16 +169,19 @@ public class Linker {
                     if (slave.isQuery() || master.getRight().isQuery()) {
                         s.setQuery();
                     }
-                } else {
+                    occurrsSubst = true;
+                    solves[i] = s.getValue();
+                    occurrsMaster = true;
+                } else if (!slave.get(i).isTSet() || slave.get(i).getT().getId() != master.get(i).getT().getId()) {
                     s = master.get(i).getT().find(slave.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, slave, master);
                     if (slave.isQuery() || master.getRight().isQuery()) {
                         s.setQuery();
                     }
+                    solves[i] = s.getValue();
+                    occurrsMaster = true;
                 }
-                solves[i] = s.getValue();
-                occurrsMaster = true;
 
             }
 
@@ -200,7 +202,6 @@ public class Linker {
                     s = slave.get(i).getT().addValue(master.get(i).getValue());
                     s.setClosed();
 //                    System.out.println("Closed: " + slave.get(i).getTVariable());
-                    occurrsSubst = true;
                     //TODO: Перенес
                     s.addSolve(i, master, slave);
 //                } else {
@@ -209,16 +210,19 @@ public class Linker {
                     if (master.isQuery() || slave.getRight().isQuery()) {
                         s.setQuery();
                     }
-                } else {
+                    occurrsSubst = true;
+                    solves[i] = s.getValue();
+                    occurrsSlave = true;
+                } else if (!master.get(i).isTSet() || master.get(i).getT().getId() != slave.get(i).getT().getId()) {
                     s = slave.get(i).getT().find(master.get(i).getValue());
                     s.setClosed();
                     s.addSolve(i, master, slave);
                     if (master.isQuery() || slave.getRight().isQuery()) {
                         s.setQuery();
                     }
+                    solves[i] = s.getValue();
+                    occurrsSlave = true;
                 }
-                solves[i] = s.getValue();
-                occurrsSlave = true;
 
             }
 
@@ -321,6 +325,9 @@ public class Linker {
         if (tvars.isEmpty()) {
             for (Tree master : masterSet) { //query == null ? set : query.getTree()) {
                 for (Tree slave : slaveSet) {
+
+                    updateDatabase(master, logging);
+                    updateDatabase(slave, logging);
 
                     user.getMind().getClosedValues().clear();
                     user.getMind().getBlockedValues().clear();
@@ -449,12 +456,13 @@ public class Linker {
 
             for (Tree tree : set) {
                 for (Domain d : tree.getSequence()) {
-                    if (!d.isStored() /*&& d.isExcluded()*/) {
-                        if (markProduced(d, logging)) {
+                    if (!d.isStored() && d.isExcluded()) {
+                        if (markProduced(d, tree, logging)) {
                         }
                     }
                 }
             }
+
             for (Tree tree : set) {
                 updateDatabase(tree, logging);
             }
@@ -487,13 +495,13 @@ public class Linker {
         return result;
     }
 
-    private boolean markProduced(Domain master, boolean logging) {
+    private boolean markProduced(Domain master, Tree set, boolean logging) {
         boolean result = false;
 
         for (TVariable t : master.getTVariables(true)) {
             boolean found = false;
             for (Domain r : t.getUsage()) {
-                if (master.getId() != r.getId() && !r.isExcluded() && !r.isProduced() && !r.isStored()) {
+                if (master.getId() != r.getId() && set.getSequence().contains(r) && !r.isExcluded() && !r.isProduced() && !r.isStored()) {
                     r.setProduced();
                     found = true;
                     result = true;
@@ -503,10 +511,7 @@ public class Linker {
                 }
             }
 
-            if (/*found &&*/ logging) {
-                if (!found) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "CONFIRMED: " + t.toString());
-                }
+            if (found && logging) {
                 if (t.getSrcSolves(master) != null) {
                     for (Domain slave : t.getSrcSolves(master)) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
@@ -519,6 +524,7 @@ public class Linker {
                         user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave.toString());
                     }
                 }
+                user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
             }
         }
         return result;
@@ -893,7 +899,6 @@ public class Linker {
         }
         if (logging) {
             user.getMind().getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
-            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
 
         return !found;
