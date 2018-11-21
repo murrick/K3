@@ -49,7 +49,7 @@ public class KangerTest {
 
     private boolean exists(String name, Object o) {
         for (Term t : mind.getValues().getValues(name)) {
-            if (o.equals(t.getValue())) {
+            if (o.equals(t.getVal())) {
                 return true;
             }
         }

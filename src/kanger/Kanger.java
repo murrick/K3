@@ -888,6 +888,7 @@ public class Kanger {
 
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
+        mind.query("?a(pp) || b(pp);");
 
 //            mind.compile(
 //                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +

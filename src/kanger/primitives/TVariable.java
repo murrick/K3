@@ -186,20 +186,8 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         if (user.getMind().getTValues().get(this) != null) {
             List<Domain> list = new ArrayList<>();
             for (Domain d : user.getMind().getTValues().get(this).getSrcSolves()) {
-                if (slave.getPredicate().getId() == d.getPredicate().getId() && slave.isAntc() != d.isAntc()) {
-                    boolean success = true;
-                    for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
-                        if (
-                                slave.get(i).isEmpty() || d.get(i).isEmpty()
-                                        || slave.get(i).getValue().getId() != d.get(i).getValue().getId()
-                                        || (slave.get(i).isTSet() && d.get(i).isTSet() && slave.get(i).getT().getId() == d.get(i).getT().getId())) {
-                            success = false;
-                            break;
-                        }
-                    }
-                    if (success) {
-                        list.add(d);
-                    }
+                if (slave.equalsSolve(d)) {
+                    list.add(d);
                 }
             }
             return list;

@@ -260,6 +260,24 @@ public class Domain {
         return true;
     }
 
+    public boolean equalsSolve(Domain slave) {
+        boolean success = false;
+        if (slave.getPredicate().getId() == predicate.getId() && slave.isAntc() != antc) {
+            success = true;
+            for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                if (
+                        slave.get(i).isEmpty() || arguments.get(i).isEmpty()
+                                || slave.get(i).getValue().getId() != arguments.get(i).getValue().getId()
+                                || (slave.get(i).isTSet() && arguments.get(i).isTSet()
+                                && slave.get(i).getT().getId() == arguments.get(i).getT().getId())) {
+                    success = false;
+                    break;
+                }
+            }
+        }
+        return success;
+    }
+
     public boolean contains(TVariable t) {
         for (TVariable x : getTVariables(true)) {
             if (x.getId() == t.getId()) {

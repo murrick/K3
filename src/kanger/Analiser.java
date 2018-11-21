@@ -691,7 +691,7 @@ public class Analiser {
         user.getMind().getClosedDomains().clear();
         for (Domain p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
             for (Domain q = p.getNext(); q != null; q = q.getNext()) {
-                if (p.equalsBase(q) && p.isAntc() != q.isAntc()) {
+                if (p.equalsSolve(q)) {
 
 //                    Set<Domain> sequence = new HashSet<>();
 

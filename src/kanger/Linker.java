@@ -931,7 +931,7 @@ public class Linker {
                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
             }
-        } else {
+        } else if (tree.isUsed()) {
 
             boolean excluded = true;
             for (Domain d : tree.getSequence()) {
@@ -1026,6 +1026,11 @@ public class Linker {
                     if (t.isClosed()) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "CLOSED:\t" + t.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getTVar().getRight().toString());
+                        if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                            user.getMind().getLog().add(LogMode.ANALIZER, t.getTVar().getRight());
+                            user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                        }
                         for (int i = 0; i < t.getPosSolves().size(); ++i) {
                             int saveDebugLevel = user.getMind().getDebugLevel();
                             user.getMind().setDebugLevel(saveDebugLevel & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
