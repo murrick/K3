@@ -738,6 +738,7 @@ public class Kanger {
 
     public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
 
+        Mind mind = new Mind(mindRoot);
 
 //        new LibraryStrings(mind);
 //        new LibraryMath(mind);
@@ -884,6 +885,10 @@ public class Kanger {
 //                    "!b(ooo); " +
 //                    "!d(v);");
 
+
+        mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
+                "!a(nnn);");
+
 //            mind.compile(
 //                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
 //                            "!a(mmm); " +
@@ -947,7 +952,7 @@ public class Kanger {
         }
         */
 
-        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
+//        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
         Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();

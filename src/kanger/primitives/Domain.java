@@ -424,7 +424,7 @@ public class Domain {
         if (!user.getMind().getExcludedDomains().containsKey(this)) {
             user.getMind().getExcludedDomains().put(this, new HashSet<>());
         }
-        if (!isExcluded()) {
+        if (!isExcluded(args)) {
             try {
                 user.getMind().getExcludedDomains().get(this).add(convertArguments(args));
             } catch (ParametersIncompleteException e) {

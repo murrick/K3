@@ -320,7 +320,7 @@ public class Analiser {
 //        return append;
 //    }
 
-    private boolean recurseTree(List<TVariable> tvars, int tIndex, Queue<Tree> set, boolean logging) throws RuntimeErrorException {
+    private boolean checkTree(List<TVariable> tvars, int tIndex, Queue<Tree> set, boolean logging) throws RuntimeErrorException {
         boolean result = false;
         if (tIndex >= tvars.size()) {
 
@@ -424,12 +424,12 @@ public class Analiser {
             if (v != null) {
                 do {
                     user.getMind().getTValues().set(t, v);
-                    if (recurseTree(tvars, tIndex + 1, set, logging)) {
+                    if (checkTree(tvars, tIndex + 1, set, logging)) {
                         result = true;
                     }
                 } while ((v = t.next(v)) != null);
             } else {
-                if (recurseTree(tvars, tIndex + 1, set, logging)) {
+                if (checkTree(tvars, tIndex + 1, set, logging)) {
                     result = true;
                 }
             }
@@ -445,7 +445,7 @@ public class Analiser {
 //        mind.getCalculated().clear();
 //        mind.getQueuedDomains().clear();
 //        List<TVariable> vars = t.getTVariables(true);
-//        return recurseTree(t, vars, 0, logging);
+//        return checkTree(t, vars, 0, logging);
 //    }
 
 
@@ -493,17 +493,17 @@ public class Analiser {
         user.getMind().getSolutions().clear();
         user.getMind().getValues().clear();
 
-//        if (check(logging)) {
+//        if (checkDatabase(logging)) {
 //            for (Tree t : set) {
 //                mind.getDatabase().collectResults(t.getSequence());
 //            }
 //            result = true;
 //        } else {
 
-        result = recurseTree(new ArrayList<>(tvars), 0, set, logging);
-//        if (!result) {
-            result = check(logging);
-//        }
+        result = checkDatabase(logging);
+        if (!result) {
+            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
+        }
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
 //            if (analiseTree(t, logging)) {
@@ -587,13 +587,13 @@ public class Analiser {
                     }
                 }
 
-                if (d.isStored()) {
-                    for (Argument a : d.getArguments()) {
-                        if (a.isVSet()) {
-                            user.getMind().getValues().add(a.getV());
-                        }
-                    }
-                }
+//                if (d.isStored()) {
+//                    for (Argument a : d.getArguments()) {
+//                        if (a.isVSet()) {
+//                            user.getMind().getValues().add(a.getV());
+//                        }
+//                    }
+//                }
 
                 if (d.isAntc()) {
                     ant.add(d);
@@ -686,41 +686,74 @@ public class Analiser {
 
     }
 
-    public boolean check(boolean logging) {
+    public boolean checkDatabase(boolean logging) {
         boolean result = false;
+        user.getMind().getClosedDomains().clear();
         for (Domain p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
             for (Domain q = p.getNext(); q != null; q = q.getNext()) {
                 if (p.equalsBase(q) && p.isAntc() != q.isAntc()) {
-//                    sequence.add(p);
-//                    sequence.add(q); 
-                    user.getMind().getClosedDomains().clear();
-                    Set<Domain> sequence = new HashSet<>();
 
-//                    if(!p.getRight().isQuery() || q.getRight().isQuery()) {
-//                    mind.getSolutions().add(p);
-                    for (Domain parent : p.getParents()) {
-                        parent.apply(p);
-                        parent.setClosed();
-                        sequence.add(parent);
-                    }
+//                    Set<Domain> sequence = new HashSet<>();
+
+//                    for (Domain parent : p.getParents()) {
+//                        parent.apply(p);
+//                        parent.setClosed();
+//                        sequence.add(parent);
+//
+////                        if(parent.isQuery()) {
+////                            for (TVariable tv : parent.getTVariables(true)) {
+////                                user.getMind().getValues().add(tv.getCurrent());
+////                            }
+////                        } else {
+////                            user.getMind().getSolutions().add(p);
+////                        }
+//                    }
+//
+//                    for (Domain parent : q.getParents()) {
+//                        parent.apply(q);
+//                        parent.setClosed();
+//                        sequence.add(parent);
+//
+////                        if(parent.isQuery()) {
+////                            for (TVariable tv : parent.getTVariables(true)) {
+////                                user.getMind().getValues().add(tv.getCurrent());
+////                            }
+////                        } else {
+////                            user.getMind().getSolutions().add(p);
+////                        }
 //                    }
 
-//                    if(!q.getRight().isQuery() || p.getRight().isQuery()) {
-//                    mind.getSolutions().add(q);
-                    for (Domain parent : q.getParents()) {
-                        parent.apply(q);
-                        parent.setClosed();
-                        sequence.add(parent);
+                    if (p.isQuery()) {
+                        for (Argument a : p.getArguments()) {
+                            if (a.isVSet()) {
+                                user.getMind().getValues().add(a.getV());
+                            }
+                        }
                     }
-//                    }
+                    if (q.isQuery()) {
+                        for (Argument a : q.getArguments()) {
+                            if (a.isVSet()) {
+                                user.getMind().getValues().add(a.getV());
+                            }
+                        }
+                    }
+
+                    if (p.isQuery() && !q.isQuery()) {
+                        user.getMind().getSolutions().add(q);
+                    } else if (!p.isQuery() && q.isQuery()) {
+                        user.getMind().getSolutions().add(p);
+                    } else {
+                        user.getMind().getSolutions().add(q);
+                        user.getMind().getSolutions().add(p);
+                    }
 
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Database coincidence : ");
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Database coincidence: ");
                         user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "\t" + q.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
                     }
-                    collectResults(sequence);
+//                    collectResults(sequence);
                     result = true;
                 }
             }
