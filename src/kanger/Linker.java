@@ -124,6 +124,7 @@ public class Linker {
 //                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
 //                }
             }
+
             return occurrsSubst;
 
         } else {
@@ -377,9 +378,14 @@ public class Linker {
 //                                        if(d1.isQuery() || d2.isQuery()) {
 //                                            System.out.println("!");
 //                                        }
-
-                                            master.setUsed();
-                                            slave.setUsed();
+                                            for (Tree t : d1.getUsedTrees()) {
+                                                t.setUsed();
+                                            }
+                                            for (Tree t : d2.getUsedTrees()) {
+                                                t.setUsed();
+                                            }
+//                                            master.setUsed();
+//                                            slave.setUsed();
 
                                             result = true;
                                             linkFunctions(d1, d2, 0, logging, new HashSet<Function>());
@@ -399,6 +405,8 @@ public class Linker {
                         }
 
 //                        if (checkSystem(logging, master) && checkSystem(logging, slave)) {
+
+
                         logCommit(logging);
                         user.getMind().getTValues().commit();
                         user.getMind().getFValues().commit();

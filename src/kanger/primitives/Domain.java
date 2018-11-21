@@ -691,6 +691,16 @@ public class Domain {
         }
     }
 
+    public Set<Tree> getUsedTrees() {
+        Set<Tree> set = new HashSet<>();
+        for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
+            if (t.getSequence().contains(this)) {
+                set.add(t);
+            }
+        }
+        return set;
+    }
+
 //    public int getValOrder(int i) {
 //    }
 }

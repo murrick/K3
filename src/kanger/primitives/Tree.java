@@ -68,6 +68,12 @@ public class Tree {
     }
 
     public boolean isUsed() {
+//        for(Domain d : sequence) {
+//            if(d.isExcluded()) {
+//                return true;
+//            }
+//        }
+//        return false;
         return user.getMind().getUsedTrees().contains(this);
     }
 
@@ -177,17 +183,23 @@ public class Tree {
         }
     }
 
-    public boolean isExcluded() {
-        return user.getMind().getExcludedTrees().contains(this);
-    }
+//    public boolean isExcluded() {
+//        for(Domain d : sequence) {
+//            if(d.isExcluded()) {
+//                return true;
+//            }
+//        }
+//        return false;
+//        return user.getMind().getExcludedTrees().contains(this);
+//    }
 
-    public void setExcluded(boolean excluded) {
-        if (excluded) {
-            user.getMind().getExcludedTrees().add(this);
-        } else {
-            user.getMind().getExcludedTrees().remove(this);
-        }
-    }
+//    public void setExcluded(boolean excluded) {
+//        if (excluded) {
+//            user.getMind().getExcludedTrees().add(this);
+//        } else {
+//            user.getMind().getExcludedTrees().remove(this);
+//        }
+//    }
 
     public List<Function> getFunctions() {
         List<Function> list = new ArrayList<>();
@@ -211,6 +223,16 @@ public class Tree {
             }
         }
         return false;
+    }
+
+    public Set<Domain> getExcluded() {
+        Set<Domain> set = new HashSet<>();
+        for (Domain d : sequence) {
+            if (d.isExcluded()) {
+                set.add(d);
+            }
+        }
+        return set;
     }
 
 //    public boolean equalsBase(Tree t) {

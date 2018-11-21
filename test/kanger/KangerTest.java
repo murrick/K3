@@ -1,5 +1,6 @@
 package kanger;
 
+import kanger.enums.LogMode;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Hypotese;
@@ -499,6 +500,7 @@ public class KangerTest {
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
+        Screen.showLog(mind, LogMode.ALL);
         showResult(true);
         Solution s = new Solution(user, false, "a", "z");
         if (!mind.getSolutions().getRoot().contains(s)) {
