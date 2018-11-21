@@ -78,7 +78,7 @@ public class Screen {
 //                            }
                             break;
                         case 'H':
-                            showHelp();
+                            showCommonHelp();
                             break;
                         case 'R': {
                             Mind m = mind;
@@ -179,6 +179,42 @@ public class Screen {
                         case 'U':
                             loadCompiled(mind);
                             break;
+                        case 'O':
+                            if (line.length() == 1) {
+                                showOptions(mind);
+                            } else {
+                                switch (line.charAt(1)) {
+                                    case 'h':
+                                    case 'H':
+                                        showOptionsHelp();
+                                        break;
+                                    case 'R':
+                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RIGHTS);
+                                        System.out.print("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                                        break;
+                                    case 'r':
+                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RIGHTS);
+                                        System.out.print("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                                        break;
+                                    case 'V':
+                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES);
+                                        System.out.print("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+                                        break;
+                                    case 'v':
+                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
+                                        System.out.print("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+                                        break;
+                                    case 'S':
+                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS);
+                                        System.out.print("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+                                        break;
+                                    case 's':
+                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
+                                        System.out.print("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+                                        break;
+                                }
+                            }
+                            break;
                         case Enums.ANT:
                         case Enums.SUC:
 //                        savedQuery = line;
@@ -256,6 +292,24 @@ public class Screen {
         }
         System.out.println("KANGER III Session closed");
 
+    }
+
+    private static void showOptions(Mind mind) {
+        System.out.print("Debug lebel: ");
+        switch (mind.getDebugLevel() & 0xFF) {
+            case Enums.DEBUG_LEVEL_QUIET:
+                System.out.println("QUIET");
+                break;
+            case Enums.DEBUG_LEVEL_DEBUG:
+                System.out.println("DEBUG");
+                break;
+            case Enums.DEBUG_LEVEL_INFO:
+                System.out.println("INFO");
+                break;
+        }
+        System.out.print("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+        System.out.print("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+        System.out.print("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
     }
 
     public static void showLog(Mind mind, LogMode type) {
@@ -366,32 +420,46 @@ public class Screen {
 //            return true;
 //        }
 //    }
-    public static void showHelp() {
+    public static void showOptionsHelp() {
+        System.out.printf(
+                "Available OPTIONS:\n\n"
+                        + "   H[ELP]    - Get this message\n"
+                        + "\n"
+                        + "   R[IGHTS]  - Rights showed in logs\n"
+                        + "   V[ALUES]  - Values of vars and funcs showed in logs\n"
+                        + "   S[TATUS]  - Status of domains and trees showed in logs\n"
+                        + "\n"
+                        + "Use UPPERCASE letter for ON and LOWER for OFF.\n"
+        );
+    }
+
+    public static void showCommonHelp() {
         System.out.printf(
                 "Available KEYWORDS:\n\n"
-                        + "   HELP    - Get this message\n"
+                        + "   H[ELP]    - Get this message\n"
                         + "\n"
-                        + "   ?       - Check for Rights Collisions\n"
-                        + "   BASE    - View DataBase contents\n"
-                        + "   RIGHTS  - View compiled-structured Rights list\n"
-                        + "   FUNCS   - View defined Functions list\n"
-                        + "   KILL    - Remove right\n"
-                        + "   LIST    - View Hypotheses list after last work\n"
-                        + "   INSERT  - Insert Hypotheses as right\n"
-                        + "   AGAIN   - Repeat last question\n"
-                        + "   XPLAIN  - Show explanation log\n"
-                        + "   SOLVES  - Show solves list\n"
-                        + "   VALUES  - Show values list\n"
+                        + "   ?         - Check for Rights Collisions\n"
+                        + "   B[ASE]    - View DataBase contents\n"
+                        + "   R[IGHTS]  - View compiled-structured Rights list\n"
+                        + "   F[UNCS]   - View defined Functions list\n"
+                        + "   K[ILL]    - Remove right\n"
+                        + "   L[IST]    - View Hypotheses list after last work\n"
+                        + "   I[NSERT]  - Insert Hypotheses as right\n"
+                        + "   A[GAIN]   - Repeat last question\n"
+                        + "   X[PLAIN]  - Show explanation log\n"
+                        + "   S[OLVES]  - Show solves list\n"
+                        + "   V[ALUES]  - Show values list\n"
                         //                        + "   TEXT    - Show source text\n"
-                        + "   CLEAR   - Clear workspace\n"
+                        + "   C[LEAR]   - Clear workspace\n"
+                        + "   O[PTIONS] - Set workspace options\n"
                         //                        + "   ERASE   - Clear all working memory\n"
                         + "\n"
                         //                        + "   PUT     - Save Source file\n"
-                        + "   GET     - Load Source file from disk\n"
-                        + "   ZIP     - Save compiled code\n"
-                        + "   UNZIP   - Load compiled code from file\n"
+                        + "   G[ET]     - Load Source file from disk\n"
+                        + "   Z[IP]     - Save compiled code\n"
+                        + "   U[NZIP]   - Load compiled code from file\n"
                         + "\n"
-                        + "   QUIT    - Quit KANGER\n"
+                        + "   Q[UIT]    - Quit KANGER\n"
                         + "\n"
                         + "You can use just FIRST letter of keywords.\n"
         );

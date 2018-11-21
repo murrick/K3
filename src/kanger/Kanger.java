@@ -906,12 +906,11 @@ public class Kanger {
 //                            "!@x $y father(y,x);" +
 //                            "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
 //                            "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
-//                            "!@x (male(x) || female(x)); !@x ~(male(x) && female(x));"+
-//                                    "!male(Tom);" +
+//                            "!@x (male(x) || female(x)), ~(male(x) && female(x));"+
 //                            "!father(John,Tom);" +
 //                            "!daughter(Mary,John);" +
 //                    "");
-
+//
 //        Mind mind = new Mind(mindRoot);
 //        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
 //        mind.query("? (a(z) && c(z)) -> d(z);");
