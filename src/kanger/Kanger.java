@@ -915,7 +915,7 @@ public class Kanger {
 //        Mind mind = new Mind(mindRoot);
 //        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
 //        mind.query("? (a(z) && c(z)) -> d(z);");
-//        Screen.session(mind);
+        Screen.session(mind);
 
 //
 ////            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
@@ -940,20 +940,20 @@ public class Kanger {
 
 //            mind = mindRoot;
 
-        /*
-        for (int i = 0; i < set01.size(); ++i) {
-            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
-//            Screen.session(mind);
-        }
-
-        for (int i = 0; i < set02.size(); ++i) {
-            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
-            Screen.session(mind);
-        }
-        */
+        
+//        for (int i = 0; i < set01.size(); ++i) {
+//            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
+////            Screen.session(mind);
+//        }
+//
+//        for (int i = 0; i < set02.size(); ++i) {
+//            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
+////            Screen.session(mind);
+//        }
+        
 
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
-        Screen.session(mind);
+//        Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();
 
@@ -1010,7 +1010,7 @@ public class Kanger {
             }
         }
         System.out.println("----------------------------------------------------");
-        if (mind.getQueryResult() != assertResult) {
+        if (!(mind.getQueryResult() + "").equals(assertResult + "")) {
             fail(o + " Expected: " + assertResult);
         }
     }
