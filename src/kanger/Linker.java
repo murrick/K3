@@ -10,6 +10,7 @@ import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
 import kanger.exception.SubstitutionException;
+import kanger.factory.DatabaseFactory;
 import kanger.primitives.*;
 
 import java.util.*;
@@ -157,17 +158,17 @@ public class Linker {
 //                        && (!master.isDestFor() || (!master.get(level).isEmpty() && master.get(level).getValue().getRight().isQuery()))
             ) {
                 TValue s;
-                if (!master.get(i).getT().contains(slave.get(i).getValue())) {
+                if (master.get(i).getT().find(slave.get(i).getValue()) == null) {
                     s = master.get(i).getT().addValue(slave.get(i).getValue());
                     s.setClosed();
 
 //                    System.out.println("Closed: " + master.get(i).getTVariable());
                     //TODO: Перенес
-                    s.addSolve(i, slave, master);
+                    s.addSolve(i, master, slave);
 //                } else {
 //                    s = master.get(i).getTVariable().find(slave.get(i).getValue());
 //                }
-                    if (slave.isQuery() || master.getRight().isQuery()) {
+                    if (slave.isQuery() /*|| master.getRight().isQuery()*/) {
                         s.setQuery();
                     }
                     occurrsSubst = true;
@@ -176,8 +177,8 @@ public class Linker {
                 } else if (!slave.get(i).isTSet() || slave.get(i).getT().getId() != master.get(i).getT().getId()) {
                     s = master.get(i).getT().find(slave.get(i).getValue());
                     s.setClosed();
-                    s.addSolve(i, slave, master);
-                    if (slave.isQuery() || master.getRight().isQuery()) {
+                    s.addSolve(i, master, slave);
+                    if (slave.isQuery() /*|| master.getRight().isQuery()*/) {
                         s.setQuery();
                     }
                     solves[i] = s.getValue();
@@ -199,16 +200,16 @@ public class Linker {
 //                        && (!slave.isDestFor() || (!slave.get(level).isEmpty() && slave.get(level).getValue().getRight().isQuery()))
             ) {
                 TValue s;
-                if (!slave.get(i).getT().contains(master.get(i).getValue())) {
+                if (slave.get(i).getT().find(master.get(i).getValue()) == null) {
                     s = slave.get(i).getT().addValue(master.get(i).getValue());
                     s.setClosed();
 //                    System.out.println("Closed: " + slave.get(i).getTVariable());
                     //TODO: Перенес
-                    s.addSolve(i, master, slave);
+                    s.addSolve(i, slave, master);
 //                } else {
 //                    s = slave.get(i).getTVariable().find(master.get(i).getValue());
 //                }
-                    if (master.isQuery() || slave.getRight().isQuery()) {
+                    if (master.isQuery() /*|| slave.getRight().isQuery()*/) {
                         s.setQuery();
                     }
                     occurrsSubst = true;
@@ -217,8 +218,8 @@ public class Linker {
                 } else if (!master.get(i).isTSet() || master.get(i).getT().getId() != slave.get(i).getT().getId()) {
                     s = slave.get(i).getT().find(master.get(i).getValue());
                     s.setClosed();
-                    s.addSolve(i, master, slave);
-                    if (master.isQuery() || slave.getRight().isQuery()) {
+                    s.addSolve(i, slave, master);
+                    if (master.isQuery() /*|| slave.getRight().isQuery()*/) {
                         s.setQuery();
                     }
                     solves[i] = s.getValue();
@@ -327,8 +328,8 @@ public class Linker {
             for (Tree master : masterSet) { //query == null ? set : query.getTree()) {
                 for (Tree slave : slaveSet) {
 
-                    updateDatabase(master, logging);
-                    updateDatabase(slave, logging);
+//                    updateDatabase(master, logging);
+//                    updateDatabase(slave, logging);
 
                     user.getMind().getClosedValues().clear();
                     user.getMind().getBlockedValues().clear();
@@ -520,16 +521,23 @@ public class Linker {
             }
 
             if (found && logging) {
-                if (t.getSrcSolves(master) != null) {
-                    for (Domain slave : t.getSrcSolves(master)) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
-                        if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
-                            user.getMind().getLog().add(LogMode.ANALIZER, t.getRight());
-                            user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                if (!t.isEmpty()) {
+                    Set<Domain> looked = new HashSet<>();
+                    for (TValue.Solve slave : t.getCurrent().getSolves()) {
+                        if (looked.contains(slave.getSrc())) {
+                            continue;
                         }
-                        user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master.toString());
-                        user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave.toString());
+                        looked.add(slave.getSrc());
+                        if (slave.getSrc().equalsBase(master) && slave.getSrc().isAntc() != master.isAntc()) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getRight().toString());
+                            if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
+                                user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                                user.getMind().getLog().add(LogMode.ANALIZER, t.getRight());
+                                user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                            }
+                            user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master.toString());
+                            user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave.getSrc().toString());
+                        }
                     }
                 }
                 user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
@@ -774,7 +782,7 @@ public class Linker {
 
         TValue saveT = null;
         FValue saveF = null;
-        Domain saveB = null;
+        DatabaseFactory.Record saveB = null;
 
 
 //        mind.getQueryValues().clear();
@@ -877,39 +885,45 @@ public class Linker {
 
     }
 
-    private boolean addToDatabase(Domain produced, boolean logging) {
-        int save = user.getMind().getDebugLevel();
-        user.getMind().setDebugLevel(0);
-        Domain d = produced.setStored();
-        String origin = d.toString();
-        user.getMind().setDebugLevel(save);
+    private boolean addToDatabase(Domain produced, boolean create, boolean logging) {
+//        int save = user.getMind().getDebugLevel();
+//        user.getMind().setDebugLevel(0);
+//        Domain d = produced.setStored();
+//        String origin = d.toString();
+//        user.getMind().setDebugLevel(save);
+//
+//        boolean found = false;
+//        for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
+//            if (origin.equals(r.getOrig())) {
+//                found = true;
+//                break;
+//            }
+//        }
+//
+//        if (!found) {
+//            Right r = user.getMind().getRights().add();
+//            Tree t = user.getMind().getTrees().add();
+//            t.setRight(r);
+//            t.setGenerated();
+//            t.setUsed();
+//            d.setRight(r);
+//            t.getSequence().add(d);
+//            r.getTree().add(t);
+//            r.setGenerated(true);
+//            r.setQuery(produced.isQuery());
+//            r.setOrig(origin);
+//        }
 
-        boolean found = false;
-        for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
-            if (origin.equals(r.getOrig())) {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            Right r = user.getMind().getRights().add();
-            Tree t = user.getMind().getTrees().add();
-            t.setRight(r);
-            t.setGenerated();
-            t.setUsed();
-            d.setRight(r);
-            t.getSequence().add(d);
-            r.getTree().add(t);
-            r.setGenerated(true);
-            r.setQuery(produced.isQuery());
-            r.setOrig(origin);
+        if (create) {
+            produced.createStored();
+        } else {
+            produced.setStored();
         }
         if (logging) {
             user.getMind().getLog().add(LogMode.ANALIZER, "DB record: " + produced.toString());
         }
 
-        return !found;
+        return create;
     }
 
     private Domain updateDatabase(Tree tree, boolean logging) {
@@ -927,6 +941,11 @@ public class Linker {
                     produced = null;
                     break;
                 }
+            } else {
+                if (produced != null) {
+                    produced = null;
+                    break;
+                }
             }
         }
 
@@ -934,7 +953,7 @@ public class Linker {
 
         if (produced != null) {
             if (!produced.isStored()) {
-                addToDatabase(produced, logging);
+                addToDatabase(produced, tree.getSequence().size() > 1 || !produced.getTVariables(true).isEmpty(), logging);
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
@@ -953,7 +972,7 @@ public class Linker {
                 for (Domain d : tree.getSequence()) {
                     if (!d.isStored()) {
                         occurs = true;
-                        addToDatabase(d, logging);
+                        addToDatabase(d, true, logging);
                     }
                 }
                 if (logging && occurs) {
@@ -1039,12 +1058,12 @@ public class Linker {
                             user.getMind().getLog().add(LogMode.ANALIZER, t.getTVar().getRight());
                             user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
                         }
-                        for (int i = 0; i < t.getPosSolves().size(); ++i) {
+                        for (TValue.Solve s : t.getSolves()) {
                             int saveDebugLevel = user.getMind().getDebugLevel();
                             user.getMind().setDebugLevel(saveDebugLevel & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
-                            user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + t.getDstSolves().get(i).toString());
+                            user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + s.getDst().toString());
                             user.getMind().setDebugLevel(saveDebugLevel);
-                            user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + t.getSrcSolves().get(i).toString());
+                            user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + s.getSrc().toString());
                         }
                     }
                 }

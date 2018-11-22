@@ -887,7 +887,14 @@ public class Kanger {
 
 
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
-        mind.query("?$x f(x);");
+//        mind.query("?$x f(x);");
+
+//        mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
+//                "!@x a(x) -> ~n(x); " +
+//                "!a(nnn); " +
+//                "!b(ooo); " +
+//                "!d(v);");
+//        mind.query("?n(nnn);");
 
 //            mind.compile(
 //                    "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +

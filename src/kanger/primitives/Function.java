@@ -1,11 +1,17 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.compiler.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
+import kanger.User;
+import kanger.compiler.Operation;
+import kanger.compiler.Parser;
+import kanger.enums.Enums;
+import kanger.enums.Tools;
+import kanger.interfaces.IValue;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
@@ -333,9 +339,9 @@ public class Function implements IValue {
         setValue(null);
     }
 
-    public List<TVariable> getTVariables() {
-        return Tools.getTVariables(arguments, true);
-    }
+//    public List<TVariable> getTVariables() {
+//        return Tools.getTVariables(arguments, true);
+//    }
 
     public boolean isCalculated() {
         FValue f = user.getMind().getFValues().get(this);

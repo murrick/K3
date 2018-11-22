@@ -1,10 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Predicate;
-import kanger.primitives.Right;
+import kanger.primitives.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -18,10 +15,9 @@ import java.util.Stack;
  */
 public class DatabaseFactory {
 
-    private Domain root = null;
-    private long lastID = 0;
+    private Record root = null;
 
-    private Stack<Object[]> stack = new Stack<>();
+    private Stack<Record> stack = new Stack<>();
 
     private User user = null;
 
@@ -31,103 +27,125 @@ public class DatabaseFactory {
 
     public void transaction(DatabaseFactory base) {
         root = base.root;
-        lastID = base.lastID;
         mark();
     }
 
     public void commit(DatabaseFactory base) {
-        List<Domain> list = new ArrayList();
-        for (Domain p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
+        List<Record> list = new ArrayList();
+        for (Record p = base.root; p != null && (root == null || p.getDomain().getId() != root.getDomain().getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (Domain p : list) { 
+        for (Record p : list) {
             p.setNext(root);
             root = p;
-            p.setId(lastID++);
         }
     }
 
-    public Domain add(Domain d) {
-        Domain c = add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRight());
-        c.getParents().add(d);
-        return c;
-    }
-
-
-    public Domain add(Predicate pred, boolean antc, List<Argument> arg, Right r) {
-        Domain p = find(pred, antc, arg);
+    public Record add(Domain d) {
+        Record p = find(d.getPredicate(), d.isAntc(), d.getArguments());
         if (p != null) {
             return p;
         } else {
-            p = new Domain(user);
-            p.setNext(root);
-            p.setPredicate(pred);
-            p.setAntc(antc);
-            p.setRight(r);
-            p.setId(lastID++);
-            if (arg != null) {
-                for (Argument t : arg) {
-                    if (t.isTSet()) {
-                        p.add(new Argument(t.getT().getCurrent()));
-                    } else {
-                        p.add(new Argument(t.getValue()));
-                    }
-                }
-            }
-            root = p;
-            return p;
+            Record r = new Record(d);
+            r.setNext(root);
+            root = r;
+            return r;
         }
     }
 
-    public Domain find(Domain d) {
+
+    public Record add(Predicate pred, boolean antc, boolean isQuery, List<Argument> arg) {
+        Record p = find(pred, antc, arg);
+        if (p != null) {
+            return p;
+        } else {
+            List<Argument> list = null;
+            if (arg != null) {
+                list = new ArrayList<>();
+                for (Argument t : arg) {
+                    if (t.isTSet()) {
+                        TValue v = t.getT().getCurrent();
+                        if (isQuery) {
+                            v.setQuery();
+                        }
+                        list.add(new Argument(v));
+
+                    } else {
+                        list.add(new Argument(t.getValue()));
+                    }
+                }
+            }
+            Right r = user.getMind().getRights().add();
+            Tree t = user.getMind().getTrees().add();
+            t.setRight(r);
+            t.setGenerated();
+            t.setUsed();
+            Domain d = user.getMind().getDomains().add(pred, antc, list, r);
+            d.setRight(r);
+            t.getSequence().add(d);
+            r.getTree().add(t);
+            r.setGenerated(true);
+
+            int save = user.getMind().getDebugLevel();
+            user.getMind().setDebugLevel(0);
+            String origin = d.toString();
+            user.getMind().setDebugLevel(save);
+            r.setOrig(origin);
+
+            return add(d);
+        }
+    }
+
+    public Record find(Domain d) {
         return find(d.getPredicate(), d.isAntc(), d.getArguments());
     }
 
-    public Domain find(Predicate pred, boolean antc, List<Argument> arg) {
-        for (Domain p = root; p != null; p = p.getNext()) {
-            if (p.isAntc() == antc && p.getPredicate() == pred && p.getPredicate().getRange() == pred.getRange() && !p.getArguments().isEmpty()) {
+    public Record find(Predicate pred, boolean antc, List<Argument> arg) {
+        for (Record p = root; p != null; p = p.getNext()) {
+            if (p.getDomain().isAntc() == antc
+                    && p.getDomain().getPredicate() == pred
+                    && p.getDomain().getPredicate().getRange() == pred.getRange()
+                /*&& !p.getArguments().isEmpty()*/) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {
-                    if (!p.get(i).isEmpty() && !arg.get(i).isEmpty() && p.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                    if (!p.getDomain().get(i).isEmpty() && !arg.get(i).isEmpty() && p.getDomain().get(i).getValue().getId() != arg.get(i).getValue().getId()) {
                         break;
                     }
                 }
                 if (i == pred.getRange()) {
                     return p;
                 }
-                //return p;
             }
         }
         return null;
     }
 
     public Domain get(long id) {
-        for (Domain p = root; p != null; p = p.getNext()) {
-            if (p.getId() == id) {
-                return p;
+        for (Record p = root; p != null; p = p.getNext()) {
+            if (p.getDomain().getId() == id) {
+                return p.getDomain();
             }
         }
         return null;
     }
 
-    
 
-    public Domain getRoot() {
+    public Record getRoot() {
         return root;
     }
 
-    public void setRoot(Domain o) {
+    public void setRoot(Record o) {
         root = o;
     }
 
     public void clear() {
-        while(stack.size() > 1){
+        while (stack.size() > 1) {
             release();
         }
     }
 
     public void mark() {
-        stack.push(new Object[]{root, lastID});
+        stack.push(root);
     }
 
     public void commit() {
@@ -138,10 +156,7 @@ public class DatabaseFactory {
 
     public void release() {
         if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            Domain saved = (Domain) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
+            root = stack.pop();
         }
         if (stack.empty()) {
             mark();
@@ -150,27 +165,25 @@ public class DatabaseFactory {
 
     public int size() {
         int cnt = 0;
-        for (Domain q = root; q != null; q = q.getNext()) {
+        for (Record q = root; q != null; q = q.getNext()) {
             ++cnt;
         }
         return cnt;
     }
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
         dos.writeInt(size());
-        for (Domain d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+        for (Record d = root; d != null; d = d.getNext()) {
+            dos.writeLong(d.getDomain().getId());
         }
     }
 
     public void readCompiledData(DataInputStream dis) throws IOException {
         clear();
-        lastID = dis.readLong();
         int count = dis.readInt();
-        Domain a = null, b;
+        Record a = null, b;
         while (count-- > 0) {
-            b = new Domain(dis, user);
+            b = new Record(user.getMind().getDomains().get(dis.readLong()));
             if (a == null) {
                 root = b;
             } else {
@@ -179,6 +192,26 @@ public class DatabaseFactory {
             a = b;
         }
     }
-   
-    
+
+    public class Record {
+        private Domain domain = null;
+        private Record next = null;
+
+        public Record(Domain domain) {
+            this.domain = domain;
+        }
+
+        public Domain getDomain() {
+            return domain;
+        }
+
+        public Record getNext() {
+            return next;
+        }
+
+        public void setNext(Record next) {
+            this.next = next;
+        }
+    }
+
 }

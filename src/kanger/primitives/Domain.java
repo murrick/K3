@@ -25,7 +25,7 @@ public class Domain {
     private Right right;                                        // Ссылка на правило
     private long id = -1;                                       // id домена
     private Domain next = null;                                 // Следующий элемент
-    private Set<Domain> parents = new HashSet<>();              // Родительские домены для БД
+//    private Set<Domain> parents = new HashSet<>();              // Родительские домены для БД
 
     private User user = null;
 
@@ -111,15 +111,12 @@ public class Domain {
 //        mind.getQueuedDomains().createTVar(id);
 //    }
 
-    public List<Domain> getCauses() {
-        List<Domain> list = new ArrayList<>();
-        for (TVariable t : getTVariables(true)) {
+    public Set<Domain> getCauses() {
+        Set<Domain> list = new HashSet<>();
+        for (TValue t : getTValues(true)) {
             if (!t.isEmpty()) {
-                for (int i = 0; i < t.getSrcSolves().size(); ++i) {
-//                    if(t.getDstSolves().get(i).getId() == getId()) {
-                    Domain src = t.getSrcSolves().get(i);
-                    list.add(src);
-//                    }
+                for (TValue.Solve s : t.getSolves()) {
+                    list.add(s.getSrc());
                 }
             }
         }
@@ -138,9 +135,9 @@ public class Domain {
         this.antc = antc;
     }
 
-    public Set<Domain> getParents() {
-        return parents;
-    }
+//    public Set<Domain> getParents() {
+//        return parents;
+//    }
 
 
     //    String s = String.format("%c%s(", d.isAntc() ? Enums.ANT : Enums.SUC, d.getPredicate().getName());
@@ -267,6 +264,8 @@ public class Domain {
             for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
                 if (slave.get(i).isEmpty() || arguments.get(i).isEmpty()
                         || slave.get(i).getValue().getId() != arguments.get(i).getValue().getId()
+                        || this.isDestFor(i, slave)
+                        || slave.isDestFor(i, this)
                         || (slave.get(i).isTSet() && arguments.get(i).isTSet()
                         && slave.get(i).getT().getId() == arguments.get(i).getT().getId())) {
                     success = false;
@@ -315,12 +314,17 @@ public class Domain {
 //    }
 
     public boolean isDestFor(int index, Domain d) {
-        return index < arguments.size()
-                && arguments.get(index).isTSet()
-                && !arguments.get(index).getT().isEmpty()
-                && arguments.get(index).getT().getDstSolves() != null
-                && arguments.get(index).getT().getDstIndex(this) == index
-                && arguments.get(index).getT().getSrcSolve(index).getId() == d.getId();
+        if (index < arguments.size() && ((arguments.get(index).isTSet() && !arguments.get(index).getT().isEmpty()) || arguments.get(index).isVSet())) {
+            TValue v = arguments.get(index).isVSet() ? arguments.get(index).getV() : arguments.get(index).getT().getCurrent();
+            for (TValue.Solve s : v.getSolves()) {
+                if (s.getIndex() == index
+                        && s.getDst().getId() == id
+                        && s.getSrc().getId() == d.getId()) {
+                    return true;
+                }
+            }
+        }
+        return false;
 
     }
 
@@ -337,6 +341,10 @@ public class Domain {
 
     public List<TVariable> getTVariables(boolean full) {
         return Tools.getTVariables(arguments, full);
+    }
+
+    public List<TValue> getTValues(boolean full) {
+        return Tools.getTValues(arguments, full);
     }
 
     public List<Function> getFunctions() {
@@ -557,9 +565,12 @@ public class Domain {
     }
 
     public Domain setStored() {
-        return user.getMind().getDatabase().add(predicate, antc, arguments, right);
+        return user.getMind().getDatabase().add(this).getDomain();
     }
 
+    public Domain createStored() {
+        return user.getMind().getDatabase().add(predicate, antc, isQuery(), arguments).getDomain();
+    }
 
     public boolean isSystem() {
         return Parser.getOp(predicate.getName()) != null;
@@ -600,6 +611,13 @@ public class Domain {
         } else {
             for (TVariable t : getTVariables(true)) {
                 if (t.isQuery()) {
+                    return true;
+                }
+            }
+            for (Argument a : arguments) {
+                if (a.isVSet()
+                        && user.getMind().getQueryValues().containsKey(a.getV().getTVar())
+                        && user.getMind().getQueryValues().get(a.getV().getTVar()).contains(a.getV())) {
                     return true;
                 }
             }
@@ -693,7 +711,7 @@ public class Domain {
             if (arguments.get(i).isTSet()) {
                 if (list.get(i).isEmpty()) {
                     arguments.get(i).getT().setValue(null);
-                } else if (arguments.get(i).getT().contains(list.get(i).getValue())) {
+                } else if (arguments.get(i).getT().find(list.get(i).getValue()) != null) {
                     arguments.get(i).getT().setValue(list.get(i).getValue());
 //                                    mind.getValues().add(parent.get(i).getT(), parent);
                 }

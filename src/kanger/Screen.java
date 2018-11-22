@@ -230,9 +230,9 @@ public class Screen {
 //                                reader.getHistory().getHistoryList().remove(0);
 //                                reader.getHistory().addToHistory(line);
 //                            } else {
-                                // StringSelection selec = new StringSelection(line);
-                                // Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                                // clipboard.setContents(selec, selec);
+                            // StringSelection selec = new StringSelection(line);
+                            // Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            // clipboard.setContents(selec, selec);
 //                            }
 
                             int pos = 0;
@@ -551,7 +551,7 @@ public class Screen {
             return;
         }
 
-        List<Domain> list = s.getCauses();
+        Set<Domain> list = s.getCauses();
         String indent = "";
         for (int i = 0; i < level; ++i) {
             indent += "\t";
@@ -571,11 +571,8 @@ public class Screen {
             if (d.isStored() /*|| (d.isExcluded() && d.isQuery())*/) {
 //                d.recalculate();
                 System.out.printf("\t%s\n", d.toString());
-                if (showCauses) { 
-                    for(Domain parent : d.getParents()) { 
-                        parent.apply(d);
-                        showCauses(mind, parent, 0); 
-                    }
+                if (showCauses) {
+                    showCauses(mind, d, 0);
                 }
             }
         } else {
@@ -682,7 +679,7 @@ public class Screen {
         int depth = 0;
         for (Tree t : r.getTree()) {
             List<String> v = new ArrayList<>();
-            v.add( (t.isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (!t.getExcludes().isEmpty() ? "X" : ""));
+            v.add((t.isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (!t.getExcludes().isEmpty() ? "X" : ""));
             list.add(v);
             int len = 0;
             for (Domain d : t.getSequence()) {

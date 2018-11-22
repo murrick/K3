@@ -81,7 +81,7 @@ public class DomainFactory {
 
     public Domain find(Predicate pred, boolean antc, List<Argument> arg) {
         for (Domain p = root; p != null; p = p.getNext()) {
-            if (p.isAntc() == antc && p.getPredicate() == pred && p.getPredicate().getRange() == pred.getRange() && !p.getArguments().isEmpty()) {
+            if (p.isAntc() == antc && p.getPredicate() == pred && p.getPredicate().getRange() == pred.getRange() /*&& !p.getArguments().isEmpty()*/) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {
                     if (p.get(i).getValue() != arg.get(i).getValue() || p.get(i).getT() != arg.get(i).getT() || p.get(i).getF() != arg.get(i).getF()) {/*??? .f*/

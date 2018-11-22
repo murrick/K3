@@ -6,9 +6,8 @@ import kanger.interfaces.IValue;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by murray on 13.12.16.
@@ -19,9 +18,10 @@ public class TValue implements IValue {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private List<Domain> srcSolves = new ArrayList<>();
-    private List<Domain> dstSolves = new ArrayList<>();
-    private List<Integer> posSolves = new ArrayList<>();
+    private Set<Solve> solves = new HashSet<>();
+//    private List<Domain> srcSolves = new ArrayList<>();
+//    private List<Domain> dstSolves = new ArrayList<>();
+//    private List<Integer> posSolves = new ArrayList<>();
 
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
@@ -54,7 +54,7 @@ public class TValue implements IValue {
         this.user = user;
     }
 
-    
+
     public Term getValue() {
         return value;
     }
@@ -69,34 +69,31 @@ public class TValue implements IValue {
         return value;
     }
 
-    public List<Domain> getSrcSolves() {
-        return srcSolves;
+    public Set<Solve> getSolves() {
+        return solves;
     }
 
-    public void addSolve(int index, Domain src, Domain dst) {
-        boolean found = false;
-        for (int i = 0; i < srcSolves.size(); ++i) {
-            if (srcSolves.get(i).getId() == src.getId()
-                    && dstSolves.get(i).getId() == dst.getId()
-                    && posSolves.get(i) == index) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            this.srcSolves.add(src);
-            this.dstSolves.add(dst);
-            this.posSolves.add(index);
-        }
+//    public Set<Domain> getSrcSolves() {
+//        Set<Domain> set = new HashSet<>();
+//        for(Solve s : solves) {
+//            set.add(s.getSrc());
+//        }
+//        return set;
+//    }
+//
+//    public Set<Domain> getDstSolves() {
+//        Set<Domain> set = new HashSet<>();
+//        for(Solve s : solves) {
+//            set.add(s.getDst());
+//        }
+//        return set;
+//    }
+
+
+    public void addSolve(int index, Domain dst, Domain src) {
+        solves.add(new Solve(index, dst, src));
     }
 
-    public List<Domain> getDstSolves() {
-        return dstSolves;
-    }
-
-    public List<Integer> getPosSolves() {
-        return posSolves;
-    }
 
     public Right getRight() {
         return right;
@@ -172,26 +169,26 @@ public class TValue implements IValue {
         return user.getMind().getClosedValues().containsKey(tVar) && user.getMind().getClosedValues().get(tVar).contains(this);
     }
 
-    public boolean isRelativeFor(TValue slave) {
-        for (Domain m : dstSolves) {
-            if (slave.getSrcSolves().contains(m)) {
-                return true;
-            }
-        }
-        for (Domain m : srcSolves) {
-            if (slave.getDstSolves().contains(m)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
+    //    public boolean isRelativeFor(TValue slave) {
+//        for (Domain m : dstSolves) {
+//            if (slave.getSrcSolves().contains(m)) {
+//                return true;
+//            }
+//        }
+//        for (Domain m : srcSolves) {
+//            if (slave.getDstSolves().contains(m)) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+//
+//
     @Override
     public boolean equals(Object obj) {
         return obj != null && obj instanceof TValue && ((TValue) obj).getId() == id;
     }
-   
+
     @Override
     public boolean isEmpty() {
         return getValue() == null;
@@ -263,5 +260,51 @@ public class TValue implements IValue {
         return null;
     }
 
+    public class Solve {
+        private Domain src = null;
+        private Domain dst = null;
+        private int index = -1;
+
+        public Solve(int index, Domain dst, Domain src) {
+            this.index = index;
+            this.dst = dst;
+            this.src = src;
+        }
+
+        public Domain getSrc() {
+            return src;
+        }
+
+        public void setSrc(Domain src) {
+            this.src = src;
+        }
+
+        public Domain getDst() {
+            return dst;
+        }
+
+        public void setDst(Domain dst) {
+            this.dst = dst;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public void setIndex(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o != null
+                    && o instanceof Solve
+                    && src != null && dst != null
+                    && ((Solve) o).getSrc() != null && ((Solve) o).getDst() != null
+                    && src.getId() == ((Solve) o).getSrc().getId()
+                    && dst.getId() == ((Solve) o).getDst().getId()
+                    && index == ((Solve) o).getIndex();
+        }
+    }
 
 }

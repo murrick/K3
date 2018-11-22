@@ -3,6 +3,7 @@ package kanger.enums;
 import kanger.compiler.Parser;
 import kanger.exception.ParseErrorException;
 import kanger.primitives.Argument;
+import kanger.primitives.TValue;
 import kanger.primitives.TVariable;
 
 import java.text.ParseException;
@@ -247,6 +248,26 @@ public abstract class Tools {
             } else if (full && a.isFSet()) {
                 List<TVariable> temp = getTVariables(a.getF().getArguments(), full);
                 for (TVariable t : temp) {
+                    if (!list.contains(t)) {
+                        list.add(t);
+                    }
+                }
+            }
+
+        }
+        return list;
+    }
+
+    public static List<TValue> getTValues(List<Argument> arg, boolean full) {
+        List<TValue> list = new ArrayList<>();
+        for (Argument a : arg) {
+            if (a.isTSet() && !list.contains(a.getT().getCurrent())) {
+                list.add(a.getT().getCurrent());
+            } else if (a.isVSet() && !list.contains(a.getV())) {
+                list.add(a.getV());
+            } else if (full && a.isFSet()) {
+                List<TValue> temp = getTValues(a.getF().getArguments(), full);
+                for (TValue t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
                     }
