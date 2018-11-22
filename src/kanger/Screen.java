@@ -154,7 +154,7 @@ public class Screen {
                             String s = new Scanner(System.in).nextLine().toUpperCase();
                             if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                 mind.clear();
-//                                mind.rollback();
+//                                mind.release();
                             }
                         }
                         break;
@@ -976,7 +976,7 @@ public class Screen {
 //                    mind.setText(buf);
 //                    mind.setChanged(false);
                     mind.setSourceFileName(line);
-//                    mind.rollback();
+//                    mind.release();
                     //TODO: Надо это?
                     mind.compile(buf.toString());
                     //mind.getAnalyser().analiser(true);

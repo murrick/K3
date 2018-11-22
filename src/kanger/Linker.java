@@ -601,8 +601,8 @@ public class Linker {
 //
 ////            if (result) {
 //            logCommit(logging);
-//            mind.getTValues().rollback();
-//            mind.getFValues().rollback();
+//            mind.getTValues().release();
+//            mind.getFValues().release();
 ////            } else {
 ////                logCommit("RELEASE (F):", logging);
 ////                mind.getTValues().release();

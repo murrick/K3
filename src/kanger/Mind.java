@@ -180,7 +180,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public void rollback(Mind m) {
+    public void release(Mind m) {
 
         user.setMind(this);
         log.commit(m.getLog());
@@ -345,7 +345,7 @@ public class Mind {
         Boolean ar = m.analise(true);
 
         if (ar) {
-            rollback(m);
+            release(m);
             getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             return false;
         } else {
@@ -777,7 +777,7 @@ public class Mind {
 //        excluded.clear();
 //        m.link(true);
 //        Boolean ar = m.analise(true);
-//        rollback();
+//        release();
 //        excluded.commit(m.getHypotesisStore());
 
 //        if (ar) {
@@ -814,7 +814,7 @@ public class Mind {
                         m.link(r, true);
                         boolean ar = m.analise(true);
                         if (ar) {
-                            rollback(m);
+                            release(m);
                             m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
                             res = null;
                         } else {
@@ -843,7 +843,7 @@ public class Mind {
                         }
 //                    }
                     } else {
-                        rollback(m);
+                        release(m);
                     }
                 }
                 break;
@@ -868,8 +868,23 @@ public class Mind {
                     hypotesis.clear();
 
                     if (line.length() == 1) {
-                        getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
-                        res = true;
+                        Mind m = new Mind(this);
+
+                        m.link(true);
+                        Boolean ar = m.analise(true);
+
+                        if (ar) {
+                            release(m);
+                            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+                            res = false;
+                        } else {
+                            commit(m);
+                            excluded.clear();
+                            excluded.commit(m.getHypotesisStore());
+                            getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+                            res = true;
+                        }
+
                     } else if (!isInsertion) {
 
                         if (!DEBUG_DISABLE_FALSE_CHECK) {
@@ -900,7 +915,7 @@ public class Mind {
                                 }
 
                             }
-                            rollback(m);
+                            release(m);
 
                         }
                     }
@@ -965,7 +980,7 @@ public class Mind {
                                 }
                             }
                         }
-                        rollback(m);
+                        release(m);
 
 //TODO: Померял местами с началом
 //                        mind.release();

@@ -1,9 +1,15 @@
 package kanger.factory;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.primitives.FValue;
+import kanger.primitives.Function;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 public class FValueFactory {
     private FValue root = null;
@@ -154,7 +160,7 @@ public class FValueFactory {
 //        }
 //    }
 //
-//    public void rollback() {
+//    public void release() {
 //        if (!stack.empty()) {
 //            Object[] pop = stack.pop();
 //            FValue saved = (FValue) pop[0];

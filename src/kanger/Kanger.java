@@ -42,7 +42,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -72,7 +72,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -129,7 +129,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -182,7 +182,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -235,7 +235,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -288,7 +288,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -333,7 +333,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -370,7 +370,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -412,7 +412,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -448,7 +448,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -487,7 +487,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -529,7 +529,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -567,7 +567,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -609,7 +609,7 @@ public class Kanger {
                         ex.printStackTrace();
                     } finally {
                         System.out.println("====================================================");
-                        mindRoot.rollback(mind);
+                        mindRoot.release(mind);
                     }
                     return mind;
                 }
@@ -886,7 +886,7 @@ public class Kanger {
 //                    "!d(v);");
 
 
-        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
+//        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
 //        mind.query("?$x f(x);");
 
 //        mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -908,15 +908,15 @@ public class Kanger {
 //                            "!a(nn);" +
 //                    ""
 //            );
-//            mind.compile(
-//                    "!@x ~father(x,x);" +
-//                            "!@x $y father(y,x);" +
+        mind.compile(
+                "!@x ~father(x,x);" +
+                        "!@x $y father(y,x);" +
 //                            "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
-//                            "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
-//                            "!@x (male(x) || female(x)), ~(male(x) && female(x));"+
-//                            "!father(John,Tom);" +
-//                            "!daughter(Mary,John);" +
-//                    "");
+                        "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
+                        "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
+                        "!father(John,Tom);" +
+                        "!daughter(Mary,John);" +
+                        "");
 //
 //        Mind mind = new Mind(mindRoot);
 //        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
@@ -961,7 +961,7 @@ public class Kanger {
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
 //        Screen.session(mind);
 
-//            mind = new Mind(mindRoot); set01_04(); mindRoot.rollback();
+//            mind = new Mind(mindRoot); set01_04(); mindRoot.release();
 
 //            mindRoot.getLog().commit(mind.getLog());
 
