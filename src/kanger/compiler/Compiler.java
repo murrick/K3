@@ -171,7 +171,11 @@ public class Compiler {
     }
 
     private Tree compilePredicate(Tree t, PTree root, boolean antc, Map<String, Argument> replacements) {
-        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
+//        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
+
+        Domain d = new Domain(user);
+        d.setRight(user.getMind().getRights().getRoot());
+
         List<Argument> arg = new ArrayList<>();
         Predicate pred = null;
         if (root.isSystem()) {
@@ -198,6 +202,8 @@ public class Compiler {
         d.setPredicate(pred);
         d.setAntc(antc);
         d.getArguments().addAll(arg);
+
+        d = user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRight());
         t.getSequence().add(d);
         return t;
     }

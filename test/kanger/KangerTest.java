@@ -563,7 +563,7 @@ public class KangerTest {
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Hypotese(user, false, "f", "z");
+        s = new Hypotese(user, true, "f", "z");
         if (!mind.getHypotesisStore().getRoot().contains(s)) {
             fail("Expected: " + s.toString());
         }

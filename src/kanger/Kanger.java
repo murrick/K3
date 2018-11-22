@@ -714,7 +714,7 @@ public class Kanger {
                         if (!mind.getHypotesisStore().getRoot().contains(s)) {
                             fail("Expected: " + s.toString());
                         }
-                        s = new Hypotese(mind.getUser(), false, "f", "z");
+                        s = new Hypotese(mind.getUser(), true, "f", "z");
                         if (!mind.getHypotesisStore().getRoot().contains(s)) {
                             fail("Expected: " + s.toString());
                         }

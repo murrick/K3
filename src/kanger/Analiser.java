@@ -203,7 +203,7 @@ public class Analiser {
                 if (d.isComplete() && !d.isClosed() && !(d.isExcluded() && d.isQuery()) && !d.isStored()) {
                     result = false;
                     if (user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
-                        user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+                        user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     }
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
@@ -247,17 +247,17 @@ public class Analiser {
         } else {
             for (int k = 0; k < sequence.size(); ++k) {
                 Domain d = sequence.get(k);
-//                if(d.isQuery() && (d.isExcluded() || d.isProduced()) && d.isStored()) {
-//                    System.out.println(d);
-//                }
-                if (d.isComplete() && !d.isClosed() && ((d.isQuery() || !d.isStored()) /*|| d.isQuery() || d.isStored()*/) && (d.isProduced() || d.isExcluded()) && (d.isProduced() || d.isStored()) && user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
-//                    if (/*(d.isQuery() || d.isStored()) &&*/ d.isProduced() && !d.isExcluded()) {
-                    user.getMind().getHypotesisStore().add(!d.isAntc(), false /*d.isQuery()*/, d.getPredicate(), d.getArguments());
+                if (d.isComplete()
+                        && !d.isClosed()
+                        && (d.isQuery() || !d.isStored())
+                        && (d.isProduced() || d.isExcluded())
+                        && (d.isProduced() || d.isStored())
+                        && user.getMind().getHypotesisStore().find(null, d.getPredicate(), d.getArguments()) == null) {
+                    user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
                     }
-//                    }
                 }
             }
 
