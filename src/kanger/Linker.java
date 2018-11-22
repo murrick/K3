@@ -378,7 +378,8 @@ public class Linker {
 
 //                                        if(d1.isQuery() || d2.isQuery()) {
 //                                            System.out.println("!");
-//                                        }
+//                                        
+                                            //TODO А разве не dest только метить?
                                             for (Tree t : d1.getUsedTrees()) {
                                                 t.setUsed();
                                             }
@@ -459,22 +460,42 @@ public class Linker {
         boolean result = false;
 
         if (tvars.isEmpty()) {
-            Set<Tree> set = new HashSet<>();
-            set.addAll(masterSet);
-            set.addAll(slaveSet);
-
-            for (Tree tree : set) {
-                for (Domain d : tree.getSequence()) {
-                    if (!d.isStored() && d.isExcluded()) {
-                        if (markProduced(d, tree, logging)) {
+     
+            for(Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
+                boolean found = false;
+                for(Domain d : t.getSequence()) {
+                    if(d.isExcluded()) {
+                        found = true;
+                        break;
+                    }
+                }
+                if(found) {
+                    for(Domain d : t.getSequence()) {
+                        if(!d.isExcluded() && !d.isStored()) {
+                            d.setProduced();
                         }
                     }
                 }
+                
+                updateDatabase(t, logging);
             }
-
-            for (Tree tree : set) {
-                updateDatabase(tree, logging);
-            }
+            
+//            Set<Tree> set = new HashSet<>();
+//            set.addAll(masterSet);
+//            set.addAll(slaveSet);
+//
+//            for (Tree tree : set) {
+//                for (Domain d : tree.getSequence()) {
+//                    if (!d.isStored() && d.isExcluded()) {
+//                        if (markProduced(d, tree, logging)) {
+//                        }
+//                    }
+//                }
+//            }
+//
+//            for (Tree tree : set) {
+//                updateDatabase(tree, logging);
+//            }
 
 
         } else {

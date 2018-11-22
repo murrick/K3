@@ -911,7 +911,7 @@ public class Kanger {
         mind.compile(
                 "!@x ~father(x,x);" +
                         "!@x $y father(y,x);" +
-//                            "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
+                        "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
                         "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
                         "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
                         "!father(John,Tom);" +
