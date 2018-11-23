@@ -58,13 +58,14 @@ public class Tree {
         return sequence;
     }
 
-    public boolean isProduced(List<Argument> args) {
+
+    public boolean isReady() {
         for (Domain d : sequence) {
-            if (d.isProduced(args)) {
-                return true;
+            if (!d.isExcluded() && !d.isUsed() && !d.isStored() && !d.isQuery()) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public boolean isUsed() {

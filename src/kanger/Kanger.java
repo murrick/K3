@@ -911,8 +911,8 @@ public class Kanger {
         mind.compile(
                 "!@x ~father(x,x);" +
                         "!@x $y father(y,x);" +
-//                            "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
-                        "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
+                        "!@x @y father(x,y) -> male(x) && child(y,x);" +
+                        "!@x @y child(y,x) -> (male(y) && son(y,x)) || (female(y) && daughter(y,x));" +
                         "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
                         "!father(John,Tom);" +
                         "!daughter(Mary,John);" +
@@ -946,7 +946,7 @@ public class Kanger {
 
 //            mind = mindRoot;
 
-        
+
 //        for (int i = 0; i < set01.size(); ++i) {
 //            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
 ////            Screen.session(mind);
@@ -956,7 +956,7 @@ public class Kanger {
 //            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
 ////            Screen.session(mind);
 //        }
-        
+
 
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
 //        Screen.session(mind);

@@ -721,7 +721,7 @@ public class Domain {
         }
     }
 
-    public Set<Tree> getUsedTrees() {
+    public Set<Tree> getParentTrees() {
         Set<Tree> set = new HashSet<>();
         for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
             if (t.getSequence().contains(this)) {

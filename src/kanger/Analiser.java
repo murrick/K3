@@ -543,7 +543,7 @@ public class Analiser {
 //        int countClosed;
 //
 //        do {
-//            countUsed = mind.getUsedTrees().size();
+//            countUsed = mind.getParentTrees().size();
 //            countClosed = mind.getClosedTrees().size();
 //            for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
 //                for (Tree x = mind.getTrees().getRoot(); x != null; x = x.getNext()) {
@@ -556,7 +556,7 @@ public class Analiser {
 //                    }
 //                }
 //            }
-//        } while (countClosed != mind.getClosedTrees().size() || countUsed != mind.getUsedTrees().size());
+//        } while (countClosed != mind.getClosedTrees().size() || countUsed != mind.getParentTrees().size());
 
 //        }
         if (logging) {

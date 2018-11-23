@@ -102,7 +102,7 @@ public class Linker {
     }
 
 
-    private boolean linkDomains(Domain master, Domain slave, int level, Term[] solves, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) throws SubstitutionException {
+    private boolean linkDomains(Domain master, boolean isMasterReay, Domain slave, boolean isSlaveReady, int level, Term[] solves, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) throws SubstitutionException {
 
         if (level >= master.getPredicate().getRange()) {
 
@@ -146,6 +146,7 @@ public class Linker {
 //                }
 
             if (master.get(i).isTSet()
+                    && isSlaveReady
                     && !slave.get(i).isEmpty()
                     && !slave.isDestFor(i, master)
                     && !slave.isExcluded()
@@ -188,6 +189,7 @@ public class Linker {
             }
 
             if (slave.get(i).isTSet()
+                    && isMasterReay
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
                     && !master.isExcluded()
@@ -248,7 +250,7 @@ public class Linker {
 //                }
 //            }
 
-            return linkDomains(master, slave, level + 1, solves, logging, occurrsSubst, occurrsMaster, occurrsSlave);
+            return linkDomains(master, isMasterReay, slave, isSlaveReady, level + 1, solves, logging, occurrsSubst, occurrsMaster, occurrsSlave);
         }
     }
 
@@ -326,10 +328,21 @@ public class Linker {
 
         if (tvars.isEmpty()) {
             for (Tree master : masterSet) { //query == null ? set : query.getTree()) {
-                for (Tree slave : slaveSet) {
+                if (master.getSequence().size() == 1 && master.getSequence().get(0).getTVariables(true).size() == 0 && !master.getSequence().get(0).isStored()) {
+                    updateDatabase(master, logging);
+                }
+//                if(!master.isReady()) {
+//                    continue;
+//                }
 
-//                    updateDatabase(master, logging);
-//                    updateDatabase(slave, logging);
+                for (Tree slave : slaveSet) {
+                    if (slave.getSequence().size() == 1 && slave.getSequence().get(0).getTVariables(true).size() == 0 && !slave.getSequence().get(0).isStored()) {
+                        updateDatabase(slave, logging);
+                    }
+//                    if(!slave.isReady()) {
+//                        continue;
+//                    }
+
 
                     user.getMind().getClosedValues().clear();
                     user.getMind().getBlockedValues().clear();
@@ -363,7 +376,7 @@ public class Linker {
 
                                     try {
                                         user.getMind().getTValues().mark();
-                                        if (linkDomains(d1, d2, 0, new Term[d1.getPredicate().getRange()], logging, false, false, false)) {
+                                        if (linkDomains(d1, master.isReady(), d2, slave.isReady(), 0, new Term[d1.getPredicate().getRange()], logging, false, false, false)) {
 
 //                                        for(Argument ma : d1.getArguments()) {
 //                                            if ("xx".equals(ma.getValue() + "")) {
@@ -379,10 +392,10 @@ public class Linker {
 //                                        if(d1.isQuery() || d2.isQuery()) {
 //                                            System.out.println("!");
 //                                        }
-                                            for (Tree t : d1.getUsedTrees()) {
+                                            for (Tree t : d1.getParentTrees()) {
                                                 t.setUsed();
                                             }
-                                            for (Tree t : d2.getUsedTrees()) {
+                                            for (Tree t : d2.getParentTrees()) {
                                                 t.setUsed();
                                             }
 //                                            master.setUsed();
@@ -463,10 +476,12 @@ public class Linker {
             set.addAll(masterSet);
             set.addAll(slaveSet);
 
+
             for (Tree tree : set) {
                 for (Domain d : tree.getSequence()) {
                     if (!d.isStored() && d.isExcluded()) {
                         if (markProduced(d, tree, logging)) {
+                            result = true;
                         }
                     }
                 }
@@ -476,6 +491,7 @@ public class Linker {
                 updateDatabase(tree, logging);
             }
 
+            return result;
 
         } else {
             TVariable t = tvars.last(); //.get(tIndex);
@@ -507,18 +523,32 @@ public class Linker {
     private boolean markProduced(Domain master, Tree set, boolean logging) {
         boolean result = false;
 
-        for (TVariable t : master.getTVariables(true)) {
-            boolean found = false;
-            for (Domain r : t.getUsage()) {
-                if (master.getId() != r.getId() && set.getSequence().contains(r) && !r.isExcluded() && !r.isProduced() && !r.isStored()) {
-                    r.setProduced();
+        boolean found = false;
+        for (Tree t : master.getParentTrees()) {
+            for (Domain d : t.getSequence()) {
+                if (master.getId() != d.getId() && !d.isExcluded() && !d.isProduced() && !d.isStored()) {
+                    d.setProduced();
                     found = true;
                     result = true;
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Produced: " + d.toString());
                     }
                 }
             }
+        }
+
+        for (TVariable t : master.getTVariables(true)) {
+//            boolean found = false;
+//            for (Domain r : t.getUsage()) {
+//                if (master.getId() != r.getId() && set.getSequence().contains(r) && !r.isExcluded() && !r.isProduced() && !r.isStored()) {
+//                    r.setProduced();
+//                    found = true;
+//                    result = true;
+//                    if (logging) {
+//                        user.getMind().getLog().add(LogMode.ANALIZER, "Result: " + r.toString());
+//                    }
+//                }
+//            }
 
             if (found && logging) {
                 if (!t.isEmpty()) {
@@ -770,7 +800,7 @@ public class Linker {
 //        mind.getExcludedTrees().clear();
         //TODO: Нужно сделать динамический сет
 //        Queue<Tree> slave = getActualTrees(r);
-//        Queue<Tree> master = getUsedTrees(r);
+//        Queue<Tree> master = getParentTrees(r);
 //        if (r != null) {
 //            master = new LinkedList<>();
 //            master.addAll(r.getTree());
@@ -822,9 +852,12 @@ public class Linker {
 //            mind.getExcludedDomains().clear();
 //            mind.getProducedDomains().clear();
 //            mind.getStoredDomains().clear();
-//            user.getMind().getUsedTrees().clear();
+//            user.getMind().getParentTrees().clear();
 
 //                calcFunctions(tset, slave, logging);
+
+//            user.getMind().getProducedDomains().clear();
+
             while (updateDomains(tset, master, slave, 0, logging)) ;
             calcFunctions(tset, slave, logging);
             produceDomains(tset, master, slave, 0, logging);
@@ -929,7 +962,7 @@ public class Linker {
     private Domain updateDatabase(Tree tree, boolean logging) {
         Domain produced = null;
         for (Domain d : tree.getSequence()) {
-            if (!d.isComplete()) {
+            if (!d.isComplete() || d.isStored()) {
                 produced = null;
                 break;
             } else if (d.isStored() || d.isExcluded() || d.isUsed()) {
@@ -951,8 +984,10 @@ public class Linker {
 
 //        }
 
+
         if (produced != null) {
             if (!produced.isStored()) {
+
                 addToDatabase(produced, tree.getSequence().size() > 1 || !produced.getTVariables(true).isEmpty(), logging);
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
@@ -972,7 +1007,9 @@ public class Linker {
                 for (Domain d : tree.getSequence()) {
                     if (!d.isStored()) {
                         occurs = true;
+
                         addToDatabase(d, true, logging);
+
                     }
                 }
                 if (logging && occurs) {
