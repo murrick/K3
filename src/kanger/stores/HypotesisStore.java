@@ -211,6 +211,10 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
                     }
                 }
             }
+        } else if (isEmpty() && !exclude.isEmpty()) {
+            for (Hypotese h : exclude.getRoot()) {
+                add(h);
+            }
         }
     }
 }

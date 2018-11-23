@@ -917,6 +917,14 @@ public class Kanger {
                         "!father(John,Tom);" +
                         "!daughter(Mary,John);" +
                         "");
+
+
+//        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
+//        mind.query("?$x f(x);");
+
+//        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+//        mind.query("?@x $y a(y,x);");
+
 //
 //        Mind mind = new Mind(mindRoot);
 //        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");

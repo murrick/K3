@@ -60,9 +60,11 @@ public class Tree {
 
 
     public boolean isReady() {
-        for (Domain d : sequence) {
-            if (!d.isExcluded() && !d.isUsed() && !d.isStored() && !d.isQuery()) {
-                return false;
+        if (sequence.size() > 1) {
+            for (Domain d : sequence) {
+                if (!d.isExcluded() && !d.isUsed() && !d.isStored() && !d.isQuery()) {
+                    return false;
+                }
             }
         }
         return true;
