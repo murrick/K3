@@ -479,7 +479,7 @@ public class Linker {
 
             for (Tree tree : set) {
                 for (Domain d : tree.getSequence()) {
-                    if (!d.isStored() && d.isExcluded()) {
+                    if (d.isComplete() && !d.isStored() && d.isExcluded()) {
                         if (markProduced(d, tree, logging)) {
                             result = true;
                         }
@@ -526,7 +526,7 @@ public class Linker {
         boolean found = false;
         for (Tree t : master.getParentTrees()) {
             for (Domain d : t.getSequence()) {
-                if (master.getId() != d.getId() && !d.isExcluded() && !d.isProduced() && !d.isStored()) {
+                if (d.isComplete() && master.getId() != d.getId() && !d.isExcluded() && !d.isProduced() && !d.isStored()) {
                     d.setProduced();
                     found = true;
                     result = true;
@@ -828,9 +828,10 @@ public class Linker {
             if (logging) {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("============= LINKER PASS %03d =============", ++pass));
             }
-
-            Queue<Tree> slave = getActualTrees(r);
-            Queue<Tree> master = getUsedTrees(r);
+           
+            //TODO ВСЕ правила для отладки
+            Queue<Tree> slave = getActualTrees(null);
+            Queue<Tree> master = getUsedTrees(null);
 
             SortedSet<TVariable> tset = new TreeSet<>();
             for (Tree t : slave) {

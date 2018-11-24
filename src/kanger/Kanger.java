@@ -908,16 +908,25 @@ public class Kanger {
 //                            "!a(nn);" +
 //                    ""
 //            );
-        mind.compile(
-                "!@x ~father(x,x);" +
-                        "!@x $y father(y,x);" +
-                        "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
-                        "!@x @y child(x,y) -> (son(x,y) || daughter(x,y));" +
-                        "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
-                        "!father(John,Tom);" +
-                        "!daughter(Mary,John);" +
-                        "");
-
+       
+        mind.compile("" +
+        "!@x @y p(x, y) -> c(y, x);" +
+        "!@x @y d(x, y) -> c(x, y), p(y,x), f(x);" +
+        "!@x @y s(x, y) -> c(x, y), p(y,x), m(x);" +
+        "!p(J,T);" +
+        "!d(M,J);" +
+        "!@x (m(x) || f(x)), ~(m(x) && f(x));" +
+        "");
+//        mind.compile(
+//                "!@x ~father(x,x);" +
+//                        "!@x $y father(y,x);" +
+//                        "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
+//                        "!@x @y daughter(x,y) -> child(x,y) && female(x);" +
+//                        "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
+//                        "!father(John,Tom);" +
+//                        "!daughter(Mary,John);" +
+//                        "");
+//
 
 //        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
 //        mind.query("?$x f(x);");
