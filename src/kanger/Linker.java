@@ -149,7 +149,8 @@ public class Linker {
                     && isSlaveReady
                     && !slave.get(i).isEmpty()
                     && !slave.isDestFor(i, master)
-                    && !slave.isExcluded()
+//                    && !slave.isExcluded() 
+                    && slave.isStored()
 //                    && !master.isDestFor(i, slave)
 
 //                        && master.get(i).getTVariable().isEmpty()
@@ -192,7 +193,8 @@ public class Linker {
                     && isMasterReay
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
-                    && !master.isExcluded()
+//                    && !master.isExcluded() 
+                    && master.isStored()
 //                    && !slave.isDestFor(i, master)
 
 //                        && slave.get(i).getTVariable().isEmpty()
@@ -478,17 +480,31 @@ public class Linker {
 
 
             for (Tree tree : set) {
+                Set<Domain> candidades = new HashSet<>();
                 for (Domain d : tree.getSequence()) {
-                    if (d.isComplete() && !d.isStored() && d.isExcluded()) {
-                        if (markProduced(d, tree, logging)) {
-                            result = true;
-                        }
+                    if(!d.isComplete() || d.isStored()) { 
+                        candidades.clear();
+                        break;
+                    } else if(!d.isExcluded()){ 
+                        candidades.add(d);
+                    }                   
+                } 
+                if(candidades.size() == 1) { 
+                    result = true;
+                    Domain d = candidades.toArray(new Domain[]{})[0];
+                    if(tree.getSequence().size() > 1 || !d.getTVariables(true).isEmpty()) { 
+                        d.createStored();
+                    } else { 
+                        d.setStored(); 
+                    } 
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB record: " + d.toString());
                     }
                 }
             }
 
-            for (Tree tree : set) {
-                updateDatabase(tree, logging);
+            if(logging && result) { 
+                user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
             }
 
             return result;
@@ -498,7 +514,6 @@ public class Linker {
             TValue v = t.rewind();
             if (v != null) {
                 do {
-
                     user.getMind().getTValues().set(t, v);
                     if (produceDomains(tvars.headSet(t), masterSet, slaveSet, ++level, logging)) {
                         result = true;
@@ -994,31 +1009,33 @@ public class Linker {
                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
             }
-        } else if (tree.isUsed()) {
-
-            boolean excluded = true;
-            for (Domain d : tree.getSequence()) {
-                if (!d.isComplete() || !d.isExcluded() || d.isStored() || d.isUsed()) {
-                    excluded = false;
-                    break;
-                }
-            }
-            if (excluded) {
-                boolean occurs = false;
-                for (Domain d : tree.getSequence()) {
-                    if (!d.isStored()) {
-                        occurs = true;
-
-                        addToDatabase(d, true, logging);
-
-                    }
-                }
-                if (logging && occurs) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                }
-            }
-
         }
+        
+//        else if (tree.isUsed()) {
+//
+//            boolean excluded = true;
+//            for (Domain d : tree.getSequence()) {
+//                if (!d.isComplete() || !d.isExcluded() || d.isStored() || d.isUsed()) {
+//                    excluded = false;
+//                    break;
+//                }
+//            }
+//            if (excluded) {
+//                boolean occurs = false;
+//                for (Domain d : tree.getSequence()) {
+//                    if (!d.isStored()) {
+//                        occurs = true;
+//
+//                        addToDatabase(d, true, logging);
+//
+//                    }
+//                }
+//                if (logging && occurs) {
+//                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                }
+//            }
+//
+//        }
 
         return produced;
     }
@@ -1090,14 +1107,17 @@ public class Linker {
                 for (TValue t = user.getMind().getTValues().getRoot(); t != user.getMind().getTValues().getMark(); t = t.getNext()) {
                     if (t.isClosed()) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "CLOSED:\t" + t.toString());
-                        user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getTVar().getRight().toString());
-                        if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "From right  : " + t.getTVar().getRight().toString()); 
+                        int saveDebugLevel = user.getMind().getDebugLevel(); 
+                        if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) != 0) { 
+                            user.getMind().setDebugLevel(saveDebugLevel & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
                             user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
                             user.getMind().getLog().add(LogMode.ANALIZER, t.getTVar().getRight());
-                            user.getMind().getLog().add(LogMode.ANALIZER, "...........................................");
+                            user.getMind().getLog().add(LogMode.ANALIZER, "..........................................."); 
+                            user.getMind().setDebugLevel(saveDebugLevel);
                         }
-                        for (TValue.Solve s : t.getSolves()) {
-                            int saveDebugLevel = user.getMind().getDebugLevel();
+                        for (TValue.Solve s : t.getSolves()) { 
+                            saveDebugLevel = user.getMind().getDebugLevel(); 
                             user.getMind().setDebugLevel(saveDebugLevel & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
                             user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + s.getDst().toString());
                             user.getMind().setDebugLevel(saveDebugLevel);
