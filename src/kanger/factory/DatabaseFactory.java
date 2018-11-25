@@ -16,8 +16,9 @@ import java.util.Stack;
 public class DatabaseFactory {
 
     private Record root = null;
+    private long lastID = 0;
 
-    private Stack<Record> stack = new Stack<>();
+    private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
 
@@ -27,6 +28,7 @@ public class DatabaseFactory {
 
     public void transaction(DatabaseFactory base) {
         root = base.root;
+        lastID = base.lastID;
         mark();
     }
 
@@ -38,6 +40,7 @@ public class DatabaseFactory {
         for (Record p : list) {
             p.setNext(root);
             root = p;
+            p.setId(lastID++);
         }
     }
 
@@ -49,6 +52,7 @@ public class DatabaseFactory {
             Record r = new Record(d);
             r.setNext(root);
             root = r;
+            r.setId(lastID++);
             return r;
         }
     }
@@ -120,10 +124,10 @@ public class DatabaseFactory {
         return null;
     }
 
-    public Domain get(long id) {
+    public Record get(long id) {
         for (Record p = root; p != null; p = p.getNext()) {
-            if (p.getDomain().getId() == id) {
-                return p.getDomain();
+            if (p.getId() == id) {
+                return p;
             }
         }
         return null;
@@ -145,7 +149,7 @@ public class DatabaseFactory {
     }
 
     public void mark() {
-        stack.push(root);
+        stack.push(new Object[]{root, lastID});
     }
 
     public void commit() {
@@ -156,7 +160,10 @@ public class DatabaseFactory {
 
     public void release() {
         if (!stack.empty()) {
-            root = stack.pop();
+            Object[] pop = stack.pop();
+            Record saved = (Record) pop[0];
+            lastID = (long) pop[1];
+            root = saved;
         }
         if (stack.empty()) {
             mark();
@@ -195,6 +202,7 @@ public class DatabaseFactory {
 
     public class Record {
         private Domain domain = null;
+        private long id = -1;
         private Record next = null;
 
         public Record(Domain domain) {
@@ -203,6 +211,14 @@ public class DatabaseFactory {
 
         public Domain getDomain() {
             return domain;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public void setId(long id) {
+            this.id = id;
         }
 
         public Record getNext() {

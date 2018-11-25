@@ -59,7 +59,7 @@ public class DomainFactory {
 
 
     public Domain add(Predicate pred, boolean antc, List<Argument> arg, Right r) {
-        Domain p = find(pred, antc, arg);
+        Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
         } else {
@@ -79,12 +79,16 @@ public class DomainFactory {
         }
     }
 
-    public Domain find(Predicate pred, boolean antc, List<Argument> arg) {
+    public Domain find(Predicate pred, boolean antc, List<Argument> arg, Right r) {
         for (Domain p = root; p != null; p = p.getNext()) {
-            if (p.isAntc() == antc && p.getPredicate() == pred && p.getPredicate().getRange() == pred.getRange() /*&& !p.getArguments().isEmpty()*/) {
+            if (p.isAntc() == antc
+                    && p.getPredicate() == pred
+                    && p.getRight().getId() == r.getId()) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {
-                    if (p.get(i).getValue() != arg.get(i).getValue() || p.get(i).getT() != arg.get(i).getT() || p.get(i).getF() != arg.get(i).getF()) {/*??? .f*/
+                    if (p.get(i).getValue() != arg.get(i).getValue()
+                            || p.get(i).getT().getId() != arg.get(i).getT().getId()
+                            || p.get(i).getF().getId() != arg.get(i).getF().getId()) {
 
                         break;
                     }

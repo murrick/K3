@@ -90,8 +90,14 @@ public class TValue implements IValue {
 //    }
 
 
-    public void addSolve(int index, Domain dst, Domain src) {
-        solves.add(new Solve(index, dst, src));
+    public boolean addSolve(int index, Domain dst, Domain src) {
+        Solve s = new Solve(index, dst, src);
+        if (solves.contains(s)) {
+            return false;
+        } else {
+            solves.add(s);
+            return true;
+        }
     }
 
 

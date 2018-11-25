@@ -95,6 +95,16 @@ public class Predicate {
         return set;
     }
 
+    public Set<Domain> getLinked() {
+        Set<Domain> set = new HashSet<>();
+        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+            if (getId() == d.getPredicate().getId()) {
+                set.add(d);
+            }
+        }
+        return set;
+    }
+
     public Domain containsSolve(Domain d) {
         for (Domain x : getSolves()) {
             if (x.isStored() && d.equalsBase(x)) {
