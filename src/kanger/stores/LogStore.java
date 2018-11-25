@@ -2,6 +2,7 @@ package kanger.stores;
 
 import kanger.Mind;
 import kanger.Screen;
+import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.primitives.LogEntry;
 import kanger.primitives.Right;
@@ -63,9 +64,9 @@ public class LogStore {
             }
             log = new LogEntry(m, s);
             root.add(log);
-//            if(mirroring) {
-//                System.out.println(log.getRecord());
-//            }
+            if((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) != 0) {
+                System.out.println(log.getRecord());
+            }
         }
         return log;
     }
@@ -90,10 +91,9 @@ public class LogStore {
         LogEntry log = null;
         log = new LogEntry(m, s);
         root.add(log);
-
-//        System.out.println(log.getRecord());
-
-
+        if((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) != 0) {
+            System.out.println(log.getRecord());
+        }
         return log;
     }
 

@@ -908,15 +908,18 @@ public class Kanger {
 //                            "!a(nn);" +
 //                    ""
 //            );
-       
+
         mind.compile("" +
-        "!@x @y p(x, y) -> c(y, x);" +
-        "!@x @y d(x, y) -> c(x, y), p(y,x), f(x);" +
-        "!@x @y s(x, y) -> c(x, y), p(y,x), m(x);" +
-        "!p(J,T);" +
-        "!d(M,J);" +
-        "!@x (m(x) || f(x)), ~(m(x) && f(x));" +
-        "");
+                "!@x ~p(x,x);" +
+                "!@x $y p(y,x);" +
+                "!@x @y p(x, y) -> c(y, x);" +
+                "!@x @y d(x, y) -> c(x, y), p(y,x), f(x);" +
+                "!@x @y s(x, y) -> c(x, y), p(y,x), m(x);" +
+//                "!@x @y c(x, y) -> (s(x, y) || d(x, y));" +
+                "!p(J,T);" +
+                "!d(M,J);" +
+                "!@x (m(x) || f(x)), ~(m(x) && f(x));" +
+                "");
 //        mind.compile(
 //                "!@x ~father(x,x);" +
 //                        "!@x $y father(y,x);" +
@@ -963,7 +966,7 @@ public class Kanger {
 
 //            mind = mindRoot;
 
-        
+
 //        for (int i = 0; i < set01.size(); ++i) {
 //            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
 ////            Screen.session(mind);
@@ -973,7 +976,7 @@ public class Kanger {
 //            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
 ////            Screen.session(mind);
 //        }
-        
+
 
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
 //        Screen.session(mind);

@@ -102,7 +102,7 @@ public class Linker {
     }
 
 
-    private boolean linkDomains(Domain master, boolean isMasterReay, Domain slave, boolean isSlaveReady, int level, Term[] solves, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) throws SubstitutionException {
+    private boolean linkDomains(Domain master, boolean isMasterReady, Domain slave, boolean isSlaveReady, int level, Term[] solves, boolean logging, boolean occurrsSubst, boolean occurrsMaster, boolean occurrsSlave) throws SubstitutionException {
 
         if (level >= master.getPredicate().getRange()) {
 
@@ -146,7 +146,7 @@ public class Linker {
 //                }
 
             if (master.get(i).isTSet()
-                    && isSlaveReady
+//                    && isSlaveReady
                     && !slave.get(i).isEmpty()
                     && !slave.isDestFor(i, master)
 //                    && !slave.isExcluded() 
@@ -190,7 +190,7 @@ public class Linker {
             }
 
             if (slave.get(i).isTSet()
-                    && isMasterReay
+//                    && isMasterReady
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
 //                    && !master.isExcluded() 
@@ -252,7 +252,7 @@ public class Linker {
 //                }
 //            }
 
-            return linkDomains(master, isMasterReay, slave, isSlaveReady, level + 1, solves, logging, occurrsSubst, occurrsMaster, occurrsSlave);
+            return linkDomains(master, isMasterReady, slave, isSlaveReady, level + 1, solves, logging, occurrsSubst, occurrsMaster, occurrsSlave);
         }
     }
 
@@ -331,7 +331,7 @@ public class Linker {
         if (tvars.isEmpty()) {
             for (Tree master : masterSet) { //query == null ? set : query.getTree()) {
                 if (master.getSequence().size() == 1 && master.getSequence().get(0).getTVariables(true).size() == 0 && !master.getSequence().get(0).isStored()) {
-                    updateDatabase(master, logging);
+                    master.getSequence().get(0).setStored();
                 }
 //                if(!master.isReady()) {
 //                    continue;
@@ -339,7 +339,7 @@ public class Linker {
 
                 for (Tree slave : slaveSet) {
                     if (slave.getSequence().size() == 1 && slave.getSequence().get(0).getTVariables(true).size() == 0 && !slave.getSequence().get(0).isStored()) {
-                        updateDatabase(slave, logging);
+                        slave.getSequence().get(0).setStored();
                     }
 //                    if(!slave.isReady()) {
 //                        continue;
@@ -474,6 +474,7 @@ public class Linker {
         boolean result = false;
 
         if (tvars.isEmpty()) {
+
             Set<Tree> set = new HashSet<>();
             set.addAll(masterSet);
             set.addAll(slaveSet);
@@ -482,6 +483,12 @@ public class Linker {
             for (Tree tree : set) {
                 Set<Domain> candidades = new HashSet<>();
                 for (Domain d : tree.getSequence()) {
+
+//                    if(d.isComplete() && d.getPredicate().getName().equals("s")) {
+//                        System.out.println("====");
+//                        System.out.println(tree);
+//                    }
+
                     if(!d.isComplete() || d.isStored()) { 
                         candidades.clear();
                         break;
@@ -518,7 +525,7 @@ public class Linker {
                     if (produceDomains(tvars.headSet(t), masterSet, slaveSet, ++level, logging)) {
                         result = true;
                     }
-                    user.getMind().getTValues().set(t, v);
+//                    user.getMind().getTValues().set(t, v);
                 } while ((v = t.next(v)) != null);
 
 //                mind.getTValues().set(t, null);
@@ -664,7 +671,7 @@ public class Linker {
                     if (!calcFunctions(tvars.headSet(t), set, logging)) {
                         result = false;
                     }
-                    user.getMind().getTValues().set(t, v);
+//                    user.getMind().getTValues().set(t, v);
                 } while ((v = t.next(v)) != null);
 
 //                mind.getTValues().set(t, null);
@@ -829,6 +836,12 @@ public class Linker {
         FValue saveF = null;
         DatabaseFactory.Record saveB = null;
 
+
+        user.getMind().getUsedDomains().clear();
+        user.getMind().getCalculatedDomains().clear();
+
+        user.getMind().getExcludedDomains().clear();
+        user.getMind().getProducedDomains().clear();
 
 //        mind.getQueryValues().clear();
 

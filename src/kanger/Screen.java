@@ -13,10 +13,7 @@ import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 //import java.awt.*;
 //import java.awt.datatransfer.Clipboard;
@@ -727,14 +724,44 @@ public class Screen {
         }
     }
 
+    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) {
+        if (tset.isEmpty()) {
+            showTree(mind, r);
+        } else {
+            TVariable t = tset.last(); //.get(tIndex);
+            TValue v = t.rewind();
+            if (v != null) {
+                do {
+                    mind.getTValues().set(t, v);
+                    showTreeWithValues(mind, r, tset.headSet(t));
+                } while ((v = t.next(v)) != null);
+            } else {
+                showTreeWithValues(mind, r, tset.headSet(t));
+            }
+        }
+    }
+
     public static void showRights(Mind mind, boolean showTree) {
 //        int i = 0;
         for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+            System.out.printf("%sRight %03d%s: %s\n",
+                    showTree ? "\n --- " : "",
+                    r.getId(),
+                    r.isGenerated() || r.isQuery() ? " " +
+                            (r.isGenerated() ? "G" : "") +
+                            (r.isQuery() ? "Q" : "") : "",
+                    r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
-                System.out.printf("\n -- Right %03d%s: %s\n", r.getId(), r.isGenerated() ? " G" : "", r.getOrig());
-                showTree(mind, r);
-            } else {
-                System.out.printf("Right %03d%s: %s\n", r.getId(), r.isGenerated() ? " G" : "", r.getOrig());
+                if((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0) {
+                    int save = mind.getDebugLevel();
+                    mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
+                    showTree(mind, r);
+                    mind.setDebugLevel(save);
+                } else {
+                    SortedSet<TVariable> tset = new TreeSet<>();
+                    tset.addAll(r.getTVariables(true));
+                    showTreeWithValues(mind, r, tset);
+                }
             }
         }
     }
