@@ -931,6 +931,7 @@ public class Kanger {
 //                        "");
 //
 
+
 //        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
 //        mind.query("?$x f(x);");
 
