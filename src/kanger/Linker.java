@@ -146,10 +146,10 @@ public class Linker {
 //                }
 
             if (master.get(i).isTSet()
-//                    && isSlaveReady
+                    && isSlaveReady
                     && !slave.get(i).isEmpty()
                     && !slave.isDestFor(i, master)
-//                    && !slave.isExcluded() 
+                    && !slave.isExcluded() 
                     && slave.isStored()
 //                    && !master.isDestFor(i, slave)
 
@@ -190,10 +190,10 @@ public class Linker {
             }
 
             if (slave.get(i).isTSet()
-//                    && isMasterReady
+                    && isMasterReady
                     && !master.get(i).isEmpty()
                     && !master.isDestFor(i, slave)
-//                    && !master.isExcluded() 
+                    && !master.isExcluded() 
                     && master.isStored()
 //                    && !slave.isDestFor(i, master)
 
