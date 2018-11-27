@@ -11,7 +11,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
- * @author murray
+ * @author Dmitry G. Qusnetsov
  */
 public class Linker {
 
@@ -26,6 +26,8 @@ public class Linker {
     }
 
     public void link(Right right, boolean logging) {
+
+        user.getMind().getProducedDomains().clear();
 
         DatabaseFactory.Record saveRec;
         do {
@@ -61,10 +63,10 @@ public class Linker {
                             success = false;
                             for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
                                 if (subst[i] != null) {
-                                    subst[i].addSolve(i, master, slave);
-                                    if (!subst[i].isClosed()) {
+                                    if (subst[i].addSolve(i, master, slave)) {
+//                                    if (!subst[i].isClosed()) {
                                         success = true;
-                                        subst[i].setClosed();
+//                                        subst[i].setClosed();
                                         if (logging) {
                                             user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
                                         }
@@ -127,22 +129,25 @@ public class Linker {
                 Domain d = candidades.toArray(new Domain[]{})[0];
                 result = true;
                 if (excluded.isEmpty() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
-                    d.setStored();
+                    Domain x = d.setStored();
+                    x.setProduced();
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
                     }
                 } else {
-                    d.createStored();
+                    Domain x = d.createStored();
+                    x.setProduced();
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
                     }
                 }
             } else if (candidades.isEmpty()) {
                 for (Domain d : excluded) {
                     result = true;
-                    d.createStored();
+                    Domain x = d.createStored();
+                    x.setProduced();
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
                     }
                 }
             }

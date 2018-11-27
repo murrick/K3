@@ -522,7 +522,19 @@ public class Analiser {
 
         result = checkDatabase(logging);
         if (!result) {
-            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
+
+//            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
+
+            for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+                if (d.isProduced() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                    user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+                    }
+
+                }
+            }
         }
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {

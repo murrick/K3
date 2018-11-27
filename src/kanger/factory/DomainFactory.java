@@ -86,17 +86,19 @@ public class DomainFactory {
                     && p.getRight().getId() == r.getId()) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {
-                    if (p.get(i).getValue() != arg.get(i).getValue()
-                            || p.get(i).getT().getId() != arg.get(i).getT().getId()
-                            || p.get(i).getF().getId() != arg.get(i).getF().getId()) {
-
+                    if ((p.get(i).isTSet() && arg.get(i).isTSet() && p.get(i).getT().getId() == arg.get(i).getT().getId())
+                            || (p.get(i).isFSet() && arg.get(i).isFSet() && p.get(i).getF().getId() == arg.get(i).getF().getId())
+                            || (!p.get(i).isTSet() && !arg.get(i).isTSet()
+                            && !p.get(i).isFSet() && !arg.get(i).isFSet()
+                            && !p.get(i).isEmpty() && !arg.get(i).isEmpty()
+                            && p.get(i).getValue().getId() == arg.get(i).getValue().getId())) {
+                    } else {
                         break;
                     }
                 }
                 if (i == pred.getRange()) {
                     return p;
                 }
-                //return p;
             }
         }
         return null;
@@ -120,7 +122,7 @@ public class DomainFactory {
     }
 
     public void clear() {
-        while(stack.size() > 1) {
+        while (stack.size() > 1) {
             release();
         }
         ;
@@ -132,13 +134,13 @@ public class DomainFactory {
     }
 
     private void release() {
-        if(!stack.empty()) {
+        if (!stack.empty()) {
             Object[] pop = stack.pop();
             Domain saved = (Domain) pop[0];
             lastID = (long) pop[1];
             root = saved;
         }
-        if(stack.empty()) {
+        if (stack.empty()) {
             mark();
         }
     }
