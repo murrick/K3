@@ -30,6 +30,14 @@ public class Linker {
         user.getMind().getProducedDomains().clear();
 
         DatabaseFactory.Record saveRec;
+      
+        Set<Domain> waiters = new HashSet<>();
+        for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
+            if (tree.getSequence().size() == 1 && !tree.getSequence().get(0).getTVariables(true).isEmpty()) {
+                waiters.add(tree.getSequence().get(0));
+            }
+        }
+        
         do {
 
             saveRec = user.getMind().getDatabase().getRoot();
@@ -41,8 +49,8 @@ public class Linker {
                     if (master.isAntc() != slave.isAntc()) {
                         boolean success = true;
                         TValue subst[] = new TValue[slave.getPredicate().getRange()];
-                        for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
-                            user.getMind().getTValues().mark();
+                        user.getMind().getTValues().mark();
+                        for (int i = 0; i < slave.getPredicate().getRange(); ++i) {                           
                             if (master.get(i).isTSet() && master.getVarOrder(i) >= slave.getVarOrder(i)) {
                                 TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
                                 if (s == null) {
@@ -64,9 +72,7 @@ public class Linker {
                             for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
                                 if (subst[i] != null) {
                                     if (subst[i].addSolve(i, master, slave)) {
-//                                    if (!subst[i].isClosed()) {
                                         success = true;
-//                                        subst[i].setClosed();
                                         if (logging) {
                                             user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
                                         }
@@ -91,7 +97,7 @@ public class Linker {
             }
 
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-                if (updateDatabase(null, tree, logging)) {
+                if (updateDatabase(null, tree, waiters, logging)) {
                     occurrs = true;
                 }
             }
@@ -103,7 +109,7 @@ public class Linker {
                 || (user.getMind().getDatabase().getRoot() != null && user.getMind().getDatabase().getRoot().getId() != saveRec.getId()));
     }
 
-    private boolean updateDatabase(SortedSet<TVariable> tvars, Tree tree, boolean logging) {
+    private boolean updateDatabase(SortedSet<TVariable> tvars, Tree tree, Set<Domain> waiters, boolean logging) {
 
         boolean result = false;
         if (tvars == null) {
@@ -123,6 +129,26 @@ public class Linker {
                     excluded.add(d);
                 } else {
                     candidades.add(d);
+                }
+                
+                for(Domain master : waiters) {
+                    if(master.isAntc() != d.isAntc()) {
+                        boolean success = true;                       
+                        user.getMind().getTValues().mark();
+                        for (int i = 0; i < d.getPredicate().getRange(); ++i) {                           
+                            if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {                         
+                            } else if (master.get(i).isEmpty()
+                                       || d.get(i).isEmpty()
+                                       || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {
+                                success = false;
+                                break;
+                            } 
+                        }
+                       
+                        if(success) {
+                            d.setUsed();
+                        }
+                    }
                 }
             }
             if (candidades.size() == 1) {
@@ -157,13 +183,13 @@ public class Linker {
             if (v != null) {
                 do {
                     user.getMind().getTValues().set(t, v);
-                    if (updateDatabase(tvars.headSet(t), tree, logging)) {
+                    if (updateDatabase(tvars.headSet(t), tree, waiters, logging)) {
                         result = true;
                     }
                 } while ((v = t.next(v)) != null);
 
             } else {
-                if (updateDatabase(tvars.headSet(t), tree, logging)) {
+                if (updateDatabase(tvars.headSet(t), tree, waiters, logging)) {
                     result = true;
                 }
             }
