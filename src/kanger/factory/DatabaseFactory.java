@@ -6,9 +6,7 @@ import kanger.primitives.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -230,4 +228,11 @@ public class DatabaseFactory {
         }
     }
 
+    public Set<TVariable> getTVariables(boolean full) {
+        Set<TVariable> set = new HashSet<>();
+        for (Record d = root; d != null; d = d.getNext()) {
+            set.addAll(d.getDomain().getTVariables(full));
+        }
+        return set;
+    }
 }

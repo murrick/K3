@@ -526,7 +526,7 @@ public class Analiser {
 //            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
 
             for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
-                if (d.isProduced() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                if (d.isProduced() && !d.isQuery() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
@@ -535,6 +535,27 @@ public class Analiser {
 
                 }
             }
+
+//            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
+//                if (tree.getSequence().size() > 1) {
+//                    List<Domain> pretendents = new ArrayList<>();
+//                    for (Domain d : tree.getSequence()) {
+//                        if (d.isStored()) {
+//                            pretendents.clear();
+//                            break;
+//                        } else if (d.isComplete() && !d.isExcluded() && !d.isUsed()) {
+//                            pretendents.add(d);
+//                        }
+//                    }
+//                    if (pretendents.size() == 1 && user.getMind().getHypotesisStore().find(!pretendents.get(0).isAntc(), pretendents.get(0).getPredicate(), pretendents.get(0).getArguments()) == null) {
+//                        user.getMind().getHypotesisStore().add(!pretendents.get(0).isAntc(), pretendents.get(0).isQuery(), pretendents.get(0).getPredicate(), pretendents.get(0).getArguments());
+//                        if (logging) {
+//                            user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + pretendents.get(0).toString());
+//                            user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+//                        }
+//                    }
+//                }
+//            }
         }
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {

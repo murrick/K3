@@ -910,17 +910,17 @@ public class Kanger {
 //            );
 
 
-//        mind.compile("" +
-//                "!@x ~p(x,x);" +
-//                "!@x $y p(y,x);" +
-//                "!@x @y p(x, y) -> c(y, x);" +
-//                "!@x @y d(x, y) -> c(x, y), p(y,x), f(x);" +
-//                "!@x @y s(x, y) -> c(x, y), p(y,x), m(x);" +
-////                "!@x @y c(x, y) -> (s(x, y) || d(x, y));" +
-//                "!p(J,T);" +
-//                "!d(M,J);" +
-//                "!@x (m(x) || f(x)), ~(m(x) && f(x));" +
-//                "");
+        mind.compile("" +
+                "!@x ~p(x,x);" +
+                "!@x $y p(y,x);" +
+                "!@x @y p(x, y) -> c(y, x);" +
+                "!@x @y d(x, y) -> c(x, y), p(y,x), f(x);" +
+                "!@x @y s(x, y) -> c(x, y), p(y,x), m(x);" +
+//                "!@x @y c(x, y) -> (s(x, y) || d(x, y));" +
+                "!p(J,T);" +
+                "!d(M,J);" +
+                "!@x (m(x) || f(x)), ~(m(x) && f(x));" +
+                "");
 
 
 
@@ -944,9 +944,8 @@ public class Kanger {
 
 //
 //        Mind mind = new Mind(mindRoot);
-        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
-        mind.query("? (a(z) && c(z)) -> d(z);");
-        Screen.session(mind);
+//        mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+//        mind.query("?$x @y a(x,y);");
 
 //
 ////            mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
@@ -954,6 +953,9 @@ public class Kanger {
 ////            mind.query("?b(z) -> d(z);");
 ////            mind.query("?$x f(x);");
 //
+
+        Screen.session(mind);
+
 ////            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
 ////                    "!a(nnn);" +
 ////                    ""
