@@ -30,6 +30,9 @@ public class Linker {
 
         user.getMind().getProducedDomains().clear();
         user.getMind().getUsedDomains().clear();
+        user.getMind().getCalculatedDomains().clear();
+
+        user.getMind().getClosedTrees().clear();
 
         DatabaseFactory.Record saveRec;
 
@@ -47,7 +50,7 @@ public class Linker {
             linkDomains(null, logging);
             boolean occurrs = false;
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-                if (updateDatabase(null, tree, waiters, logging)) {
+                if (!tree.isClosed() && updateDatabase(null, tree, waiters, logging)) {
                     occurrs = true;
                 }
             }
@@ -123,6 +126,39 @@ public class Linker {
                     }
                 }
             }
+
+            for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+                if (d.isSystem() && !d.isCalculated()) {
+                    int res = d.execSystem();
+
+                    for (Argument a : d.getArguments()) {
+                        if (!a.isCalculated()) {
+                            res = -2;
+                            break;
+                        }
+                    }
+
+                    boolean block = false;
+                    if (res == 0) {
+                        if (d.isAntc()) {
+                            d.setCalculated();
+                        } else if (!d.isQuery()) {
+                            block = true;
+                        }
+                    } else if (res == 1) {
+                        if (!d.isAntc()) {
+                            d.setCalculated();
+                        } else if (!d.isQuery()) {
+                            block = true;
+                        }
+                    }
+
+                    if (block && logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
+                    }
+                }
+            }
+
 
         } else {
             TVariable t = tvars.last();
@@ -205,7 +241,12 @@ public class Linker {
             }
 
             for (Domain d : tree.getSequence()) {
-                if (d.isStored() || !(d.isComplete() || d.isQuery())) {
+                if (d.isCalculated()) {
+                    excluded.clear();
+                    candidades.clear();
+                    candidades.add(d);
+                    break;
+                } else if (d.isStored() || !(d.isComplete() || d.isQuery())) {
                     excluded.clear();
                     candidades.clear();
                     break;
@@ -219,15 +260,18 @@ public class Linker {
             if (candidades.size() == 1) {
                 Domain d = candidades.toArray(new Domain[]{})[0];
                 result = true;
-                if (excluded.isEmpty() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
+                if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
                     Domain x = d.setStored();
                     x.setProduced();
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
                     }
                 } else {
                     Domain x = d.createStored();
                     x.setProduced();
+                    if (d.isCalculated()) {
+                        x.setCalculated();
+                    }
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
                     }
@@ -273,6 +317,41 @@ public class Linker {
             }
         }
         return result;
+    }
+
+    public boolean checkSystem(Tree tree, boolean logging) {
+        boolean block = false;
+        for (Domain d : tree.getSequence()) {
+            if (d.isSystem() && !d.isUsed()) {
+                int res = d.execSystem();
+
+                for (Argument a : d.getArguments()) {
+                    if (!a.isCalculated()) {
+                        res = -2;
+                        break;
+                    }
+                }
+
+                if (res == 0) {
+                    if (d.isAntc()) {
+                        d.setCalculated();
+                    } else if (!d.isQuery()) {
+                        block = true;
+                    }
+                } else if (res == 1) {
+                    if (!d.isAntc()) {
+                        d.setCalculated();
+                    } else if (!d.isQuery()) {
+                        block = true;
+                    }
+                }
+
+                if (block && logging) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
+                }
+            }
+        }
+        return !block;
     }
 
 }
