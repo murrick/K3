@@ -745,10 +745,8 @@ public class Analiser {
         for (DatabaseFactory.Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
-                for (Argument a : p.getDomain().getArguments()) {
-                    if (a.isVSet()) {
-                        user.getMind().getValues().add(a.getV());
-                    }
+                for (TValue v : p.getDomain().getTValues(true)) {
+                    user.getMind().getValues().add(v);
                 }
 //                }
                 if (logging) {

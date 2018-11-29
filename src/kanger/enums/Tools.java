@@ -272,6 +272,13 @@ public abstract class Tools {
                         list.add(t);
                     }
                 }
+            } else if (full && a.isRSet()) {
+                List<TValue> temp = getTValues(a.getR().getCondition(), full);
+                for (TValue t : temp) {
+                    if (!list.contains(t)) {
+                        list.add(t);
+                    }
+                }
             }
 
         }

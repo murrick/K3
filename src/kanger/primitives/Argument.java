@@ -42,6 +42,8 @@ public class Argument {
             return ((TVariable) o).getValue();
         } else if (o instanceof TValue) {
             return ((TValue) o).getValue();
+        } else if (o instanceof FValue) {
+            return ((FValue) o).getValue();
         } else if (o instanceof Function) {
             if (isEmpty() && getF().getArguments().size() > getF().getRange()) {
                 return getF().getArguments().get(getF().getRange()).getDirtyValue();
@@ -60,6 +62,8 @@ public class Argument {
             return ((TVariable) o).getValue();
         } else if (o instanceof TValue) {
             return ((TValue) o).getValue();
+        } else if (o instanceof FValue) {
+            return ((FValue) o).getValue();
         } else if (o instanceof Function) {
             return ((Function) o).getValue();
         } else {
@@ -106,6 +110,9 @@ public class Argument {
         return isFSet() ? (Function) o : null;
     }
 
+    public FValue getR() {
+        return isRSet() ? (FValue) o : null;
+    }
 
     public boolean isEmpty() {
         return getValue() == null;
@@ -117,6 +124,10 @@ public class Argument {
 
     public boolean isVSet() {
         return o instanceof TValue;
+    }
+
+    public boolean isRSet() {
+        return o instanceof FValue;
     }
 
     public boolean isFSet() {

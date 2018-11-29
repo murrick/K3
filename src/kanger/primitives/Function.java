@@ -348,7 +348,7 @@ public class Function implements IValue {
         if (f != null) {
             for (int i = 0; i < getRange(); ++i) {
                 if (getArguments().get(i).getValue() == null
-                        || getArguments().get(i).getValue().getId() != f.getCondition(i)) {
+                        || getArguments().get(i).getValue().getId() != f.getCondition(i).getValue().getId()) {
                     return false;
                 }
             }
@@ -436,5 +436,10 @@ public class Function implements IValue {
     @Override
     public FValue getFValue() {
         return null;
+    }
+
+
+    public FValue getCurrent() {
+        return user.getMind().getFValues().find(this);
     }
 }

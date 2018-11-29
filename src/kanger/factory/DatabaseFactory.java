@@ -72,6 +72,8 @@ public class DatabaseFactory {
                         }
                         list.add(new Argument(v));
 
+                    } else if (t.isFSet()) {
+                        list.add(new Argument(t.getF().getCurrent()));
                     } else {
                         list.add(new Argument(t.getValue()));
                     }

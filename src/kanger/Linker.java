@@ -102,14 +102,18 @@ public class Linker {
                                     }
                                     substMaster[i] = s;
                                     applied = true;
-//                                } else if(master.get(i).isFSet()
-//                                        && master.get(i).getF().isCalculable()
-//                                        && !master.get(i).getF().isCalculated()
-//                                        && !slave.get(i).isEmpty()) {
-//                                    FValue  s = user.getMind().getFValues().add(master.get(i).getT(), slave.get(i).getValue());
-//                                        result = true;
-//                                    substMaster[i] = s;
-//                                    applied = true;
+                                } else if (master.get(i).isFSet()
+                                        && !slave.get(i).isEmpty()
+                                        && master.get(i).getF().isCalculable()
+                                        && (master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId())) {
+                                    master.pushValues();
+                                    master.get(i).getF().setValue(slave.get(i).getValue());
+                                    if (new Calculator(user).calculate(master.get(i).getF(), logging) > 0) {
+                                        FValue s = user.getMind().getFValues().add(master.get(i).getF());
+                                        result = true;
+                                    }
+                                    applied = true;
+                                    master.popValues();
                                 }
 
                                 if (slave.get(i).isTSet()
@@ -122,6 +126,18 @@ public class Linker {
                                     }
                                     substSlave[i] = s;
                                     applied = true;
+                                } else if (slave.get(i).isFSet()
+                                        && !master.get(i).isEmpty()
+                                        && slave.get(i).getF().isCalculable()
+                                        && (slave.get(i).isEmpty() || slave.get(i).getValue().getId() != master.get(i).getValue().getId())) {
+                                    slave.pushValues();
+                                    slave.get(i).getF().setValue(master.get(i).getValue());
+                                    if (new Calculator(user).calculate(slave.get(i).getF(), logging) > 0) {
+                                        FValue s = user.getMind().getFValues().add(slave.get(i).getF());
+                                        result = true;
+                                    }
+                                    applied = true;
+                                    slave.popValues();
                                 }
 
                                 if (!applied) {
@@ -152,6 +168,11 @@ public class Linker {
                     int res = d.execSystem();
 
                     for (Argument a : d.getArguments()) {
+                        if (a.isFSet() && a.getF().isCalculable() && !a.isCalculated()) {
+                            if (new Calculator(user).calculate(a.getF(), logging) > 0) {
+                                FValue s = user.getMind().getFValues().add(a.getF());
+                            }
+                        }
                         if (!a.isCalculated()) {
                             res = -2;
                             break;
@@ -300,6 +321,12 @@ public class Linker {
                     int res = d.execSystem();
 
                     for (Argument a : d.getArguments()) {
+                        if (a.isFSet() && a.getF().isCalculable() && !a.isCalculated()) {
+                            if (new Calculator(user).calculate(a.getF(), logging) > 0) {
+                                FValue s = user.getMind().getFValues().add(a.getF());
+                            }
+                        }
+
                         if (!a.isCalculated()) {
                             res = -2;
                             break;

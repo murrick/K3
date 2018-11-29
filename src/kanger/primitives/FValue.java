@@ -1,15 +1,21 @@
 package kanger.primitives;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.interfaces.*;
+import kanger.User;
+import kanger.compiler.Operation;
+import kanger.compiler.Parser;
+import kanger.enums.Enums;
+import kanger.interfaces.IValue;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FValue implements IValue {
     private long id = -1;
     private Term value = null;
-    //    private Map<Long, Long> condition = new HashMap<>();
-    private List<Long> condition = new ArrayList<>();
+    private List<Argument> condition = new ArrayList<>();
     private Function function = null;
 
     private FValue next = null;
@@ -17,15 +23,15 @@ public class FValue implements IValue {
 
     public FValue(Function f, User user) {
         function = f;
-        value = f.getArguments().get(f.getRange()).getValue(); //.getResult();
-//        for(Argument a : f.getArguments()){
-//            condition.createTVar(a.getValue().getId());
-//        }
-//        for (TVariable t : f.getTVariables()) {
-//            condition.put(t.getId(), t.getCurrent().getId());
-//        }
+        value = f.getArguments().get(f.getRange()).getValue();
         for (Argument a : f.getArguments()) {
-            condition.add(a.getDirtyValue().getId());
+            if (a.isTSet()) {
+                condition.add(new Argument(a.getT().getCurrent()));
+            } else if (a.isFSet()) {
+                condition.add(new Argument(a.getF().getCurrent()));
+            } else {
+                condition.add(new Argument(a.getValue()));
+            }
         }
         this.user = user;
     }
@@ -37,7 +43,7 @@ public class FValue implements IValue {
         int count = dis.readInt();
         while (--count >= 0) {
 //            condition.createTVar(dis.readLong());
-            condition.add(dis.readLong());
+            condition.add(new Argument(dis));
         }
         this.user = user;
     }
@@ -172,18 +178,16 @@ public class FValue implements IValue {
         dos.writeLong(function.getId());
         dos.writeLong(value == null ? -1 : value.getId());
         dos.writeInt(condition.size());
-//        for(long id : condition){
-//            dos.writeLong(id);
-//        }
-        for (Long e : condition) {
-            dos.writeLong(e);
+        for (Argument e : condition) {
+            e.writeCompiledData(dos);
         }
     }
 
     public boolean isActual(Function f) {
         for (int i = 0; i < function.getRange(); ++i) {
             if (function.getArguments().get(i).getDirtyValue() == null
-                    || function.getArguments().get(i).getDirtyValue().getId() != condition.get(i)) {
+                    || condition.get(i).getValue() == null
+                    || function.getArguments().get(i).getDirtyValue().getId() != condition.get(i).getValue().getId()) {
                 return false;
             }
         }
@@ -196,8 +200,12 @@ public class FValue implements IValue {
         return true;
     }
 
-    public long getCondition(int index) {
+    public Argument getCondition(int index) {
         return condition.get(index);
+    }
+
+    public List<Argument> getCondition() {
+        return condition;
     }
 
 //    public boolean isClosed() {
@@ -218,8 +226,68 @@ public class FValue implements IValue {
 //        return false;
 //    }
 
-//    @Override
-//    public String toString() {
-//        return function.toString(this);
-//    }
+    private String formatParam(Argument t) {
+        Operation op = Parser.getOp(function.getName().toString());
+        boolean isOp = op != null && op.getRange() == function.getRange();
+        String s = "";
+        if (t.isFSet()) {
+            s += (isOp ? "(" : "") + t.getF().toString() + (isOp ? ")" : "");
+        } else if (t.isRSet()) {
+            s += (isOp ? "(" : "") + t.getR().toString() + (isOp ? ")" : "");
+        } else if (t.isTSet()) {
+            s += t.getT().toString();
+        } else if (t.isVSet()) {
+            s += t.getV().toString();
+        } else if (!t.isEmpty()) {
+            s += t.getValue().toString();
+        } else {
+            s += "_";
+        }
+        return s;
+    }
+
+    @Override
+    public String toString() {
+        if (!function.isCalculable() && getValue() != null) {
+            return getValue().toString();
+        } else {
+            Operation op = Parser.getOp(function.getName().toString());
+            String s = "";
+            if (op == null || op.getRange() != function.getRange()) {
+                s = String.format("%s(", function.getName().toString());
+                for (int i = 0; i < function.getRange(); ++i) {
+                    s += formatParam(condition.get(i));
+                    if (i + 1 < function.getRange()) {
+                        s += (char) Enums.COMMA;
+                    }
+                }
+                s += ")";
+            } else if (op.getRange() == 1) {
+                if (op.isPost()) {
+                    s = formatParam(condition.get(0)) + op.getName();
+                } else {
+                    s = op.getName() + formatParam(condition.get(0));
+                }
+            } else {
+                for (int i = 0; i < op.getRange(); ++i) {
+                    s += formatParam(condition.get(i));
+                    if (i + 1 < op.getRange()) {
+                        s += " " + op.getName() + " ";
+                    }
+                }
+            }
+
+            String res = "";
+            if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+//                if (getResult() != null) {
+                if (isCalculated()) {
+                    res = " {= " + getValue() + "}";
+                } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
+                    res = " [= " + condition.get(function.getRange()).getValue() + "]";
+                }
+            }
+            //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
+            return s + res;
+        }
+    }
 }
