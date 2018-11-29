@@ -74,22 +74,10 @@ public class Argument {
 
     //TODO: Тут разобраться. Для IValue
     public boolean setValue(Term t) {
-        if (o == null || o instanceof Term) {
+        if (o == null) {
             o = t;
         } else if (o instanceof TVariable) {
-            TValue s = ((TVariable) o).find(t);
-            if (s != null) {
-            } else {
-                s = ((TVariable) o).setValue(t);
-                s.setClosed();
-            }
-            ((TVariable) o).setCurrent(s);
-        } else if (o instanceof TVariable) {
-            if (((TVariable) o).find(t) != null) {
-            } else {
-                TValue s = ((TVariable) o).setValue(t);
-                s.setClosed();
-            }
+            ((TVariable) o).setValue(t).setClosed();
         } else if (o instanceof Function) {
             ((Function) o).setValue(t);
         }

@@ -25,6 +25,8 @@ public class Domain {
     private Right right;                                        // Ссылка на правило
     private long id = -1;                                       // id домена
     private Domain next = null;                                 // Следующий элемент
+
+    private Stack<List<TValue>> tStack = new Stack<>();
 //    private Set<Domain> parents = new HashSet<>();              // Родительские домены для БД
 
     private User user = null;
@@ -206,7 +208,7 @@ public class Domain {
         }
 
         String suffix = "";
-        if((user.getMind().getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
+        if ((user.getMind().getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
             suffix += " " + id;
         }
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
@@ -543,6 +545,21 @@ public class Domain {
             }
         }
         return false;
+//
+//        List<TVariable> tVars = getTVariables(true);
+//        if(!isSystem() || tVars.isEmpty()) {
+//            return false;
+//        } else {
+//            boolean complete = true;
+//            for (TVariable t : getTVariables(true)) {
+//                if (t.isEmpty() || !t.getCurrent().isClosed()) {
+//                    complete = false;
+//                    break;
+//                }
+//            }
+//            return complete;
+//        }
+
     }
 
     public void setCalculated() {
@@ -625,6 +642,15 @@ public class Domain {
             }
             return false;
         }
+    }
+
+    public boolean isSingleInTree() {
+        for (Tree t : getParentTrees()) {
+            if (t.getSequence().size() == 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
 //    public boolean isComplete() {
@@ -731,6 +757,22 @@ public class Domain {
             }
         }
         return set;
+    }
+
+    public void pushValues() {
+        List<TValue> list = new ArrayList<>();
+        for (TVariable t : getTVariables(true)) {
+            list.add(t.getCurrent());
+        }
+        tStack.push(list);
+    }
+
+    public void popValues() {
+        List<TValue> list = tStack.pop();
+        List<TVariable> ts = getTVariables(true);
+        for (int i = 0; i < ts.size(); ++i) {
+            ts.get(i).setCurrent(list.get(i));
+        }
     }
 
 //    public int getValOrder(int i) {

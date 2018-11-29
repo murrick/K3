@@ -1,9 +1,14 @@
 package kanger.calculator;
 
-import kanger.*;
-import kanger.compiler.*;
-import kanger.enums.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.compiler.SysOp;
+import kanger.enums.Enums;
+import kanger.enums.LibMode;
+import kanger.enums.LogMode;
+import kanger.primitives.Argument;
+import kanger.primitives.Domain;
+import kanger.primitives.Function;
+import kanger.primitives.Predicate;
 
 /**
  * Created by murray on 27.05.15.
@@ -27,7 +32,7 @@ public class Calculator {
      * @param fu
      * @return
      */
-    public int calculate(Function fu) /*throws RuntimeErrorException*/ {
+    public int calculate(Function fu, boolean logging) /*throws RuntimeErrorException*/ {
 
         //FArg fu = func.getFunction();
         int flag = 0;
@@ -64,7 +69,7 @@ public class Calculator {
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).isFSet() /* && !fu.createCVar(i).getFunction().isBusy()*/) {
 //                fu.createCVar(i).getFunction().setResult(fu.createCVar(i).getValue());
-                if (calculate(fu.getArguments().get(i).getF()) > 0) {
+                if (calculate(fu.getArguments().get(i).getF(), logging) > 0) {
                     ++flag;
 //                    fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
                 } else {
@@ -91,12 +96,13 @@ public class Calculator {
             user.getMind().getFValues().add(fu);
 //            fu.setResult(null);
 //            fu.setCalculated(true);
-            user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
-            user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
+            if (logging) {
+                user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
+                user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
 //                    + (fu.getResult() != null
 //                    && fu.isCalculable()
 //                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
-            ));
+                ));
 //            } else {
 //                mind.getLog().add(LogMode.ANALIZER, "Invalid function result:");
 //                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
@@ -105,7 +111,8 @@ public class Calculator {
 ////                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
 //                ));
 //            }
-            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            }
         }
 
 //            flag = (arg.createCVar(i).isCSet()) ? 1 : 0;
@@ -114,7 +121,7 @@ public class Calculator {
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).isFSet()) {
 //                fu.createCVar(i).getFunction().setResult(fu.createCVar(i).getValue());
-                if (calculate(fu.getArguments().get(i).getF()) > 0) {
+                if (calculate(fu.getArguments().get(i).getF(), logging) > 0) {
                     ++flag;
 //                    fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
                 } else {

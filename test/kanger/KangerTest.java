@@ -729,6 +729,19 @@ public class KangerTest {
     public void set04_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
+        mind.query("?$x x=5 / 2;");
+        showResult(true);
+        if (!exists("x", 2.5)) {
+            fail("Expected: x=2.5");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set04_08() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
         mind.query("?$x ((x+3)*16)=965;");
         showResult(true);
         if (!exists("x", 57.3125)) {
@@ -739,7 +752,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04_08() throws ParseErrorException, RuntimeErrorException {
+    public void set04_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x $y (12+y)*2=256 && x=5*y;");
@@ -755,7 +768,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04_09() throws ParseErrorException, RuntimeErrorException {
+    public void set04_0A() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x $y x + y = 12;");
@@ -765,7 +778,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04_0A() throws ParseErrorException, RuntimeErrorException {
+    public void set04_0B() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -810,7 +823,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04_0B() throws ParseErrorException, RuntimeErrorException {
+    public void set04_0C() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -837,7 +850,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04_0C() throws ParseErrorException, RuntimeErrorException {
+    public void set04_0D() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -864,7 +877,7 @@ public class KangerTest {
 
     //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
     @org.junit.Test
-    public void set04_0D() throws ParseErrorException, RuntimeErrorException {
+    public void set04_0E() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -914,7 +927,7 @@ public class KangerTest {
 
 
     @org.junit.Test
-    public void set04_0E() throws ParseErrorException, RuntimeErrorException {
+    public void set04_0F() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -959,7 +972,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04_0F() throws ParseErrorException, RuntimeErrorException {
+    public void set04_10() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -986,7 +999,7 @@ public class KangerTest {
     }
 
     @org.junit.Test
-    public void set04_10() throws ParseErrorException, RuntimeErrorException {
+    public void set04_11() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1013,7 +1026,7 @@ public class KangerTest {
 
     //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
     @org.junit.Test
-    public void set04_11() throws ParseErrorException, RuntimeErrorException {
+    public void set04_12() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
