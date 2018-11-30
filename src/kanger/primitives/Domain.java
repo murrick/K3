@@ -723,8 +723,8 @@ public class Domain {
 
     public boolean isComplete() {
         boolean complete = true;
-        for (TVariable t : getTVariables(true)) {
-            if (t.isEmpty()) {
+        for (Argument a : arguments) {
+            if (a.isEmpty()) {
                 complete = false;
                 break;
             }
@@ -773,7 +773,9 @@ public class Domain {
         List<TValue> list = tStack.pop();
         List<TVariable> ts = getTVariables(true);
         for (int i = 0; i < ts.size(); ++i) {
-            ts.get(i).setCurrent(list.get(i));
+            if (list.get(i) != null) {
+                ts.get(i).setCurrent(list.get(i));
+            }
         }
     }
 

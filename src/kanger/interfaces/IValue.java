@@ -10,8 +10,6 @@ public interface IValue<T> {
 
     Term getValue();
 
-    Term getDirtyValue();
-
     T setValue(Term term);
 
     boolean isEmpty();
@@ -32,7 +30,7 @@ public interface IValue<T> {
 
     boolean isDefined();
 
-    boolean isCalculated();
+//    boolean isCalculated();
 
     TVariable getTVariable();
 

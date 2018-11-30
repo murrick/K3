@@ -79,11 +79,6 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         }
     }
 
-    @Override
-    public Term getDirtyValue() {
-        return getValue();
-    }
-
     public TValue getCurrent() {
         if (user.getMind().getTValues().get(this) != null) {
             return user.getMind().getTValues().get(this);
@@ -445,11 +440,11 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         return t != null && !t.isCVariable();
     }
 
-    @Override
-    public boolean isCalculated() {
-        return !isEmpty();
-    }
-
+    //    @Override
+//    public boolean isCalculated() {
+//        return !isEmpty();
+//    }
+//
     @Override
     public TVariable getTVariable() {
         return null;

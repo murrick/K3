@@ -59,11 +59,6 @@ public class TValue implements IValue {
         return value;
     }
 
-    @Override
-    public Term getDirtyValue() {
-        return getValue();
-    }
-
     public Object setValue(Term value) {
         this.value = value;
         return value;
@@ -241,10 +236,10 @@ public class TValue implements IValue {
         return t != null && !t.isCVariable();
     }
 
-    @Override
-    public boolean isCalculated() {
-        return !isEmpty();
-    }
+//    @Override
+//    public boolean isCalculated() {
+//        return !isEmpty();
+//    }
 
     @Override
     public TVariable getTVariable() {

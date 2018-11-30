@@ -1,11 +1,17 @@
 package kanger.primitives;
 
+import kanger.User;
+import kanger.enums.DataType;
+import kanger.enums.Enums;
+import kanger.enums.Tools;
+import kanger.interfaces.IValue;
+
 import java.io.*;
-import java.text.*;
-import java.util.*;
-import kanger.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -208,11 +214,11 @@ public class Term implements IValue, Comparable<Object> {
         return !isCVariable();
     }
 
-    @Override
-    public boolean isCalculated() {
-        return !isEmpty();
-    }
-
+    //    @Override
+//    public boolean isCalculated() {
+//        return !isEmpty();
+//    }
+//
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {
@@ -358,10 +364,10 @@ public class Term implements IValue, Comparable<Object> {
         return this;
     }
 
-    @Override
-    public Term getDirtyValue() {
-        return this;
-    }
+//    @Override
+//    public Term getDirtyValue() {
+//        return this;
+//    }
 
     @Override
     public Object setValue(Term term) {

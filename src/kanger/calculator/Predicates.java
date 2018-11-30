@@ -1,12 +1,20 @@
 package kanger.calculator;
 
-import java.util.*;
-import java.util.regex.*;
-import kanger.*;
-import kanger.compiler.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.compiler.SysOp;
+import kanger.enums.DataType;
+import kanger.enums.LibMode;
+import kanger.interfaces.IRunnable;
+import kanger.primitives.Argument;
+import kanger.primitives.Domain;
+import kanger.primitives.Term;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Created by murray on 18.01.17.
@@ -34,7 +42,7 @@ public class Predicates {
                         if (arg.get(0).setValue(arg.get(1).getValue())) {
                             i = 1;
                         }
-                    } else if (arg.get(0).isCalculated() && arg.get(1).isCalculated()) {
+                    } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
                         if (arg.get(0).getValue().compareTo(arg.get(1).getValue()) == 0) {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue().isCVariable() && arg.createCVar(1).getValue().isCVariable()) || (!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())) {
@@ -54,7 +62,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated()) {
+                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc == -1 || rc == 1) {
                             i = 1;
@@ -72,7 +80,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
+                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc > 0 ? 1 : 0;
@@ -88,7 +96,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
+                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc >= 0 ? 1 : 0;
@@ -104,7 +112,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
+                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc < 0 ? 1 : 0;
@@ -120,7 +128,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
+                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
                             i = rc <= 0 ? 1 : 0;
@@ -168,7 +176,7 @@ public class Predicates {
                                 }
                             }
                         }
-                    } else if (arg.get(0).isCalculated() && arg.get(1).isCalculated() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
+                    } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getVal() instanceof Collection
                                 && ((Collection) arg.get(1).getValue().getVal()).size() == 2) {
@@ -188,7 +196,7 @@ public class Predicates {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isCalculated() && arg.get(1).isCalculated()) {
+                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
                         if (arg.get(0).getValue().isCVariable() || arg.get(1).getValue().isCVariable()) {
                             i = -1;
                         } else {

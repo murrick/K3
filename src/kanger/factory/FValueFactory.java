@@ -34,7 +34,7 @@ public class FValueFactory {
         for (FValue p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (FValue p : list) { 
+        for (FValue p : list) {
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -44,7 +44,7 @@ public class FValueFactory {
     public FValue add(Function f) {
         FValue t = find(f);
         if (t == null) {
-            if (f.isDirtyComplete()) {
+            if (f.isComplete()) {
                 t = new FValue(f, user);
                 t.setNext(root);
                 root = t;
@@ -56,31 +56,31 @@ public class FValueFactory {
         return t;
     }
 
-    public FValue get(Function f) {
-        for (FValue v = root; v != null; v = v.getNext()) {
-            if (v.getFunc().getId() == f.getId() && v.isActual(f)) {
-                return v;
-            }
-        }
-        return null;
-    }
-
+//    public FValue get(Function f) {
+//        for (FValue v = root; v != null; v = v.getNext()) {
+//            if (v.getFunc().getId() == f.getId() && v.isActual(f)) {
+//                return v;
+//            }
+//        }
+//        return null;
+//    }
+//
 
     public FValue find(Function f) {
         for (FValue t = root; t != null; t = t.getNext()) {
             if (f.getId() == t.getFunc().getId()
-                    && t.getValue().getId() == f.getArguments().get(f.getRange()).getDirtyValue().getId()
-                    && t.isActual(f)) {
-//                boolean complete = true;
-//                for (TVariable tv : f.getTVariables()) {
-//                    if (!tv.isEmpty() && t.getCondition().createCVar(tv.getId()) != tv.getValue().getId()) {
-//                        complete = false;
-//                        break;
-//                    }
-//                }
-//                if (complete) {
-                return t;
-//                }
+                    && (f.getArguments().get(f.getRange()).isEmpty()
+                    || t.getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId())) {
+                boolean complete = true;
+                for (int i = 0; i < f.getRange(); ++i) {
+                    if (!f.getArguments().get(i).isEmpty() && f.getArguments().get(i).getValue().getId() != t.getCondition().get(i).getValue().getId()) {
+                        complete = false;
+                        break;
+                    }
+                }
+                if (complete) {
+                    return t;
+                }
             }
         }
         return null;

@@ -206,20 +206,20 @@ public class Argument {
         return t != null && !t.isCVariable();
     }
 
-    public boolean isCalculated() {
-        if (isTSet()) {
-            return !getT().isEmpty(); //.isComplete();
-        } else if (isFSet()) {
-//            Term t = getFunction().getResult();
-//			if(getFunction().isCalculable()) {
-            return getF().isCalculated();
-//			} else {
-//            return t != null && !"$$".equals(t.toString());
-//			}
-        } else {
-            return !isEmpty() /*&& !getValue().isCVariable()*/;
-        }
-    }
+//    public boolean isCalculated() {
+//        if (isTSet()) {
+//            return !getT().isEmpty(); //.isComplete();
+//        } else if (isFSet()) {
+////            Term t = getFunction().getResult();
+////			if(getFunction().isCalculable()) {
+//            return getF().isCalculated();
+////			} else {
+////            return t != null && !"$$".equals(t.toString());
+////			}
+//        } else {
+//            return !isEmpty() /*&& !getValue().isCVariable()*/;
+//        }
+//    }
 
     public boolean isCVar() {
         return !isEmpty() && getValue().isCVariable();

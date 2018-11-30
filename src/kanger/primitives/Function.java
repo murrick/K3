@@ -21,7 +21,6 @@ import java.util.List;
 public class Function implements IValue {
 
 
-
     private Term name = null;
     private int range = 0;
     private final List<Argument> arguments = new ArrayList<>();     // Параметры
@@ -143,36 +142,14 @@ public class Function implements IValue {
 //    }
 
     public Term getValue() {
-        if (isCalculated()) {
-            return user.getMind().getFValues().get(this).getValue();
+        FValue c = getCurrent();
+        if (c != null) {
+            return getCurrent().getValue();
         } else {
             return null;
-//            if (arguments.size() - 1 == range) {
-//                return arguments.get(range).getValue();
-//            } else {
-//                return null;
-//            }
         }
     }
 
-    @Override
-    public Term getDirtyValue() {
-        if (isEmpty() && getArguments().size() > getRange()) {
-            return getArguments().get(getRange()).getDirtyValue();
-        } else {
-            return getValue();
-        }
-    }
-
-//    public void setResult(Domain d, Argument r) {
-//        if (range + 1 > arguments.size()) {
-//            arguments.createTVar(new Argument());
-//        }
-//        arguments.createCVar(range).setValue(d, r.getValue());
-////        arguments.createCVar(range).setC(r.getC());
-////        arguments.createCVar(range).setT(r.getTVariable());
-////        arguments.createCVar(range).setF(r.getFunction());
-//    }
 
     public Object setValue(Term r) {
         while (range + 1 > arguments.size()) {
@@ -277,7 +254,7 @@ public class Function implements IValue {
             String res = "";
             if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
 //                if (getResult() != null) {
-                if (isCalculated()) {
+                if (getCurrent() != null) {
                     res = " {= " + getValue() + "}";
                 } else if (arguments.size() > range && !arguments.get(range).isEmpty()) {
                     res = " [= " + arguments.get(range).getValue() + "]";
@@ -343,19 +320,19 @@ public class Function implements IValue {
 //        return Tools.getTVariables(arguments, true);
 //    }
 
-    public boolean isCalculated() {
-        FValue f = user.getMind().getFValues().get(this);
-        if (f != null) {
-            for (int i = 0; i < getRange(); ++i) {
-                if (getArguments().get(i).getValue() == null
-                        || getArguments().get(i).getValue().getId() != f.getCondition(i).getValue().getId()) {
-                    return false;
-                }
-            }
-        }
-        return f != null && f.isActual(this); // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
-    }
-
+    //    public boolean isCalculated() {
+//        FValue f = user.getMind().getFValues().get(this);
+//        if (f != null) {
+//            for (int i = 0; i < getRange(); ++i) {
+//                if (getArguments().get(i).getValue() == null
+//                        || getArguments().get(i).getValue().getId() != f.getCondition(i).getValue().getId()) {
+//                    return false;
+//                }
+//            }
+//        }
+//        return f != null && f.isActual(this); // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
+//    }
+//
     public boolean isComplete() {
         for (Argument a : arguments) {
             if (a.getValue() == null) {
@@ -365,18 +342,22 @@ public class Function implements IValue {
         return true;
     }
 
-    public boolean isDirtyComplete() {
-        for (Argument a : arguments) {
-            if (a.getDirtyValue() == null) {
-                return false;
-            }
-        }
-        return true;
-    }
+//    public boolean isDirtyComplete() {
+//        for (Argument a : arguments) {
+//            if (a.getDirtyValue() == null) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 
     public boolean isCalculable() {
         return Tools.getTVariables(arguments, true).size() > 0;
     }
+
+//    public boolean isCalculated() {
+//        return getCurrent() != null;
+//    }
 
     @Override
     public boolean isEmpty() {

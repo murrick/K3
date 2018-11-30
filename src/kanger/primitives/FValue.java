@@ -107,10 +107,10 @@ public class FValue implements IValue {
         return t != null && !t.isCVariable();
     }
 
-    @Override
-    public boolean isCalculated() {
-        return !isEmpty();
-    }
+//    @Override
+//    public boolean isCalculated() {
+//        return !isEmpty();
+//    }
 
     @Override
     public TVariable getTVariable() {
@@ -136,10 +136,10 @@ public class FValue implements IValue {
         return value;
     }
 
-    @Override
-    public Term getDirtyValue() {
-        return getValue();
-    }
+//    @Override
+//    public Term getDirtyValue() {
+//        return getValue();
+//    }
 
 //    public TValue getValue(TVariable t) {
 //        if (condition.containsKey(t.getId())) {
@@ -183,22 +183,22 @@ public class FValue implements IValue {
         }
     }
 
-    public boolean isActual(Function f) {
-        for (int i = 0; i < function.getRange(); ++i) {
-            if (function.getArguments().get(i).getDirtyValue() == null
-                    || condition.get(i).getValue() == null
-                    || function.getArguments().get(i).getDirtyValue().getId() != condition.get(i).getValue().getId()) {
-                return false;
-            }
-        }
-//        for (Map.Entry<Long, Long> e : condition.entrySet()) {
-//            TVariable tv = mind.getTVars().get(e.getKey());
-//            if (tv == null || tv.isEmpty() || tv.getCurrent().getId() != e.getValue()) {
+//    public boolean isActual(Function f) {
+//        for (int i = 0; i < function.getRange(); ++i) {
+//            if (function.getArguments().get(i).getDirtyValue() == null
+//                    || condition.get(i).getValue() == null
+//                    || function.getArguments().get(i).getDirtyValue().getId() != condition.get(i).getValue().getId()) {
 //                return false;
 //            }
 //        }
-        return true;
-    }
+////        for (Map.Entry<Long, Long> e : condition.entrySet()) {
+////            TVariable tv = mind.getTVars().get(e.getKey());
+////            if (tv == null || tv.isEmpty() || tv.getCurrent().getId() != e.getValue()) {
+////                return false;
+////            }
+////        }
+//        return true;
+//    }
 
     public Argument getCondition(int index) {
         return condition.get(index);
@@ -280,7 +280,7 @@ public class FValue implements IValue {
             String res = "";
             if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
 //                if (getResult() != null) {
-                if (isCalculated()) {
+                if (getValue() != null) {
                     res = " {= " + getValue() + "}";
                 } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
                     res = " [= " + condition.get(function.getRange()).getValue() + "]";

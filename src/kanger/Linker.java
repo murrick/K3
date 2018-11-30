@@ -35,7 +35,6 @@ public class Linker {
 
         user.getMind().getClosedTrees().clear();
 
-        DatabaseFactory.Record saveRec;
 
         for (Function f = user.getMind().getFunctions().getRoot(); f != null; f = f.getNext()) {
             if (!f.isCalculable()) {
@@ -50,9 +49,14 @@ public class Linker {
             }
         }
 
+        DatabaseFactory.Record saveR;
+        TValue saveT;
+        FValue saveF;
         do {
 
-            saveRec = user.getMind().getDatabase().getRoot();
+            saveR = user.getMind().getDatabase().getRoot();
+            saveT = user.getMind().getTValues().getRoot();
+            saveF = user.getMind().getFValues().getRoot();
 
             linkDomains(null, logging);
             boolean occurrs = false;
@@ -66,8 +70,7 @@ public class Linker {
             }
 
 
-        } while ((saveRec == null && user.getMind().getDatabase().getRoot() != null)
-                || (user.getMind().getDatabase().getRoot() != null && user.getMind().getDatabase().getRoot().getId() != saveRec.getId()));
+        } while (saveR != user.getMind().getDatabase().getRoot() || saveT != user.getMind().getTValues().getRoot() || saveF != user.getMind().getFValues().getRoot());
     }
 
     private boolean linkDomains(SortedSet<TVariable> tvars, boolean logging) {
@@ -92,6 +95,19 @@ public class Linker {
                             boolean applied = false;
                             for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
 
+                                if (master.get(i).isFSet() && master.get(i).isEmpty()) {
+                                    master.get(i).getF().setValue(null);
+                                    if (new Calculator(user).calculate(master.get(i).getF(), logging) > 0) {
+//                                        FValue s = user.getMind().getFValues().add(master.get(i).getF());
+                                    }
+                                }
+                                if (slave.get(i).isFSet() && slave.get(i).isEmpty()) {
+                                    slave.get(i).getF().setValue(null);
+                                    if (new Calculator(user).calculate(slave.get(i).getF(), logging) > 0) {
+//                                        FValue s = user.getMind().getFValues().add(slave.get(i).getF());
+                                    }
+                                }
+
                                 if (master.get(i).isTSet()
                                         && !slave.get(i).isEmpty()
                                         && master.getVarOrder(i) >= slave.getVarOrder(i)) {
@@ -109,7 +125,7 @@ public class Linker {
                                     master.pushValues();
                                     master.get(i).getF().setValue(slave.get(i).getValue());
                                     if (new Calculator(user).calculate(master.get(i).getF(), logging) > 0) {
-                                        FValue s = user.getMind().getFValues().add(master.get(i).getF());
+//                                        FValue s = user.getMind().getFValues().add(master.get(i).getF());
                                         result = true;
                                     }
                                     applied = true;
@@ -133,7 +149,7 @@ public class Linker {
                                     slave.pushValues();
                                     slave.get(i).getF().setValue(master.get(i).getValue());
                                     if (new Calculator(user).calculate(slave.get(i).getF(), logging) > 0) {
-                                        FValue s = user.getMind().getFValues().add(slave.get(i).getF());
+//                                        FValue s = user.getMind().getFValues().add(slave.get(i).getF());
                                         result = true;
                                     }
                                     applied = true;
@@ -165,15 +181,26 @@ public class Linker {
 
                 if (d.isSystem() && !d.isCalculated()) {
                     d.pushValues();
-                    int res = d.execSystem();
 
-                    for (Argument a : d.getArguments()) {
-                        if (a.isFSet() && a.getF().isCalculable() && !a.isCalculated()) {
-                            if (new Calculator(user).calculate(a.getF(), logging) > 0) {
-                                FValue s = user.getMind().getFValues().add(a.getF());
+                    boolean occurs;
+                    int res;
+                    do {
+                        occurs = false;
+                        res = d.execSystem();
+                        for (Argument a : d.getArguments()) {
+                            if (a.isFSet() && a.getF().isCalculable() /*&& a.isEmpty()*/) {
+                                if (new Calculator(user).calculate(a.getF(), logging) > 0) {
+//                                    FValue s = user.getMind().getFValues().add(a.getF());
+                                    occurs = true;
+                                }
                             }
                         }
-                        if (!a.isCalculated()) {
+
+                    } while (occurs);
+
+
+                    for (Argument a : d.getArguments()) {
+                        if (a.isEmpty()) {
                             res = -2;
                             break;
                         }
@@ -318,16 +345,26 @@ public class Linker {
 
             for (Domain d : tree.getSequence()) {
                 if (d.isComplete() && d.isSystem()) {
-                    int res = d.execSystem();
 
-                    for (Argument a : d.getArguments()) {
-                        if (a.isFSet() && a.getF().isCalculable() && !a.isCalculated()) {
-                            if (new Calculator(user).calculate(a.getF(), logging) > 0) {
-                                FValue s = user.getMind().getFValues().add(a.getF());
+                    boolean occurs;
+                    int res;
+                    do {
+                        occurs = false;
+                        res = d.execSystem();
+                        for (Argument a : d.getArguments()) {
+                            if (a.isFSet() && a.getF().isCalculable()/* && a.isEmpty()*/) {
+                                if (new Calculator(user).calculate(a.getF(), logging) > 0) {
+//                                    FValue s = user.getMind().getFValues().add(a.getF());
+                                    occurs = true;
+                                }
                             }
                         }
 
-                        if (!a.isCalculated()) {
+                    } while (occurs);
+
+                    for (Argument a : d.getArguments()) {
+
+                        if (a.isEmpty()) {
                             res = -2;
                             break;
                         }
