@@ -910,17 +910,17 @@ public class Kanger {
 //            );
 
 
-        mind.compile("" +
-                "!@x ~p(x,x);" +
-                "!@x $y p(y,x);" +
-                "!@x @y p(x, y) -> c(y, x);" +
-                "!@x @y d(x, y) -> c(x, y), p(y,x), f(x);" +
-                "!@x @y s(x, y) -> c(x, y), p(y,x), m(x);" +
-//                "!@x @y c(x, y) -> (s(x, y) || d(x, y));" +
-                "!p(J,T);" +
-                "!d(M,J);" +
-                "!@x (m(x) || f(x)), ~(m(x) && f(x));" +
-                "");
+//        mind.compile("" +
+//                "!@x ~p(x,x);" +
+//                "!@x $y p(y,x);" +
+//                "!@x @y p(x, y) -> c(y, x);" +
+//                "!@x @y d(x, y) -> c(x, y), p(y,x), f(x);" +
+//                "!@x @y s(x, y) -> c(x, y), p(y,x), m(x);" +
+////                "!@x @y c(x, y) -> (s(x, y) || d(x, y));" +
+//                "!p(J,T);" +
+//                "!d(M,J);" +
+//                "!@x (m(x) || f(x)), ~(m(x) && f(x));" +
+//                "");
 
 
 
@@ -954,6 +954,7 @@ public class Kanger {
 ////            mind.query("?$x f(x);");
 //
 
+        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
         Screen.session(mind);
 
 ////            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -961,7 +962,6 @@ public class Kanger {
 ////                    ""
 ////            );
 //
-////            mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);"
 ////            mind.query("?$x num(x);");
 //
 ////            mind.compile("!@x x in 0..10 -> num(x);"

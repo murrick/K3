@@ -78,7 +78,7 @@ public class Argument {
 
     //TODO: Тут разобраться. Для IValue
     public boolean setValue(Term t) {
-        if (o == null) {
+        if (o == null || o instanceof Term) {
             o = t;
         } else if (o instanceof TVariable) {
             ((TVariable) o).setValue(t).setClosed();
