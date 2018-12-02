@@ -88,7 +88,7 @@ public class Analiser {
         // Контроль системных предикатов
         for (int k = 0; k < sequence.size(); ++k) {
             Domain a = sequence.get(k);
-            if (a.isSystem() && a.isUsed() /*&& !a.isAntc()*/) {
+            if (a.isSystem() && a.isCalculated() /*&& !a.isAntc()*/) {
                 a.setClosed();
             }
         }

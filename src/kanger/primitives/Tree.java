@@ -62,7 +62,7 @@ public class Tree {
     public boolean isReady() {
         if (sequence.size() > 1) {
             for (Domain d : sequence) {
-                if (!d.isExcluded() && !d.isUsed() && !d.isStored() && !d.isQuery()) {
+                if (/*!d.isExcluded() && !d.isCalculated() && !d.isStored() &&*/ !d.isQuery()) {
                     return false;
                 }
             }

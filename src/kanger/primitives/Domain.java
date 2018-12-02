@@ -214,12 +214,12 @@ public class Domain {
             suffix += " " + id;
         }
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix += /*isDest() ||*/ isQuery() || isClosed() || isUsed() || isExcluded() || isProduced() || isStored() || isCalculated()
+            suffix += /*isDest() ||*/ isQuery() || isClosed() || /*isUsed() ||*/ isExcluded() || isProduced() || isStored() || isCalculated()
                     ? " " +
                     //(isDest() ? "A" : "") +
                     (isQuery() ? "Q" : "") +
                     (isClosed() ? "C" : "") +
-                    (isUsed() ? "U" : "") +
+//                    (isUsed() ? "U" : "") +
                     (isExcluded() ? "X" : "") +
                     (isProduced() ? "P" : "") +
                     (isStored() ? "B" : "") +
@@ -418,30 +418,30 @@ public class Domain {
     }
 
 
-    public boolean isUsed() {
-        if (user.getMind().getUsedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getUsedDomains().get(this)) {
-                if (isEqualsArguments(list)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void setUsed() {
-        if (!user.getMind().getUsedDomains().containsKey(this)) {
-            user.getMind().getUsedDomains().put(this, new HashSet<>());
-        }
-        if (!isUsed()) {
-            try {
-                user.getMind().getUsedDomains().get(this).add(convertArguments());
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
-        }
-    }
-
+//    public boolean isUsed() {
+//        if (user.getMind().getUsedDomains().containsKey(this)) {
+//            for (List<Argument> list : user.getMind().getUsedDomains().get(this)) {
+//                if (isEqualsArguments(list)) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+//
+//    public void setUsed() {
+//        if (!user.getMind().getUsedDomains().containsKey(this)) {
+//            user.getMind().getUsedDomains().put(this, new HashSet<>());
+//        }
+//        if (!isUsed()) {
+//            try {
+//                user.getMind().getUsedDomains().get(this).add(convertArguments());
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
+//        }
+//    }
+//
     public boolean isExcluded(List<Argument> args) {
         if (user.getMind().getExcludedDomains().containsKey(this)) {
             for (List<Argument> list : user.getMind().getExcludedDomains().get(this)) {
