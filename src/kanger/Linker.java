@@ -71,7 +71,10 @@ public class Linker {
             }
 
 
-        } while (saveR != user.getMind().getDatabase().getRoot() /*|| saveT != user.getMind().getTValues().getRoot() || saveF != user.getMind().getFValues().getRoot()*/);
+        } while (saveR != user.getMind().getDatabase().getRoot()
+                || saveT != user.getMind().getTValues().getRoot()
+//                || saveF != user.getMind().getFValues().getRoot()
+        );
     }
 
     private boolean linkDomains(SortedSet<TVariable> tvars, boolean logging) {
