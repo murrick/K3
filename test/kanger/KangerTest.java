@@ -1065,6 +1065,7 @@ public class KangerTest {
 
         System.out.println("OK");
         System.out.println("====================================================");
+
 //        if (mind.getLog().size() > 0) {
 //            for (LogEntry log : mind.getLog().getRoot()) {
 //                System.out.println(log.getRecord());
