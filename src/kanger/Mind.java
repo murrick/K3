@@ -26,7 +26,7 @@ import java.util.zip.GZIPOutputStream;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Mind {
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
+    private static final boolean DEBUG_DISABLE_FALSE_CHECK = true;
 
     private int id = 0;
     private Mind next = null;
