@@ -7,10 +7,7 @@ import kanger.enums.LogMode;
 import kanger.factory.DatabaseFactory;
 import kanger.primitives.*;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Dmitry G. Qusnetsov
@@ -85,113 +82,125 @@ public class Linker {
             tvars = new TreeSet<>();
             tvars.addAll(user.getMind().getDatabase().getTVariables(true));
         }
+
         if (tvars.isEmpty()) {
 
             for (Tree treeSlave = user.getMind().getTrees().getRoot(); treeSlave != null; treeSlave = treeSlave.getNext()) {
-                if (treeSlave.isReady()) {//treeSlave.getSequence().size() == 1) { //&& checkSystem(treeSlave, logging)) {
-                    Domain d = treeSlave.getSequence().get(0);
-//                    if (d.isStored() /*|| d.isSingleInTree()*/) {
-                    Domain slave = d;
+                if (treeSlave.getSequence().size() == 1) { //&& checkSystem(treeSlave, logging)) {
 
-                    for (Tree treeMaster : slave.getPredicate().getLinkedTrees()) {
-                        if (checkSystem(treeMaster, logging) && checkSystem(treeSlave, logging)) {
+                    for (Tree treeMaster = user.getMind().getTrees().getRoot(); treeMaster != null; treeMaster = treeMaster.getNext()) {
 
-                            for (Domain master : treeMaster.getSequence()) {
+                        Set<Domain> set = new HashSet<>();
+                        set.addAll(treeSlave.getSequence());
+                        set.addAll(treeMaster.getSequence());
+
+                        if (checkSystem(set, logging)) {
+
+                            for (Domain slave : set) {
+                                for (Domain master : set) {
+
+                                    if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
+
+                                        linkFunctions(master, slave, 0, logging, new HashSet<Function>());
+
+                                        TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
+                                        TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
+
+                                        user.getMind().getTValues().mark();
+                                        user.getMind().getFValues().mark();
+
+                                        boolean success = true;
+                                        boolean applied = false;
+                                        for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
 
 
-                                if (master.getPredicate().getId() == slave.getPredicate().getId()
-                                        && master.isAntc() != slave.isAntc()) {
-
-//                                        linkFunctions(master, slave, 0, logging, new HashSet<Function>());
-
-                                    TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
-                                    TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
-                                    user.getMind().getTValues().mark();
-                                    boolean success = true;
-                                    boolean applied = false;
-                                    for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
-
-//                                            if (master.get(i).isFSet() && master.get(i).isEmpty()) {
-//                                                master.get(i).getF().setValue(null);
-//                                                if (new Calculator(user).calculate(master.get(i).getF(), logging) > 0) {
-//                                                }
-//                                            }
-//                                            if (slave.get(i).isFSet() && slave.get(i).isEmpty()) {
-//                                                slave.get(i).getF().setValue(null);
-//                                                if (new Calculator(user).calculate(slave.get(i).getF(), logging) > 0) {
-//                                                }
-//                                            }
-
-                                        if (master.get(i).isTSet()
-                                                && !slave.get(i).isEmpty()
-                                                && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                            TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
-                                            if (s == null) {
-                                                s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
-                                                result = true;
+//                                            master.pushValues();
+//                                            slave.pushValues();
+                                            if (master.get(i).isFSet() && master.get(i).isEmpty()) {
+                                                master.get(i).getF().setValue(null);
+                                                if (new Calculator(user).calculate(master.get(i).getF(), logging) > 0) {
+                                                }
                                             }
-                                            substMaster[i] = s;
-                                            applied = true;
-//                                            } else if (master.get(i).isFSet()
-//                                                    && !slave.get(i).isEmpty()
-//                                                    && master.get(i).getF().isCalculable()
-//                                                    && (master.get(i).isEmpty() || master.get(i).getValue().getId() != slave.get(i).getValue().getId())) {
+                                            if (slave.get(i).isFSet() && slave.get(i).isEmpty()) {
+                                                slave.get(i).getF().setValue(null);
+                                                if (new Calculator(user).calculate(slave.get(i).getF(), logging) > 0) {
+                                                }
+                                            }
+//                                            master.popValues();
+//                                            slave.popValues();
+
+                                            if (master.get(i).isTSet()
+                                                    && !slave.get(i).isEmpty()
+                                                    && master.getVarOrder(i) >= slave.getVarOrder(i)) {
+                                                TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
+                                                if (s == null) {
+                                                    s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
+                                                    result = true;
+                                                }
+                                                substMaster[i] = s;
+                                                applied = true;
+                                            } else if (master.get(i).isFSet()
+                                                    && master.get(i).getF().isCalculable()
+                                                    && !slave.get(i).isEmpty()
+                                                    && (master.get(i).isEmpty() /*|| master.get(i).getValue().getId() != slave.get(i).getValue().getId()*/)) {
 //                                                master.pushValues();
-//                                                master.get(i).getF().setValue(slave.get(i).getValue());
-//                                                if (new Calculator(user).calculate(master.get(i).getF(), logging) > 0) {
-////                                                    substMaster[i] = null; //master.get(i).getF().getValue();
-////                                                    applied = true;
-////                                                    result = true;
-//                                                }
+                                                master.get(i).getF().setValue(slave.get(i).getValue());
+                                                if (new Calculator(user).calculate(master.get(i).getF(), logging) > 0) {
+                                                    result = true;
+                                                }
+                                                substMaster[i] = null; //master.get(i).getF().getValue();
+                                                applied = true;
 //                                                master.popValues();
-                                        }
-
-                                        if (slave.get(i).isTSet()
-                                                && !master.get(i).isEmpty()
-                                                && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                            TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
-                                            if (s == null) {
-                                                s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
-                                                result = true;
                                             }
-                                            substSlave[i] = s;
-                                            applied = true;
-//                                            } else if (slave.get(i).isFSet()
-//                                                    && !master.get(i).isEmpty()
-//                                                    && slave.get(i).getF().isCalculable()
-//                                                    && (slave.get(i).isEmpty() || slave.get(i).getValue().getId() != master.get(i).getValue().getId())) {
+
+                                            if (slave.get(i).isTSet()
+                                                    && !master.get(i).isEmpty()
+                                                    && slave.getVarOrder(i) >= master.getVarOrder(i)) {
+                                                TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
+                                                if (s == null) {
+                                                    s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
+                                                    result = true;
+                                                }
+                                                substSlave[i] = s;
+                                                applied = true;
+                                            } else if (slave.get(i).isFSet()
+                                                    && slave.get(i).getF().isCalculable()
+                                                    && !master.get(i).isEmpty()
+                                                    && (slave.get(i).isEmpty() /*|| slave.get(i).getValue().getId() != master.get(i).getValue().getId()*/)) {
 //                                                slave.pushValues();
-//                                                slave.get(i).getF().setValue(master.get(i).getValue());
-//                                                if (new Calculator(user).calculate(slave.get(i).getF(), logging) > 0) {
-////                                                    substSlave[i] = null; //slave.get(i).getF().getValue();
-////                                                    applied = true;
-////                                                    result = true;
-//                                                }
+                                                slave.get(i).getF().setValue(master.get(i).getValue());
+                                                if (new Calculator(user).calculate(slave.get(i).getF(), logging) > 0) {
+                                                    result = true;
+                                                }
+                                                substSlave[i] = null; //slave.get(i).getF().getValue();
+                                                applied = true;
 //                                                slave.popValues();
-                                        }
+                                            }
 
-                                        if (!applied) {
-                                            if (master.get(i).isEmpty()
-                                                    || slave.get(i).isEmpty()
-                                                    || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
-                                                success = false;
-                                                break;
-                                            } else {
-                                                substMaster[i] = null;
-                                                substSlave[i] = null;
+                                            if (!applied) {
+                                                if (master.get(i).isEmpty()
+                                                        || slave.get(i).isEmpty()
+                                                        || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                                                    success = false;
+                                                    break;
+                                                } else {
+                                                    substMaster[i] = null;
+                                                    substSlave[i] = null;
+                                                }
                                             }
                                         }
-                                    }
-                                    if (success) {
-                                        user.getMind().getTValues().commit();
-                                        markExcluded(substMaster, master, slave, logging);
-                                        markExcluded(substSlave, slave, master, logging);
+                                        if (success) {
+                                            user.getMind().getTValues().commit();
+                                            user.getMind().getFValues().commit();
+                                            markExcluded(substMaster, master, slave, logging);
+                                            markExcluded(substSlave, slave, master, logging);
+                                        } else {
+                                            user.getMind().getTValues().release();
+                                            user.getMind().getFValues().release();
+                                        }
 
-
-                                    } else {
-                                        user.getMind().getTValues().release();
+                                        linkFunctions(master, slave, 0, logging, new HashSet<Function>());
                                     }
-                                            linkFunctions(master, slave, 0, logging, new HashSet<Function>());
                                 }
                             }
                         }
@@ -336,35 +345,35 @@ public class Linker {
         }
         if (tvars.isEmpty()) {
 
-            if (checkSystem(tree, logging)) {
+//            if (checkSystem(tree, logging)) {
 
-                Set<Domain> excluded = new HashSet<>();
-                Set<Domain> calculated = new HashSet<>();
-                Set<Domain> candidades = new HashSet<>();
-                Set<Domain> assumed = new HashSet<>();
+            Set<Domain> excluded = new HashSet<>();
+            Set<Domain> calculated = new HashSet<>();
+            Set<Domain> candidades = new HashSet<>();
+            Set<Domain> assumed = new HashSet<>();
 
-                for (Domain d : tree.getSequence()) {
-                    for (Domain master : waiters) {
-                        if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
-                            boolean success = true;
-                            user.getMind().getTValues().mark();
-                            for (int i = 0; i < d.getPredicate().getRange(); ++i) {
-                                if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {
-                                } else if (master.get(i).isEmpty()
-                                        || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {
-                                    success = false;
-                                    break;
-                                }
+            for (Domain d : tree.getSequence()) {
+                for (Domain master : waiters) {
+                    if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
+                        boolean success = true;
+                        user.getMind().getTValues().mark();
+                        for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                            if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {
+                            } else if (master.get(i).isEmpty()
+                                    || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {
+                                success = false;
+                                break;
                             }
+                        }
 
-                            if (success) {
-                                assumed.add(d);
-                            }
+                        if (success) {
+                            assumed.add(d);
                         }
                     }
                 }
+            }
 
-                for (Domain d : tree.getSequence()) {
+            for (Domain d : tree.getSequence()) {
 //                if (d.isComplete() && d.isSystem()) {
 //
 //                    boolean occurs;
@@ -402,86 +411,86 @@ public class Linker {
 //                    }
 //                }
 
-                    if (d.isCalculated()) {
-                        calculated.add(d);
-                    } else if (d.isStored() || d.isSystem() || !d.isComplete()) {
-                        excluded.clear();
-                        candidades.clear();
-                        break;
-                    } else if (d.isExcluded()) {
-                        excluded.add(d);
-                    } else {
-                        candidades.add(d);
-                    }
+                if (d.isCalculated()) {
+                    calculated.add(d);
+                } else if (d.isStored() || d.isSystem() || !d.isComplete()) {
+                    excluded.clear();
+                    candidades.clear();
+                    break;
+                } else if (d.isExcluded()) {
+                    excluded.add(d);
+                } else {
+                    candidades.add(d);
                 }
+            }
 
-                if (candidades.size() == 1) {
-                    Domain d = candidades.toArray(new Domain[]{})[0];
+            if (candidades.size() == 1) {
+                Domain d = candidades.toArray(new Domain[]{})[0];
+                result = true;
+                if (!d.isStored()) {
+                    if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
+                        Domain x = d.setStored();
+                        x.setProduced();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
+                        }
+                    } else {
+                        Domain x = d.createStored();
+                        x.setProduced();
+                        if (d.isCalculated()) {
+                            x.setCalculated();
+                        }
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
+                        }
+                    }
+                } else {
+                    d.setProduced();
+                }
+            } else if (!excluded.isEmpty() && candidades.isEmpty()) {
+                for (Domain d : excluded) {
                     result = true;
                     if (!d.isStored()) {
-                        if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
-                            Domain x = d.setStored();
-                            x.setProduced();
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
-                            }
-                        } else {
-                            Domain x = d.createStored();
-                            x.setProduced();
-                            if (d.isCalculated()) {
-                                x.setCalculated();
-                            }
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
-                            }
+                        Domain x = d.createStored();
+                        x.setProduced();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
                         }
                     } else {
                         d.setProduced();
                     }
-                } else if (!excluded.isEmpty() && candidades.isEmpty()) {
-                    for (Domain d : excluded) {
-                        result = true;
-                        if (!d.isStored()) {
-                            Domain x = d.createStored();
-                            x.setProduced();
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
-                            }
-                        } else {
-                            d.setProduced();
-                        }
-                    }
-                } else if (!calculated.isEmpty() && tree.getSequence().size() == calculated.size()) {
-                    for (Domain d : calculated) {
-                        result = true;
-                        if (!d.isStored()) {
-                            Domain x = d.createStored();
-                            x.setProduced();
-                            if (d.isCalculated()) {
-                                x.setCalculated();
-                            }
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
-                            }
-                        } else {
-                            d.setProduced();
-                        }
-                    }
                 }
-
-
-                if (!result && tree.getSequence().size() > 1) {
-                    candidades.clear();
-                    for (Domain d : tree.getSequence()) {
-                        if (d.isComplete() && !d.isExcluded() && !assumed.contains(d)) {
-                            candidades.add(d);
+            } else if (!calculated.isEmpty() && tree.getSequence().size() == calculated.size()) {
+                for (Domain d : calculated) {
+                    result = true;
+                    if (!d.isStored()) {
+                        Domain x = d.createStored();
+                        x.setProduced();
+                        if (d.isCalculated()) {
+                            x.setCalculated();
                         }
-                    }
-                    if (candidades.size() == 1) {
-                        candidades.toArray(new Domain[]{})[0].setProduced();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
+                        }
+                    } else {
+                        d.setProduced();
                     }
                 }
             }
+
+
+            if (!result && tree.getSequence().size() > 1) {
+                candidades.clear();
+                for (Domain d : tree.getSequence()) {
+                    if (d.isComplete() && !d.isExcluded() && !assumed.contains(d)) {
+                        candidades.add(d);
+                    }
+                }
+                if (candidades.size() == 1) {
+                    candidades.toArray(new Domain[]{})[0].setProduced();
+                }
+            }
+//            }
         } else {
             TVariable t = tvars.last();
             TValue v = t.rewind();
@@ -512,12 +521,12 @@ public class Linker {
         if (tvars.isEmpty()) {
 
             for (Tree master = user.getMind().getTrees().getRoot(); master != null; master = master.getNext()) {
-                if (checkSystem(master, logging)) {
+//                if (checkSystem(master.getSequence(), logging)) {
 
-                    for (Domain d : master.getSequence()) {
+                for (Domain d : master.getSequence()) {
 //                    if (saveF == mind.getFValues().getRoot()) {
-                        for (Function f : d.getFunctions()) {
-                            new Calculator(user).calculate(f, logging);
+                    for (Function f : d.getFunctions()) {
+                        new Calculator(user).calculate(f, logging);
 //                        if ((f.isCalculable() || !f.isCalculated()) && f.isComplete()) {
 //                            f.clearResult();
 //                            if (mind.getCalculator().calculate(f) > 0) {
@@ -525,10 +534,10 @@ public class Linker {
 //                                mind.getLog().add(LogMode.ANALIZER, "Shot function result: " + f.toString());
 //                            }
 //                        }
-                        }
-//                    }
                     }
+//                    }
                 }
+//                }
 
 //                for (Domain d : master.getSequence()) {
 //                    if (d.isSystem()) {
@@ -591,25 +600,25 @@ public class Linker {
         return result;
     }
 
-    public boolean checkSystem(Tree tree, boolean logging) {
+    public boolean checkSystem(Collection<Domain> sequence, boolean logging) {
         boolean block = false;
-        for (Domain d : tree.getSequence()) {
+        for (Domain d : sequence) {
             if (d.isSystem() && !d.isCalculated()) {
 
                 d.pushValues();
-//                boolean occurs;
+                boolean occurs;
                 int res;
-//                do {
-//                    occurs = false;
-                res = d.execSystem();
-//                    for (Argument a : d.getArguments()) {
-//                        if (a.isFSet() && a.getF().isCalculable() && a.isEmpty()) {
-//                            if (new Calculator(user).calculate(a.getF(), logging) > 0) {
-//                                occurs = true;
-//                            }
-//                        }
-//                    }
-//                } while (occurs);
+                do {
+                    occurs = false;
+                    res = d.execSystem();
+                    for (Argument a : d.getArguments()) {
+                        if (a.isFSet() && a.getF().isCalculable() && a.isEmpty()) {
+                            if (new Calculator(user).calculate(a.getF(), logging) > 0) {
+                                occurs = true;
+                            }
+                        }
+                    }
+                } while (occurs);
 
                 for (Argument a : d.getArguments()) {
                     if (a.isEmpty()) {
@@ -718,6 +727,7 @@ public class Linker {
         }
 
     }
+
 
 }
 
