@@ -1,9 +1,14 @@
 package kanger.factory;
 
-import java.io.*;
+import kanger.User;
+import kanger.primitives.TValue;
+import kanger.primitives.TVariable;
+import kanger.primitives.Term;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.*;
-import kanger.*;
-import kanger.primitives.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -13,6 +18,7 @@ public class TValueFactory {
     private TValue root = null;
     private Map<TVariable, Long> current = new HashMap<>();
     private long lastID = 0;
+    private long commitID = 0;
 
     private Stack<Object[]> stack = new Stack<>();
 
@@ -37,6 +43,7 @@ public class TValueFactory {
             p.setNext(root);
             root = p;
             p.setId(lastID++);
+            //TODO: Добавить commitID
         }
     }
 
@@ -48,6 +55,7 @@ public class TValueFactory {
             t.setNext(root);
             root = t;
             t.setId(lastID++);
+            t.setCommitId(commitID);
 
         }
 
@@ -188,7 +196,11 @@ public class TValueFactory {
 
     public void commit() {
         if (stack.size() > 1) {
-            stack.pop();
+//            ++commitID;
+            Object[] curr = stack.pop();
+//            for(TValue v = root; v != null && (curr[0] == null || v.getId() != ((TValue)curr[0]).getId()); v = v.getNext()) {
+//                v.setCommitId(commitID);
+//            }
         }
     }
 
@@ -274,4 +286,15 @@ public class TValueFactory {
         }
     }
 
+    public long getCommitID() {
+        return commitID;
+    }
+
+    public void setCommitID(long commitID) {
+        this.commitID = commitID;
+    }
+
+    public void incCommitId() {
+        ++this.commitID;
+    }
 }

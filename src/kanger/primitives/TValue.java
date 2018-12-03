@@ -23,6 +23,7 @@ public class TValue implements IValue {
 //    private List<Domain> dstSolves = new ArrayList<>();
 //    private List<Integer> posSolves = new ArrayList<>();
 
+    private long commitId = 0;
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
 
@@ -138,7 +139,7 @@ public class TValue implements IValue {
 
     @Override
     public String toString() {
-        return tVar.getVarName() + ":" + value.toString();
+        return tVar.getVarName() + ":" + value.toString() + (commitId > 0 ? " " + commitId : "");
     }
 
     public void setQuery() {
@@ -261,6 +262,14 @@ public class TValue implements IValue {
         return null;
     }
 
+    public long getCommitId() {
+        return commitId;
+    }
+
+    public void setCommitId(long commitId) {
+        this.commitId = commitId;
+    }
+
     public class Solve {
         private Domain src = null;
         private Domain dst = null;
@@ -295,6 +304,7 @@ public class TValue implements IValue {
         public void setIndex(int index) {
             this.index = index;
         }
+
 
         @Override
         public boolean equals(Object o) {
