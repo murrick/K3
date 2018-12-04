@@ -138,7 +138,7 @@ public class Screen {
 //                                System.out.println(": " + h);
                                 System.out.println();
                                 Boolean res = mind.query(h, false);
-                                if (res != null) {
+                                if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                                     showLog(mind, LogMode.SOLVES);
                                     showLog(mind, LogMode.VALUES);
                                 }
@@ -187,27 +187,35 @@ public class Screen {
                                         break;
                                     case 'R':
                                         mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RIGHTS);
-                                        System.out.print("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                                        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
                                         break;
                                     case 'r':
                                         mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RIGHTS);
-                                        System.out.print("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                                        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
                                         break;
                                     case 'V':
                                         mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES);
-                                        System.out.print("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+                                        System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
                                         break;
                                     case 'v':
                                         mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
-                                        System.out.print("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+                                        System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
                                         break;
                                     case 'S':
                                         mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS);
-                                        System.out.print("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+                                        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
                                         break;
                                     case 's':
                                         mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
-                                        System.out.print("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+                                        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+                                        break;
+                                    case 'L':
+                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS);
+                                        System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
+                                        break;
+                                    case 'l':
+                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
+                                        System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
                                         break;
                                 }
                             }
@@ -239,16 +247,18 @@ public class Screen {
                                 String ln = (String) t[0];
 
                                 Boolean res = mind.query(ln, false);
-                                if (res != null) {
-                                    showLog(mind, LogMode.SOLVES);
-                                    showLog(mind, LogMode.VALUES);
-                                } else if (mind.isInsertion()) {
-                                    showLog(mind, LogMode.SAVED);
-                                }
-                                LogEntry lastLine = mind.getLog().getCurrent(LogMode.ANALIZER);
-                                System.out.println(lastLine.getRecord());
-                                if (res == null && !mind.isInsertion()) {
-                                    showHypo(mind);
+                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                                    if (res != null) {
+                                        showLog(mind, LogMode.SOLVES);
+                                        showLog(mind, LogMode.VALUES);
+                                    } else if (mind.isInsertion()) {
+                                        showLog(mind, LogMode.SAVED);
+                                    }
+                                    LogEntry lastLine = mind.getLog().getCurrent(LogMode.ANALIZER);
+                                    System.out.println(lastLine.getRecord());
+                                    if (res == null && !mind.isInsertion()) {
+                                        showHypo(mind);
+                                    }
                                 }
                             }
 //                            }
@@ -292,7 +302,7 @@ public class Screen {
     }
 
     private static void showOptions(Mind mind) {
-        System.out.print("Debug lebel: ");
+        System.out.print("Debug level: ");
         switch (mind.getDebugLevel() & 0xFF) {
             case Enums.DEBUG_LEVEL_QUIET:
                 System.out.println("QUIET");
@@ -304,9 +314,10 @@ public class Screen {
                 System.out.println("INFO");
                 break;
         }
-        System.out.print("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
-        System.out.print("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
-        System.out.print("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+        System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+        System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
     }
 
     public static void showLog(Mind mind, LogMode type) {
