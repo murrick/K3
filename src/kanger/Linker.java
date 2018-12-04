@@ -74,18 +74,24 @@ public class Linker {
 
                         if (linkDomainsForTree(t, logging)) {
                             result = true;
+//                            if (logging) {
+//                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                            }
                         }
                         if (calcFunctionsForTree(t, logging)) {
                             result = true;
+                            if (logging) {
+                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                            }
                         }
                         if (updateDatabaseForTree(t, waiters, logging)) {
                             result = true;
+                            if (logging) {
+                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                            }
                         }
 
 
-                        if (result && logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                        }
 
                         return result;
                     }
@@ -378,16 +384,16 @@ public class Linker {
                     result = true;
                     if (!d.isStored()) {
                         if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
-                            Domain x = d.setStored();
-                            x.setProduced();
+                            DatabaseFactory.Record x = d.setStored();
+                            x.getDomain().setProduced();
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
                             }
                         } else {
-                            Domain x = d.createStored();
-                            x.setProduced();
+                            DatabaseFactory.Record x = d.createStored();
+                            x.getDomain().setProduced();
                             if (d.isCalculated()) {
-                                x.setCalculated();
+                                x.getDomain().setCalculated();
                             }
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
@@ -400,8 +406,8 @@ public class Linker {
                     for (Domain d : excluded) {
                         result = true;
                         if (!d.isStored()) {
-                            Domain x = d.createStored();
-                            x.setProduced();
+                            DatabaseFactory.Record x = d.createStored();
+                            x.getDomain().setProduced();
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
                             }
@@ -413,10 +419,10 @@ public class Linker {
                     for (Domain d : calculated) {
                         result = true;
                         if (!d.isStored()) {
-                            Domain x = d.createStored();
-                            x.setProduced();
+                            DatabaseFactory.Record x = d.createStored();
+                            x.getDomain().setProduced();
                             if (d.isCalculated()) {
-                                x.setCalculated();
+                                x.getDomain().setCalculated();
                             }
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
@@ -526,16 +532,16 @@ public class Linker {
                 if (!d.isStored()) {
                     result = true;
                     if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
-                        Domain x = d.setStored();
-                        x.setProduced();
+                        DatabaseFactory.Record x = d.setStored();
+                        x.getDomain().setProduced();
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
                         }
                     } else {
-                        Domain x = d.createStored();
-                        x.setProduced();
+                        DatabaseFactory.Record x = d.createStored();
+                        x.getDomain().setProduced();
                         if (d.isCalculated()) {
-                            x.setCalculated();
+                            x.getDomain().setCalculated();
                         }
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
@@ -549,8 +555,8 @@ public class Linker {
                 for (Domain d : excluded) {
                     if (!d.isStored()) {
                         result = true;
-                        Domain x = d.createStored();
-                        x.setProduced();
+                        DatabaseFactory.Record x = d.createStored();
+                        x.getDomain().setProduced();
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (x): " + x);
                         }
@@ -563,10 +569,10 @@ public class Linker {
                 for (Domain d : calculated) {
                     if (!d.isStored()) {
                         result = true;
-                        Domain x = d.createStored();
-                        x.setProduced();
+                        DatabaseFactory.Record x = d.createStored();
+                        x.getDomain().setProduced();
                         if (d.isCalculated()) {
-                            x.setCalculated();
+                            x.getDomain().setCalculated();
                         }
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (c): " + x);
@@ -590,6 +596,10 @@ public class Linker {
                 }
             }
         }
+        if (result) {
+            user.getMind().getDatabase().incTag();
+        }
+
         return result;
     }
 

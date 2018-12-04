@@ -15,6 +15,7 @@ public class DatabaseFactory {
 
     private Record root = null;
     private long lastID = 0;
+    private int lastTag = 0;
 
     private Stack<Object[]> stack = new Stack<>();
 
@@ -27,6 +28,7 @@ public class DatabaseFactory {
     public void transaction(DatabaseFactory base) {
         root = base.root;
         lastID = base.lastID;
+        lastTag = base.lastTag;
         mark();
     }
 
@@ -35,9 +37,15 @@ public class DatabaseFactory {
         for (Record p = base.root; p != null && (root == null || p.getDomain().getId() != root.getDomain().getId()); p = p.getNext()) {
             list.add(0, p);
         }
+        Map<Integer, Integer> map = new HashMap<>();
         for (Record p : list) {
             p.setNext(root);
             root = p;
+
+            if (!map.containsKey(p.getTag())) {
+                map.put(p.getTag(), ++lastTag);
+            }
+            p.setTag(map.get(p.getTag()));
             p.setId(lastID++);
         }
     }
@@ -51,6 +59,7 @@ public class DatabaseFactory {
             r.setNext(root);
             root = r;
             r.setId(lastID++);
+            r.setTag(lastTag);
             return r;
         }
     }
@@ -208,10 +217,23 @@ public class DatabaseFactory {
         }
     }
 
+    public void incTag() {
+        ++lastTag;
+    }
+
+    public Set<TVariable> getTVariables(boolean full) {
+        Set<TVariable> set = new HashSet<>();
+        for (Record d = root; d != null; d = d.getNext()) {
+            set.addAll(d.getDomain().getTVariables(full));
+        }
+        return set;
+    }
+
     public class Record {
         private Domain domain = null;
         private long id = -1;
         private Record next = null;
+        private int tag = -1;
 
         public Record(Domain domain) {
             this.domain = domain;
@@ -236,13 +258,18 @@ public class DatabaseFactory {
         public void setNext(Record next) {
             this.next = next;
         }
-    }
 
-    public Set<TVariable> getTVariables(boolean full) {
-        Set<TVariable> set = new HashSet<>();
-        for (Record d = root; d != null; d = d.getNext()) {
-            set.addAll(d.getDomain().getTVariables(full));
+        public int getTag() {
+            return tag;
         }
-        return set;
+
+        public void setTag(int tag) {
+            this.tag = tag;
+        }
+
+        @Override
+        public String toString() {
+            return tag + ":\t" + domain.toString();
+        }
     }
 }

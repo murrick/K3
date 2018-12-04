@@ -2,6 +2,7 @@ package kanger;
 
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
+import kanger.factory.DatabaseFactory;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.Hypotese;
 import kanger.primitives.Solution;
@@ -1035,7 +1036,7 @@ public class Kanger {
         System.out.println("Result: " + mind.getQueryResult());
         if (!mind.getSolutions().isEmpty()) {
             System.out.println("Solves (" + mind.getSolutions().size() + "):");
-            for (Solution s : mind.getSolutions().getRoot()) {
+            for (DatabaseFactory.Record s : mind.getSolutions().getRoot()) {
                 System.out.println("\t" + s);
             }
         }

@@ -50,7 +50,7 @@ public class Calculator {
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
                     user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()));
-                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
             }
         }

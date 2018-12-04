@@ -1,7 +1,7 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.primitives.Domain;
+import kanger.factory.DatabaseFactory;
 import kanger.primitives.Solution;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class SolutionsStore {
 
-    private List<Solution> root = null;
+    private List<DatabaseFactory.Record> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -34,20 +34,20 @@ public class SolutionsStore {
         }
     }
 
-    public Solution add(Domain d) {
+    public DatabaseFactory.Record add(DatabaseFactory.Record d) {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
             root = new ArrayList<>();
         }
-        Solution s = new Solution(d);
-        if (!root.contains(s)) {
-            root.add(s);
+//        Solution s = new Solution(d);
+        if (!root.contains(d)) {
+            root.add(d);
         } else {
-            s = root.get(root.indexOf(s));
+            d = root.get(root.indexOf(d));
         }
-        return s;
+        return d;
     }
 
     public void enable(boolean e) {
@@ -58,7 +58,7 @@ public class SolutionsStore {
         return enableStore;
     }
 
-    public Solution get(int index) {
+    public DatabaseFactory.Record get(int index) {
         return root.get(index);
     }
 
@@ -66,7 +66,7 @@ public class SolutionsStore {
         return root.indexOf(o);
     }
 
-    public List<Solution> getRoot() {
+    public List<DatabaseFactory.Record> getRoot() {
         return root;
     }
 
