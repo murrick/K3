@@ -277,7 +277,8 @@ public class Domain {
 //                        || this.isDestFor(i, slave)
 //                        || slave.isDestFor(i, this)
                         || (slave.get(i).isTSet() && arguments.get(i).isTSet()
-                        && slave.get(i).getT().getId() == arguments.get(i).getT().getId())) {
+                        && slave.get(i).getT().getId() == arguments.get(i).getT().getId())
+                ) {
                     success = false;
                     break;
                 }

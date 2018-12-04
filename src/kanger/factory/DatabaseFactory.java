@@ -106,13 +106,21 @@ public class DatabaseFactory {
 
     public Record find(Predicate pred, boolean antc, List<Argument> arg) {
         for (Record p = root; p != null; p = p.getNext()) {
-            if (p.getDomain().isAntc() == antc
-                    && p.getDomain().getPredicate() == pred
-                    && p.getDomain().getPredicate().getRange() == pred.getRange()
-                /*&& !p.getArguments().isEmpty()*/) {
+            Domain x = p.getDomain();
+            if (x.isAntc() == antc
+                    && x.getPredicate() == pred
+                    && x.getPredicate().getRange() == pred.getRange()) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {
-                    if (!p.getDomain().get(i).isEmpty() && !arg.get(i).isEmpty() && p.getDomain().get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                    if (!x.get(i).isEmpty()
+                            && !arg.get(i).isEmpty()
+                            && x.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                        break;
+                    }
+
+                    TValue a = x.get(i).isTSet() ? x.get(i).getT().getCurrent() : x.get(i).getV();
+                    TValue b = arg.get(i).isTSet() ? arg.get(i).getT().getCurrent() : arg.get(i).getV();
+                    if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
                         break;
                     }
                 }

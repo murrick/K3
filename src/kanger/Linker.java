@@ -505,7 +505,11 @@ public class Linker {
             for (Domain d : tree.getSequence()) {
                 if (d.isCalculated()) {
                     calculated.add(d);
-                } else if (d.isStored() || d.isSystem() || !d.isComplete()) {
+                } else if (d.isStored()) {
+                    excluded.clear();
+                    candidades.clear();
+                    break;
+                } else if (d.isSystem() || !d.isComplete()) {
                     excluded.clear();
                     candidades.clear();
                     break;
@@ -548,7 +552,7 @@ public class Linker {
                         Domain x = d.createStored();
                         x.setProduced();
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (x): " + x);
                         }
                     } else {
                         d.setProduced();
@@ -565,7 +569,7 @@ public class Linker {
                             x.setCalculated();
                         }
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (c): " + x);
                         }
                     } else {
                         d.setProduced();
