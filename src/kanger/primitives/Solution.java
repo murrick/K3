@@ -123,7 +123,7 @@ public class Solution {
         int ccnt = 0;
 
         String line = antc == null ? "" : String.format("%c", antc ? Enums.ANT : Enums.SUC);
-        Operation op = Parser.getOp(predicate.getName());
+        Operation op = Parser.getOp(predicate.getName(), predicate.getRange());
         String tmp = "";
         String post = "";
         String mid = "";

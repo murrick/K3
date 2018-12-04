@@ -1,11 +1,16 @@
 package kanger.calculator;
 
+import kanger.User;
+import kanger.compiler.SysOp;
+import kanger.enums.DataType;
+import kanger.enums.LibMode;
+import kanger.enums.Tools;
+import kanger.interfaces.IRunnable;
+import kanger.primitives.Argument;
+import kanger.primitives.Function;
+import kanger.primitives.Term;
+
 import java.util.*;
-import kanger.*;
-import kanger.compiler.*;
-import kanger.enums.*;
-import kanger.interfaces.*;
-import kanger.primitives.*;
 
 /**
  * Created by murray on 18.01.17.
@@ -1136,7 +1141,7 @@ public class Functions {
         return sysOps;
     }
 
-    private Term _add(Term a, Term b) {
+    protected Term _add(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getVal() + (double) b.getVal();
@@ -1170,7 +1175,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _sub(Term a, Term b) {
+    protected Term _sub(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getVal() - (double) b.getVal();

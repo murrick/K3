@@ -198,7 +198,7 @@ public class Function implements IValue {
     }
 
     private String formatParam(Argument t) {
-        Operation op = Parser.getOp(name.toString());
+        Operation op = Parser.getOp(name.toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
         if (t.isFSet()) {
@@ -225,7 +225,7 @@ public class Function implements IValue {
         if (!isCalculable() && getValue() != null) {
             return getValue().toString();
         } else {
-            Operation op = Parser.getOp(name.toString());
+            Operation op = Parser.getOp(name.toString(), range);
             String s = "";
             if (op == null || op.getRange() != range) {
                 s = String.format("%s(", name.toString());

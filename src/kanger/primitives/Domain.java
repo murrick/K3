@@ -178,7 +178,7 @@ public class Domain {
 
     public String toString() {
         String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
-        Operation op = Parser.getOp(predicate.getName());
+        Operation op = Parser.getOp(predicate.getName(), predicate.getRange());
         if (op == null) {
             s += predicate.getName() + "(";
             int i = 0;
@@ -201,7 +201,11 @@ public class Domain {
                 for (int i = 0; i < op.getRange(); ++i) {
                     s += formatParam(arguments.get(i));
                     if (i + 1 < op.getRange()) {
-                        s += " " + op.getName() + " ";
+                        if (i == 0) {
+                            s += " " + op.getName() + " ";
+                        } else {
+                            s += (char) Enums.COMMA;
+                        }
                     }
                 }
             } catch (IndexOutOfBoundsException ex) {
@@ -594,7 +598,7 @@ public class Domain {
     }
 
     public boolean isSystem() {
-        return Parser.getOp(predicate.getName()) != null;
+        return Parser.getOp(predicate.getName(), predicate.getRange()) != null;
     }
 
     public int execSystem() {

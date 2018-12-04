@@ -190,6 +190,58 @@ public class Predicates {
             }));
         }
 
+        {
+            put("_in(3)", new SysOp(LibMode.PREDICATE, "_in", 3, new IRunnable() {
+                public Object run(Object o) {
+                    int i = -1;
+                    List<Argument> arg = ((Domain) o).getArguments();
+                    if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
+                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
+                                && arg.get(1).getValue().getVal() instanceof Collection
+                                && ((Collection) arg.get(1).getValue().getVal()).size() == 2) {
+
+                            Term min = (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[0];
+                            Term max = (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[1];
+                            Term cur = min;
+                            Term step = arg.get(2).getValue();
+                            int rc = min.compareTo(max);
+                            while (true) {
+                                if (arg.get(0).setValue(cur)) {
+                                    i = 1;
+                                    Term next = rc < 0
+                                            ? new Calculator(user).getFunctions()._add(cur, step)
+                                            : new Calculator(user).getFunctions()._sub(cur, step);
+                                    if (next.getId() == cur.getId()) {
+                                        if (arg.get(0).setValue(max)) {
+                                            i = 1;
+                                        }
+                                        break;
+                                    } else if (rc < 0 && next.compareTo(max) > 0) {
+                                        break;
+                                    } else if (rc > 0 && next.compareTo(max) < 0) {
+                                        break;
+                                    } else {
+                                        cur = next;
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
+                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
+                                && arg.get(1).getValue().getVal() instanceof Collection
+                                && ((Collection) arg.get(1).getValue().getVal()).size() == 2) {
+                            i = _in(arg.get(0).getValue(),
+                                    (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[0],
+                                    (Term) ((Collection) arg.get(1).getValue().getVal()).toArray()[1]) ? 1 : 0;
+                        }
+                    }
+                    return i;
+                }
+            }));
+        }
+
         //TODO: Добавить ret значение 2 для всех заполненных и совпадающих полей
         {
             put("match(2)", new SysOp(LibMode.PREDICATE, "match", 2, new IRunnable() {

@@ -218,7 +218,6 @@ public class Compiler {
                 parseArgs(d, arg, root.getRight(), level + 1, replacements);
             } else {
                 // системная функция
-
                 Function f = user.getMind().getFunctions().add(d); //new Function(mind);
                 parseArgs(d, f.getArguments(), root.getLeft(), level + 1, replacements);
                 parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);

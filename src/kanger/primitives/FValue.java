@@ -227,7 +227,7 @@ public class FValue implements IValue {
 //    }
 
     private String formatParam(Argument t) {
-        Operation op = Parser.getOp(function.getName().toString());
+        Operation op = Parser.getOp(function.getName().toString(), function.getRange());
         boolean isOp = op != null && op.getRange() == function.getRange();
         String s = "";
         if (t.isFSet()) {
@@ -251,7 +251,7 @@ public class FValue implements IValue {
         if (!function.isCalculable() && getValue() != null) {
             return getValue().toString();
         } else {
-            Operation op = Parser.getOp(function.getName().toString());
+            Operation op = Parser.getOp(function.getName().toString(), function.getRange());
             String s = "";
             if (op == null || op.getRange() != function.getRange()) {
                 s = String.format("%s(", function.getName().toString());

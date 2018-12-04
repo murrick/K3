@@ -47,6 +47,7 @@ public class Parser {
 
             /* 12 */
             new Operation("in", "_in", 12, 2, 0, false, false),
+            new Operation("in", "_in", 12, 3, 0, false, false),
             new Operation("<=", "_le", 12, 2, 0, false, false),
             new Operation("<", "_lr", 12, 2, 0, false, false),
             new Operation(">=", "_ge", 12, 2, 0, false, false),
@@ -622,9 +623,9 @@ public class Parser {
 //    }
 
 
-    public static Operation getOp(String o) {
+    public static Operation getOp(String o, int range) {
         for (Operation op : ops) {
-            if (op.getSubst().equals(o)) {
+            if (op.getSubst().equals(o) && op.getRange() == range) {
                 return op;
             }
         }
