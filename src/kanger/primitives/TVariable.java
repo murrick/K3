@@ -305,6 +305,11 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+
+    @Override
     public boolean equals(Object t) {
         return !(t == null || !(t instanceof TVariable)) && ((TVariable) t).id == id;
     }

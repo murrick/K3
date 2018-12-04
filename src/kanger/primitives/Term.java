@@ -284,6 +284,11 @@ public class Term implements IValue, Comparable<Object> {
     }
 
     @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+
+    @Override
     public boolean equals(Object t) {
         return t != null && t instanceof Term && ((Term) t).getId() == id;
 //        if (t instanceof Term) {

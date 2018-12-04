@@ -32,107 +32,35 @@ public class Calculator {
      * @param fu
      * @return
      */
-    public int calculate(Function fu, boolean logging) /*throws RuntimeErrorException*/ {
+    public boolean calculate(Function fu, boolean logging) /*throws RuntimeErrorException*/ {
 
-        //FArg fu = func.getFunction();
-        int flag = 0;
+        boolean result = false;
 
-        if (fu == null) {
-            return 0;
-        }
-//        List<Argument> arg = new ArrayList<>();
-
-        //fu.getArguments();
-        //arg.clear();
-
-        /* Проверка наличия всех параметров
-         * и заполнение массива
-         */
-//        int i;
-//        fu.setCalculated(false);
-        fu.setBusy(true);
-
-//        for (int i = 0; i <= fu.getRange(); ++i) {
-//            if (!fu.createCVar(i).isEmpty()) {
-//                if (!fu.createCVar(i).getValue().isCVariable()) {
-//                    fu.createCVar(i).setValue(fu.createCVar(i).getValue());
-//                } else {
-//                    fu.createCVar(i).setValue(null);
-//                }
-//            } else if (fu.createCVar(i).isFunction()) {
-//                fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
-//            } else if (fu.createCVar(i).isTVariable() && fu.createCVar(i).getTVariable().getOwner() != 0) {
-//                fu.createCVar(i).setValue(fu.createCVar(i).getTVariable().getValue());
-//            }
-//        }
-//
         for (int i = 0; i < fu.getRange(); ++i) {
-            if (fu.getArguments().get(i).isFSet() /* && !fu.createCVar(i).getFunction().isBusy()*/) {
-//                fu.createCVar(i).getFunction().setResult(fu.createCVar(i).getValue());
-                if (calculate(fu.getArguments().get(i).getF(), logging) > 0) {
-                    ++flag;
-//                    fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
-                } else {
-                    --flag;
-                }
+            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF().isEmpty()) {
+                calculate(fu.getArguments().get(i).getF(), logging);
             }
         }
 
-//        // Если еще не добавлен элемент результата - добавляем
-//        if (fu.getArguments().size() < fu.getRange() + 1) {
-//            fu.getArguments().createTVar(new Argument());
-//        }
-//        fu.setResult(result);
-//        Argument tl = new Argument();
-//        arg.createTVar(tl);
-//        tl.setC(result);
-        //fu.setA(arg);
-//        if (!fu.isCalculated(arg)) {
-//        flag = execute(fu);
         int k = execute(fu);
         if (k == 1 || k == 2) {
-//            if (!"$$".equals(fu.getArguments().get(fu.getRange()).getValue())) {
-            ++flag;
-            user.getMind().getFValues().add(fu);
-//            fu.setResult(null);
-//            fu.setCalculated(true);
-            if (logging) {
-                user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
-                user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
-//                    + (fu.getResult() != null
-//                    && fu.isCalculable()
-//                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
-                ));
-//            } else {
-//                mind.getLog().add(LogMode.ANALIZER, "Invalid function result:");
-//                mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()
-////                    + (fu.getResult() != null
-////                    && fu.isCalculable()
-////                    && (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? " = " + fu.getResult() : ""))
-//                ));
-//            }
-                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-            }
-        }
-
-//            flag = (arg.createCVar(i).isCSet()) ? 1 : 0;
-//        flag = (fu.getResult() != null) ? 1 : 0;
-//        if(!fu.isCalculated()) {
-        for (int i = 0; i < fu.getRange(); ++i) {
-            if (fu.getArguments().get(i).isFSet()) {
-//                fu.createCVar(i).getFunction().setResult(fu.createCVar(i).getValue());
-                if (calculate(fu.getArguments().get(i).getF(), logging) > 0) {
-                    ++flag;
-//                    fu.createCVar(i).setValue(fu.createCVar(i).getFunction().getResult());
-                } else {
-                    --flag;
+            if (fu.isEmpty()) {
+                user.getMind().getFValues().add(fu);
+                result = true;
+                if (logging) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
+                    user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()));
+                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
             }
         }
-//        }
 
-        fu.setBusy(false);
-        return flag;
+        for (int i = 0; i < fu.getRange(); ++i) {
+            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF().isEmpty()) {
+                calculate(fu.getArguments().get(i).getF(), logging);
+            }
+        }
+        return result;
     }
 
     /**

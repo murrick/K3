@@ -142,6 +142,12 @@ public class Tree {
         return excludes.contains(t.getId());
     }
 
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+
+    @Override
     public boolean equals(Object t) {
         return !(t == null || !(t instanceof Tree)) && ((Tree) t).id == id;
     }

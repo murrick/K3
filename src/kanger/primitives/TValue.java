@@ -18,7 +18,7 @@ public class TValue implements IValue {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Set<Solve> solves = new HashSet<>();
+    private Set<TValue.Solve> solves = new HashSet<>();
 //    private List<Domain> srcSolves = new ArrayList<>();
 //    private List<Domain> dstSolves = new ArrayList<>();
 //    private List<Integer> posSolves = new ArrayList<>();
@@ -87,7 +87,7 @@ public class TValue implements IValue {
 
 
     public boolean addSolve(int index, Domain dst, Domain src) {
-        Solve s = new Solve(index, dst, src);
+        TValue.Solve s = new TValue.Solve(index, dst, src);
         if (solves.contains(s)) {
             return false;
         } else {
@@ -186,6 +186,12 @@ public class TValue implements IValue {
 //    }
 //
 //
+
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+
     @Override
     public boolean equals(Object obj) {
         return obj != null && obj instanceof TValue && ((TValue) obj).getId() == id;
@@ -305,6 +311,20 @@ public class TValue implements IValue {
             this.index = index;
         }
 
+
+        @Override
+        public int hashCode() {
+            StringBuffer buffer = new StringBuffer();
+            buffer.append(this.src.getId());
+            buffer.append(this.dst.getId());
+            buffer.append(this.index);
+            return buffer.toString().hashCode();
+        }
+
+//        @Override
+//        public int hashCode(){
+//            return toString().hashCode();
+//        }
 
         @Override
         public boolean equals(Object o) {

@@ -177,18 +177,18 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || !(o instanceof HypotesisStore) || size() != ((HypotesisStore) o).size()) {
-            return false;
-        }
-        for (Hypotese h : ((HypotesisStore) o).getRoot()) {
-            if (find(h) == null) {
-                return false;
-            }
-        }
-        return true;
-    }
+//    @Override
+//    public boolean equals(Object o) {
+//        if (o == null || !(o instanceof HypotesisStore) || size() != ((HypotesisStore) o).size()) {
+//            return false;
+//        }
+//        for (Hypotese h : ((HypotesisStore) o).getRoot()) {
+//            if (find(h) == null) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 
     @Override
     public int compareTo(HypotesisStore o) {

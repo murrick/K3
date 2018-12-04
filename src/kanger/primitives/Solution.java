@@ -1,9 +1,12 @@
 package kanger.primitives;
 
-import java.util.*;
-import kanger.*;
-import kanger.compiler.*;
-import kanger.enums.*;
+import kanger.User;
+import kanger.compiler.Operation;
+import kanger.compiler.Parser;
+import kanger.enums.Enums;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Solution {
     private Predicate predicate = null;
@@ -174,6 +177,11 @@ public class Solution {
             line += tmp;
         }
         return line;
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
     }
 
     @Override

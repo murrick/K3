@@ -6,9 +6,13 @@
 package kanger.primitives;
 
 
-import java.util.*;
-import kanger.*;
-import kanger.enums.*;
+import kanger.User;
+import kanger.enums.Enums;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -135,6 +139,11 @@ public class Hypotese {
         tmp += ");";
         line += tmp;
         return line;
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
     }
 
     @Override

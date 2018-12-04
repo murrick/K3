@@ -717,6 +717,11 @@ public class Domain {
     }
 
     @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+
+    @Override
     public boolean equals(Object d) {
         return d != null && d instanceof Domain && ((Domain) d).id == id;
     }
