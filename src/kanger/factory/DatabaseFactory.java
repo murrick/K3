@@ -271,5 +271,15 @@ public class DatabaseFactory {
         public String toString() {
             return tag + ":\t" + domain.toString();
         }
+
+        @Override
+        public int hashCode() {
+            return ("" + id).hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o != null && o instanceof Record && id == ((Record) o).getId();
+        }
     }
 }

@@ -2,7 +2,10 @@ package kanger.stores;
 
 import kanger.User;
 import kanger.factory.DatabaseFactory;
+import kanger.primitives.Argument;
+import kanger.primitives.Predicate;
 import kanger.primitives.Solution;
+import kanger.primitives.Term;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +52,41 @@ public class SolutionsStore {
         }
         return d;
     }
+
+    public boolean contains(Object pred, boolean antc, Object... params) {
+        Predicate predicate;
+        if (pred instanceof Predicate) {
+            predicate = (Predicate) pred;
+        } else {
+            predicate = user.getMind().getPredicates().add(pred.toString(), params.length);
+        }
+        List<Argument> parameters = new ArrayList<>();
+        for (Object p : params) {
+            if (p instanceof Argument) {
+                parameters.add((Argument) p);
+            } else if (p instanceof Term) {
+                parameters.add((new Argument(p)));
+            } else {
+                parameters.add(new Argument(user.getMind().getTerms().add(p)));
+            }
+        }
+        for (DatabaseFactory.Record r : root) {
+            if (r.getDomain().getPredicate().getId() == predicate.getId() && r.getDomain().isAntc() == antc) {
+                boolean ok = true;
+                for (int i = 0; i < predicate.getRange(); ++i) {
+                    if (r.getDomain().get(i).getValue().getId() != parameters.get(i).getValue().getId()) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     public void enable(boolean e) {
         enableStore = e;

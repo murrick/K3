@@ -70,7 +70,7 @@ public class KangerTest {
         mind.query("?a(nnn);");
         showResult(true);
         Solution s = new Solution(user, true, "a", "nnn");
-        if (!mind.getSolutions().getRoot().contains(s)) {
+        if (!mind.getSolutions().contains(s) {
             fail("Expected: " + s.toString());
         }
         System.out.println("OK");
