@@ -250,7 +250,7 @@ public class Linker {
                                     user.getMind().getTValues().release();
                                     user.getMind().getFValues().release();
                                 }
-                                linkFunctions(master, slave, 0, logging, new HashSet<Function>());
+//                                linkFunctions(master, slave, 0, logging, new HashSet<Function>());
                             }
                         }
                     }

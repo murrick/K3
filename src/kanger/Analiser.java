@@ -816,9 +816,9 @@ public class Analiser {
                             user.getMind().getSolutions().add(q);
                         } else if (!p.getDomain().isQuery() && q.getDomain().isQuery()) {
                             user.getMind().getSolutions().add(p);
-                        } else {
-                            user.getMind().getSolutions().add(q);
-                            user.getMind().getSolutions().add(p);
+//                        } else {
+//                            user.getMind().getSolutions().add(q);
+//                            user.getMind().getSolutions().add(p);
                         }
 
                         if (logging) {

@@ -738,7 +738,7 @@ public class Kanger {
 
     public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
 
-//        Mind mind = new Mind(mindRoot);
+        Mind mind = new Mind(mindRoot);
 
 //        new LibraryStrings(mind);
 //        new LibraryMath(mind);
@@ -923,17 +923,16 @@ public class Kanger {
 //                "");
 
 
+        mind.compile(
+                "!@x ~father(x,x);" +
+                        "!@x $y father(y,x);" +
+                        "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
+                        "!@x @y daughter(x,y) -> child(x,y) && female(x);" +
+                        "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
+                        "!father(John,Tom);" +
+                        "!daughter(Mary,John);" +
+                        "");
 
-//        mind.compile(
-//                "!@x ~father(x,x);" +
-//                        "!@x $y father(y,x);" +
-//                        "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
-//                        "!@x @y daughter(x,y) -> child(x,y) && female(x);" +
-//                        "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
-//                        "!father(John,Tom);" +
-//                        "!daughter(Mary,John);" +
-//                        "");
-//
 
 
 //        mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
@@ -983,19 +982,19 @@ public class Kanger {
 //            mind = mindRoot;
 
 
-        for (int i = 0; i < set01.size(); ++i) {
-            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
-////            Screen.session(mind);
-        }
-//
-        for (int i = 0; i < set02.size(); ++i) {
-            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
-////            Screen.session(mind);
-        }
+//        for (int i = 0; i < set01.size(); ++i) {
+//            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
+//////            Screen.session(mind);
+//        }
+////
+//        for (int i = 0; i < set02.size(); ++i) {
+//            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
+//////            Screen.session(mind);
+//        }
 
 
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
-//        Screen.session(mind);
+        Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.release();
 
