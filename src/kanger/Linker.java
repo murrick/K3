@@ -42,7 +42,7 @@ public class Linker {
             }
         }
 
-        Set<Domain> waiters = new HashSet<>();
+        final Set<Domain> waiters = new HashSet<>();
         for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
             if (tree.getSequence().size() == 1 && !tree.getSequence().get(0).getTVariables(true).isEmpty()) {
                 waiters.add(tree.getSequence().get(0));
