@@ -4,7 +4,6 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
-import kanger.factory.DatabaseFactory;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.*;
 
@@ -50,7 +49,7 @@ public class Linker {
             }
         }
 
-        DatabaseFactory.Record saveR;
+        Record saveR;
         TValue saveT;
         FValue saveF;
         do {
@@ -74,9 +73,6 @@ public class Linker {
 
                         if (linkDomainsForTree(t, logging)) {
                             result = true;
-//                            if (logging) {
-//                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-//                            }
                         }
                         if (calcFunctionsForTree(t, logging)) {
                             result = true;
@@ -384,13 +380,13 @@ public class Linker {
                     result = true;
                     if (!d.isStored()) {
                         if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
-                            DatabaseFactory.Record x = d.setStored();
+                            Record x = d.setStored();
                             x.getDomain().setProduced();
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
                             }
                         } else {
-                            DatabaseFactory.Record x = d.createStored();
+                            Record x = d.createStored();
                             x.getDomain().setProduced();
                             if (d.isCalculated()) {
                                 x.getDomain().setCalculated();
@@ -406,7 +402,7 @@ public class Linker {
                     for (Domain d : excluded) {
                         result = true;
                         if (!d.isStored()) {
-                            DatabaseFactory.Record x = d.createStored();
+                            Record x = d.createStored();
                             x.getDomain().setProduced();
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
@@ -419,7 +415,7 @@ public class Linker {
                     for (Domain d : calculated) {
                         result = true;
                         if (!d.isStored()) {
-                            DatabaseFactory.Record x = d.createStored();
+                            Record x = d.createStored();
                             x.getDomain().setProduced();
                             if (d.isCalculated()) {
                                 x.getDomain().setCalculated();
@@ -532,13 +528,13 @@ public class Linker {
                 if (!d.isStored()) {
                     result = true;
                     if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
-                        DatabaseFactory.Record x = d.setStored();
+                        Record x = d.setStored();
                         x.getDomain().setProduced();
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
                         }
                     } else {
-                        DatabaseFactory.Record x = d.createStored();
+                        Record x = d.createStored();
                         x.getDomain().setProduced();
                         if (d.isCalculated()) {
                             x.getDomain().setCalculated();
@@ -555,7 +551,7 @@ public class Linker {
                 for (Domain d : excluded) {
                     if (!d.isStored()) {
                         result = true;
-                        DatabaseFactory.Record x = d.createStored();
+                        Record x = d.createStored();
                         x.getDomain().setProduced();
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (x): " + x);
@@ -569,7 +565,7 @@ public class Linker {
                 for (Domain d : calculated) {
                     if (!d.isStored()) {
                         result = true;
-                        DatabaseFactory.Record x = d.createStored();
+                        Record x = d.createStored();
                         x.getDomain().setProduced();
                         if (d.isCalculated()) {
                             x.getDomain().setCalculated();

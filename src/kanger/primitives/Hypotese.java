@@ -9,16 +9,12 @@ package kanger.primitives;
 import kanger.User;
 import kanger.enums.Enums;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
- *
  * @author murray
  */
-public class Hypotese {
+public class Hypotese implements Comparable<Hypotese> {
 
     private Predicate predicate = null;
     private List<Term> solve = new ArrayList<>();
@@ -26,28 +22,35 @@ public class Hypotese {
     private boolean antc = true;
     private boolean deleted = false;
     private boolean query = false;
+    private int tag = -1;
+
+    private User user = null;
 
     public Hypotese(User user, boolean antc, Object predicate, Object... params) {
+        this.user = user;
         this.antc = antc;
         if (predicate instanceof Predicate) {
             this.predicate = (Predicate) predicate;
         } else {
             this.predicate = user.getMind().getPredicates().add(predicate.toString(), params.length);
         }
+
+        if (params[0] instanceof Collection) {
+            addParams((Collection) params[0]);
+        } else {
+            addParams(Arrays.asList(params));
+        }
+    }
+
+    private void addParams(Collection params) {
         for (Object p : params) {
-            if (p instanceof Term) {
+            if (p instanceof Argument) {
+                solve.add(((Argument) p).getValue());
+            } else if (p instanceof Term) {
                 solve.add((Term) p);
             } else {
                 solve.add(user.getMind().getTerms().add(p));
             }
-        }
-    }
-
-    public Hypotese(boolean antc, Predicate predicate, List<Argument> arg) {
-        this.predicate = predicate;
-        this.antc = antc;
-        for (Argument a : arg) {
-            this.solve.add(a.getValue());
         }
     }
 
@@ -100,6 +103,14 @@ public class Hypotese {
         this.query = query;
     }
 
+    public int getTag() {
+        return tag;
+    }
+
+    public void setTag(int tag) {
+        this.tag = tag;
+    }
+
     @Override
     public String toString() {
         int i, j;
@@ -107,8 +118,12 @@ public class Hypotese {
         int cptr[] = new int[predicate.getRange()];
 
         int ccnt = 0;
+//        String prefix = "";
+//        if (tag != -1 && (user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
+//            prefix = tag + ":\t";
+//        }
 
-        String line = (antc ? "" : String.format("%c",Enums.NOT));
+        String line = (antc ? "" : String.format("%c", Enums.NOT));
         String tmp = predicate.getName() + "(";
         for (i = 0; i < predicate.getRange(); ++i) {
             if (solve.get(i) != null && solve.get(i).isCVariable()) {
@@ -143,7 +158,13 @@ public class Hypotese {
 
     @Override
     public int hashCode() {
-        return toString().hashCode();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("" + this.predicate.getId());
+        buffer.append("" + this.isAntc());
+        for (Term t : solve) {
+            buffer.append("" + t.getId());
+        }
+        return buffer.toString().hashCode();
     }
 
     @Override
@@ -164,4 +185,12 @@ public class Hypotese {
         return false;
     }
 
+    @Override
+    public int compareTo(Hypotese o) {
+        if (tag != o.getTag()) {
+            return tag - o.getTag();
+        } else {
+            return predicate.getName().compareTo(o.getPredicate().getName());
+        }
+    }
 }

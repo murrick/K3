@@ -1,7 +1,6 @@
 package kanger.primitives;
 
 import kanger.User;
-import kanger.factory.DatabaseFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -87,7 +86,7 @@ public class Predicate {
 //            }
 //        }
 
-        for (DatabaseFactory.Record d = user.getMind().getDatabase().getRoot(); d != null; d = d.getNext()) {
+        for (Record d = user.getMind().getDatabase().getRoot(); d != null; d = d.getNext()) {
             if (getId() == d.getDomain().getPredicate().getId()) {
                 set.add(d.getDomain());
             }

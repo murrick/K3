@@ -6,13 +6,15 @@ import kanger.primitives.Term;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Created by murray on 28.05.15.
  */
 public class ValuesStore {
 
-    private List<TValue> root = null;
+    private SortedSet<TValue> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -28,7 +30,7 @@ public class ValuesStore {
         clear();
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new ArrayList<>();
+                root = new TreeSet<>();
             }
             root.addAll(base.getRoot());
         }
@@ -56,16 +58,12 @@ public class ValuesStore {
             return null;
         }
         if (root == null) {
-            root = new ArrayList<>();
+            root = new TreeSet<>();
         }
-        TValue m = t;
-//        m.setSolution(user.getMind().getSolutions().add(d));
-        if (!root.contains(m)) {
-            root.add(m);
-        } else {
-            m = root.get(root.indexOf(m));
+        if (!root.contains(t)) {
+            root.add(t);
         }
-        return m;
+        return t;
     }
 
     public void enable(boolean e) {
@@ -77,7 +75,7 @@ public class ValuesStore {
     }
 
     public TValue get(int index) {
-        return root.get(index);
+        return root.toArray(new TValue[]{})[index];
     }
 
     public List<Term> getValues(String name) {
@@ -90,11 +88,11 @@ public class ValuesStore {
         return list;
     }
 
-    public int find(TValue s) {
-        return root.indexOf(s);
-    }
+//    public int find(TValue s) {
+//        return root.indexOf(s);
+//    }
 
-    public List<TValue> getRoot() {
+    public SortedSet<TValue> getRoot() {
         return root;
     }
 

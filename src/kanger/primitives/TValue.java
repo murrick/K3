@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.enums.Enums;
 import kanger.interfaces.IValue;
 
 import java.io.DataInputStream;
@@ -12,7 +13,7 @@ import java.util.Set;
 /**
  * Created by murray on 13.12.16.
  */
-public class TValue implements IValue {
+public class TValue implements IValue, Comparable<TValue> {
 
 
     private long id = -1;                   // Идентификатор значения переменной
@@ -23,7 +24,7 @@ public class TValue implements IValue {
 //    private List<Domain> dstSolves = new ArrayList<>();
 //    private List<Integer> posSolves = new ArrayList<>();
 
-    private long commitId = 0;
+    private int tag = -1;
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
 
@@ -139,7 +140,8 @@ public class TValue implements IValue {
 
     @Override
     public String toString() {
-        return tVar.getVarName() + ":" + value.toString() + (commitId > 0 ? " " + commitId : "");
+        return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? tVar.getVarName() + ":" : "") + value.toString();
+//        return tVar.getVarName() + ":" + value.toString();
     }
 
     public void setQuery() {
@@ -268,12 +270,21 @@ public class TValue implements IValue {
         return null;
     }
 
-    public long getCommitId() {
-        return commitId;
+    public int getTag() {
+        return tag;
     }
 
-    public void setCommitId(long commitId) {
-        this.commitId = commitId;
+    public void setTag(int tag) {
+        this.tag = tag;
+    }
+
+    @Override
+    public int compareTo(TValue o) {
+        if (tag != o.getTag()) {
+            return tag - o.getTag();
+        } else {
+            return (int) (id - o.getId());
+        }
     }
 
     public class Solve {

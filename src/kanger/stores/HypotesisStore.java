@@ -1,21 +1,24 @@
 package kanger.stores;
 
+import kanger.User;
 import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.primitives.Predicate;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by murray on 28.05.15.
  */
 public class HypotesisStore implements Comparable<HypotesisStore> {
 
-    private List<Hypotese> root = null;
+    private SortedSet<Hypotese> root = null;
     private boolean enableStore = true;
+    private User user = null;
+
+    public HypotesisStore(User user) {
+        this.user = user;
+    }
 
     public void commit(HypotesisStore base) {
         if (!enableStore) {
@@ -23,7 +26,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new ArrayList<>();
+                root = new TreeSet<>();
             }
             for (Hypotese h : base.getRoot()) {
                 add(h);
@@ -36,7 +39,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         if (root == null) {
-            root = new ArrayList<>();
+            root = new TreeSet<>();
         }
         Hypotese h = find(antc, pred, arg);
         if (h != null) {
@@ -45,7 +48,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             }
             return h;
         } else {
-            h = new Hypotese(antc, pred, arg);
+            h = new Hypotese(user, antc, pred, arg);
             h.setQuery(isQuery);
             root.add(h);
             return h;
@@ -58,7 +61,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         if (root == null) {
-            root = new ArrayList<>();
+            root = new TreeSet<>();
         }
         Hypotese h = find(hypotese);
         if (h == null) {
@@ -88,7 +91,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
     public Hypotese get(int index) {
-        return root.get(index);
+        return root.toArray(new Hypotese[]{})[index];
     }
 
 
@@ -139,7 +142,11 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public List<Hypotese> getRoot() {
+    public boolean contains(Hypotese h) {
+        return find(h) != null;
+    }
+
+    public SortedSet<Hypotese> getRoot() {
         return root;
     }
 
@@ -153,42 +160,10 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return root == null ? 0 : root.size();
     }
 
-    public void pack() {
-        if (root != null) {
-            List<Hypotese> temp = new ArrayList<>();
-            for (Hypotese h : root) {
-                if (!h.isDeleted()) {
-                    temp.add(h);
-                }
-            }
-            root = temp;
-        }
-    }
-
     public boolean isEmpty() {
         return root == null || root.isEmpty();
     }
 
-    public void setAntc(boolean antc) {
-        if (root != null) {
-            for (Hypotese h : root) {
-                h.setAntc(antc);
-            }
-        }
-    }
-
-//    @Override
-//    public boolean equals(Object o) {
-//        if (o == null || !(o instanceof HypotesisStore) || size() != ((HypotesisStore) o).size()) {
-//            return false;
-//        }
-//        for (Hypotese h : ((HypotesisStore) o).getRoot()) {
-//            if (find(h) == null) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
 
     @Override
     public int compareTo(HypotesisStore o) {

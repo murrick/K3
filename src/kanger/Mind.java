@@ -85,7 +85,7 @@ public class Mind {
     private String compiledFileName = "mind.e";
 
 
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS | Enums.DEBUG_OPTION_RTLOGS);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     public Mind(User user) {
@@ -133,8 +133,8 @@ public class Mind {
         functions = new FunctionFactory(user);                    // Функции
         fValues = new FValueFactory(user);                          // Решения функций
 
-        hypotesis = new HypotesisStore();                                // Список гипотез
-        excluded = new HypotesisStore();                                // Список исключенных гипотез
+        hypotesis = new HypotesisStore(user);                                // Список гипотез
+        excluded = new HypotesisStore(user);                                // Список исключенных гипотез
         solves = new SolutionsStore(user);                         // Список решений
         values = new ValuesStore(user);                               // Список значений
 
@@ -1010,18 +1010,21 @@ public class Mind {
     }
 
     private void logResult(Mind mind) {
+        boolean status = (debugLevel & Enums.DEBUG_OPTION_STATUS) != 0;
         if (mind.getSolutions().size() > 0) {
             mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
-            for (DatabaseFactory.Record log : mind.getSolutions().getRoot()) {
-                mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i, log.toString()));
+            for (Record log : mind.getSolutions().getRoot()) {
+                mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i,
+                        (log.getTag() != -1 && status ? log.getTag() + ":\t" : "") + log.toString()));
             }
         }
         if (mind.getValues().size() > 0) {
             mind.getLog().add(LogMode.VALUES, "Values(" + mind.getValues().size() + "):");
             int i = 0;
             for (TValue log : mind.getValues().getRoot()) {
-                mind.getLog().add(LogMode.VALUES, String.format("\tSolution %03d: %s", ++i, log.toString()));
+                mind.getLog().add(LogMode.VALUES, String.format("\tValue %03d: %s", ++i,
+                        (log.getTag() != -1 && status ? log.getTag() + ":\t" : "") + log.toString()));
             }
         }
     }

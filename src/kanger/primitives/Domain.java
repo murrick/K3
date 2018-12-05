@@ -6,7 +6,6 @@ import kanger.compiler.Parser;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
 import kanger.exception.ParametersIncompleteException;
-import kanger.factory.DatabaseFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -591,11 +590,11 @@ public class Domain {
         return user.getMind().getDatabase().find(predicate, antc, args) != null;
     }
 
-    public DatabaseFactory.Record setStored() {
+    public Record setStored() {
         return user.getMind().getDatabase().add(this);
     }
 
-    public DatabaseFactory.Record createStored() {
+    public Record createStored() {
         return user.getMind().getDatabase().add(predicate, antc, isQuery(), arguments);
     }
 
@@ -633,6 +632,9 @@ public class Domain {
     }
 
     public boolean isQuery() {
+        if (right == null) {
+            return false;
+        }
         if (right.isQuery()) {
             return true;
         } else {
@@ -788,6 +790,10 @@ public class Domain {
                 ts.get(i).setCurrent(list.get(i));
             }
         }
+    }
+
+    public User getUser() {
+        return user;
     }
 
 //    public int getValOrder(int i) {

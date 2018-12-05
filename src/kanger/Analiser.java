@@ -2,7 +2,6 @@ package kanger;
 
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
-import kanger.factory.DatabaseFactory;
 import kanger.primitives.*;
 
 import java.util.HashSet;
@@ -530,7 +529,11 @@ public class Analiser {
 
             for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
                 if (d.isProduced() && !d.isQuery() && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                    user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                    Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                    Record r = user.getMind().getDatabase().find(d);
+                    if (r != null) {
+                        h.setTag(r.getTag());
+                    }
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
@@ -745,7 +748,7 @@ public class Analiser {
     public boolean checkDatabase(boolean logging) {
         boolean result = false;
         user.getMind().getClosedDomains().clear();
-        for (DatabaseFactory.Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
+        for (Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
                 for (TValue v : p.getDomain().getTValues(true)) {
@@ -759,7 +762,7 @@ public class Analiser {
                 }
                 result = true;
             } else {
-                for (DatabaseFactory.Record q = p.getNext(); q != null; q = q.getNext()) {
+                for (Record q = p.getNext(); q != null; q = q.getNext()) {
                     if (p.getDomain().equalsSolve(q.getDomain())) {
 
 //                    Set<Domain> sequence = new HashSet<>();
@@ -795,6 +798,7 @@ public class Analiser {
                         if (p.getDomain().isQuery()) {
                             for (Argument a : p.getDomain().getArguments()) {
                                 if (a.isVSet()) {
+                                    a.getV().setTag(p.getTag());
                                     user.getMind().getValues().add(a.getV());
                                 }
                             }
@@ -802,6 +806,7 @@ public class Analiser {
                         if (q.getDomain().isQuery()) {
                             for (Argument a : q.getDomain().getArguments()) {
                                 if (a.isVSet()) {
+                                    a.getV().setTag(q.getTag());
                                     user.getMind().getValues().add(a.getV());
                                 }
                             }

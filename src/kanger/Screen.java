@@ -668,11 +668,11 @@ public class Screen {
     //
     public static void showHypo(Mind mind) {
         int i;
-        List<Hypotese> list = mind.getHypotesisStore().getRoot();
+        SortedSet<Hypotese> list = mind.getHypotesisStore().getRoot();
         if (list != null && list.size() > 0) {
             System.out.printf("Hypotheses list:\n");
             for (i = 0; i < list.size(); ++i) {
-                System.out.printf("\t%3d:\t%s\n", i + 1, list.get(i).toString());
+                System.out.printf("\t%3d:\t%s\n", i + 1, list.toArray(new Hypotese[]{})[i].toString());
             }
             System.out.printf("Use INSERT command for select Hypoteses\n");
         }

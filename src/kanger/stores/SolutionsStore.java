@@ -1,21 +1,17 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.factory.DatabaseFactory;
-import kanger.primitives.Argument;
-import kanger.primitives.Predicate;
-import kanger.primitives.Solution;
-import kanger.primitives.Term;
+import kanger.primitives.Record;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Created by murray on 28.05.15.
  */
 public class SolutionsStore {
 
-    private List<DatabaseFactory.Record> root = null;
+    private SortedSet<Record> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -31,57 +27,33 @@ public class SolutionsStore {
         clear();
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new ArrayList<>();
+                root = new TreeSet<>();
             }
             root.addAll(base.getRoot());
         }
     }
 
-    public DatabaseFactory.Record add(DatabaseFactory.Record d) {
+    public Record add(Record d) {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
-            root = new ArrayList<>();
+            root = new TreeSet<>();
         }
 //        Solution s = new Solution(d);
         if (!root.contains(d)) {
             root.add(d);
-        } else {
-            d = root.get(root.indexOf(d));
         }
+//        else {
+//            d = root.get(root.indexOf(d));
+//        }
         return d;
     }
 
-    public boolean contains(Object pred, boolean antc, Object... params) {
-        Predicate predicate;
-        if (pred instanceof Predicate) {
-            predicate = (Predicate) pred;
-        } else {
-            predicate = user.getMind().getPredicates().add(pred.toString(), params.length);
-        }
-        List<Argument> parameters = new ArrayList<>();
-        for (Object p : params) {
-            if (p instanceof Argument) {
-                parameters.add((Argument) p);
-            } else if (p instanceof Term) {
-                parameters.add((new Argument(p)));
-            } else {
-                parameters.add(new Argument(user.getMind().getTerms().add(p)));
-            }
-        }
-        for (DatabaseFactory.Record r : root) {
-            if (r.getDomain().getPredicate().getId() == predicate.getId() && r.getDomain().isAntc() == antc) {
-                boolean ok = true;
-                for (int i = 0; i < predicate.getRange(); ++i) {
-                    if (r.getDomain().get(i).getValue().getId() != parameters.get(i).getValue().getId()) {
-                        ok = false;
-                        break;
-                    }
-                }
-                if (ok) {
-                    return true;
-                }
+    public boolean contains(Record rec) {
+        for (Record r : root) {
+            if (r.getDomain().equalsBase(rec.getDomain()) && r.getDomain().isAntc() == rec.getDomain().isAntc()) {
+                return true;
             }
         }
         return false;
@@ -96,21 +68,21 @@ public class SolutionsStore {
         return enableStore;
     }
 
-    public DatabaseFactory.Record get(int index) {
-        return root.get(index);
+    public Record get(int index) {
+        return root.toArray(new Record[]{})[index];
     }
 
-    public int find(Solution o) {
-        return root.indexOf(o);
-    }
+//    public int find(Solution o) {
+//        return root.indexOf(o);
+//    }
 
-    public List<DatabaseFactory.Record> getRoot() {
+    public SortedSet<Record> getRoot() {
         return root;
     }
 
-    public void remove(Solution s) {
-        root.remove(s);
-    }
+//    public void remove(Solution s) {
+//        root.remove(s);
+//    }
 
     public void clear() {
         if (enableStore) {

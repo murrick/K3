@@ -18,7 +18,7 @@ public class TValueFactory {
     private TValue root = null;
     private Map<TVariable, Long> current = new HashMap<>();
     private long lastID = 0;
-    private long commitID = 0;
+    private long lastTag = 0;
 
     private Stack<Object[]> stack = new Stack<>();
 
@@ -55,8 +55,7 @@ public class TValueFactory {
             t.setNext(root);
             root = t;
             t.setId(lastID++);
-            t.setCommitId(commitID);
-
+            t.setTag(-1);
         }
 
         //TODO: Фиксация текцщего значения подстановки. Правильно ли это?
@@ -286,15 +285,15 @@ public class TValueFactory {
         }
     }
 
-    public long getCommitID() {
-        return commitID;
-    }
-
-    public void setCommitID(long commitID) {
-        this.commitID = commitID;
-    }
-
-    public void incCommitId() {
-        ++this.commitID;
-    }
+//    public long getCommitID() {
+//        return commitID;
+//    }
+//
+//    public void setCommitID(long commitID) {
+//        this.commitID = commitID;
+//    }
+//
+//    public void incCommitId() {
+//        ++this.commitID;
+//    }
 }
