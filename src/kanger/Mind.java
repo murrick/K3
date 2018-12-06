@@ -85,7 +85,7 @@ public class Mind {
     private String compiledFileName = "mind.e";
 
 
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS | Enums.DEBUG_OPTION_RTLOGS);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     public Mind(User user) {
@@ -353,8 +353,8 @@ public class Mind {
         Boolean ar = m.analise(true);
 
         if (ar) {
+            m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             release(m);
-            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             return false;
         } else {
             commit(m);
@@ -822,16 +822,16 @@ public class Mind {
                     m.link(r, true);
                     boolean ar = m.analise(true);
                     if (ar) {
-                        release(m);
                         m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
+                        release(m);
                         res = null;
                     } else {
+                        m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
+                        m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
                         commit(m);
                         excluded.commit(m.getHypotesisStore());
 
 //                            if (!isInsertion) {
-                        m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
-                        m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
                         setChanged(true);
                         res = true;
 //                            } else {
@@ -882,14 +882,14 @@ public class Mind {
                     Boolean ar = m.analise(true);
 
                     if (ar) {
+                        m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
                         release(m);
-                        getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
                         res = false;
                     } else {
+                        m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
                         commit(m);
                         excluded.clear();
                         excluded.commit(m.getHypotesisStore());
-                        getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
                         res = true;
                     }
 

@@ -923,15 +923,16 @@ public class Kanger {
 //                "");
 
 
-        mind.compile(
-                "!@x ~father(x,x);" +
-                        "!@x $y father(y,x);" +
-                        "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
-                        "!@x @y daughter(x,y) -> child(x,y) && female(x);" +
-                        "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
-                        "!father(John,Tom);" +
-                        "!daughter(Mary,John);" +
-                        "");
+//        mind.compile(
+//                "!@x ~father(x,x);" +
+//                        "!@x $y father(y,x);" +
+//                        "!@x @y father(x,y) -> male(x) && child(y,x) && (male(y) -> son(y,x)) && (female(y) -> daughter(y,x));" +
+//                        "!@x @y daughter(x,y) -> child(x,y) && female(x);" +
+//                        "!@x (male(x) || female(x)), ~(male(x) && female(x));" +
+//                        "!father(John,Tom);" +
+//                        "!daughter(Mary,John);" +
+//                        "");
+
 
 
 
@@ -994,6 +995,10 @@ public class Kanger {
 
 
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
+
+        mind.compile("!a(A,12); !a(B,37);");
+        mind.query("?$x $y a(x, y) && y >= 12;");
+
         Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.release();

@@ -1172,4 +1172,62 @@ public class KangerTest {
         System.out.println("OK");
         System.out.println("====================================================");
     }
+
+    @org.junit.Test
+    public void set06_01() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!a(A,12); !a(B,37);");
+        mind.query("?$x $y a(x, y) && y > 12;");
+        showResult(true);
+        Record s = new Record(user, true, "a", "B", 37.0);
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        if (!exists("x", "B")) {
+            fail("Expected x: B");
+        }
+        if (!exists("y", 37.0)) {
+            fail("Expected y: 37");
+        }
+        if (mind.getSolutions().size() != 1) {
+            fail("Expected 1 solution");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    @org.junit.Test
+    public void set06_02() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!a(A,12); !a(B,37);");
+        mind.query("?$x $y a(x, y) && y >= 12;");
+        showResult(true);
+        Record s = new Record(user, true, "a", "A", 12.0);
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Record(user, true, "a", "B", 37.0);
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        if (!exists("x", "A")) {
+            fail("Expected x: A");
+        }
+        if (!exists("y", 12.0)) {
+            fail("Expected y: 37");
+        }
+        if (!exists("x", "B")) {
+            fail("Expected x: B");
+        }
+        if (!exists("y", 37.0)) {
+            fail("Expected y: 37");
+        }
+        if (mind.getSolutions().size() != 2) {
+            fail("Expected 1 solution");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
 }

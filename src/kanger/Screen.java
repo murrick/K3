@@ -254,8 +254,7 @@ public class Screen {
                                     } else if (mind.isInsertion()) {
                                         showLog(mind, LogMode.SAVED);
                                     }
-                                    LogEntry lastLine = mind.getLog().getCurrent(LogMode.ANALIZER);
-                                    System.out.println(lastLine.getRecord());
+                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                     if (res == null && !mind.isInsertion()) {
                                         showHypo(mind);
                                     }
@@ -1019,7 +1018,7 @@ public class Screen {
                     mind.compile(buf.toString());
                     //mind.getAnalyser().analiser(true);
                     Boolean res = mind.query("?");
-                    System.out.println(mind.getLog().getCurrent(LogMode.ALL).getRecord());
+                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                     if (res != null && res) {
                         System.out.printf("File %s loaded\n", line);
                         return true;

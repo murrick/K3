@@ -61,6 +61,7 @@ public class Linker {
 
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
+
                 final Tree t = tree;
                 SortedSet<TVariable> tvars = new TreeSet<>();
                 tvars.addAll(tree.getTVariables(true));
@@ -71,6 +72,7 @@ public class Linker {
                         boolean result = false;
                         boolean logging = (boolean) o;
 
+
                         if (linkDomainsForTree(t, logging)) {
                             result = true;
                         }
@@ -80,6 +82,7 @@ public class Linker {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                             }
                         }
+
                         if (updateDatabaseForTree(t, waiters, logging)) {
                             result = true;
                             if (logging) {
@@ -88,11 +91,11 @@ public class Linker {
                         }
 
 
-
                         return result;
                     }
                 });
             }
+
 
         } while (saveR != user.getMind().getDatabase().getRoot()
                 || saveT != user.getMind().getTValues().getRoot()
@@ -151,7 +154,7 @@ public class Linker {
 
                 for (Tree treeMaster : slave.getPredicate().getLinkedTrees()) {
 
-                    if (checkSystem(treeMaster, logging) && checkSystem(treeSlave, logging)) {
+                    //if (checkSystem(treeMaster, logging) && checkSystem(treeSlave, logging)) {
 
                         for (Domain master : treeMaster.getSequence()) {
 
@@ -253,7 +256,7 @@ public class Linker {
 //                                linkFunctions(master, slave, 0, logging, new HashSet<Function>());
                             }
                         }
-                    }
+                    //}
                 }
             }
         }
@@ -477,7 +480,7 @@ public class Linker {
 
         boolean result = false;
         boolean occurrs = false;
-        if (!tree.isClosed() && checkSystem(tree, logging)) {
+        if (/*!tree.isClosed() && */ checkSystem(tree, logging)) {
 
             Set<Domain> excluded = new HashSet<>();
             Set<Domain> calculated = new HashSet<>();
@@ -527,7 +530,7 @@ public class Linker {
                 occurrs = true;
                 if (!d.isStored()) {
                     result = true;
-                    if (excluded.isEmpty() && !d.isCalculated() && (d.getTVariables(true).isEmpty() || d.getRight().isQuery())) {
+                    if (excluded.isEmpty() && !d.isCalculated() && d.getTVariables(true).isEmpty() /*|| d.getRight().isQuery())*/) {
                         Record x = d.setStored();
                         x.getDomain().setProduced();
                         if (logging) {
@@ -669,13 +672,13 @@ public class Linker {
                 if (res == 0) {
                     if (d.isAntc()) {
                         d.setCalculated();
-                    } else if (!d.isQuery()) {
+                    } else { //if (!d.isQuery()) {
                         block = true;
                     }
                 } else if (res == 1) {
                     if (!d.isAntc()) {
                         d.setCalculated();
-                    } else if (!d.isQuery()) {
+                    } else { //if (!d.isQuery()) {
                         block = true;
                     }
                 }
