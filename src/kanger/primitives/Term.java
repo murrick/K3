@@ -356,9 +356,8 @@ public class Term implements IValue, Comparable<Object> {
                 } else {
                     return -2;
                 }
-            } else if ((value instanceof Double || value instanceof Float)
-                    && (o.getVal() instanceof Double || o.getVal() instanceof Float)) {
-                double diff = Math.abs((double) value - (double) o.getVal());
+            } else if (value instanceof Number && o.getVal() instanceof Number) {
+                double diff = Math.abs(((Number) value).doubleValue() - ((Number) o.getVal()).doubleValue());
                 if (diff < FLT_EPSILON) {
                     return 0;
                 } else {

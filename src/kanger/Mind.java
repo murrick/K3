@@ -7,6 +7,7 @@ import kanger.compiler.Parser;
 import kanger.compiler.SysOp;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
+import kanger.enums.QueryPass;
 import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
@@ -81,6 +82,7 @@ public class Mind {
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
+    private QueryPass queryPass = QueryPass.SILENCE;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
 
@@ -214,6 +216,14 @@ public class Mind {
 
     }
 
+    public QueryPass getQueryPass() {
+        return queryPass;
+    }
+
+    public void setQueryPass(QueryPass queryPass) {
+        this.queryPass = queryPass;
+    }
+
     public void pushDebugLevel() {
         debugLevelStack.push(debugLevel);
     }
@@ -343,6 +353,7 @@ public class Mind {
         int pos = 0;
         Object[] t = null;
         Mind m = new Mind(this);
+        m.setQueryPass(QueryPass.ACCEPT);
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
@@ -574,6 +585,7 @@ public class Mind {
 
     public Boolean query(String line) throws ParseErrorException, RuntimeErrorException {
         querySource = line;
+        queryPass = QueryPass.SILENCE;
         queryResult = query(line, false);
         return queryResult;
     }
@@ -811,6 +823,7 @@ public class Mind {
                 getLog().add(LogMode.ANALIZER, "============= ACCEPTING ===================");
 
                 Mind m = new Mind(this);
+                m.setQueryPass(QueryPass.ACCEPT);
                 Right r = (Right) m.compileLine(line);
 //                    r.setQuery(true);
 
@@ -877,6 +890,7 @@ public class Mind {
 
                 if (line.length() == 1) {
                     Mind m = new Mind(this);
+                    m.setQueryPass(QueryPass.CHECK);
 
                     m.link(true);
                     Boolean ar = m.analise(true);
@@ -898,6 +912,7 @@ public class Mind {
                     if (!DEBUG_DISABLE_FALSE_CHECK) {
 
                         Mind m = new Mind(this);
+                        m.setQueryPass(QueryPass.CHECKFALSE);
                         m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
 
                         Right r = (Right) m.compileLine(invert(line));
@@ -931,6 +946,7 @@ public class Mind {
                 if (res == null) {
 
                     Mind m = new Mind(this);
+                    m.setQueryPass(QueryPass.CHECKTRUE);
                     m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
 
                     Right r = (Right) m.compileLine(line);

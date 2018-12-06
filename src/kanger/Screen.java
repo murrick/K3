@@ -141,8 +141,8 @@ public class Screen {
                                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                                     showLog(mind, LogMode.SOLVES);
                                     showLog(mind, LogMode.VALUES);
+                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                 }
-                                System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
 //                            lastQuery = savedQuery;
                             }
                             break;
@@ -253,8 +253,8 @@ public class Screen {
                                         showLog(mind, LogMode.VALUES);
                                     } else if (mind.isInsertion()) {
                                         showLog(mind, LogMode.SAVED);
+                                        System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                     }
-                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                     if (res == null && !mind.isInsertion()) {
                                         showHypo(mind);
                                     }
@@ -1018,7 +1018,9 @@ public class Screen {
                     mind.compile(buf.toString());
                     //mind.getAnalyser().analiser(true);
                     Boolean res = mind.query("?");
-                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                    if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                        System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                    }
                     if (res != null && res) {
                         System.out.printf("File %s loaded\n", line);
                         return true;
@@ -1069,7 +1071,9 @@ public class Screen {
 //    }
     public static boolean saveCompiled(Mind mind) throws RuntimeErrorException, ParseErrorException {
         if (!mind.query("?")) {
-            System.out.println(mind.getLog().getCurrent(LogMode.ALL).getRecord());
+            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                System.out.println(mind.getLog().getCurrent(LogMode.ALL).getRecord());
+            }
             System.out.printf("Use XPLAIN command for analisys\n");
             return false;
         }

@@ -41,14 +41,15 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         if (root == null) {
             root = new TreeSet<>();
         }
-        Hypotese h = find(antc, pred, arg);
+        Hypotese h = find(!antc, pred, arg);
         if (h != null) {
             if (isQuery) {
                 h.setQuery(isQuery);
             }
             return h;
         } else {
-            h = new Hypotese(user, antc, pred, arg);
+//            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? antc : !antc;
+            h = new Hypotese(user, !antc, pred, arg);
             h.setQuery(isQuery);
             root.add(h);
             return h;
@@ -100,7 +101,8 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         for (Hypotese h : root) {
-            if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == antc)) {
+//            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? h.isAntc() : !h.isAntc();
+            if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == !antc)) {
 
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
