@@ -65,7 +65,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             root = new TreeSet<>();
         }
         Hypotese h = find(hypotese);
-        if (h == null) {
+        if (h == null /*|| h.isAntc() != hypotese.isAntc()*/) {
             h = hypotese;
             root.add(h);
             return h;
@@ -125,7 +125,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         for (Hypotese h : root) {
-            if (h.getPredicate().getId() == hy.getPredicate().getId()) {
+            if (h.getPredicate().getId() == hy.getPredicate().getId() && h.isAntc() == hy.isAntc()) {
 
                 int i = 0;
                 if (hy.getSolve().size() == h.getSolve().size()) {
