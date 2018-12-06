@@ -118,7 +118,9 @@ public class Domain {
         for (TValue t : getTValues(true)) {
             if (!t.isEmpty()) {
                 for (TValue.Solve s : t.getSolves()) {
-                    list.add(s.getSrc());
+                    if (s.getSrc().getId() != id) {
+                        list.add(s.getSrc());
+                    }
                 }
             }
         }
@@ -423,7 +425,7 @@ public class Domain {
     }
 
 
-//    public boolean isUsed() {
+    //    public boolean isUsed() {
 //        if (user.getMind().getUsedDomains().containsKey(this)) {
 //            for (List<Argument> list : user.getMind().getUsedDomains().get(this)) {
 //                if (isEqualsArguments(list)) {

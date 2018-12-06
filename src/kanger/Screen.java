@@ -564,9 +564,9 @@ public class Screen {
             indent += "\t";
         }
         if (!list.isEmpty()) {
-            System.out.printf("\t    %sRight: %s\n", indent, s.getRight().getOrig());
             for (Domain d : list) {
-                d.apply(s);
+//                d.apply(s);
+                System.out.printf("\t    %sRight: %s\n", indent, d.getRight().getOrig());
                 System.out.printf("\t    %sCause: %s\n", indent, d.toString());
                 showCauses(mind, d, level + 1);
             }
@@ -762,7 +762,7 @@ public class Screen {
                             (r.isQuery() ? "Q" : "") : "",
                     r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
-                if((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0) {
+                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
                     int save = mind.getDebugLevel();
                     mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
                     showTree(mind, r);

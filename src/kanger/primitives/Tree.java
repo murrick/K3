@@ -184,12 +184,8 @@ public class Tree {
         return user.getMind().getClosedTrees().contains(this);
     }
 
-    public void setClosed(boolean closed) {
-        if (closed) {
-            user.getMind().getClosedTrees().add(this);
-        } else {
-            user.getMind().getClosedTrees().remove(this);
-        }
+    public void setClosed() {
+        user.getMind().getClosedTrees().add(this);
     }
 
 //    public boolean isExcluded() {

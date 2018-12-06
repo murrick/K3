@@ -510,7 +510,7 @@ public class Analiser {
 //        mind.getClosedDimains().clear();
 //        mind.getQueuedDomains().clear();
         user.getMind().getUsedTrees().clear();
-        user.getMind().getClosedTrees().clear();
+//        user.getMind().getClosedTrees().clear();
         user.getMind().getClosedDomains().clear();
         user.getMind().getSolutions().clear();
         user.getMind().getValues().clear();

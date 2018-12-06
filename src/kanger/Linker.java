@@ -49,15 +49,18 @@ public class Linker {
             }
         }
 
+
         Record saveR;
         TValue saveT;
         FValue saveF;
+
+        user.getMind().getClosedTrees().clear();
+
         do {
 
             saveR = user.getMind().getDatabase().getRoot();
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
-
 
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
@@ -155,22 +158,22 @@ public class Linker {
 
                     //if (checkSystem(treeMaster, logging) && checkSystem(treeSlave, logging)) {
 
-                        for (Domain master : treeMaster.getSequence()) {
+                    for (Domain master : treeMaster.getSequence()) {
 
 
-                            if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
+                        if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
 
 //                                        linkFunctions(master, slave, 0, logging, new HashSet<Function>());
 
-                                TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
-                                TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
+                            TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
+                            TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
 
-                                user.getMind().getTValues().mark();
-                                user.getMind().getFValues().mark();
+                            user.getMind().getTValues().mark();
+                            user.getMind().getFValues().mark();
 
-                                boolean success = true;
-                                boolean applied = false;
-                                for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                            boolean success = true;
+                            boolean applied = false;
+                            for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
 
 //                                            if (master.get(i).isFSet() && master.get(i).isEmpty()) {
 //                                                master.get(i).getF().setValue(null);
@@ -183,16 +186,16 @@ public class Linker {
 //                                                }
 //                                            }
 
-                                    if (master.get(i).isTSet()
-                                            && !slave.get(i).isEmpty()
-                                            && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                        TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
-                                        if (s == null) {
-                                            s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
-                                            result = true;
-                                        }
-                                        substMaster[i] = s;
-                                        applied = true;
+                                if (master.get(i).isTSet()
+                                        && !slave.get(i).isEmpty()
+                                        && master.getVarOrder(i) >= slave.getVarOrder(i)) {
+                                    TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
+                                    if (s == null) {
+                                        s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
+                                        result = true;
+                                    }
+                                    substMaster[i] = s;
+                                    applied = true;
 //                                            } else if (master.get(i).isFSet()
 //                                                    && !slave.get(i).isEmpty()
 //                                                    && master.get(i).getF().isCalculable()
@@ -205,18 +208,18 @@ public class Linker {
 ////                                                    result = true;
 //                                                }
 //                                                master.popValues();
-                                    }
+                                }
 
-                                    if (slave.get(i).isTSet()
-                                            && !master.get(i).isEmpty()
-                                            && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                        TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
-                                        if (s == null) {
-                                            s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
-                                            result = true;
-                                        }
-                                        substSlave[i] = s;
-                                        applied = true;
+                                if (slave.get(i).isTSet()
+                                        && !master.get(i).isEmpty()
+                                        && slave.getVarOrder(i) >= master.getVarOrder(i)) {
+                                    TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
+                                    if (s == null) {
+                                        s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
+                                        result = true;
+                                    }
+                                    substSlave[i] = s;
+                                    applied = true;
 //                                            } else if (slave.get(i).isFSet()
 //                                                    && !master.get(i).isEmpty()
 //                                                    && slave.get(i).getF().isCalculable()
@@ -229,32 +232,32 @@ public class Linker {
 ////                                                    result = true;
 //                                                }
 //                                                slave.popValues();
-                                    }
+                                }
 
-                                    if (!applied) {
-                                        if (master.get(i).isEmpty()
-                                                || slave.get(i).isEmpty()
-                                                || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
-                                            success = false;
-                                            break;
-                                        } else {
-                                            substMaster[i] = null;
-                                            substSlave[i] = null;
-                                        }
+                                if (!applied) {
+                                    if (master.get(i).isEmpty()
+                                            || slave.get(i).isEmpty()
+                                            || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                                        success = false;
+                                        break;
+                                    } else {
+                                        substMaster[i] = null;
+                                        substSlave[i] = null;
                                     }
                                 }
-                                if (success) {
-                                    user.getMind().getTValues().commit();
-                                    user.getMind().getFValues().commit();
-                                    markExcluded(substMaster, master, slave, logging);
-                                    markExcluded(substSlave, slave, master, logging);
-                                } else {
-                                    user.getMind().getTValues().release();
-                                    user.getMind().getFValues().release();
-                                }
-//                                linkFunctions(master, slave, 0, logging, new HashSet<Function>());
                             }
+                            if (success) {
+                                user.getMind().getTValues().commit();
+                                user.getMind().getFValues().commit();
+                                markExcluded(substMaster, master, slave, logging);
+                                markExcluded(substSlave, slave, master, logging);
+                            } else {
+                                user.getMind().getTValues().release();
+                                user.getMind().getFValues().release();
+                            }
+//                                linkFunctions(master, slave, 0, logging, new HashSet<Function>());
                         }
+                    }
                     //}
                 }
             }
