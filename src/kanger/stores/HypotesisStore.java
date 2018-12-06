@@ -41,7 +41,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         if (root == null) {
             root = new TreeSet<>();
         }
-        Hypotese h = find(!antc, pred, arg);
+        Hypotese h = find(antc, pred, arg);
         if (h != null) {
             if (isQuery) {
                 h.setQuery(isQuery);
@@ -49,7 +49,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return h;
         } else {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? antc : !antc;
-            h = new Hypotese(user, !antc, pred, arg);
+            h = new Hypotese(user, antc, pred, arg);
             h.setQuery(isQuery);
             root.add(h);
             return h;
@@ -102,7 +102,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
         for (Hypotese h : root) {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? h.isAntc() : !h.isAntc();
-            if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == !antc)) {
+            if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == antc)) {
 
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
@@ -188,10 +188,10 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
                     }
                 }
             }
-        } else if (isEmpty() && !exclude.isEmpty()) {
-            for (Hypotese h : exclude.getRoot()) {
-                add(h);
-            }
+//        } else if (isEmpty() && !exclude.isEmpty()) {
+//            for (Hypotese h : exclude.getRoot()) {
+//                add(h);
+//            }
         }
     }
 }

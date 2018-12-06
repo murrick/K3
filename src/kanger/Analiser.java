@@ -531,8 +531,8 @@ public class Analiser {
                 if (d.isProduced()
                         && !d.isQuery()
 //                        && !(user.getMind().getQueryPass() == QueryPass.CHECKFALSE && !d.isAntc())
-                        && user.getMind().getHypotesisStore().find(d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                    Hypotese h = user.getMind().getHypotesisStore().add(d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                        && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                    Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     Record r = user.getMind().getDatabase().find(d);
                     if (r != null) {
                         h.setTag(r.getTag());
