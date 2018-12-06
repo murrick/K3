@@ -20,6 +20,7 @@ import java.util.List;
  */
 public class Term implements IValue, Comparable<Object> {
 
+    public static final double FLT_EPSILON = 0.00000000001;
 
     private DataType type = DataType.VOID;
     private Object value = null;
@@ -355,6 +356,14 @@ public class Term implements IValue, Comparable<Object> {
                 } else {
                     return -2;
                 }
+            } else if ((value instanceof Double || value instanceof Float)
+                    && (o.getVal() instanceof Double || o.getVal() instanceof Float)) {
+                double diff = Math.abs((double) value - (double) o.getVal());
+                if (diff < FLT_EPSILON) {
+                    return 0;
+                } else {
+                    return ((Comparable) value).compareTo(o.getVal());
+                }
             } else {
                 return ((Comparable) value).compareTo(o.getVal());
             }
@@ -363,7 +372,7 @@ public class Term implements IValue, Comparable<Object> {
             return Integer.valueOf(index).compareTo(((TVariable) oo).getIndex());
         }
     }
-    
+
     @Override
     public Term getValue() {
         return this;
@@ -435,6 +444,6 @@ public class Term implements IValue, Comparable<Object> {
     }
 
 
-} 
+}
 
 //TODO ТИП данных blob

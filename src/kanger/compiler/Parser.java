@@ -40,7 +40,7 @@ public class Parser {
             new Operation("|", "_bitor", 3, 2, 0, false, false),
 
             /*  10 */
-            new Operation(",", "", 10, 2, 0, false, false),
+//            new Operation(",", "", 10, 2, 0, false, false),
 
             /* 11 */
             new Operation("~", "", 1, 1, 1, false, false),
@@ -60,6 +60,7 @@ public class Parser {
             new Operation("<>", "_ne", 13, 2, 0, false, false),
 
             /* 14 */
+            new Operation(",", "", 14, 2, 0, false, false),
             new Operation("&&", "&", 14, 2, 0, false, true),
 
             /* 15 */

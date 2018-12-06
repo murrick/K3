@@ -740,10 +740,10 @@ public class KangerTest {
     public void set04_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?$x ((x+3)*16)=965;");
+        mind.query("?$x ((x+3)*15)=965;");
         showResult(true);
-        if (!exists("x", 57.3125)) {
-            fail("Expected: x=57.3125");
+        if (!exists("x", 61.33333333333333)) {
+            fail("Expected: x=61.33333333333333");
         }
         System.out.println("OK");
         System.out.println("====================================================");
@@ -1230,4 +1230,28 @@ public class KangerTest {
         System.out.println("OK");
         System.out.println("====================================================");
     }
+
+    @org.junit.Test
+    public void set06_03() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!a(T,12); !a(S,4); !a(J,37); !f(J,T); !f(J,S);");
+        mind.query("?$x $y $z f(x,y) && a(x, z) && z >= 30;");
+        showResult(true);
+        Record s = new Record(user, true, "f", "J", "T");
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Record(user, true, "f", "J", "S");
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = new Record(user, true, "a", "J", 37.0);
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
 }

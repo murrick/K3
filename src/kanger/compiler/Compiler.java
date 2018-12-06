@@ -77,14 +77,15 @@ public class Compiler {
             }
             break;
 
-            case Enums.COMMA: {
-                Tree x = r.cloneTree(t, false);
-                list.add(x);
-                construct(r, t, root.getLeft(), antc, replacements, list);
-                construct(r, x, root.getRight(), antc, replacements, list);
-            }
-            break;
+//            case Enums.COMMA: {
+//                Tree x = r.cloneTree(t, false);
+//                list.add(x);
+//                construct(r, t, root.getLeft(), antc, replacements, list);
+//                construct(r, x, root.getRight(), antc, replacements, list);
+//            }
+//            break;
 
+            case Enums.COMMA:
             case Enums.CON: {
                 if (antc) {
                     Tree x = r.cloneTree(t, true);

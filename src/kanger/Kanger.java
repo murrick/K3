@@ -996,8 +996,8 @@ public class Kanger {
 
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
 
-        mind.compile("!a(A,12); !a(B,37);");
-        mind.query("?$x $y a(x, y) && y >= 12;");
+//        mind.compile("!a(A,12); !a(B,37);");
+//        mind.query("?$x $y a(x, y) && y >= 12;");
 
         Screen.session(mind);
 

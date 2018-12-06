@@ -61,7 +61,6 @@ public class Linker {
 
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
-
                 final Tree t = tree;
                 SortedSet<TVariable> tvars = new TreeSet<>();
                 tvars.addAll(tree.getTVariables(true));
@@ -510,10 +509,10 @@ public class Linker {
             for (Domain d : tree.getSequence()) {
                 if (d.isCalculated()) {
                     calculated.add(d);
-                } else if (d.isStored()) {
-                    excluded.clear();
-                    candidades.clear();
-                    break;
+//                } else if (d.isStored()) {
+//                    excluded.clear();
+//                    candidades.clear();
+//                    break;
                 } else if (d.isSystem() || !d.isComplete()) {
                     excluded.clear();
                     candidades.clear();
@@ -617,13 +616,15 @@ public class Linker {
     public boolean calcFunctionsForTree(Tree master, boolean logging) {
         boolean result = false;
 
-        if (checkSystem(master, logging)) {
-            for (Domain d : master.getSequence()) {
-                for (Function f : d.getFunctions()) {
-                    if (f.isCalculable() && f.isEmpty()) {
-                        if (new Calculator(user).calculate(f, logging)) {
-                            result = true;
+        if (!master.getFunctions().isEmpty()) {
+            if (checkSystem(master, logging)) {
+                for (Domain d : master.getSequence()) {
+                    for (Function f : d.getFunctions()) {
+                        if (f.isCalculable() && f.isEmpty()) {
+                            if (new Calculator(user).calculate(f, logging)) {
+                                result = true;
 
+                            }
                         }
                     }
                 }
