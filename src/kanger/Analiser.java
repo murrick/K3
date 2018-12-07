@@ -526,7 +526,7 @@ public class Analiser {
         if (!result) {
 
 //            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
-
+                //todo только из базы?
             for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
                 if (d.isProduced()
                         && !d.isQuery()

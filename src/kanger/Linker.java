@@ -443,6 +443,7 @@ public class Linker {
                         }
                     }
                     if (candidades.size() == 1) {
+                        //todo в базу?
                         candidades.toArray(new Domain[]{})[0].setProduced();
                     }
                 }
