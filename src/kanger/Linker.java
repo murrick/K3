@@ -576,16 +576,20 @@ public class Linker {
             }
 
 
-            if (!occurrs && tree.getSequence().size() > 1) {
+            if (!occurrs && !assumed.isEmpty() && tree.getSequence().size() > 1) {
                 candidades.clear();
+                excluded.clear();
                 for (Domain d : tree.getSequence()) {
-                    if (d.isComplete() && !d.isExcluded() && !d.isSystem() && !assumed.contains(d)) {
-                        candidades.add(d);
+                    if (d.isComplete() && !d.isCalculated() && !d.isSystem() && !assumed.contains(d)) {
+                        if (!d.isExcluded()) {
+                            candidades.add(d);
+                        } else {
+                            excluded.add(d);
+                        }
                     }
                 }
-                if (candidades.size() == 1) {
+                if (candidades.size() == 1 && !excluded.isEmpty()) {
                     Domain d = candidades.toArray(new Domain[]{})[0];
-                    occurrs = true;
                     if (!d.isStored()) {
                         result = true;
                         if (d.getTVariables(true).isEmpty() /*|| d.getRight().isQuery())*/) {

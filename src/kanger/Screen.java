@@ -1015,20 +1015,17 @@ public class Screen {
                     mind.setSourceFileName(line);
 //                    mind.release();
                     //TODO: Надо это?
-                    mind.compile(buf.toString());
+                    boolean res = mind.compile(buf.toString());
                     //mind.getAnalyser().analiser(true);
-                    Boolean res = mind.query("?");
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                         System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                     }
-                    if (res != null && res) {
+                    if (res) {
                         System.out.printf("File %s loaded\n", line);
-                        return true;
                     } else {
                         System.out.printf("Use XPLAIN command for analisys\n");
-                        return false;
                     }
-
+                    return res;
                 } else {
                     System.out.printf("WARNING: File %s is empty\n", line);
                 }

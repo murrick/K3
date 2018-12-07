@@ -369,6 +369,7 @@ public class Mind {
             release(m);
             return false;
         } else {
+            m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
             commit(m);
             excluded.clear();
             excluded.commit(m.getHypotesisStore());

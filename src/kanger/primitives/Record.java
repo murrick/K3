@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.enums.Enums;
 
 public class Record implements Comparable<Record> {
     private Domain domain = null;
@@ -74,13 +75,11 @@ public class Record implements Comparable<Record> {
 
     @Override
     public String toString() {
-//        String prefix;
-//        if (tag != -1 && (user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-//            prefix = tag + ":\t";
-//        } else {
-//            prefix = "";
-//        }
-        return /*prefix +*/ domain.toString();
+        String prefix = "";
+        if (tag != -1 && (user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
+            prefix = id + ":";
+        }
+        return prefix + domain.toString();
     }
 
     @Override

@@ -535,7 +535,8 @@ public class Analiser {
                 Domain d = r.getDomain();
                 if (!d.isQuery()
 //                        && !(user.getMind().getQueryPass() == QueryPass.CHECKFALSE && !d.isAntc())
-                        && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                        &&
+                        user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     h.setTag(r.getTag());
                     if (logging) {
