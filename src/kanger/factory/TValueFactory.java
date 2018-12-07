@@ -55,7 +55,7 @@ public class TValueFactory {
             t.setNext(root);
             root = t;
             t.setId(lastID++);
-            t.setTag(-1);
+//            t.setTag(-1);
         }
 
         //TODO: Фиксация текцщего значения подстановки. Правильно ли это?

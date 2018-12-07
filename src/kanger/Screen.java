@@ -450,8 +450,8 @@ public class Screen {
                         + "   R[IGHTS]  - View compiled-structured Rights list\n"
                         + "   F[UNCS]   - View defined Functions list\n"
                         + "   K[ILL]    - Remove right\n"
-                        + "   L[IST]    - View Hypotheses list after last work\n"
-                        + "   I[NSERT]  - Insert Hypotheses as right\n"
+                        + "   L[IST]    - View Hypothesis list after last work\n"
+                        + "   I[NSERT]  - Insert Hypothesis as right\n"
                         + "   A[GAIN]   - Repeat last question\n"
                         + "   X[PLAIN]  - Show explanation log\n"
                         + "   S[OLVES]  - Show solves list\n"
@@ -669,11 +669,11 @@ public class Screen {
         int i;
         SortedSet<Hypotese> list = mind.getHypotesisStore().getRoot();
         if (list != null && list.size() > 0) {
-            System.out.printf("Hypotheses list:\n");
+            System.out.printf("Hypothesis list:\n");
             for (i = 0; i < list.size(); ++i) {
                 System.out.printf("\t%3d:\t%s\n", i + 1, list.toArray(new Hypotese[]{})[i].toString());
             }
-            System.out.printf("Use INSERT command for select Hypoteses\n");
+            System.out.printf("Use INSERT command for select Hypotesis\n");
         }
     }
 
@@ -872,7 +872,7 @@ public class Screen {
 //        int i;
 //        char temp[MAXLINE];
 
-        System.out.printf("Enter Hypotheses Number: ");
+        System.out.printf("Enter Hypothesis Number: ");
         int i = Integer.parseInt(new Scanner(System.in).nextLine());
         if (--i >= mind.getHypotesisStore().size()) {
             System.out.printf("ERROR: Wrong number\n");

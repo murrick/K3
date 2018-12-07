@@ -2,19 +2,17 @@ package kanger.stores;
 
 import kanger.User;
 import kanger.primitives.TValue;
+import kanger.primitives.TVariable;
 import kanger.primitives.Term;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Created by murray on 28.05.15.
  */
 public class ValuesStore {
 
-    private SortedSet<TValue> root = null;
+    private SortedMap<Integer, SortedSet<TValue>> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -30,9 +28,9 @@ public class ValuesStore {
         clear();
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new TreeSet<>();
+                root = new TreeMap<>();
             }
-            root.addAll(base.getRoot());
+            root.putAll(base.getRoot());
         }
     }
 
@@ -53,17 +51,93 @@ public class ValuesStore {
 //        return m;
 //    }
 
-    public TValue add(TValue t) {
-        if(!enableStore) {
+    public TValue add(int tag, TValue t) {
+        if (!enableStore) {
             return null;
         }
         if (root == null) {
-            root = new TreeSet<>();
+            root = new TreeMap<>();
         }
-        if (!root.contains(t)) {
-            root.add(t);
+        boolean found = false;
+        for (SortedSet<TValue> s : root.values()) {
+            if (s.contains(t)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            if (!root.containsKey(tag)) {
+                root.put(tag, new TreeSet<>());
+            }
+            root.get(tag).add(t);
         }
         return t;
+    }
+
+    /*
+     *
+     * Результат работы функции:
+     *
+     * Query: ?$x $y $z f(x,y) && a(x, z) && z >= 30;
+     * Result: true
+     * Solves (3):
+     * 	Solution 001: 0:!f(J,S); 4 B
+     * 	Solution 002: 1:!f(J,T); 3 B
+     * 	Solution 003: 2:!a(J,37.0); 2 B
+     * Values(2):
+     * 	Value 001: [x]#1=J, [y]#2=S, [z]#3=37.0
+     * 	Value 002: [x]#1=J, [y]#2=T, [z]#3=37.0
+     * ----------------------------------------------------
+     * OK
+     * ====================================================
+     *
+     * Плюс сортировка
+     */
+
+    public void normalize() {
+        Set<TVariable> retain = new HashSet<>();
+        for (SortedSet<TValue> s : root.values()) {
+            for (TValue v : s) {
+                retain.add(v.getTVar());
+            }
+        }
+        for (SortedSet<TValue> s : root.values()) {
+            Set<TVariable> set = new HashSet<>();
+            for (TValue v : s) {
+                set.add(v.getTVar());
+            }
+            retain.retainAll(set);
+        }
+        if (!retain.isEmpty()) {
+            Set<TValue> collect = new HashSet<>();
+            for (SortedSet<TValue> s : root.values()) {
+                for (TValue v : s) {
+                    if (!retain.contains(v.getTVar())) {
+                        collect.add(v);
+                    }
+                }
+            }
+            if (!collect.isEmpty()) {
+                for (SortedSet<TValue> s : root.values()) {
+                    s.addAll(collect);
+                }
+            }
+        }
+
+        List<SortedSet<TValue>> list = new ArrayList<>();
+        list.addAll(root.values());
+        Collections.sort(list, new Comparator<SortedSet<TValue>>() {
+            @Override
+            public int compare(SortedSet<TValue> o1, SortedSet<TValue> o2) {
+                return o1.toArray(new TValue[]{})[0].getValue().compareTo(o2.toArray(new TValue[]{})[0].getValue());
+            }
+        });
+        root.clear();
+        int i = 0;
+        for (SortedSet<TValue> s : list) {
+            root.put(++i, s);
+        }
+
     }
 
     public void enable(boolean e) {
@@ -74,15 +148,17 @@ public class ValuesStore {
         return enableStore;
     }
 
-    public TValue get(int index) {
-        return root.toArray(new TValue[]{})[index];
-    }
+//    public TValue get(int index) {
+//        return root.toArray(new TValue[]{})[index];
+//    }
 
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
-        for (TValue t : root) {
-            if (name == null || name.equals(t.getTVar().getName())) {
-                list.add(t.getValue());
+        for (SortedSet<TValue> s : root.values()) {
+            for (TValue t : s) {
+                if (name == null || name.equals(t.getTVar().getName())) {
+                    list.add(t.getValue());
+                }
             }
         }
         return list;
@@ -92,12 +168,12 @@ public class ValuesStore {
 //        return root.indexOf(s);
 //    }
 
-    public SortedSet<TValue> getRoot() {
+    public Map<Integer, SortedSet<TValue>> getRoot() {
         return root;
     }
 
     public void clear() {
-        if(enableStore) {
+        if (enableStore) {
             root = null;
         }
     }

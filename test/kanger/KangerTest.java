@@ -7,6 +7,8 @@ import kanger.primitives.Record;
 import kanger.primitives.TValue;
 import kanger.primitives.Term;
 
+import java.util.Set;
+
 import static org.junit.Assert.fail;
 
 public class KangerTest {
@@ -23,22 +25,33 @@ public class KangerTest {
     private void showResult(Boolean assertResult) {
         System.out.println("Query: " + mind.getQuerySource());
         System.out.println("Result: " + mind.getQueryResult());
-        if (!mind.getSolutions().isEmpty()) {
+        if (mind.getSolutions().size() > 0) {
             System.out.println("Solves (" + mind.getSolutions().size() + "):");
-            for (Record s : mind.getSolutions().getRoot()) {
-                System.out.println("\t" + (s.getTag() != -1 ? s.getTag() + ":\t" : "") + s);
+            int i = 0;
+            for (Record log : mind.getSolutions().getRoot()) {
+                System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
             }
         }
-        if (!mind.getValues().isEmpty()) {
-            System.out.println("Values: (" + mind.getValues().size() + ")");
-            for (TValue s : mind.getValues().getRoot()) {
-                System.out.println("\t" + (s.getTag() != -1 ? s.getTag() + ":\t" : "") + s);
+        if (mind.getValues().size() > 0) {
+//            mind.getValues().normalize();
+            System.out.println("Values (" + mind.getValues().size() + "):");
+            int i = 0;
+            for (Set<TValue> log : mind.getValues().getRoot().values()) {
+                String s = String.format("\tValue %03d: ", ++i);
+                String list = "";
+                for (TValue v : log) {
+                    if (!list.isEmpty()) {
+                        list += ", ";
+                    }
+                    list += v.toString();
+                }
+                System.out.println(s + list);
             }
         }
         if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {
-            System.out.println("Hypotesis (" + mind.getHypotesisStore().size() + "):");
-            for (Hypotese s : mind.getHypotesisStore().getRoot()) {
-                System.out.println("\t" + (s.getTag() != -1 ? s.getTag() + ":\t" : "") + s);
+            System.out.println("Hypothesis (" + mind.getHypotesisStore().size() + "):");
+            for (int i = 0; i < mind.getHypotesisStore().getRoot().size(); ++i) {
+                System.out.printf("\t%3d:\t%s\n", i + 1, mind.getHypotesisStore().getRoot().toArray(new Hypotese[]{})[i].toString());
             }
         }
         System.out.println("----------------------------------------------------");

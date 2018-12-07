@@ -23,7 +23,7 @@ public class TValue implements IValue, Comparable<TValue> {
 //    private List<Domain> dstSolves = new ArrayList<>();
 //    private List<Integer> posSolves = new ArrayList<>();
 
-    private int tag = -1;
+    //    private int tag = -1;
     private Right right = null;             // Ссылка на правило
     private TValue next = null;          // Следующая переменная
 
@@ -269,21 +269,17 @@ public class TValue implements IValue, Comparable<TValue> {
         return null;
     }
 
-    public int getTag() {
-        return tag;
-    }
-
-    public void setTag(int tag) {
-        this.tag = tag;
-    }
-
+    //    public int getTag() {
+//        return tag;
+//    }
+//
+//    public void setTag(int tag) {
+//        this.tag = tag;
+//    }
+//
     @Override
     public int compareTo(TValue o) {
-        if (tag != o.getTag()) {
-            return tag - o.getTag();
-        } else {
-            return (int) (id - o.getId());
-        }
+        return (int) (tVar.getId() == o.getTVar().getId() ? id - o.getId() : tVar.getId() - o.getTVar().getId());
     }
 
     public class Solve {

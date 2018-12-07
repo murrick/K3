@@ -567,6 +567,10 @@ public class Analiser {
 //                    }
 //                }
 //            }
+        } else {
+            if (!user.getMind().getValues().isEmpty()) {
+                user.getMind().getValues().normalize();
+            }
         }
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
@@ -756,8 +760,9 @@ public class Analiser {
         for (Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
+                int i = 0;
                 for (TValue v : p.getDomain().getTValues(true)) {
-                    user.getMind().getValues().add(v);
+                    user.getMind().getValues().add(++i, v);
                 }
 //                }
                 if (logging) {
@@ -803,16 +808,14 @@ public class Analiser {
                         if (p.getDomain().isQuery()) {
                             for (Argument a : p.getDomain().getArguments()) {
                                 if (a.isVSet()) {
-                                    a.getV().setTag(p.getTag());
-                                    user.getMind().getValues().add(a.getV());
+                                    user.getMind().getValues().add(p.getTag(), a.getV());
                                 }
                             }
                         }
                         if (q.getDomain().isQuery()) {
                             for (Argument a : q.getDomain().getArguments()) {
                                 if (a.isVSet()) {
-                                    a.getV().setTag(q.getTag());
-                                    user.getMind().getValues().add(a.getV());
+                                    user.getMind().getValues().add(p.getTag(), a.getV());
                                 }
                             }
                         }

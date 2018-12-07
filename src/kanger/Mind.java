@@ -1038,11 +1038,18 @@ public class Mind {
             }
         }
         if (mind.getValues().size() > 0) {
-            mind.getLog().add(LogMode.VALUES, "Values(" + mind.getValues().size() + "):");
+            mind.getLog().add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (TValue log : mind.getValues().getRoot()) {
-                mind.getLog().add(LogMode.VALUES, String.format("\tValue %03d: %s", ++i,
-                        (log.getTag() != -1 && status ? log.getTag() + ":\t" : "") + log.toString()));
+            for (Set<TValue> log : mind.getValues().getRoot().values()) {
+                String s = String.format("\tValue %03d: ", ++i);
+                String list = "";
+                for (TValue v : log) {
+                    if (!list.isEmpty()) {
+                        list += ", ";
+                    }
+                    list += log.toString();
+                }
+                mind.getLog().add(LogMode.VALUES, s + list);
             }
         }
     }
