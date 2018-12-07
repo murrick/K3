@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.enums.ArgumentType;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -35,83 +36,70 @@ public class Argument {
         }
     }
 
-    public Term getDirtyValue() {
+    public ArgumentType getType() {
         if (o instanceof Term) {
-            return (Term) o;
+            return ArgumentType.TERM;
         } else if (o instanceof TVariable) {
-            return ((TVariable) o).getValue();
+            return ArgumentType.TVRIABLE;
         } else if (o instanceof TValue) {
-            return ((TValue) o).getValue();
+            return ArgumentType.TVALUE;
         } else if (o instanceof FValue) {
-            return ((FValue) o).getValue();
+            return ArgumentType.FVALUE;
         } else if (o instanceof Function) {
-            if (isEmpty() && getF().getArguments().size() > getF().getRange()) {
-                return getF().getArguments().get(getF().getRange()).getDirtyValue();
-            } else {
-                return ((Function) o).getValue();
-            }
+            return ArgumentType.FUNCTION;
         } else {
-            return null;
+            return ArgumentType.EMPTY;
         }
     }
 
     public Term getValue() {
-        if (o instanceof Term) {
-            return (Term) o;
-        } else if (o instanceof TVariable) {
-            return ((TVariable) o).getValue();
-        } else if (o instanceof TValue) {
-            return ((TValue) o).getValue();
-        } else if (o instanceof FValue) {
-            return ((FValue) o).getValue();
-        } else if (o instanceof Function) {
-            return ((Function) o).getValue();
-        } else {
-            return null;
+        switch (getType()) {
+            case TERM:
+                return (Term) o;
+            case TVRIABLE:
+                return ((TVariable) o).getValue();
+            case TVALUE:
+                return ((TValue) o).getValue();
+            case FVALUE:
+                return ((FValue) o).getValue();
+            case FUNCTION:
+                return ((Function) o).getValue();
+            default:
+                return null;
         }
     }
 
-//    public boolean setValue(Function f, Term t) {
-//        return setValue(f.getOwner(), t);
-//    }
-//
-
-    //TODO: Тут разобраться. Для IValue
     public boolean setValue(Term t) {
-        if (o == null || o instanceof Term) {
-            o = t;
-        } else if (o instanceof TVariable) {
-            ((TVariable) o).setValue(t).setClosed();
-        } else if (o instanceof Function) {
-            ((Function) o).setValue(t);
-        }
-        return true;
-    }
-
-    public void delValue() {
-        if (o == null || o instanceof Term || o instanceof TValue) {
-            o = null;
-        } else if (o instanceof TVariable) {
-            ((TVariable) o).clear();
-        } else if (o instanceof Function) {
-            ((Function) o).clear();
+        switch (getType()) {
+            case EMPTY:
+            case TERM:
+                o = t;
+                return true;
+            case TVRIABLE:
+                ((TVariable) o).setValue(t);
+                return true;
+            case FUNCTION:
+                ((Function) o).setValue(t);
+                return true;
+            default:
+                return false;
         }
     }
 
     public TVariable getT() {
-        return isTSet() ? (TVariable) o : null;
+        return getType() == ArgumentType.TVRIABLE ? (TVariable) o : null;
     }
 
     public TValue getV() {
-        return isVSet() ? (TValue) o : null;
+        return getType() == ArgumentType.TVALUE ? (TValue) o : null;
     }
 
     public Function getF() {
-        return isFSet() ? (Function) o : null;
+        return getType() == ArgumentType.FUNCTION ? (Function) o : null;
     }
 
     public FValue getR() {
-        return isRSet() ? (FValue) o : null;
+        return getType() == ArgumentType.FVALUE ? (FValue) o : null;
     }
 
     public boolean isEmpty() {
@@ -119,22 +107,27 @@ public class Argument {
     }
 
     public boolean isTSet() {
-        return o instanceof TVariable;
+        return getType() == ArgumentType.TVRIABLE;
     }
 
     public boolean isVSet() {
-        return o instanceof TValue;
+        return getType() == ArgumentType.TVALUE;
     }
 
     public boolean isRSet() {
-        return o instanceof FValue;
+        return getType() == ArgumentType.FVALUE;
     }
 
     public boolean isFSet() {
-        return o instanceof Function;
+        return getType() == ArgumentType.FUNCTION;
     }
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {
+        ArgumentType type = getType();
+        dos.writeInt(type.ordinal());
+        switch (type) {
+            case FUNCTION:
+        }
         if (o instanceof Term) {
             dos.writeInt(1);
             dos.writeLong(((Term) o).getId());
@@ -146,49 +139,6 @@ public class Argument {
             ((Function) o).writeCompiledData(dos);
         }
     }
-
-
-//    @Override
-//    public boolean equals(Object x) {
-//        if (x == null || !(x instanceof Argument)) {
-//            return false;
-//        } else {
-//            Argument a = (Argument) x;
-//            if ((o instanceof Term)
-//                    && ((o == null && a.o == null)
-//                    || (o != null && a.o != null && ((!((Term) o).isCVariable() && a.o.equals(o))
-//                    || (((Term) o).isCVariable() && ((Term) a.o).isCVariable()))))) {
-//                return true;
-//
-//            } else if ((o instanceof Function)
-//                    && ((o == null && a.o == null) || (o != null && a.o != null && ((Function) a.o).equals(o)))) {
-//                return true;
-//
-//            } else if (o instanceof TVariable
-//                    && ((o == null && a.o == null) || (o != null && a.o != null))) {
-//                return true;
-//
-//
-//            }
-//            return false;
-//        }
-//    }
-
-//    public boolean isDestFor(Domain d) {
-////        return isTVariable() && getTVariable().isDestFor(d);
-//        if (isTVariable())
-//            return getTVariable().isDestFor(d);
-//        else if (isFunction()) {
-//            for (TVariable t : getFunction().getTVariables()) {
-//                if (t.isDestFor(d)) {
-//                    return true;
-//                }
-//            }
-//            return false;
-//        } else {
-//            return false;
-//        }
-//    }
 
     @Override
     public String toString() {
@@ -206,20 +156,6 @@ public class Argument {
         return t != null && !t.isCVariable();
     }
 
-//    public boolean isCalculated() {
-//        if (isTSet()) {
-//            return !getT().isEmpty(); //.isComplete();
-//        } else if (isFSet()) {
-////            Term t = getFunction().getResult();
-////			if(getFunction().isCalculable()) {
-//            return getF().isCalculated();
-////			} else {
-////            return t != null && !"$$".equals(t.toString());
-////			}
-//        } else {
-//            return !isEmpty() /*&& !getValue().isCVariable()*/;
-//        }
-//    }
 
     public boolean isCVar() {
         return !isEmpty() && getValue().isCVariable();

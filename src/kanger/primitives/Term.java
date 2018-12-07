@@ -4,7 +4,6 @@ import kanger.User;
 import kanger.enums.DataType;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
-import kanger.interfaces.IValue;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -18,7 +17,7 @@ import java.util.List;
  * <p>
  * Элемент словаря
  */
-public class Term implements IValue, Comparable<Object> {
+public class Term implements Comparable<Object> {
 
     public static final double FLT_EPSILON = 0.00000000001;
 
@@ -37,37 +36,20 @@ public class Term implements IValue, Comparable<Object> {
         this.user = user;
     }
 
-//    public Term(StringBuffer str, int pos) throws ParseErrorException {
-//        int c = pos;
-//        while (c < str.length() && Parser.str.charAt(c) <= ' ') {
-//            ++c;
-//        }
-//        int stop = c;
-//        String tmp;
-//        if ((str.charAt(c) == '\"' && (stop = str.indexOf("\"", c + 1)) != -1) || (str.charAt(c) == '\'' && (stop = str.indexOf("\'", c + 1)) != -1)) {
-//            ++stop;
-//        } else {
-//            while (stop < str.length() && !Tools.isKey(str.charAt(stop))) {
-//                ++stop;
-//            }
-//        }
-//
-////        sourceLength = stop - c;
-//        construct(str.substring(c, stop));
-//    }
-
     public Term(Object str, User user) {
-//        sourceLength = str.length();
         this.user = user;
         construct(str);
     }
 
     public Term(DataInputStream din, User user) throws IOException, ClassNotFoundException {
-        id = din.readLong();
         this.user = user;
-        user.getMind().getDictionaryLinks().put(this, din.readLong());
-        int typeIndex = din.readInt();
-        type = DataType.values()[typeIndex];
+        type = DataType.values()[din.readInt()];
+        name = din.readUTF();
+
+        index = din.readInt();
+        id = din.readLong();
+        user.getMind().getDictionaryLinks().put(this,din.readLong());
+
         switch (type) {
             case DATE:
                 value = new Date(din.readLong());
@@ -76,20 +58,11 @@ public class Term implements IValue, Comparable<Object> {
                 value = din.readDouble();
                 break;
             case INTERVAL:
-                value = din.readUTF();
-                break;
             case STRING:
                 value = din.readUTF();
                 break;
-            case TERM:
-                value = new ObjectInputStream(din).readObject();
-                break;
         }
 
-        name = din.readUTF();
-        index = din.readInt();
-//        sourceLength = din.readInt();
-//        token = din.readUTF();
     }
 
     private void construct(Object o) {
@@ -137,12 +110,6 @@ public class Term implements IValue, Comparable<Object> {
                     } else {
                         type = DataType.STRING;
                         value = token;
-//                if (token.contains(" ") || token.contains("\r") || token.contains("\t")) {
-//                    type = DataType.STRING;
-//                    token = token.replaceAll("\r", "");
-//                    token = token.replaceAll("\t", "");
-//                    token = token.replaceAll(" ", "");
-//                }
                     }
                 } catch (NumberFormatException ex) {
                     type = DataType.STRING;
@@ -174,10 +141,6 @@ public class Term implements IValue, Comparable<Object> {
         return type;
     }
 
-    public void setType(DataType type) {
-        this.type = type;
-    }
-
     public long getId() {
         return id;
     }
@@ -204,22 +167,8 @@ public class Term implements IValue, Comparable<Object> {
 
     public boolean isCVariable() {
         return index > 0;
-//        return value != null
-//                && type == DataType.STRING
-//                && !value.toString().isEmpty()
-//                && value.toString().charAt(0) == Enums.CVC;
     }
 
-    @Override
-    public boolean isDefined() {
-        return !isCVariable();
-    }
-
-    //    @Override
-//    public boolean isCalculated() {
-//        return !isEmpty();
-//    }
-//
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {
@@ -249,14 +198,6 @@ public class Term implements IValue, Comparable<Object> {
         } else {
             return "";
         }
-    }
-
-    public String asString() {
-        String str = toString();
-        if (str.contains(" ") || str.contains("\t") || str.contains("\r")) {
-            str = "\"" + str.replace("\"", "\\\"").replace("\'", "\\\'") + "\"";
-        }
-        return str;
     }
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {
@@ -292,22 +233,13 @@ public class Term implements IValue, Comparable<Object> {
     @Override
     public boolean equals(Object t) {
         return t != null && t instanceof Term && ((Term) t).getId() == id;
-//        if (t instanceof Term) {
-//            return ((Term) t).id == id;
-//        } else if (value == null && t == null) {
-//            return true;
-//        } else if (value == null || t == null) {
-//            return false;
-//        } else {
-//            return value.equals(t);
-//        }
     }
 
-    public Object getVal() {
+    public Object getValue() {
         return value;
     }
 
-    public void setVal(Object value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 
@@ -338,13 +270,13 @@ public class Term implements IValue, Comparable<Object> {
             } else if (isCVariable() && o.isCVariable()) {
                 return Integer.valueOf(index).compareTo(o.getIndex());
             } else if (type == DataType.INTERVAL && value instanceof Collection) {
-                if (o.getVal() instanceof Collection) {
-                    if (((Collection) value).size() != ((Collection) o.getVal()).size()) {
+                if (o.getValue() instanceof Collection) {
+                    if (((Collection) value).size() != ((Collection) o.getValue()).size()) {
                         return -2;
                     } else {
                         int c = 0;
                         Object[] a = ((Collection) value).toArray();
-                        Object[] b = ((Collection) o.getVal()).toArray();
+                        Object[] b = ((Collection) o.getValue()).toArray();
                         for (int i = 0; i < a.length; ++i) {
                             c = ((Comparable) a[i]).compareTo(b[i]);
                             if (c != 0) {
@@ -356,92 +288,28 @@ public class Term implements IValue, Comparable<Object> {
                 } else {
                     return -2;
                 }
-            } else if (value instanceof Number && o.getVal() instanceof Number) {
-                double diff = Math.abs(((Number) value).doubleValue() - ((Number) o.getVal()).doubleValue());
+            } else if (value instanceof Number && o.getValue() instanceof Number) {
+                double diff = Math.abs(((Number) value).doubleValue() - ((Number) o.getValue()).doubleValue());
                 if (diff < FLT_EPSILON) {
                     return 0;
                 } else {
-                    return ((Comparable) value).compareTo(o.getVal());
+                    return ((Comparable) value).compareTo(o.getValue());
                 }
             } else {
-                return ((Comparable) value).compareTo(o.getVal());
+                return ((Comparable) value).compareTo(o.getValue());
             }
-//            return c > 0 ? 1 : (c < 0 ? -1 : 0);
         } else {
             return Integer.valueOf(index).compareTo(((TVariable) oo).getIndex());
         }
     }
 
-    @Override
-    public Term getValue() {
-        return this;
-    }
-
-//    @Override
-//    public Term getDirtyValue() {
-//        return this;
-//    }
-
-    @Override
-    public Object setValue(Term term) {
-        return null;
-    }
-
-    @Override
     public boolean isEmpty() {
         return value == null;
     }
 
-    @Override
     public void clear() {
         value = null;
     }
-
-    @Override
-    public boolean isTVariable() {
-        return false;
-    }
-
-    @Override
-    public boolean isFunction() {
-        return false;
-    }
-
-    @Override
-    public boolean isTValue() {
-        return false;
-    }
-
-    @Override
-    public boolean isTerm() {
-        return true;
-    }
-
-    @Override
-    public boolean isFValue() {
-        return false;
-    }
-
-    @Override
-    public TVariable getTVariable() {
-        return null;
-    }
-
-    @Override
-    public Function getFunction() {
-        return null;
-    }
-
-    @Override
-    public TValue getTValue() {
-        return null;
-    }
-
-    @Override
-    public FValue getFValue() {
-        return null;
-    }
-
 
 }
 

@@ -225,11 +225,11 @@ public class Functions {
                         if (!((Function) o).setParameter(2, _mul(arg.get(0).getValue(), arg.get(1).getValue()))) {
                             ret = 0;
                         }
-                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && (double) arg.get(1).getValue().getVal() != 0) {
+                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && (double) arg.get(1).getValue().getValue() != 0) {
                         if (!((Function) o).setParameter(0, _div(arg.get(2).getValue(), arg.get(1).getValue()))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && (double) arg.get(0).getValue().getVal() != 0) {
+                    } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && (double) arg.get(0).getValue().getValue() != 0) {
                         if (!((Function) o).setParameter(1, _div(arg.get(2).getValue(), arg.get(0).getValue()))) {
                             ret = 0;
                         }
@@ -249,7 +249,7 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined() && (double) arg.get(1).getValue().getVal() != 0) {
+                    if (arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined() && (double) arg.get(1).getValue().getValue() != 0) {
                         if (!((Function) o).setParameter(2, _div(arg.get(0).getValue(), arg.get(1).getValue()))) {
                             ret = 0;
                         }
@@ -257,7 +257,7 @@ public class Functions {
                         if (!((Function) o).setParameter(0, _mul(arg.get(2).getValue(), arg.get(1).getValue()))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && (double) arg.get(2).getValue().getVal() != 0) {
+                    } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && (double) arg.get(2).getValue().getValue() != 0) {
                         if (!((Function) o).setParameter(1, _div(arg.get(0).getValue(), arg.get(2).getValue()))) {
                             ret = 0;
                         }
@@ -277,7 +277,7 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    if (arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined() && (double) arg.get(1).getValue().getVal() != 0) {
+                    if (arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined() && (double) arg.get(1).getValue().getValue() != 0) {
                         if (!((Function) o).setParameter(2, _rem(arg.get(0).getValue(), arg.get(1).getValue()))) {
                             ret = 0;
                         }
@@ -787,8 +787,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
 
                     if (src != null && result == null) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add((double) src.length()))) {
@@ -807,9 +807,9 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
-                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
+                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
 
                     if (src != null && pos != null && result == null) {
                         if (!((Function) o).setParameter(2, user.getMind().getTerms().add(pos - 1 >= src.length() ? "" : src.substring(pos.intValue() - 1)))) {
@@ -833,10 +833,10 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
-                    Double len = arg.get(2).getValue() != null ? (Double) arg.get(2).getValue().getVal() : null;
-                    String result = arg.get(3).getValue() != null ? (String) arg.get(3).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
+                    Double len = arg.get(2).getValue() != null ? (Double) arg.get(2).getValue().getValue() : null;
+                    String result = arg.get(3).getValue() != null ? (String) arg.get(3).getValue().getValue() : null;
 
                     if (src != null && pos != null && len != null && result == null) {
                         String str = "";
@@ -875,9 +875,9 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
-                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
+                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
 
                     if (src != null && pos != null && result == null) {
                         if (pos > src.length()) {
@@ -904,9 +904,9 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
-                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
+                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
 
                     if (src != null && pos != null && result == null) {
                         if (pos > src.length()) {
@@ -933,8 +933,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
 
                     if (src != null && result == null) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.trim()))) {
@@ -953,8 +953,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
 
                     if (src != null && result == null) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toUpperCase()))) {
@@ -973,8 +973,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
 
                     if (src != null && result == null) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toLowerCase()))) {
@@ -993,9 +993,9 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    String sample = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
-                    Double result = arg.get(2).getValue() != null ? (Double) arg.get(2).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    String sample = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
+                    Double result = arg.get(2).getValue() != null ? (Double) arg.get(2).getValue().getValue() : null;
 
                     if (src != null && sample != null && result == null) {
                         if (!((Function) o).setParameter(2, user.getMind().getTerms().add((src.indexOf(sample) + 1)))) {
@@ -1020,10 +1020,10 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    String target = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
-                    String replacement = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getVal() : null;
-                    String result = arg.get(3).getValue() != null ? (String) arg.get(3).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    String target = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
+                    String replacement = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
+                    String result = arg.get(3).getValue() != null ? (String) arg.get(3).getValue().getValue() : null;
 
                     if (src != null && target != null && replacement != null && result == null) {
                         if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.replace(target, replacement)))) {
@@ -1046,8 +1046,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    Double src = arg.get(0).getValue() != null ? (Double) arg.get(0).getValue().getVal() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getVal() : null;
+                    Double src = arg.get(0).getValue() != null ? (Double) arg.get(0).getValue().getValue() : null;
+                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
 
                     if (src != null && result == null) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(String.format("%c", src.intValue())))) {
@@ -1070,8 +1070,8 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     List<Argument> arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getVal() : null;
-                    Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getVal() : null;
+                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
+                    Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
 
                     if (src != null && result == null) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.charAt(0)))) {
@@ -1144,13 +1144,13 @@ public class Functions {
     protected Term _add(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = (double) a.getVal() + (double) b.getVal();
+            res = (double) a.getValue() + (double) b.getValue();
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.INTERVAL) {
-            res = Tools.dateAdd((Date) a.getVal(), (String) b.getVal(), 1);
+            res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), 1);
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) b.getVal(), (String) a.getVal(), 1);
+            res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), 1);
         } else {
-            res = a.getVal().toString() + b.getVal().toString();
+            res = a.getValue().toString() + b.getValue().toString();
         }
         return user.getMind().getTerms().add(res);
     }
@@ -1158,9 +1158,9 @@ public class Functions {
     protected Term _inc(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = (double) a.getVal() + 1;
+            res = (double) a.getValue() + 1;
         } else {
-            res = a.getVal();
+            res = a.getValue();
         }
         return user.getMind().getTerms().add(res);
     }
@@ -1168,9 +1168,9 @@ public class Functions {
     protected Term _dec(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = (double) a.getVal() - 1;
+            res = (double) a.getValue() - 1;
         } else {
-            res = a.getVal();
+            res = a.getValue();
         }
         return user.getMind().getTerms().add(res);
     }
@@ -1178,15 +1178,15 @@ public class Functions {
     protected Term _sub(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = (double) a.getVal() - (double) b.getVal();
+            res = (double) a.getValue() - (double) b.getValue();
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.INTERVAL) {
-            res = Tools.dateAdd((Date) a.getVal(), (String) b.getVal(), -1);
+            res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), -1);
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) b.getVal(), (String) a.getVal(), -1);
+            res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), -1);
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
-            res = Tools.dateDiff((Date) b.getVal(), (Date) a.getVal());
+            res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
         } else {
-            res = a.getVal().toString().replace(b.getVal().toString(), "");
+            res = a.getValue().toString().replace(b.getValue().toString(), "");
         }
         return user.getMind().getTerms().add(res);
     }
@@ -1194,7 +1194,7 @@ public class Functions {
     private Term _mul(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = (double) a.getVal() * (double) b.getVal();
+            res = (double) a.getValue() * (double) b.getValue();
         } else {
             res = (double) 0;
         }
@@ -1204,7 +1204,7 @@ public class Functions {
     private Term _div(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = (double) a.getVal() / (double) b.getVal();
+            res = (double) a.getValue() / (double) b.getValue();
         } else {
             res = (double) 0;
         }
@@ -1214,7 +1214,7 @@ public class Functions {
     private Term _rem(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC || b.getType() == DataType.NUMERIC) {
-            res = (double) a.getVal() % (double) b.getVal();
+            res = (double) a.getValue() % (double) b.getValue();
         } else {
             res = (double) 0;
         }
@@ -1224,11 +1224,11 @@ public class Functions {
     private Term _neg(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = -(double) a.getVal();
-        } else if (a.getType() == DataType.INTERVAL && a.getVal() instanceof Collection && ((Collection) a.getVal()).size() == 2) {
+            res = -(double) a.getValue();
+        } else if (a.getType() == DataType.INTERVAL && a.getValue() instanceof Collection && ((Collection) a.getValue()).size() == 2) {
             List<Term> list = new ArrayList<>();
-            list.add(_neg((Term) ((Collection) a.getVal()).toArray()[0]));
-            list.add((Term) ((Collection) a.getVal()).toArray()[0]);
+            list.add(_neg((Term) ((Collection) a.getValue()).toArray()[0]));
+            list.add((Term) ((Collection) a.getValue()).toArray()[0]);
             res = list;
         } else {
             res = (double) 0;
@@ -1239,7 +1239,7 @@ public class Functions {
     private Term _bitnot(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getVal()).doubleValue();
+            res = Long.valueOf((long) a.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1249,7 +1249,7 @@ public class Functions {
     private Term _bitleft(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getVal() << (long) b.getVal()).doubleValue();
+            res = Long.valueOf((long) a.getValue() << (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1259,7 +1259,7 @@ public class Functions {
     private Term _bitright(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getVal() >> (long) b.getVal()).doubleValue();
+            res = Long.valueOf((long) a.getValue() >> (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1269,7 +1269,7 @@ public class Functions {
     private Term _bitxor(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getVal() ^ (long) b.getVal()).doubleValue();
+            res = Long.valueOf((long) a.getValue() ^ (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1279,7 +1279,7 @@ public class Functions {
     private Term _bitand(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getVal() & (long) b.getVal()).doubleValue();
+            res = Long.valueOf((long) a.getValue() & (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1289,7 +1289,7 @@ public class Functions {
     private Term _bitor(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getVal() | (long) b.getVal()).doubleValue();
+            res = Long.valueOf((long) a.getValue() | (long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1299,7 +1299,7 @@ public class Functions {
     private Term _bitandnot(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getVal() & ~(long) b.getVal()).doubleValue();
+            res = Long.valueOf((long) a.getValue() & ~(long) b.getValue()).doubleValue();
         } else {
             res = (double) 0;
         }
@@ -1309,7 +1309,7 @@ public class Functions {
     private Term _log(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.log((double) a.getVal());
+            res = Math.log((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1319,7 +1319,7 @@ public class Functions {
     private Term _exp(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.exp((double) a.getVal());
+            res = Math.exp((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1334,7 +1334,7 @@ public class Functions {
     private Term _sin(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.sin((double) a.getVal());
+            res = Math.sin((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1344,7 +1344,7 @@ public class Functions {
     private Term _asin(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.asin((double) a.getVal());
+            res = Math.asin((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1354,7 +1354,7 @@ public class Functions {
     private Term _cos(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.cos((double) a.getVal());
+            res = Math.cos((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1364,7 +1364,7 @@ public class Functions {
     private Term _acos(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.acos((double) a.getVal());
+            res = Math.acos((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1374,7 +1374,7 @@ public class Functions {
     private Term _tan(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.tan((double) a.getVal());
+            res = Math.tan((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1384,7 +1384,7 @@ public class Functions {
     private Term _atan(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.atan((double) a.getVal());
+            res = Math.atan((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1394,7 +1394,7 @@ public class Functions {
     private Term _abs(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.abs((double) a.getVal());
+            res = Math.abs((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1404,7 +1404,7 @@ public class Functions {
     private Term _int(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = (double) (long) (double) a.getVal();
+            res = (double) (long) (double) a.getValue();
         } else {
             res = (double) 0;
         }
@@ -1416,11 +1416,11 @@ public class Functions {
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             Double val;
             if (b != null) {
-                val = (double) a.getVal() * Math.pow(10, (double) b.getVal());
+                val = (double) a.getValue() * Math.pow(10, (double) b.getValue());
                 Long r = Math.round(val);
-                val = r / Math.pow(10, (double) b.getVal());
+                val = r / Math.pow(10, (double) b.getValue());
             } else {
-                val = (double) Math.round((double) a.getVal());
+                val = (double) Math.round((double) a.getValue());
             }
             res = val;
         } else {
@@ -1432,7 +1432,7 @@ public class Functions {
     private Term _sqrt(Term a) {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Math.sqrt((double) a.getVal());
+            res = Math.sqrt((double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1442,7 +1442,7 @@ public class Functions {
     private Term _pow(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Math.pow((double) a.getVal(), (double) b.getVal());
+            res = Math.pow((double) a.getValue(), (double) b.getValue());
         } else {
             res = (double) 0;
         }
@@ -1452,7 +1452,7 @@ public class Functions {
     private Term _root(Term a, Term b) {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
-            res = Math.pow((double) a.getVal(), 1.0 / (double) b.getVal());
+            res = Math.pow((double) a.getValue(), 1.0 / (double) b.getValue());
         } else {
             res = (double) 0;
         }

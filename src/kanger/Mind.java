@@ -170,7 +170,7 @@ public class Mind {
             if (o instanceof Term) {
                 String temp = String.format("%c%d", Enums.CVC, i);
                 ((Term) o).setIndex(i);
-                ((Term) o).setVal(temp);
+                ((Term) o).setValue(temp);
             } else {
                 ((TVariable) o).setIndex(i);
             }
@@ -541,11 +541,6 @@ public class Mind {
         clear();
 
         DataInputStream dis = new DataInputStream(is);
-
-        dictionaryLinks = new HashMap<>();
-        domainLinks = new HashMap<>();
-//        solveLinks = new HashMap<>();
-        tVariableLinks = new HashMap<>();
 
         int signature = dis.readInt();
         String key = dis.readUTF();
