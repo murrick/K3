@@ -531,6 +531,8 @@ public class Analiser {
             if (user.getMind().getNext() != null) {
                 stop = user.getMind().getNext().getDatabase().getRoot();
             }
+
+            boolean occurrs = false;
             for (Record r = user.getMind().getDatabase().getRoot(); r != stop; r = r.getNext()) {
                 Domain d = r.getDomain();
                 if (!d.isQuery()
@@ -539,13 +541,17 @@ public class Analiser {
                         user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     h.setTag(r.getTag());
+                    occurrs = true;
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
-                        user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
                     }
-
                 }
             }
+
+            if (occurrs && logging) {
+                user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+            }
+
 
 //            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 //                if (tree.getSequence().size() > 1) {
