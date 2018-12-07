@@ -248,12 +248,12 @@ public class Screen {
 
                                 Boolean res = mind.query(ln, false);
                                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                     if (res != null) {
                                         showLog(mind, LogMode.SOLVES);
                                         showLog(mind, LogMode.VALUES);
                                     } else if (mind.isInsertion()) {
                                         showLog(mind, LogMode.SAVED);
-                                        System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                     }
                                     if (res == null && !mind.isInsertion()) {
                                         showHypo(mind);
