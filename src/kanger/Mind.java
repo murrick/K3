@@ -216,6 +216,7 @@ public class Mind {
 
     }
 
+
     public QueryPass getQueryPass() {
         return queryPass;
     }

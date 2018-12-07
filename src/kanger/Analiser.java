@@ -526,17 +526,18 @@ public class Analiser {
         if (!result) {
 
 //            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
-                //todo только из базы?
-            for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
-                if (d.isProduced()
-                        && !d.isQuery()
+            //todo только из базы?
+            Record stop = null;
+            if (user.getMind().getNext() != null) {
+                stop = user.getMind().getNext().getDatabase().getRoot();
+            }
+            for (Record r = user.getMind().getDatabase().getRoot(); r != stop; r = r.getNext()) {
+                Domain d = r.getDomain();
+                if (!d.isQuery()
 //                        && !(user.getMind().getQueryPass() == QueryPass.CHECKFALSE && !d.isAntc())
                         && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
-                    Record r = user.getMind().getDatabase().find(d);
-                    if (r != null) {
-                        h.setTag(r.getTag());
-                    }
+                    h.setTag(r.getTag());
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
                         user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");

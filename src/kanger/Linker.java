@@ -535,13 +535,11 @@ public class Linker {
                     result = true;
                     if (excluded.isEmpty() && !d.isCalculated() && d.getTVariables(true).isEmpty() /*|| d.getRight().isQuery())*/) {
                         Record x = d.setStored();
-                        x.getDomain().setProduced();
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
                         }
                     } else {
                         Record x = d.createStored();
-                        x.getDomain().setProduced();
                         if (d.isCalculated()) {
                             x.getDomain().setCalculated();
                         }
@@ -549,8 +547,6 @@ public class Linker {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
                         }
                     }
-                } else {
-                    d.setProduced();
                 }
             } else if (!excluded.isEmpty() && candidades.isEmpty()) {
                 occurrs = true;
@@ -558,12 +554,9 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         Record x = d.createStored();
-                        x.getDomain().setProduced();
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (x): " + x);
                         }
-                    } else {
-                        d.setProduced();
                     }
                 }
             } else if (!calculated.isEmpty() && tree.getSequence().size() == calculated.size()) {
@@ -572,15 +565,12 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         Record x = d.createStored();
-                        x.getDomain().setProduced();
                         if (d.isCalculated()) {
                             x.getDomain().setCalculated();
                         }
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (c): " + x);
                         }
-                    } else {
-                        d.setProduced();
                     }
                 }
             }
@@ -589,12 +579,30 @@ public class Linker {
             if (!occurrs && tree.getSequence().size() > 1) {
                 candidades.clear();
                 for (Domain d : tree.getSequence()) {
-                    if (d.isComplete() && !d.isExcluded() && !assumed.contains(d)) {
+                    if (d.isComplete() && !d.isExcluded() && !d.isSystem() && !assumed.contains(d)) {
                         candidades.add(d);
                     }
                 }
                 if (candidades.size() == 1) {
-                    candidades.toArray(new Domain[]{})[0].setProduced();
+                    Domain d = candidades.toArray(new Domain[]{})[0];
+                    occurrs = true;
+                    if (!d.isStored()) {
+                        result = true;
+                        if (d.getTVariables(true).isEmpty() /*|| d.getRight().isQuery())*/) {
+                            Record x = d.setStored();
+                            if (logging) {
+                                user.getMind().getLog().add(LogMode.ANALIZER, "DB set assumed record: " + x);
+                            }
+                        } else {
+                            Record x = d.createStored();
+                            if (d.isCalculated()) {
+                                x.getDomain().setCalculated();
+                            }
+                            if (logging) {
+                                user.getMind().getLog().add(LogMode.ANALIZER, "DB add assumed record: " + x);
+                            }
+                        }
+                    }
                 }
             }
         }
