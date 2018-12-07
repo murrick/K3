@@ -1047,7 +1047,7 @@ public class Mind {
                     if (!list.isEmpty()) {
                         list += ", ";
                     }
-                    list += log.toString();
+                    list += v.toString();
                 }
                 mind.getLog().add(LogMode.VALUES, s + list);
             }
