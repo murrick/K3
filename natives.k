@@ -13,7 +13,14 @@
     child(y,x),
     (male(x) -> father(x,y)),
     (female(x) -> mother(x,y));
-!@x @y (father(x,y) -> male(x), parent(x,y)), (mother(x,y) -> femaile(x), parent(x,y));
+
+!@x @y child(x,y) ->
+    parent(y,x),
+    (male(x) -> son(x,y)),
+    (female(x) -> daughter(x,y));
+
+!@x @y father(x,y) -> male(x), parent(x,y);
+!@x @y mother(x,y) -> femaile(x), parent(x,y);
 
 !@x @y child(x,y) ->
     parent(y,x);
