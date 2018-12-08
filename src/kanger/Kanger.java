@@ -737,6 +737,49 @@ public class Kanger {
 
     };
 
+    private static String text = "* Базовые правила для родственных отношений\n" +
+            "\n" +
+            "!@x $y parent(y,x);\n" +
+            "* У всех есть отцы\n" +
+            "\n" +
+            "!@x ~parent(x,x);\n" +
+            "* Никто не может быть собственным отцом.\n" +
+            "\n" +
+            "!@x (male(x) || female(x)) && ~(male(x) && female(x));\n" +
+            "* Каждый является мужчиной или женщиной.\n" +
+            "\n" +
+            "!@x @y parent(x,y) ->\n" +
+            "    child(y,x),\n" +
+            "    (male(x) -> father(x,y)),\n" +
+            "    (female(x) -> mother(x,y));\n" +
+            "\n" +
+            "!@x @y child(x,y) ->\n" +
+            "    parent(y,x),\n" +
+            "    (male(x) -> son(x,y)),\n" +
+            "    (female(x) -> daughter(x,y));\n" +
+            "\n" +
+            "!@x @y father(x,y) -> male(x), parent(x,y);\n" +
+            "!@x @y mother(x,y) -> femaile(x), parent(x,y);\n" +
+            "\n" +
+            "!@x @y child(x,y) ->\n" +
+            "    parent(y,x);\n" +
+            "\n" +
+            "!@x @y daughter(x,y) -> female(x), child(x,y);\n" +
+            "!@x @y son(x,y) -> male(x), child(x,y);\n" +
+            "* Дочь всегда женского пола, сын – мужского.\n" +
+            "\n" +
+            "* База данных. Утверждения.\n" +
+            "\n" +
+            "!father(John, Tom);\n" +
+            "!daughter(Sarah, John);\n" +
+            "\n" +
+            "* Возраст\n" +
+            "\n" +
+            "!age(John, 37);\n" +
+            "!age(Tom, 12);\n" +
+            "!age(Sarah, 4);\n" +
+            "\n";
+
     public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
 
         Mind mind = new Mind(mindRoot);
@@ -998,6 +1041,7 @@ public class Kanger {
 //        mind.compile("!a(A,12); !a(B,37);");
 //        mind.query("?$x $y a(x, y) && y >= 12;");
 
+        mind.compile(text);
         Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.release();
