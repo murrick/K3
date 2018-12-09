@@ -7,10 +7,7 @@ import kanger.enums.LogMode;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.*;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Dmitry G. Qusnetsov
@@ -75,7 +72,6 @@ public class Linker {
                         boolean result = false;
                         boolean logging = (boolean) o;
 
-
                         if (linkDomains(t, logging)) {
                             result = true;
                         }
@@ -86,18 +82,18 @@ public class Linker {
                             }
                         }
 
-                        if (updateDatabase(t, waiters, logging)) {
+                        if (linkDatabase(t, waiters, logging)) {
                             result = true;
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                             }
                         }
-
-
                         return result;
                     }
                 });
             }
+
+            updateDatabase(logging);
 
 
         } while (saveR != user.getMind().getDatabase().getRoot()
@@ -236,7 +232,7 @@ public class Linker {
         return applied;
     }
 
-    private boolean updateDatabase(Tree tree, Set<Domain> waiters, boolean logging) {
+    private boolean linkDatabase(Tree tree, Set<Domain> waiters, boolean logging) {
 
         boolean result = false;
         boolean occurrs = false;
@@ -246,6 +242,7 @@ public class Linker {
             Set<Domain> calculated = new HashSet<>();
             Set<Domain> candidades = new HashSet<>();
             Set<Domain> assumed = new HashSet<>();
+            Set<Domain> stored = new HashSet<>();
 
             for (Domain d : tree.getSequence()) {
                 for (Domain master : waiters) {
@@ -279,6 +276,9 @@ public class Linker {
                 } else {
                     candidades.add(d);
                 }
+                if (d.isStored()) {
+                    stored.add(d);
+                }
             }
 
             if (candidades.size() == 1) {
@@ -286,29 +286,19 @@ public class Linker {
                 occurrs = true;
                 if (!d.isStored()) {
                     result = true;
-                    if (excluded.isEmpty() && !d.isCalculated() && d.getTVariables(true).isEmpty() /*|| d.getRight().isQuery())*/) {
-                        Record x = d.setStored();
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
-                        }
-                    } else {
-                        Record x = d.createStored();
-                        if (d.isCalculated()) {
-                            x.getDomain().setCalculated();
-                        }
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
-                        }
+                    d.setProduced();
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                     }
                 }
-            } else if (!excluded.isEmpty() && candidades.isEmpty()) {
+            } else if (!excluded.isEmpty() && candidades.isEmpty() && stored.isEmpty()) {
                 occurrs = true;
                 for (Domain d : excluded) {
                     if (!d.isStored()) {
                         result = true;
-                        Record x = d.createStored();
+                        d.setProduced();
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (x): " + x);
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
                         }
                     }
                 }
@@ -317,12 +307,9 @@ public class Linker {
                 for (Domain d : calculated) {
                     if (!d.isStored()) {
                         result = true;
-                        Record x = d.createStored();
-                        if (d.isCalculated()) {
-                            x.getDomain().setCalculated();
-                        }
+                        d.setProduced();
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (c): " + x);
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
                         }
                     }
                 }
@@ -345,19 +332,9 @@ public class Linker {
                     Domain d = candidades.toArray(new Domain[]{})[0];
                     if (!d.isStored()) {
                         result = true;
-                        if (d.getTVariables(true).isEmpty()) {
-                            Record x = d.setStored();
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB set record (a): " + x);
-                            }
-                        } else {
-                            Record x = d.createStored();
-                            if (d.isCalculated()) {
-                                x.getDomain().setCalculated();
-                            }
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (a): " + x);
-                            }
+                        d.setProduced();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
                         }
                     }
                 }
@@ -369,6 +346,37 @@ public class Linker {
 
         return result;
     }
+
+    private boolean updateDatabase(boolean logging) {
+        boolean result = false;
+        for (Map.Entry<Domain, Set<List<Argument>>> e : user.getMind().getProducedDomains().entrySet()) {
+            Domain d = e.getKey();
+            for (List<Argument> args : e.getValue()) {
+                result = true;
+                d.apply(args);
+                Record x;
+                if (d.getTVariables(true).isEmpty()) {
+                    x = d.setStored();
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+                    }
+                } else {
+                    x = d.createStored();
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                    }
+                }
+                if (d.isCalculated()) {
+                    x.getDomain().setCalculated();
+                }
+            }
+        }
+        if (result && logging) {
+            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+        }
+        return result;
+    }
+
 
     public boolean calcFunctions(Tree master, boolean logging) {
         boolean result = false;
