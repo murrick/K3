@@ -51,14 +51,13 @@ public class Linker {
         TValue saveT;
         FValue saveF;
 
-        user.getMind().getClosedTrees().clear();
-
         do {
 
             saveR = user.getMind().getDatabase().getRoot();
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
 
+            user.getMind().getProducedDomains().clear();
 
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
