@@ -285,7 +285,7 @@ public class Linker {
                 occurrs = true;
                 if (!d.isStored()) {
                     result = true;
-                    d.setProduced();
+                    d.setProduced(user.getMind().getDatabase().getTag());
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                     }
@@ -295,7 +295,7 @@ public class Linker {
                 for (Domain d : excluded) {
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced();
+                        d.setProduced(user.getMind().getDatabase().getTag());
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
                         }
@@ -306,7 +306,7 @@ public class Linker {
                 for (Domain d : calculated) {
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced();
+                        d.setProduced(user.getMind().getDatabase().getTag());
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
                         }
@@ -331,7 +331,7 @@ public class Linker {
                     Domain d = candidades.toArray(new Domain[]{})[0];
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced();
+                        d.setProduced(user.getMind().getDatabase().getTag());
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
                         }
@@ -348,25 +348,28 @@ public class Linker {
 
     private boolean updateDatabase(boolean logging) {
         boolean result = false;
-        for (Map.Entry<Domain, Set<List<Argument>>> e : user.getMind().getProducedDomains().entrySet()) {
+        for (Map.Entry<Domain, Map<Integer, Set<List<Argument>>>> e : user.getMind().getProducedDomains().entrySet()) {
             Domain d = e.getKey();
-            for (List<Argument> args : e.getValue()) {
-                result = true;
-                d.apply(args);
-                Record x;
-                if (d.getTVariables(true).isEmpty()) {
-                    x = d.setStored();
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+            for (Map.Entry<Integer, Set<List<Argument>>> tags : e.getValue().entrySet()) {
+                for (List<Argument> args : tags.getValue()) {
+                    result = true;
+                    d.apply(args);
+                    Record x;
+                    if (d.getTVariables(true).isEmpty()) {
+                        x = d.setStored();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+                        }
+                    } else {
+                        x = d.createStored();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                        }
                     }
-                } else {
-                    x = d.createStored();
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                    if (d.isCalculated()) {
+                        x.getDomain().setCalculated();
                     }
-                }
-                if (d.isCalculated()) {
-                    x.getDomain().setCalculated();
+                    x.setTag(tags.getKey());
                 }
             }
         }

@@ -63,7 +63,7 @@ public class Mind {
 
     private final Map<Domain, Set<List<Argument>>> closedDomains = new HashMap<>();
     private final Map<Domain, Set<List<Argument>>> usedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Argument>>> producedDomains = new HashMap<>();
+    private final Map<Domain, Map<Integer, Set<List<Argument>>>> producedDomains = new HashMap<>();
     private final Map<Domain, Set<List<Argument>>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<List<Argument>>> excludedDomains = new HashMap<>();
     private Linker linker = null;                                         // Линкер
@@ -615,7 +615,7 @@ public class Mind {
         return excludedDomains;
     }
 
-    public Map<Domain, Set<List<Argument>>> getProducedDomains() {
+    public Map<Domain, Map<Integer, Set<List<Argument>>>> getProducedDomains() {
         return producedDomains;
     }
 

@@ -227,8 +227,13 @@ public class DatabaseFactory {
         }
     }
 
-    public void incTag() {
+    public int incTag() {
         ++lastTag;
+        return lastTag;
+    }
+
+    public int getTag() {
+        return lastTag;
     }
 
     public Set<TVariable> getTVariables(boolean full) {

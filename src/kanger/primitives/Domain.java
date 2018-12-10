@@ -220,14 +220,14 @@ public class Domain {
             suffix += " " + id;
         }
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix += /*isDest() ||*/ isQuery() || isClosed() || /*isUsed() ||*/ isExcluded() || isProduced() || isStored() || isCalculated()
+            suffix += /*isDest() ||*/ isQuery() || isClosed() || /*isUsed() ||*/ isExcluded() || /*isProduced() ||*/ isStored() || isCalculated()
                     ? " " +
                     //(isDest() ? "A" : "") +
                     (isQuery() ? "Q" : "") +
                     (isClosed() ? "C" : "") +
 //                    (isUsed() ? "U" : "") +
                     (isExcluded() ? "X" : "") +
-                    (isProduced() ? "P" : "") +
+                    //(isProduced() ? "P" : "") +
                     (isStored() ? "B" : "") +
                     (isCalculated() ? "S" : "") +
                     " "
@@ -497,48 +497,54 @@ public class Domain {
         }
     }
 
-    public boolean isProduced() {
+    public boolean isProduced(int tag) {
         if (user.getMind().getProducedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getProducedDomains().get(this)) {
-                if (isEqualsArguments(list)) {
-                    return true;
+            if (user.getMind().getProducedDomains().get(this).containsKey(tag)) {
+                for (List<Argument> list : user.getMind().getProducedDomains().get(this).get(tag)) {
+                    if (isEqualsArguments(list)) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    public void setProduced(List<Argument> args) {
-        if (!user.getMind().getProducedDomains().containsKey(this)) {
-            user.getMind().getProducedDomains().put(this, new HashSet<>());
-        }
-        if (!isProduced(args)) {
-            try {
-                user.getMind().getProducedDomains().get(this).add(convertArguments(args));
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
-        }
-    }
+//    public void setProduced(int tag, List<Argument> args) {
+//        if (!user.getMind().getProducedDomains().containsKey(this)) {
+//            user.getMind().getProducedDomains().put(this, new HashSet<>());
+//        }
+//        if (!isProduced(args)) {
+//            try {
+//                user.getMind().getProducedDomains().get(this).add(convertArguments(args));
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
+//        }
+//    }
+//
+//    public boolean isProduced(List<Argument> args) {
+//        if (user.getMind().getProducedDomains().containsKey(this)) {
+//            for (List<Argument> list : user.getMind().getProducedDomains().get(this)) {
+//                if (isEqualsArguments(args, list)) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+//
 
-    public boolean isProduced(List<Argument> args) {
-        if (user.getMind().getProducedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getProducedDomains().get(this)) {
-                if (isEqualsArguments(args, list)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void setProduced() {
+    public void setProduced(int tag) {
         if (!user.getMind().getProducedDomains().containsKey(this)) {
-            user.getMind().getProducedDomains().put(this, new HashSet<>());
+            user.getMind().getProducedDomains().put(this, new HashMap<>());
         }
-        if (!isProduced()) {
+        if (!user.getMind().getProducedDomains().get(this).containsKey(tag)) {
+            user.getMind().getProducedDomains().get(this).put(tag, new HashSet<>());
+        }
+        if (!isProduced(tag)) {
             try {
-                user.getMind().getProducedDomains().get(this).add(convertArguments());
+                user.getMind().getProducedDomains().get(this).get(tag).add(convertArguments());
             } catch (ParametersIncompleteException e) {
 //                e.printStackTrace();
             }

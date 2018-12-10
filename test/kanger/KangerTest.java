@@ -1035,7 +1035,6 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
     @org.junit.Test
     public void set04_12() throws ParseErrorException, RuntimeErrorException {
 
@@ -1086,6 +1085,43 @@ public class KangerTest {
 
     }
 
+    @org.junit.Test
+    public void set04_13() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.query("?$x $y num(x) && num(y) && x * y = 12;");
+        showResult(true);
+        if (!exists("x", 2.0) || !exists("y", 6.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 3.0) || !exists("y", 4.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 4.0) || !exists("y", 3.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 6.0) || !exists("y", 2.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (mind.getValues().getValues("x").size() != 4) {
+            fail("Expected x 4 solves");
+        }
+        if (mind.getValues().getValues("y").size() != 4) {
+            fail("Expected y 4 solves");
+        }
+
+        System.out.println("OK");
+        System.out.println("====================================================");
+
+//        if (mind.getLog().size() > 0) {
+//            for (LogEntry log : mind.getLog().getRoot()) {
+//                System.out.println(log.getRecord());
+//            }
+////            System.out.println();
+//        }
+
+    }
 
     @org.junit.Test
     public void set05_01() throws ParseErrorException, RuntimeErrorException {
