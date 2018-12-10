@@ -1,9 +1,14 @@
 package kanger.factory;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.primitives.Predicate;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
@@ -19,11 +24,18 @@ public class PredicateFactory {
 
     public PredicateFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(PredicateFactory base) {
-        root = base.root;
-        lastID = base.lastID;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+        } else {
+            root = null;
+            lastID = 0;
+        }
+        stack.clear();
         mark();
     }
 
@@ -81,10 +93,11 @@ public class PredicateFactory {
     }
 
     public void clear() {
-        while(stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getPredicates());
+        } else {
+            transaction(null);
         }
-        ;
     }
 
     private void mark() {

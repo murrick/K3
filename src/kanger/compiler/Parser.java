@@ -52,6 +52,7 @@ public class Parser {
             new Operation("<", "_lr", 12, 2, 0, false, false),
             new Operation(">=", "_ge", 12, 2, 0, false, false),
             new Operation(">", "_gr", 12, 2, 0, false, false),
+            new Operation("match", "", 12, 2, 0, false, false),
 
             /* 13 */
             new Operation("==", "_eq", 13, 2, 0, false, false),

@@ -18,7 +18,6 @@ public class TValueFactory {
     private TValue root = null;
     private Map<TVariable, Long> current = new HashMap<>();
     private long lastID = 0;
-    private long lastTag = 0;
 
     private Stack<Object[]> stack = new Stack<>();
 
@@ -26,11 +25,19 @@ public class TValueFactory {
 
     public TValueFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(TValueFactory base) {
-        root = base.root;
-        lastID = base.lastID;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+        } else {
+            root = null;
+            lastID = 0;
+        }
+        current.clear();
+        stack.clear();
         mark();
     }
 
@@ -182,10 +189,11 @@ public class TValueFactory {
     }
 
     public void clear() {
-        while (stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getTValues());
+        } else {
+            transaction(null);
         }
-        ;
     }
 
     public void mark() {

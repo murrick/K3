@@ -1010,13 +1010,9 @@ public class Screen {
                     final int read = isr.read(cbuf);
                     StringBuffer buf = new StringBuffer(new String(cbuf).replace("\r\n", "\r"));
                     isr.close();
-//                    mind.setText(buf);
-//                    mind.setChanged(false);
+
                     mind.setSourceFileName(line);
-//                    mind.release();
-                    //TODO: Надо это?
                     boolean res = mind.compile(buf.toString());
-                    //mind.getAnalyser().analiser(true);
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                         System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                     }

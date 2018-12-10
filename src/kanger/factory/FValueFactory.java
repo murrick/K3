@@ -21,11 +21,18 @@ public class FValueFactory {
 
     public FValueFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(FValueFactory base) {
-        root = base.root;
-        lastID = base.lastID;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+        } else {
+            root = null;
+            lastID = 0;
+        }
+        stack.clear();
         mark();
     }
 
@@ -104,10 +111,11 @@ public class FValueFactory {
     }
 
     public void clear() {
-        while (stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getFValues());
+        } else {
+            transaction(null);
         }
-        ;
     }
 
     public void mark() {

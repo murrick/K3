@@ -23,12 +23,20 @@ public class DatabaseFactory {
 
     public DatabaseFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(DatabaseFactory base) {
-        root = base.root;
-        lastID = base.lastID;
-        lastTag = base.lastTag;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+            lastTag = base.lastTag;
+        } else {
+            root = null;
+            lastID = 0;
+            lastTag = 0;
+        }
+        stack.clear();
         mark();
     }
 
@@ -160,8 +168,10 @@ public class DatabaseFactory {
     }
 
     public void clear() {
-        while (stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getDatabase());
+        } else {
+            transaction(null);
         }
     }
 

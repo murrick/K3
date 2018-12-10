@@ -127,13 +127,14 @@ public class Mind {
         domains = new DomainFactory(user);                          // Список доменов
         rights = new RightFactory(user);                             // Список правил
         trees = new TreeFactory(user);                                // Список секвенций
-        library = new LibraryStore(user);                            // Системная библиотека функций и предикатов
 
         tVars = new TVariableFactory(user);                      // t-переменные
         tValues = new TValueFactory(user);                          // Подставленные значения
 
         functions = new FunctionFactory(user);                    // Функции
         fValues = new FValueFactory(user);                          // Решения функций
+
+        library = new LibraryStore(user);                            // Системная библиотека функций и предикатов
 
         hypotesis = new HypotesisStore(user);                                // Список гипотез
         excluded = new HypotesisStore(user);                                // Список исключенных гипотез
