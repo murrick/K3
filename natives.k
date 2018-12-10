@@ -22,9 +22,6 @@
 !@x @y father(x,y) -> male(x), parent(x,y);
 !@x @y mother(x,y) -> femaile(x), parent(x,y);
 
-!@x @y child(x,y) ->
-    parent(y,x);
-
 !@x @y daughter(x,y) -> female(x), child(x,y);
 !@x @y son(x,y) -> male(x), child(x,y);
 * Дочь всегда женского пола, сын – мужского.

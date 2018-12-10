@@ -244,7 +244,7 @@ public class Predicates {
 
         //TODO: Добавить ret значение 2 для всех заполненных и совпадающих полей
         {
-            put("match(2)", new SysOp(LibMode.PREDICATE, "match", 2, new IRunnable() {
+            put("_match(2)", new SysOp(LibMode.PREDICATE, "_match", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
                     List<Argument> arg = ((Domain) o).getArguments();
