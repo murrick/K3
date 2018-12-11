@@ -552,26 +552,27 @@ public class Screen {
 //        return str;
 //    }
     //
-    public static void showCauses(Mind mind, Domain s, int level) {
+    public static void showCauses(Mind mind, Domain d, int level) {
         //ПРЕДОХРАНИТЕЛЬ
         if (level > 20) {
             return;
         }
 
-        Set<Domain> list = s.getCauses();
         String indent = "";
         for (int i = 0; i < level; ++i) {
             indent += "\t";
         }
-        if (!list.isEmpty()) {
-            for (Domain d : list) {
-//                d.apply(s);
-                System.out.printf("\t    %sRight: %s\n", indent, d.getRight().getOrig());
-                System.out.printf("\t    %sCause: %s\n", indent, d.toString());
-                showCauses(mind, d, level + 1);
+
+        Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
+        if (dest != null) {
+            for (Cause c : dest.getCauses()) {
+                System.out.printf("\t    %sRight: %s\n", indent, c.getR().getOrig().replaceAll("(.*)\n(.*)", " "));
+                System.out.printf("\t    %sCause: %s\n", indent, c.getD().toString());
+                showCauses(mind, c.getD(), level + 1);
             }
         }
     }
+
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
         if (tIndex >= tvars.size()) {

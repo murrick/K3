@@ -3,12 +3,15 @@ package kanger.primitives;
 import kanger.User;
 import kanger.enums.Enums;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Record implements Comparable<Record> {
     private Domain domain = null;
     private long id = -1;
     private Record next = null;
     private int tag = -1;
-    private boolean query = false;
+    private Set<Cause> causes = new HashSet<>();
 
     private User user = null;
 
@@ -65,12 +68,21 @@ public class Record implements Comparable<Record> {
         this.tag = tag;
     }
 
-    public boolean isQuery() {
-        return query;
+    //    public boolean isQuery() {
+//        return query;
+//    }
+//
+//    public void setQuery() {
+//        this.query = true;
+//    }
+//
+
+    public Set<Cause> getCauses() {
+        return causes;
     }
 
-    public void setQuery() {
-        this.query = true;
+    public void addCause(Right r, Domain d) {
+        causes.add(new Cause(r, d));
     }
 
     @Override

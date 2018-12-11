@@ -1041,7 +1041,7 @@ public class Kanger {
 //        mind.compile("!a(A,12); !a(B,37);");
 //        mind.query("?$x $y a(x, y) && y >= 12;");
 
-//        mind.compile(text);
+        mind.compile(text);
         Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.release();

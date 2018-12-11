@@ -58,6 +58,7 @@ public class Linker {
             saveF = user.getMind().getFValues().getRoot();
 
             user.getMind().getProducedDomains().clear();
+            user.getMind().getUsedDomains().clear();
 
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
@@ -76,16 +77,10 @@ public class Linker {
                         }
                         if (calcFunctions(t, logging)) {
                             result = true;
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                            }
                         }
 
                         if (linkDatabase(t, waiters, logging)) {
                             result = true;
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                            }
                         }
                         return result;
                     }
@@ -218,6 +213,7 @@ public class Linker {
         }
         if (applied) {
             master.setExcluded(slave.getArguments());
+            slave.setUsed();
             if (logging) {
                 user.getMind().pushDebugLevel();
                 user.getMind().setDebugLevel(user.getMind().getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
@@ -234,12 +230,12 @@ public class Linker {
     private boolean linkDatabase(Tree tree, Set<Domain> waiters, boolean logging) {
 
         boolean result = false;
-        boolean occurrs = false;
+        boolean occurs = false;
         if (checkSystem(tree, logging)) {
 
             Set<Domain> excluded = new HashSet<>();
             Set<Domain> calculated = new HashSet<>();
-            Set<Domain> candidades = new HashSet<>();
+            Set<Domain> candidates = new HashSet<>();
             Set<Domain> assumed = new HashSet<>();
             Set<Domain> stored = new HashSet<>();
 
@@ -268,21 +264,21 @@ public class Linker {
                     calculated.add(d);
                 } else if (d.isSystem() || !d.isComplete()) {
                     excluded.clear();
-                    candidades.clear();
+                    candidates.clear();
                     break;
                 } else if (d.isExcluded()) {
                     excluded.add(d);
                 } else {
-                    candidades.add(d);
+                    candidates.add(d);
                 }
                 if (d.isStored()) {
                     stored.add(d);
                 }
             }
 
-            if (candidades.size() == 1) {
-                Domain d = candidades.toArray(new Domain[]{})[0];
-                occurrs = true;
+            if (candidates.size() == 1) {
+                Domain d = candidates.toArray(new Domain[]{})[0];
+                occurs = true;
                 if (!d.isStored()) {
                     result = true;
                     d.setProduced(user.getMind().getDatabase().getTag());
@@ -290,8 +286,8 @@ public class Linker {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                     }
                 }
-            } else if (!excluded.isEmpty() && candidades.isEmpty() && stored.isEmpty()) {
-                occurrs = true;
+            } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
+                occurs = true;
                 for (Domain d : excluded) {
                     if (!d.isStored()) {
                         result = true;
@@ -302,7 +298,7 @@ public class Linker {
                     }
                 }
             } else if (!calculated.isEmpty() && tree.getSequence().size() == calculated.size()) {
-                occurrs = true;
+                occurs = true;
                 for (Domain d : calculated) {
                     if (!d.isStored()) {
                         result = true;
@@ -314,21 +310,20 @@ public class Linker {
                 }
             }
 
-
-            if (!occurrs && !assumed.isEmpty() && tree.getSequence().size() > 1) {
-                candidades.clear();
+            if (!occurs && !assumed.isEmpty() && tree.getSequence().size() > 1) {
+                candidates.clear();
                 excluded.clear();
                 for (Domain d : tree.getSequence()) {
                     if (d.isComplete() && !d.isCalculated() && !d.isSystem() && !assumed.contains(d)) {
                         if (!d.isExcluded()) {
-                            candidades.add(d);
+                            candidates.add(d);
                         } else {
                             excluded.add(d);
                         }
                     }
                 }
-                if (candidades.size() == 1 && !excluded.isEmpty()) {
-                    Domain d = candidades.toArray(new Domain[]{})[0];
+                if (candidates.size() == 1 && !excluded.isEmpty()) {
+                    Domain d = candidates.toArray(new Domain[]{})[0];
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced(user.getMind().getDatabase().getTag());
@@ -341,6 +336,9 @@ public class Linker {
         }
         if (result) {
             user.getMind().getDatabase().incTag();
+            if (logging) {
+                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            }
         }
 
         return result;
@@ -370,6 +368,16 @@ public class Linker {
                         x.getDomain().setCalculated();
                     }
                     x.setTag(tags.getKey());
+                    for (TValue v : x.getDomain().getTValues(true)) {
+                        for (TValue.Solve s : v.getSolves()) {
+                            if (s.getSrc().isUsed()) {
+                                Record r = user.getMind().getDatabase().find(s.getSrc().getPredicate(), s.getSrc().isAntc(), s.getSrc().getArguments());
+                                if(r != null) {
+                                    x.addCause(v.getTVar().getRight(), r.getDomain());
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -398,6 +406,9 @@ public class Linker {
             }
         }
 
+        if (result && logging) {
+            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+        }
         return result;
     }
 
@@ -414,7 +425,6 @@ public class Linker {
                         break;
                     }
                 }
-
 
                 if (res == 0) {
                     if (d.isAntc()) {
