@@ -166,7 +166,7 @@ public class Parser {
 
             /* double character operators */
             for (i = 0; i < ops.length; ++i) {
-                if (ops[i].getName().length() > 1 && ops[i].getName().charAt(0) == ch && ops[i].getName().charAt(1) == c) {
+                if (ops[i].getName().length() == 2 && ops[i].getName().charAt(0) == ch && ops[i].getName().charAt(1) == c) {
                     line += (char) c;
                     break;
                 }
@@ -175,7 +175,7 @@ public class Parser {
 
                 /* single character operations */
                 for (i = 0; i < ops.length; ++i) {
-                    if (ops[i].getName().charAt(0) == ch) {
+                    if (ops[i].getName().length() == 2 && ops[i].getName().charAt(0) == ch) {
                         --pos;
                         break;
                     }

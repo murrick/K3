@@ -368,16 +368,17 @@ public class Linker {
                         x.getDomain().setCalculated();
                     }
                     x.setTag(tags.getKey());
-                    for (TValue v : x.getDomain().getTValues(true)) {
-                        for (TValue.Solve s : v.getSolves()) {
-                            if (s.getSrc().isUsed()) {
-                                Record r = user.getMind().getDatabase().find(s.getSrc().getPredicate(), s.getSrc().isAntc(), s.getSrc().getArguments());
-                                if(r != null) {
-                                    x.addCause(v.getTVar().getRight(), r.getDomain());
-                                }
-                            }
-                        }
-                    }
+                    
+//                    for (TValue v : d.getTValues(true)) {
+//                        for (TValue.Solve s : v.getSolves()) {
+//                            if (s.getSrc().isUsed()) {
+//                                Record r = user.getMind().getDatabase().find(s.getSrc().getPredicate(), s.getSrc().isAntc(), s.getSrc().getArguments());
+//                                if(r != null) {
+//                                    x.addCause(v.getTVar().getRight(), r.getDomain());
+//                                }
+//                            }
+//                        }
+//                    }
                 }
             }
         }

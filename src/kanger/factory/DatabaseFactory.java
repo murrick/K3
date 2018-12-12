@@ -82,15 +82,16 @@ public class DatabaseFactory {
             if (arg != null) {
                 list = new ArrayList<>();
                 for (Argument t : arg) {
-                    if (t.isTSet()) {
-                        TValue v = t.getT().getCurrent();
-                        if (isQuery) {
-                            v.setQuery();
+                    if (isQuery) {
+                        if (t.isTSet()) {
+                            TValue v = t.getT().getCurrent();                       
+                            v.setQuery();                     
+                            list.add(new Argument(v));
+                        } else if (t.isFSet()) {
+                            list.add(new Argument(t.getF().getCurrent()));
+                        } else {
+                            list.add(new Argument(t.getValue()));
                         }
-                        list.add(new Argument(v));
-
-                    } else if (t.isFSet()) {
-                        list.add(new Argument(t.getF().getCurrent()));
                     } else {
                         list.add(new Argument(t.getValue()));
                     }
@@ -125,13 +126,13 @@ public class DatabaseFactory {
         for (Record p = root; p != null; p = p.getNext()) {
             Domain x = p.getDomain();
             if (x.isAntc() == antc
-                    && x.getPredicate() == pred
-                    && x.getPredicate().getRange() == pred.getRange()) {
+                && x.getPredicate() == pred
+                && x.getPredicate().getRange() == pred.getRange()) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {
                     if (!x.get(i).isEmpty()
-                            && !arg.get(i).isEmpty()
-                            && x.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                        && !arg.get(i).isEmpty()
+                        && x.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
                         break;
                     }
 

@@ -779,7 +779,7 @@ public class Analiser {
                 result = true;
             } else {
                 for (Record q = p.getNext(); q != null; q = q.getNext()) {
-                    if (p.getDomain().equalsSolve(q.getDomain())) {
+                    if (p.getDomain().equalsBase(q.getDomain()) && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
 //                    Set<Domain> sequence = new HashSet<>();
 
