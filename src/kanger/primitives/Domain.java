@@ -370,11 +370,11 @@ public class Domain {
         return list;
     }
 
-    private boolean isEqualsArguments(List<Argument> params) {
+    public boolean isEqualsArguments(List<Argument> params) {
         return isEqualsArguments(arguments, params);
     }
 
-    private boolean isEqualsArguments(List<Argument> solves, List<Argument> params) {
+    public boolean isEqualsArguments(List<Argument> solves, List<Argument> params) {
         for (int i = 0; i < predicate.getRange(); ++i) {
             if (!solves.get(i).isEmpty() && !params.get(i).isEmpty() && solves.get(i).getValue().getId() != params.get(i).getValue().getId()) {
                 return false;
@@ -804,6 +804,38 @@ public class Domain {
         return user;
     }
 
+    public boolean isIntersected(Domain d) {
+        List <TValue> tValues = getTValues(true);
+        if(tValues.isEmpty()) {
+            return false;
+        } else {
+            boolean found = false;
+            for (TValue v : tValues) {
+                for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                    Argument a = d.get(i);
+                    if (a.isEmpty()) {
+                        return false;
+                    } else {
+                        if (a.getValue().getId() == v.getValue().getId()) {
+                            for (TValue.Solve s : v.getSolves()) {
+                                if (s.getSrc().getPredicate().getId() == d.getPredicate().getId() && s.getIndex() == i) {
+                                    found = true;
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+//                    if (found) {
+//                        break;
+//                    }
+                }
+            }
+//            if (!found) {
+//                return false;
+//            }
+            return true;
+        }
+    }
 //    public int getValOrder(int i) {
 //    }
 }

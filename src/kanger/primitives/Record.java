@@ -3,7 +3,9 @@ package kanger.primitives;
 import kanger.User;
 import kanger.enums.Enums;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class Record implements Comparable<Record> {
@@ -11,7 +13,7 @@ public class Record implements Comparable<Record> {
     private long id = -1;
     private Record next = null;
     private int tag = -1;
-    private Set<Cause> causes = new HashSet<>();
+    private Map<Right, Set<Record>> causes = new HashMap<>();
 
     private User user = null;
 
@@ -77,12 +79,8 @@ public class Record implements Comparable<Record> {
 //    }
 //
 
-    public Set<Cause> getCauses() {
+    public Map<Right, Set<Record>> getCauses() {
         return causes;
-    }
-
-    public void addCause(Right r, Domain d) {
-        causes.add(new Cause(r, d));
     }
 
     @Override
