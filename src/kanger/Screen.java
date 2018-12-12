@@ -566,9 +566,13 @@ public class Screen {
         Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
         if (dest != null) {
             for (Cause c : dest.getCauses()) {
-                System.out.printf("\t    %sRight: %s\n", indent, c.getR().getOrig().replaceAll("(.*)\n(.*)", " "));
+//                if(c.getR().isGenerated()) {
+//                    System.out.println("....");
+//                } else {
+                System.out.printf("\t    %sRight: %s\n", indent, c.getR().toString().replaceAll("(.*)\n(.*)", " "));
                 System.out.printf("\t    %sCause: %s\n", indent, c.getD().toString());
                 showCauses(mind, c.getD(), level + 1);
+//                }
             }
         }
     }

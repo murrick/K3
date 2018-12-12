@@ -53,6 +53,8 @@ public class Linker {
 
         do {
 
+            Map<Domain, Set<Cause>> causesMap = new HashMap<>();
+
             saveR = user.getMind().getDatabase().getRoot();
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
@@ -60,11 +62,14 @@ public class Linker {
             user.getMind().getProducedDomains().clear();
             user.getMind().getUsedDomains().clear();
 
+            Set<Cause> causes = new HashSet<>();
+
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
                 final Tree t = tree;
                 SortedSet<TVariable> tvars = new TreeSet<>();
                 tvars.addAll(tree.getTVariables(true));
+
 
                 rotateVariables(tvars, logging, new IRunnable() {
                     @Override
@@ -72,14 +77,14 @@ public class Linker {
                         boolean result = false;
                         boolean logging = (boolean) o;
 
-                        if (linkDomains(t, logging)) {
+                        if (linkDomains(t, causes, logging)) {
                             result = true;
                         }
-                        if (calcFunctions(t, logging)) {
+                        if (calcFunctions(t, causes, logging)) {
                             result = true;
                         }
 
-                        if (linkDatabase(t, waiters, logging)) {
+                        if (linkDatabase(t, waiters, causes, causesMap, logging)) {
                             result = true;
                         }
                         return result;
@@ -87,7 +92,7 @@ public class Linker {
                 });
             }
 
-            updateDatabase(logging);
+            updateDatabase(causesMap, logging);
 
 
         } while (saveR != user.getMind().getDatabase().getRoot()
@@ -128,7 +133,7 @@ public class Linker {
         return result;
     }
 
-    private boolean linkDomains(Tree treeSlave, boolean logging) {
+    private boolean linkDomains(Tree treeSlave, Set<Cause> causes, boolean logging) {
 
         boolean result = false;
         if (treeSlave.getSequence().size() == 1) {
@@ -185,8 +190,8 @@ public class Linker {
                             if (success) {
                                 user.getMind().getTValues().commit();
                                 user.getMind().getFValues().commit();
-                                markExcluded(substMaster, master, slave, logging);
-                                markExcluded(substSlave, slave, master, logging);
+                                markExcluded(substMaster, master, slave, causes, logging);
+                                markExcluded(substSlave, slave, master, causes, logging);
                             } else {
                                 user.getMind().getTValues().release();
                                 user.getMind().getFValues().release();
@@ -200,20 +205,22 @@ public class Linker {
         return result;
     }
 
-    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, boolean logging) {
-        boolean applied = false;
+    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Set<Cause> causes, boolean logging) {
+//        boolean applied = false;
+        Right r = null;
         for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
             if (subst[i] != null && (subst[i].addSolve(i, master, slave) || !master.isExcluded(slave.getArguments()))) {
-                applied = true;
+                r = subst[i].getTVar().getRight();
+//                applied = true;
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
                 }
 
             }
         }
-        if (applied) {
+        if (r != null) {
             master.setExcluded(slave.getArguments());
-            slave.setUsed();
+            causes.add(new Cause(r, slave));
             if (logging) {
                 user.getMind().pushDebugLevel();
                 user.getMind().setDebugLevel(user.getMind().getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
@@ -224,10 +231,32 @@ public class Linker {
                 user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
         }
-        return applied;
+        return r != null;
     }
 
-    private boolean linkDatabase(Tree tree, Set<Domain> waiters, boolean logging) {
+    private void updateCauses(Domain d, Set<Cause> causes, Map<Domain, Set<Cause>> causesMap) {
+        if (!causesMap.containsKey(d)) {
+            causesMap.put(d, new HashSet<>());
+        }
+        for (Cause c : causes) {
+            if (c.getR().getId() == d.getRight().getId()) {
+                boolean found = false;
+                for (TValue dv : d.getTValues(true)) {
+                    for (TValue.Solve s : dv.getSolves()) {
+                        if (s.getSrc().getId() == c.getD().getId()) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (found) {
+                    causesMap.get(d).add(c);
+                }
+            }
+        }
+    }
+
+    private boolean linkDatabase(Tree tree, Set<Domain> waiters, Set<Cause> causes, Map<Domain, Set<Cause>> causesMap, boolean logging) {
 
         boolean result = false;
         boolean occurs = false;
@@ -282,6 +311,7 @@ public class Linker {
                 if (!d.isStored()) {
                     result = true;
                     d.setProduced(user.getMind().getDatabase().getTag());
+                    updateCauses(d, causes, causesMap);
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                     }
@@ -292,6 +322,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced(user.getMind().getDatabase().getTag());
+                        updateCauses(d, causes, causesMap);
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
                         }
@@ -303,6 +334,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced(user.getMind().getDatabase().getTag());
+                        updateCauses(d, causes, causesMap);
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
                         }
@@ -327,6 +359,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced(user.getMind().getDatabase().getTag());
+                        updateCauses(d, causes, causesMap);
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
                         }
@@ -344,7 +377,7 @@ public class Linker {
         return result;
     }
 
-    private boolean updateDatabase(boolean logging) {
+    private boolean updateDatabase(Map<Domain, Set<Cause>> causesMap, boolean logging) {
         boolean result = false;
         for (Map.Entry<Domain, Map<Integer, Set<List<Argument>>>> e : user.getMind().getProducedDomains().entrySet()) {
             Domain d = e.getKey();
@@ -368,7 +401,10 @@ public class Linker {
                         x.getDomain().setCalculated();
                     }
                     x.setTag(tags.getKey());
-                    
+                    if (causesMap.containsKey(d)) {
+                        x.getCauses().addAll(causesMap.get(d));
+                    }
+
 //                    for (TValue v : d.getTValues(true)) {
 //                        for (TValue.Solve s : v.getSolves()) {
 //                            if (s.getSrc().isUsed()) {
@@ -389,7 +425,7 @@ public class Linker {
     }
 
 
-    public boolean calcFunctions(Tree master, boolean logging) {
+    public boolean calcFunctions(Tree master, Set<Cause> causes, boolean logging) {
         boolean result = false;
 
         if (!master.getFunctions().isEmpty()) {
