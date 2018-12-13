@@ -243,7 +243,7 @@ public class Linker {
         System.out.println("STOR: " + d);
         for (TValue v : d.getTValues(true)) {
             System.out.println("\t---- Right:" + v.getTVar().getRight().toString().replaceAll("\n", " "));
-            for (TValue.Solve s : v.getSolves()) {
+            for (Cause s : v.getCauses()) {
                 //Record r = user.getMind().getDatabase().find(s.getSrc());
                 //if (r != null) {
                 boolean found = false;
@@ -287,7 +287,7 @@ public class Linker {
             } else {
                 set = causes.get(v.getTVar().getRight());
             }
-            for (TValue.Solve s : v.getSolves()) {
+            for (Cause s : v.getCauses()) {
                 Record r = user.getMind().getDatabase().find(s.getSrc());
                 if (r != null) {
                     boolean found = false;

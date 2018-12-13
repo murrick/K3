@@ -18,7 +18,7 @@ public class TValue implements IValue, Comparable<TValue> {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Set<TValue.Solve> solves = new HashSet<>();
+    private Set<Cause> causes = new HashSet<>();
 //    private List<Domain> srcSolves = new ArrayList<>();
 //    private List<Domain> dstSolves = new ArrayList<>();
 //    private List<Integer> posSolves = new ArrayList<>();
@@ -65,13 +65,13 @@ public class TValue implements IValue, Comparable<TValue> {
         return value;
     }
 
-    public Set<Solve> getSolves() {
-        return solves;
+    public Set<Cause> getCauses() {
+        return causes;
     }
 
 //    public Set<Domain> getSrcSolves() {
 //        Set<Domain> set = new HashSet<>();
-//        for(Solve s : solves) {
+//        for(Cause s : causes) {
 //            set.add(s.getSrc());
 //        }
 //        return set;
@@ -79,7 +79,7 @@ public class TValue implements IValue, Comparable<TValue> {
 //
 //    public Set<Domain> getDstSolves() {
 //        Set<Domain> set = new HashSet<>();
-//        for(Solve s : solves) {
+//        for(Cause s : causes) {
 //            set.add(s.getDst());
 //        }
 //        return set;
@@ -87,11 +87,11 @@ public class TValue implements IValue, Comparable<TValue> {
 
 
     public boolean addSolve(int index, Domain dst, Domain src) {
-        TValue.Solve s = new TValue.Solve(index, dst, src);
-        if (solves.contains(s)) {
+        Cause s = new Cause(index, dst, src);
+        if (causes.contains(s)) {
             return false;
         } else {
-            solves.add(s);
+            causes.add(s);
             return true;
         }
     }
@@ -280,68 +280,6 @@ public class TValue implements IValue, Comparable<TValue> {
     @Override
     public int compareTo(TValue o) {
         return (int) (tVar.getId() == o.getTVar().getId() ? id - o.getId() : tVar.getId() - o.getTVar().getId());
-    }
-
-    public class Solve {
-        private Domain src = null;
-        private Domain dst = null;
-        private int index = -1;
-
-        public Solve(int index, Domain dst, Domain src) {
-            this.index = index;
-            this.dst = dst;
-            this.src = src;
-        }
-
-        public Domain getSrc() {
-            return src;
-        }
-
-        public void setSrc(Domain src) {
-            this.src = src;
-        }
-
-        public Domain getDst() {
-            return dst;
-        }
-
-        public void setDst(Domain dst) {
-            this.dst = dst;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public void setIndex(int index) {
-            this.index = index;
-        }
-
-
-        @Override
-        public int hashCode() {
-            StringBuffer buffer = new StringBuffer();
-            buffer.append(this.src.getId());
-            buffer.append(this.dst.getId());
-            buffer.append(this.index);
-            return buffer.toString().hashCode();
-        }
-
-//        @Override
-//        public int hashCode(){
-//            return toString().hashCode();
-//        }
-
-        @Override
-        public boolean equals(Object o) {
-            return o != null
-                    && o instanceof Solve
-                    && src != null && dst != null
-                    && ((Solve) o).getSrc() != null && ((Solve) o).getDst() != null
-                    && src.getId() == ((Solve) o).getSrc().getId()
-                    && dst.getId() == ((Solve) o).getDst().getId()
-                    && index == ((Solve) o).getIndex();
-        }
     }
 
 }

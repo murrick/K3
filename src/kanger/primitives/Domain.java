@@ -117,7 +117,7 @@ public class Domain {
         Set<Domain> list = new HashSet<>();
         for (TValue t : getTValues(true)) {
             if (!t.isEmpty()) {
-                for (TValue.Solve s : t.getSolves()) {
+                for (Cause s : t.getCauses()) {
                     if (s.getDst().getId() != id) {
                         list.add(s.getSrc());
                     }
@@ -329,7 +329,7 @@ public class Domain {
     public boolean isDestFor(int index, Domain d) {
         if (index < arguments.size() && ((arguments.get(index).isTSet() && !arguments.get(index).getT().isEmpty()) || arguments.get(index).isVSet())) {
             TValue v = arguments.get(index).isVSet() ? arguments.get(index).getV() : arguments.get(index).getT().getCurrent();
-            for (TValue.Solve s : v.getSolves()) {
+            for (Cause s : v.getCauses()) {
                 if (s.getIndex() == index
                         && s.getDst().getId() == id
                         && s.getSrc().getId() == d.getId()) {
@@ -817,7 +817,7 @@ public class Domain {
                         return false;
                     } else {
                         if (a.getValue().getId() == v.getValue().getId()) {
-                            for (TValue.Solve s : v.getSolves()) {
+                            for (Cause s : v.getCauses()) {
                                 if (s.getSrc().getPredicate().getId() == d.getPredicate().getId() && s.getIndex() == i) {
                                     found = true;
                                     return true;
