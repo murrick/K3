@@ -55,7 +55,7 @@ public class Linker {
         TValue saveT;
         FValue saveF;
 
-        Set<Cause> causes = new HashSet<>();
+        final Set<Cause> causes = new HashSet<>();
 
         do {
 
