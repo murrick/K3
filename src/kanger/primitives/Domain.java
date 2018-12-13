@@ -178,7 +178,13 @@ public class Domain {
         return s;
     }
 
+    @Override
     public String toString() {
+        return toString(arguments);
+    }
+   
+    
+    public String toString(List<Argument> arguments) {
         String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
         Operation op = Parser.getOp(predicate.getName(), predicate.getRange());
         if (op == null) {
@@ -220,7 +226,7 @@ public class Domain {
             suffix += " " + id;
         }
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix += /*isDest() ||*/ isQuery() || isClosed() || /*isUsed() ||*/ isExcluded() || /*isProduced() ||*/ isStored() || isCalculated()
+            suffix += /*isDest() ||*/ isQuery(arguments) || isClosed(arguments) || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
                     ? " " +
                     //(isDest() ? "A" : "") +
                     (isQuery() ? "Q" : "") +
@@ -383,17 +389,17 @@ public class Domain {
         return true;
     }
 
-    public List<Argument> convertArguments() throws ParametersIncompleteException {
+    public List<Argument> convertArguments() {
         return convertArguments(arguments);
     }
 
-    public List<Argument> convertArguments(List<Argument> args) throws ParametersIncompleteException {
+    public List<Argument> convertArguments(List<Argument> args) {
         List<Argument> list = new ArrayList<>();
         for (int i = 0; i < predicate.getRange(); ++i) {
             try {
                 list.add(new Argument(args.get(i).getValue()));
             } catch (Exception x) {
-                throw new ParametersIncompleteException("Incomplete args: " + predicate.toString() + " : " + i);
+//                throw new ParametersIncompleteException("Incomplete args: " + predicate.toString() + " : " + i);
                 //System.out.println(i);
             }
         }
@@ -401,9 +407,13 @@ public class Domain {
     }
 
     public boolean isClosed() {
+        return isClosed(arguments);
+    }
+    
+    public boolean isClosed(List<Argument> aeguments) {
         if (user.getMind().getClosedDomains().containsKey(this)) {
             for (List<Argument> list : user.getMind().getClosedDomains().get(this)) {
-                if (isEqualsArguments(list)) {
+                if (isEqualsArguments(arguments,list)) {
                     return true;
                 }
             }
@@ -416,11 +426,11 @@ public class Domain {
             user.getMind().getClosedDomains().put(this, new HashSet<>());
         }
         if (!isClosed()) {
-            try {
+//            try {
                 user.getMind().getClosedDomains().get(this).add(convertArguments());
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
         }
     }
 
@@ -441,11 +451,11 @@ public class Domain {
             user.getMind().getUsedDomains().put(this, new HashSet<>());
         }
         if (!isUsed()) {
-            try {
+//            try {
                 user.getMind().getUsedDomains().get(this).add(convertArguments());
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
         }
     }
 
@@ -476,11 +486,11 @@ public class Domain {
             user.getMind().getExcludedDomains().put(this, new HashSet<>());
         }
         if (!isExcluded(args)) {
-            try {
+//            try {
                 user.getMind().getExcludedDomains().get(this).add(convertArguments(args));
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
         }
     }
 
@@ -489,11 +499,11 @@ public class Domain {
             user.getMind().getExcludedDomains().put(this, new HashSet<>());
         }
         if (!isExcluded()) {
-            try {
+//            try {
                 user.getMind().getExcludedDomains().get(this).add(convertArguments());
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
         }
     }
 
@@ -543,18 +553,22 @@ public class Domain {
             user.getMind().getProducedDomains().get(this).put(tag, new HashSet<>());
         }
         if (!isProduced(tag)) {
-            try {
+//            try {
                 user.getMind().getProducedDomains().get(this).get(tag).add(convertArguments());
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
         }
     }
 
-    public boolean isCalculated() {
+    public boolean isCalculated(){
+        return isCalculated(arguments);
+    }
+    
+    public boolean isCalculated(List<Argument> arguments) {
         if (user.getMind().getCalculatedDomains().containsKey(this)) {
             for (List<Argument> list : user.getMind().getCalculatedDomains().get(this)) {
-                if (isEqualsArguments(list)) {
+                if (isEqualsArguments(arguments, list)) {
                     return true;
                 }
             }
@@ -582,11 +596,11 @@ public class Domain {
             user.getMind().getCalculatedDomains().put(this, new HashSet<>());
         }
         if (!isCalculated()) {
-            try {
+//            try {
                 user.getMind().getCalculatedDomains().get(this).add(convertArguments());
-            } catch (ParametersIncompleteException e) {
-//                e.printStackTrace();
-            }
+//            } catch (ParametersIncompleteException e) {
+////                e.printStackTrace();
+//            }
         }
     }
 
@@ -640,13 +654,17 @@ public class Domain {
     }
 
     public boolean isQuery() {
+        return isQuery(arguments);
+    }
+    
+    public boolean isQuery(List<Argument> arguments) {
         if (right == null) {
             return false;
         }
         if (right.isQuery()) {
             return true;
         } else {
-            for (TVariable t : getTVariables(true)) {
+            for (TVariable t : Tools.getTVariables(arguments, true)) {
                 if (t.isQuery()) {
                     return true;
                 }
