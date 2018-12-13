@@ -58,7 +58,7 @@ public class Linker {
 
         do {
 
-            Map<Map<Domain, List<Argument>>, Map<Right, Set<Record>>> causesMap = new HashMap<>();
+            final Map<Map<Domain, List<Argument>>, Map<Right, Set<Map<Domain, List<Argument>>>>> causesMap = new HashMap<>();
 
             saveR = user.getMind().getDatabase().getRoot();
             saveT = user.getMind().getTValues().getRoot();
@@ -239,7 +239,7 @@ public class Linker {
         return r != null;
     }
 
-    private void updateCauses(Domain d, Map<Map<Domain, List<Argument>>, Map<Right, Set<Record>>> causesMap) {
+    private void updateCauses(Domain d, Map<Map<Domain, List<Argument>>, Map<Right, Set<Map<Domain, List<Argument>>>>> causesMap) {
         System.out.println("STOR: " + d);
         for (TValue v : d.getTValues(true)) {
             System.out.println("\t---- Right:" + v.getTVar().getRight().toString().replaceAll("\n", " "));
@@ -261,26 +261,26 @@ public class Linker {
         }
         System.out.println("--------------------------------------------");
 
-        Map<Right, Set<Record>> causes = null;
-        for (Map.Entry<Map<Domain, List<Argument>>, Map<Right, Set<Record>>> e : causesMap.entrySet()) {
+        Map<Right, Set<Map<Domain, List<Argument>>>> causes = null;
+        for (Map.Entry<Map<Domain, List<Argument>>, Map<Right, Set<Map<Domain, List<Argument>>>>> e : causesMap.entrySet()) {
             if (e.getKey().containsKey(d) && d.isEqualsArguments(e.getKey().get(d))) {
                 causes = e.getValue();
                 break;
             }
         }
         if (causes == null) {
-            try {
+//            try {
                 causes = new HashMap<>();
                 Map<Domain, List<Argument>> key = new HashMap<>();
                 key.put(d, d.convertArguments());
                 causesMap.put(key, causes);
-            } catch (ParametersIncompleteException e) {
-                e.printStackTrace();
-            }
+//            } catch (ParametersIncompleteException e) {
+//                e.printStackTrace();
+//            }
         }
 
         for (TValue v : d.getTValues(true)) {
-            Set<Record> set;
+            Set<Map<Domain, List<Argument>>> set;
             if (!causes.containsKey(v.getTVar().getRight())) {
                 set = new HashSet<>();
                 causes.put(v.getTVar().getRight(), set);
@@ -288,8 +288,8 @@ public class Linker {
                 set = causes.get(v.getTVar().getRight());
             }
             for (TValue.Solve s : v.getSolves()) {
-                Record r = user.getMind().getDatabase().find(s.getSrc());
-                if (r != null) {
+//                Record r = user.getMind().getDatabase().find(s.getSrc());
+//                if (r != null) {
                     boolean found = false;
                     for (Argument a : d.getArguments()) {
                         if (!a.isEmpty() && a.getValue().getId() == v.getValue().getId()) {
@@ -298,16 +298,18 @@ public class Linker {
                         }
                     }
                     if (found) {
-                        set.add(r);
+                        Map<Domain, List<Argument>> map = new HashMap<>();
+                        map.put(s.getSrc(), s.getSrc().convertArguments());
+                        set.add(map);
                     }
-                } else {
-                    System.out.println("!!!!!!!!!-------------" + s.getSrc());
-                }
+//                } else {
+//                    System.out.println("!!!!!!!!!-------------" + s.getSrc());
+//                }
             }
         }
     }
 
-    private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Map<Domain, List<Argument>>, Map<Right, Set<Record>>> causesMap, boolean logging) {
+    private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Map<Domain, List<Argument>>, Map<Right, Set<Map<Domain, List<Argument>>>>> causesMap, boolean logging) {
 
         boolean result = false;
         boolean occurs = false;
@@ -428,7 +430,7 @@ public class Linker {
         return result;
     }
 
-    private boolean updateDatabase(Map<Map<Domain, List<Argument>>, Map<Right, Set<Record>>> causesMap, boolean logging) {
+    private boolean updateDatabase(Map<Map<Domain, List<Argument>>, Map<Right, Set<Map<Domain, List<Argument>>>>> causesMap, boolean logging) {
         boolean result = false;
         for (Map.Entry<Domain, Map<Integer, Set<List<Argument>>>> e : user.getMind().getProducedDomains().entrySet()) {
             Domain d = e.getKey();
@@ -453,8 +455,8 @@ public class Linker {
                     }
                     x.setTag(tags.getKey());
 
-                    Map<Right, Set<Record>> map = null;
-                    for (Map.Entry<Map<Domain, List<Argument>>, Map<Right, Set<Record>>> z : causesMap.entrySet()) {
+                    Map<Right, Set<Map<Domain, List<Argument>>>> map = null;
+                    for (Map.Entry<Map<Domain, List<Argument>>, Map<Right, Set<Map<Domain, List<Argument>>>>> z : causesMap.entrySet()) {
                         if (z.getKey().containsKey(d) && d.isEqualsArguments(z.getKey().get(d))) {
                             map = z.getValue();
                             break;
@@ -464,14 +466,14 @@ public class Linker {
                     if (map != null) {
                         x.getCauses().clear();
 
-                        for (Map.Entry<Right, Set<Record>> z : map.entrySet()) {
+                        for (Map.Entry<Right, Set<Map<Domain, List<Argument>>>> z : map.entrySet()) {
                             if (!x.getCauses().containsKey(z.getKey())) {
                                 x.getCauses().put(z.getKey(), new HashSet<>());
                             }
                             if (logging) {
                                 user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + z.getKey().toString().replaceAll("(.*)\n(.*)", " "));
                             }
-                            for (Record r : z.getValue()) {
+                            for (Map<Domain, List<Argument>> r : z.getValue()) {
                                 if (d.isIntersected(r.getDomain())) {
                                     x.getCauses().get(z.getKey()).add(r);
                                     if (logging) {
