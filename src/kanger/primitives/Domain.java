@@ -20,13 +20,14 @@ import java.util.*;
 public class Domain {
 
     private Predicate predicate = null;                         // Ссылка на описатель предиката
-    private List<Argument> arguments = new ArrayList<>();       // Массив подстановочных переменных
+    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
     private boolean antc = true;                                // ! или ?
     private Right right;                                        // Ссылка на правило
     private long id = -1;                                       // id домена
     private Domain next = null;                                 // Следующий элемент
 
     private Stack<List<TValue>> tStack = new Stack<>();
+    private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
 //    private Set<Domain> parents = new HashSet<>();              // Родительские домены для БД
 
     private User user = null;
@@ -113,21 +114,43 @@ public class Domain {
 //        mind.getQueuedDomains().createTVar(id);
 //    }
 
-    public Set<Domain> getCauses() {
-        Set<Domain> list = new HashSet<>();
-        for (TValue t : getTValues(true)) {
-            if (!t.isEmpty()) {
-                for (Cause s : t.getCauses()) {
-                    if (s.getDst().getId() != id) {
-                        list.add(s.getSrc());
-                    }
-                }
-            }
-        }
-        return list;
+//    public Set<Domain> getCauses() {
+//        Set<Domain> list = new HashSet<>();
+//        for (TValue t : arguments.getTValues(true)) {
+//            if (!t.isEmpty()) {
+//                for (Cause s : t.getCauses()) {
+//                    if (s.getDst().getId() != id) {
+//                        list.add(s.getSrc());
+//                    }
+//                }
+//            }
+//        }
+//        return list;
+//    }
+
+
+    public SortedSet<Cause> getCauses() {
+        return causes.get(arguments);
     }
 
-    public List<Argument> getArguments() {
+//    public SortedSet<Cause> getCauses(ArgList arguments) {
+//        return causes.get(arguments);
+//    }
+
+    public void addCauses(Collection<Cause> causes) {
+        if (!this.causes.containsKey(arguments)) {
+            this.causes.put(arguments.convert(), new TreeSet<>());
+        }
+        for(Cause c : causes) {
+            if(c.getDst().getRight().getId() == right.getId()
+                    && c.getArguments().equalsBase(c.getSrc().getArguments())
+                    && c.getArguments().equalsBase(c.getDst().getArguments())) {
+                this.causes.get(arguments).add(c);
+            }
+        }
+    }
+
+    public ArgList getArguments() {
         return arguments;
     }
 
@@ -182,9 +205,9 @@ public class Domain {
     public String toString() {
         return toString(arguments);
     }
-   
-    
-    public String toString(List<Argument> arguments) {
+
+
+    public String toString(ArgList arguments) {
         String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
         Operation op = Parser.getOp(predicate.getName(), predicate.getRange());
         if (op == null) {
@@ -309,7 +332,7 @@ public class Domain {
 //    }
 
     public boolean contains(TVariable t) {
-        for (TVariable x : getTVariables(true)) {
+        for (TVariable x : arguments.getTVariables(true)) {
             if (x.getId() == t.getId()) {
                 return true;
             }
@@ -358,14 +381,14 @@ public class Domain {
 //        // return mind.getSources().containsKey(this) && !mind.getSources().createCVar(this).isEmpty();
 //    }
 
-    public List<TVariable> getTVariables(boolean full) {
-        return Tools.getTVariables(arguments, full);
-    }
-
-    public List<TValue> getTValues(boolean full) {
-        return Tools.getTValues(arguments, full);
-    }
-
+    //    public List<TVariable> getTVariables(boolean full) {
+//        return Tools.getTVariables(arguments, full);
+//    }
+//
+//    public List<TValue> getTValues(boolean full) {
+//        return Tools.getTValues(arguments, full);
+//    }
+//
     public List<Function> getFunctions() {
         List<Function> list = new ArrayList<>();
         for (Argument a : arguments) {
@@ -376,44 +399,15 @@ public class Domain {
         return list;
     }
 
-    public boolean isEqualsArguments(List<Argument> params) {
-        return isEqualsArguments(arguments, params);
-    }
-
-    public boolean isEqualsArguments(List<Argument> solves, List<Argument> params) {
-        for (int i = 0; i < predicate.getRange(); ++i) {
-            if (!solves.get(i).isEmpty() && !params.get(i).isEmpty() && solves.get(i).getValue().getId() != params.get(i).getValue().getId()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public List<Argument> convertArguments() {
-        return convertArguments(arguments);
-    }
-
-    public List<Argument> convertArguments(List<Argument> args) {
-        List<Argument> list = new ArrayList<>();
-        for (int i = 0; i < predicate.getRange(); ++i) {
-            try {
-                list.add(new Argument(args.get(i).getValue()));
-            } catch (Exception x) {
-//                throw new ParametersIncompleteException("Incomplete args: " + predicate.toString() + " : " + i);
-                //System.out.println(i);
-            }
-        }
-        return list;
-    }
 
     public boolean isClosed() {
         return isClosed(arguments);
     }
-    
-    public boolean isClosed(List<Argument> aeguments) {
+
+    public boolean isClosed(ArgList arguments) {
         if (user.getMind().getClosedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getClosedDomains().get(this)) {
-                if (isEqualsArguments(arguments,list)) {
+            for (ArgList list : user.getMind().getClosedDomains().get(this)) {
+                if (arguments.equalsBase(list)) {
                     return true;
                 }
             }
@@ -427,7 +421,7 @@ public class Domain {
         }
         if (!isClosed()) {
 //            try {
-                user.getMind().getClosedDomains().get(this).add(convertArguments());
+            user.getMind().getClosedDomains().get(this).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -437,8 +431,8 @@ public class Domain {
 
     public boolean isUsed() {
         if (user.getMind().getUsedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getUsedDomains().get(this)) {
-                if (isEqualsArguments(list)) {
+            for (ArgList list : user.getMind().getUsedDomains().get(this)) {
+                if (arguments.equalsBase(list)) {
                     return true;
                 }
             }
@@ -452,17 +446,17 @@ public class Domain {
         }
         if (!isUsed()) {
 //            try {
-                user.getMind().getUsedDomains().get(this).add(convertArguments());
+            user.getMind().getUsedDomains().get(this).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
         }
     }
 
-    public boolean isExcluded(List<Argument> args) {
+    public boolean isExcluded(ArgList args) {
         if (user.getMind().getExcludedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getExcludedDomains().get(this)) {
-                if (isEqualsArguments(args, list)) {
+            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
+                if (args.equalsBase(list)) {
                     return true;
                 }
             }
@@ -472,8 +466,8 @@ public class Domain {
 
     public boolean isExcluded() {
         if (user.getMind().getExcludedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getExcludedDomains().get(this)) {
-                if (isEqualsArguments(list)) {
+            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
+                if (arguments.equalsBase(list)) {
                     return true;
                 }
             }
@@ -481,13 +475,13 @@ public class Domain {
         return false;
     }
 
-    public void setExcluded(List<Argument> args) {
+    public void setExcluded(ArgList args) {
         if (!user.getMind().getExcludedDomains().containsKey(this)) {
             user.getMind().getExcludedDomains().put(this, new HashSet<>());
         }
         if (!isExcluded(args)) {
 //            try {
-                user.getMind().getExcludedDomains().get(this).add(convertArguments(args));
+            user.getMind().getExcludedDomains().get(this).add(args.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -500,7 +494,7 @@ public class Domain {
         }
         if (!isExcluded()) {
 //            try {
-                user.getMind().getExcludedDomains().get(this).add(convertArguments());
+            user.getMind().getExcludedDomains().get(this).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -510,8 +504,8 @@ public class Domain {
     public boolean isProduced(int tag) {
         if (user.getMind().getProducedDomains().containsKey(this)) {
             if (user.getMind().getProducedDomains().get(this).containsKey(tag)) {
-                for (List<Argument> list : user.getMind().getProducedDomains().get(this).get(tag)) {
-                    if (isEqualsArguments(list)) {
+                for (ArgList list : user.getMind().getProducedDomains().get(this).get(tag)) {
+                    if (arguments.equalsBase(list)) {
                         return true;
                     }
                 }
@@ -520,7 +514,7 @@ public class Domain {
         return false;
     }
 
-//    public void setProduced(int tag, List<Argument> args) {
+//    public void setProduced(int tag, ArgList args) {
 //        if (!user.getMind().getProducedDomains().containsKey(this)) {
 //            user.getMind().getProducedDomains().put(this, new HashSet<>());
 //        }
@@ -533,9 +527,9 @@ public class Domain {
 //        }
 //    }
 //
-//    public boolean isProduced(List<Argument> args) {
+//    public boolean isProduced(ArgList args) {
 //        if (user.getMind().getProducedDomains().containsKey(this)) {
-//            for (List<Argument> list : user.getMind().getProducedDomains().get(this)) {
+//            for (ArgList list : user.getMind().getProducedDomains().get(this)) {
 //                if (isEqualsArguments(args, list)) {
 //                    return true;
 //                }
@@ -554,21 +548,21 @@ public class Domain {
         }
         if (!isProduced(tag)) {
 //            try {
-                user.getMind().getProducedDomains().get(this).get(tag).add(convertArguments());
+            user.getMind().getProducedDomains().get(this).get(tag).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
         }
     }
 
-    public boolean isCalculated(){
+    public boolean isCalculated() {
         return isCalculated(arguments);
     }
-    
-    public boolean isCalculated(List<Argument> arguments) {
+
+    public boolean isCalculated(ArgList arguments) {
         if (user.getMind().getCalculatedDomains().containsKey(this)) {
-            for (List<Argument> list : user.getMind().getCalculatedDomains().get(this)) {
-                if (isEqualsArguments(arguments, list)) {
+            for (ArgList list : user.getMind().getCalculatedDomains().get(this)) {
+                if (arguments.equalsBase(list)) {
                     return true;
                 }
             }
@@ -597,7 +591,7 @@ public class Domain {
         }
         if (!isCalculated()) {
 //            try {
-                user.getMind().getCalculatedDomains().get(this).add(convertArguments());
+            user.getMind().getCalculatedDomains().get(this).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -608,7 +602,7 @@ public class Domain {
         return user.getMind().getDatabase().find(this) != null;
     }
 
-    public boolean isStored(List<Argument> args) {
+    public boolean isStored(ArgList args) {
         return user.getMind().getDatabase().find(predicate, antc, args) != null;
     }
 
@@ -644,27 +638,27 @@ public class Domain {
 //        return occurrs;
 //    }
 
-    public boolean isPairedWith(Domain d) {
-        for (TVariable t : getTVariables(false)) {
-            if (d.getTVariables(false).contains(t)) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    public boolean isPairedWith(Domain d) {
+//        for (TVariable t : getTVariables(false)) {
+//            if (d.getTVariables(false).contains(t)) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     public boolean isQuery() {
         return isQuery(arguments);
     }
-    
-    public boolean isQuery(List<Argument> arguments) {
+
+    public boolean isQuery(ArgList arguments) {
         if (right == null) {
             return false;
         }
         if (right.isQuery()) {
             return true;
         } else {
-            for (TVariable t : Tools.getTVariables(arguments, true)) {
+            for (TVariable t : arguments.getTVariables(true)) {
                 if (t.isQuery()) {
                     return true;
                 }
@@ -775,7 +769,7 @@ public class Domain {
         apply(p.getArguments());
     }
 
-    public void apply(List<Argument> list) {
+    public void apply(ArgList list) {
         for (int i = 0; i < predicate.getRange(); ++i) {
             if (arguments.get(i).isTSet()) {
                 if (list.get(i).isEmpty()) {
@@ -802,7 +796,7 @@ public class Domain {
 
     public void pushValues() {
         List<TValue> list = new ArrayList<>();
-        for (TVariable t : getTVariables(true)) {
+        for (TVariable t : arguments.getTVariables(true)) {
             list.add(t.getCurrent());
         }
         tStack.push(list);
@@ -810,7 +804,7 @@ public class Domain {
 
     public void popValues() {
         List<TValue> list = tStack.pop();
-        List<TVariable> ts = getTVariables(true);
+        List<TVariable> ts = arguments.getTVariables(true);
         for (int i = 0; i < ts.size(); ++i) {
             if (list.get(i) != null) {
                 ts.get(i).setCurrent(list.get(i));
@@ -822,9 +816,10 @@ public class Domain {
         return user;
     }
 
+
     public boolean isIntersected(Domain d) {
-        List <TValue> tValues = getTValues(true);
-        if(tValues.isEmpty()) {
+        List<TValue> tValues = arguments.getTValues(true);
+        if (tValues.isEmpty()) {
             return false;
         } else {
             boolean found = false;

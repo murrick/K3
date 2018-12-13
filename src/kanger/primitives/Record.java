@@ -13,7 +13,7 @@ public class Record implements Comparable<Record> {
     private long id = -1;
     private Record next = null;
     private int tag = -1;
-    private Map<Right, Set<Record>> causes = new HashMap<>();
+    private Set<Cause> causes = new HashSet<>();
 
     private User user = null;
 
@@ -79,7 +79,7 @@ public class Record implements Comparable<Record> {
 //    }
 //
 
-    public Map<Right, Set<Record>> getCauses() {
+    public Set<Cause> getCauses() {
         return causes;
     }
 

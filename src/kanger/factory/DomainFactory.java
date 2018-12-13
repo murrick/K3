@@ -1,10 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Predicate;
-import kanger.primitives.Right;
+import kanger.primitives.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -65,7 +62,7 @@ public class DomainFactory {
     }
 
 
-    public Domain add(Predicate pred, boolean antc, List<Argument> arg, Right r) {
+    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
@@ -86,7 +83,7 @@ public class DomainFactory {
         }
     }
 
-    public Domain find(Predicate pred, boolean antc, List<Argument> arg, Right r) {
+    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) {
         for (Domain p = root; p != null; p = p.getNext()) {
             if (p.isAntc() == antc
                     && p.getPredicate() == pred

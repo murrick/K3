@@ -15,7 +15,7 @@ import java.util.List;
 public class FValue implements IValue {
     private long id = -1;
     private Term value = null;
-    private List<Argument> condition = new ArrayList<>();
+    private ArgList condition = new ArgList();
     private Function function = null;
 
     private FValue next = null;
@@ -204,7 +204,7 @@ public class FValue implements IValue {
         return condition.get(index);
     }
 
-    public List<Argument> getCondition() {
+    public ArgList getCondition() {
         return condition;
     }
 

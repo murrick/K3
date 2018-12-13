@@ -50,7 +50,7 @@ public class Compiler {
 //        if (t.getRight() == null) {
 ////            for (Tree t = tree; t != null; t = t.getRight()) {
 //            for (Tree v = t; v != null; v = v.getDown()) {
-//                List<Argument> arg = new ArrayList<>();
+//                ArgList arg = new ArrayList<>();
 //                if (mind.getAnalyser().fillSolve(arg, v.getD(), v.getD().isAntc()) != 0) {
 //                    mind.getAnalyser().addBase(arg, v.getD(), false /*v.getD().getPredicate(), v.getD().isAntc()*/);
 //                }
@@ -177,7 +177,7 @@ public class Compiler {
         Domain d = new Domain(user);
         d.setRight(user.getMind().getRights().getRoot());
 
-        List<Argument> arg = new ArrayList<>();
+        ArgList arg = new ArgList();
         Predicate pred = null;
         if (root.isSystem()) {
             // системный предикат
@@ -209,7 +209,7 @@ public class Compiler {
         return t;
     }
 
-    private void parseArgs(Domain d, List<Argument> arg, PTree root, int level, Map<String, Argument> replacements) {
+    private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) {
         int s;
 
         if (root == null) {

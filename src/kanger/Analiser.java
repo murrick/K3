@@ -767,7 +767,7 @@ public class Analiser {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
                 int i = 0;
-                for (TValue v : p.getDomain().getTValues(true)) {
+                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
                     user.getMind().getValues().add(++i, v);
                 }
 //                }

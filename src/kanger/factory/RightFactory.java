@@ -1,10 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Right;
-import kanger.primitives.Tree;
+import kanger.primitives.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -139,7 +136,7 @@ public class RightFactory {
         Right r = add();
         Tree t = user.getMind().getTrees().add();
         r.getTree().add(t);
-        List<Argument> arg = new ArrayList<>();
+        ArgList arg = new ArgList();
         for (Argument a : d.getArguments()) {
             arg.add(new Argument(a.getValue()));
         }

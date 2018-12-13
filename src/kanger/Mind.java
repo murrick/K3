@@ -61,11 +61,11 @@ public class Mind {
     private final Set<Tree> excludedTrees = new HashSet<>();
     private HypotesisStore excluded = null;                                // Список исключенных гипотез
 
-    private final Map<Domain, Set<List<Argument>>> closedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Argument>>> usedDomains = new HashMap<>();
-    private final Map<Domain, Map<Integer, Set<List<Argument>>>> producedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Argument>>> calculatedDomains = new HashMap<>();
-    private final Map<Domain, Set<List<Argument>>> excludedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> closedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
+    private final Map<Domain, Map<Integer, Set<ArgList>>> producedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
     private Linker linker = null;                                         // Линкер
 
 
@@ -607,19 +607,19 @@ public class Mind {
         return tVariableLinks;
     }
 
-    public Map<Domain, Set<List<Argument>>> getUsedDomains() {
+    public Map<Domain, Set<ArgList>> getUsedDomains() {
         return usedDomains;
     }
 
-    public Map<Domain, Set<List<Argument>>> getExcludedDomains() {
+    public Map<Domain, Set<ArgList>> getExcludedDomains() {
         return excludedDomains;
     }
 
-    public Map<Domain, Map<Integer, Set<List<Argument>>>> getProducedDomains() {
+    public Map<Domain, Map<Integer, Set<ArgList>>> getProducedDomains() {
         return producedDomains;
     }
 
-    public Map<Domain, Set<List<Argument>>> getCalculatedDomains() {
+    public Map<Domain, Set<ArgList>> getCalculatedDomains() {
         return calculatedDomains;
     }
 
@@ -631,7 +631,7 @@ public class Mind {
         return usedTrees;
     }
 
-    public Map<Domain, Set<List<Argument>>> getClosedDomains() {
+    public Map<Domain, Set<ArgList>> getClosedDomains() {
         return closedDomains;
     }
 

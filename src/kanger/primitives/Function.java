@@ -23,7 +23,7 @@ public class Function implements IValue {
 
     private Term name = null;
     private int range = 0;
-    private final List<Argument> arguments = new ArrayList<>();     // Параметры
+    private final ArgList arguments = new ArgList();     // Параметры
     private boolean busy = false;                       // Предотвращение бесконечной рекурсии
 
     private long id = -1;
@@ -118,19 +118,19 @@ public class Function implements IValue {
         this.range = range;
     }
 
-//    public void setL(List<Argument> list) {
+//    public void setL(ArgList list) {
 //        line = list;
 //    }
 
-//    public void setA(List<Argument> list) {
+//    public void setA(ArgList list) {
 //        arguments = list;
 //    }
 
-    //    public List<Argument> getArguments() {
+    //    public ArgList getArguments() {
 //        return arguments;
 //    }
 //
-    public List<Argument> getArguments() {
+    public ArgList getArguments() {
         return arguments;
     }
 
@@ -352,7 +352,7 @@ public class Function implements IValue {
 //    }
 
     public boolean isCalculable() {
-        return Tools.getTVariables(arguments, true).size() > 0;
+        return arguments.getTVariables(true).size() > 0;
     }
 
 //    public boolean isCalculated() {

@@ -154,10 +154,12 @@ public class ValuesStore {
 
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
-        for (SortedSet<TValue> s : root.values()) {
-            for (TValue t : s) {
-                if (name == null || name.equals(t.getTVar().getName())) {
-                    list.add(t.getValue());
+        if(root != null) {
+            for (SortedSet<TValue> s : root.values()) {
+                for (TValue t : s) {
+                    if (name == null || name.equals(t.getTVar().getName())) {
+                        list.add(t.getValue());
+                    }
                 }
             }
         }

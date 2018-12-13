@@ -564,13 +564,11 @@ public class Screen {
         }
 
         Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
-        if (dest != null) {
-            for (Map.Entry<Right, Set<Record>> c : dest.getCauses().entrySet()) {
-                System.out.printf("\t\t%sRight: %s\n", indent, c.getKey().toString().replaceAll("\n", " ").replaceAll("  ", " "));
-                for (Record x : c.getValue()) {
-                    System.out.printf("\t\t%sCause: %s\n", indent, x.getDomain().toString());
-                    showCauses(mind, x.getDomain(), level + 1);
-                }
+        if (dest != null && !dest.getCauses().isEmpty()) {
+            System.out.printf("\t\t%sRight: %s\n", indent, dest.getCauses().toArray(new Cause[]{})[0].getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
+            for (Cause c : dest.getCauses()) {
+                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString(c.getArguments()));
+                showCauses(mind, c.getSrc(), level + 1);
             }
         }
     }
@@ -612,7 +610,7 @@ public class Screen {
             for (Domain s : set) {
 //                if (!s.isDestFor()) {
 //                    mind.getSubstituted().clear();
-                showPredRecurse(mind, s.getTVariables(true), 0, s, showCauses);
+                showPredRecurse(mind, s.getArguments().getTVariables(true), 0, s, showCauses);
 //                }
             }
         }

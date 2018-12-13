@@ -8,6 +8,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Created by murray on 13.12.16.
@@ -18,7 +20,7 @@ public class TValue implements IValue, Comparable<TValue> {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Set<Cause> causes = new HashSet<>();
+    private SortedSet<Cause> causes = new TreeSet<>();
 //    private List<Domain> srcSolves = new ArrayList<>();
 //    private List<Domain> dstSolves = new ArrayList<>();
 //    private List<Integer> posSolves = new ArrayList<>();
@@ -65,7 +67,7 @@ public class TValue implements IValue, Comparable<TValue> {
         return value;
     }
 
-    public Set<Cause> getCauses() {
+    public SortedSet<Cause> getCauses() {
         return causes;
     }
 
@@ -86,7 +88,17 @@ public class TValue implements IValue, Comparable<TValue> {
 //    }
 
 
-    public boolean addSolve(int index, Domain dst, Domain src) {
+    public Cause getCause(int index, Domain dst, Domain src) {
+        Cause s = new Cause(index, dst, src);
+        for(Cause x : causes) {
+            if(s.equals(x)) {
+                return x;
+            }
+        }
+        return null;
+    }
+
+    public boolean addCause(int index, Domain dst, Domain src) {
         Cause s = new Cause(index, dst, src);
         if (causes.contains(s)) {
             return false;

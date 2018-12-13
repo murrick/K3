@@ -73,29 +73,35 @@ public class DatabaseFactory {
     }
 
 
-    public Record add(Predicate pred, boolean antc, boolean isQuery, List<Argument> arg) {
+    public Record add(Predicate pred, boolean antc, boolean isQuery, ArgList arg) {
         Record p = find(pred, antc, arg);
         if (p != null) {
             return p;
         } else {
-            List<Argument> list = null;
+            ArgList list = null;
             if (arg != null) {
-                list = new ArrayList<>();
-                for (Argument t : arg) {
-                    if (isQuery) {
-                        if (t.isTSet()) {
-                            TValue v = t.getT().getCurrent();                       
-                            v.setQuery();                     
-                            list.add(new Argument(v));
-                        } else if (t.isFSet()) {
-                            list.add(new Argument(t.getF().getCurrent()));
-                        } else {
-                            list.add(new Argument(t.getValue()));
-                        }
-                    } else {
-                        list.add(new Argument(t.getValue()));
-                    }
+                if(isQuery) {
+                    list = arg.convert();
+                    for(TValue t : list.getTValues(true)) t.setQuery();
+                } else {
+                    list = arg.convertBase();
                 }
+//                list = new ArgList();
+//                for (Argument t : arg) {
+//                    if (isQuery) {
+//                        if (t.isTSet()) {
+//                            TValue v = t.getT().getCurrent();
+//                            v.setQuery();
+//                            list.add(new Argument(v));
+//                        } else if (t.isFSet()) {
+//                            list.add(new Argument(t.getF().getCurrent()));
+//                        } else {
+//                            list.add(new Argument(t.getValue()));
+//                        }
+//                    } else {
+//                        list.add(new Argument(t.getValue()));
+//                    }
+//                }
             }
             Right r = user.getMind().getRights().add();
             Tree t = user.getMind().getTrees().add();
@@ -122,7 +128,7 @@ public class DatabaseFactory {
         return find(d.getPredicate(), d.isAntc(), d.getArguments());
     }
 
-    public Record find(Predicate pred, boolean antc, List<Argument> arg) {
+    public Record find(Predicate pred, boolean antc, ArgList arg) {
         for (Record p = root; p != null; p = p.getNext()) {
             Domain x = p.getDomain();
             if (x.isAntc() == antc
@@ -240,7 +246,7 @@ public class DatabaseFactory {
     public Set<TVariable> getTVariables(boolean full) {
         Set<TVariable> set = new HashSet<>();
         for (Record d = root; d != null; d = d.getNext()) {
-            set.addAll(d.getDomain().getTVariables(full));
+            set.addAll(d.getDomain().getArguments().getTVariables(full));
         }
         return set;
     }
