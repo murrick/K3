@@ -154,21 +154,11 @@ public class Domain {
             } else {
                 this.causes.get(current).clear();
             }
-            int cnt = 0;
-//            for (Cause c : causes) {
-//                if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) == getPredicate().getRange()) {
-//                    this.causes.get(arguments).add(c);
-//                    ++cnt;
-//                }
-//            }
-//            if(cnt == 0) {
             for (Cause c : causes) {
                 if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
                     this.causes.get(arguments).add(c);
-                    ++cnt;
                 }
             }
-//            }
         }
     }
 
