@@ -12,7 +12,7 @@ public class Cause implements Comparable<Cause> {
         this.index = index;
         this.dst = dst;
         this.src = src;
-        this.arguments = src.getArguments().convert();
+        this.arguments = src.getArguments().convertBase();
     }
 
     public Domain getSrc() {

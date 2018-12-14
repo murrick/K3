@@ -130,23 +130,45 @@ public class Domain {
 
 
     public SortedSet<Cause> getCauses() {
-        return causes.get(arguments);
+        return causes.get(arguments.convertBase());
     }
 
 //    public SortedSet<Cause> getCauses(ArgList arguments) {
 //        return causes.get(arguments);
 //    }
 
-    public void addCauses(Collection<Cause> causes) {
-        if (!this.causes.containsKey(arguments)) {
-            this.causes.put(arguments.convert(), new TreeSet<>());
-        }
-        for(Cause c : causes) {
-            if(c.getDst().getRight().getId() == right.getId()
-                    && c.getArguments().equalsBase(c.getSrc().getArguments())
-                    && c.getArguments().equalsBase(c.getDst().getArguments())) {
-                this.causes.get(arguments).add(c);
+    private boolean sourceExists(Cause c) {
+        for (Cause x : causes.get(arguments)) {
+            if (x.getSrc().getPredicate().getId() == c.getSrc().getPredicate().getId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
+                return true;
             }
+        }
+        return false;
+    }
+
+    public void addCauses(Collection<Cause> causes) {
+        if (causes != null) {
+            ArgList current = arguments.convertBase();
+            if (!this.causes.containsKey(current)) {
+                this.causes.put(current, new TreeSet<>());
+            } else {
+                this.causes.get(current).clear();
+            }
+            int cnt = 0;
+//            for (Cause c : causes) {
+//                if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) == getPredicate().getRange()) {
+//                    this.causes.get(arguments).add(c);
+//                    ++cnt;
+//                }
+//            }
+//            if(cnt == 0) {
+            for (Cause c : causes) {
+                if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
+                    this.causes.get(arguments).add(c);
+                    ++cnt;
+                }
+            }
+//            }
         }
     }
 
@@ -330,6 +352,18 @@ public class Domain {
 //        }
 //        return success;
 //    }
+
+    public int getOverlaps(ArgList arg) {
+        Set<Long> ids = new HashSet<>();
+        for (Argument a : arguments) {
+            for (Argument b : arg) {
+                if (!a.isEmpty() && !b.isEmpty() && a.getValue().getId() == b.getValue().getId()) {
+                    ids.add(a.getValue().getId());
+                }
+            }
+        }
+        return ids.size();
+    }
 
     public boolean contains(TVariable t) {
         for (TVariable x : arguments.getTVariables(true)) {

@@ -575,30 +575,33 @@ public class Screen {
 
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
-        if (tIndex >= tvars.size()) {
+//        if (tIndex >= tvars.size()) {
             if (d.isStored() /*|| (d.isExcluded() && d.isQuery())*/) {
 //                d.recalculate();
+                if (showCauses) {
+                    System.out.println("\t-------------------------------------------");
+                }
                 System.out.printf("\t%s\n", d.toString());
                 if (showCauses) {
                     showCauses(mind, d, 0);
                 }
             }
-        } else {
-            TVariable t = tvars.get(tIndex);
-            TValue v = t.rewind();
-            if (v != null) {
-                do {
-//                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
-//                        mind.getSubstituted().createTVar(t);
-//                    if (!d.isDest()) {
-                    mind.getTValues().set(t, v);
-                    showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
-//                    }
-                } while ((v = t.next(v)) != null);
-            } else {
-                showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
-            }
-        }
+//        } else {
+//            TVariable t = tvars.get(tIndex);
+//            TValue v = t.rewind();
+//            if (v != null) {
+//                do {
+////                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
+////                        mind.getSubstituted().createTVar(t);
+////                    if (!d.isDest()) {
+//                    mind.getTValues().set(t, v);
+//                    showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
+////                    }
+//                } while ((v = t.next(v)) != null);
+//            } else {
+//                showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
+//            }
+//        }
     }
 
     public static void showPred(Mind mind, Predicate p, boolean showCauses) throws RuntimeErrorException {

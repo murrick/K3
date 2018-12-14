@@ -88,18 +88,18 @@ public class TValue implements IValue, Comparable<TValue> {
 //    }
 
 
-    public Cause getCause(int index, Domain dst, Domain src) {
-        Cause s = new Cause(index, dst, src);
-        for(Cause x : causes) {
-            if(s.equals(x)) {
-                return x;
-            }
-        }
-        return null;
-    }
-
-    public boolean addCause(int index, Domain dst, Domain src) {
-        Cause s = new Cause(index, dst, src);
+//    public Cause getCause(int index, Domain dst, Domain src) {
+//        Cause s = new Cause(index, dst, src);
+//        for(Cause x : causes) {
+//            if(s.equals(x)) {
+//                return x;
+//            }
+//        }
+//        return null;
+//    }
+//
+    public boolean addCause(Cause s) {
+//        Cause s = new Cause(index, dst, src);
         if (causes.contains(s)) {
             return false;
         } else {
