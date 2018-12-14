@@ -55,8 +55,6 @@ public class Linker {
         TValue saveT;
         FValue saveF;
 
-        final Set<Cause> causes = new HashSet<>();
-
         do {
 
             saveR = user.getMind().getDatabase().getRoot();
@@ -65,43 +63,45 @@ public class Linker {
 
             user.getMind().getProducedDomains().clear();
 
+            for (Right rt = user.getMind().getRights().getRoot(); rt != null; rt = rt.getNext()) {
 
-            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-
-                final Tree t = tree;
+                final Right r = rt;
                 SortedSet<TVariable> tvars = new TreeSet<>();
-                tvars.addAll(tree.getTVariables(true));
+                tvars.addAll(rt.getTVariables(true));
 
 
                 rotateVariables(tvars, logging, new IRunnable() {
-                    @Override
-                    public Object run(Object o) {
-                        boolean result = false;
-                        boolean logging = (boolean) o;
+                        @Override
+                        public Object run(Object o) {
+                            boolean result = false;
+                            boolean logging = (boolean) o;
+                            final Set<Cause> causes = new HashSet<>();
+                            
+                            for (Tree t : r.getTree()) {
 
+                                if (linkDomains(t, causes, logging)) {
+                                    result = true;
+                                }
+                                if (calcFunctions(t, causes, logging)) {
+                                    result = true;
+                                }
 
-                        if (linkDomains(t, causes, logging)) {
-                            result = true;
+                                if (linkDatabase(t, waiters, causes, logging)) {
+                                    result = true;
+                                }
+                            }
+
+                            return result;
                         }
-                        if (calcFunctions(t, causes, logging)) {
-                            result = true;
-                        }
-
-                        if (linkDatabase(t, waiters, causes, logging)) {
-                            result = true;
-                        }
-
-                        return result;
-                    }
-                });
+                    });
             }
 
             updateDatabase(logging);
 
 
         } while (saveR != user.getMind().getDatabase().getRoot()
-                || saveT != user.getMind().getTValues().getRoot()
-                || saveF != user.getMind().getFValues().getRoot()
+        || saveT != user.getMind().getTValues().getRoot()
+        || saveF != user.getMind().getFValues().getRoot()
         );
     }
 
@@ -158,8 +158,8 @@ public class Linker {
                             for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
 
                                 if (master.get(i).isTSet()
-                                        && !slave.get(i).isEmpty()
-                                        && master.getVarOrder(i) >= slave.getVarOrder(i)) {
+                                    && !slave.get(i).isEmpty()
+                                    && master.getVarOrder(i) >= slave.getVarOrder(i)) {
                                     TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
                                     if (s == null) {
                                         s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
@@ -170,8 +170,8 @@ public class Linker {
                                 }
 
                                 if (slave.get(i).isTSet()
-                                        && !master.get(i).isEmpty()
-                                        && slave.getVarOrder(i) >= master.getVarOrder(i)) {
+                                    && !master.get(i).isEmpty()
+                                    && slave.getVarOrder(i) >= master.getVarOrder(i)) {
                                     TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
                                     if (s == null) {
                                         s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
@@ -183,8 +183,8 @@ public class Linker {
 
                                 if (!applied) {
                                     if (master.get(i).isEmpty()
-                                            || slave.get(i).isEmpty()
-                                            || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                                        || slave.get(i).isEmpty()
+                                        || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
                                         success = false;
                                         break;
                                     } else {
@@ -269,7 +269,7 @@ public class Linker {
                         for (int i = 0; i < d.getPredicate().getRange(); ++i) {
                             if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {
                             } else if (master.get(i).isEmpty()
-                                    || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {
+                                       || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {
                                 success = false;
                                 break;
                             }
