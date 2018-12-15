@@ -62,12 +62,12 @@ public class Linker {
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
 
-
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
                 final Tree t = tree;
                 SortedSet<TVariable> tvars = new TreeSet<>();
                 tvars.addAll(tree.getTVariables(true));
+
 
                 rotateVariables(tvars, logging, new IRunnable() {
                     @Override
@@ -245,6 +245,7 @@ public class Linker {
             Set<Domain> excluded = new HashSet<>();
             Set<Domain> calculated = new HashSet<>();
             Set<Domain> candidades = new HashSet<>();
+            Set<Domain> stored = new HashSet<>();
             Set<Domain> assumed = new HashSet<>();
 
             for (Domain d : tree.getSequence()) {
@@ -279,6 +280,9 @@ public class Linker {
                 } else {
                     candidades.add(d);
                 }
+                if (d.isStored()) {
+                    stored.add(d);
+                }
             }
 
             if (candidades.size() == 1) {
@@ -301,7 +305,7 @@ public class Linker {
                         }
                     }
                 }
-            } else if (!excluded.isEmpty() && candidades.isEmpty()) {
+            } else if (!excluded.isEmpty() && candidades.isEmpty() && stored.isEmpty()) {
                 occurrs = true;
                 for (Domain d : excluded) {
                     if (!d.isStored()) {
