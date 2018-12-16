@@ -96,6 +96,8 @@ public class Kanger {
             for (Map.Entry<String, Double> e: list.entrySet()) {
                 System.out.println(e.getKey() + "\t" + e.getValue() + " sec");
             }
+            System.out.println("====================================================");
+            System.out.println("Success.");
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace(System.err);
