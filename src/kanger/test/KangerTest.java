@@ -1,5 +1,7 @@
-package kanger;
+package kanger.test;
 
+import kanger.Mind;
+import kanger.User;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Hypotese;

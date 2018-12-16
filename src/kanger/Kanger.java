@@ -8,9 +8,9 @@ import kanger.primitives.Record;
 import kanger.primitives.TValue;
 import kanger.primitives.Term;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -356,14 +356,14 @@ public class Kanger {
                         mind.query("?$x c(x);");
                         showResult(o, mind, true);
                         Term term = mind.getTerms().add("ooo");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
                         term = mind.getTerms().add("nnn");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
-                        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 2) {
+                        if (mind.getValues().getValues("x").size() != 2) {
                             fail(o + " Expected 2 solves");
                         }
                         System.out.println("OK");
@@ -394,18 +394,18 @@ public class Kanger {
                         mind.query("?$x d(x);");
                         showResult(o, mind, true);
                         Term term = mind.getTerms().add("ooo");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
                         term = mind.getTerms().add("nnn");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
                         term = mind.getTerms().add("v");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
-                        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 3) {
+                        if (mind.getValues().getValues("x").size() != 3) {
                             fail(o + " Expected 3 solves");
                         }
                         System.out.println("OK");
@@ -437,10 +437,10 @@ public class Kanger {
                         showResult(o, mind, true);
         /*
          Term term = mind.getTerms().add("nn");
-         if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+         if (!mind.getValues().getValues("x").contains(term)) {
          fail(o + " Expected: " + term);
          }
-         if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1) {
+         if (mind.getValues().getValues("x").size() != 1) {
          fail(o + "Expected1 solve");
          }
          */
@@ -473,13 +473,13 @@ public class Kanger {
                         showResult(o, mind, true);
         /*
          Term term = mind.getTerms().add("nn");
-         if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+         if (!mind.getValues().getValues("x").contains(term)) {
          fail(o + " Expected: " + term);
          }
-         if (!mind.getValues().getValues(mind.getTerms().add("y")).contains(term)) {
+         if (!mind.getValues().getValues("y").contains(term)) {
          fail(o + " Expected: " + term);
          }
-         if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1 || mind.getValues().getValues(mind.getTerms().add("y")).size() != 1) {
+         if (mind.getValues().getValues("x").size() != 1 || mind.getValues().getValues("y").size() != 1) {
          fail(o + "Expected2 solve");
          }
          */
@@ -512,16 +512,16 @@ public class Kanger {
                         showResult(o, mind, true);
         /*
          Term term = mind.getTerms().add("nn");
-         if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+         if (!mind.getValues().getValues("x").contains(term)) {
          fail(o + "Expectedx: " + term);
          }
-         if (!mind.getValues().getValues(mind.getTerms().add("y")).contains(term)) {
+         if (!mind.getValues().getValues("y").contains(term)) {
          fail(o + "Expectedy: " + term);
          }
          if (!mind.getValues().getValues(mind.getTerms().add("z")).contains(term)) {
          fail(o + "Expectedz: " + term);
          }
-         if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1 || mind.getValues().getValues(mind.getTerms().add("y")).size() != 1 || mind.getValues().getValues(mind.getTerms().add("z")).size() != 1) {
+         if (mind.getValues().getValues("x").size() != 1 || mind.getValues().getValues("y").size() != 1 || mind.getValues().getValues(mind.getTerms().add("z")).size() != 1) {
          fail(o + "Expected3 solve");
          }
          */
@@ -554,10 +554,10 @@ public class Kanger {
                         showResult(o, mind, true);
                         if (!mind.getValues().isEmpty()) {
                             Term term = mind.getTerms().add("nnn");
-                            if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                            if (!mind.getValues().getValues("x").contains(term)) {
                                 fail(o + " Expected x: " + term);
                             }
-                            if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1) {
+                            if (mind.getValues().getValues("x").size() != 1) {
                                 fail(o + " Expected 1 solve");
                             }
                             System.out.println("OK");
@@ -591,18 +591,18 @@ public class Kanger {
                         mind.query("?$x a(x) || d(x);");
                         showResult(o, mind, true);
                         Term term = mind.getTerms().add("nnn");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
                         term = mind.getTerms().add("ooo");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
                         term = mind.getTerms().add("v");
-                        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
+                        if (!mind.getValues().getValues("x").contains(term)) {
                             fail(o + " Expected: " + term);
                         }
-                        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 3) {
+                        if (mind.getValues().getValues("x").size() != 3) {
                             fail(o + " Expected 3 solves");
                         }
                         System.out.println("OK");
@@ -783,6 +783,47 @@ public class Kanger {
     public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
 
         Mind mind = new Mind(mindRoot);
+
+        kanger.test.KangerTest cls = new kanger.test.KangerTest();
+        try {
+            System.out.println("Init test system...");
+            Method setUp = cls.getClass().getDeclaredMethod("setUp");
+            setUp.setAccessible(true);
+            setUp.invoke(cls);
+
+            Map<String, Double> list = new TreeMap<>();
+            for (Method method : cls.getClass().getDeclaredMethods()) {
+                if (method.getName().startsWith("set_")) {
+                    list.put(method.getName(), 0.0);
+                }
+            }
+
+            System.out.println("Done.");
+            System.out.println("----------------------------------------------------");
+
+            for (String name : list.keySet()) {
+                System.out.println("Testing: " + name);
+                long t = System.currentTimeMillis();
+                Method method = cls.getClass().getDeclaredMethod(name);
+                method.setAccessible(true);
+                method.invoke(cls);
+                System.out.println("Timing: " + ((System.currentTimeMillis() - t) / 1000.0) + " sec");
+                System.out.println("====================================================");
+                list.put(name, ((System.currentTimeMillis() - t) / 1000.0));
+            }
+
+            for (Map.Entry<String, Double> e: list.entrySet()) {
+                System.out.println(e.getKey() + "\t" + e.getValue() + " sec");
+            }
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace(System.err);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace(System.err);
+        } catch (InvocationTargetException e) {
+            e.printStackTrace(System.err);
+        }
+
 
 //        new LibraryStrings(mind);
 //        new LibraryMath(mind);
@@ -1026,23 +1067,23 @@ public class Kanger {
 
 
 //        for (int i = 0; i < set01.size(); ++i) {
-//            Mind mind = (Mind) set01.get(i).run("set01_" + String.format("%02X", i + 1));
-//////            Screen.session(mind);
+//            set01.get(i).run("set01_" + String.format("%02X", i + 1));
+////            Screen.session(mind);
 //        }
-////
+//
 //        for (int i = 0; i < set02.size(); ++i) {
-//            Mind mind = (Mind) set02.get(i).run("set02_" + String.format("%02X", i + 1));
-//////            Screen.session(mind);
+//            set02.get(i).run("set02_" + String.format("%02X", i + 1));
+////            Screen.session(mind);
 //        }
-
+//
 
 //        Mind mind = (Mind) set01.get(9 - 1).run("set02_09");
 
 //        mind.compile("!a(A,12); !a(B,37);");
 //        mind.query("?$x $y a(x, y) && y >= 12;");
 
-        mind.compile(text);
-        Screen.session(mind);
+//        mind.compile(text);
+//        Screen.session(mind);
 
 //            mind = new Mind(mindRoot); set01_04(); mindRoot.release();
 
@@ -1069,7 +1110,7 @@ public class Kanger {
     }
 
     private static boolean exists(Mind mind, String name, Object o) {
-        for (Term t : mind.getValues().getValues(mind.getTerms().add(name))) {
+        for (Term t : mind.getValues().getValues(name)) {
             if (o.equals(t.getValue())) {
                 return true;
             }
