@@ -330,7 +330,7 @@ public class Kanger {
 //                "!d(v);");
 //        mind.query("?n(nnn);");
 
-//        Screen.session(mind);
+        Screen.session(mind);
 
 ////            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
 ////                    "!a(nnn);" +

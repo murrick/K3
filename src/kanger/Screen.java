@@ -25,8 +25,8 @@ import java.util.*;
 public class Screen {
 
     public static boolean LINE_EDITOR_ENABLE
-            = System.getProperties().getProperty("kanger.enable.line.editor") != null
-            && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
+    = System.getProperties().getProperty("kanger.enable.line.editor") != null
+    && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
 
     public static void session(Mind mind) {
         boolean stop = false;
@@ -78,7 +78,7 @@ public class Screen {
                             showCommonHelp();
                             break;
                         case 'R': {
-                            Mind m = mind;
+                                Mind m = mind;
 //                            int pos = 0;
 //                            while (line.substring(pos).contains("..")) {
 //                                int ps = line.indexOf("..");
@@ -88,11 +88,11 @@ public class Screen {
 //                                }
 //                            }
 //                            line.replace("/", "");
-                            showRights(m, line.charAt(0) != 'r');
-                        }
-                        break;
+                                showRights(m, line.charAt(0) != 'r');
+                            }
+                            break;
                         case 'B': {
-                            Mind m = mind;
+                                Mind m = mind;
 //                            int pos = 0;
 //                            while (line.substring(pos).contains("..")) {
 //                                int ps = line.indexOf("..");
@@ -102,9 +102,9 @@ public class Screen {
 //                                }
 //                            }
 //                            line.replace("/", "");
-                            showBase(m, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
-                        }
-                        break;
+                                showBase(m, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
+                            }
+                            break;
                         case 'F':
                             showFunctions(mind, line.charAt(0) != 'f');
                             break;
@@ -147,14 +147,14 @@ public class Screen {
                             }
                             break;
                         case 'C': {
-                            System.out.printf("Are you sure to clear workspace? [y/N]? ");
-                            String s = new Scanner(System.in).nextLine().toUpperCase();
-                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                mind.clear();
+                                System.out.printf("Are you sure to clear workspace? [y/N]? ");
+                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    mind.clear();
 //                                mind.release();
+                                }
                             }
-                        }
-                        break;
+                            break;
 //                        case 'E': {
 //                            System.out.printf("Are you sure to clear working memory? [y/N]? ");
 //                            String s = new Scanner(System.in).nextLine().toUpperCase();
@@ -164,9 +164,9 @@ public class Screen {
 //                            }
 //                        }
 //                        break;
-//                        case 'P':
-//                            saveSource(mind);
-//                            break;
+                        case 'P':
+                            saveSource(mind);
+                            break;
                         case 'G':
                             loadSource(mind);
                             break;
@@ -355,8 +355,8 @@ public class Screen {
 //    }
     public static void showCopyrigt(Mind mind) {
         System.out.printf("KANGER III, Version %s\n"
-                + "Copiryght (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
-                + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
+                          + "Copiryght (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
+                          + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
 //        System.out.printf("Context ID: %s\n", mind.getContextIdString());
     }
 
@@ -429,46 +429,46 @@ public class Screen {
 //    }
     public static void showOptionsHelp() {
         System.out.printf(
-                "Available OPTIONS:\n\n"
-                        + "   H[ELP]    - Get this message\n"
-                        + "\n"
-                        + "   R[IGHTS]  - Rights showed in logs\n"
-                        + "   V[ALUES]  - Values of vars and funcs showed in logs\n"
-                        + "   S[TATUS]  - Status of domains and trees showed in logs\n"
-                        + "\n"
-                        + "Use UPPERCASE letter for ON and LOWER for OFF.\n"
+            "Available OPTIONS:\n\n"
+            + "   H[ELP]    - Get this message\n"
+            + "\n"
+            + "   R[IGHTS]  - Rights showed in logs\n"
+            + "   V[ALUES]  - Values of vars and funcs showed in logs\n"
+            + "   S[TATUS]  - Status of domains and trees showed in logs\n"
+            + "\n"
+            + "Use UPPERCASE letter for ON and LOWER for OFF.\n"
         );
     }
 
     public static void showCommonHelp() {
         System.out.printf(
-                "Available KEYWORDS:\n\n"
-                        + "   H[ELP]    - Get this message\n"
-                        + "\n"
-                        + "   ?         - Check for Rights Collisions\n"
-                        + "   B[ASE]    - View DataBase contents\n"
-                        + "   R[IGHTS]  - View compiled-structured Rights list\n"
-                        + "   F[UNCS]   - View defined Functions list\n"
-                        + "   K[ILL]    - Remove right\n"
-                        + "   L[IST]    - View Hypothesis list after last work\n"
-                        + "   I[NSERT]  - Insert Hypothesis as right\n"
-                        + "   A[GAIN]   - Repeat last question\n"
-                        + "   X[PLAIN]  - Show explanation log\n"
-                        + "   S[OLVES]  - Show solves list\n"
-                        + "   V[ALUES]  - Show values list\n"
-                        //                        + "   TEXT    - Show source text\n"
-                        + "   C[LEAR]   - Clear workspace\n"
-                        + "   O[PTIONS] - Set workspace options\n"
-                        //                        + "   ERASE   - Clear all working memory\n"
-                        + "\n"
-                        //                        + "   PUT     - Save Source file\n"
-                        + "   G[ET]     - Load Source file from disk\n"
-                        + "   Z[IP]     - Save compiled code\n"
-                        + "   U[NZIP]   - Load compiled code from file\n"
-                        + "\n"
-                        + "   Q[UIT]    - Quit KANGER\n"
-                        + "\n"
-                        + "You can use just FIRST letter of keywords.\n"
+            "Available KEYWORDS:\n\n"
+            + "   H[ELP]    - Get this message\n"
+            + "\n"
+            + "   ?         - Check for Rights Collisions\n"
+            + "   B[ASE]    - View DataBase contents\n"
+            + "   R[IGHTS]  - View compiled-structured Rights list\n"
+            + "   F[UNCS]   - View defined Functions list\n"
+            + "   K[ILL]    - Remove right\n"
+            + "   L[IST]    - View Hypothesis list after last work\n"
+            + "   I[NSERT]  - Insert Hypothesis as right\n"
+            + "   A[GAIN]   - Repeat last question\n"
+            + "   X[PLAIN]  - Show explanation log\n"
+            + "   S[OLVES]  - Show solves list\n"
+            + "   V[ALUES]  - Show values list\n"
+            //                        + "   TEXT    - Show source text\n"
+            + "   C[LEAR]   - Clear workspace\n"
+            + "   O[PTIONS] - Set workspace options\n"
+            //                        + "   ERASE   - Clear all working memory\n"
+            + "\n"
+            //                        + "   PUT     - Save Source file\n"
+            + "   G[ET]     - Load Source file from disk\n"
+            + "   Z[IP]     - Save compiled code\n"
+            + "   U[NZIP]   - Load compiled code from file\n"
+            + "\n"
+            + "   Q[UIT]    - Quit KANGER\n"
+            + "\n"
+            + "You can use just FIRST letter of keywords.\n"
         );
     }
 
@@ -576,16 +576,16 @@ public class Screen {
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
 //        if (tIndex >= tvars.size()) {
-            if (d.isStored() /*|| (d.isExcluded() && d.isQuery())*/) {
+        if (d.isStored()) {
 //                d.recalculate();
-                if (showCauses) {
-                    System.out.println("\t-------------------------------------------");
-                }
-                System.out.printf("\t%s\n", d.toString());
-                if (showCauses) {
-                    showCauses(mind, d, 0);
-                }
+            if (showCauses) {
+                System.out.println("\t-------------------------------------------");
             }
+            System.out.printf("\t%s\n", d.toString());
+            if (showCauses) {
+                showCauses(mind, d, 0);
+            }
+        }
 //        } else {
 //            TVariable t = tvars.get(tIndex);
 //            TValue v = t.rewind();
@@ -759,12 +759,12 @@ public class Screen {
 //        int i = 0;
         for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
             System.out.printf("%sRight %03d%s: %s\n",
-                    showTree ? "\n --- " : "",
-                    r.getId(),
-                    r.isGenerated() || r.isQuery() ? " " +
-                            (r.isGenerated() ? "G" : "") +
-                            (r.isQuery() ? "Q" : "") : "",
-                    r.getOrig());
+                              showTree ? "\n --- " : "",
+                              r.getId(),
+                              r.isGenerated() || r.isQuery() ? " " +
+                              (r.isGenerated() ? "G" : "") +
+                              (r.isQuery() ? "Q" : "") : "",
+                              r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
                     int save = mind.getDebugLevel();
@@ -912,48 +912,49 @@ public class Screen {
         }
     }
 
-    //    public static boolean saveSource(Mind context) {
-//        Scanner scanner = new Scanner(System.in);
-//        if (context.getSourceFileName().isEmpty()) {
-//            context.setSourceFileName("context.k");
-//        }
-//        StringBuilder tmp = new StringBuilder(context.getText().toString().replace("\r", "\r\n"));
-//
-//        System.out.printf("Enter file name for save (%s): ", context.getSourceFileName());
-//        String line = scanner.nextLine();
-//        if (!line.isEmpty()) {
-//            context.setSourceFileName(line);
-//        } else {
-//            line = context.getSourceFileName();
-//        }
-//
-//        if (new File(line).exists()) {
-//            System.out.print("WARNING: File already exists. Overwrite [y/N] ? ");
-//            String ch = scanner.nextLine();
-//            if (!(ch.startsWith("y") || ch.startsWith("Y"))) {
-//                return false;
-//            }
-//        }
-//
-//        try {
-//            BufferedWriter f = new BufferedWriter(new FileWriter(new File(line)));
-//            f.write(tmp.toString());
-//            f.flush();
-//            f.close();
-//            context.setChanged(false);
-//
-//            System.out.printf("File %s saved\n", line);
-//            return true;
-//        } catch (IOException ex) {
-//            System.out.printf("ERROR: %s\n", ex);
-//            return false;
-//        }
-//    }
+    public static boolean saveSource(Mind context) {
+        Scanner scanner = new Scanner(System.in);
+        if (context.getSourceFileName().isEmpty()) {
+            context.setSourceFileName("context.k");
+        }
+        
+
+        System.out.printf("Enter file name for save (%s): ", context.getSourceFileName());
+        String line = scanner.nextLine();
+        if (!line.isEmpty()) {
+            context.setSourceFileName(line);
+        } else {
+            line = context.getSourceFileName();
+        }
+
+        if (new File(line).exists()) {
+            System.out.print("WARNING: File already exists. Overwrite [y/N] ? ");
+            String ch = scanner.nextLine();
+            if (!(ch.startsWith("y") || ch.startsWith("Y"))) {
+                return false;
+            }
+        }
+
+        try {
+            BufferedWriter f = new BufferedWriter(new FileWriter(new File(line)));
+            f.write("test");
+            f.flush();
+            f.close();
+            context.setChanged(false);
+
+            System.out.printf("File %s saved\n", line);
+            return true;
+        } catch (IOException ex) {
+            System.out.printf("ERROR: %s\n", ex);
+            return false;
+        }
+    }
+
     public static boolean loadSource(Mind mind) throws ParseErrorException, RuntimeErrorException {
         Scanner scanner = new Scanner(System.in);
 //        if (checkChg(mind)) {
         List<String> list = new ArrayList<>();
-        File[] dir = new File(".").listFiles();
+        File[] dir = new File(System.getProperty("user.dir")).listFiles();
         if (dir != null) {
             for (File f : dir) {
                 if (!f.isDirectory() && f.getName().contains(".k")) {
