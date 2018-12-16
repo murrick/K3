@@ -16,7 +16,11 @@ public class KangerTest {
     User user;
     Mind mind;
 
-    @org.junit.Before
+    public KangerTest(User user) {
+        this.user = user;
+        this.mind = user.getMind();
+    }
+
     public void setUp() throws Exception {
         user = new User();
         mind = new Mind(user);
@@ -55,8 +59,8 @@ public class KangerTest {
             }
         }
         System.out.println("----------------------------------------------------");
-        if (mind.getQueryResult() != assertResult) {
-            fail("Expeced: " + assertResult);
+        if (!(mind.getQueryResult() + "").equals(assertResult + "")) {
+            fail("Expected: " + assertResult);
         }
     }
 
