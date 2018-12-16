@@ -4,10 +4,7 @@ import kanger.Mind;
 import kanger.User;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
-import kanger.primitives.Hypotese;
-import kanger.primitives.Record;
-import kanger.primitives.TValue;
-import kanger.primitives.Term;
+import kanger.primitives.*;
 
 import java.util.Set;
 
@@ -27,6 +24,11 @@ public class KangerTest {
     }
 
     private void showResult(Boolean assertResult) throws RuntimeErrorException {
+        for(Right r = mind.getRights().getRoot(); r != null;r = r.getNext()) {
+            if(!r.isGenerated() && !r.isQuery()) {
+                System.out.println("Right: " + r.toString());
+            }
+        }
         System.out.println("Query: " + mind.getQuerySource());
         System.out.println("Result: " + mind.getQueryResult());
         if (mind.getSolutions().size() > 0) {
