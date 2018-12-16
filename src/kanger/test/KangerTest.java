@@ -11,8 +11,6 @@ import kanger.primitives.Term;
 
 import java.util.Set;
 
-import static org.junit.Assert.fail;
-
 public class KangerTest {
 
     User user;
@@ -24,7 +22,7 @@ public class KangerTest {
         mind = new Mind(user);
     }
 
-    private void showResult(Boolean assertResult) {
+    private void showResult(Boolean assertResult) throws RuntimeErrorException {
         System.out.println("Query: " + mind.getQuerySource());
         System.out.println("Result: " + mind.getQueryResult());
         if (mind.getSolutions().size() > 0) {
@@ -80,8 +78,7 @@ public class KangerTest {
     }
 
 
-    @org.junit.Test
-    public void set_01_01() throws ParseErrorException, RuntimeErrorException {
+public void set_01_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -99,8 +96,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_02() throws ParseErrorException, RuntimeErrorException {
+public void set_01_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -118,8 +114,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_03() throws ParseErrorException, RuntimeErrorException {
+public void set_01_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -164,8 +159,7 @@ public class KangerTest {
         }
     }
 
-    @org.junit.Test
-    public void set_01_04() throws ParseErrorException, RuntimeErrorException {
+public void set_01_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -206,8 +200,7 @@ public class KangerTest {
         }
     }
 
-    @org.junit.Test
-    public void set_01_05() throws ParseErrorException, RuntimeErrorException {
+public void set_01_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -248,8 +241,7 @@ public class KangerTest {
         }
     }
 
-    @org.junit.Test
-    public void set_01_06() throws ParseErrorException, RuntimeErrorException {
+public void set_01_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -290,8 +282,7 @@ public class KangerTest {
         }
     }
 
-    @org.junit.Test
-    public void set_01_07() throws ParseErrorException, RuntimeErrorException {
+public void set_01_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -324,8 +315,7 @@ public class KangerTest {
         }
     }
 
-    @org.junit.Test
-    public void set_01_08() throws ParseErrorException, RuntimeErrorException {
+public void set_01_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -350,8 +340,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_09() throws ParseErrorException, RuntimeErrorException {
+public void set_01_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -380,8 +369,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_0A() throws ParseErrorException, RuntimeErrorException {
+public void set_01_0A() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -404,8 +392,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_0B() throws ParseErrorException, RuntimeErrorException {
+public void set_01_0B() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -431,8 +418,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_0C() throws ParseErrorException, RuntimeErrorException {
+public void set_01_0C() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -461,8 +447,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_0D() throws ParseErrorException, RuntimeErrorException {
+public void set_01_0D() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -487,8 +472,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_01_0E() throws ParseErrorException, RuntimeErrorException {
+public void set_01_0E() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -517,8 +501,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_02_01() throws ParseErrorException, RuntimeErrorException {
+public void set_02_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
@@ -540,8 +523,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_02_02() throws ParseErrorException, RuntimeErrorException {
+public void set_02_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
@@ -574,8 +556,7 @@ public class KangerTest {
         }
     }
 
-    @org.junit.Test
-    public void set_02_03() throws ParseErrorException, RuntimeErrorException {
+public void set_02_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
@@ -604,8 +585,7 @@ public class KangerTest {
         }
     }
 
-    @org.junit.Test
-    public void set_03_01() throws ParseErrorException, RuntimeErrorException {
+public void set_03_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -615,8 +595,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_03_02() throws ParseErrorException, RuntimeErrorException {
+public void set_03_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -626,8 +605,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_03_03() throws ParseErrorException, RuntimeErrorException {
+public void set_03_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -637,8 +615,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_03_04() throws ParseErrorException, RuntimeErrorException {
+public void set_03_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -648,8 +625,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_03_05() throws ParseErrorException, RuntimeErrorException {
+public void set_03_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -659,8 +635,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_03_06() throws ParseErrorException, RuntimeErrorException {
+public void set_03_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -670,8 +645,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_03_07() throws ParseErrorException, RuntimeErrorException {
+public void set_03_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -681,8 +655,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_01() throws ParseErrorException, RuntimeErrorException {
+public void set_04_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 > 3;");
@@ -691,8 +664,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_02() throws ParseErrorException, RuntimeErrorException {
+public void set_04_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 < 3;");
@@ -701,8 +673,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_03() throws ParseErrorException, RuntimeErrorException {
+public void set_04_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 = 3;");
@@ -711,8 +682,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_04() throws ParseErrorException, RuntimeErrorException {
+public void set_04_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 = 2;");
@@ -721,8 +691,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_05() throws ParseErrorException, RuntimeErrorException {
+public void set_04_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x x=5;");
@@ -734,8 +703,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_06() throws ParseErrorException, RuntimeErrorException {
+public void set_04_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?~$x x=5;");
@@ -747,8 +715,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_07() throws ParseErrorException, RuntimeErrorException {
+public void set_04_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x x=5 / 2;");
@@ -760,8 +727,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_08() throws ParseErrorException, RuntimeErrorException {
+public void set_04_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x ((x+3)*15)=965;");
@@ -773,8 +739,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_09() throws ParseErrorException, RuntimeErrorException {
+public void set_04_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x $y (12+y)*2=256 && x=5*y;");
@@ -789,8 +754,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_0A() throws ParseErrorException, RuntimeErrorException {
+public void set_04_0A() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x $y x + y = 12;");
@@ -799,8 +763,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_0B() throws ParseErrorException, RuntimeErrorException {
+public void set_04_0B() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -844,8 +807,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_0C() throws ParseErrorException, RuntimeErrorException {
+public void set_04_0C() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -871,8 +833,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_0D() throws ParseErrorException, RuntimeErrorException {
+public void set_04_0D() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -898,8 +859,7 @@ public class KangerTest {
     }
 
     //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
-    @org.junit.Test
-    public void set_04_0E() throws ParseErrorException, RuntimeErrorException {
+public void set_04_0E() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -948,8 +908,7 @@ public class KangerTest {
     }
 
 
-    @org.junit.Test
-    public void set_04_0F() throws ParseErrorException, RuntimeErrorException {
+public void set_04_0F() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -993,8 +952,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_10() throws ParseErrorException, RuntimeErrorException {
+public void set_04_10() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1020,8 +978,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_11() throws ParseErrorException, RuntimeErrorException {
+public void set_04_11() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1046,8 +1003,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_04_12() throws ParseErrorException, RuntimeErrorException {
+public void set_04_12() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1096,8 +1052,7 @@ public class KangerTest {
 
     }
 
-    @org.junit.Test
-    public void set_04_14() throws ParseErrorException, RuntimeErrorException {
+public void set_04_14() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -1134,8 +1089,7 @@ public class KangerTest {
 
     }
 
-    @org.junit.Test
-    public void set_04_13() throws ParseErrorException, RuntimeErrorException {
+public void set_04_13() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1172,8 +1126,7 @@ public class KangerTest {
 
     }
 
-    @org.junit.Test
-    public void set_05_01() throws ParseErrorException, RuntimeErrorException {
+public void set_05_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1184,8 +1137,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_05_02() throws ParseErrorException, RuntimeErrorException {
+public void set_05_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1196,8 +1148,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_05_03() throws ParseErrorException, RuntimeErrorException {
+public void set_05_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1208,8 +1159,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_05_04() throws ParseErrorException, RuntimeErrorException {
+public void set_05_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1220,8 +1170,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_05_05() throws ParseErrorException, RuntimeErrorException {
+public void set_05_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1232,8 +1181,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_05_06() throws ParseErrorException, RuntimeErrorException {
+public void set_05_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1244,8 +1192,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_05_07() throws ParseErrorException, RuntimeErrorException {
+public void set_05_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1256,8 +1203,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_05_08() throws ParseErrorException, RuntimeErrorException {
+public void set_05_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1271,8 +1217,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_06_01() throws ParseErrorException, RuntimeErrorException {
+public void set_06_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!a(A,12); !a(B,37);");
@@ -1295,8 +1240,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_06_02() throws ParseErrorException, RuntimeErrorException {
+public void set_06_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!a(A,12); !a(B,37);");
@@ -1329,8 +1273,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    @org.junit.Test
-    public void set_06_03() throws ParseErrorException, RuntimeErrorException {
+public void set_06_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!a(T,12); !a(S,4); !a(J,37); !f(J,T); !f(J,S);");
@@ -1351,5 +1294,10 @@ public class KangerTest {
         System.out.println("OK");
         System.out.println("====================================================");
     }
+
+    private static void fail(String msg) throws RuntimeErrorException {
+        throw new RuntimeErrorException("FAIL: " + msg);
+    }
+
 
 }
