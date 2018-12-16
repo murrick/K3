@@ -68,7 +68,7 @@ public class Linker {
 
             user.getMind().getProducedDomains().clear();
 
-            Map<Right, Set<Cause>> causes = new HashMap<>();
+            final Map<Right, Set<Cause>> causes = new HashMap<>();
 
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
