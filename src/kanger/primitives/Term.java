@@ -48,7 +48,7 @@ public class Term implements Comparable<Object> {
 
         index = din.readInt();
         id = din.readLong();
-        user.getMind().getDictionaryLinks().put(this,din.readLong());
+        user.getMind().getTermsLink().put(this,din.readLong());
 
         switch (type) {
             case DATE:

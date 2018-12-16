@@ -416,26 +416,26 @@ public class Analiser {
 //
 ////            mind.getSubstituted().clear();
 //
-////            boolean occurrs = false;
+////            boolean occurs = false;
 ////            for (Domain d : sd) {
 ////                if (d.isUsed() /*&& !d.isAntc()*/) {
-////                    occurrs = true;
+////                    occurs = true;
 ////                    result = true;
 ////                }
 ////                int res = d.execSystem();
 ////                if (res == 0) { //(res == 0 && !d.isAntc()) || (res == 1 && d.isAntc())) {
 ////                    result = d.isAntc();
-////                    occurrs = true;
+////                    occurs = true;
 ////                } else if (res == 1) {
 ////                    //TODO: Срабатывает временами неверно
 //////                    if (d.isQuery()) {
 ////                        result = !d.isAntc();
 //////                    }
-////                    occurrs = true;
+////                    occurs = true;
 ////                }
 ////            }
 //
-////            if (occurrs) {
+////            if (occurs) {
 ////                collectResults(!result, sd);
 ////            }
 //
@@ -532,7 +532,7 @@ public class Analiser {
                 stop = user.getMind().getNext().getDatabase().getRoot();
             }
 
-            boolean occurrs = false;
+            boolean occurs = false;
             for (Record r = user.getMind().getDatabase().getRoot(); r != stop; r = r.getNext()) {
                 Domain d = r.getDomain();
                 if (!d.isQuery()
@@ -541,14 +541,14 @@ public class Analiser {
                         user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     h.setTag(r.getTag());
-                    occurrs = true;
+                    occurs = true;
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
                     }
                 }
             }
 
-            if (occurrs && logging) {
+            if (occurs && logging) {
                 user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
             }
 
@@ -767,7 +767,7 @@ public class Analiser {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
                 int i = 0;
-                for (TValue v : p.getDomain().getTValues(true)) {
+                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
                     user.getMind().getValues().add(++i, v);
                 }
 //                }
@@ -779,7 +779,7 @@ public class Analiser {
                 result = true;
             } else {
                 for (Record q = p.getNext(); q != null; q = q.getNext()) {
-                    if (p.getDomain().equalsSolve(q.getDomain())) {
+                    if (p.getDomain().equalsBase(q.getDomain()) && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
 //                    Set<Domain> sequence = new HashSet<>();
 

@@ -552,52 +552,56 @@ public class Screen {
 //        return str;
 //    }
     //
-    public static void showCauses(Mind mind, Domain s, int level) {
+    public static void showCauses(Mind mind, Domain d, int level) {
         //ПРЕДОХРАНИТЕЛЬ
         if (level > 20) {
             return;
         }
 
-        Set<Domain> list = s.getCauses();
         String indent = "";
         for (int i = 0; i < level; ++i) {
             indent += "\t";
         }
-        if (!list.isEmpty()) {
-            for (Domain d : list) {
-//                d.apply(s);
-                System.out.printf("\t    %sRight: %s\n", indent, d.getRight().getOrig());
-                System.out.printf("\t    %sCause: %s\n", indent, d.toString());
-                showCauses(mind, d, level + 1);
+
+        Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
+        if (dest != null && !dest.getCauses().isEmpty()) {
+            System.out.printf("\t\t%sRight: %s\n", indent, dest.getCauses().toArray(new Cause[]{})[0].getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
+            for (Cause c : dest.getCauses()) {
+                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString(c.getArguments()));
+                showCauses(mind, c.getSrc(), level + 1);
             }
         }
     }
 
+
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
-        if (tIndex >= tvars.size()) {
+//        if (tIndex >= tvars.size()) {
             if (d.isStored() /*|| (d.isExcluded() && d.isQuery())*/) {
 //                d.recalculate();
+                if (showCauses) {
+                    System.out.println("\t-------------------------------------------");
+                }
                 System.out.printf("\t%s\n", d.toString());
                 if (showCauses) {
                     showCauses(mind, d, 0);
                 }
             }
-        } else {
-            TVariable t = tvars.get(tIndex);
-            TValue v = t.rewind();
-            if (v != null) {
-                do {
-//                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
-//                        mind.getSubstituted().createTVar(t);
-//                    if (!d.isDest()) {
-                    mind.getTValues().set(t, v);
-                    showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
-//                    }
-                } while ((v = t.next(v)) != null);
-            } else {
-                showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
-            }
-        }
+//        } else {
+//            TVariable t = tvars.get(tIndex);
+//            TValue v = t.rewind();
+//            if (v != null) {
+//                do {
+////                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
+////                        mind.getSubstituted().createTVar(t);
+////                    if (!d.isDest()) {
+//                    mind.getTValues().set(t, v);
+//                    showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
+////                    }
+//                } while ((v = t.next(v)) != null);
+//            } else {
+//                showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
+//            }
+//        }
     }
 
     public static void showPred(Mind mind, Predicate p, boolean showCauses) throws RuntimeErrorException {
@@ -609,7 +613,7 @@ public class Screen {
             for (Domain s : set) {
 //                if (!s.isDestFor()) {
 //                    mind.getSubstituted().clear();
-                showPredRecurse(mind, s.getTVariables(true), 0, s, showCauses);
+                showPredRecurse(mind, s.getArguments().getTVariables(true), 0, s, showCauses);
 //                }
             }
         }
@@ -1010,13 +1014,9 @@ public class Screen {
                     final int read = isr.read(cbuf);
                     StringBuffer buf = new StringBuffer(new String(cbuf).replace("\r\n", "\r"));
                     isr.close();
-//                    mind.setText(buf);
-//                    mind.setChanged(false);
+
                     mind.setSourceFileName(line);
-//                    mind.release();
-                    //TODO: Надо это?
                     boolean res = mind.compile(buf.toString());
-                    //mind.getAnalyser().analiser(true);
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                         System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                     }

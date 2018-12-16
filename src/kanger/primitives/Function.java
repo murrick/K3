@@ -20,43 +20,33 @@ import java.util.List;
  */
 public class Function implements IValue {
 
-
+    private long id = -1;
     private Term name = null;
     private int range = 0;
-    private final List<Argument> arguments = new ArrayList<>();     // Параметры
-    private boolean busy = false;                       // Предотвращение бесконечной рекурсии
+    private ArgList arguments = new ArgList();     // Параметры
 
-    private long id = -1;
     private Function next = null;
-    private Domain owner = null;
-    private int index = -1;
     private User user = null;
 
-    public Function(Domain owner, User user) {
-        this.owner = owner;
+    public Function(User user) {
         this.user = user;
     }
 
     public Function(DataInputStream dis, User user) throws IOException {
-        long id = dis.readLong();
-        name = user.getMind().getTerms().get(id);
-        range = dis.readInt();
         this.user = user;
-
-//        f = (FunctionDescriptor) mind.getFunctions().createCVar(id);
-//        line.clear();
-//        int count = dis.readInt();
-//        while (count-- > 0) {
-//            Argument a = new Argument(dis, mind);
-//            line.createTVar(a);
-//        }
-        arguments.clear();
-        int count = dis.readInt();
-        while (count-- > 0) {
-            Argument a = new Argument(dis, user);
-            arguments.add(a);
-        }
+        user.getMind().getFunctionsLink().put(dis.readLong(), this);
+        name = user.getMind().getTerms().get(dis.readLong());
+        range = dis.readInt();
+        arguments = new ArgList(dis, user);
     }
+
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(name.getId());
+        dos.writeInt(range);
+        arguments.writeCompiledData(dos, user);
+    }
+
 
     public void setId(long id) {
         this.id = id;
@@ -74,42 +64,6 @@ public class Function implements IValue {
         return next;
     }
 
-    public void setOwner(Domain owner) {
-        this.owner = owner;
-    }
-
-    public Domain getOwner() {
-        return owner;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
-    public int getIndex() {
-        return index;
-    }
-
-
-//    public FunctionDescriptor getFunction() {
-//        return f;
-//    }
-//
-//    public void setF(FunctionDescriptor f) {
-//        this.f = f;
-//    }
-//
-//    public void createTVar(Argument t) {
-//        line.createTVar(t);
-//    }
-
-    //    public Argument createCVar(int i) {
-//        if (i == range && range == arguments.size()) {
-//            arguments.createTVar(new Argument());
-//        }
-//        return arguments.createCVar(i);
-//    }
-//
     public int getRange() {
         return range;
     }
@@ -118,28 +72,9 @@ public class Function implements IValue {
         this.range = range;
     }
 
-//    public void setL(List<Argument> list) {
-//        line = list;
-//    }
-
-//    public void setA(List<Argument> list) {
-//        arguments = list;
-//    }
-
-    //    public List<Argument> getArguments() {
-//        return arguments;
-//    }
-//
-    public List<Argument> getArguments() {
+    public ArgList getArguments() {
         return arguments;
     }
-
-//    public Term getResult() {
-//        while (range + 1 > arguments.size()) {
-//            arguments.add(new Argument());
-//        }
-//        return arguments.get(range).getValue();
-//    }
 
     public Term getValue() {
         FValue c = getCurrent();
@@ -187,14 +122,6 @@ public class Function implements IValue {
 
     public void setName(Term name) {
         this.name = name;
-    }
-
-    public boolean isBusy() {
-        return busy;
-    }
-
-    public void setBusy(boolean busy) {
-        this.busy = busy;
     }
 
     private String formatParam(Argument t) {
@@ -275,19 +202,6 @@ public class Function implements IValue {
 //        }
 //
 //    }
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(name.getId());
-//        dos.writeInt(line.size());
-//        for (Argument a : line) {
-//            a.writeCompiledData(dos);
-//        }
-        dos.writeInt(range);
-        dos.writeInt(arguments.size());
-        for (Argument a : arguments) {
-            a.writeCompiledData(dos);
-        }
-    }
-
 //    @Override
 //    public boolean equals(Object o) {
 //        if (o == null || !(o instanceof Function)) {
@@ -352,7 +266,7 @@ public class Function implements IValue {
 //    }
 
     public boolean isCalculable() {
-        return Tools.getTVariables(arguments, true).size() > 0;
+        return arguments.getTVariables(true).size() > 0;
     }
 
 //    public boolean isCalculated() {

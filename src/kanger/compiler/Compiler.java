@@ -50,7 +50,7 @@ public class Compiler {
 //        if (t.getRight() == null) {
 ////            for (Tree t = tree; t != null; t = t.getRight()) {
 //            for (Tree v = t; v != null; v = v.getDown()) {
-//                List<Argument> arg = new ArrayList<>();
+//                ArgList arg = new ArrayList<>();
 //                if (mind.getAnalyser().fillSolve(arg, v.getD(), v.getD().isAntc()) != 0) {
 //                    mind.getAnalyser().addBase(arg, v.getD(), false /*v.getD().getPredicate(), v.getD().isAntc()*/);
 //                }
@@ -163,7 +163,7 @@ public class Compiler {
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
             p = new Argument(user.getMind().getTVars().createTVar());
-            p.getT().setName(varName);
+            p.getT().setName(user.getMind().getTerms().add(varName));
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(user.getMind().getTerms().createCVar(varName));
         }
@@ -177,7 +177,7 @@ public class Compiler {
         Domain d = new Domain(user);
         d.setRight(user.getMind().getRights().getRoot());
 
-        List<Argument> arg = new ArrayList<>();
+        ArgList arg = new ArgList();
         Predicate pred = null;
         if (root.isSystem()) {
             // системный предикат
@@ -193,12 +193,12 @@ public class Compiler {
                 }
             }
             parseArgs(d, arg, root, 0, replacements);
-            pred = user.getMind().getPredicates().add(root.getName(), arg.size());
+            pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), arg.size());
         } else if (root.getLeft() == null) {
-            pred = user.getMind().getPredicates().add(root.getName(), 0);
+            pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), 0);
         } else {
             parseArgs(d, arg, root.getRight(), 1, replacements);
-            pred = user.getMind().getPredicates().add(root.getLeft().getName(), arg.size());
+            pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getLeft().getName()), arg.size());
         }
         d.setPredicate(pred);
         d.setAntc(antc);
@@ -209,7 +209,7 @@ public class Compiler {
         return t;
     }
 
-    private void parseArgs(Domain d, List<Argument> arg, PTree root, int level, Map<String, Argument> replacements) {
+    private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) {
         int s;
 
         if (root == null) {
@@ -219,7 +219,7 @@ public class Compiler {
                 parseArgs(d, arg, root.getRight(), level + 1, replacements);
             } else {
                 // системная функция
-                Function f = user.getMind().getFunctions().add(d); //new Function(mind);
+                Function f = user.getMind().getFunctions().add(); //new Function(mind);
                 parseArgs(d, f.getArguments(), root.getLeft(), level + 1, replacements);
                 parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
                 f.setName(user.getMind().getTerms().add(root.getName()));
@@ -232,7 +232,7 @@ public class Compiler {
             parseArgs(d, arg, root.getRight(), level + 1, replacements);
         } else if (root.getName().charAt(0) == Enums.LB) {
             // вложенная функция
-            Function f = user.getMind().getFunctions().add(d); //new Function(mind);
+            Function f = user.getMind().getFunctions().add(); //new Function(mind);
             parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
             f.setName(user.getMind().getTerms().add(root.getLeft().getName()));
             f.setRange(f.getArguments().size());

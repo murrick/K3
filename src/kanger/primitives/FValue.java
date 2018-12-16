@@ -14,9 +14,9 @@ import java.util.List;
 
 public class FValue implements IValue {
     private long id = -1;
-    private Term value = null;
-    private List<Argument> condition = new ArrayList<>();
     private Function function = null;
+    private Term value = null;
+    private ArgList condition = new ArgList();
 
     private FValue next = null;
     private User user = null;
@@ -37,15 +37,21 @@ public class FValue implements IValue {
     }
 
     public FValue(DataInputStream dis, User user) throws IOException {
-        id = dis.readLong();
-        function = user.getMind().getFunctions().get(dis.readLong());
-        value = user.getMind().getTerms().get(dis.readLong());
-        int count = dis.readInt();
-        while (--count >= 0) {
-//            condition.createTVar(dis.readLong());
-            condition.add(new Argument(dis));
-        }
         this.user = user;
+        user.getMind().getFValuesLink().put(dis.readLong(), this);
+        function = (Function) user.getMind().getFunctionsLink().get(dis.readLong());
+        long valueId = dis.readLong();
+        if(valueId != -1) {
+            value = (Term) user.getMind().getTermsLink().get(valueId);
+        }
+        condition = new ArgList(dis, user);
+    }
+
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(function.getId());
+        dos.writeLong(value == null ? -1 : value.getId());
+        condition.writeCompiledData(dos, user);
     }
 
     public void setId(long id) {
@@ -173,15 +179,6 @@ public class FValue implements IValue {
         return next;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeLong(function.getId());
-        dos.writeLong(value == null ? -1 : value.getId());
-        dos.writeInt(condition.size());
-        for (Argument e : condition) {
-            e.writeCompiledData(dos);
-        }
-    }
 
 //    public boolean isActual(Function f) {
 //        for (int i = 0; i < function.getRange(); ++i) {
@@ -204,7 +201,7 @@ public class FValue implements IValue {
         return condition.get(index);
     }
 
-    public List<Argument> getCondition() {
+    public ArgList getCondition() {
         return condition;
     }
 

@@ -1,9 +1,14 @@
 package kanger.factory;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
+import kanger.User;
 import kanger.primitives.*;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
@@ -19,11 +24,18 @@ public class RightFactory {
 
     public RightFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(RightFactory base) {
-        root = base.root;
-        lastID = base.lastID;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+        } else {
+            root = null;
+            lastID = 0;
+        }
+        stack.clear();
         mark();
     }
 
@@ -65,8 +77,10 @@ public class RightFactory {
     }
 
     public void clear() {
-        while(stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getRights());
+        } else {
+            transaction(null);
         }
     }
 
@@ -98,7 +112,7 @@ public class RightFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Right r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos);
+            r.writeCompiledData(dos, user);
         }
     }
 
@@ -122,7 +136,7 @@ public class RightFactory {
         Right r = add();
         Tree t = user.getMind().getTrees().add();
         r.getTree().add(t);
-        List<Argument> arg = new ArrayList<>();
+        ArgList arg = new ArgList();
         for (Argument a : d.getArguments()) {
             arg.add(new Argument(a.getValue()));
         }

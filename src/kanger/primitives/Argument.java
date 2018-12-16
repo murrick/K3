@@ -2,6 +2,7 @@ package kanger.primitives;
 
 import kanger.User;
 import kanger.enums.ArgumentType;
+import kanger.interfaces.IEntry;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -12,7 +13,7 @@ import java.io.IOException;
  * <p>
  * Решение для предиката
  */
-public class Argument {
+public class Argument  {
 
     private Object o = null;
 
@@ -24,15 +25,23 @@ public class Argument {
     }
 
     public Argument(DataInputStream dis, User user) throws IOException {
-        int flags = dis.readInt();
-        if (flags == 1) {
-            long id = dis.readLong();
-            o = user.getMind().getTerms().get(id);
-        } else if (flags == 2) {
-            long id = dis.readLong();
-            o = user.getMind().getTVars().get(id);
-        } else if (flags == 3) {
-            o = new Function(dis, user);
+        ArgumentType type = ArgumentType.values()[dis.readInt()];
+        switch (type) {
+            case TERM:
+                o = user.getMind().getTermsLink().get(dis.readLong());
+                break;
+            case TVRIABLE:
+                o = user.getMind().getTVariablesLink().get(dis.readLong());
+                break;
+            case TVALUE:
+                o = user.getMind().getTValuesLink().get(dis.readLong());
+                break;
+            case FVALUE:
+                o = user.getMind().getFValuesLink().get(dis.readLong());
+                break;
+            case FUNCTION:
+                o = user.getMind().getFunctionsLink().get(dis.readLong());
+                break;
         }
     }
 
@@ -122,21 +131,25 @@ public class Argument {
         return getType() == ArgumentType.FUNCTION;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
         ArgumentType type = getType();
         dos.writeInt(type.ordinal());
         switch (type) {
             case FUNCTION:
-        }
-        if (o instanceof Term) {
-            dos.writeInt(1);
-            dos.writeLong(((Term) o).getId());
-        } else if (o instanceof TVariable) {
-            dos.writeInt(2);
-            dos.writeLong(((TVariable) o).getId());
-        } else if (o instanceof Function) {
-            dos.writeInt(3);
-            ((Function) o).writeCompiledData(dos);
+                dos.writeLong((Long) user.getMind().getFunctionsLink().get(getF()));
+                break;
+            case TVRIABLE:
+                dos.writeLong((Long) user.getMind().getTVariablesLink().get(getT()));
+                break;
+            case TERM:
+                dos.writeLong((Long) user.getMind().getTermsLink().get(getValue()));
+                break;
+            case FVALUE:
+                dos.writeLong((Long) user.getMind().getFValuesLink().get(getR()));
+                break;
+            case TVALUE:
+                dos.writeLong((Long) user.getMind().getTValuesLink().get(getV()));
+                break;
         }
     }
 

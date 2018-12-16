@@ -1,9 +1,15 @@
 package kanger.factory;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.primitives.Domain;
+import kanger.primitives.Function;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 public class FunctionFactory { 
 
@@ -16,11 +22,18 @@ public class FunctionFactory {
 
     public FunctionFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(FunctionFactory base) {
-        root = base.root;
-        lastID = base.lastID;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+        } else {
+            root = null;
+            lastID = 0;
+        }
+        stack.clear();
         mark();
     }
 
@@ -36,8 +49,8 @@ public class FunctionFactory {
         }
     }
 
-    public Function add(Domain owner) {
-        Function p = new Function(owner, user);
+    public Function add() {
+        Function p = new Function(user);
         p.setId(++lastID);
         p.setNext(root);
         root = p;
@@ -62,10 +75,11 @@ public class FunctionFactory {
     }
 
     public void clear() {
-        while(stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getFunctions());
+        } else {
+            transaction(null);
         }
-        ;
     }
 
 
@@ -97,7 +111,7 @@ public class FunctionFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Function r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos);
+            r.writeCompiledData(dos, user);
         }
     }
 

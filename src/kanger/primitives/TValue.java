@@ -8,6 +8,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Created by murray on 13.12.16.
@@ -18,15 +20,10 @@ public class TValue implements IValue, Comparable<TValue> {
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Set<TValue.Solve> solves = new HashSet<>();
-//    private List<Domain> srcSolves = new ArrayList<>();
-//    private List<Domain> dstSolves = new ArrayList<>();
-//    private List<Integer> posSolves = new ArrayList<>();
-
-    //    private int tag = -1;
     private Right right = null;             // Ссылка на правило
-    private TValue next = null;          // Следующая переменная
+    private SortedSet<Cause> causes = new TreeSet<>();
 
+    private TValue next = null;          // Следующая переменная
     private User user = null;
 
 
@@ -41,18 +38,30 @@ public class TValue implements IValue, Comparable<TValue> {
     }
 
     public TValue(DataInputStream dis, User user) throws IOException {
-        id = dis.readLong();
-        tVar = user.getMind().getTVars().get(dis.readLong());
-        value = user.getMind().getTerms().get(dis.readLong());
-        long sid = dis.readLong();
-        if (sid != -1) {
-//            srcSolves = mind.getDomains().get(sid);
-        }
-        sid = dis.readLong();
-        if (sid != -1) {
-//            dstSolves = mind.getDomains().get(sid);
-        }
         this.user = user;
+        user.getMind().getRightsLink().put(dis.readLong(), this);
+        long valueId = dis.readLong();
+        if(valueId != -1) {
+            value = (Term) user.getMind().getTermsLink().get(valueId);
+        }
+        tVar = (TVariable) user.getMind().getTVariablesLink().get(dis.readLong());
+        right = (Right) user.getMind().getRightsLink().get(dis.readLong());
+        int count = dis.readInt();
+        while(count-- > 0) {
+            Cause c = new Cause(dis, user);
+            causes.add(c);
+        }
+    }
+
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(value == null ? -1 : value.getId());
+        dos.writeLong(tVar.getId());
+        dos.writeLong(right.getId());
+        dos.writeInt(causes.size());
+        for(Cause c : causes) {
+            c.writeCompiledData(dos, user);
+        }
     }
 
 
@@ -65,33 +74,16 @@ public class TValue implements IValue, Comparable<TValue> {
         return value;
     }
 
-    public Set<Solve> getSolves() {
-        return solves;
+    public SortedSet<Cause> getCauses() {
+        return causes;
     }
 
-//    public Set<Domain> getSrcSolves() {
-//        Set<Domain> set = new HashSet<>();
-//        for(Solve s : solves) {
-//            set.add(s.getSrc());
-//        }
-//        return set;
-//    }
-//
-//    public Set<Domain> getDstSolves() {
-//        Set<Domain> set = new HashSet<>();
-//        for(Solve s : solves) {
-//            set.add(s.getDst());
-//        }
-//        return set;
-//    }
-
-
-    public boolean addSolve(int index, Domain dst, Domain src) {
-        TValue.Solve s = new TValue.Solve(index, dst, src);
-        if (solves.contains(s)) {
+    public boolean addCause(Cause s) {
+//        Cause s = new Cause(index, dst, src);
+        if (causes.contains(s)) {
             return false;
         } else {
-            solves.add(s);
+            causes.add(s);
             return true;
         }
     }
@@ -127,14 +119,6 @@ public class TValue implements IValue, Comparable<TValue> {
 
     public void setNext(TValue next) {
         this.next = next;
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeLong(tVar.getId());
-        dos.writeLong(value == null ? -1 : value.getId());
-//        dos.writeLong(srcSolves == null ? -1 : srcSolves.getId());
-//        dos.writeLong(dstSolves == null ? -1 : dstSolves.getId());
     }
 
     @Override
@@ -280,68 +264,6 @@ public class TValue implements IValue, Comparable<TValue> {
     @Override
     public int compareTo(TValue o) {
         return (int) (tVar.getId() == o.getTVar().getId() ? id - o.getId() : tVar.getId() - o.getTVar().getId());
-    }
-
-    public class Solve {
-        private Domain src = null;
-        private Domain dst = null;
-        private int index = -1;
-
-        public Solve(int index, Domain dst, Domain src) {
-            this.index = index;
-            this.dst = dst;
-            this.src = src;
-        }
-
-        public Domain getSrc() {
-            return src;
-        }
-
-        public void setSrc(Domain src) {
-            this.src = src;
-        }
-
-        public Domain getDst() {
-            return dst;
-        }
-
-        public void setDst(Domain dst) {
-            this.dst = dst;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public void setIndex(int index) {
-            this.index = index;
-        }
-
-
-        @Override
-        public int hashCode() {
-            StringBuffer buffer = new StringBuffer();
-            buffer.append(this.src.getId());
-            buffer.append(this.dst.getId());
-            buffer.append(this.index);
-            return buffer.toString().hashCode();
-        }
-
-//        @Override
-//        public int hashCode(){
-//            return toString().hashCode();
-//        }
-
-        @Override
-        public boolean equals(Object o) {
-            return o != null
-                    && o instanceof Solve
-                    && src != null && dst != null
-                    && ((Solve) o).getSrc() != null && ((Solve) o).getDst() != null
-                    && src.getId() == ((Solve) o).getSrc().getId()
-                    && dst.getId() == ((Solve) o).getDst().getId()
-                    && index == ((Solve) o).getIndex();
-        }
     }
 
 }

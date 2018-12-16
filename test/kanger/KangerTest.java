@@ -61,12 +61,7 @@ public class KangerTest {
     }
 
     private boolean exists(String name, Object o) {
-        for (Term t : mind.getValues().getValues(name)) {
-            if (o.equals(t.getValue())) {
-                return true;
-            }
-        }
-        return false;
+        return mind.getValues().getValues(mind.getTerms().add(name)).contains(mind.getTerms().add(o));
     }
 
     @org.junit.Test
@@ -325,14 +320,14 @@ public class KangerTest {
         mind.query("?$x c(x);");
         showResult(true);
         Term term = mind.getTerms().add("ooo");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
         term = mind.getTerms().add("nnn");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
-        if (mind.getValues().getValues("x").size() != 2) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 2) {
             fail("Expected 2 solves");
         }
         System.out.println("OK");
@@ -351,18 +346,18 @@ public class KangerTest {
         mind.query("?$x d(x);");
         showResult(true);
         Term term = mind.getTerms().add("ooo");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
         term = mind.getTerms().add("nnn");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
         term = mind.getTerms().add("v");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
-        if (mind.getValues().getValues("x").size() != 3) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 3) {
             fail("Expected 3 solves");
         }
         System.out.println("OK");
@@ -382,10 +377,10 @@ public class KangerTest {
         showResult(true);
         /*
         Term term = mind.getTerms().add("nn");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
-        if (mind.getValues().getValues("x").size() != 1) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1) {
             fail("Expected 1 solve");
         }
         */
@@ -406,13 +401,13 @@ public class KangerTest {
         showResult(true);
         /*
         Term term = mind.getTerms().add("nn");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
-        if (!mind.getValues().getValues("y").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("y")).contains(term)) {
             fail("Expected: " + term);
         }
-        if (mind.getValues().getValues("x").size() != 1 || mind.getValues().getValues("y").size() != 1) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1 || mind.getValues().getValues(mind.getTerms().add("y")).size() != 1) {
             fail("Expected 2 solve");
         }
         */
@@ -433,16 +428,16 @@ public class KangerTest {
         showResult(true);
         /*
         Term term = mind.getTerms().add("nn");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected x: " + term);
         }
-        if (!mind.getValues().getValues("y").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("y")).contains(term)) {
             fail("Expected y: " + term);
         }
-        if (!mind.getValues().getValues("z").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("z")).contains(term)) {
             fail("Expected z: " + term);
         }
-        if (mind.getValues().getValues("x").size() != 1 || mind.getValues().getValues("y").size() != 1 || mind.getValues().getValues("z").size() != 1) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1 || mind.getValues().getValues(mind.getTerms().add("y")).size() != 1 || mind.getValues().getValues(mind.getTerms().add("z")).size() != 1) {
             fail("Expected 3 solve");
         }
         */
@@ -463,10 +458,10 @@ public class KangerTest {
         showResult(true);
         if (!mind.getValues().isEmpty()) {
             Term term = mind.getTerms().add("nnn");
-            if (!mind.getValues().getValues("x").contains(term)) {
+            if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
                 fail("Expected x: " + term);
             }
-            if (mind.getValues().getValues("x").size() != 1) {
+            if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 1) {
                 fail("Expected 1 solve");
             }
         } else {
@@ -488,18 +483,18 @@ public class KangerTest {
         mind.query("?$x a(x) || d(x);");
         showResult(true);
         Term term = mind.getTerms().add("nnn");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
         term = mind.getTerms().add("ooo");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
         term = mind.getTerms().add("v");
-        if (!mind.getValues().getValues("x").contains(term)) {
+        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(term)) {
             fail("Expected: " + term);
         }
-        if (mind.getValues().getValues("x").size() != 3) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 3) {
             fail("Expected 3 solves");
         }
         System.out.println("OK");
@@ -716,6 +711,7 @@ public class KangerTest {
         mind.clear();
         mind.query("?$x x=5;");
         showResult(true);
+//        if (!mind.getValues().getValues(mind.getTerms().add("x")).contains(mind.getTerms().add(5.0))) {
         if (!exists("x", 5.0)) {
             fail("Expected: x=5.0");
         }
@@ -825,7 +821,7 @@ public class KangerTest {
         if (!exists("x", 9.0)) {
             fail("Expected: x=9.0");
         }
-        if (mind.getValues().getValues("x").size() != 10) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 10) {
             //TODO: Потом разберусь
 //            fail("Expected 10 solves");
         }
@@ -852,7 +848,7 @@ public class KangerTest {
         if (!exists("x", 9.0)) {
             fail("Expected: x=9.0");
         }
-        if (mind.getValues().getValues("x").size() != 4) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 4) {
             //TODO: Потом разберусь
 //            fail("Expected 4 solves");
         }
@@ -879,7 +875,7 @@ public class KangerTest {
         if (!exists("x", 3.0)) {
             fail("Expected: x=3.0");
         }
-        if (mind.getValues().getValues("x").size() != 4) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 4) {
             fail("Expected 4 solves");
         }
         System.out.println("OK");
@@ -918,10 +914,10 @@ public class KangerTest {
         if (!exists("x", 7.0) || !exists("y", 0.0)) {
             fail("Expected: x=7.0, y = 0.0");
         }
-        if (mind.getValues().getValues("x").size() != 8) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 8) {
             fail("Expected x 8 solves");
         }
-        if (mind.getValues().getValues("y").size() != 8) {
+        if (mind.getValues().getValues(mind.getTerms().add("y")).size() != 8) {
             fail("Expected y 8 solves");
         }
 
@@ -974,7 +970,7 @@ public class KangerTest {
         if (!exists("x", 9.0)) {
             fail("Expected: x=9.0");
         }
-        if (mind.getValues().getValues("x").size() != 10) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 10) {
             //TODO: Потом разберусь
 //            fail("Expected 10 solves");
         }
@@ -1001,7 +997,7 @@ public class KangerTest {
         if (!exists("x", 9.0)) {
             fail("Expected: x=9.0");
         }
-        if (mind.getValues().getValues("x").size() != 4) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 4) {
             //TODO: Потом разберусь
 //            fail("Expected 4 solves");
         }
@@ -1028,14 +1024,13 @@ public class KangerTest {
         if (!exists("x", 3.0)) {
             fail("Expected: x=3.0");
         }
-        if (mind.getValues().getValues("x").size() != 4) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 4) {
             fail("Expected 4 solves");
         }
         System.out.println("OK");
         System.out.println("====================================================");
     }
 
-    //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
     @org.junit.Test
     public void set04_12() throws ParseErrorException, RuntimeErrorException {
 
@@ -1067,10 +1062,10 @@ public class KangerTest {
         if (!exists("x", 7.0) || !exists("y", 0.0)) {
             fail("Expected: x=7.0, y = 0.0");
         }
-        if (mind.getValues().getValues("x").size() != 8) {
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 8) {
             fail("Expected x 8 solves");
         }
-        if (mind.getValues().getValues("y").size() != 8) {
+        if (mind.getValues().getValues(mind.getTerms().add("y")).size() != 8) {
             fail("Expected y 8 solves");
         }
 
@@ -1086,6 +1081,81 @@ public class KangerTest {
 
     }
 
+    @org.junit.Test
+    public void set04_14() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+        mind.query("?$x $y num(x) && num(y) && x * y = 12;");
+        showResult(true);
+        if (!exists("x", 2.0) || !exists("y", 6.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 3.0) || !exists("y", 4.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 4.0) || !exists("y", 3.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 6.0) || !exists("y", 2.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 4) {
+            fail("Expected x 4 solves");
+        }
+        if (mind.getValues().getValues(mind.getTerms().add("y")).size() != 4) {
+            fail("Expected y 4 solves");
+        }
+
+        System.out.println("OK");
+        System.out.println("====================================================");
+
+//        if (mind.getLog().size() > 0) {
+//            for (LogEntry log : mind.getLog().getRoot()) {
+//                System.out.println(log.getRecord());
+//            }
+////            System.out.println();
+//        }
+
+    }
+
+    @org.junit.Test
+    public void set04_13() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.query("?$x $y num(x) && num(y) && x * y = 12;");
+        showResult(true);
+        if (!exists("x", 2.0) || !exists("y", 6.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 3.0) || !exists("y", 4.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 4.0) || !exists("y", 3.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 6.0) || !exists("y", 2.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (mind.getValues().getValues(mind.getTerms().add("x")).size() != 4) {
+            fail("Expected x 4 solves");
+        }
+        if (mind.getValues().getValues(mind.getTerms().add("y")).size() != 4) {
+            fail("Expected y 4 solves");
+        }
+
+        System.out.println("OK");
+        System.out.println("====================================================");
+
+//        if (mind.getLog().size() > 0) {
+//            for (LogEntry log : mind.getLog().getRoot()) {
+//                System.out.println(log.getRecord());
+//            }
+////            System.out.println();
+//        }
+
+    }
 
     @org.junit.Test
     public void set05_01() throws ParseErrorException, RuntimeErrorException {

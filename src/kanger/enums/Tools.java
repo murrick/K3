@@ -2,6 +2,7 @@ package kanger.enums;
 
 import kanger.compiler.Parser;
 import kanger.exception.ParseErrorException;
+import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.TValue;
 import kanger.primitives.TVariable;
@@ -240,52 +241,52 @@ public abstract class Tools {
         }
     }
 
-    public static List<TVariable> getTVariables(List<Argument> arg, boolean full) {
-        List<TVariable> list = new ArrayList<>();
-        for (Argument a : arg) {
-            if (a.isTSet() && !list.contains(a.getT())) {
-                list.add(a.getT());
-            } else if (full && a.isFSet()) {
-                List<TVariable> temp = getTVariables(a.getF().getArguments(), full);
-                for (TVariable t : temp) {
-                    if (!list.contains(t)) {
-                        list.add(t);
-                    }
-                }
-            }
+//    public static List<TVariable> getTVariables(ArgList arg, boolean full) {
+//        List<TVariable> list = new ArrayList<>();
+//        for (Argument a : arg) {
+//            if (a.isTSet() && !list.contains(a.getT())) {
+//                list.add(a.getT());
+//            } else if (full && a.isFSet()) {
+//                List<TVariable> temp = getTVariables(a.getF().getArguments(), full);
+//                for (TVariable t : temp) {
+//                    if (!list.contains(t)) {
+//                        list.add(t);
+//                    }
+//                }
+//            }
+//
+//        }
+//        return list;
+//    }
+//
+//    public static List<TValue> getTValues(ArgList arg, boolean full) {
+//        List<TValue> list = new ArrayList<>();
+//        for (Argument a : arg) {
+//            if (a.isTSet() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
+//                list.add(a.getT().getCurrent());
+//            } else if (a.isVSet() && !list.contains(a.getV())) {
+//                list.add(a.getV());
+//            } else if (full && a.isFSet()) {
+//                List<TValue> temp = getTValues(a.getF().getArguments(), full);
+//                for (TValue t : temp) {
+//                    if (!list.contains(t)) {
+//                        list.add(t);
+//                    }
+//                }
+//            } else if (full && a.isRSet()) {
+//                List<TValue> temp = getTValues(a.getR().getCondition(), full);
+//                for (TValue t : temp) {
+//                    if (!list.contains(t)) {
+//                        list.add(t);
+//                    }
+//                }
+//            }
+//
+//        }
+//        return list;
+//    }
 
-        }
-        return list;
-    }
-
-    public static List<TValue> getTValues(List<Argument> arg, boolean full) {
-        List<TValue> list = new ArrayList<>();
-        for (Argument a : arg) {
-            if (a.isTSet() && !list.contains(a.getT().getCurrent())) {
-                list.add(a.getT().getCurrent());
-            } else if (a.isVSet() && !list.contains(a.getV())) {
-                list.add(a.getV());
-            } else if (full && a.isFSet()) {
-                List<TValue> temp = getTValues(a.getF().getArguments(), full);
-                for (TValue t : temp) {
-                    if (!list.contains(t)) {
-                        list.add(t);
-                    }
-                }
-            } else if (full && a.isRSet()) {
-                List<TValue> temp = getTValues(a.getR().getCondition(), full);
-                for (TValue t : temp) {
-                    if (!list.contains(t)) {
-                        list.add(t);
-                    }
-                }
-            }
-
-        }
-        return list;
-    }
-
-//    public static List<Function> getFunctions(List<Argument> arg) {
+//    public static List<Function> getFunctions(ArgList arg) {
 //        List<Function> list = new ArrayList<>();
 //        for (Argument a : arg) {
 //            if (a.isFunction() && !list.contains(a.getFunction())) {

@@ -18,9 +18,9 @@ import java.util.Set;
  */
 public class Predicate {
 
-    private String name = "";               // Имя предиката
-    private int range = 0;                  // К-во параметров
     private long id = -1;                   // Идентификатор
+    private Term name = null;               // Имя предиката
+    private int range = 0;                  // К-во параметров
     private Predicate next = null;          // Следующий предикат
 
     private User user = null;
@@ -30,17 +30,24 @@ public class Predicate {
     }
 
     public Predicate(DataInputStream dis, User user) throws IOException {
-        id = dis.readLong();
-        name = dis.readUTF();
-        range = dis.readInt();
         this.user = user;
+        user.getMind().getPredicatesLink().put(dis.readLong(), this);
+        name = (Term) user.getMind().getTermsLink().get(dis.readLong());
+        range = dis.readInt();
     }
 
-    public String getName() {
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        name.writeCompiledData(dos);
+        dos.writeInt(range);
+    }
+
+
+    public Term getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(Term name) {
         this.name = name;
     }
 
@@ -66,12 +73,6 @@ public class Predicate {
 
     public void setNext(Predicate next) {
         this.next = next;
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeUTF(name);
-        dos.writeInt(range);
     }
 
     public Set<Domain> getSolves() {

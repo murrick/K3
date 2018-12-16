@@ -7,10 +7,7 @@ import kanger.enums.LogMode;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.*;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Dmitry G. Qusnetsov
@@ -44,8 +41,12 @@ public class Linker {
 
         final Set<Domain> waiters = new HashSet<>();
         for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-            if (tree.getSequence().size() == 1 && !tree.getSequence().get(0).getTVariables(true).isEmpty()) {
-                waiters.add(tree.getSequence().get(0));
+            if (tree.getSequence().size() == 1) {
+                if (!tree.getSequence().get(0).getArguments().getTVariables(true).isEmpty()) {
+                    waiters.add(tree.getSequence().get(0));
+                } else {
+                    tree.getSequence().get(0).setStored();
+                }
             }
         }
 
@@ -54,20 +55,26 @@ public class Linker {
         TValue saveT;
         FValue saveF;
 
-        user.getMind().getClosedTrees().clear();
-
+        int passCounter = 0;
         do {
+
+            if (logging) {
+                user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
+            }
 
             saveR = user.getMind().getDatabase().getRoot();
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
 
+            user.getMind().getProducedDomains().clear();
+
+            Map<Right, Set<Cause>> causes = new HashMap<>();
+
             for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
 
                 final Tree t = tree;
                 SortedSet<TVariable> tvars = new TreeSet<>();
-                tvars.addAll(tree.getTVariables(true));
-
+                tvars.addAll(t.getTVariables(true));
 
                 rotateVariables(tvars, logging, new IRunnable() {
                     @Override
@@ -76,28 +83,23 @@ public class Linker {
                         boolean logging = (boolean) o;
 
 
-                        if (linkDomains(t, logging)) {
+                        if (linkDomains(t, causes, logging)) {
                             result = true;
                         }
-                        if (calcFunctions(t, logging)) {
+                        if (calcFunctions(t, causes, logging)) {
                             result = true;
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                            }
                         }
 
-                        if (updateDatabase(t, waiters, logging)) {
+                        if (linkDatabase(t, waiters, causes, logging)) {
                             result = true;
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-                            }
                         }
-
 
                         return result;
                     }
                 });
             }
+
+            updateDatabase(logging);
 
 
         } while (saveR != user.getMind().getDatabase().getRoot()
@@ -138,7 +140,7 @@ public class Linker {
         return result;
     }
 
-    private boolean linkDomains(Tree treeSlave, boolean logging) {
+    private boolean linkDomains(Tree treeSlave, Map<Right, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
         if (treeSlave.getSequence().size() == 1) {
@@ -146,6 +148,7 @@ public class Linker {
                 for (Tree treeMaster : slave.getPredicate().getLinkedTrees()) {
                     for (Domain master : treeMaster.getSequence()) {
                         if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
+
                             TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
                             TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
 
@@ -154,6 +157,7 @@ public class Linker {
 
                             boolean success = true;
                             boolean applied = false;
+
                             for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
 
                                 if (master.get(i).isTSet()
@@ -195,8 +199,8 @@ public class Linker {
                             if (success) {
                                 user.getMind().getTValues().commit();
                                 user.getMind().getFValues().commit();
-                                markExcluded(substMaster, master, slave, logging);
-                                markExcluded(substSlave, slave, master, logging);
+                                markExcluded(substMaster, master, slave, causes, logging);
+                                markExcluded(substSlave, slave, master, causes, logging);
                             } else {
                                 user.getMind().getTValues().release();
                                 user.getMind().getFValues().release();
@@ -210,43 +214,60 @@ public class Linker {
         return result;
     }
 
-    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, boolean logging) {
-        boolean applied = false;
+    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) {
+        Right r = null;
         for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
-            if (subst[i] != null && (subst[i].addSolve(i, master, slave) || !master.isExcluded(slave.getArguments()))) {
-                applied = true;
+            Cause s = new Cause(i, master, slave);
+            if (subst[i] != null && (subst[i].addCause(s) || !master.isExcluded(slave.getArguments()))) {
+                r = subst[i].getTVar().getRight();
+                if (!causes.containsKey(r)) {
+                    causes.put(r, new HashSet<>());
+                }
+                causes.get(r).add(s);
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
                 }
 
             }
         }
-        if (applied) {
+        if (r != null) {
             master.setExcluded(slave.getArguments());
             if (logging) {
                 user.getMind().pushDebugLevel();
                 user.getMind().setDebugLevel(user.getMind().getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
-                user.getMind().getLog().add(LogMode.ANALIZER, "From right: " + master.getRight());
+                user.getMind().getLog().add(LogMode.ANALIZER, "From right: " + r); //master.getRight());
                 user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master);
                 user.getMind().popDebugLevel();
                 user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave);
                 user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
         }
-        return applied;
+        return r != null;
     }
 
-    private boolean updateDatabase(Tree tree, Set<Domain> waiters, boolean logging) {
+    private void updateCauses(Domain d) {
+        System.out.println("STOR: " + d);
+        for (TValue v : d.getArguments().getTValues(true)) {
+            System.out.println("\t---- Right:" + v.getTVar().getRight().toString().replaceAll("\n", " "));
+            for (Cause s : v.getCauses()) {
+                System.out.println("\t\t" + s.getSrc() + " -> " + s.getDst());
+            }
+        }
+        System.out.println("--------------------------------------------");
+
+    }
+
+    private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
-        boolean occurrs = false;
+        boolean occurs = false;
         if (checkSystem(tree, logging)) {
 
             Set<Domain> excluded = new HashSet<>();
             Set<Domain> calculated = new HashSet<>();
-            Set<Domain> candidades = new HashSet<>();
-            Set<Domain> stored = new HashSet<>();
+            Set<Domain> candidates = new HashSet<>();
             Set<Domain> assumed = new HashSet<>();
+            Set<Domain> stored = new HashSet<>();
 
             for (Domain d : tree.getSequence()) {
                 for (Domain master : waiters) {
@@ -273,108 +294,182 @@ public class Linker {
                     calculated.add(d);
                 } else if (d.isSystem() || !d.isComplete()) {
                     excluded.clear();
-                    candidades.clear();
+                    candidates.clear();
                     break;
                 } else if (d.isExcluded()) {
                     excluded.add(d);
                 } else {
-                    candidades.add(d);
+                    candidates.add(d);
                 }
                 if (d.isStored()) {
                     stored.add(d);
                 }
             }
 
-            if (candidades.size() == 1) {
-                Domain d = candidades.toArray(new Domain[]{})[0];
-                occurrs = true;
+            if (candidates.size() == 1) {
+                Domain d = candidates.toArray(new Domain[]{})[0];
+//                d.addCauses(causes.get(d.getRight()));
+                occurs = true;
                 if (!d.isStored()) {
                     result = true;
-                    if (excluded.isEmpty() && !d.isCalculated() && d.getTVariables(true).isEmpty() /*|| d.getRight().isQuery())*/) {
-                        Record x = d.setStored();
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + x);
-                        }
-                    } else {
-                        Record x = d.createStored();
-                        if (d.isCalculated()) {
-                            x.getDomain().setCalculated();
-                        }
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + x);
-                        }
+                    d.setProduced(user.getMind().getDatabase().getTag());
+                    d.addCauses(causes.get(d.getRight()));
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
+                        logCauses(d);
                     }
                 }
-            } else if (!excluded.isEmpty() && candidades.isEmpty() && stored.isEmpty()) {
-                occurrs = true;
+            } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
+                occurs = true;
                 for (Domain d : excluded) {
+//                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        Record x = d.createStored();
+                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.addCauses(causes.get(d.getRight()));
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (x): " + x);
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
+                            logCauses(d);
                         }
                     }
                 }
             } else if (!calculated.isEmpty() && tree.getSequence().size() == calculated.size()) {
-                occurrs = true;
+                occurs = true;
                 for (Domain d : calculated) {
+//                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        Record x = d.createStored();
-                        if (d.isCalculated()) {
-                            x.getDomain().setCalculated();
-                        }
+                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.addCauses(causes.get(d.getRight()));
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (c): " + x);
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
+                            logCauses(d);
                         }
                     }
                 }
             }
 
-
-            if (!occurrs && !assumed.isEmpty() && tree.getSequence().size() > 1) {
-                candidades.clear();
+            if (!occurs && !assumed.isEmpty() && tree.getSequence().size() > 1) {
+                candidates.clear();
                 excluded.clear();
                 for (Domain d : tree.getSequence()) {
                     if (d.isComplete() && !d.isCalculated() && !d.isSystem() && !assumed.contains(d)) {
                         if (!d.isExcluded()) {
-                            candidades.add(d);
+                            candidates.add(d);
                         } else {
                             excluded.add(d);
                         }
                     }
                 }
-                if (candidades.size() == 1 && !excluded.isEmpty()) {
-                    Domain d = candidades.toArray(new Domain[]{})[0];
+                if (candidates.size() == 1 && !excluded.isEmpty()) {
+                    Domain d = candidates.toArray(new Domain[]{})[0];
+//                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        if (d.getTVariables(true).isEmpty()) {
-                            Record x = d.setStored();
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB set record (a): " + x);
-                            }
-                        } else {
-                            Record x = d.createStored();
-                            if (d.isCalculated()) {
-                                x.getDomain().setCalculated();
-                            }
-                            if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "DB add record (a): " + x);
-                            }
+                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.addCauses(causes.get(d.getRight()));
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
+                            logCauses(d);
                         }
                     }
                 }
             }
-        }
-        if (result) {
-            user.getMind().getDatabase().incTag();
+            if (result) {
+                user.getMind().getDatabase().incTag();
+                if (logging) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                }
+            }
+
         }
 
         return result;
     }
 
-    public boolean calcFunctions(Tree master, boolean logging) {
+    private void logCauses(Domain d) {
+        boolean rightShowed = false;
+        if(d.getCauses() != null) {
+            for (Cause c : d.getCauses()) {
+                if (!rightShowed) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
+                    rightShowed = true;
+                }
+                user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
+            }
+        }
+    }
+
+    //    private boolean isRecurse(Cause top, Cause c) {
+//        if(c == null) {
+//            return isRecurse(top, top);
+//        } else {
+//            for(TValue v : c.getSrc().getTValues(true)) {
+//                if(v != null && v.getCauses() != null) {
+//                    for (Cause x : v.getCauses()) {
+//                        if (x.getSrc().equalsBase(top.getSrc())) {
+//                            return true;
+//                        }
+//                        if (isRecurse(top, x)) {
+//                            return true;
+//                        }
+//                    }
+//                }
+//            }
+//            return false;
+//        }
+//    }
+//
+    private boolean updateDatabase(boolean logging) {
+        boolean result = false;
+        for (Map.Entry<Domain, Map<Integer, Set<ArgList>>> e : user.getMind().getProducedDomains().entrySet()) {
+            Domain d = e.getKey();
+            for (Map.Entry<Integer, Set<ArgList>> tags : e.getValue().entrySet()) {
+                for (ArgList args : tags.getValue()) {
+                    result = true;
+
+                    for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                        if (d.getArguments().get(i).isTSet()) {
+                            if (d.getArguments().get(i).getT().find(args.get(i).getValue()) != null) {
+                                d.getArguments().get(i).getT().setValue(args.get(i).getValue());
+                            }
+                        } else if (d.getArguments().get(i).isFSet()) {
+                            //TODO: Добавить обработку функций
+                        }
+                    }
+
+                    Record x;
+                    if (d.getArguments().getTVariables(true).isEmpty()) {
+                        x = d.setStored();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+                        }
+                    } else {
+                        x = d.createStored();
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                        }
+                    }
+                    if (d.isCalculated()) {
+                        x.getDomain().setCalculated();
+                    }
+                    x.setTag(tags.getKey());
+                    if(d.getCauses() != null) {
+                        x.getCauses().clear();
+                        x.getCauses().addAll(d.getCauses());
+                    }
+                }
+            }
+        }
+
+        if (result && logging) {
+            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+        }
+        return result;
+    }
+
+
+    public boolean calcFunctions(Tree master, Map<Right, Set<Cause>> causes, boolean logging) {
         boolean result = false;
 
         if (!master.getFunctions().isEmpty()) {
@@ -392,6 +487,9 @@ public class Linker {
             }
         }
 
+        if (result && logging) {
+            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+        }
         return result;
     }
 
@@ -408,7 +506,6 @@ public class Linker {
                         break;
                     }
                 }
-
 
                 if (res == 0) {
                     if (d.isAntc()) {

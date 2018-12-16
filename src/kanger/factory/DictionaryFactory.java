@@ -1,10 +1,16 @@
 package kanger.factory;
 
-import java.io.*;
-import java.util.*;
-import kanger.*;
-import kanger.enums.*;
-import kanger.primitives.*;
+import kanger.User;
+import kanger.enums.Enums;
+import kanger.primitives.Term;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
@@ -16,17 +22,24 @@ public class DictionaryFactory {
     private int varIndex = 0;           // Счетчик C-переменных
 
     private Stack<Object[]> stack = new Stack<>();
-
     private User user = null;
 
     public DictionaryFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(DictionaryFactory base) {
-        root = base.root;
-        lastID = base.lastID;
-        varIndex = base.varIndex;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+            varIndex = base.varIndex;
+        } else {
+            root = null;
+            lastID = 0;
+            varIndex = 0;
+        }
+        stack.clear();
         mark();
     }
 
@@ -148,10 +161,11 @@ public class DictionaryFactory {
     }
 
     public void clear() {
-        while (stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getTerms());
+        } else {
+            transaction(null);
         }
-        ;
     }
 
     public int nextVarIndex() {

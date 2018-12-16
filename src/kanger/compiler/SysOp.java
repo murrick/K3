@@ -3,6 +3,7 @@ package kanger.compiler;
 import kanger.Mind;
 import kanger.enums.LibMode;
 import kanger.interfaces.IRunnable;
+import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.Domain;
 import kanger.primitives.Function;
@@ -33,7 +34,7 @@ public class SysOp {
             @Override
             public Object run(Object o) /*throws RuntimeErrorException*/ {
 
-                List<Argument> arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
+                ArgList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
 
                 int result = 1;
                 String script = "";

@@ -155,7 +155,7 @@ public class Tree {
     public List<TVariable> getTVariables(boolean full) {
         List<TVariable> list = new ArrayList<>();
         for (Domain d : sequence) {
-            for (TVariable t : d.getTVariables(full)) {
+            for (TVariable t : d.getArguments().getTVariables(full)) {
                 if (!list.contains(t)) {
                     list.add(t);
                 }
@@ -219,8 +219,8 @@ public class Tree {
             if (d.getPredicate().getId() == dom.getPredicate().getId()) {
                 return true;
             }
-            for (TVariable t : dom.getTVariables(true)) {
-                for (TVariable x : d.getTVariables(true)) {
+            for (TVariable t : dom.getArguments().getTVariables(true)) {
+                for (TVariable x : d.getArguments().getTVariables(true)) {
                     if (t.getId() == x.getId()) {
                         return true;
                     }

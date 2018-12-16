@@ -5,6 +5,7 @@ import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
 import kanger.interfaces.IRunnable;
+import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.Domain;
 import kanger.primitives.Term;
@@ -33,7 +34,7 @@ public class Predicates {
                 @Override
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (arg.get(0).isDefined() && !arg.get(1).isDefined()) {
                         if (arg.get(1).setValue(arg.get(0).getValue())) {
                             i = 1;
@@ -61,7 +62,7 @@ public class Predicates {
             put("_ne(2)", new SysOp(LibMode.PREDICATE, "_ne", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc == -1 || rc == 1) {
@@ -79,7 +80,7 @@ public class Predicates {
             put("_gr(2)", new SysOp(LibMode.PREDICATE, "_gr", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
@@ -95,7 +96,7 @@ public class Predicates {
             put("_ge(2)", new SysOp(LibMode.PREDICATE, "_ge", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
@@ -111,7 +112,7 @@ public class Predicates {
             put("_lr(2)", new SysOp(LibMode.PREDICATE, "_lr", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
@@ -127,7 +128,7 @@ public class Predicates {
             put("_le(2)", new SysOp(LibMode.PREDICATE, "_le", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
                         if (rc != -2) {
@@ -143,7 +144,7 @@ public class Predicates {
             put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
@@ -194,7 +195,7 @@ public class Predicates {
             put("_in(3)", new SysOp(LibMode.PREDICATE, "_in", 3, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
@@ -244,10 +245,10 @@ public class Predicates {
 
         //TODO: Добавить ret значение 2 для всех заполненных и совпадающих полей
         {
-            put("match(2)", new SysOp(LibMode.PREDICATE, "match", 2, new IRunnable() {
+            put("_match(2)", new SysOp(LibMode.PREDICATE, "_match", 2, new IRunnable() {
                 public Object run(Object o) {
                     int i = -1;
-                    List<Argument> arg = ((Domain) o).getArguments();
+                    ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
                         if (arg.get(0).getValue().isCVariable() || arg.get(1).getValue().isCVariable()) {
                             i = -1;

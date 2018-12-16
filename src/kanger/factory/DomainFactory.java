@@ -1,10 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Predicate;
-import kanger.primitives.Right;
+import kanger.primitives.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -27,11 +24,18 @@ public class DomainFactory {
 
     public DomainFactory(User user) {
         this.user = user;
+        transaction(null);
     }
 
     public void transaction(DomainFactory base) {
-        root = base.root;
-        lastID = base.lastID;
+        if (base != null) {
+            root = base.root;
+            lastID = base.lastID;
+        } else {
+            root = null;
+            lastID = 0;
+        }
+        stack.clear();
         mark();
     }
 
@@ -58,7 +62,7 @@ public class DomainFactory {
     }
 
 
-    public Domain add(Predicate pred, boolean antc, List<Argument> arg, Right r) {
+    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
@@ -79,7 +83,7 @@ public class DomainFactory {
         }
     }
 
-    public Domain find(Predicate pred, boolean antc, List<Argument> arg, Right r) {
+    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) {
         for (Domain p = root; p != null; p = p.getNext()) {
             if (p.isAntc() == antc
                     && p.getPredicate() == pred
@@ -122,10 +126,11 @@ public class DomainFactory {
     }
 
     public void clear() {
-        while (stack.size() > 1) {
-            release();
+        if (user.getMind().getNext() != null) {
+            transaction(user.getMind().getNext().getDomains());
+        } else {
+            transaction(null);
         }
-        ;
     }
 
 
@@ -157,7 +162,7 @@ public class DomainFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Domain d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+            d.writeCompiledData(dos, user);
         }
     }
 
