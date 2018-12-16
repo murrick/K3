@@ -17,14 +17,12 @@ import java.util.Set;
  */
 public class TVariable implements IValue<TValue>, Comparable<Object> {
 
-
-    private Right right = null;             // Ссылка на правило
     private long id = -1;                   // Идентификатор переменной
-    private TVariable next = null;          // Следующая переменная
-
-    private String name = "";               // Оригинальное подкванторное имя
+    private Term name = null;               // Оригинальное подкванторное имя
     private int index = 0;                  // Сквозной индекс переменной
+    private Right right = null;             // Ссылка на правило
 
+    private TVariable next = null;          // Следующая переменная
     private User user = null;
 
     public TVariable(User user) {
@@ -32,26 +30,29 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     public TVariable(DataInputStream dis, User user) throws IOException {
-        id = dis.readLong();
-        user.getMind().getTVariableLinks().put(this, dis.readLong());
-//        long did = dis.readLong();
-//        if (did != -1) {
-//            area = mind.getTerms().get(did);
-//        } else {
-//            area = null;
-//        }
-        index = dis.readInt();
-        long did = dis.readLong();
-        right = user.getMind().getRights().get(did);
-        name = dis.readUTF();
         this.user = user;
+        user.getMind().getTVariablesLink().put(dis.readLong(), this);
+        name = (Term) user.getMind().getTermsLink().get(dis.readLong());
+        index = dis.readInt();
+        long rightId = dis.readLong();
+        if(rightId != -1) {
+            right = (Right) user.getMind().getRightsLink().get(rightId);
+        }
     }
 
-    public String getName() {
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(name.getId());
+        dos.writeInt(index);
+        dos.writeLong(right == null ? -1 : right.getId());
+    }
+
+
+    public Term getName() {
         return name;
     }
 
-    public void setName(String tName) {
+    public void setName(Term tName) {
         this.name = tName;
     }
 
@@ -279,12 +280,12 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //        this.p = p;
 //    }
 //
-    public String getVarName() {
+    public Term getVarName() {
         switch (user.getMind().getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_INFO:
                 return name;
             case Enums.DEBUG_LEVEL_DEBUG:
-                return String.format("[%s]%c%d", name, Enums.TVC, index);
+                return user.getMind().getTerms().add(String.format("[%s]%c%d", name.toString(), Enums.TVC, index));
             default:
                 return name;
         }
@@ -293,15 +294,6 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     @Override
     public String toString() {
         return getVarName() + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeLong(right.getId());
-        dos.writeInt(index);
-//        dos.writeLong(area == null ? -1 : area.getId());
-        dos.writeLong(right == null ? -1 : right.getId());
-        dos.writeUTF(name);
     }
 
     @Override

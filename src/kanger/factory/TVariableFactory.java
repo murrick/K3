@@ -125,7 +125,7 @@ public class TVariableFactory {
         int sz = size();
         dos.writeInt(sz);
         for (TVariable t = root; t != null; t = t.getNext()) {
-            t.writeCompiledData(dos);
+            t.writeCompiledData(dos, user);
         }
     }
 

@@ -75,9 +75,16 @@ public class Mind {
 
     private boolean isInsertion = false;
 
-    private transient Map<Term, Long> dictionaryLinks = null;
-    private transient Map<Domain, Long> domainLinks = null;
-    private transient Map<TVariable, Long> tVariableLinks = null;
+    private transient Map<Object, Object> termsLink = null;
+    private transient Map<Object, Object> domainsLink = null;
+    private transient Map<Object, Object> tVariablesLink = null;
+    private transient Map<Object, Object> tValuesLink = null;
+    private transient Map<Object, Object> fValuesLink = null;
+    private transient Map<Object, Object> functionsLink = null;
+    private transient Map<Object, Object> predicatesLink = null;
+    private transient Map<Object, Object> rightsLink = null;
+    private transient Map<Object, Object> recordsLink = null;
+    private transient Map<Object, Object> treesLink = null;
 
     private boolean changed = false;
     private Boolean queryResult = null;
@@ -401,7 +408,7 @@ public class Mind {
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
             r = new Compiler(user).compileLine(p, suc);
-            ((Right) r).setOrig(orig);
+            ((Right) r).setOrig(user.getMind().getTerms().add(orig));
         }
 
         return r;
@@ -556,24 +563,24 @@ public class Mind {
         this.predicates.readCompiledData(dis);
         this.domains.readCompiledData(dis);
         this.rights.readCompiledData(dis);
-        for (Map.Entry<Term, Long> d : dictionaryLinks.entrySet()) {
-            d.getKey().setRight(rights.get(d.getValue()));
-        }
-        for (Map.Entry<Domain, Long> d : domainLinks.entrySet()) {
-            d.getKey().setRight(rights.get(d.getValue()));
-        }
+//        for (Map.Entry<Term, Long> d : termsLink.entrySet()) {
+//            d.getKey().setRight(rights.get(d.getValue()));
+//        }
+//        for (Map.Entry<Domain, Long> d : domainsLink.entrySet()) {
+//            d.getKey().setRight(rights.get(d.getValue()));
+//        }
         //TODO: Загрузка causes
 //        for(Map.Entry<Solution,Long> d: solveLinks.entrySet()) {
 //            d.getKey().setRight(rights.createCVar(d.getValue()));
 //        }
-        for (Map.Entry<TVariable, Long> d : tVariableLinks.entrySet()) {
-            d.getKey().setRight(rights.get(d.getValue()));
-        }
+//        for (Map.Entry<TVariable, Long> d : tVariablesLink.entrySet()) {
+//            d.getKey().setRight(rights.get(d.getValue()));
+//        }
 
-        dictionaryLinks = null;
-        domainLinks = null;
+        termsLink = null;
+        domainsLink = null;
 //        solveLinks = null;
-        tVariableLinks = null;
+        tVariablesLink = null;
 
     }
 
@@ -592,19 +599,48 @@ public class Mind {
         return Version.VERSION_S;
     }
 
-    public Map<Term, Long> getDictionaryLinks() {
-        return dictionaryLinks;
+    public Map<Object, Object> getTermsLink() {
+        return termsLink;
     }
 
-    public Map<Domain, Long> getDomainLinks() {
-        return domainLinks;
+    public Map<Object, Object> getDomainsLink() {
+        return domainsLink;
     }
 
     //    public Map<Solution, Long> getSolveLinks() {
 //        return solveLinks;
 //    }
-    public Map<TVariable, Long> getTVariableLinks() {
-        return tVariableLinks;
+    public Map<Object, Object> getTVariablesLink() {
+        return tVariablesLink;
+    }
+
+
+    public Map<Object, Object> getTValuesLink() {
+        return tValuesLink;
+    }
+
+    public Map<Object, Object> getFValuesLink() {
+        return fValuesLink;
+    }
+
+    public Map<Object, Object> getFunctionsLink() {
+        return functionsLink;
+    }
+
+    public Map<Object, Object> getPredicatesLink() {
+        return predicatesLink;
+    }
+
+    public Map<Object, Object> getRightsLink() {
+        return rightsLink;
+    }
+
+    public Map<Object, Object> getRecordsLink() {
+        return recordsLink;
+    }
+
+    public Map<Object, Object> getTreesLink() {
+        return treesLink;
     }
 
     public Map<Domain, Set<ArgList>> getUsedDomains() {

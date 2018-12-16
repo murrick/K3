@@ -32,7 +32,7 @@ public class Hypotese implements Comparable<Hypotese> {
         if (predicate instanceof Predicate) {
             this.predicate = (Predicate) predicate;
         } else {
-            this.predicate = user.getMind().getPredicates().add(predicate.toString(), params.length);
+            this.predicate = user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length);
         }
 
         if (params[0] instanceof Collection) {

@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.primitives.Predicate;
+import kanger.primitives.Term;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -51,7 +52,7 @@ public class PredicateFactory {
         }
     }
 
-    public Predicate add(String line, int range) {
+    public Predicate add(Term line, int range) {
         Predicate p = (Predicate) find(line, range);
         if (p != null) {
             return p;
@@ -66,9 +67,9 @@ public class PredicateFactory {
         }
     }
 
-    public Object find(String line, int range) {
+    public Object find(Term line, int range) {
         for (Predicate p = root; p != null; p = p.getNext()) {
-            if (line.equals(p.getName()) && p.getRange() == range) {
+            if (line.getId() == p.getName().getId() && p.getRange() == range) {
                 return p;
             }
         }
@@ -128,7 +129,7 @@ public class PredicateFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Predicate p = root; p != null; p = p.getNext()) {
-            p.writeCompiledData(dos);
+            p.writeCompiledData(dos, user);
         }
         List<Long[]> links = new ArrayList<>();
         //TODO: Save causes

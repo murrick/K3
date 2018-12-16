@@ -162,7 +162,7 @@ public class DomainFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Domain d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+            d.writeCompiledData(dos, user);
         }
     }
 

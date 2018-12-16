@@ -112,7 +112,7 @@ public class RightFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Right r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos);
+            r.writeCompiledData(dos, user);
         }
     }
 

@@ -116,7 +116,7 @@ public class DatabaseFactory {
 
             int save = user.getMind().getDebugLevel();
             user.getMind().setDebugLevel(0);
-            String origin = d.toString();
+            Term origin = user.getMind().getTerms().add(d.toString());
             user.getMind().setDebugLevel(save);
             r.setOrig(origin);
 

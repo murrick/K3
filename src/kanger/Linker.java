@@ -389,12 +389,14 @@ public class Linker {
 
     private void logCauses(Domain d) {
         boolean rightShowed = false;
-        for (Cause c : d.getCauses()) {
-            if (!rightShowed) {
-                user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
-                rightShowed = true;
+        if(d.getCauses() != null) {
+            for (Cause c : d.getCauses()) {
+                if (!rightShowed) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
+                    rightShowed = true;
+                }
+                user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
             }
-            user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
         }
     }
 
@@ -425,7 +427,17 @@ public class Linker {
             for (Map.Entry<Integer, Set<ArgList>> tags : e.getValue().entrySet()) {
                 for (ArgList args : tags.getValue()) {
                     result = true;
-                    d.apply(args);
+
+                    for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                        if (d.getArguments().get(i).isTSet()) {
+                            if (d.getArguments().get(i).getT().find(args.get(i).getValue()) != null) {
+                                d.getArguments().get(i).getT().setValue(args.get(i).getValue());
+                            }
+                        } else if (d.getArguments().get(i).isFSet()) {
+                            //TODO: Добавить обработку функций
+                        }
+                    }
+
                     Record x;
                     if (d.getArguments().getTVariables(true).isEmpty()) {
                         x = d.setStored();
@@ -442,25 +454,10 @@ public class Linker {
                         x.getDomain().setCalculated();
                     }
                     x.setTag(tags.getKey());
-                    x.getCauses().clear();
-                    x.getCauses().addAll(d.getCauses());
-
-//                    boolean vxr = false;
-//                    for(TValue v : d.getTValues(true)) {
-//                        for(Cause c : v.getCauses()) {
-//                            if(c.getSrc().getArguments().equalsBase(c.getArguments()) && !isRecurse(c, null)) {
-//                                x.getCauses().add(c);
-//                                if(logging) {
-//                                    if(!vxr) {
-//                                        user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + v.getTVar().getRight());
-//                                        vxr = true;
-//                                    }
-//                                    user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
-//                                }
-//                            }
-//                        }
-//                    }
-
+                    if(d.getCauses() != null) {
+                        x.getCauses().clear();
+                        x.getCauses().addAll(d.getCauses());
+                    }
                 }
             }
         }

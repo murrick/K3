@@ -1,5 +1,11 @@
 package kanger.primitives;
 
+import kanger.User;
+import kanger.enums.ArgumentType;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,11 +23,26 @@ public class ArgList extends ArrayList<Argument> {
         super(lis);
     }
 
+    public ArgList(DataInputStream dis, User user) throws IOException {
+        int count = dis.readInt();
+        while (count-- > 0) {
+            Argument a = new Argument(dis, user);
+            add(a);
+        }
+    }
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeInt(size());
+        for(Argument a : this) {
+            a.writeCompiledData(dos, user);
+        }
+    }
+
+
     @Override
     public int hashCode() {
         StringBuffer buffer = new StringBuffer();
         for (Argument a : this) {
-            if(!a.isEmpty()) {
+            if (!a.isEmpty()) {
                 buffer.append(a.getValue().getId());
             }
         }

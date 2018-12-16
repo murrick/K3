@@ -20,9 +20,9 @@ import java.util.*;
 public class Domain {
 
     private Predicate predicate = null;                         // Ссылка на описатель предиката
+    private Right right;                                        // Ссылка на правило
     private ArgList arguments = new ArgList();       // Массив подстановочных переменных
     private boolean antc = true;                                // ! или ?
-    private Right right;                                        // Ссылка на правило
     private long id = -1;                                       // id домена
     private Domain next = null;                                 // Следующий элемент
 
@@ -37,18 +37,38 @@ public class Domain {
     }
 
     public Domain(DataInputStream dis, User user) throws IOException {
-        id = dis.readLong();
-        user.getMind().getDomainLinks().put(this, dis.readLong());
-        int flags = dis.readInt();
-        antc = (flags & 0x0001) != 0;
-//        used = (flags & 0x0002) != 0;
-        long id = dis.readLong();
-        predicate = user.getMind().getPredicates().get(id);
+        this.user = user;
+        user.getMind().getDomainsLink().put(dis.readLong(), this);
+        right = (Right) user.getMind().getRightsLink().get(dis.readLong());
+        predicate = (Predicate) user.getMind().getPredicatesLink().get(dis.readLong());
+        arguments = new ArgList(dis, user);
+        antc = dis.readBoolean();
+
         int count = dis.readInt();
-        arguments.clear();
         while (count-- > 0) {
-            Argument a = new Argument(dis, user);
-            arguments.add(a);
+            ArgList args = new ArgList(dis, user);
+            causes.put(args, new TreeSet<>());
+            int cnt = dis.readInt();
+            while(cnt-- > 0) {
+                Cause c = new Cause(dis, user);
+                causes.get(args).add(c);
+            }
+        }
+    }
+
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(right.getId());
+        dos.writeLong(predicate.getId());
+        arguments.writeCompiledData(dos, user);
+        dos.writeBoolean(antc);
+        dos.writeInt(causes.size());
+        for(Map.Entry<ArgList, SortedSet<Cause>> e : causes.entrySet()) {
+            e.getKey().writeCompiledData(dos, user);
+            dos.writeInt(e.getValue().size());
+            for(Cause c : e.getValue()) {
+                c.writeCompiledData(dos, user);
+            }
         }
     }
 
@@ -221,7 +241,7 @@ public class Domain {
 
     public String toString(ArgList arguments) {
         String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
-        Operation op = Parser.getOp(predicate.getName(), predicate.getRange());
+        Operation op = Parser.getOp(predicate.getName().toString(), predicate.getRange());
         if (op == null) {
             s += predicate.getName() + "(";
             int i = 0;
@@ -277,20 +297,6 @@ public class Domain {
         return s + ";" + suffix;
     }
 
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeLong(right.getId());
-        int flags = (antc ? 0x0001 : 0);
-//                | (used ? 0x0002 : 0);
-//                | (cst ? 0x0004 : 0);
-        dos.writeInt(flags);
-        dos.writeLong(predicate.getId());
-        dos.writeInt(arguments.size());
-        for (Argument a : arguments) {
-            a.writeCompiledData(dos);
-        }
-    }
 
     public boolean equalsBase(Domain o) {
         if (predicate.getId() != o.getPredicate().getId()) {
@@ -639,7 +645,7 @@ public class Domain {
     }
 
     public boolean isSystem() {
-        return Parser.getOp(predicate.getName(), predicate.getRange()) != null;
+        return Parser.getOp(predicate.getName().toString(), predicate.getRange()) != null;
     }
 
     public int execSystem() {
@@ -787,25 +793,6 @@ public class Domain {
             }
         }
         return complete;
-    }
-
-    public void apply(Domain p) {
-        apply(p.getArguments());
-    }
-
-    public void apply(ArgList list) {
-        for (int i = 0; i < predicate.getRange(); ++i) {
-            if (arguments.get(i).isTSet()) {
-                if (list.get(i).isEmpty()) {
-                    arguments.get(i).getT().setValue(null);
-                } else if (arguments.get(i).getT().find(list.get(i).getValue()) != null) {
-                    arguments.get(i).getT().setValue(list.get(i).getValue());
-//                                    mind.getValues().add(parent.get(i).getT(), parent);
-                }
-            } else if (arguments.get(i).isFSet()) {
-                //TODO: Добавить обработку функций
-            }
-        }
     }
 
     public Set<Tree> getParentTrees() {

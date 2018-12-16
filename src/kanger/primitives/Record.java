@@ -3,18 +3,21 @@ package kanger.primitives;
 import kanger.User;
 import kanger.enums.Enums;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class Record implements Comparable<Record> {
-    private Domain domain = null;
     private long id = -1;
-    private Record next = null;
+    private Domain domain = null;
     private int tag = -1;
     private Set<Cause> causes = new HashSet<>();
 
+    private Record next = null;
     private User user = null;
 
     public Record(Domain domain) {
@@ -29,7 +32,7 @@ public class Record implements Comparable<Record> {
         if (predicate instanceof Predicate) {
             d.setPredicate((Predicate) predicate);
         } else {
-            d.setPredicate(user.getMind().getPredicates().add(predicate.toString(), params.length));
+            d.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
         }
         for (Object p : params) {
             if (p instanceof Term) {
@@ -41,6 +44,27 @@ public class Record implements Comparable<Record> {
         domain = d;
     }
 
+    public Record(DataInputStream dis, User user) throws IOException {
+        this.user = user;
+        user.getMind().getRecordsLink().put(dis.readLong(), this);
+        domain = (Domain) user.getMind().getDomainsLink().get(dis.readLong());
+        tag = dis.readInt();
+        int count = dis.readInt();
+        while(count-- > 0) {
+            Cause c = new Cause(dis, user);
+            causes.add(c);
+        }
+    }
+
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(domain.getId());
+        dos.writeInt(tag);
+        dos.writeInt(causes.size());
+        for(Cause c : causes) {
+            c.writeCompiledData(dos, user);
+        }
+    }
 
     public Domain getDomain() {
         return domain;

@@ -17,13 +17,13 @@ import java.util.Set;
  */
 public class Right {
 
-    private List<Tree> tree = new ArrayList<>();      // Ссылка на дерево правила
     private long id = -1;                       // ID Правила
-    private Right next = null;                  // Следующее правило
-    private String orig = "";                   // Оригинальная строка
+    private Term orig = null;                   // Оригинальная строка
     private boolean query = false;             // Вновь введенное правило
     private boolean generated = false;         // Правило добавлено в процессе выводс
+    private List<Tree> tree = new ArrayList<>();      // Ссылка на дерево правила
 
+    private Right next = null;                  // Следующее правило
     private User user = null;
 
     public Right(User user) {
@@ -31,13 +31,28 @@ public class Right {
     }
 
     public Right(DataInputStream dis, User user) throws IOException {
-        id = dis.readLong();
-        orig = dis.readUTF();
+        this.user = user;
+        user.getMind().getRightsLink().put(dis.readLong(), this);
+        orig = (Term) user.getMind().getTermsLink().get(dis.readLong());
+        query = dis.readBoolean();
+        generated = dis.readBoolean();
         int count = dis.readInt();
         while (count-- > 0) {
-            tree.add(new Tree(dis, user));
+            Tree t = new Tree(dis, user);
+            t.setRight(this);
+            tree.add(t);
         }
-        this.user = user;
+    }
+
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(orig.getId());
+        dos.writeBoolean(query);
+        dos.writeBoolean(generated);
+        dos.writeInt(tree.size());
+        for (Tree r : tree) {
+            r.writeCompiledData(dos);
+        }
     }
 
     public void setGenerated(boolean generated) {
@@ -68,11 +83,11 @@ public class Right {
         this.next = next;
     }
 
-    public String getOrig() {
+    public Term getOrig() {
         return orig;
     }
 
-    public void setOrig(String orig) {
+    public void setOrig(Term orig) {
         this.orig = orig;
     }
 
@@ -82,16 +97,6 @@ public class Right {
 
     public void setQuery(boolean current) {
         this.query = current;
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeUTF(orig);
-        dos.writeInt(tree.size());
-        for (Tree r : tree) {
-            r.writeCompiledData(dos);
-
-        }
     }
 
     public int size() {
@@ -147,7 +152,7 @@ public class Right {
 
     @Override
     public String toString() {
-        return orig;
+        return orig.toString();
     }
 
     @Override

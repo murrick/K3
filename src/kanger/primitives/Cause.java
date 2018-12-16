@@ -1,5 +1,10 @@
 package kanger.primitives;
 
+import kanger.User;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 public class Cause implements Comparable<Cause> {
@@ -13,6 +18,20 @@ public class Cause implements Comparable<Cause> {
         this.dst = dst;
         this.src = src;
         this.arguments = src.getArguments().convertBase();
+    }
+
+    public Cause(DataInputStream dis, User user) throws IOException {
+        index = dis.readInt();
+        src = (Domain) user.getMind().getDomainsLink().get(dis.readLong());
+        dst = (Domain) user.getMind().getDomainsLink().get(dis.readLong());
+        arguments = new ArgList(dis, user);
+    }
+
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeInt(index);
+        dos.writeLong((Long) user.getMind().getDomainsLink().get(src));
+        dos.writeLong((Long) user.getMind().getDomainsLink().get(dst));
+        arguments.writeCompiledData(dos, user);
     }
 
     public Domain getSrc() {
