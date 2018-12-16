@@ -62,9 +62,10 @@ public class Kanger {
 
     public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
 
-        Mind mind = new Mind(new User());
+        User user = new User();
+        Mind mind = new Mind(user);
 
-        kanger.test.KangerTest cls = new kanger.test.KangerTest();
+        kanger.test.KangerTest cls = new kanger.test.KangerTest(user);
         try {
             System.out.println("Init test system...");
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
