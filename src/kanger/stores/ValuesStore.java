@@ -152,12 +152,12 @@ public class ValuesStore {
 //        return root.toArray(new TValue[]{})[index];
 //    }
 
-    public List<Term> getValues(Term name) {
+    public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
         if(root != null) {
             for (SortedSet<TValue> s : root.values()) {
                 for (TValue t : s) {
-                    if (name == null || name.getId() == t.getTVar().getName().getId()) {
+                    if (name == null || name.equals(t.getTVar().getName().getValue())) {
                         list.add(t.getValue());
                     }
                 }
