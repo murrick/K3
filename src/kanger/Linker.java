@@ -62,29 +62,39 @@ public class Linker {
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
 
-            user.getMind().getProducedDomains().clear();
-
             final Map<Right, Set<Cause>> causes = new HashMap<>();
 
-            Set<Tree> treeSet = new HashSet<>();
-//            if (right == null) {
+            SortedSet<Tree> treeSet = new TreeSet<>();
+            if (right == null) {
                 for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
                     treeSet.add(tree);
                 }
-//            } else {
-//                for (Tree tree : right.getTree()) {
-//                    for(Domain d : tree.getSequence()) {
-//                        treeSet.addAll(d.getPredicate().getLinkedTrees());
-//                    }
-//                }
-//            }
+            } else {
+                Set<Right> rights = new HashSet<>();
+                for (Tree tree : right.getTree()) {
+                    for(Domain d : tree.getSequence()) {
+                        for(Tree t : d.getPredicate().getLinkedTrees()) {
+                            rights.add(t.getSequence().get(0).getRight());
+                        }
+                    }
+                }
+                for(Right r : rights) {
+                    treeSet.addAll(r.getTree());
+                }
+            }
 
 
+            user.getMind().getProducedDomains().clear();
+            //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
+
+//            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
             for (Tree tree : treeSet) {
 
                 final Tree t = tree;
                 SortedSet<TVariable> tvars = new TreeSet<>();
                 tvars.addAll(t.getTVariables(true));
+
+
 
                 rotateVariables(tvars, logging, new IRunnable() {
                     @Override
@@ -107,6 +117,7 @@ public class Linker {
                         return result;
                     }
                 });
+
             }
 
             updateDatabase(logging);

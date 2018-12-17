@@ -15,7 +15,7 @@ import java.util.Set;
  * <p>
  * Элемент ветви дерева
  */
-public class Tree {
+public class Tree implements Comparable<Tree>{
 
     private List<Domain> sequence = new ArrayList<>();          // Домены
     private long id = -1;                                       // Идентификатор
@@ -249,6 +249,11 @@ public class Tree {
             }
         }
         return set;
+    }
+
+    @Override
+    public int compareTo(Tree o) {
+        return (int) (o.id - id);
     }
 
 //    public boolean equalsBase(Tree t) {
