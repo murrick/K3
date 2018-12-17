@@ -26,32 +26,8 @@ public class Hypotese implements Comparable<Hypotese> {
 
     private User user = null;
 
-    public Hypotese(User user, boolean antc, Object predicate, Object... params) {
+    public Hypotese(User user) {
         this.user = user;
-        this.antc = antc;
-        if (predicate instanceof Predicate) {
-            this.predicate = (Predicate) predicate;
-        } else {
-            this.predicate = user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length);
-        }
-
-        if (params[0] instanceof Collection) {
-            addParams((Collection) params[0]);
-        } else {
-            addParams(Arrays.asList(params));
-        }
-    }
-
-    private void addParams(Collection params) {
-        for (Object p : params) {
-            if (p instanceof Argument) {
-                solve.add(((Argument) p).getValue());
-            } else if (p instanceof Term) {
-                solve.add((Term) p);
-            } else {
-                solve.add(user.getMind().getTerms().add(p));
-            }
-        }
     }
 
     public void delete() {
@@ -110,6 +86,19 @@ public class Hypotese implements Comparable<Hypotese> {
     public void setTag(int tag) {
         this.tag = tag;
     }
+
+    public void addParams(Collection params) {
+        for (Object p : params) {
+            if (p instanceof Argument) {
+                solve.add(((Argument) p).getValue());
+            } else if (p instanceof Term) {
+                solve.add((Term) p);
+            } else {
+                solve.add(user.getMind().getTerms().add(p));
+            }
+        }
+    }
+
 
     @Override
     public String toString() {

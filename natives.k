@@ -20,7 +20,7 @@
     (female(x) -> daughter(x,y));
 
 !@x @y father(x,y) -> male(x), parent(x,y);
-!@x @y mother(x,y) -> femaile(x), parent(x,y);
+!@x @y mother(x,y) -> female(x), parent(x,y);
 
 !@x @y daughter(x,y) -> female(x), child(x,y);
 !@x @y son(x,y) -> male(x), child(x,y);

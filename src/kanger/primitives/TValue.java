@@ -78,16 +78,6 @@ public class TValue implements IValue, Comparable<TValue> {
         return causes;
     }
 
-    public boolean addCause(Cause s) {
-//        Cause s = new Cause(index, dst, src);
-        if (causes.contains(s)) {
-            return false;
-        } else {
-            causes.add(s);
-            return true;
-        }
-    }
-
 
     public Right getRight() {
         return right;

@@ -5,12 +5,14 @@ import kanger.User;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
- *
+ * <p>
  * Описание предиката. Голова предиката ссылается на список решений для него.
  * Список решений состоит из строк со значениями параметров. Флажок cuted служит
  * для отмены какого-либо решения. Собственно говоря предикат со списком решений
@@ -95,14 +97,43 @@ public class Predicate {
         return set;
     }
 
+    public Set<Domain> getRelates() {
+        Set<Domain> set = new HashSet<>();
+        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+            if (getId() == d.getPredicate().getId()) {
+                set.add(d);
+            }
+        }
+        return set;
+    }
+
     public Set<Tree> getLinkedTrees() {
         Set<Tree> set = new HashSet<>();
-        for(Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
+        for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
             for (Domain d : t.getSequence()) {
                 if (getId() == d.getPredicate().getId()) {
                     set.add(t);
                     break;
                 }
+            }
+        }
+        return set;
+    }
+
+    public Set<Right> getLinkedRights() {
+        Set<Right> set = new HashSet<>();
+        for(Domain d : getRelates()) {
+            set.add(d.getRight());
+        }
+        return set;
+    }
+
+    public Set<TVariable> getTVariables(boolean full) {
+        Set<TVariable> set = new HashSet<>();
+        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+            if (getId() == d.getPredicate().getId()) {
+                set.addAll(d.getArguments().getTVariables(full));
+                break;
             }
         }
         return set;

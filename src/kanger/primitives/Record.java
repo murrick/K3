@@ -25,25 +25,6 @@ public class Record implements Comparable<Record> {
         this.user = domain.getUser();
     }
 
-    public Record(User user, boolean antc, Object predicate, Object... params) {
-        this.user = user;
-        Domain d = new Domain(user);
-        d.setAntc(antc);
-        if (predicate instanceof Predicate) {
-            d.setPredicate((Predicate) predicate);
-        } else {
-            d.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
-        }
-        for (Object p : params) {
-            if (p instanceof Term) {
-                d.add(new Argument((Term) p));
-            } else {
-                d.add(new Argument(user.getMind().getTerms().add(p)));
-            }
-        }
-        domain = d;
-    }
-
     public Record(DataInputStream dis, User user) throws IOException {
         this.user = user;
         user.getMind().getRecordsLink().put(dis.readLong(), this);

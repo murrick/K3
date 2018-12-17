@@ -11,6 +11,7 @@ import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
+import kanger.test.KangerTest;
 
 import java.io.*;
 import java.util.*;
@@ -25,11 +26,14 @@ import java.util.*;
 public class Screen {
 
     public static boolean LINE_EDITOR_ENABLE
-    = System.getProperties().getProperty("kanger.enable.line.editor") != null
-    && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
+            = System.getProperties().getProperty("kanger.enable.line.editor") != null
+            && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
 
-    public static void session(Mind mind) {
+    public static void session(User user) {
         boolean stop = false;
+        boolean again = false;
+        Mind mind = user.getMind();
+        String lastQuery = "";
 
 //        ConsoleReader reader = null;
 //        if (LINE_EDITOR_ENABLE) {
@@ -62,13 +66,22 @@ public class Screen {
 //                }
 //                if (!LINE_EDITOR_ENABLE || reader == null) {
                 System.out.printf("\n: ");
-                line = new Scanner(System.in).nextLine();
+                if(again) {
+                    line = lastQuery;
+                    System.out.printf("%s\n", line);
+                    again = false;
+                } else {
+                    line = new Scanner(System.in).nextLine();
+                }
 //                }
                 if (line == null) {
                     line = "";
                 }
                 if (line.length() > 0) {
                     switch (line.toUpperCase().charAt(0)) {
+                        case 'A':
+                            again = true;
+                            break;
                         case 'Q':
 //                            if (checkChg(mind)) {
                             stop = true;
@@ -78,7 +91,7 @@ public class Screen {
                             showCommonHelp();
                             break;
                         case 'R': {
-                                Mind m = mind;
+                            Mind m = mind;
 //                            int pos = 0;
 //                            while (line.substring(pos).contains("..")) {
 //                                int ps = line.indexOf("..");
@@ -88,11 +101,11 @@ public class Screen {
 //                                }
 //                            }
 //                            line.replace("/", "");
-                                showRights(m, line.charAt(0) != 'r');
-                            }
-                            break;
+                            showRights(m, line.charAt(0) != 'r');
+                        }
+                        break;
                         case 'B': {
-                                Mind m = mind;
+                            Mind m = mind;
 //                            int pos = 0;
 //                            while (line.substring(pos).contains("..")) {
 //                                int ps = line.indexOf("..");
@@ -102,9 +115,9 @@ public class Screen {
 //                                }
 //                            }
 //                            line.replace("/", "");
-                                showBase(m, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
-                            }
-                            break;
+                            showBase(m, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
+                        }
+                        break;
                         case 'F':
                             showFunctions(mind, line.charAt(0) != 'f');
                             break;
@@ -147,14 +160,14 @@ public class Screen {
                             }
                             break;
                         case 'C': {
-                                System.out.printf("Are you sure to clear workspace? [y/N]? ");
-                                String s = new Scanner(System.in).nextLine().toUpperCase();
-                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                    mind.clear();
+                            System.out.printf("Are you sure to clear workspace? [y/N]? ");
+                            String s = new Scanner(System.in).nextLine().toUpperCase();
+                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                mind.clear();
 //                                mind.release();
-                                }
                             }
-                            break;
+                        }
+                        break;
 //                        case 'E': {
 //                            System.out.printf("Are you sure to clear working memory? [y/N]? ");
 //                            String s = new Scanner(System.in).nextLine().toUpperCase();
@@ -217,13 +230,15 @@ public class Screen {
                                         mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
                                         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
                                         break;
+                                    case 'T':
+                                        KangerTest.test(user, "set_");
+                                        break;
                                 }
                             }
                             break;
-                        case Enums.ANT:
                         case Enums.SUC:
-//                        savedQuery = line;
-//                        lastQuery = "";
+                            lastQuery = line;
+                        case Enums.ANT:
                         case Enums.INS:
                         case Enums.DEL:
                         case Enums.WIPE:
@@ -252,10 +267,8 @@ public class Screen {
                                     if (res != null) {
                                         showLog(mind, LogMode.SOLVES);
                                         showLog(mind, LogMode.VALUES);
-                                    } else if (mind.isInsertion()) {
-                                        showLog(mind, LogMode.SAVED);
                                     }
-                                    if (res == null && !mind.isInsertion()) {
+                                    if (res == null) {
                                         showHypo(mind);
                                     }
                                 }
@@ -355,8 +368,8 @@ public class Screen {
 //    }
     public static void showCopyrigt(Mind mind) {
         System.out.printf("KANGER III, Version %s\n"
-                          + "Copiryght (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
-                          + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
+                + "Copiryght (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
+                + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
 //        System.out.printf("Context ID: %s\n", mind.getContextIdString());
     }
 
@@ -429,46 +442,46 @@ public class Screen {
 //    }
     public static void showOptionsHelp() {
         System.out.printf(
-            "Available OPTIONS:\n\n"
-            + "   H[ELP]    - Get this message\n"
-            + "\n"
-            + "   R[IGHTS]  - Rights showed in logs\n"
-            + "   V[ALUES]  - Values of vars and funcs showed in logs\n"
-            + "   S[TATUS]  - Status of domains and trees showed in logs\n"
-            + "\n"
-            + "Use UPPERCASE letter for ON and LOWER for OFF.\n"
+                "Available OPTIONS:\n\n"
+                        + "   H[ELP]    - Get this message\n"
+                        + "\n"
+                        + "   R[IGHTS]  - Rights showed in logs\n"
+                        + "   V[ALUES]  - Values of vars and funcs showed in logs\n"
+                        + "   S[TATUS]  - Status of domains and trees showed in logs\n"
+                        + "\n"
+                        + "Use UPPERCASE letter for ON and LOWER for OFF.\n"
         );
     }
 
     public static void showCommonHelp() {
         System.out.printf(
-            "Available KEYWORDS:\n\n"
-            + "   H[ELP]    - Get this message\n"
-            + "\n"
-            + "   ?         - Check for Rights Collisions\n"
-            + "   B[ASE]    - View DataBase contents\n"
-            + "   R[IGHTS]  - View compiled-structured Rights list\n"
-            + "   F[UNCS]   - View defined Functions list\n"
-            + "   K[ILL]    - Remove right\n"
-            + "   L[IST]    - View Hypothesis list after last work\n"
-            + "   I[NSERT]  - Insert Hypothesis as right\n"
-            + "   A[GAIN]   - Repeat last question\n"
-            + "   X[PLAIN]  - Show explanation log\n"
-            + "   S[OLVES]  - Show solves list\n"
-            + "   V[ALUES]  - Show values list\n"
-            //                        + "   TEXT    - Show source text\n"
-            + "   C[LEAR]   - Clear workspace\n"
-            + "   O[PTIONS] - Set workspace options\n"
-            //                        + "   ERASE   - Clear all working memory\n"
-            + "\n"
-            //                        + "   PUT     - Save Source file\n"
-            + "   G[ET]     - Load Source file from disk\n"
-            + "   Z[IP]     - Save compiled code\n"
-            + "   U[NZIP]   - Load compiled code from file\n"
-            + "\n"
-            + "   Q[UIT]    - Quit KANGER\n"
-            + "\n"
-            + "You can use just FIRST letter of keywords.\n"
+                "Available KEYWORDS:\n\n"
+                        + "   H[ELP]    - Get this message\n"
+                        + "\n"
+                        + "   ?         - Check for Rights Collisions\n"
+                        + "   B[ASE]    - View DataBase contents\n"
+                        + "   R[IGHTS]  - View compiled-structured Rights list\n"
+                        + "   F[UNCS]   - View defined Functions list\n"
+                        + "   K[ILL]    - Remove right\n"
+                        + "   L[IST]    - View Hypothesis list after last work\n"
+                        + "   I[NSERT]  - Insert Hypothesis as right\n"
+                        + "   A[GAIN]   - Repeat last question\n"
+                        + "   X[PLAIN]  - Show explanation log\n"
+                        + "   S[OLVES]  - Show solves list\n"
+                        + "   V[ALUES]  - Show values list\n"
+                        //                        + "   TEXT    - Show source text\n"
+                        + "   C[LEAR]   - Clear workspace\n"
+                        + "   O[PTIONS] - Set workspace options\n"
+                        //                        + "   ERASE   - Clear all working memory\n"
+                        + "\n"
+                        //                        + "   PUT     - Save Source file\n"
+                        + "   G[ET]     - Load Source file from disk\n"
+                        + "   Z[IP]     - Save compiled code\n"
+                        + "   U[NZIP]   - Load compiled code from file\n"
+                        + "\n"
+                        + "   Q[UIT]    - Quit KANGER\n"
+                        + "\n"
+                        + "You can use just FIRST letter of keywords.\n"
         );
     }
 
@@ -759,12 +772,12 @@ public class Screen {
 //        int i = 0;
         for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
             System.out.printf("%sRight %03d%s: %s\n",
-                              showTree ? "\n --- " : "",
-                              r.getId(),
-                              r.isGenerated() || r.isQuery() ? " " +
-                              (r.isGenerated() ? "G" : "") +
-                              (r.isQuery() ? "Q" : "") : "",
-                              r.getOrig());
+                    showTree ? "\n --- " : "",
+                    r.getId(),
+                    r.isGenerated() || r.isQuery() ? " " +
+                            (r.isGenerated() ? "G" : "") +
+                            (r.isQuery() ? "Q" : "") : "",
+                    r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
                     int save = mind.getDebugLevel();
@@ -882,16 +895,8 @@ public class Screen {
             System.out.printf("ERROR: Wrong number\n");
             return null;
         }
-        System.out.printf("Enter T(rue) or F(alse) for new right: ");
-        String s = new Scanner(System.in).nextLine();
-        int antc = (s.charAt(0) == 'T' || s.charAt(0) == 't') ? Enums.ANT : Enums.SUC;
-
         String temp = mind.getHypotesisStore().get(i).toString();
-        if (antc == Enums.ANT) {
-            return String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
-        } else {
-            return String.format("!~(%s);", temp.replace(String.format("%c", Enums.EOLN), ""));
-        }
+        return String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
     }
 
     public static void killRight(Mind mind) {
@@ -917,7 +922,7 @@ public class Screen {
         if (context.getSourceFileName().isEmpty()) {
             context.setSourceFileName("context.k");
         }
-        
+
 
         System.out.printf("Enter file name for save (%s): ", context.getSourceFileName());
         String line = scanner.nextLine();

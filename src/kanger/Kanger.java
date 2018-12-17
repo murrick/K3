@@ -39,10 +39,7 @@ public class Kanger {
             "    (female(x) -> daughter(x,y));\n" +
             "\n" +
             "!@x @y father(x,y) -> male(x), parent(x,y);\n" +
-            "!@x @y mother(x,y) -> femaile(x), parent(x,y);\n" +
-            "\n" +
-            "!@x @y child(x,y) ->\n" +
-            "    parent(y,x);\n" +
+            "!@x @y mother(x,y) -> female(x), parent(x,y);\n" +
             "\n" +
             "!@x @y daughter(x,y) -> female(x), child(x,y);\n" +
             "!@x @y son(x,y) -> male(x), child(x,y);\n" +
@@ -65,47 +62,6 @@ public class Kanger {
         User user = new User();
         Mind mind = new Mind(user);
 
-        kanger.test.KangerTest cls = new kanger.test.KangerTest(user);
-        try {
-            System.out.println("Init test system...");
-            Method setUp = cls.getClass().getDeclaredMethod("setUp");
-            setUp.setAccessible(true);
-            setUp.invoke(cls);
-
-            Map<String, Double> list = new TreeMap<>();
-            for (Method method : cls.getClass().getDeclaredMethods()) {
-                if (method.getName().startsWith("set_")) {
-                    list.put(method.getName(), 0.0);
-                }
-            }
-
-            System.out.println("Done.");
-            System.out.println("----------------------------------------------------");
-
-            for (String name : list.keySet()) {
-                System.out.println("Testing: " + name);
-                long t = System.currentTimeMillis();
-                Method method = cls.getClass().getDeclaredMethod(name);
-                method.setAccessible(true);
-                method.invoke(cls);
-                System.out.println("Timing: " + ((System.currentTimeMillis() - t) / 1000.0) + " sec");
-                System.out.println("====================================================");
-                list.put(name, ((System.currentTimeMillis() - t) / 1000.0));
-            }
-
-            for (Map.Entry<String, Double> e: list.entrySet()) {
-                System.out.println(e.getKey() + "\t" + e.getValue() + " sec");
-            }
-            System.out.println("====================================================");
-            System.out.println("Success.");
-
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace(System.err);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace(System.err);
-        } catch (InvocationTargetException e) {
-            e.printStackTrace(System.err);
-        }
 
 
 //        new LibraryStrings(mind);
@@ -330,7 +286,8 @@ public class Kanger {
 //                "!d(v);");
 //        mind.query("?n(nnn);");
 
-        Screen.session(mind);
+        mind.compile(text);
+        Screen.session(user);
 
 ////            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
 ////                    "!a(nnn);" +

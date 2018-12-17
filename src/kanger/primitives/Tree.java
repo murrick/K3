@@ -152,23 +152,34 @@ public class Tree {
         return !(t == null || !(t instanceof Tree)) && ((Tree) t).id == id;
     }
 
-    public List<TVariable> getTVariables(boolean full) {
-        List<TVariable> list = new ArrayList<>();
+    public Set<TVariable> getTVariables(boolean full) {
+        Set<TVariable> list = new HashSet<>();
         for (Domain d : sequence) {
             for (TVariable t : d.getArguments().getTVariables(full)) {
-                if (!list.contains(t)) {
                     list.add(t);
-                }
             }
         }
         return list;
     }
 
-//    public void recalculate() throws RuntimeErrorException {
-//        for (Domain d : sequence) {
-//            d.recalculate();
-//        }
-//    }
+    public Set<TVariable> getRelatedTVariables(boolean full) {
+        Set<TVariable> list = new HashSet<>();
+        for (Domain d : sequence) {
+            for (TVariable t : d.getRelatedTVariables(full)) {
+                    list.add(t);
+            }
+        }
+        return list;
+    }
+
+    public Set<Tree> getRelatedTrees() {
+        Set<Tree> list = new HashSet<>();
+        for (Domain d : sequence) {
+            list.addAll(d.getPredicate().getLinkedTrees());
+        }
+        return list;
+    }
+
 
     public List<Domain> getSystem() {
         List<Domain> list = new ArrayList<>();

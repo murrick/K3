@@ -20,10 +20,6 @@ public class Linker {
         this.user = user;
     }
 
-    public void link(boolean logging) {
-        link(null, logging);
-    }
-
     public void link(Right right, boolean logging) {
 
         user.getMind().getProducedDomains().clear();
@@ -70,7 +66,21 @@ public class Linker {
 
             final Map<Right, Set<Cause>> causes = new HashMap<>();
 
-            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
+            Set<Tree> treeSet = new HashSet<>();
+//            if (right == null) {
+                for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
+                    treeSet.add(tree);
+                }
+//            } else {
+//                for (Tree tree : right.getTree()) {
+//                    for(Domain d : tree.getSequence()) {
+//                        treeSet.addAll(d.getPredicate().getLinkedTrees());
+//                    }
+//                }
+//            }
+
+
+            for (Tree tree : treeSet) {
 
                 final Tree t = tree;
                 SortedSet<TVariable> tvars = new TreeSet<>();
@@ -216,23 +226,33 @@ public class Linker {
 
     private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) {
         Right r = null;
+        boolean occurrs = false;
         for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
-            Cause s = new Cause(i, master, slave);
-            if (subst[i] != null && (subst[i].addCause(s) || !master.isExcluded(slave.getArguments()))) {
-                r = subst[i].getTVar().getRight();
-                if (!causes.containsKey(r)) {
-                    causes.put(r, new HashSet<>());
+            if (subst[i] != null) {
+                boolean caused = false;
+                Cause s = new Cause(i, master, slave);
+                if (!subst[i].getCauses().contains(s)) {
+                    subst[i].getCauses().add(s);
+                    caused = true;
                 }
-                causes.get(r).add(s);
-                if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
+                if (caused || !master.isExcluded(slave.getArguments())) {
+                    r = subst[i].getTVar().getRight();
+                    if (caused) {
+                        if (!causes.containsKey(r)) {
+                            causes.put(r, new HashSet<>());
+                        }
+                        causes.get(r).add(s);
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
+                        }
+                        occurrs = true;
+                    }
                 }
-
             }
         }
         if (r != null) {
             master.setExcluded(slave.getArguments());
-            if (logging) {
+            if (occurrs && logging) {
                 user.getMind().pushDebugLevel();
                 user.getMind().setDebugLevel(user.getMind().getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
                 user.getMind().getLog().add(LogMode.ANALIZER, "From right: " + r); //master.getRight());
@@ -243,18 +263,6 @@ public class Linker {
             }
         }
         return r != null;
-    }
-
-    private void updateCauses(Domain d) {
-        System.out.println("STOR: " + d);
-        for (TValue v : d.getArguments().getTValues(true)) {
-            System.out.println("\t---- Right:" + v.getTVar().getRight().toString().replaceAll("\n", " "));
-            for (Cause s : v.getCauses()) {
-                System.out.println("\t\t" + s.getSrc() + " -> " + s.getDst());
-            }
-        }
-        System.out.println("--------------------------------------------");
-
     }
 
     private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
@@ -389,7 +397,7 @@ public class Linker {
 
     private void logCauses(Domain d) {
         boolean rightShowed = false;
-        if(d.getCauses() != null) {
+        if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
@@ -454,7 +462,7 @@ public class Linker {
                         x.getDomain().setCalculated();
                     }
                     x.setTag(tags.getKey());
-                    if(d.getCauses() != null) {
+                    if (d.getCauses() != null) {
                         x.getCauses().clear();
                         x.getCauses().addAll(d.getCauses());
                     }

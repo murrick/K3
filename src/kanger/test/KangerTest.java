@@ -6,7 +6,9 @@ import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
 
-import java.util.Set;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public class KangerTest {
 
@@ -24,8 +26,8 @@ public class KangerTest {
     }
 
     private void showResult(Boolean assertResult) throws RuntimeErrorException {
-        for(Right r = mind.getRights().getRoot(); r != null;r = r.getNext()) {
-            if(!r.isGenerated() && !r.isQuery()) {
+        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+            if (!r.isGenerated() && !r.isQuery()) {
                 System.out.println("Right: " + r.toString());
             }
         }
@@ -74,17 +76,111 @@ public class KangerTest {
         }
         return false;
     }
-    private static boolean exists(Mind mind, String name, Object o) {
-        for (Term t : mind.getValues().getValues(name)) {
-            if (o.equals(t.getValue())) {
-                return true;
+
+//    private static boolean exists(Mind mind, String name, Object o) {
+//        for (Term t : mind.getValues().getValues(name)) {
+//            if (o.equals(t.getValue())) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+
+    public Hypotese createHypotese(User user, boolean antc, Object predicate, Object... params) {
+        Hypotese h = new Hypotese(user);
+        h.setAntc(antc);
+        if (predicate instanceof Predicate) {
+            h.setPredicate((Predicate) predicate);
+        } else {
+            h.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
+        }
+
+        if (params[0] instanceof Collection) {
+            h.addParams((Collection) params[0]);
+        } else {
+            h.addParams(Arrays.asList(params));
+        }
+        return h;
+    }
+
+    public Record createRecord(User user, boolean antc, Object predicate, Object... params) {
+        Domain d = new Domain(user);
+        d.setAntc(antc);
+        if (predicate instanceof Predicate) {
+            d.setPredicate((Predicate) predicate);
+        } else {
+            d.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
+        }
+        for (Object p : params) {
+            if (p instanceof Term) {
+                d.add(new Argument((Term) p));
+            } else {
+                d.add(new Argument(user.getMind().getTerms().add(p)));
             }
         }
-        return false;
+        return new Record(d);
+    }
+
+    public static boolean test(User user, String prefix) {
+        kanger.test.KangerTest cls = new kanger.test.KangerTest(user);
+        int failCount = 0;
+        int successCount = 0;
+        long startTime = System.currentTimeMillis();
+        System.out.println("Init test system...");
+        try {
+
+            Method setUp = cls.getClass().getDeclaredMethod("setUp");
+            setUp.setAccessible(true);
+            setUp.invoke(cls);
+
+            Map<String, Double> list = new TreeMap<>();
+            for (Method method : cls.getClass().getDeclaredMethods()) {
+                if (method.getName().startsWith(prefix)) {
+                    list.put(method.getName(), 0.0);
+                }
+            }
+
+            System.out.println("Done.");
+            System.out.println("----------------------------------------------------");
+
+            for (String name : list.keySet()) {
+                try {
+                    System.out.println("Testing: " + name);
+                    long t = System.currentTimeMillis();
+                    Method method = cls.getClass().getDeclaredMethod(name);
+                    method.setAccessible(true);
+                    method.invoke(cls);
+                    System.out.println("Timing: " + ((System.currentTimeMillis() - t) / 1000.0) + " sec");
+                    System.out.println("====================================================");
+                    list.put(name, ((System.currentTimeMillis() - t) / 1000.0));
+                    ++successCount;
+                } catch (Exception e) {
+                    ++failCount;
+                    e.printStackTrace(System.err);
+                }
+            }
+
+            for (Map.Entry<String, Double> e : list.entrySet()) {
+                System.out.println(e.getKey() + "\t" + e.getValue() + " sec");
+            }
+            System.out.println("====================================================");
+            System.out.println(" Timing: " + ((System.currentTimeMillis() - startTime) / 1000.0));
+            System.out.println("Success: " + successCount);
+            System.out.println("  Fails: " + failCount);
+
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        }
+
+        return failCount == 0;
+    }
+
+    private static void fail(String msg) throws RuntimeErrorException {
+        throw new RuntimeErrorException("FAIL: " + msg);
     }
 
 
-public void set_01_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -94,7 +190,7 @@ public void set_01_01() throws ParseErrorException, RuntimeErrorException {
                 "!d(v);");
         mind.query("?a(nnn);");
         showResult(true);
-        Record s = new Record(user, true, "a", "nnn");
+        Record s = createRecord(user, true, "a", "nnn");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -102,7 +198,7 @@ public void set_01_01() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -112,7 +208,7 @@ public void set_01_02() throws ParseErrorException, RuntimeErrorException {
                 "!d(v);");
         mind.query("?n(nnn);");
         showResult(false);
-        Record s = new Record(user, false, "n", "nnn");
+        Record s = createRecord(user, false, "n", "nnn");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -120,7 +216,7 @@ public void set_01_02() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -131,27 +227,27 @@ public void set_01_03() throws ParseErrorException, RuntimeErrorException {
         mind.query("?a(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(user, false, "c", "xx");
+            Hypotese s = createHypotese(user, false, "c", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, false, "b", "xx");
+            s = createHypotese(user, false, "b", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, false, "d", "xx");
+            s = createHypotese(user, false, "d", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, true, "n", "xx");
+            s = createHypotese(user, true, "n", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(user, true, "a", "xx");
+//            s = createHypotese(user, true, "a", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(user, false, "a", "xx");
+//            s = createHypotese(user, false, "a", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -165,7 +261,7 @@ public void set_01_03() throws ParseErrorException, RuntimeErrorException {
         }
     }
 
-public void set_01_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -176,23 +272,23 @@ public void set_01_04() throws ParseErrorException, RuntimeErrorException {
         mind.query("?b(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(user, false, "c", "xx");
+            Hypotese s = createHypotese(user, false, "c", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, true, "a", "xx");
+            s = createHypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, false, "d", "xx");
+            s = createHypotese(user, false, "d", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(user, true, "b", "xx");
+//            s = createHypotese(user, true, "b", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(user, false, "b", "xx");
+//            s = createHypotese(user, false, "b", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -206,7 +302,7 @@ public void set_01_04() throws ParseErrorException, RuntimeErrorException {
         }
     }
 
-public void set_01_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -217,23 +313,23 @@ public void set_01_05() throws ParseErrorException, RuntimeErrorException {
         mind.query("?c(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(user, true, "b", "xx");
+            Hypotese s = createHypotese(user, true, "b", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, true, "a", "xx");
+            s = createHypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, false, "d", "xx");
+            s = createHypotese(user, false, "d", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(user, true, "c", "xx");
+//            s = createHypotese(user, true, "c", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(user, false, "c", "xx");
+//            s = createHypotese(user, false, "c", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -247,7 +343,7 @@ public void set_01_05() throws ParseErrorException, RuntimeErrorException {
         }
     }
 
-public void set_01_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -258,23 +354,23 @@ public void set_01_06() throws ParseErrorException, RuntimeErrorException {
         mind.query("?d(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(user, true, "b", "xx");
+            Hypotese s = createHypotese(user, true, "b", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, true, "a", "xx");
+            s = createHypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, true, "c", "xx");
+            s = createHypotese(user, true, "c", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(user, true, "d", "xx");
+//            s = createHypotese(user, true, "d", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(user, false, "d", "xx");
+//            s = createHypotese(user, false, "d", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -288,7 +384,7 @@ public void set_01_06() throws ParseErrorException, RuntimeErrorException {
         }
     }
 
-public void set_01_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -299,15 +395,15 @@ public void set_01_07() throws ParseErrorException, RuntimeErrorException {
         mind.query("?n(xx);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(user, true, "a", "xx");
+            Hypotese s = createHypotese(user, true, "a", "xx");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(user, true, "n", "xx");
+//            s = createHypotese(user, true, "n", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(user, false, "n", "xx");
+//            s = createHypotese(user, false, "n", "xx");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -321,7 +417,7 @@ public void set_01_07() throws ParseErrorException, RuntimeErrorException {
         }
     }
 
-public void set_01_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -346,7 +442,7 @@ public void set_01_08() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_09() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -375,7 +471,7 @@ public void set_01_09() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_0A() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0A() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -398,7 +494,7 @@ public void set_01_0A() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_0B() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0B() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -424,7 +520,7 @@ public void set_01_0B() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_0C() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0C() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -453,7 +549,7 @@ public void set_01_0C() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_0D() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0D() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -478,7 +574,7 @@ public void set_01_0D() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_01_0E() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0E() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -507,21 +603,21 @@ public void set_01_0E() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_02_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_02_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
         showResult(true);
-        Record s = new Record(user, false, "a", "z");
+        Record s = createRecord(user, false, "a", "z");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = s = new Record(user, false, "c", "z");
+        s = s = createRecord(user, false, "c", "z");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = s = new Record(user, true, "d", "z");
+        s = s = createRecord(user, true, "d", "z");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -529,26 +625,26 @@ public void set_02_01() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_02_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_02_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("?b(z) -> d(z);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(user, true, "c", "z");
+            Hypotese s = createHypotese(user, true, "c", "z");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(user, true, "a", "z");
+//            s = createHypotese(user, true, "a", "z");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(user, true, "e", "z");
+//            s = createHypotese(user, true, "e", "z");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-//            s = new Hypotese(user, false, "f", "z");
+//            s = createHypotese(user, false, "f", "z");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -562,22 +658,22 @@ public void set_02_02() throws ParseErrorException, RuntimeErrorException {
         }
     }
 
-public void set_02_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_02_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
         mind.query("?$x f(x);");
         showResult(null);
         if (!mind.getHypotesisStore().isEmpty()) {
-            Hypotese s = new Hypotese(user, true, "a", "z");
+            Hypotese s = createHypotese(user, true, "a", "z");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            s = new Hypotese(user, true, "b", "z");
+            s = createHypotese(user, true, "b", "z");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-//            s = new Hypotese(user, false, "f", "z");
+//            s = createHypotese(user, false, "f", "z");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
@@ -591,7 +687,7 @@ public void set_02_03() throws ParseErrorException, RuntimeErrorException {
         }
     }
 
-public void set_03_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -601,7 +697,7 @@ public void set_03_01() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_03_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -611,7 +707,7 @@ public void set_03_02() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_03_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -621,7 +717,7 @@ public void set_03_03() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_03_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -631,7 +727,7 @@ public void set_03_04() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_03_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -641,7 +737,7 @@ public void set_03_05() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_03_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -651,7 +747,7 @@ public void set_03_06() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_03_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -661,7 +757,7 @@ public void set_03_07() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 > 3;");
@@ -670,7 +766,7 @@ public void set_04_01() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 < 3;");
@@ -679,7 +775,7 @@ public void set_04_02() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 = 3;");
@@ -688,7 +784,7 @@ public void set_04_03() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?2 = 2;");
@@ -697,7 +793,7 @@ public void set_04_04() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x x=5;");
@@ -709,7 +805,7 @@ public void set_04_05() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?~$x x=5;");
@@ -721,7 +817,7 @@ public void set_04_06() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x x=5 / 2;");
@@ -733,7 +829,7 @@ public void set_04_07() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x ((x+3)*15)=965;");
@@ -745,7 +841,7 @@ public void set_04_08() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_09() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x $y (12+y)*2=256 && x=5*y;");
@@ -760,7 +856,7 @@ public void set_04_09() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_0A() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0A() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.query("?$x $y x + y = 12;");
@@ -769,7 +865,7 @@ public void set_04_0A() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_0B() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0B() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -813,7 +909,7 @@ public void set_04_0B() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_0C() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0C() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -839,7 +935,7 @@ public void set_04_0C() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_0D() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0D() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -865,7 +961,7 @@ public void set_04_0D() throws ParseErrorException, RuntimeErrorException {
     }
 
     //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
-public void set_04_0E() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0E() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -914,7 +1010,7 @@ public void set_04_0E() throws ParseErrorException, RuntimeErrorException {
     }
 
 
-public void set_04_0F() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0F() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -958,7 +1054,7 @@ public void set_04_0F() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_10() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_10() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -984,7 +1080,7 @@ public void set_04_10() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_11() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_11() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1009,7 +1105,7 @@ public void set_04_11() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_04_12() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_12() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1058,7 +1154,7 @@ public void set_04_12() throws ParseErrorException, RuntimeErrorException {
 
     }
 
-public void set_04_14() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_14() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -1095,7 +1191,7 @@ public void set_04_14() throws ParseErrorException, RuntimeErrorException {
 
     }
 
-public void set_04_13() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_13() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x x in 0..10 -> num(x);");
@@ -1132,7 +1228,7 @@ public void set_04_13() throws ParseErrorException, RuntimeErrorException {
 
     }
 
-public void set_05_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1143,7 +1239,7 @@ public void set_05_01() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_05_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1154,7 +1250,7 @@ public void set_05_02() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_05_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1165,7 +1261,7 @@ public void set_05_03() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_05_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1176,7 +1272,7 @@ public void set_05_04() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_05_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1187,7 +1283,7 @@ public void set_05_05() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_05_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1198,7 +1294,7 @@ public void set_05_06() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_05_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1209,7 +1305,7 @@ public void set_05_07() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_05_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1223,17 +1319,31 @@ public void set_05_08() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_06_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!a(A,12); !a(B,37);");
-        mind.query("?$x $y a(x, y) && y > 12;");
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x $y age(x, y) && y > 12;");
         showResult(true);
-        Record s = new Record(user, true, "a", "B", 37.0);
+        Record s = createRecord(user, true, "age", "John", 37.0);
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        if (!exists("x", "B")) {
+        if (!exists("x", "John")) {
             fail("Expected x: B");
         }
         if (!exists("y", 37.0)) {
@@ -1246,64 +1356,239 @@ public void set_06_01() throws ParseErrorException, RuntimeErrorException {
         System.out.println("====================================================");
     }
 
-public void set_06_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!a(A,12); !a(B,37);");
-        mind.query("?$x $y a(x, y) && y >= 12;");
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x $y age(x, y) && y >= 12;");
         showResult(true);
-        Record s = new Record(user, true, "a", "A", 12.0);
+        Record s = createRecord(user, true, "age", "Tom", 12.0);
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Record(user, true, "a", "B", 37.0);
+        s = createRecord(user, true, "age", "John", 37.0);
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        if (!exists("x", "A")) {
-            fail("Expected x: A");
+        if (!exists("x", "Tom")) {
+            fail("Expected x: Tom");
         }
         if (!exists("y", 12.0)) {
-            fail("Expected y: 37");
+            fail("Expected y: 12");
         }
-        if (!exists("x", "B")) {
-            fail("Expected x: B");
+        if (!exists("x", "John")) {
+            fail("Expected x: John");
         }
         if (!exists("y", 37.0)) {
             fail("Expected y: 37");
         }
         if (mind.getSolutions().size() != 2) {
+            fail("Expected 2 solution");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_06_03() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x $y $z father(x,y) && age(x, z) && z >= 30;");
+        showResult(true);
+        Record s = createRecord(user, true, "father", "John", "Tom");
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = createRecord(user, true, "father", "John", "Sarah");
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        s = createRecord(user, true, "age", "John", 37.0);
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        if (mind.getSolutions().size() != 3) {
+            fail("Expected 3 solution");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_06_04() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x male(x);");
+        showResult(true);
+        Record s = createRecord(user, true, "male", "John");
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        if (!exists("x", "John")) {
+            fail("Expected x: John");
+        }
+        if (mind.getSolutions().size() != 1) {
             fail("Expected 1 solution");
         }
         System.out.println("OK");
         System.out.println("====================================================");
     }
 
-public void set_06_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!a(T,12); !a(S,4); !a(J,37); !f(J,T); !f(J,S);");
-        mind.query("?$x $y $z f(x,y) && a(x, z) && z >= 30;");
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x child(x, John);");
         showResult(true);
-        Record s = new Record(user, true, "f", "J", "T");
+        Record s = createRecord(user, true, "child", "Tom", "John");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Record(user, true, "f", "J", "S");
+        s = createRecord(user, true, "child", "Sarah", "John");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
-        s = new Record(user, true, "a", "J", 37.0);
-        if (!mind.getSolutions().contains(s)) {
-            fail("Expected: " + s.toString());
+        if (!exists("x", "Tom")) {
+            fail("Expected x: Tom");
+        }
+        if (!exists("x", "Sarah")) {
+            fail("Expected x: Sarah");
+        }
+        if (mind.getSolutions().size() != 2) {
+            fail("Expected 2 solution");
         }
         System.out.println("OK");
         System.out.println("====================================================");
     }
 
-    private static void fail(String msg) throws RuntimeErrorException {
-        throw new RuntimeErrorException("FAIL: " + msg);
+    public void set_06_06() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?male(Tom);");
+        showResult(null);
+        if (!mind.getHypotesisStore().isEmpty()) {
+            Hypotese s = createHypotese(user, false, "son", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "son", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, false, "female", "Tom");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "female", "Tom");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, false, "daughter", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "daughter", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "daughter", "Tom", "Sarah");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "father", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "father", "Tom", "Sarah");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "mother", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "mother", "Tom", "Sarah");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            if (mind.getHypotesisStore().getRoot().size() != 11) {
+                fail("Expected 11 hypotesis");
+            }
+            System.out.println("OK");
+            System.out.println("====================================================");
+        } else {
+            fail("Expected 11 hypotesis");
+        }
     }
-
-
 }

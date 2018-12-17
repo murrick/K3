@@ -280,14 +280,14 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
 //        this.p = p;
 //    }
 //
-    public Term getVarName() {
+    public String getVarName() {
         switch (user.getMind().getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_INFO:
-                return name;
+                return name.toString();
             case Enums.DEBUG_LEVEL_DEBUG:
-                return user.getMind().getTerms().add(String.format("[%s]%c%d", name.toString(), Enums.TVC, index));
+                return String.format("[%s]%c%d", name.toString(), Enums.TVC, index);
             default:
-                return name;
+                return name.toString();
         }
     }
 

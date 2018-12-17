@@ -1,10 +1,7 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.primitives.ArgList;
-import kanger.primitives.Argument;
-import kanger.primitives.Hypotese;
-import kanger.primitives.Predicate;
+import kanger.primitives.*;
 
 import java.util.*;
 
@@ -50,13 +47,17 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return h;
         } else {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? antc : !antc;
-            h = new Hypotese(user, antc, pred, arg);
+            h = new Hypotese(user);
+            h.setAntc(antc);
+            h.setPredicate(pred);
+            h.addParams(arg);
             h.setQuery(isQuery);
             root.add(h);
             return h;
         }
 
     }
+
 
     public Hypotese add(Hypotese hypotese) {
         if (!enableStore) {

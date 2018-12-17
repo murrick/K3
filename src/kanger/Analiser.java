@@ -471,7 +471,7 @@ public class Analiser {
 //    }
 
 
-    public boolean analise(boolean logging) throws RuntimeErrorException {
+    public boolean analise(boolean logging) {
         boolean result = false;
         int counter = 0;
 
@@ -481,31 +481,32 @@ public class Analiser {
             user.getMind().getLog().add(LogMode.ANALIZER, "============= ANALISER ====================");
         }
 
-        Queue<Tree> set = new LinkedList<>();
-        for (Right rx = user.getMind().getRights().getRoot(); rx != null; rx = rx.getNext()) {
-            set.addAll(rx.getTree());
-        }
+//        Queue<Tree> set = new LinkedList<>();
+//        for (Right rx = user.getMind().getRights().getRoot(); rx != null; rx = rx.getNext()) {
+//            set.addAll(rx.getTree());
+//        }
 
-        Set<TVariable> tvars = new HashSet<>();
-        for (Tree t : set) {
-            tvars.addAll(t.getTVariables(true));
-
-//                for(Function f: t.getFunctions()) {~
-//                    f.clearResult();
-//                }
-        }
+//        Set<TVariable> tvars = new HashSet<>();
+//        for (Tree t : set) {
+//            tvars.addAll(t.getTVariables(true));
+//
+////                for(Function f: t.getFunctions()) {~
+////                    f.clearResult();
+////                }
+//        }
 
 //        for(Predicate p = mind.getPredicates().getRoot(); p != null; p = p.getNext()) {
 //            if(p.checkSolves())
 //                return true;
 //        }
 //        return false;
-        Set<Tree> query = new HashSet<>();
-        for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
-            if (r.isQuery()) {
-                query.addAll(r.getTree());
-            }
-        }
+
+//        Set<Tree> query = new HashSet<>();
+//        for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
+//            if (r.isQuery()) {
+//                query.addAll(r.getTree());
+//            }
+//        }
 
 //        mind.getClosedDimains().clear();
 //        mind.getQueuedDomains().clear();

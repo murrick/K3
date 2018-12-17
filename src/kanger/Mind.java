@@ -73,8 +73,6 @@ public class Mind {
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariable, Set<TValue>> closedValues = new HashMap<>();
 
-    private boolean isInsertion = false;
-
     private transient Map<Object, Object> termsLink = null;
     private transient Map<Object, Object> domainsLink = null;
     private transient Map<Object, Object> tVariablesLink = null;
@@ -345,15 +343,11 @@ public class Mind {
         changed = b;
     }
 
-    public void link(boolean logging) throws RuntimeErrorException {
-        linker.link(logging);
-    }
-
-    public void link(Right r, boolean logging) throws RuntimeErrorException {
+    public void link(Right r, boolean logging) {
         linker.link(r, logging);
     }
 
-    public Boolean analise(boolean logging) throws RuntimeErrorException {
+    public Boolean analise(boolean logging) {
         return analiser.analise(logging);
     }
 
@@ -369,7 +363,7 @@ public class Mind {
             m.compileLine(line);
         }
 
-        m.link(true);
+        m.link(null, true);
         Boolean ar = m.analise(true);
 
         if (ar) {
@@ -800,10 +794,6 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
-    public boolean isInsertion() {
-        return isInsertion;
-    }
-
     public Boolean query(String line, boolean testMode) throws ParseErrorException, RuntimeErrorException {
         Boolean res = null;
 
@@ -822,7 +812,6 @@ public class Mind {
         getValues().clear();
         getHypotesisStore().clear();
 
-        isInsertion = false;
         long queryStart = System.currentTimeMillis();
 
         getLog().add(LogMode.ANALIZER, "============= CHECKING ===================");
@@ -849,10 +838,6 @@ public class Mind {
         int key = line.charAt(0);
         switch (key) {
 
-            case Enums.INS:
-                isInsertion = true;
-                line = resign(Enums.ANT, line);
-
             case Enums.ANT: {
                 getLog().add(LogMode.ANALIZER, "============= ACCEPTING ===================");
 
@@ -864,7 +849,7 @@ public class Mind {
                 if (r != null) {
                     m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                     m.getLog().add(LogMode.ANALIZER, r);
-                    m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//                    m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
 
                     m.link(r, true);
                     boolean ar = m.analise(true);
@@ -877,26 +862,9 @@ public class Mind {
                         m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
                         commit(m);
                         excluded.commit(m.getHypotesisStore());
-
-//                            if (!isInsertion) {
                         setChanged(true);
                         res = true;
-//                            } else {
-//                                removeInsertionRight(r);
-//                                if (m.getHypotesisStore().size() != 0) {
-//                                    m.getLog().add(LogMode.SAVED, "Predicates added:");
-//                                    int i = 0;
-//                                    for (Hypotese s : (List<Hypotese>) m.getHypotesisStore().getRoot()) {
-//                                        //TODO: Тут надо использовать Domain а не Hypotese
-//                                        //TODO: Добавление предикаторв в базу добавить!
-////                                        mind.getText().append(String.format("%c%s", Enums.ANT, s.toString()) + "\r");
-////                                        mind.getSolutions().createTVar(String.format("%c%s", Enums.ANT, s.toString()));
-//                                        m.getLog().add(LogMode.SAVED, String.format("\tSolution %03d: \t%s", ++i, String.format("%c%s", Enums.ANT, s.toString())));
-//                                    }
-//                                }
-//                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New solves: " + m.getHypotesisStore().size());
                     }
-//                    }
                 } else {
                     release(m);
                 }
@@ -912,11 +880,8 @@ public class Mind {
                     } else {
                         getLog().add(LogMode.ANALIZER, "WARNING: Unable to remove function: " + op.toString());
                     }
-                    break;
-                } else {
-                    isInsertion = true;
-                    line = resign(Enums.SUC, line);
                 }
+                break;
 
             case Enums.SUC: {
 
@@ -926,7 +891,7 @@ public class Mind {
                     Mind m = new Mind(this);
                     m.setQueryPass(QueryPass.CHECK);
 
-                    m.link(true);
+                    m.link(null, true);
                     Boolean ar = m.analise(true);
 
                     if (ar) {
@@ -941,113 +906,125 @@ public class Mind {
                         res = true;
                     }
 
-                } else if (!isInsertion) {
+                } else {
 
-                    if (!DEBUG_DISABLE_FALSE_CHECK) {
+//                    if (!DEBUG_DISABLE_FALSE_CHECK) {
+//
+//                        Mind m = new Mind(this);
+//                        m.setQueryPass(QueryPass.CHECKFALSE);
+//                        m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING (QUICK) ======");
+//
+//                        Right r = (Right) m.compileLine(invert(line));
+//                        if (r != null) {
+//                            r.setQuery(true);
+//
+//                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+//                            m.getLog().add(LogMode.ANALIZER, r);
+//
+//                            m.link(r, true);
+//                            boolean ar = m.analise(true);
+//                            if (ar) {
+//                                m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
+//                                logResult(m);
+//                                res = false;
+//                            } else {
+////                                hypotesis.commit(m.getHypotesisStore());
+//                            }
+//                        }
+//                        release(m);
+//
+//                    }
+//
+//                    if (res == null) {
+//
+//                        Mind m = new Mind(this);
+//                        m.setQueryPass(QueryPass.CHECKTRUE);
+//                        m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING (QUICK) =======");
+//
+//                        Right r = (Right) m.compileLine(line);
+//                        if (r != null) {
+//
+//                            r.setQuery(true);
+//                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+//                            m.getLog().add(LogMode.ANALIZER, r);
+//                            m.link(r, true);
+//                            boolean ar = m.analise(true);
+//                            if (ar) {
+//                                m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
+//                                logResult(m);
+//                                res = true;
+//                            } else {
+////                                hypotesis.commit(m.getHypotesisStore());
+//                            }
+//                        }
+//                        release(m);
+//                    }
+//
+//
+//                    if (res == null) {
+                        if (!DEBUG_DISABLE_FALSE_CHECK) {
 
-                        Mind m = new Mind(this);
-                        m.setQueryPass(QueryPass.CHECKFALSE);
-                        m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
+                            Mind m = new Mind(this);
+                            m.setQueryPass(QueryPass.CHECKFALSE);
+                            m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
 
-                        Right r = (Right) m.compileLine(invert(line));
+                            Right r = (Right) m.compileLine(invert(line));
+                            if (r != null) {
+                                r.setQuery(true);
 
-                        if (r != null) {
-                            r.setQuery(true);
-
-                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-                            m.getLog().add(LogMode.ANALIZER, r);
-                            m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-
-                            m.link(r, true);
-
-                            boolean ar = m.analise(true);
-                            if (ar) {
-                                m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
-                                logResult(m);
-//                                    solves.commit(m.getSolutions());
-//                                    values.commit(m.getValues());
-                                res = false;
-                            } else {
-                                hypotesis.commit(m.getHypotesisStore());
+                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+                                m.getLog().add(LogMode.ANALIZER, r);
+                                m.link(r, true);
+                                boolean ar = m.analise(true);
+                                if (ar) {
+                                    m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
+                                    logResult(m);
+                                    res = false;
+                                } else {
+                                    hypotesis.commit(m.getHypotesisStore());
+                                }
                             }
-
+                            release(m);
                         }
-                        release(m);
 
-                    }
-                }
+                        if (res == null) {
 
-                if (res == null) {
+                            Mind m = new Mind(this);
+                            m.setQueryPass(QueryPass.CHECKTRUE);
+                            m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
 
-                    Mind m = new Mind(this);
-                    m.setQueryPass(QueryPass.CHECKTRUE);
-                    m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
+                            Right r = (Right) m.compileLine(line);
+                            if (r != null) {
 
-                    Right r = (Right) m.compileLine(line);
-                    if (r != null) {
+                                r.setQuery(true);
+                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+                                m.getLog().add(LogMode.ANALIZER, r);
+                                m.link(r, true);
+                                boolean ar = m.analise(true);
+                                if (ar) {
+                                    m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
+                                    logResult(m);
+                                    res = true;
+                                } else {
 
-                        r.setQuery(true);
-                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-                        m.getLog().add(LogMode.ANALIZER, r);
-                        m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                    hypotesis.commit(m.getHypotesisStore());
+                                    hypotesis.exclude(excluded);
 
-                        m.link(r, true);
-                        boolean ar = m.analise(true);
-                        if (ar) {
-
-                            if (isInsertion) {
-                                m.removeInsertionRight(r);
-                                List<Right> killedRights = killInsertion(m, r, key == Enums.WIPE);
-                                if (m.getHypotesisStore().size() != 0) {
-                                    m.getLog().add(LogMode.SAVED, "Predicates deleted:");
-                                    int i = 0;
-                                    for (Hypotese s : (List<Hypotese>) m.getHypotesisStore().getRoot()) {
-                                        //TODO: Тут надо использовать Domain а не Hypotese
-                                        //TODO: Удаление предикаторв из базы добавить!
-//                                            mind.getText().append(String.format("%c%s", Enums.ANT, s.toString()) + "\r");
-//                                            mind.getSolutions().createTVar(String.format("%c%s", Enums.ANT, s.toString()));
-                                        m.getLog().add(LogMode.SAVED, String.format("\tSolution %03d: \t%s", ++i, String.format("%c%s", Enums.ANT, s.toString())));
+                                    if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
+                                        m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));
+                                    } else {
+                                        m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
                                     }
                                 }
-                                if (killedRights.size() != 0) {
-                                    m.getLog().add(LogMode.SAVED, "Rights deleted:");
-                                    for (Right rr : killedRights) {
-                                        m.getLog().add(LogMode.SAVED, String.format("\tRight %03d: \t%s", rr.getId(), rr.getOrig()));
-                                    }
-                                }
-                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted solves: " + m.getHypotesisStore().size());
-
-                            } else {
-                                m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
-                                logResult(m);
-//                                    solves.commit(m.getSolutions());
-//                                    values.commit(m.getValues());
-                                res = true;
                             }
-                        } else if (isInsertion) {
-                            m.getLog().add(LogMode.ANALIZER, "Result: No predicates was deleted");
-                        } else {
-
-                            hypotesis.commit(m.getHypotesisStore());
-                            hypotesis.exclude(excluded);
-
-                            if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
-                                m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));
-                            } else {
-                                m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
-                            }
+                            release(m);
                         }
-                    }
-                    release(m);
-
-//TODO: Померял местами с началом
-//                        mind.release();
-
+//                    }
                 }
+
                 break;
             }
         }
-//        }
 
         getHypotesisStore().enable(storeH);
         getValues().enable(storeV);
