@@ -48,7 +48,7 @@ public class Term implements Comparable<Object> {
 
         index = din.readInt();
         id = din.readLong();
-        user.getMind().getTermsLink().put(this,din.readLong());
+        user.getMind().getTermsLink().put(this, din.readLong());
 
         switch (type) {
             case DATE:
@@ -85,22 +85,22 @@ public class Term implements Comparable<Object> {
                     if ((token.startsWith("\"") && token.endsWith("\"")) || (token.startsWith("\'") && token.endsWith("\'"))) {
                         token = token.substring(1);
                         token = token.substring(0, token.length() - 1);
-                        if ((d = Tools.parseDate(token)) != null) {
-                            type = DataType.DATE;
-                            value = d;
-                        } else if (Tools.isInterval(token)) {
+                        if (Tools.isInterval(token)) {
                             type = DataType.INTERVAL;
                             value = conatructInterval(token);
+                        } else if ((d = Tools.parseDate(token)) != null) {
+                            type = DataType.DATE;
+                            value = d;
                         } else {
                             type = DataType.STRING;
                             value = token;
                         }
-                    } else if ((d = Tools.parseDate(token)) != null) {
-                        type = DataType.DATE;
-                        value = d;
                     } else if (Tools.isInterval(token)) {
                         type = DataType.INTERVAL;
                         value = conatructInterval(token);
+                    } else if ((d = Tools.parseDate(token)) != null) {
+                        type = DataType.DATE;
+                        value = d;
                     } else if (Tools.isFloat(token)) {
                         type = DataType.NUMERIC;
                         value = Double.parseDouble(token);

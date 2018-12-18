@@ -75,7 +75,7 @@ public abstract class Tools {
     //TODO !!!добавить численные/произвольные интервалы и множества. Операции IN, ~IN, +, -, ()
     //
     public static boolean isInterval(String ch) {
-        if (ch.contains("..")) {
+        if (ch.contains("..") && ch.charAt(0) != Enums.ANT && ch.charAt(0) != Enums.SUC) {
             return ch.split("\\.\\.").length == 2;
         } else {
             String[] s = ch.split(" ");
