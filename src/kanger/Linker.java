@@ -23,6 +23,7 @@ public class Linker {
     public void link(Right right, boolean logging) {
 
         user.getMind().getProducedDomains().clear();
+        user.getMind().getExcludedDomains().clear();
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
 
@@ -62,66 +63,61 @@ public class Linker {
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
 
+
             final Map<Right, Set<Cause>> causes = new HashMap<>();
 
-            SortedSet<Tree> treeSet = new TreeSet<>();
-            if (right == null) {
-                for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-                    treeSet.add(tree);
-                }
-            } else {
-                Set<Right> rights = new HashSet<>();
-                for (Tree tree : right.getTree()) {
-                    for(Domain d : tree.getSequence()) {
-                        for(Tree t : d.getPredicate().getLinkedTrees()) {
-                            rights.add(t.getSequence().get(0).getRight());
-                        }
-                    }
-                }
-                for(Right r : rights) {
-                    treeSet.addAll(r.getTree());
-                }
-            }
-
-
             user.getMind().getProducedDomains().clear();
-            //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
 
-//            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-            for (Tree tree : treeSet) {
+            int size = user.getMind().getRights().size();
+            Right root = user.getMind().getRights().getRoot();
+            Right last = user.getMind().getRights().getLast();
 
-                final Tree t = tree;
-                SortedSet<TVariable> tvars = new TreeSet<>();
-                tvars.addAll(t.getTVariables(true));
+            last.setNext(root);
+            Right current = root;
 
+            for (int i=0; i < size; current = current.getNext(), ++i) {
+                Right r = current;
+                user.getMind().getExcludedDomains().clear();
 
+                for (int k = 0; k < size; r = r.getNext(), ++k) {
 
-                rotateVariables(tvars, logging, new IRunnable() {
-                    @Override
-                    public Object run(Object o) {
-                        boolean result = false;
-                        boolean logging = (boolean) o;
+//                    System.out.println("ROOT " + r);
+                    //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
 
+                    for (Tree tree : r.getTree()) {
 
-                        if (linkDomains(t, causes, logging)) {
-                            result = true;
-                        }
-                        if (calcFunctions(t, causes, logging)) {
-                            result = true;
-                        }
+                        final Tree t = tree;
+                        SortedSet<TVariable> tvars = new TreeSet<>();
+                        tvars.addAll(t.getTVariables(true));
 
-                        if (linkDatabase(t, waiters, causes, logging)) {
-                            result = true;
-                        }
+                        rotateVariables(tvars, logging, new IRunnable() {
+                            @Override
+                            public Object run(Object o) {
+                                boolean result = false;
+                                boolean logging = (boolean) o;
 
-                        return result;
+//                            if(right == null || right.getId() == t.getRight().getId()) {
+                                if (linkDomains(t, causes, logging)) {
+                                    result = true;
+                                }
+                                if (calcFunctions(t, causes, logging)) {
+                                    result = true;
+                                }
+//                            }
+                                if (linkDatabase(t, waiters, causes, logging)) {
+                                    result = true;
+                                }
+
+                                return result;
+                            }
+                        });
                     }
-                });
 
+                }
             }
 
+            last.setNext(null);
             updateDatabase(logging);
-
 
         } while (saveR != user.getMind().getDatabase().getRoot()
                 || saveT != user.getMind().getTValues().getRoot()

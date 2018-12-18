@@ -253,7 +253,7 @@ public class Tree implements Comparable<Tree>{
 
     @Override
     public int compareTo(Tree o) {
-        return (int) (o.id - id);
+        return (int) (id - o.id);
     }
 
 //    public boolean equalsBase(Tree t) {

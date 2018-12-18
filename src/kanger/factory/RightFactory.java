@@ -68,6 +68,15 @@ public class RightFactory {
         return null;
     }
 
+    public Right getLast() {
+        for (Right r = root; r != null; r = r.getNext()) {
+            if(r.getNext() == null) {
+                return r;
+            }
+        }
+        return null;
+    }
+
     public Right getRoot() {
         return root;
     }
