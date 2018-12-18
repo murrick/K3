@@ -736,12 +736,10 @@ public class Functions {
                             || (arg.get(0).isDefined() && arg.get(1).isDefined()
                             && _sqrt(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) != 0)) {
                         if (!((Function) o).setParameter(1, _sqrt(arg.get(0).getValue()))) {
-
                             ret = 0;
                         }
                     } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (!((Function) o).setParameter(0, _pow(arg.get(1).getValue(), user.getMind().getTerms().add(2)))) {
-
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && _sqrt(arg.get(0).getValue()).compareTo(arg.get(1).getValue()) == 0) {
@@ -811,23 +809,27 @@ public class Functions {
             }));
         }
 
-        //TODO: Закончить с перезаписью результата в случае неверного !!!
-
         // String functions
         /// Строковые функции
         {
             put("strlen(1)", new SysOp(LibMode.FUNCTION, "strlen", 1, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
+                    try {
+                        ArgList arg = ((Function) o).getArguments();
+                        if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                                || (arg.get(0).isDefined() && arg.get(1).isDefined()
+                                && user.getMind().getTerms().add(arg.get(0).getValue().toString().length()).compareTo(arg.get(1).getValue()) != 0)) {
 
-                    if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add((double) src.length()))) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(arg.get(0).getValue().toString().length()))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && user.getMind().getTerms().add(arg.get(0).getValue().toString().length()).compareTo(arg.get(1).getValue()) == 0) {
+                            ret = 2;
+                        } else {
                             ret = 0;
                         }
-                    } else {
+                    } catch (Exception ex) {
                         ret = 0;
                     }
                     return ret;
@@ -839,21 +841,29 @@ public class Functions {
             put("mid(2)", new SysOp(LibMode.FUNCTION, "mid", 2, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
-                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
+                    try {
+                        ArgList arg = ((Function) o).getArguments();
+                        String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                        Double pos = arg.get(1).isEmpty() ? null : (Double) arg.get(1).getValue().getValue();
+                        String result = arg.get(2).isEmpty() ? null : (String) arg.get(2).getValue().getValue();
 
-                    if (src != null && pos != null && result == null) {
-                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(pos - 1 >= src.length() ? "" : src.substring(pos.intValue() - 1)))) {
+                        if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
+                                || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && !result.equals(src.substring(pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(pos.intValue())))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined()) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.indexOf(result)))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && result.equals(src.substring(pos.intValue()))) {
+                            ret = 2;
+                        } else {
                             ret = 0;
                         }
-                    } else if (src != null && pos == null && result != null) {
-                        pos = (double) src.indexOf(result);
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos))) {
-                            ret = 0;
-                        }
-                    } else {
+                    } catch (Exception ex) {
                         ret = 0;
                     }
                     return ret;
@@ -865,37 +875,39 @@ public class Functions {
             put("mid(3)", new SysOp(LibMode.FUNCTION, "mid", 3, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
-                    Double len = arg.get(2).getValue() != null ? (Double) arg.get(2).getValue().getValue() : null;
-                    String result = arg.get(3).getValue() != null ? (String) arg.get(3).getValue().getValue() : null;
+                    try {
+                        ArgList arg = ((Function) o).getArguments();
+                        String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                        Double pos = arg.get(1).isEmpty() ? null : (Double) arg.get(1).getValue().getValue();
+                        Double len = arg.get(2).isEmpty() ? null : (Double) arg.get(2).getValue().getValue();
+                        String result = arg.get(3).isEmpty() ? null : (String) arg.get(3).getValue().getValue();
 
-                    if (src != null && pos != null && len != null && result == null) {
-                        String str = "";
-                        if (pos - 1 < src.length()) {
-                            if (pos - 1 + len >= src.length()) {
-                                len = (double) src.length();
+                        if ((arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && !arg.get(3).isDefined())
+                                || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()
+                                && !result.equals(src.substring(pos.intValue(), len.intValue())))) {
+                            if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.substring(pos.intValue(), len.intValue())))) {
+                                ret = 0;
                             }
-                        }
-                        if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.substring(pos.intValue() - 1, pos.intValue() - 1 + len.intValue())))) {
+                        } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.indexOf(result)))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined() && arg.get(3).isDefined() && src.indexOf(result) != -1) {
+                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.indexOf(result) + result.length()))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && !arg.get(2).isDefined() && arg.get(3).isDefined() && src.indexOf(result) != -1) {
+                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.indexOf(result) + result.length()))
+                                    || !((Function) o).setParameter(1, user.getMind().getTerms().add(src.indexOf(result)))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()
+                                && result.equals(src.substring(pos.intValue(), len.intValue()))) {
+                            ret = 2;
+                        } else {
                             ret = 0;
                         }
-
-                    } else if (src != null && (pos == null || len != null) && result != null) {
-                        pos = (double) src.indexOf(result);
-                        len = (double) result.length();
-                        if (arg.get(1).getValue() == null) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos + 1))) {
-                                ret = 0;
-                            }
-                        }
-                        if (arg.get(2).getValue() == null) {
-                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(len))) {
-                                ret = 0;
-                            }
-                        }
-                    } else {
+                    } catch (Exception ex) {
                         ret = 0;
                     }
                     return ret;
@@ -907,24 +919,29 @@ public class Functions {
             put("left(2)", new SysOp(LibMode.FUNCTION, "left", 2, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
-                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
+                    try {
+                        ArgList arg = ((Function) o).getArguments();
+                        String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                        Double pos = arg.get(1).isEmpty() ? null : (Double) arg.get(1).getValue().getValue();
+                        String result = arg.get(2).isEmpty() ? null : (String) arg.get(2).getValue().getValue();
 
-                    if (src != null && pos != null && result == null) {
-                        if (pos > src.length()) {
-                            pos = (double) src.length();
-                        }
-                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(0, pos.intValue())))) {
+                        if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
+                                || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && !result.equals(src.substring(0, pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(0, pos.intValue())))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && src.startsWith(result)) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(result.length()))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && result.equals(src.substring(0, pos.intValue()))) {
+                            ret = 2;
+                        } else {
                             ret = 0;
                         }
-                    } else if (src != null && pos == null && result != null) {
-                        pos = (double) result.length();
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos))) {
-                            ret = 0;
-                        }
-                    } else {
+                    } catch (Exception ex) {
                         ret = 0;
                     }
                     return ret;
@@ -936,24 +953,29 @@ public class Functions {
             put("right(2)", new SysOp(LibMode.FUNCTION, "right", 2, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    Double pos = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
-                    String result = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
+                    try {
+                        ArgList arg = ((Function) o).getArguments();
+                        String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                        Double pos = arg.get(1).isEmpty() ? null : (Double) arg.get(1).getValue().getValue();
+                        String result = arg.get(2).isEmpty() ? null : (String) arg.get(2).getValue().getValue();
 
-                    if (src != null && pos != null && result == null) {
-                        if (pos > src.length()) {
-                            pos = (double) src.length();
-                        }
-                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(src.length() - pos.intValue())))) {
+                        if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
+                                || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && !result.equals(src.substring(src.length() - pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(src.length() - pos.intValue())))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && src.endsWith(result)) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(result.length()))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && result.equals(src.substring(src.length() - pos.intValue()))) {
+                            ret = 2;
+                        } else {
                             ret = 0;
                         }
-                    } else if (src != null && pos == null && result != null) {
-                        pos = (double) result.length();
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(pos))) {
-                            ret = 0;
-                        }
-                    } else {
+                    } catch (Exception ex) {
                         ret = 0;
                     }
                     return ret;
@@ -966,13 +988,18 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
+                    String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                    String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
-                    if (src != null && result == null) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && !result.equals(src.trim()))) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.trim()))) {
                             ret = 0;
                         }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && result.equals(src.trim())) {
+                        ret = 2;
                     } else {
                         ret = 0;
                     }
@@ -986,13 +1013,18 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
+                    String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                    String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
-                    if (src != null && result == null) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && !result.equals(src.toUpperCase()))) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toUpperCase()))) {
                             ret = 0;
                         }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && result.equals(src.toUpperCase())) {
+                        ret = 2;
                     } else {
                         ret = 0;
                     }
@@ -1006,13 +1038,18 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
+                    String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                    String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
-                    if (src != null && result == null) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && !result.equals(src.toLowerCase()))) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toLowerCase()))) {
                             ret = 0;
                         }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && result.equals(src.toLowerCase())) {
+                        ret = 2;
                     } else {
                         ret = 0;
                     }
@@ -1025,22 +1062,29 @@ public class Functions {
             put("at(2)", new SysOp(LibMode.FUNCTION, "at", 2, new IRunnable() {
                 public Object run(Object o) {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    String sample = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
-                    Double result = arg.get(2).getValue() != null ? (Double) arg.get(2).getValue().getValue() : null;
+                    try {
+                        ArgList arg = ((Function) o).getArguments();
+                        String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                        String sample = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
+                        Double result = arg.get(2).isEmpty() ? null : (Double) arg.get(2).getValue().getValue();
 
-                    if (src != null && sample != null && result == null) {
-                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add((src.indexOf(sample) + 1)))) {
-                            ret = 0;
-                        }
-                    } else if (src != null && sample == null && result != null) {
-                        if (result - 1 >= 0 && result - 1 < src.length()) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.substring(result.intValue() - 1)))) {
+                        if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
+                                || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && result != src.indexOf(sample))) {
+                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add((src.indexOf(sample))))) {
                                 ret = 0;
                             }
+                        } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined()) {
+                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.substring(result.intValue())))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                                && result == src.indexOf(sample)) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
                         }
-                    } else {
+                    } catch (Exception ex) {
                         ret = 0;
                     }
                     return ret;
@@ -1053,19 +1097,24 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    String target = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
-                    String replacement = arg.get(2).getValue() != null ? (String) arg.get(2).getValue().getValue() : null;
-                    String result = arg.get(3).getValue() != null ? (String) arg.get(3).getValue().getValue() : null;
+                    String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                    String target = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
+                    String replacement = arg.get(2).isEmpty() ? null : (String) arg.get(2).getValue().getValue();
+                    String result = arg.get(3).isEmpty() ? null : (String) arg.get(3).getValue().getValue();
 
-                    if (src != null && target != null && replacement != null && result == null) {
-                        if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.replace(target, replacement)))) {
+                    if ((arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && !arg.get(3).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()
+                            && !result.equals(src.replaceAll(target, replacement)))) {
+                        if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.replaceAll(target, replacement)))) {
                             ret = 0;
                         }
-                    } else if (src == null && target != null && replacement != null && result != null) {
-                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(result.replace(replacement, target)))) {
+                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()) {
+                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(result.replaceAll(replacement, target)))) {
                             ret = 0;
                         }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()
+                            && result.equals(src.replaceAll(target, replacement))) {
+                        ret = 2;
                     } else {
                         ret = 0;
                     }
@@ -1079,17 +1128,22 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
-                    Double src = arg.get(0).getValue() != null ? (Double) arg.get(0).getValue().getValue() : null;
-                    String result = arg.get(1).getValue() != null ? (String) arg.get(1).getValue().getValue() : null;
+                    Double src = arg.get(0).isEmpty() ? null : (Double) arg.get(0).getValue().getValue();
+                    String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
-                    if (src != null && result == null) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && !result.equals(String.format("%c", src.intValue())))) {
                         if (!((Function) o).setParameter(1, user.getMind().getTerms().add(String.format("%c", src.intValue())))) {
                             ret = 0;
                         }
-                    } else if (src == null && result != null) {
-                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(result.charAt(0)))) {
+                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
+                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add((int) result.charAt(0)))) {
                             ret = 0;
                         }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && result.equals(String.format("%c", src.intValue()))) {
+                        ret = 2;
                     } else {
                         ret = 0;
                     }
@@ -1103,17 +1157,22 @@ public class Functions {
                 public Object run(Object o) {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).getValue() != null ? (String) arg.get(0).getValue().getValue() : null;
-                    Double result = arg.get(1).getValue() != null ? (Double) arg.get(1).getValue().getValue() : null;
+                    String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
+                    Double result = arg.get(1).isEmpty() ? null : (Double) arg.get(1).getValue().getValue();
 
-                    if (src != null && result == null) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.charAt(0)))) {
+                    if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && result != src.charAt(0))) {
+                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add((int) src.charAt(0)))) {
                             ret = 0;
                         }
-                    } else if (src == null && result != null) {
+                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (!((Function) o).setParameter(0, user.getMind().getTerms().add(String.format("%c", result.intValue())))) {
                             ret = 0;
                         }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()
+                            && result == src.charAt(0)) {
+                        ret = 2;
                     } else {
                         ret = 0;
                     }
@@ -1157,6 +1216,9 @@ public class Functions {
                 }
             }));
         }
+
+        //TODO: Закончить с перезаписью результата в случае неверного !!!
+
 
     };
 

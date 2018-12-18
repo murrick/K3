@@ -65,6 +65,9 @@ public class Compiler {
     private void construct(Right r, Tree t, PTree root, boolean antc, Map<String, Argument> replacements, List<Tree> clones) throws ParseErrorException {
         List<Tree> list = new ArrayList<>();
         List<Tree> tmp = new ArrayList<>();
+        if(root == null) {
+            throw new ParseErrorException(0, ParseError.EMPTY);
+        }
         switch (root.getName().charAt(0)) {
             case Enums.NOT:
                 construct(r, t, root.getLeft(), !antc, replacements, list);
