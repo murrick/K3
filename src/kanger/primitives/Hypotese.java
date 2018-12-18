@@ -145,34 +145,34 @@ public class Hypotese implements Comparable<Hypotese> {
         return line;
     }
 
-    @Override
-    public int hashCode() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("" + this.predicate.getId());
-        buffer.append("" + this.isAntc());
-        for (Term t : solve) {
-            buffer.append("" + t.getId());
-        }
-        return buffer.toString().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if ((o instanceof Hypotese)
-                && ((Hypotese) o).getPredicate().getId() == predicate.getId()
-                && ((Hypotese) o).isAntc() == isAntc()
-                && ((Hypotese) o).getSolve().size() == solve.size()) {
-            for (int i = 0; i < solve.size(); ++i) {
-                if (solve.get(i) != null
-                        && ((Hypotese) o).getSolve().get(i) != null
-                        && ((Hypotese) o).getSolve().get(i).getId() != solve.get(i).getId()) {
-                    return false;
-                }
-                return true;
-            }
-        }
-        return false;
-    }
+//    @Override
+//    public int hashCode() {
+//        StringBuffer buffer = new StringBuffer();
+//        buffer.append(this.predicate.getId());
+//        buffer.append(this.isAntc());
+//        for (Term t : solve) {
+//            buffer.append(t.getId());
+//        }
+//        return buffer.toString().hashCode();
+//    }
+//
+//    @Override
+//    public boolean equals(Object o) {
+//        if ((o instanceof Hypotese)
+//                && ((Hypotese) o).getPredicate().getId() == predicate.getId()
+//                && ((Hypotese) o).isAntc() == isAntc()
+//                && ((Hypotese) o).getSolve().size() == solve.size()) {
+//            for (int i = 0; i < solve.size(); ++i) {
+//                if (solve.get(i) != null
+//                        && ((Hypotese) o).getSolve().get(i) != null
+//                        && ((Hypotese) o).getSolve().get(i).getId() != solve.get(i).getId()) {
+//                    return false;
+//                }
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     @Override
     public int compareTo(Hypotese o) {

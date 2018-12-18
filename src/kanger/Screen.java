@@ -684,7 +684,7 @@ public class Screen {
     //
     public static void showHypo(Mind mind) {
         int i;
-        SortedSet<Hypotese> list = mind.getHypotesisStore().getRoot();
+        List<Hypotese> list = mind.getHypotesisStore().getRoot();
         if (list != null && list.size() > 0) {
             System.out.printf("Hypothesis list:\n");
             for (i = 0; i < list.size(); ++i) {

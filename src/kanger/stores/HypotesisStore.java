@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class HypotesisStore implements Comparable<HypotesisStore> {
 
-    private SortedSet<Hypotese> root = null;
+    private List<Hypotese> root = null;
     private boolean enableStore = true;
     private User user = null;
 
@@ -24,7 +24,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new TreeSet<>();
+                root = new ArrayList<>();
             }
             for (Hypotese h : base.getRoot()) {
                 add(h);
@@ -37,7 +37,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         if (root == null) {
-            root = new TreeSet<>();
+            root = new ArrayList<>();
         }
         Hypotese h = find(antc, pred, arg);
         if (h != null) {
@@ -64,7 +64,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         if (root == null) {
-            root = new TreeSet<>();
+            root = new ArrayList<>();
         }
         Hypotese h = find(hypotese);
         if (h == null /*|| h.isAntc() != hypotese.isAntc()*/) {
@@ -150,7 +150,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return find(h) != null;
     }
 
-    public SortedSet<Hypotese> getRoot() {
+    public List<Hypotese> getRoot() {
         return root;
     }
 

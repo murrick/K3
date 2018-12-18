@@ -1546,6 +1546,10 @@ public class KangerTest {
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
+            s = createHypotese(user, true, "son", "Tom", "Sarah");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
             s = createHypotese(user, false, "female", "Tom");
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
@@ -1582,8 +1586,8 @@ public class KangerTest {
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            if (mind.getHypotesisStore().getRoot().size() != 11) {
-                fail("Expected 11 hypotesis");
+            if (mind.getHypotesisStore().getRoot().size() != 12) {
+                fail("Expected 12 hypotesis");
             }
             System.out.println("OK");
             System.out.println("====================================================");
