@@ -1247,7 +1247,7 @@ public class Functions {
         } else if (a.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) a.getValue(), "1 day", 1);
         } else if (a.getType() == DataType.STRING && a.getValue().toString().length() == 1) {
-            res = (a.getValue().toString().charAt(0) + 1) + "";
+            res = String.format("%c", a.getValue().toString().charAt(0) + 1);
         } else {
             res = a.getValue();
         }
@@ -1261,7 +1261,7 @@ public class Functions {
         } else if (a.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) a.getValue(), "1 day", -1);
         } else if (a.getType() == DataType.STRING && a.getValue().toString().length() == 1) {
-            res = (a.getValue().toString().charAt(0) - 1) + "";
+            res = String.format("%c", a.getValue().toString().charAt(0) - 1);
         } else {
             res = a.getValue();
         }

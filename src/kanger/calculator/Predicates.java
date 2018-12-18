@@ -298,10 +298,10 @@ public class Predicates {
             rcmin = cur.compareTo(min);
             rcmax = cur.compareTo(max);
         }
-        if (rcmin != -2 && rcmax != -2 && rc != -2) {
+//        if (rcmin != -2 && rcmax != -2 && rc != -2) {
             return (rc < 0 ? (rcmin >= 0 && rcmax <= 0) : (rcmin <= 0 && rcmax >= 0));
-        } else {
-            return false;
-        }
+//        } else {
+//            return false;
+//        }
     }
 }
