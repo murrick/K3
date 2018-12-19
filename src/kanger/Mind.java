@@ -1049,7 +1049,7 @@ public class Mind {
         if (mind.getValues().size() > 0) {
             mind.getLog().add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (Set<TValue> log : mind.getValues().getRoot().values()) {
+            for (List<TValue> log : mind.getValues().getRoot().values()) {
                 String s = String.format("\tValue %03d: ", ++i);
                 String list = "";
                 for (TValue v : log) {

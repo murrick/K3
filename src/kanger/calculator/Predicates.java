@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -157,7 +158,7 @@ public class Predicates {
                             while (true) {
                                 if (arg.get(0).setValue(cur)) {
                                     i = 1;
-                                    if(rc == 0) {
+                                    if (rc == 0) {
                                         break;
                                     }
                                     Term next = rc < 0
@@ -181,7 +182,10 @@ public class Predicates {
                             }
                         } else if (arg.get(1).getValue().getType() == DataType.STRING) {
                             for (int k = 0; k < arg.get(1).getValue().toString().length(); ++k) {
-                                arg.get(0).setValue(user.getMind().getTerms().add(arg.get(1).getValue().toString().charAt(k) + ""));
+                                Term t = user.getMind().getTerms().add(arg.get(1).getValue().toString().charAt(k) + "");
+                                if(arg.get(0).setValue(t)) {
+                                    i = 1;
+                                }
                             }
                         }
                     } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
@@ -219,7 +223,7 @@ public class Predicates {
                             while (true) {
                                 if (arg.get(0).setValue(cur)) {
                                     i = 1;
-                                    if(rc == 0) {
+                                    if (rc == 0) {
                                         break;
                                     }
                                     Term next = rc < 0
@@ -241,6 +245,17 @@ public class Predicates {
                                     break;
                                 }
                             }
+                        } else if (arg.get(1).getValue().getType() == DataType.STRING) {
+                            Pattern pt = Pattern.compile(arg.get(2).getValue().toString());
+                            Matcher mt = pt.matcher(arg.get(1).getValue().toString());
+                            if (mt.find()) {
+                                for (int k = 0; k < mt.groupCount(); ++k) {
+                                    Term t = user.getMind().getTerms().add(mt.group(k+1) + "");
+                                    if(arg.get(0).setValue(t)) {
+                                        i = 1;
+                                    }
+                                }
+                            }
                         }
                     } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
@@ -249,6 +264,18 @@ public class Predicates {
                             i = _in(arg.get(0).getValue(),
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0],
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1]) ? 1 : 0;
+                        } else if (arg.get(1).getValue().getType() == DataType.STRING) {
+                            Pattern pt = Pattern.compile(arg.get(2).getValue().toString());
+                            Matcher mt = pt.matcher(arg.get(1).getValue().toString());
+                            if (mt.find()) {
+                                for (int k = 0; k < mt.groupCount(); ++k) {
+                                    Term t = user.getMind().getTerms().add(mt.group(k+1) + "");
+                                    if(arg.get(0).getValue().getId() == t.getId()) {
+                                        i = 1;
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                     return i;

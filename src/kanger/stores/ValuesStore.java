@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class ValuesStore {
 
-    private SortedMap<Integer, SortedSet<TValue>> root = null;
+    private SortedMap<Integer, List<TValue>> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -59,7 +59,7 @@ public class ValuesStore {
             root = new TreeMap<>();
         }
         boolean found = false;
-        for (SortedSet<TValue> s : root.values()) {
+        for (List<TValue> s : root.values()) {
             if (s.contains(t)) {
                 found = true;
                 break;
@@ -67,7 +67,7 @@ public class ValuesStore {
         }
         if (!found) {
             if (!root.containsKey(tag)) {
-                root.put(tag, new TreeSet<>());
+                root.put(tag, new ArrayList<>());
             }
             root.get(tag).add(t);
         }
@@ -96,7 +96,7 @@ public class ValuesStore {
 
     public void normalize() {
         List<Map<TVariable, TValue>> cnt = new ArrayList<>();
-        for (SortedSet<TValue> s : root.values()) {
+        for (List<TValue> s : root.values()) {
             for(TValue v : s) {
                 boolean done = false;
                 for (Map<TVariable, TValue> map : cnt) {
@@ -117,18 +117,18 @@ public class ValuesStore {
         root.clear();
         int i = 0;
         for (Map<TVariable, TValue> s : cnt) {
-            SortedSet<TValue> set = new TreeSet<>();
+            List<TValue> set = new ArrayList<>();
             set.addAll(s.values());
             root.put(++i, set);
         }
 
         Set<TVariable> retain = new HashSet<>();
-        for (SortedSet<TValue> s : root.values()) {
+        for (List<TValue> s : root.values()) {
             for (TValue v : s) {
                 retain.add(v.getTVar());
             }
         }
-        for (SortedSet<TValue> s : root.values()) {
+        for (List<TValue> s : root.values()) {
             Set<TVariable> set = new HashSet<>();
             for (TValue v : s) {
                 set.add(v.getTVar());
@@ -137,7 +137,7 @@ public class ValuesStore {
         }
         if (!retain.isEmpty()) {
             Set<TValue> collect = new HashSet<>();
-            for (SortedSet<TValue> s : root.values()) {
+            for (List<TValue> s : root.values()) {
                 for (TValue v : s) {
                     if (!retain.contains(v.getTVar())) {
                         collect.add(v);
@@ -145,23 +145,23 @@ public class ValuesStore {
                 }
             }
             if (!collect.isEmpty()) {
-                for (SortedSet<TValue> s : root.values()) {
+                for (List<TValue> s : root.values()) {
                     s.addAll(collect);
                 }
             }
         }
 
-        List<SortedSet<TValue>> list = new ArrayList<>();
+        List<List<TValue>> list = new ArrayList<>();
         list.addAll(root.values());
-        Collections.sort(list, new Comparator<SortedSet<TValue>>() {
+        Collections.sort(list, new Comparator<List<TValue>>() {
             @Override
-            public int compare(SortedSet<TValue> o1, SortedSet<TValue> o2) {
+            public int compare(List<TValue> o1, List<TValue> o2) {
                 return o1.toArray(new TValue[]{})[0].getValue().compareTo(o2.toArray(new TValue[]{})[0].getValue());
             }
         });
         root.clear();
         i = 0;
-        for (SortedSet<TValue> s : list) {
+        for (List<TValue> s : list) {
             root.put(++i, s);
         }
     }
@@ -181,7 +181,7 @@ public class ValuesStore {
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
         if(root != null) {
-            for (SortedSet<TValue> s : root.values()) {
+            for (List<TValue> s : root.values()) {
                 for (TValue t : s) {
                     if (name == null || name.equals(t.getTVar().getName().getValue())) {
                         list.add(t.getValue());
@@ -196,7 +196,7 @@ public class ValuesStore {
 //        return root.indexOf(s);
 //    }
 
-    public Map<Integer, SortedSet<TValue>> getRoot() {
+    public Map<Integer, List<TValue>> getRoot() {
         return root;
     }
 
@@ -211,7 +211,7 @@ public class ValuesStore {
             return 0;
         } else {
             int cnt = 0;
-            for(SortedSet<TValue> v : root.values()) {
+            for(List<TValue> v : root.values()) {
                 cnt += v.size();
             }
             return cnt;
