@@ -1154,42 +1154,6 @@ public class KangerTest {
 
     }
 
-    public void set_04_14() throws ParseErrorException, RuntimeErrorException {
-
-        mind.clear();
-        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
-        mind.query("?$x $y num(x) && num(y) && x * y = 12;");
-        showResult(true);
-        if (!exists("x", 2.0) || !exists("y", 6.0)) {
-            fail("Expected: x=2.0, y = 6.0");
-        }
-        if (!exists("x", 3.0) || !exists("y", 4.0)) {
-            fail("Expected: x=2.0, y = 6.0");
-        }
-        if (!exists("x", 4.0) || !exists("y", 3.0)) {
-            fail("Expected: x=2.0, y = 6.0");
-        }
-        if (!exists("x", 6.0) || !exists("y", 2.0)) {
-            fail("Expected: x=2.0, y = 6.0");
-        }
-        if (mind.getValues().getValues("x").size() != 4) {
-            fail("Expected x 4 solves");
-        }
-        if (mind.getValues().getValues("y").size() != 4) {
-            fail("Expected y 4 solves");
-        }
-
-        System.out.println("OK");
-        System.out.println("====================================================");
-
-//        if (mind.getLog().size() > 0) {
-//            for (LogEntry log : mind.getLog().getRoot()) {
-//                System.out.println(log.getRecord());
-//            }
-////            System.out.println();
-//        }
-
-    }
 
     public void set_04_13() throws ParseErrorException, RuntimeErrorException {
 
@@ -1227,6 +1191,44 @@ public class KangerTest {
 //        }
 
     }
+
+    public void set_04_14() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
+        mind.query("?$x $y num(x) && num(y) && x * y = 12;");
+        showResult(true);
+        if (!exists("x", 2.0) || !exists("y", 6.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 3.0) || !exists("y", 4.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 4.0) || !exists("y", 3.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (!exists("x", 6.0) || !exists("y", 2.0)) {
+            fail("Expected: x=2.0, y = 6.0");
+        }
+        if (mind.getValues().getValues("x").size() != 4) {
+            fail("Expected x 4 solves");
+        }
+        if (mind.getValues().getValues("y").size() != 4) {
+            fail("Expected y 4 solves");
+        }
+
+        System.out.println("OK");
+        System.out.println("====================================================");
+
+//        if (mind.getLog().size() > 0) {
+//            for (LogEntry log : mind.getLog().getRoot()) {
+//                System.out.println(log.getRecord());
+//            }
+////            System.out.println();
+//        }
+
+    }
+
 
     public void set_05_01() throws ParseErrorException, RuntimeErrorException {
 
@@ -1594,5 +1596,104 @@ public class KangerTest {
         } else {
             fail("Expected 11 hypotesis");
         }
+    }
+
+    public void set_07_01() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x x in '2018-03-01'..'2018-04-19', 38 hours 40 minutes, x > '2018-03-07';");
+        showResult(true);
+        if (mind.getValues().size() != 27) {
+            fail("Expected 27 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_02() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?'2018-03-07' in '2018-03-01'..'2018-04-19';");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_03() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?er in qwerty;");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_04() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?'(.*)er(.*)' in qwerty;");
+        showResult(true);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_05() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x x in qwerty;");
+        showResult(true);
+        if (mind.getValues().size() != 6) {
+            fail("Expected 6 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_06() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x x in qwerty,'(.*)er(.*)';");
+        showResult(true);
+        if (mind.getValues().size() != 2) {
+            fail("Expected 2 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_07() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x x in qwerty,'(.*)er(.*)', x=qw;");
+        showResult(true);
+        if (mind.getValues().size() != 1) {
+            fail("Expected 1 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_08() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x x in qwerty,'(.*)er(.*)', x=ty;");
+        showResult(true);
+        if (mind.getValues().size() != 1) {
+            fail("Expected 1 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_09() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x x in qwerty,'(.*)er(.*)', x != ty;");
+        showResult(true);
+        if (mind.getValues().size() != 1) {
+            fail("Expected 1 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
     }
 }

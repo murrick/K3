@@ -66,7 +66,7 @@ public class Predicates {
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
-                        if (rc == -1 || rc == 1) {
+                        if (rc != 0) {
                             i = 1;
                         } else if (rc == 0) {
                             i = 0;
@@ -84,9 +84,9 @@ public class Predicates {
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
-                        if (rc != -2) {
+//                        if (rc != -2) {
                             i = rc > 0 ? 1 : 0;
-                        }
+//                        }
                     }
                     return i;
                 }
@@ -100,9 +100,9 @@ public class Predicates {
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
-                        if (rc != -2) {
+//                        if (rc != -2) {
                             i = rc >= 0 ? 1 : 0;
-                        }
+//                        }
                     }
                     return i;
                 }
@@ -116,9 +116,9 @@ public class Predicates {
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
-                        if (rc != -2) {
+//                        if (rc != -2) {
                             i = rc < 0 ? 1 : 0;
-                        }
+//                        }
                     }
                     return i;
                 }
@@ -132,9 +132,9 @@ public class Predicates {
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
-                        if (rc != -2) {
+//                        if (rc != -2) {
                             i = rc <= 0 ? 1 : 0;
-                        }
+//                        }
                     }
                     return i;
                 }
