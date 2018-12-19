@@ -81,9 +81,15 @@ public class Argument  {
     public boolean setValue(Term t) {
         switch (getType()) {
             case EMPTY:
-            case TERM:
                 o = t;
                 return true;
+            case TERM:
+                if(!((Term)o).isCVariable()) {
+                    o = t;
+                    return true;
+                } else {
+                    return false;
+                }
             case TVRIABLE:
                 ((TVariable) o).setValue(t);
                 return true;

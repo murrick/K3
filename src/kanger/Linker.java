@@ -4,6 +4,7 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
+import kanger.enums.QueryPass;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.*;
 
@@ -97,7 +98,6 @@ public class Linker {
                     final Tree t = tree;
                     SortedSet<TVariable> tvars = new TreeSet<>();
                     tvars.addAll(t.getTVariables(true));
-
 
                     rotateVariables(tvars, logging, new IRunnable() {
                         @Override
@@ -277,6 +277,7 @@ public class Linker {
         return r != null;
     }
 
+    //TODO ?$x x in qwerty, "(.*)er(.*)", x = qw;
     private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
