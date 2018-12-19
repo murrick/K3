@@ -60,6 +60,7 @@ public class Parser {
             new Operation("<>", "_ne", 13, 2, 0, false, false),
 
             /* 14 */
+            new Operation("..", "", 11, 2, 0, false, false),
             new Operation(",", "", 14, 2, 0, false, false),
             new Operation("&&", "&", 14, 2, 0, false, true),
 

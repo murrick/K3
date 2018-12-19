@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.compiler.PTree;
 import kanger.enums.DataType;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
@@ -73,6 +74,14 @@ public class Term implements Comparable<Object> {
         } else if (o instanceof Date) {
             type = DataType.DATE;
             value = o;
+        } else if(o instanceof PTree) {
+            if("..".equals(((PTree) o).getName())) {
+                List<Term> list = new ArrayList<>();
+                list.add(user.getMind().getTerms().add(((PTree) o).getLeft().getName()));
+                list.add(user.getMind().getTerms().add(((PTree) o).getRight().getName()));
+                type = DataType.INTERVAL;
+                value = list;
+            }
         } else if (!(o instanceof String)) {
             o = o.toString();
         }
@@ -127,7 +136,7 @@ public class Term implements Comparable<Object> {
             List<Term> list = new ArrayList<>();
             for (String s : ch.split("\\.\\.")) {
                 if (!s.trim().isEmpty()) {
-                    Term t = user.getMind().getTerms().add(new Term(s, user));
+                    Term t = user.getMind().getTerms().add(s);
                     list.add(t);
                 }
             }

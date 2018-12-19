@@ -45,6 +45,14 @@ public class Enums {
         }
 
         {
+            put("msec", 1L);
+        }
+
+        {
+            put("msecs", 1L);
+        }
+
+        {
             put("millisecond", 1L);
         }
 
@@ -74,6 +82,10 @@ public class Enums {
         }
 
         {
+            put("mns", 1000L * 60L);
+        }
+
+        {
             put("mins", 1000L * 60L);
         }
 
@@ -83,6 +95,10 @@ public class Enums {
 
         {
             put("minutes", 1000L * 60L);
+        }
+
+        {
+            put("hs", 1000L * 60L * 60L);
         }
 
         {
@@ -106,11 +122,19 @@ public class Enums {
         }
 
         {
+            put("ds", 1000L * 60L * 60L * 24L);
+        }
+
+        {
             put("day", 1000L * 60L * 60L * 24L);
         }
 
         {
             put("days", 1000L * 60L * 60L * 24L);
+        }
+
+        {
+            put("wks", 1000L * 60L * 60L * 24L * 7);
         }
 
         {

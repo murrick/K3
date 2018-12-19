@@ -95,6 +95,33 @@ public class ValuesStore {
      */
 
     public void normalize() {
+        List<Map<TVariable, TValue>> cnt = new ArrayList<>();
+        for (SortedSet<TValue> s : root.values()) {
+            for(TValue v : s) {
+                boolean done = false;
+                for (Map<TVariable, TValue> map : cnt) {
+                    if (!map.containsKey(v.getTVar())) {
+                        map.put(v.getTVar(), v);
+                        done = true;
+                        break;
+                    }
+                }
+                if(!done) {
+                    Map<TVariable, TValue> map = new HashMap<>();
+                    map.put(v.getTVar(), v);
+                    cnt.add(map);
+                }
+            }
+        }
+
+        root.clear();
+        int i = 0;
+        for (Map<TVariable, TValue> s : cnt) {
+            SortedSet<TValue> set = new TreeSet<>();
+            set.addAll(s.values());
+            root.put(++i, set);
+        }
+
         Set<TVariable> retain = new HashSet<>();
         for (SortedSet<TValue> s : root.values()) {
             for (TValue v : s) {
@@ -133,11 +160,10 @@ public class ValuesStore {
             }
         });
         root.clear();
-        int i = 0;
+        i = 0;
         for (SortedSet<TValue> s : list) {
             root.put(++i, s);
         }
-
     }
 
     public void enable(boolean e) {
@@ -181,7 +207,15 @@ public class ValuesStore {
     }
 
     public int size() {
-        return root == null ? 0 : root.size();
+        if(root == null) {
+            return 0;
+        } else {
+            int cnt = 0;
+            for(SortedSet<TValue> v : root.values()) {
+                cnt += v.size();
+            }
+            return cnt;
+        }
     }
 
     public boolean isEmpty() {

@@ -157,6 +157,9 @@ public class Predicates {
                             while (true) {
                                 if (arg.get(0).setValue(cur)) {
                                     i = 1;
+                                    if(rc == 0) {
+                                        break;
+                                    }
                                     Term next = rc < 0
                                             ? new Calculator(user).getFunctions()._inc(cur)
                                             : new Calculator(user).getFunctions()._dec(cur);
@@ -216,6 +219,9 @@ public class Predicates {
                             while (true) {
                                 if (arg.get(0).setValue(cur)) {
                                     i = 1;
+                                    if(rc == 0) {
+                                        break;
+                                    }
                                     Term next = rc < 0
                                             ? new Calculator(user).getFunctions()._add(cur, step)
                                             : new Calculator(user).getFunctions()._sub(cur, step);

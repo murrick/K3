@@ -89,6 +89,14 @@ public class Compiler {
 //            break;
 
             case Enums.COMMA:
+                if ("_in".equals(root.getLeft().getName())) {
+                    PTree left = root.getLeft();
+                    root.setLeft(left.getRight());
+                    left.setRight(root);
+                    root = left;
+                    compilePredicate(t, root, antc, replacements);
+                    break;
+                }
             case Enums.CON: {
                 if (antc) {
                     Tree x = r.cloneTree(t, true);
@@ -240,6 +248,9 @@ public class Compiler {
             f.setName(user.getMind().getTerms().add(root.getLeft().getName()));
             f.setRange(f.getArguments().size());
             Argument t = new Argument(f);
+            arg.add(t);
+        } else if (root.getName().equals("..")) {
+            Argument t = new Argument(user.getMind().getTerms().add(root));
             arg.add(t);
         } else {
             Argument t;

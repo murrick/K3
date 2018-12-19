@@ -286,7 +286,7 @@ public class Kanger {
 //                "!d(v);");
 //        mind.query("?n(nnn);");
 
-        mind.compile(text);
+//        mind.compile(text);
         Screen.session(user);
 
 ////            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
