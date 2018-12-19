@@ -31,16 +31,17 @@ public class Predicate {
         this.user = user;
     }
 
-    public Predicate(DataInputStream dis, User user) throws IOException {
+    public Predicate readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
-        user.getMind().getPredicatesLink().put(dis.readLong(), this);
-        name = (Term) user.getMind().getTermsLink().get(dis.readLong());
+        id = dis.readLong();
+        name = user.getMind().getTerms().get(dis.readLong());
         range = dis.readInt();
+        return this;
     }
 
     public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
         dos.writeLong(id);
-        name.writeCompiledData(dos);
+        dos.writeLong(name.getId());
         dos.writeInt(range);
     }
 

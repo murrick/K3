@@ -368,7 +368,7 @@ public class Screen {
 //    }
     public static void showCopyrigt(Mind mind) {
         System.out.printf("KANGER III, Version %s\n"
-                + "Copiryght (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
+                + "Copyright (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
                 + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
 //        System.out.printf("Context ID: %s\n", mind.getContextIdString());
     }

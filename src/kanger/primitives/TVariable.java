@@ -29,15 +29,13 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         this.user = user;
     }
 
-    public TVariable(DataInputStream dis, User user) throws IOException {
+    public TVariable readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
-        user.getMind().getTVariablesLink().put(dis.readLong(), this);
-        name = (Term) user.getMind().getTermsLink().get(dis.readLong());
+        id = dis.readLong();
+        name = user.getMind().getTerms().get(dis.readLong());
         index = dis.readInt();
-        long rightId = dis.readLong();
-        if(rightId != -1) {
-            right = (Right) user.getMind().getRightsLink().get(rightId);
-        }
+        right = (Right) user.getMind().getRightsLink().get(dis.readLong());
+        return this;
     }
 
     public void writeCompiledData(DataOutputStream dos, User user) throws IOException {

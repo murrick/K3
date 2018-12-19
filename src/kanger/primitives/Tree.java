@@ -19,12 +19,11 @@ public class Tree implements Comparable<Tree>{
 
     private List<Domain> sequence = new ArrayList<>();          // Домены
     private long id = -1;                                       // Идентификатор
-    private Tree next = null;
     private Right right = null;
-
-    private Set<Long> excludes = new HashSet<>();
     private boolean generated = false;
 
+    private Set<Long> excludes = new HashSet<>();
+    private Tree next = null;
     private User user = null;
 
     //    private boolean closed = false;
@@ -33,14 +32,28 @@ public class Tree implements Comparable<Tree>{
         this.user = user;
     }
 
-    public Tree(DataInputStream dis, User user) throws IOException {
+    public Tree readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
         id = dis.readLong();
+        right = user.getMind().getRights().get(dis.readLong());
+        generated = dis.readBoolean();
         int count = dis.readInt();
         while (count-- > 0) {
             sequence.add(user.getMind().getDomains().get(dis.readLong()));
         }
+        return this;
     }
+
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+        dos.writeLong(id);
+        dos.writeLong(right.getId());
+        dos.writeBoolean(generated);
+        dos.writeInt(sequence.size());
+        for (Domain d : sequence) {
+            dos.writeLong(d.getId());
+        }
+    }
+
 
     public void setGenerated() {
         this.generated = true;
@@ -128,14 +141,6 @@ public class Tree implements Comparable<Tree>{
             s += d.toString();
         }
         return s;
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeInt(sequence.size());
-        for (Domain d : sequence) {
-            dos.writeLong(d.getId());
-        }
     }
 
     public boolean isExcluded(Tree t) {

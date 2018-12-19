@@ -25,16 +25,21 @@ public class Record implements Comparable<Record> {
         this.user = domain.getUser();
     }
 
-    public Record(DataInputStream dis, User user) throws IOException {
+    public Record(User user) {
         this.user = user;
-        user.getMind().getRecordsLink().put(dis.readLong(), this);
-        domain = (Domain) user.getMind().getDomainsLink().get(dis.readLong());
+    }
+
+    public Record readCompiledData(DataInputStream dis) throws IOException {
+        this.user = user;
+        id = dis.readLong();
+        domain = user.getMind().getDomains().get(dis.readLong());
         tag = dis.readInt();
         int count = dis.readInt();
         while(count-- > 0) {
             Cause c = new Cause(dis, user);
             causes.add(c);
         }
+        return this;
     }
 
     public void writeCompiledData(DataOutputStream dos, User user) throws IOException {

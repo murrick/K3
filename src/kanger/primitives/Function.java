@@ -32,12 +32,13 @@ public class Function implements IValue {
         this.user = user;
     }
 
-    public Function(DataInputStream dis, User user) throws IOException {
+    public Function readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
-        user.getMind().getFunctionsLink().put(dis.readLong(), this);
+        id = dis.readLong();
         name = user.getMind().getTerms().get(dis.readLong());
         range = dis.readInt();
         arguments = new ArgList(dis, user);
+        return this;
     }
 
     public void writeCompiledData(DataOutputStream dos, User user) throws IOException {

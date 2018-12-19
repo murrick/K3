@@ -273,7 +273,7 @@ public class TValueFactory {
         int count = size();
         dos.writeInt(count);
         for (TValue d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+            d.writeCompiledData(dos, user);
         }
     }
 
@@ -283,7 +283,7 @@ public class TValueFactory {
         int count = dis.readInt();
         TValue a = null, b;
         while (count-- > 0) {
-            b = new TValue(dis, user);
+            b = new TValue(user).readCompiledData(dis);
             if (a != null) {
                 a.setNext(b);
             } else {

@@ -37,23 +37,24 @@ public class TValue implements IValue, Comparable<TValue> {
         this.value = t;
     }
 
-    public TValue(DataInputStream dis, User user) throws IOException {
+    public TValue readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
-        user.getMind().getRightsLink().put(dis.readLong(), this);
+        id = dis.readLong();
         long valueId = dis.readLong();
         if(valueId != -1) {
-            value = (Term) user.getMind().getTermsLink().get(valueId);
+            value = user.getMind().getTerms().get(valueId);
         }
-        tVar = (TVariable) user.getMind().getTVariablesLink().get(dis.readLong());
-        right = (Right) user.getMind().getRightsLink().get(dis.readLong());
+        tVar = user.getMind().getTVars().get(dis.readLong());
+        right = user.getMind().getRights().get(dis.readLong());
         int count = dis.readInt();
         while(count-- > 0) {
             Cause c = new Cause(dis, user);
             causes.add(c);
         }
+        return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
         dos.writeLong(id);
         dos.writeLong(value == null ? -1 : value.getId());
         dos.writeLong(tVar.getId());

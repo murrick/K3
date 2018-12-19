@@ -15,9 +15,9 @@ import java.util.Date;
 public abstract class Version {
 
     public static final int VERSION = 3;
-    public static final int RELEASE = 0;
-    public static final int REVISION = Integer.parseInt("$LastChangedRevision: 60 $".replace("$LastChangedRevision:", "").replace("$", "").trim());
-    public static final Date DATE = parseDate("$LastChangedDate: 2017-01-19 11:24:18 +0300 (Thu, 19 Jan 2017) $".replace("$LastChangedDate:", "").replace("$", "").trim());
+    public static final int RELEASE = 2;
+    public static final int REVISION = Integer.parseInt("$LastChangedRevision: 67 $".replace("$LastChangedRevision:", "").replace("$", "").trim());
+    public static final Date DATE = parseDate("$LastChangedDate: 2018-12-19 11:24:18 +0300 (Thu, 19 Jan 2017) $".replace("$LastChangedDate:", "").replace("$", "").trim());
     public static final int YEAR = getYear(DATE);
     public static final int VERSION_B = (VERSION << 24) | (RELEASE << 16) | REVISION;
     public static final String VERSION_S = String.format("%d.%d.%d", VERSION, RELEASE, REVISION);

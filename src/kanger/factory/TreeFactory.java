@@ -113,7 +113,7 @@ public class TreeFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Tree r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos);
+            r.writeCompiledData(dos, user);
         }
     }
 
@@ -123,7 +123,7 @@ public class TreeFactory {
         int count = dis.readInt();
         Tree a = null, b;
         while (count-- > 0) {
-            b = new Tree(dis, user);
+            b = new Tree(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

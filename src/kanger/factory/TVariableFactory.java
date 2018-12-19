@@ -135,7 +135,7 @@ public class TVariableFactory {
         int count = dis.readInt();
         TVariable a = null, b;
         while (count-- > 0) {
-            b = new TVariable(dis, user);
+            b = new TVariable(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

@@ -36,15 +36,16 @@ public class FValue implements IValue {
         this.user = user;
     }
 
-    public FValue(DataInputStream dis, User user) throws IOException {
+    public FValue readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
-        user.getMind().getFValuesLink().put(dis.readLong(), this);
-        function = (Function) user.getMind().getFunctionsLink().get(dis.readLong());
+        id = dis.readLong();
+        function = user.getMind().getFunctions().get(dis.readLong());
         long valueId = dis.readLong();
         if(valueId != -1) {
-            value = (Term) user.getMind().getTermsLink().get(valueId);
+            value = user.getMind().getTerms().get(valueId);
         }
         condition = new ArgList(dis, user);
+        return this;
     }
 
     public void writeCompiledData(DataOutputStream dos, User user) throws IOException {

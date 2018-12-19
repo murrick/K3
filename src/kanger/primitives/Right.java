@@ -30,10 +30,10 @@ public class Right {
         this.user = user;
     }
 
-    public Right(DataInputStream dis, User user) throws IOException {
+    public Right readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
-        user.getMind().getRightsLink().put(dis.readLong(), this);
-        orig = (Term) user.getMind().getTermsLink().get(dis.readLong());
+        id = dis.readLong();
+        orig = user.getMind().getTerms().get(dis.readLong());
         query = dis.readBoolean();
         generated = dis.readBoolean();
         int count = dis.readInt();
@@ -42,6 +42,7 @@ public class Right {
             t.setRight(this);
             tree.add(t);
         }
+        return this;
     }
 
     public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
@@ -51,7 +52,7 @@ public class Right {
         dos.writeBoolean(generated);
         dos.writeInt(tree.size());
         for (Tree r : tree) {
-            r.writeCompiledData(dos);
+            r.writeCompiledData(dos, user);
         }
     }
 

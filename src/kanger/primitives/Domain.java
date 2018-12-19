@@ -36,11 +36,11 @@ public class Domain {
         this.user = user;
     }
 
-    public Domain(DataInputStream dis, User user) throws IOException {
+    public Domain readCompiledData(DataInputStream dis) throws IOException {
         this.user = user;
-        user.getMind().getDomainsLink().put(dis.readLong(), this);
-        right = (Right) user.getMind().getRightsLink().get(dis.readLong());
-        predicate = (Predicate) user.getMind().getPredicatesLink().get(dis.readLong());
+        id = dis.readLong();
+        right = (Right) user.getMind().getRights().get(dis.readLong());
+        predicate = (Predicate) user.getMind().getPredicates().get(dis.readLong());
         arguments = new ArgList(dis, user);
         antc = dis.readBoolean();
 
@@ -54,6 +54,7 @@ public class Domain {
                 causes.get(args).add(c);
             }
         }
+        return this;
     }
 
     public void writeCompiledData(DataOutputStream dos, User user) throws IOException {

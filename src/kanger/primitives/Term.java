@@ -42,15 +42,13 @@ public class Term implements Comparable<Object> {
         construct(str);
     }
 
-    public Term(DataInputStream din, User user) throws IOException, ClassNotFoundException {
+    public Term readCompiledData(DataInputStream din) throws IOException, ClassNotFoundException {
         this.user = user;
+        id = din.readLong();
         type = DataType.values()[din.readInt()];
         name = din.readUTF();
-
         index = din.readInt();
-        id = din.readLong();
-        user.getMind().getTermsLink().put(this, din.readLong());
-
+        right = user.getMind().getRights().get(din.readLong());
         switch (type) {
             case DATE:
                 value = new Date(din.readLong());
@@ -59,12 +57,61 @@ public class Term implements Comparable<Object> {
                 value = din.readDouble();
                 break;
             case INTERVAL:
+                if (din.readBoolean()) {
+                    List<Term> list = new ArrayList<>();
+                    for (int i = 0; i < din.readInt(); ++i) {
+                        Term t = new Term(din, user);
+                        list.add(t);
+                    }
+                    value = list;
+                } else {
+                    value = din.readUTF();
+                }
+                break;
             case STRING:
                 value = din.readUTF();
                 break;
+            case TERM:
+                value = new ObjectInputStream(din).readObject();
+                break;
         }
-
+        return this;
     }
+
+    public void writeCompiledData(DataOutputStream dos, User u) throws IOException {
+        dos.writeLong(id);
+        dos.writeInt(type.ordinal());
+        dos.writeUTF(name);
+        dos.writeInt(index);
+        dos.writeLong(right.getId());
+        switch (type) {
+            case DATE:
+                dos.writeLong(((Date) value).getTime());
+                break;
+            case NUMERIC:
+                dos.writeDouble((double) value);
+                break;
+            case INTERVAL:
+                if (value instanceof Collection) {
+                    dos.writeBoolean(true);
+                    dos.writeInt(((Collection) value).size());
+                    for (Term t : (Collection<Term>) value) {
+                        t.writeCompiledData(dos, u);
+                    }
+                } else {
+                    dos.writeBoolean(false);
+                    dos.writeUTF((String) value);
+                }
+                break;
+            case STRING:
+                dos.writeUTF((String) value);
+                break;
+            case TERM:
+                new ObjectOutputStream(dos).writeObject(value);
+                break;
+        }
+    }
+
 
     private void construct(Object o) {
         value = null;
@@ -74,8 +121,8 @@ public class Term implements Comparable<Object> {
         } else if (o instanceof Date) {
             type = DataType.DATE;
             value = o;
-        } else if(o instanceof PTree) {
-            if("..".equals(((PTree) o).getName())) {
+        } else if (o instanceof PTree) {
+            if ("..".equals(((PTree) o).getName())) {
                 List<Term> list = new ArrayList<>();
                 list.add(user.getMind().getTerms().add(((PTree) o).getLeft().getName()));
                 list.add(user.getMind().getTerms().add(((PTree) o).getRight().getName()));
@@ -207,31 +254,6 @@ public class Term implements Comparable<Object> {
         } else {
             return "";
         }
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeLong(right.getId());
-        dos.writeInt(type.ordinal());
-        switch (type) {
-            case DATE:
-                dos.writeLong(((Date) value).getTime());
-                break;
-            case NUMERIC:
-                dos.writeDouble((double) value);
-                break;
-            case INTERVAL:
-                dos.writeUTF((String) value);
-                break;
-            case STRING:
-                dos.writeUTF((String) value);
-                break;
-            case TERM:
-                new ObjectOutputStream(dos).writeObject(value);
-                break;
-        }
-        dos.writeUTF(name);
-        dos.writeInt(index);
     }
 
     @Override
