@@ -155,7 +155,7 @@ public class PredicateFactory {
         int count = dis.readInt();
         Predicate a = null, b;
         while (count-- > 0) {
-            b = new Predicate(dis, user);
+            b = new Predicate(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

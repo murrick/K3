@@ -21,6 +21,10 @@ public class FValue implements IValue {
     private FValue next = null;
     private User user = null;
 
+    public FValue(User user) {
+        this.user = user;
+    }
+
     public FValue(Function f, User user) {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue();

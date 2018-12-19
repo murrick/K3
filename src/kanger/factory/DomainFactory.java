@@ -172,7 +172,7 @@ public class DomainFactory {
         int count = dis.readInt();
         Domain a = null, b;
         while (count-- > 0) {
-            b = new Domain(dis, user);
+            b = new Domain(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

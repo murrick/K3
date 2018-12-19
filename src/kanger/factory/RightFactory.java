@@ -131,7 +131,7 @@ public class RightFactory {
         int count = dis.readInt();
         Right a = null, b;
         while (count-- > 0) {
-            b = new Right(dis, user);
+            b = new Right(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

@@ -121,7 +121,7 @@ public class FunctionFactory {
         int count = dis.readInt();
         Function a = null, b;
         while (count-- > 0) {
-            b = new Function(dis, user);
+            b = new Function(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

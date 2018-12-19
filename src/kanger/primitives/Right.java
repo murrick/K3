@@ -38,7 +38,7 @@ public class Right {
         generated = dis.readBoolean();
         int count = dis.readInt();
         while (count-- > 0) {
-            Tree t = new Tree(dis, user);
+            Tree t = new Tree(user).readCompiledData(dis);
             t.setRight(this);
             tree.add(t);
         }

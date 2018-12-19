@@ -219,7 +219,7 @@ public class FValueFactory {
         int count = dis.readInt();
         FValue a = null, b;
         while (count-- > 0) {
-            b = new FValue(dis, user);
+            b = new FValue(user).readCompiledData(dis);
             if (a != null) {
                 a.setNext(b);
             } else {
