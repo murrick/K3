@@ -277,7 +277,6 @@ public class Linker {
         return r != null;
     }
 
-    //TODO ?$x x in qwerty, "(.*)er(.*)", x = qw;
     private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
@@ -553,4 +552,10 @@ public class Linker {
 
 }
 
-
+//TODO Убрать Record, перевести функционал на Right
+//TODO Query с параметрами
+//TODO Множества {} SET
+//TODO Запрсы +(insert), -(delete), =(update)
+//TODO счетчик ссылок для сборки мусор
+//TODO time для каждой записи в базе
+//TODO id для каждой зависи в базе??
