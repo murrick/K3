@@ -6,7 +6,6 @@ import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -36,7 +35,7 @@ public class KangerTest {
         if (mind.getSolutions().size() > 0) {
             System.out.println("Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
-            for (Record log : mind.getSolutions().getRoot()) {
+            for (Right log : mind.getSolutions().getRoot()) {
                 System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
             }
         }
@@ -96,14 +95,8 @@ public class KangerTest {
         return h;
     }
 
-    public Record createRecord(User user, boolean antc, Object predicate, Object... params) {
-        Domain d = new Domain(user);
-        d.setAntc(antc);
-        if (predicate instanceof Predicate) {
-            d.setPredicate((Predicate) predicate);
-        } else {
-            d.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
-        }
+    public Right findRecord(User user, boolean antc, Object predicate, Object... params) {
+                ArgList d = new ArgList();
         for (Object p : params) {
             if (p instanceof Term) {
                 d.add(new Argument((Term) p));
@@ -111,7 +104,13 @@ public class KangerTest {
                 d.add(new Argument(user.getMind().getTerms().add(p)));
             }
         }
-        return new Record(d);
+        Predicate pred;
+        if (predicate instanceof Predicate) {
+            pred = (Predicate) predicate;
+        } else {
+            pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length);
+        }
+        return user.getMind().getRights().find(pred, antc, d);
     }
 
     public static boolean test(User user, String prefix) {
@@ -183,8 +182,8 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?a(nnn);");
         showResult(true);
-        Record s = createRecord(user, true, "a", "nnn");
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, true, "a", "nnn");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         System.out.println("OK");
@@ -201,8 +200,8 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?n(nnn);");
         showResult(false);
-        Record s = createRecord(user, false, "n", "nnn");
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, false, "n", "nnn");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         System.out.println("OK");
@@ -602,16 +601,16 @@ public class KangerTest {
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
         showResult(true);
-        Record s = createRecord(user, false, "a", "z");
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, false, "a", "z");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
-        s = s = createRecord(user, false, "c", "z");
-        if (!mind.getSolutions().contains(s)) {
+        s = s = findRecord(user, false, "c", "z");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
-        s = s = createRecord(user, true, "d", "z");
-        if (!mind.getSolutions().contains(s)) {
+        s = s = findRecord(user, true, "d", "z");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         System.out.println("OK");
@@ -1334,8 +1333,8 @@ public class KangerTest {
         );
         mind.query("?$x $y age(x, y) && y > 12;");
         showResult(true);
-        Record s = createRecord(user, true, "age", "John", 37.0);
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, true, "age", "John", 37.0);
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         if (!exists("x", "John")) {
@@ -1371,12 +1370,12 @@ public class KangerTest {
         );
         mind.query("?$x $y age(x, y) && y >= 12;");
         showResult(true);
-        Record s = createRecord(user, true, "age", "Tom", 12.0);
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, true, "age", "Tom", 12.0);
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
-        s = createRecord(user, true, "age", "John", 37.0);
-        if (!mind.getSolutions().contains(s)) {
+        s = findRecord(user, true, "age", "John", 37.0);
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         if (!exists("x", "Tom")) {
@@ -1418,16 +1417,16 @@ public class KangerTest {
         );
         mind.query("?$x $y $z father(x,y) && age(x, z) && z >= 30;");
         showResult(true);
-        Record s = createRecord(user, true, "father", "John", "Tom");
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, true, "father", "John", "Tom");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
-        s = createRecord(user, true, "father", "John", "Sarah");
-        if (!mind.getSolutions().contains(s)) {
+        s = findRecord(user, true, "father", "John", "Sarah");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
-        s = createRecord(user, true, "age", "John", 37.0);
-        if (!mind.getSolutions().contains(s)) {
+        s = findRecord(user, true, "age", "John", 37.0);
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         if (mind.getSolutions().size() != 3) {
@@ -1457,8 +1456,8 @@ public class KangerTest {
         );
         mind.query("?$x male(x);");
         showResult(true);
-        Record s = createRecord(user, true, "male", "John");
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, true, "male", "John");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         if (!exists("x", "John")) {
@@ -1491,12 +1490,12 @@ public class KangerTest {
         );
         mind.query("?$x child(x, John);");
         showResult(true);
-        Record s = createRecord(user, true, "child", "Tom", "John");
-        if (!mind.getSolutions().contains(s)) {
+        Right s = findRecord(user, true, "child", "Tom", "John");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
-        s = createRecord(user, true, "child", "Sarah", "John");
-        if (!mind.getSolutions().contains(s)) {
+        s = findRecord(user, true, "child", "Sarah", "John");
+        if (s == null) {
             fail("Expected: " + s.toString());
         }
         if (!exists("x", "Tom")) {

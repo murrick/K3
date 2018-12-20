@@ -1,17 +1,19 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.primitives.Record;
+import kanger.primitives.ArgList;
+import kanger.primitives.Predicate;
+import kanger.primitives.Right;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by murray on 28.05.15.
  */
 public class SolutionsStore {
 
-    private SortedSet<Record> root = null;
+    private List<Right> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -27,18 +29,18 @@ public class SolutionsStore {
         clear();
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new TreeSet<>();
+                root = new ArrayList<>();
             }
             root.addAll(base.getRoot());
         }
     }
 
-    public Record add(Record d) {
+    public Right add(Right d) {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
-            root = new TreeSet<>();
+            root = new ArrayList<>();
         }
 //        Solution s = new Solution(d);
         if (!root.contains(d)) {
@@ -50,13 +52,25 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Record rec) {
-        for (Record r : root) {
-            if (r.getDomain().equalsBase(rec.getDomain()) && r.getDomain().isAntc() == rec.getDomain().isAntc()) {
-                return true;
+//    public boolean contains(Right rec) {
+//        for (Right r : root) {
+//            if (r.getDomain().equalsBase(rec.getDomain()) && r.getDomain().isAntc() == rec.getDomain().isAntc()) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+
+    public Right find(Predicate pred, boolean antc, ArgList args) {
+        for (Right r : root) {
+            if (r.getDomain().getPredicate().getId() == pred.getId()
+            && r.getDomain().isAntc() == antc
+            && r.getDomain().getArguments().equalsBase(args)) {
+                return r;
             }
         }
-        return false;
+        return null;
+
     }
 
 
@@ -68,15 +82,15 @@ public class SolutionsStore {
         return enableStore;
     }
 
-    public Record get(int index) {
-        return root.toArray(new Record[]{})[index];
+    public Right get(int index) {
+        return root.toArray(new Right[]{})[index];
     }
 
 //    public int find(Solution o) {
 //        return root.indexOf(o);
 //    }
 
-    public SortedSet<Record> getRoot() {
+    public List<Right> getRoot() {
         return root;
     }
 

@@ -87,6 +87,8 @@ public class DomainFactory {
         for (Domain p = root; p != null; p = p.getNext()) {
             if (p.isAntc() == antc
                     && p.getPredicate() == pred
+                    && r != null
+                    && p.getRight() != null
                     && p.getRight().getId() == r.getId()) {
                 int i = 0;
                 for (; i < pred.getRange(); ++i) {

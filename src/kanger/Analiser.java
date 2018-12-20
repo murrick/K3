@@ -528,23 +528,25 @@ public class Analiser {
 
 //            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
             //todo только из базы?
-            Record stop = null;
-            if (user.getMind().getNext() != null) {
-                stop = user.getMind().getNext().getDatabase().getRoot();
-            }
+//            Record stop = null;
+//            if (user.getMind().getNext() != null) {
+//                stop = user.getMind().getNext().getDatabase().getRoot();
+//            }
 
             boolean occurs = false;
-            for (Record r = user.getMind().getDatabase().getRoot(); r != stop; r = r.getNext()) {
-                Domain d = r.getDomain();
-                if (!d.isQuery()
+            for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
+                if(r.isStored()) {
+                    Domain d = r.getDomain();
+                    if (!d.isQuery()
 //                        && !(user.getMind().getQueryPass() == QueryPass.CHECKFALSE && !d.isAntc())
-                        &&
-                        user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                    Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
-                    h.setTag(r.getTag());
-                    occurs = true;
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                            &&
+                            user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                        Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                        h.setTag(r.getTag());
+                        occurs = true;
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                        }
                     }
                 }
             }
@@ -764,23 +766,24 @@ public class Analiser {
     public boolean checkDatabase(boolean logging) {
         boolean result = false;
         user.getMind().getClosedDomains().clear();
-        for (Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
-            if (p.getDomain().isCalculated()) {
+        for (Right p = user.getMind().getRights().getRoot(); p != null; p = p.getNext()) {
+            if(p.isStored()) {
+                if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
-                int i = 0;
-                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
-                    user.getMind().getValues().add(++i, v);
-                }
+                    int i = 0;
+                    for (TValue v : p.getDomain().getArguments().getTValues(true)) {
+                        user.getMind().getValues().add(++i, v);
+                    }
 //                }
-                if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "Calculated coincidence: ");
-                    user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                    user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
-                }
-                result = true;
-            } else {
-                for (Record q = p.getNext(); q != null; q = q.getNext()) {
-                    if (p.getDomain().equalsBase(q.getDomain()) && p.getDomain().isAntc() != q.getDomain().isAntc()) {
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Calculated coincidence: ");
+                        user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
+                        user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+                    }
+                    result = true;
+                } else {
+                    for (Right q = p.getNext(); q != null; q = q.getNext()) {
+                        if (q.isStored() && p.getDomain().equalsBase(q.getDomain()) && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
 //                    Set<Domain> sequence = new HashSet<>();
 
@@ -812,38 +815,39 @@ public class Analiser {
 ////                        }
 //                    }
 
-                        if (p.getDomain().isQuery()) {
-                            for (Argument a : p.getDomain().getArguments()) {
-                                if (a.isVSet()) {
-                                    user.getMind().getValues().add(p.getTag(), a.getV());
+                            if (p.getDomain().isQuery()) {
+                                for (Argument a : p.getDomain().getArguments()) {
+                                    if (a.isVSet()) {
+                                        user.getMind().getValues().add(p.getTag(), a.getV());
+                                    }
                                 }
                             }
-                        }
-                        if (q.getDomain().isQuery()) {
-                            for (Argument a : q.getDomain().getArguments()) {
-                                if (a.isVSet()) {
-                                    user.getMind().getValues().add(p.getTag(), a.getV());
+                            if (q.getDomain().isQuery()) {
+                                for (Argument a : q.getDomain().getArguments()) {
+                                    if (a.isVSet()) {
+                                        user.getMind().getValues().add(p.getTag(), a.getV());
+                                    }
                                 }
                             }
-                        }
 
-                        if (p.getDomain().isQuery() && !q.getDomain().isQuery()) {
-                            user.getMind().getSolutions().add(q);
-                        } else if (!p.getDomain().isQuery() && q.getDomain().isQuery()) {
-                            user.getMind().getSolutions().add(p);
+                            if (p.getDomain().isQuery() && !q.getDomain().isQuery()) {
+                                user.getMind().getSolutions().add(q);
+                            } else if (!p.getDomain().isQuery() && q.getDomain().isQuery()) {
+                                user.getMind().getSolutions().add(p);
 //                        } else {
 //                            user.getMind().getSolutions().add(q);
 //                            user.getMind().getSolutions().add(p);
-                        }
+                            }
 
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "Database coincidence: ");
-                            user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                            user.getMind().getLog().add(LogMode.ANALIZER, "\t" + q.toString());
-                            user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
-                        }
+                            if (logging) {
+                                user.getMind().getLog().add(LogMode.ANALIZER, "Database coincidence: ");
+                                user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
+                                user.getMind().getLog().add(LogMode.ANALIZER, "\t" + q.toString());
+                                user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+                            }
 //                    collectResults(sequence);
-                        result = true;
+                            result = true;
+                        }
                     }
                 }
             }

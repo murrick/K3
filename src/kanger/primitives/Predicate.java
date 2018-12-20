@@ -90,8 +90,8 @@ public class Predicate {
 //            }
 //        }
 
-        for (Record d = user.getMind().getDatabase().getRoot(); d != null; d = d.getNext()) {
-            if (getId() == d.getDomain().getPredicate().getId()) {
+        for (Right d = user.getMind().getRights().getRoot(); d != null; d = d.getNext()) {
+            if (d.isStored() && getId() == d.getDomain().getPredicate().getId()) {
                 set.add(d.getDomain());
             }
         }

@@ -49,7 +49,7 @@ public class Domain {
             ArgList args = new ArgList(dis, user);
             causes.put(args, new TreeSet<>());
             int cnt = dis.readInt();
-            while(cnt-- > 0) {
+            while (cnt-- > 0) {
                 Cause c = new Cause(dis, user);
                 causes.get(args).add(c);
             }
@@ -64,10 +64,10 @@ public class Domain {
         arguments.writeCompiledData(dos, user);
         dos.writeBoolean(antc);
         dos.writeInt(causes.size());
-        for(Map.Entry<ArgList, SortedSet<Cause>> e : causes.entrySet()) {
+        for (Map.Entry<ArgList, SortedSet<Cause>> e : causes.entrySet()) {
             e.getKey().writeCompiledData(dos, user);
             dos.writeInt(e.getValue().size());
-            for(Cause c : e.getValue()) {
+            for (Cause c : e.getValue()) {
                 c.writeCompiledData(dos, user);
             }
         }
@@ -197,7 +197,7 @@ public class Domain {
 
     public Set<TVariable> getRelatedTVariables(boolean full) {
         Set<TVariable> set = new HashSet<>();
-        for(Domain d : predicate.getRelates()) {
+        for (Domain d : predicate.getRelates()) {
             set.addAll(d.getArguments().getTVariables(full));
         }
         return set;
@@ -638,19 +638,33 @@ public class Domain {
     }
 
     public boolean isStored() {
-        return user.getMind().getDatabase().find(this) != null;
+        return user.getMind().getRights().find(this) != null;
     }
 
     public boolean isStored(ArgList args) {
-        return user.getMind().getDatabase().find(predicate, antc, args) != null;
+        return user.getMind().getRights().find(predicate, antc, args) != null;
     }
 
-    public Record setStored() {
-        return user.getMind().getDatabase().add(this);
+    public Right setStored() {
+        right.setStored();
+        return right;
     }
 
-    public Record createStored() {
-        return user.getMind().getDatabase().add(predicate, antc, isQuery(), arguments);
+    public Right createStored() {
+        ArgList list = null;
+        if (arguments != null) {
+            if (isQuery()) {
+                list = arguments.convert();
+                for (TValue t : list.getTValues(true)) t.setQuery();
+            } else {
+                list = arguments.convertBase();
+            }
+        }
+        Domain d = user.getMind().getDomains().add(predicate, antc, list, null);
+        Right r = user.getMind().getRights().add(d);
+        d.setRight(r);
+        r.setStored();
+        return r;
     }
 
     public boolean isSystem() {
