@@ -18,8 +18,8 @@ public class RightFactory {
     private Right root = null;
     private long lastID = 0;
 
+    private int tag = 0;
     private Stack<Object[]> stack = new Stack<>();
-
     private User user = null;
 
     public RightFactory(User user) {
@@ -44,7 +44,7 @@ public class RightFactory {
         for (Right p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (Right p : list) { 
+        for (Right p : list) {
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -70,7 +70,7 @@ public class RightFactory {
 
     public Right getLast() {
         for (Right r = root; r != null; r = r.getNext()) {
-            if(r.getNext() == null) {
+            if (r.getNext() == null) {
                 return r;
             }
         }
@@ -79,6 +79,14 @@ public class RightFactory {
 
     public Right getRoot() {
         return root;
+    }
+
+    public int getTag() {
+        return tag;
+    }
+
+    public int incTag() {
+        return ++tag;
     }
 
     public void setRoot(Right o) {
@@ -104,7 +112,7 @@ public class RightFactory {
             lastID = (long) pop[1];
             root = saved;
         }
-        if(stack.isEmpty()) {
+        if (stack.isEmpty()) {
             mark();
         }
     }
@@ -141,7 +149,7 @@ public class RightFactory {
         }
     }
 
-    public void add(Domain d) {
+    public Right add(Domain d) {
         Right r = add();
         Tree t = user.getMind().getTrees().add();
         r.getTree().add(t);
@@ -150,5 +158,51 @@ public class RightFactory {
             arg.add(new Argument(a.getValue()));
         }
         t.getSequence().add(user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), arg, r));
+
+        int save = user.getMind().getDebugLevel();
+        user.getMind().setDebugLevel(0);
+        Term origin = user.getMind().getTerms().add(d.toString());
+        user.getMind().setDebugLevel(save);
+        r.setOrig(origin);
+
+        r.setGenerated();
+        t.setGenerated();
+        t.setUsed();
+
+        return r;
+    }
+
+    public Right find(Domain d) {
+        return find(d.getPredicate(), d.isAntc(), d.getArguments());
+    }
+
+    public Right find(Predicate pred, boolean antc, ArgList arg) {
+        for (Right r = root; r != null; r = r.getNext()) {
+            if (r.isStored()) {
+                Domain x = r.getDomain();
+                if (x.isAntc() == antc
+                        && x.getPredicate() == pred
+                        && x.getPredicate().getRange() == pred.getRange()) {
+                    int i = 0;
+                    for (; i < pred.getRange(); ++i) {
+                        if (!x.get(i).isEmpty()
+                                && !arg.get(i).isEmpty()
+                                && x.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                            break;
+                        }
+
+                        TValue a = x.get(i).isTSet() ? x.get(i).getT().getCurrent() : x.get(i).getV();
+                        TValue b = arg.get(i).isTSet() ? arg.get(i).getT().getCurrent() : arg.get(i).getV();
+                        if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
+                            break;
+                        }
+                    }
+                    if (i == pred.getRange()) {
+                        return r;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

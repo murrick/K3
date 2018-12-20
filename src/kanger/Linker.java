@@ -49,7 +49,7 @@ public class Linker {
         }
 
 
-        Record saveR;
+        Right saveR;
         TValue saveT;
         FValue saveF;
 
@@ -60,7 +60,7 @@ public class Linker {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
 
-            saveR = user.getMind().getDatabase().getRoot();
+            saveR = user.getMind().getRights().getRoot();
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
 
@@ -124,7 +124,7 @@ public class Linker {
             }
 
 
-        } while (saveR != user.getMind().getDatabase().getRoot()
+        } while (saveR != user.getMind().getRights().getRoot()
                 || saveT != user.getMind().getTValues().getRoot()
                 || saveF != user.getMind().getFValues().getRoot()
         );
@@ -332,7 +332,7 @@ public class Linker {
                 occurs = true;
                 if (!d.isStored()) {
                     result = true;
-                    d.setProduced(user.getMind().getDatabase().getTag());
+                    d.setProduced(user.getMind().getRights().getTag());
                     d.addCauses(causes.get(d.getRight()));
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
@@ -345,7 +345,7 @@ public class Linker {
 //                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.setProduced(user.getMind().getRights().getTag());
                         d.addCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
@@ -359,7 +359,7 @@ public class Linker {
 //                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.setProduced(user.getMind().getRights().getTag());
                         d.addCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
@@ -386,7 +386,7 @@ public class Linker {
 //                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.setProduced(user.getMind().getRights().getTag());
                         d.addCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
@@ -396,7 +396,7 @@ public class Linker {
                 }
             }
             if (result) {
-                user.getMind().getDatabase().incTag();
+                user.getMind().getRights().incTag();
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
@@ -458,7 +458,7 @@ public class Linker {
                         }
                     }
 
-                    Record x;
+                    Right x;
                     if (d.getArguments().getTVariables(true).isEmpty()) {
                         x = d.setStored();
                         if (logging) {

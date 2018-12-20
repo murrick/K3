@@ -21,7 +21,11 @@ public class Right {
     private Term orig = null;                   // Оригинальная строка
     private boolean query = false;             // Вновь введенное правило
     private boolean generated = false;         // Правило добавлено в процессе выводс
+    private boolean stored = false;         // Правило является записью базы данных
     private List<Tree> tree = new ArrayList<>();      // Ссылка на дерево правила
+
+    private int tag = -1;
+    private Set<Cause> causes = new HashSet<>();
 
     private Right next = null;                  // Следующее правило
     private User user = null;
@@ -56,8 +60,8 @@ public class Right {
         }
     }
 
-    public void setGenerated(boolean generated) {
-        this.generated = generated;
+    public void setGenerated() {
+        this.generated = true;
     }
 
     public boolean isGenerated() {
@@ -98,6 +102,34 @@ public class Right {
 
     public void setQuery(boolean current) {
         this.query = current;
+    }
+
+    public boolean isStored() {
+        return stored;
+    }
+
+    public void setStored() {
+        this.stored = true;
+    }
+
+    public int getTag() {
+        return tag;
+    }
+
+    public void setTag(int tag) {
+        this.tag = tag;
+    }
+
+    public Set<Cause> getCauses() {
+        return causes;
+    }
+
+    public Domain getDomain() {
+        if(stored && !tree.isEmpty() && !tree.get(0).getSequence().isEmpty()) {
+            return tree.get(0).getSequence().get(0);
+        } else {
+            return null;
+        }
     }
 
     public int size() {

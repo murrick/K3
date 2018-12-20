@@ -576,7 +576,7 @@ public class Screen {
             indent += "\t";
         }
 
-        Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
+        Right dest = mind.getRights().find(d.getPredicate(), d.isAntc(), d.getArguments());
         if (dest != null && !dest.getCauses().isEmpty()) {
             System.out.printf("\t\t%sRight: %s\n", indent, dest.getCauses().toArray(new Cause[]{})[0].getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
             for (Cause c : dest.getCauses()) {

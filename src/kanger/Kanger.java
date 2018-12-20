@@ -2,15 +2,7 @@ package kanger;
 
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
-import kanger.interfaces.IRunnable;
-import kanger.primitives.Hypotese;
-import kanger.primitives.Record;
-import kanger.primitives.TValue;
 import kanger.primitives.Term;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
