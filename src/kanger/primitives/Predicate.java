@@ -32,14 +32,13 @@ public class Predicate {
     }
 
     public Predicate readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
         name = user.getMind().getTerms().get(dis.readLong());
         range = dis.readInt();
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(name.getId());
         dos.writeInt(range);

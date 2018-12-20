@@ -33,7 +33,6 @@ public class Tree implements Comparable<Tree>{
     }
 
     public Tree readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
         right = user.getMind().getRights().get(dis.readLong());
         generated = dis.readBoolean();
@@ -44,7 +43,7 @@ public class Tree implements Comparable<Tree>{
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(right.getId());
         dos.writeBoolean(generated);

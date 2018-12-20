@@ -43,7 +43,6 @@ public class Term implements Comparable<Object> {
     }
 
     public Term readCompiledData(DataInputStream din) throws IOException, ClassNotFoundException {
-        this.user = user;
         id = din.readLong();
         type = DataType.values()[din.readInt()];
         name = din.readUTF();
@@ -78,7 +77,7 @@ public class Term implements Comparable<Object> {
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User u) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeInt(type.ordinal());
         dos.writeUTF(name);
@@ -97,7 +96,7 @@ public class Term implements Comparable<Object> {
                     dos.writeBoolean(true);
                     dos.writeInt(((Collection) value).size());
                     for (Term t : (Collection<Term>) value) {
-                        t.writeCompiledData(dos, u);
+                        t.writeCompiledData(dos);
                     }
                 } else {
                     dos.writeBoolean(false);

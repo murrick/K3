@@ -209,7 +209,7 @@ public class FValueFactory {
         int count = size();
         dos.writeInt(count);
         for (FValue d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos, user);
+            d.writeCompiledData(dos);
         }
     }
 

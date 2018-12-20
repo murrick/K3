@@ -30,7 +30,6 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
     }
 
     public TVariable readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
         name = user.getMind().getTerms().get(dis.readLong());
         index = dis.readInt();
@@ -38,7 +37,7 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(name.getId());
         dos.writeInt(index);

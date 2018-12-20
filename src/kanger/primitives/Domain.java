@@ -37,10 +37,9 @@ public class Domain {
     }
 
     public Domain readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
-        right = (Right) user.getMind().getRights().get(dis.readLong());
-        predicate = (Predicate) user.getMind().getPredicates().get(dis.readLong());
+        right = user.getMind().getRights().get(dis.readLong());
+        predicate = user.getMind().getPredicates().get(dis.readLong());
         arguments = new ArgList(dis, user);
         antc = dis.readBoolean();
 
@@ -57,7 +56,7 @@ public class Domain {
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(right.getId());
         dos.writeLong(predicate.getId());

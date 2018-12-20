@@ -111,7 +111,7 @@ public class FunctionFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Function r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos, user);
+            r.writeCompiledData(dos);
         }
     }
 

@@ -113,7 +113,7 @@ public class TreeFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Tree r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos, user);
+            r.writeCompiledData(dos);
         }
     }
 

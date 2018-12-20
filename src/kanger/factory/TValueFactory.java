@@ -266,7 +266,7 @@ public class TValueFactory {
         int count = size();
         dos.writeInt(count);
         for (TValue d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos, user);
+            d.writeCompiledData(dos);
         }
     }
 

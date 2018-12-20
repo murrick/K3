@@ -129,7 +129,7 @@ public class PredicateFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Predicate p = root; p != null; p = p.getNext()) {
-            p.writeCompiledData(dos, user);
+            p.writeCompiledData(dos);
         }
         List<Long[]> links = new ArrayList<>();
         //TODO: Save causes

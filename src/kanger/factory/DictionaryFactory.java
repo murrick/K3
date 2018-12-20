@@ -139,7 +139,7 @@ public class DictionaryFactory {
         int count = size();
         dos.writeInt(count);
         for (Term d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos, user);
+            d.writeCompiledData(dos);
         }
     }
 

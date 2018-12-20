@@ -31,7 +31,6 @@ public class Right {
     }
 
     public Right readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
         orig = user.getMind().getTerms().get(dis.readLong());
         query = dis.readBoolean();
@@ -45,14 +44,14 @@ public class Right {
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(orig.getId());
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
         dos.writeInt(tree.size());
         for (Tree r : tree) {
-            r.writeCompiledData(dos, user);
+            r.writeCompiledData(dos);
         }
     }
 

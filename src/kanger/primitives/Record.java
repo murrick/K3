@@ -30,7 +30,6 @@ public class Record implements Comparable<Record> {
     }
 
     public Record readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
         domain = user.getMind().getDomains().get(dis.readLong());
         tag = dis.readInt();
@@ -42,7 +41,7 @@ public class Record implements Comparable<Record> {
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(domain.getId());
         dos.writeInt(tag);

@@ -38,7 +38,6 @@ public class TValue implements IValue, Comparable<TValue> {
     }
 
     public TValue readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
         long valueId = dis.readLong();
         if(valueId != -1) {
@@ -54,7 +53,7 @@ public class TValue implements IValue, Comparable<TValue> {
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(value == null ? -1 : value.getId());
         dos.writeLong(tVar.getId());

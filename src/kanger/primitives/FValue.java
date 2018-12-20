@@ -41,7 +41,6 @@ public class FValue implements IValue {
     }
 
     public FValue readCompiledData(DataInputStream dis) throws IOException {
-        this.user = user;
         id = dis.readLong();
         function = user.getMind().getFunctions().get(dis.readLong());
         long valueId = dis.readLong();
@@ -52,7 +51,7 @@ public class FValue implements IValue {
         return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    public void writeCompiledData(DataOutputStream dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(function.getId());
         dos.writeLong(value == null ? -1 : value.getId());
