@@ -1049,16 +1049,9 @@ public class Mind {
         if (mind.getValues().size() > 0) {
             mind.getLog().add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (List<TValue> log : mind.getValues().getRoot().values()) {
+            for (TValue log : mind.getValues().getRoot()) {
                 String s = String.format("\tValue %03d: ", ++i);
-                String list = "";
-                for (TValue v : log) {
-                    if (!list.isEmpty()) {
-                        list += ", ";
-                    }
-                    list += v.toString();
-                }
-                mind.getLog().add(LogMode.VALUES, s + list);
+                mind.getLog().add(LogMode.VALUES, s + log.toString());
             }
         }
     }

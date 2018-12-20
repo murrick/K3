@@ -188,6 +188,9 @@ public class Term implements Comparable<Object> {
 
     private Object conatructInterval(String ch) {
         if (ch.contains("..")) {
+            if(ch.startsWith("{") && ch.endsWith("}")) {
+                ch = ch.substring(1, ch.length()-1);
+            }
             List<Term> list = new ArrayList<>();
             for (String s : ch.split("\\.\\.")) {
                 if (!s.trim().isEmpty()) {
@@ -236,7 +239,7 @@ public class Term implements Comparable<Object> {
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {
-                return ((Collection) value).toArray()[0].toString() + ".." + ((Collection) value).toArray()[1].toString();
+                return "{" + ((Collection) value).toArray()[0].toString() + ".." + ((Collection) value).toArray()[1].toString() + "}";
             } else {
                 return value.toString();
             }
@@ -248,7 +251,7 @@ public class Term implements Comparable<Object> {
                 }
                 s += a.toString();
             }
-            return "(" + s + ")";
+            return "{" + s + "}";
         } else {
             return value.toString();
         }

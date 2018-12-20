@@ -147,6 +147,7 @@ public class Predicates {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
+                        Term top = null;
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
@@ -157,6 +158,7 @@ public class Predicates {
                             int rc = min.compareTo(max);
                             while (true) {
                                 if (arg.get(0).setValue(cur)) {
+                                    if(top == null) top = cur;
                                     i = 1;
                                     if (rc == 0) {
                                         break;
@@ -183,6 +185,7 @@ public class Predicates {
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
                                 if (arg.get(0).setValue(a)) {
+                                    if(top == null) top = a;
                                     i = 1;
                                 }
                             }
@@ -190,9 +193,13 @@ public class Predicates {
                             for (int k = 0; k < arg.get(1).getValue().toString().length(); ++k) {
                                 Term t = user.getMind().getTerms().add(arg.get(1).getValue().toString().charAt(k) + "");
                                 if (arg.get(0).setValue(t)) {
+                                    if(top == null) top = t;
                                     i = 1;
                                 }
                             }
+                        }
+                        if(top != null) {
+                            arg.get(0).setValue(top);
                         }
                     } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
@@ -225,6 +232,7 @@ public class Predicates {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
+                        Term top = null;
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
@@ -236,6 +244,7 @@ public class Predicates {
                             int rc = min.compareTo(max);
                             while (true) {
                                 if (arg.get(0).setValue(cur)) {
+                                    if(top == null) top = cur;
                                     i = 1;
                                     if (rc == 0) {
                                         break;
@@ -262,6 +271,7 @@ public class Predicates {
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
                                 if (arg.get(0).setValue(a)) {
+                                    if(top == null) top = a;
                                     i = 1;
                                 }
                             }
@@ -272,10 +282,14 @@ public class Predicates {
                                 for (int k = 0; k < mt.groupCount(); ++k) {
                                     Term t = user.getMind().getTerms().add(mt.group(k + 1) + "");
                                     if (arg.get(0).setValue(t)) {
+                                        if(top == null) top = t;
                                         i = 1;
                                     }
                                 }
                             }
+                        }
+                        if(top != null) {
+                            arg.get(0).setValue(top);
                         }
                     } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL

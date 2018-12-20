@@ -208,20 +208,20 @@ public class Compiler {
                 }
             }
             parseArgs(d, arg, root, 0, replacements);
-            if (arg.size() > 2
-            && ("_in".equals(root.getName()) || "_eq".equals(root.getName()))) {
-                ArgList tmp = arg;
-                arg = new ArgList();
-                if(tmp.get(tmp.size()-1).isTSet()) {
-                    arg.add(tmp.get(tmp.size()-1));
-                    tmp.remove(tmp.size()-1);
-                    arg.add(0, new Argument(user.getMind().getTerms().add(tmp)));
-                } else {
-                    arg.add(tmp.get(0));
-                    tmp.remove(0);
-                    arg.add(new Argument(user.getMind().getTerms().add(tmp)));
-                }
-            }
+
+//            if (arg.size() > 2 && ("_in".equals(root.getName()) || "_eq".equals(root.getName()))) {
+//                ArgList tmp = arg;
+//                arg = new ArgList();
+//                if(tmp.get(tmp.size()-1).isTSet()) {
+//                    arg.add(tmp.get(tmp.size()-1));
+//                    tmp.remove(tmp.size()-1);
+//                    arg.add(0, new Argument(user.getMind().getTerms().add(tmp)));
+//                } else {
+//                    arg.add(tmp.get(0));
+//                    tmp.remove(0);
+//                    arg.add(new Argument(user.getMind().getTerms().add(tmp)));
+//                }
+//            }
             pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), arg.size());
         } else if (root.getLeft() == null) {
             pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), 0);
@@ -239,7 +239,7 @@ public class Compiler {
     }
 
     private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) {
-        int s;
+//        int s;
 
         if (root == null) {
         } else if (root.isSystem()) {
@@ -269,6 +269,21 @@ public class Compiler {
             arg.add(t);
         } else if (root.getName().equals("..")) {
             Argument t = new Argument(user.getMind().getTerms().add(root));
+            arg.add(t);
+        } else if (root.getName().charAt(0)== '{' && root.getName().charAt(root.getName().length()-1)=='}') {
+            String str = root.getName().substring(1, root.getName().length() - 1);
+            Argument t;
+            if (root.getName().contains("..")) {
+                t = new Argument(user.getMind().getTerms().add(str));
+            } else {
+                ArgList list = new ArgList();
+                for (String s : str.split(",")) {
+                    if (!s.trim().isEmpty()) {
+                        list.add(new Argument(user.getMind().getTerms().add(s)));
+                    }
+                }
+                t = new Argument(user.getMind().getTerms().add(list));
+            }
             arg.add(t);
         } else {
             Argument t;

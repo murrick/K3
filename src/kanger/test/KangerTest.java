@@ -44,16 +44,9 @@ public class KangerTest {
 //            mind.getValues().normalize();
             System.out.println("Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (List<TValue> log : mind.getValues().getRoot().values()) {
+            for (TValue log : mind.getValues().getRoot()) {
                 String s = String.format("\tValue %03d: ", ++i);
-                String list = "";
-                for (TValue v : log) {
-                    if (!list.isEmpty()) {
-                        list += ", ";
-                    }
-                    list += v.toString();
-                }
-                System.out.println(s + list);
+                System.out.println(s + log.toString());
             }
         }
         if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {
@@ -1596,6 +1589,80 @@ public class KangerTest {
         } else {
             fail("Expected 11 hypotesis");
         }
+    }
+
+    public void set_06_07() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x $y age(x,y), y in {10..37};");
+        showResult(true);
+        if (!exists("x", "John")) {
+            fail("Expected x: John");
+        }
+        if (!exists("x", "Tom")) {
+            fail("Expected x: Tom");
+        }
+        if (!exists("y", 37.0)) {
+            fail("Expected x: 37");
+        }
+        if (!exists("y", 12.0)) {
+            fail("Expected x: 12");
+        }
+        if (mind.getValues().getRoot().size() != 4) {
+            fail("Expected 4 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+
+    }
+
+    public void set_06_08() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x $y age(x,y), y in {10,37};");
+        showResult(true);
+        if (!exists("x", "John")) {
+            fail("Expected x: John");
+        }
+        if (!exists("y", 37.0)) {
+            fail("Expected x: 37");
+        }
+        if (mind.getValues().getRoot().size() != 2) {
+            fail("Expected 2 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+
     }
 
     public void set_07_01() throws ParseErrorException, RuntimeErrorException {

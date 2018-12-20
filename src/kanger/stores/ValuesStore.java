@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class ValuesStore {
 
-    private SortedMap<Integer, List<TValue>> root = null;
+    private List<TValue> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -28,9 +28,9 @@ public class ValuesStore {
         clear();
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new TreeMap<>();
+                root = new ArrayList<>();
             }
-            root.putAll(base.getRoot());
+            root.addAll(base.getRoot());
         }
     }
 
@@ -56,20 +56,10 @@ public class ValuesStore {
             return null;
         }
         if (root == null) {
-            root = new TreeMap<>();
+            root = new ArrayList<>();
         }
-        boolean found = false;
-        for (List<TValue> s : root.values()) {
-            if (s.contains(t)) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            if (!root.containsKey(tag)) {
-                root.put(tag, new ArrayList<>());
-            }
-            root.get(tag).add(t);
+        if (!root.contains(t)) {
+            root.add(t);
         }
         return t;
     }
@@ -94,77 +84,77 @@ public class ValuesStore {
      * Плюс сортировка
      */
 
-    public void normalize() {
-        List<Map<TVariable, TValue>> cnt = new ArrayList<>();
-        for (List<TValue> s : root.values()) {
-            for(TValue v : s) {
-                boolean done = false;
-                for (Map<TVariable, TValue> map : cnt) {
-                    if (!map.containsKey(v.getTVar())) {
-                        map.put(v.getTVar(), v);
-                        done = true;
-                        break;
-                    }
-                }
-                if(!done) {
-                    Map<TVariable, TValue> map = new HashMap<>();
-                    map.put(v.getTVar(), v);
-                    cnt.add(map);
-                }
-            }
-        }
-
-        root.clear();
-        int i = 0;
-        for (Map<TVariable, TValue> s : cnt) {
-            List<TValue> set = new ArrayList<>();
-            set.addAll(s.values());
-            root.put(++i, set);
-        }
-
-        Set<TVariable> retain = new HashSet<>();
-        for (List<TValue> s : root.values()) {
-            for (TValue v : s) {
-                retain.add(v.getTVar());
-            }
-        }
-        for (List<TValue> s : root.values()) {
-            Set<TVariable> set = new HashSet<>();
-            for (TValue v : s) {
-                set.add(v.getTVar());
-            }
-            retain.retainAll(set);
-        }
-        if (!retain.isEmpty()) {
-            Set<TValue> collect = new HashSet<>();
-            for (List<TValue> s : root.values()) {
-                for (TValue v : s) {
-                    if (!retain.contains(v.getTVar())) {
-                        collect.add(v);
-                    }
-                }
-            }
-            if (!collect.isEmpty()) {
-                for (List<TValue> s : root.values()) {
-                    s.addAll(collect);
-                }
-            }
-        }
-
-        List<List<TValue>> list = new ArrayList<>();
-        list.addAll(root.values());
-        Collections.sort(list, new Comparator<List<TValue>>() {
-            @Override
-            public int compare(List<TValue> o1, List<TValue> o2) {
-                return o1.toArray(new TValue[]{})[0].getValue().compareTo(o2.toArray(new TValue[]{})[0].getValue());
-            }
-        });
-        root.clear();
-        i = 0;
-        for (List<TValue> s : list) {
-            root.put(++i, s);
-        }
-    }
+//    public void normalize() {
+//        List<Map<TVariable, TValue>> cnt = new ArrayList<>();
+//        for (List<TValue> s : root.values()) {
+//            for(TValue v : s) {
+//                boolean done = false;
+//                for (Map<TVariable, TValue> map : cnt) {
+//                    if (!map.containsKey(v.getTVar())) {
+//                        map.put(v.getTVar(), v);
+//                        done = true;
+//                        break;
+//                    }
+//                }
+//                if(!done) {
+//                    Map<TVariable, TValue> map = new HashMap<>();
+//                    map.put(v.getTVar(), v);
+//                    cnt.add(map);
+//                }
+//            }
+//        }
+//
+//        root.clear();
+//        int i = 0;
+//        for (Map<TVariable, TValue> s : cnt) {
+//            List<TValue> set = new ArrayList<>();
+//            set.addAll(s.values());
+//            root.put(++i, set);
+//        }
+//
+//        Set<TVariable> retain = new HashSet<>();
+//        for (List<TValue> s : root.values()) {
+//            for (TValue v : s) {
+//                retain.add(v.getTVar());
+//            }
+//        }
+//        for (List<TValue> s : root.values()) {
+//            Set<TVariable> set = new HashSet<>();
+//            for (TValue v : s) {
+//                set.add(v.getTVar());
+//            }
+//            retain.retainAll(set);
+//        }
+//        if (!retain.isEmpty()) {
+//            Set<TValue> collect = new HashSet<>();
+//            for (List<TValue> s : root.values()) {
+//                for (TValue v : s) {
+//                    if (!retain.contains(v.getTVar())) {
+//                        collect.add(v);
+//                    }
+//                }
+//            }
+//            if (!collect.isEmpty()) {
+//                for (List<TValue> s : root.values()) {
+//                    s.addAll(collect);
+//                }
+//            }
+//        }
+//
+//        List<List<TValue>> list = new ArrayList<>();
+//        list.addAll(root.values());
+//        Collections.sort(list, new Comparator<List<TValue>>() {
+//            @Override
+//            public int compare(List<TValue> o1, List<TValue> o2) {
+//                return o1.toArray(new TValue[]{})[0].getValue().compareTo(o2.toArray(new TValue[]{})[0].getValue());
+//            }
+//        });
+//        root.clear();
+//        i = 0;
+//        for (List<TValue> s : list) {
+//            root.put(++i, s);
+//        }
+//    }
 
     public void enable(boolean e) {
         enableStore = e;
@@ -181,13 +171,11 @@ public class ValuesStore {
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
         if(root != null) {
-            for (List<TValue> s : root.values()) {
-                for (TValue t : s) {
+                for (TValue t : root) {
                     if (name == null || name.equals(t.getTVar().getName().getValue())) {
                         list.add(t.getValue());
                     }
                 }
-            }
         }
         return list;
     }
@@ -196,7 +184,7 @@ public class ValuesStore {
 //        return root.indexOf(s);
 //    }
 
-    public Map<Integer, List<TValue>> getRoot() {
+    public List<TValue> getRoot() {
         return root;
     }
 
@@ -210,11 +198,7 @@ public class ValuesStore {
         if(root == null) {
             return 0;
         } else {
-            int cnt = 0;
-            for(List<TValue> v : root.values()) {
-                cnt += v.size();
-            }
-            return cnt;
+            return root.size();
         }
     }
 
