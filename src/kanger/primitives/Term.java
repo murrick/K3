@@ -92,6 +92,7 @@ public class Term implements Comparable<Object> {
                 dos.writeDouble((double) value);
                 break;
             case INTERVAL:
+            case SET:
                 if (value instanceof Collection) {
                     dos.writeBoolean(true);
                     dos.writeInt(((Collection) value).size());
@@ -129,6 +130,13 @@ public class Term implements Comparable<Object> {
                 type = DataType.INTERVAL;
                 value = list;
             }
+        } else if (o instanceof ArgList) {
+            List<Term> list = new ArrayList<>();
+            for(Argument a : (ArgList) o) {
+                list.add(a.getValue());
+            }
+            type = DataType.SET;
+            value = list;
         } else if (!(o instanceof String)) {
             o = o.toString();
         }
@@ -232,6 +240,15 @@ public class Term implements Comparable<Object> {
             } else {
                 return value.toString();
             }
+        } else if (type == DataType.SET) {
+            String s = "";
+            for(Object a : ((Collection) value)) {
+                if(!s.isEmpty()) {
+                    s += ",";
+                }
+                s += a.toString();
+            }
+            return "(" + s + ")";
         } else {
             return value.toString();
         }
@@ -300,7 +317,7 @@ public class Term implements Comparable<Object> {
                 return -2;
             } else if (isCVariable() && o.isCVariable()) {
                 return Integer.valueOf(index).compareTo(o.getIndex());
-            } else if (type == DataType.INTERVAL && value instanceof Collection) {
+            } else if ((type == DataType.INTERVAL || type == DataType.SET) && value instanceof Collection) {
                 if (o.getValue() instanceof Collection) {
                     if (((Collection) value).size() != ((Collection) o.getValue()).size()) {
                         return -2;

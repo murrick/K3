@@ -273,7 +273,7 @@ public class Parser {
                     }
                     if (term != 0 && ops[i].getRange() == 1) {
                         //Заглушка на унарные операции +/-
-                        if (ops[i].getName().equals("-") || ops[i].getName().equals("+")) {
+                        if (ops[i].getName().equals("~") || ops[i].getName().equals("-") || ops[i].getName().equals("+")) {
                             continue;
                         }
                         throw new ParseErrorException(pos, ParseError.EMPTY);

@@ -194,6 +194,10 @@ public class Compiler {
             // системный предикат
             // ПРОВЕРКА НЛ LB НЕ НУЖНА! Т.К. ОНА ОБРАБАТЫВАЕТСЯ
             if ("_in".equals(root.getName())) {
+                if(root.getLeft() != null && root.getLeft().getName().charAt(0) == Enums.NOT) {
+                    root.setLeft(root.getLeft().getLeft());
+                    antc = !antc;
+                }
                 if (root.getRight() != null && "_neg".equals(root.getRight().getName())) {
                     root.setRight(root.getRight().getLeft());
                     root.getRight().setName("-" + root.getRight().getName());
@@ -204,6 +208,20 @@ public class Compiler {
                 }
             }
             parseArgs(d, arg, root, 0, replacements);
+            if (arg.size() > 2
+            && ("_in".equals(root.getName()) || "_eq".equals(root.getName()))) {
+                ArgList tmp = arg;
+                arg = new ArgList();
+                if(tmp.get(tmp.size()-1).isTSet()) {
+                    arg.add(tmp.get(tmp.size()-1));
+                    tmp.remove(tmp.size()-1);
+                    arg.add(0, new Argument(user.getMind().getTerms().add(tmp)));
+                } else {
+                    arg.add(tmp.get(0));
+                    tmp.remove(0);
+                    arg.add(new Argument(user.getMind().getTerms().add(tmp)));
+                }
+            }
             pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), arg.size());
         } else if (root.getLeft() == null) {
             pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), 0);

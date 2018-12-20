@@ -576,7 +576,7 @@ public class Analiser {
 //            }
         } else {
             if (!user.getMind().getValues().isEmpty()) {
-                user.getMind().getValues().normalize();
+//                user.getMind().getValues().normalize();
             }
         }
 

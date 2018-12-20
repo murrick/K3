@@ -85,7 +85,7 @@ public class Predicates {
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
 //                        if (rc != -2) {
-                            i = rc > 0 ? 1 : 0;
+                        i = rc > 0 ? 1 : 0;
 //                        }
                     }
                     return i;
@@ -101,7 +101,7 @@ public class Predicates {
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
 //                        if (rc != -2) {
-                            i = rc >= 0 ? 1 : 0;
+                        i = rc >= 0 ? 1 : 0;
 //                        }
                     }
                     return i;
@@ -117,7 +117,7 @@ public class Predicates {
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
 //                        if (rc != -2) {
-                            i = rc < 0 ? 1 : 0;
+                        i = rc < 0 ? 1 : 0;
 //                        }
                     }
                     return i;
@@ -133,7 +133,7 @@ public class Predicates {
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
                         int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
 //                        if (rc != -2) {
-                            i = rc <= 0 ? 1 : 0;
+                        i = rc <= 0 ? 1 : 0;
 //                        }
                     }
                     return i;
@@ -180,10 +180,16 @@ public class Predicates {
                                     break;
                                 }
                             }
+                        } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
+                            for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
+                                if (arg.get(0).setValue(a)) {
+                                    i = 1;
+                                }
+                            }
                         } else if (arg.get(1).getValue().getType() == DataType.STRING) {
                             for (int k = 0; k < arg.get(1).getValue().toString().length(); ++k) {
                                 Term t = user.getMind().getTerms().add(arg.get(1).getValue().toString().charAt(k) + "");
-                                if(arg.get(0).setValue(t)) {
+                                if (arg.get(0).setValue(t)) {
                                     i = 1;
                                 }
                             }
@@ -195,6 +201,14 @@ public class Predicates {
                             i = _in(arg.get(0).getValue(),
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0],
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1]) ? 1 : 0;
+                        } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
+                            for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
+                                i = 0;
+                                if (arg.get(0).getValue().getId() == a.getId()) {
+                                    i = 1;
+                                    break;
+                                }
+                            }
                         } else if (arg.get(1).getValue().getType() == DataType.STRING) {
                             i = (arg.get(1).getValue().getValue().toString().contains(arg.get(0).getValue().getValue().toString()) ||
                                     Pattern.matches((String) arg.get(0).getValue().getValue(), (String) arg.get(1).getValue().getValue())) ? 1 : 0;
@@ -245,13 +259,19 @@ public class Predicates {
                                     break;
                                 }
                             }
+                        } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
+                            for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
+                                if (arg.get(0).setValue(a)) {
+                                    i = 1;
+                                }
+                            }
                         } else if (arg.get(1).getValue().getType() == DataType.STRING) {
                             Pattern pt = Pattern.compile(arg.get(2).getValue().toString());
                             Matcher mt = pt.matcher(arg.get(1).getValue().toString());
                             if (mt.find()) {
                                 for (int k = 0; k < mt.groupCount(); ++k) {
-                                    Term t = user.getMind().getTerms().add(mt.group(k+1) + "");
-                                    if(arg.get(0).setValue(t)) {
+                                    Term t = user.getMind().getTerms().add(mt.group(k + 1) + "");
+                                    if (arg.get(0).setValue(t)) {
                                         i = 1;
                                     }
                                 }
@@ -264,13 +284,21 @@ public class Predicates {
                             i = _in(arg.get(0).getValue(),
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0],
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1]) ? 1 : 0;
+                        } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
+                            for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
+                                i = 0;
+                                if (arg.get(0).getValue().getId() == a.getId()) {
+                                    i = 1;
+                                    break;
+                                }
+                            }
                         } else if (arg.get(1).getValue().getType() == DataType.STRING) {
                             Pattern pt = Pattern.compile(arg.get(2).getValue().toString());
                             Matcher mt = pt.matcher(arg.get(1).getValue().toString());
                             if (mt.find()) {
                                 for (int k = 0; k < mt.groupCount(); ++k) {
-                                    Term t = user.getMind().getTerms().add(mt.group(k+1) + "");
-                                    if(arg.get(0).getValue().getId() == t.getId()) {
+                                    Term t = user.getMind().getTerms().add(mt.group(k + 1) + "");
+                                    if (arg.get(0).getValue().getId() == t.getId()) {
                                         i = 1;
                                         break;
                                     }
@@ -282,29 +310,6 @@ public class Predicates {
                 }
             }));
         }
-
-        //TODO: Добавить ret значение 2 для всех заполненных и совпадающих полей
-//        {
-//            put("_match(2)", new SysOp(LibMode.PREDICATE, "_match", 2, new IRunnable() {
-//                public Object run(Object o) {
-//                    int i = -1;
-//                    ArgList arg = ((Domain) o).getArguments();
-//                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
-//                        if (arg.get(0).getValue().isCVariable() || arg.get(1).getValue().isCVariable()) {
-//                            i = -1;
-//                        } else {
-////                            i = maskcmp(arg.createCVar(0).getValue().getTerm().getName(), arg.createCVar(1).getValue().getTerm().getName()) == 0 ? 1 : 0;
-//                            try {
-//                                i = Pattern.matches((String) arg.get(0).getValue().getValue(), (String) arg.get(1).getValue().getValue()) ? 1 : 0;
-//                            } catch (PatternSyntaxException ex) {
-//                                System.err.println("Regexp error: " + ex.getDescription());
-//                            }
-//                        }
-//                    }
-//                    return i;
-//                }
-//            }));
-//        }
 
     };
 

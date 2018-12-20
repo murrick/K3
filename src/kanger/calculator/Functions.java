@@ -1217,9 +1217,6 @@ public class Functions {
             }));
         }
 
-        //TODO: Закончить с перезаписью результата в случае неверного !!!
-
-
     };
 
     public Map<String, SysOp> getSysOps() {

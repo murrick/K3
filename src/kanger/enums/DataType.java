@@ -10,5 +10,5 @@ package kanger.enums;
  * @author Dmitry Kuznetsov
  */
 public enum DataType {
-    VOID, TERM, STRING, NUMERIC, DATE, INTERVAL
+    VOID, TERM, STRING, NUMERIC, DATE, INTERVAL, SET
 }

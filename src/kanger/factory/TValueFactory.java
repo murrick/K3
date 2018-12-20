@@ -50,7 +50,6 @@ public class TValueFactory {
             p.setNext(root);
             root = p;
             p.setId(lastID++);
-            //TODO: Добавить commitID
         }
     }
 
@@ -62,13 +61,7 @@ public class TValueFactory {
             t.setNext(root);
             root = t;
             t.setId(lastID++);
-//            t.setTag(-1);
         }
-
-        //TODO: Фиксация текцщего значения подстановки. Правильно ли это?
-//        if (isEmpty(tv)) {
-//            current.put(tv, t.getId());
-//        }
 
         return t;
     }
