@@ -86,22 +86,6 @@ public class DatabaseFactory {
                 } else {
                     list = arg.convertBase();
                 }
-//                list = new ArgList();
-//                for (Argument t : arg) {
-//                    if (isQuery) {
-//                        if (t.isTSet()) {
-//                            TValue v = t.getT().getCurrent();
-//                            v.setQuery();
-//                            list.add(new Argument(v));
-//                        } else if (t.isFSet()) {
-//                            list.add(new Argument(t.getF().getCurrent()));
-//                        } else {
-//                            list.add(new Argument(t.getValue()));
-//                        }
-//                    } else {
-//                        list.add(new Argument(t.getValue()));
-//                    }
-//                }
             }
             Right r = user.getMind().getRights().add();
             Tree t = user.getMind().getTrees().add();
