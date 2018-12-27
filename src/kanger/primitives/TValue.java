@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.enums.Enums;
 import kanger.interfaces.IValue;
 
 import java.io.DataInputStream;
@@ -113,8 +114,8 @@ public class TValue implements IValue, Comparable<TValue> {
 
     @Override
     public String toString() {
-//        return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? tVar.getVarName() + ":" : "") + value.toString();
-        return tVar.getVarName() + "=" + value.toString();
+        return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? tVar.getVarName() + "=" : "") + value.toString();
+//        return tVar.getVarName() + "=" + value.toString();
     }
 
     public void setQuery() {
