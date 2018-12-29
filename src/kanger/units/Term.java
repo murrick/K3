@@ -29,7 +29,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
     private DataType type = DataType.VOID;
     private Object value = null;
 
-    private String name = "";             // Оригинальное имя c-переменной
+    private Term name = null;             // Оригинальное имя c-переменной
     private int index = 0;              // Индекс c-переменной
     private Right right = null;          // Ссылка на правило
 
@@ -78,7 +78,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
 
         index = din.readInt();
         if(index > 0) {
-            name = din.readUTF();
+            name = (Term) din.readObject();
             right = (Right) din.readObject();
         }
     }
@@ -116,7 +116,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
         }
         dos.writeInt(index);
         if(index > 0) {
-            dos.writeUTF(name);
+            dos.writeObject(name);
             dos.writeObject(right);
         }
     }
@@ -274,7 +274,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
                     case Enums.DEBUG_LEVEL_DEBUG:
                         return formatValue();
                     default:
-                        return name;
+                        return name.toString();
                 }
             } else if (type == DataType.DATE) {
                 return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format((Date) value);
@@ -304,11 +304,11 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
         this.value = value;
     }
 
-    public String getName() {
+    public Term getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(Term name) {
         this.name = name;
     }
 

@@ -87,7 +87,7 @@ public class DictionaryFactory {
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
         t.setIndex(i);
-        t.setName(name);
+        t.setName(add(name));
         return t;
     }
 
