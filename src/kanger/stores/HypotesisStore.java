@@ -2,6 +2,7 @@ package kanger.stores;
 
 import kanger.User;
 import kanger.primitives.*;
+import kanger.units.Predicate;
 
 import java.util.*;
 

@@ -1,17 +1,18 @@
 package kanger.primitives;
 
-import kanger.User;
+import kanger.units.Domain;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.List;
+import java.io.*;
 
-public class Cause implements Comparable<Cause> {
+public class Cause implements Externalizable, Comparable<Cause> {
     private Domain src = null;
     private Domain dst = null;
     private ArgList arguments = null;
     private int index = -1;
+
+    public Cause() {
+
+    }
 
     public Cause(int index, Domain dst, Domain src) {
         this.index = index;
@@ -20,18 +21,20 @@ public class Cause implements Comparable<Cause> {
         this.arguments = src.getArguments().convertBase();
     }
 
-    public Cause(DataInputStream dis, User user) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         index = dis.readInt();
-        src = (Domain) user.getMind().getDomainsLink().get(dis.readLong());
-        dst = (Domain) user.getMind().getDomainsLink().get(dis.readLong());
-        arguments = new ArgList(dis, user);
+        src = (Domain) dis.readObject();
+        dst = (Domain) dis.readObject();
+        arguments = (ArgList) dis.readObject();
     }
 
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeInt(index);
-        dos.writeLong((Long) user.getMind().getDomainsLink().get(src));
-        dos.writeLong((Long) user.getMind().getDomainsLink().get(dst));
-        arguments.writeCompiledData(dos, user);
+        dos.writeObject(src);
+        dos.writeObject(dst);
+        dos.writeObject(arguments);
     }
 
     public Domain getSrc() {

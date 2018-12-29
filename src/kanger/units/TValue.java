@@ -1,27 +1,24 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
 import kanger.interfaces.IValue;
+import kanger.primitives.Cause;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
  * Created by murray on 13.12.16.
  */
-public class TValue implements IValue, Comparable<TValue> {
+public class TValue implements Comparable<TValue>, Externalizable {
 
 
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private Right right = null;             // Ссылка на правило
     private SortedSet<Cause> causes = new TreeSet<>();
 
     private TValue next = null;          // Следующая переменная
@@ -38,30 +35,26 @@ public class TValue implements IValue, Comparable<TValue> {
         this.value = t;
     }
 
-    public TValue readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        long valueId = dis.readLong();
-        if(valueId != -1) {
-            value = user.getMind().getTerms().get(valueId);
-        }
-        tVar = user.getMind().getTVars().get(dis.readLong());
-        right = user.getMind().getRights().get(dis.readLong());
+        value = (Term) dis.readObject();
+        tVar = (TVariable) dis.readObject();
         int count = dis.readInt();
-        while(count-- > 0) {
-            Cause c = new Cause(dis, user);
+        while (count-- > 0) {
+            Cause c = (Cause) dis.readObject();
             causes.add(c);
         }
-        return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(value == null ? -1 : value.getId());
-        dos.writeLong(tVar.getId());
-        dos.writeLong(right.getId());
+        dos.writeObject(value);
+        dos.writeObject(tVar);
         dos.writeInt(causes.size());
-        for(Cause c : causes) {
-            c.writeCompiledData(dos, user);
+        for (Cause c : causes) {
+            dos.writeObject(c);
         }
     }
 
@@ -79,14 +72,6 @@ public class TValue implements IValue, Comparable<TValue> {
         return causes;
     }
 
-
-    public Right getRight() {
-        return right;
-    }
-
-    public void setRight(Right right) {
-        this.right = right;
-    }
 
     public long getId() {
         return id;
@@ -115,7 +100,6 @@ public class TValue implements IValue, Comparable<TValue> {
     @Override
     public String toString() {
         return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? tVar.getVarName() + "=" : "") + value.toString();
-//        return tVar.getVarName() + "=" + value.toString();
     }
 
     public void setQuery() {
@@ -173,85 +157,6 @@ public class TValue implements IValue, Comparable<TValue> {
         return obj != null && obj instanceof TValue && ((TValue) obj).getId() == id;
     }
 
-    @Override
-    public boolean isEmpty() {
-        return getValue() == null;
-    }
-
-    @Override
-    public void clear() {
-        setValue(null);
-    }
-
-    @Override
-    public boolean isTVariable() {
-        return false;
-    }
-
-    @Override
-    public boolean isFunction() {
-        return false;
-    }
-
-    @Override
-    public boolean isTValue() {
-        return true;
-    }
-
-    @Override
-    public boolean isTerm() {
-        return false;
-    }
-
-    @Override
-    public boolean isFValue() {
-        return false;
-    }
-
-    @Override
-    public boolean isCVariable() {
-        return !isEmpty() && getValue().isCVariable();
-    }
-
-    @Override
-    public boolean isDefined() {
-        Term t = getValue();
-        return t != null && !t.isCVariable();
-    }
-
-//    @Override
-//    public boolean isCalculated() {
-//        return !isEmpty();
-//    }
-
-    @Override
-    public TVariable getTVariable() {
-        return null;
-    }
-
-    @Override
-    public Function getFunction() {
-        return null;
-    }
-
-    @Override
-    public TValue getTValue() {
-        return this;
-    }
-
-    @Override
-    public FValue getFValue() {
-        return null;
-    }
-
-    //    public int getTag() {
-//        return tag;
-//    }
-//
-//    public void setTag(int tag) {
-//        this.tag = tag;
-//    }
-//
     @Override
     public int compareTo(TValue o) {
         return (int) (tVar.getId() == o.getTVar().getId() ? id - o.getId() : tVar.getId() - o.getTVar().getId());

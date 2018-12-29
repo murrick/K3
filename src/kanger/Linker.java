@@ -4,9 +4,9 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
-import kanger.enums.QueryPass;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.*;
+import kanger.units.*;
 
 import java.util.*;
 

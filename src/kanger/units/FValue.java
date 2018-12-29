@@ -1,18 +1,15 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.interfaces.IValue;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
 
-public class FValue implements IValue {
+public class FValue implements Externalizable {
     private long id = -1;
     private Function function = null;
     private Term value = null;
@@ -40,22 +37,20 @@ public class FValue implements IValue {
         this.user = user;
     }
 
-    public FValue readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        function = user.getMind().getFunctions().get(dis.readLong());
-        long valueId = dis.readLong();
-        if(valueId != -1) {
-            value = user.getMind().getTerms().get(valueId);
-        }
-        condition = new ArgList(dis, user);
-        return this;
+        function = (Function) dis.readObject();
+        value = (Term) dis.readObject();
+        condition = (ArgList) dis.readObject();
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(function.getId());
-        dos.writeLong(value == null ? -1 : value.getId());
-        condition.writeCompiledData(dos, user);
+        dos.writeObject(function);
+        dos.writeObject(value);
+        dos.writeObject(condition);
     }
 
     public void setId(long id) {
@@ -66,81 +61,11 @@ public class FValue implements IValue {
         return id;
     }
 
-    @Override
-    public boolean isEmpty() {
-        return false;
-    }
-
     public Term setValue(Term value) {
         this.value = value;
         return value;
     }
 
-    @Override
-    public void clear() {
-        value = null;
-    }
-
-    @Override
-    public boolean isTVariable() {
-        return false;
-    }
-
-    @Override
-    public boolean isFunction() {
-        return false;
-    }
-
-    @Override
-    public boolean isTValue() {
-        return false;
-    }
-
-    @Override
-    public boolean isTerm() {
-        return false;
-    }
-
-    @Override
-    public boolean isFValue() {
-        return true;
-    }
-
-    @Override
-    public boolean isCVariable() {
-        return !isEmpty() && getValue().isCVariable();
-    }
-
-    @Override
-    public boolean isDefined() {
-        Term t = getValue();
-        return t != null && !t.isCVariable();
-    }
-
-//    @Override
-//    public boolean isCalculated() {
-//        return !isEmpty();
-//    }
-
-    @Override
-    public TVariable getTVariable() {
-        return null;
-    }
-
-    @Override
-    public Function getFunction() {
-        return null;
-    }
-
-    @Override
-    public TValue getTValue() {
-        return null;
-    }
-
-    @Override
-    public FValue getFValue() {
-        return this;
-    }
 
     public Term getValue() {
         return value;

@@ -1,9 +1,8 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.primitives.TValue;
-import kanger.primitives.TVariable;
-import kanger.primitives.Term;
+import kanger.units.TValue;
+import kanger.units.Term;
 
 import java.util.*;
 

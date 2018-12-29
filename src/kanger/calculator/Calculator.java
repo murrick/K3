@@ -6,9 +6,9 @@ import kanger.enums.Enums;
 import kanger.enums.LibMode;
 import kanger.enums.LogMode;
 import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Function;
-import kanger.primitives.Predicate;
+import kanger.units.Domain;
+import kanger.units.Function;
+import kanger.units.Predicate;
 
 /**
  * Created by murray on 27.05.15.

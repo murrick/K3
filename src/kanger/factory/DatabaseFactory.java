@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.primitives.*;
+import kanger.units.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

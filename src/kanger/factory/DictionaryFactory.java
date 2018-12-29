@@ -2,7 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.primitives.Term;
+import kanger.units.Term;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -139,7 +139,7 @@ public class DictionaryFactory {
         int count = size();
         dos.writeInt(count);
         for (Term d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+//            d.writeCompiledData(dos);
         }
     }
 
@@ -148,9 +148,9 @@ public class DictionaryFactory {
         lastID = dis.readLong();
         varIndex = dis.readInt();
         int count = dis.readInt();
-        Term a = null, b;
+        Term a = null, b = null;
         while (count-- > 0) {
-            b = new Term(dis, user);
+//            b = new Term(dis, user);
             if (a != null) {
                 a.setNext(b);
             } else {

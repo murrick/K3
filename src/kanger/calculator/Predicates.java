@@ -6,17 +6,14 @@ import kanger.enums.DataType;
 import kanger.enums.LibMode;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.ArgList;
-import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Term;
+import kanger.units.Domain;
+import kanger.units.Term;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * Created by murray on 18.01.17.

@@ -1,7 +1,7 @@
 package kanger.interfaces;
 
 
-import kanger.primitives.*;
+import kanger.units.*;
 
 /**
  * Created by murray on 02.12.16.

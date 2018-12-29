@@ -1,6 +1,6 @@
 package kanger.compiler;
 
-import kanger.primitives.Domain;
+import kanger.units.Domain;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.

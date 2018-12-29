@@ -5,7 +5,7 @@ import kanger.Screen;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.primitives.LogEntry;
-import kanger.primitives.Right;
+import kanger.units.Right;
 
 import java.util.ArrayList;
 import java.util.Date;

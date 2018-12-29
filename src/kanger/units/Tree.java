@@ -1,10 +1,8 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,14 +13,13 @@ import java.util.Set;
  * <p>
  * Элемент ветви дерева
  */
-public class Tree implements Comparable<Tree>{
+public class Tree implements Comparable<Tree>, Externalizable {
 
-    private List<Domain> sequence = new ArrayList<>();          // Домены
     private long id = -1;                                       // Идентификатор
+    private List<Domain> sequence = new ArrayList<>();          // Домены
     private Right right = null;
     private boolean generated = false;
 
-    private Set<Long> excludes = new HashSet<>();
     private Tree next = null;
     private User user = null;
 
@@ -32,25 +29,26 @@ public class Tree implements Comparable<Tree>{
         this.user = user;
     }
 
-    public Tree readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        right = user.getMind().getRights().get(dis.readLong());
-        generated = dis.readBoolean();
         int count = dis.readInt();
         while (count-- > 0) {
-            sequence.add(user.getMind().getDomains().get(dis.readLong()));
+            sequence.add((Domain) dis.readObject());
         }
-        return this;
+        right = (Right) dis.readObject();
+        generated = dis.readBoolean();
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(right.getId());
-        dos.writeBoolean(generated);
         dos.writeInt(sequence.size());
         for (Domain d : sequence) {
-            dos.writeLong(d.getId());
+            dos.writeObject(d);
         }
+        dos.writeObject(right);
+        dos.writeBoolean(generated);
     }
 
 
@@ -60,10 +58,6 @@ public class Tree implements Comparable<Tree>{
 
     public boolean isGenerated() {
         return generated;
-    }
-
-    public Set<Long> getExcludes() {
-        return excludes;
     }
 
     public List<Domain> getSequence() {
@@ -126,7 +120,6 @@ public class Tree implements Comparable<Tree>{
         Tree t = user.getMind().getTrees().add();
         t.setRight(right);
         t.sequence.addAll(sequence);
-        t.excludes.addAll(excludes);
         return t;
     }
 
@@ -140,10 +133,6 @@ public class Tree implements Comparable<Tree>{
             s += d.toString();
         }
         return s;
-    }
-
-    public boolean isExcluded(Tree t) {
-        return excludes.contains(t.getId());
     }
 
     @Override

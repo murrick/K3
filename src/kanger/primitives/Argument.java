@@ -1,19 +1,16 @@
 package kanger.primitives;
 
-import kanger.User;
 import kanger.enums.ArgumentType;
-import kanger.interfaces.IEntry;
+import kanger.units.*;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * Created by murray on 26.05.15.
  * <p>
  * Решение для предиката
  */
-public class Argument  {
+public class Argument implements Externalizable {
 
     private Object o = null;
 
@@ -24,26 +21,16 @@ public class Argument  {
         o = d;
     }
 
-    public Argument(DataInputStream dis, User user) throws IOException {
-        ArgumentType type = ArgumentType.values()[dis.readInt()];
-        switch (type) {
-            case TERM:
-                o = user.getMind().getTermsLink().get(dis.readLong());
-                break;
-            case TVRIABLE:
-                o = user.getMind().getTVariablesLink().get(dis.readLong());
-                break;
-            case TVALUE:
-                o = user.getMind().getTValuesLink().get(dis.readLong());
-                break;
-            case FVALUE:
-                o = user.getMind().getFValuesLink().get(dis.readLong());
-                break;
-            case FUNCTION:
-                o = user.getMind().getFunctionsLink().get(dis.readLong());
-                break;
-        }
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
+        o = dis.readObject();
     }
+
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
+        dos.writeObject(o);
+    }
+
 
     public ArgumentType getType() {
         if (o instanceof Term) {
@@ -135,28 +122,6 @@ public class Argument  {
 
     public boolean isFSet() {
         return getType() == ArgumentType.FUNCTION;
-    }
-
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
-        ArgumentType type = getType();
-        dos.writeInt(type.ordinal());
-        switch (type) {
-            case FUNCTION:
-                dos.writeLong((Long) user.getMind().getFunctionsLink().get(getF()));
-                break;
-            case TVRIABLE:
-                dos.writeLong((Long) user.getMind().getTVariablesLink().get(getT()));
-                break;
-            case TERM:
-                dos.writeLong((Long) user.getMind().getTermsLink().get(getValue()));
-                break;
-            case FVALUE:
-                dos.writeLong((Long) user.getMind().getFValuesLink().get(getR()));
-                break;
-            case TVALUE:
-                dos.writeLong((Long) user.getMind().getTValuesLink().get(getV()));
-                break;
-        }
     }
 
     @Override

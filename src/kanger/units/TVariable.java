@@ -1,12 +1,10 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
 import kanger.interfaces.IValue;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,7 +13,7 @@ import java.util.Set;
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable implements IValue<TValue>, Comparable<Object> {
+public class TVariable implements Comparable<Object>, Externalizable {
 
     private long id = -1;                   // Идентификатор переменной
     private Term name = null;               // Оригинальное подкванторное имя
@@ -29,19 +27,20 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
         this.user = user;
     }
 
-    public TVariable readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        name = user.getMind().getTerms().get(dis.readLong());
+        name = (Term) dis.readObject();
         index = dis.readInt();
-        right = (Right) user.getMind().getRightsLink().get(dis.readLong());
-        return this;
+        right = (Right) dis.readObject();
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(name.getId());
+        dos.writeObject(name);
         dos.writeInt(index);
-        dos.writeLong(right == null ? -1 : right.getId());
+        dos.writeObject(right);
     }
 
 
@@ -398,64 +397,4 @@ public class TVariable implements IValue<TValue>, Comparable<Object> {
                 : Integer.valueOf(index).compareTo(((Term) o).getIndex());
     }
 
-    @Override
-    public boolean isTVariable() {
-        return true;
-    }
-
-    @Override
-    public boolean isFunction() {
-        return false;
-    }
-
-    @Override
-    public boolean isTValue() {
-        return false;
-    }
-
-    @Override
-    public boolean isTerm() {
-        return false;
-    }
-
-    @Override
-    public boolean isFValue() {
-        return false;
-    }
-
-    @Override
-    public boolean isCVariable() {
-        return !isEmpty() && getValue().isCVariable();
-    }
-
-    @Override
-    public boolean isDefined() {
-        Term t = getValue();
-        return t != null && !t.isCVariable();
-    }
-
-    //    @Override
-//    public boolean isCalculated() {
-//        return !isEmpty();
-//    }
-//
-    @Override
-    public TVariable getTVariable() {
-        return null;
-    }
-
-    @Override
-    public Function getFunction() {
-        return null;
-    }
-
-    @Override
-    public TValue getTValue() {
-        return null;
-    }
-
-    @Override
-    public FValue getFValue() {
-        return null;
-    }
 }

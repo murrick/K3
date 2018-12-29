@@ -1,7 +1,7 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.primitives.Record;
+import kanger.units.Record;
 
 import java.util.SortedSet;
 import java.util.TreeSet;

@@ -2,6 +2,9 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.primitives.*;
+import kanger.units.Domain;
+import kanger.units.Predicate;
+import kanger.units.Right;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -162,7 +165,7 @@ public class DomainFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Domain d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+//            d.writeCompiledData(dos);
         }
     }
 
@@ -170,9 +173,9 @@ public class DomainFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        Domain a = null, b;
+        Domain a = null, b = null;
         while (count-- > 0) {
-            b = new Domain(user).readCompiledData(dis);
+//            b = new Domain(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

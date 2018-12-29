@@ -1,15 +1,14 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.enums.Tools;
-import kanger.exception.ParametersIncompleteException;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
+import kanger.primitives.Cause;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -17,59 +16,41 @@ import java.util.*;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Domain {
+public class Domain implements Externalizable {
 
-    private Predicate predicate = null;                         // Ссылка на описатель предиката
-    private Right right;                                        // Ссылка на правило
-    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
-    private boolean antc = true;                                // ! или ?
     private long id = -1;                                       // id домена
+    private boolean antc = true;                                // ! или ?
+    private Predicate predicate = null;                         // Ссылка на описатель предиката
+    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
+    private Right right;                                        // Ссылка на правило
     private Domain next = null;                                 // Следующий элемент
 
     private Stack<List<TValue>> tStack = new Stack<>();
     private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
-//    private Set<Domain> parents = new HashSet<>();              // Родительские домены для БД
 
     private User user = null;
 
+    //TODO Нужен конструктор по умолчанию
     public Domain(User user) {
         this.user = user;
     }
 
-    public Domain readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        right = user.getMind().getRights().get(dis.readLong());
-        predicate = user.getMind().getPredicates().get(dis.readLong());
-        arguments = new ArgList(dis, user);
         antc = dis.readBoolean();
-
-        int count = dis.readInt();
-        while (count-- > 0) {
-            ArgList args = new ArgList(dis, user);
-            causes.put(args, new TreeSet<>());
-            int cnt = dis.readInt();
-            while(cnt-- > 0) {
-                Cause c = new Cause(dis, user);
-                causes.get(args).add(c);
-            }
-        }
-        return this;
+        predicate = (Predicate) dis.readObject();
+        arguments = (ArgList) dis.readObject();
+        right = (Right) dis.readObject();
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(right.getId());
-        dos.writeLong(predicate.getId());
-        arguments.writeCompiledData(dos, user);
         dos.writeBoolean(antc);
-        dos.writeInt(causes.size());
-        for(Map.Entry<ArgList, SortedSet<Cause>> e : causes.entrySet()) {
-            e.getKey().writeCompiledData(dos, user);
-            dos.writeInt(e.getValue().size());
-            for(Cause c : e.getValue()) {
-                c.writeCompiledData(dos, user);
-            }
-        }
+        dos.writeObject(predicate);
+        dos.writeObject(arguments);
+        dos.writeObject(right);
     }
 
     public Predicate getPredicate() {

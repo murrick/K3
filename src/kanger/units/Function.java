@@ -1,24 +1,20 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.enums.Tools;
-import kanger.interfaces.IValue;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
  * <p>
  * Домен для функции. Может быть рекурсивным на уровне структуры TList.
  */
-public class Function implements IValue {
+public class Function implements Externalizable {
 
     private long id = -1;
     private Term name = null;
@@ -32,19 +28,20 @@ public class Function implements IValue {
         this.user = user;
     }
 
-    public Function readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        name = user.getMind().getTerms().get(dis.readLong());
+        name = (Term) dis.readObject();
         range = dis.readInt();
-        arguments = new ArgList(dis, user);
-        return this;
+        arguments = (ArgList) dis.readObject();
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(name.getId());
+        dos.writeObject(name);
         dos.writeInt(range);
-        arguments.writeCompiledData(dos, user);
+        dos.writeObject(arguments);
     }
 
 
@@ -92,6 +89,10 @@ public class Function implements IValue {
         }
         arguments.get(range).setValue(r);
         return arguments.get(range);
+    }
+
+    public boolean isEmpty() {
+        return getValue() == null;
     }
 
     public boolean setParameter(int i, Term r) {
@@ -272,66 +273,6 @@ public class Function implements IValue {
 //    public boolean isCalculated() {
 //        return getCurrent() != null;
 //    }
-
-    @Override
-    public boolean isEmpty() {
-        return getValue() == null;
-    }
-
-    @Override
-    public boolean isTVariable() {
-        return false;
-    }
-
-    @Override
-    public boolean isFunction() {
-        return true;
-    }
-
-    @Override
-    public boolean isTValue() {
-        return false;
-    }
-
-    @Override
-    public boolean isTerm() {
-        return false;
-    }
-
-    @Override
-    public boolean isFValue() {
-        return false;
-    }
-
-    @Override
-    public boolean isCVariable() {
-        return !isEmpty() && getValue().isCVariable();
-    }
-
-    @Override
-    public boolean isDefined() {
-        return false;
-    }
-
-    @Override
-    public TVariable getTVariable() {
-        return null;
-    }
-
-    @Override
-    public Function getFunction() {
-        return this;
-    }
-
-    @Override
-    public TValue getTValue() {
-        return null;
-    }
-
-    @Override
-    public FValue getFValue() {
-        return null;
-    }
 
 
     public FValue getCurrent() {

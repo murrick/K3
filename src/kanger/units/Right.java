@@ -1,10 +1,8 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +13,7 @@ import java.util.Set;
  * <p>
  * Список правил
  */
-public class Right {
+public class Right implements Externalizable {
 
     private long id = -1;                       // ID Правила
     private Term orig = null;                   // Оригинальная строка
@@ -30,28 +28,28 @@ public class Right {
         this.user = user;
     }
 
-    public Right readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        orig = user.getMind().getTerms().get(dis.readLong());
+        orig = (Term) dis.readObject();
         query = dis.readBoolean();
         generated = dis.readBoolean();
         int count = dis.readInt();
         while (count-- > 0) {
-            Tree t = new Tree(user).readCompiledData(dis);
-            t.setRight(this);
+            Tree t = (Tree) dis.readObject();
             tree.add(t);
         }
-        return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(orig.getId());
+        dos.writeObject(orig);
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
         dos.writeInt(tree.size());
         for (Tree r : tree) {
-            r.writeCompiledData(dos);
+            dos.writeObject(r);
         }
     }
 
@@ -103,13 +101,9 @@ public class Right {
         return tree.size();
     }
 
-    public Tree cloneTree(Tree t, boolean exclude) {
+    public Tree cloneTree(Tree t) {
         Tree x = t.clone();
         tree.add(x);
-        if(exclude){
-            t.getExcludes().add(x.getId());
-            x.getExcludes().add(t.getId());
-        }
         return x;
     }
 

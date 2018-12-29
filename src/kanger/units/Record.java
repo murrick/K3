@@ -1,17 +1,14 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.primitives.Cause;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
+import java.io.*;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-public class Record implements Comparable<Record> {
+public class Record implements Comparable<Record>, Externalizable {
     private long id = -1;
     private Domain domain = null;
     private int tag = -1;
@@ -29,25 +26,26 @@ public class Record implements Comparable<Record> {
         this.user = user;
     }
 
-    public Record readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        domain = user.getMind().getDomains().get(dis.readLong());
+        domain = (Domain) dis.readObject();
         tag = dis.readInt();
         int count = dis.readInt();
         while(count-- > 0) {
-            Cause c = new Cause(dis, user);
+            Cause c = (Cause) dis.readObject();
             causes.add(c);
         }
-        return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(domain.getId());
+        dos.writeObject(domain);
         dos.writeInt(tag);
         dos.writeInt(causes.size());
         for(Cause c : causes) {
-            c.writeCompiledData(dos, user);
+            dos.writeObject(c);
         }
     }
 

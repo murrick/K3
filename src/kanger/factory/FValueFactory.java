@@ -1,8 +1,8 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.FValue;
-import kanger.primitives.Function;
+import kanger.units.FValue;
+import kanger.units.Function;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -209,7 +209,7 @@ public class FValueFactory {
         int count = size();
         dos.writeInt(count);
         for (FValue d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+//            d.writeCompiledData(dos);
         }
     }
 
@@ -217,9 +217,9 @@ public class FValueFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        FValue a = null, b;
+        FValue a = null, b = null;
         while (count-- > 0) {
-            b = new FValue(user).readCompiledData(dis);
+//            b = new FValue(user).readCompiledData(dis);
             if (a != null) {
                 a.setNext(b);
             } else {

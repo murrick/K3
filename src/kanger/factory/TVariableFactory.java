@@ -1,8 +1,8 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Right;
-import kanger.primitives.TVariable;
+import kanger.units.Right;
+import kanger.units.TVariable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -125,7 +125,7 @@ public class TVariableFactory {
         int sz = size();
         dos.writeInt(sz);
         for (TVariable t = root; t != null; t = t.getNext()) {
-            t.writeCompiledData(dos);
+//            t.writeCompiledData(dos);
         }
     }
 
@@ -133,9 +133,9 @@ public class TVariableFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        TVariable a = null, b;
+        TVariable a = null, b = null;
         while (count-- > 0) {
-            b = new TVariable(user).readCompiledData(dis);
+//            b = new TVariable(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {
