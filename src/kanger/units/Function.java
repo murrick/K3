@@ -6,6 +6,7 @@ import kanger.compiler.Parser;
 import kanger.enums.Enums;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
+import kanger.interfaces.Identifiable;
 
 import java.io.*;
 
@@ -14,7 +15,7 @@ import java.io.*;
  * <p>
  * Домен для функции. Может быть рекурсивным на уровне структуры TList.
  */
-public class Function implements Externalizable {
+public class Function implements Externalizable, Identifiable {
 
     private long id = -1;
     private Term name = null;
@@ -44,11 +45,12 @@ public class Function implements Externalizable {
         dos.writeObject(arguments);
     }
 
-
+    @Override
     public void setId(long id) {
         this.id = id;
     }
 
+    @Override
     public long getId() {
         return id;
     }
