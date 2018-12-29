@@ -84,11 +84,11 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
 //            }
 //        }
 //        return false;
-        return user.getMind().getUsedTrees().contains(this);
+        return user.getMind().getUsedTrees().contains(id);
     }
 
     public void setUsed() {
-        user.getMind().getUsedTrees().add(this);
+        user.getMind().getUsedTrees().add(id);
     }
 
     @Override
@@ -140,8 +140,14 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
-    }
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(right.getId());
+        buffer.append(generated);
+        for(Domain d : sequence) {
+            buffer.append(d.getId());
+        }
+        return buffer.toString().hashCode();
+    }    
 
     @Override
     public boolean equals(Object t) {
@@ -188,11 +194,11 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
     }
 
     public boolean isClosed() {
-        return user.getMind().getClosedTrees().contains(this);
+        return user.getMind().getClosedTrees().contains(id);
     }
 
     public void setClosed() {
-        user.getMind().getClosedTrees().add(this);
+        user.getMind().getClosedTrees().add(id);
     }
 
 //    public boolean isExcluded() {

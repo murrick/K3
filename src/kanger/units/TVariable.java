@@ -296,7 +296,11 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(right.getId());
+        buffer.append(name.getId());
+        buffer.append(index);
+        return buffer.toString().hashCode();
     }
 
     @Override
@@ -384,8 +388,8 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 
     public boolean isQuery() {
         return !isEmpty()
-                && user.getMind().getQueryValues().containsKey(this)
-                && user.getMind().getQueryValues().get(this).contains(getCurrent());
+                && user.getMind().getQueryValues().containsKey(this.getId())
+                && user.getMind().getQueryValues().get(this).contains(getCurrent().getId());
     }
 
 //    public boolean isBlocked() {

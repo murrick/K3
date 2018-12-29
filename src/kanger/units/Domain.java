@@ -273,11 +273,10 @@ public class Domain implements Externalizable, Identifiable {
             suffix += " " + id;
         }
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix += /*isDest() ||*/ isQuery(arguments) || isClosed(arguments) || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
+            suffix += /*isDest() ||*/ isQuery(arguments)  || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
                     ? " " +
                     //(isDest() ? "A" : "") +
                     (isQuery() ? "Q" : "") +
-                    (isClosed() ? "C" : "") +
 //                    (isUsed() ? "U" : "") +
                     (isExcluded() ? "X" : "") +
                     //(isProduced() ? "P" : "") +
@@ -422,38 +421,9 @@ public class Domain implements Externalizable, Identifiable {
     }
 
 
-    public boolean isClosed() {
-        return isClosed(arguments);
-    }
-
-    public boolean isClosed(ArgList arguments) {
-        if (user.getMind().getClosedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getClosedDomains().get(this)) {
-                if (arguments.equalsBase(list)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void setClosed() {
-        if (!user.getMind().getClosedDomains().containsKey(this)) {
-            user.getMind().getClosedDomains().put(this, new HashSet<>());
-        }
-        if (!isClosed()) {
-//            try {
-            user.getMind().getClosedDomains().get(this).add(arguments.convertBase());
-//            } catch (ParametersIncompleteException e) {
-////                e.printStackTrace();
-//            }
-        }
-    }
-
-
     public boolean isUsed() {
-        if (user.getMind().getUsedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getUsedDomains().get(this)) {
+        if (user.getMind().getUsedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getUsedDomains().get(id)) {
                 if (arguments.equalsBase(list)) {
                     return true;
                 }
@@ -463,12 +433,12 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public void setUsed() {
-        if (!user.getMind().getUsedDomains().containsKey(this)) {
-            user.getMind().getUsedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getUsedDomains().containsKey(id)) {
+            user.getMind().getUsedDomains().put(id, new HashSet<>());
         }
         if (!isUsed()) {
 //            try {
-            user.getMind().getUsedDomains().get(this).add(arguments.convertBase());
+            user.getMind().getUsedDomains().get(id).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -476,8 +446,8 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public boolean isExcluded(ArgList args) {
-        if (user.getMind().getExcludedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
+        if (user.getMind().getExcludedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getExcludedDomains().get(id)) {
                 if (args.equalsBase(list)) {
                     return true;
                 }
@@ -487,8 +457,8 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public boolean isExcluded() {
-        if (user.getMind().getExcludedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
+        if (user.getMind().getExcludedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getExcludedDomains().get(id)) {
                 if (arguments.equalsBase(list)) {
                     return true;
                 }
@@ -498,12 +468,12 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public void setExcluded(ArgList args) {
-        if (!user.getMind().getExcludedDomains().containsKey(this)) {
-            user.getMind().getExcludedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getExcludedDomains().containsKey(id)) {
+            user.getMind().getExcludedDomains().put(id, new HashSet<>());
         }
         if (!isExcluded(args)) {
 //            try {
-            user.getMind().getExcludedDomains().get(this).add(args.convertBase());
+            user.getMind().getExcludedDomains().get(id).add(args.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -511,12 +481,12 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public void setExcluded() {
-        if (!user.getMind().getExcludedDomains().containsKey(this)) {
-            user.getMind().getExcludedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getExcludedDomains().containsKey(id)) {
+            user.getMind().getExcludedDomains().put(id, new HashSet<>());
         }
         if (!isExcluded()) {
 //            try {
-            user.getMind().getExcludedDomains().get(this).add(arguments.convertBase());
+            user.getMind().getExcludedDomains().get(id).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -524,9 +494,9 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public boolean isProduced(int tag) {
-        if (user.getMind().getProducedDomains().containsKey(this)) {
-            if (user.getMind().getProducedDomains().get(this).containsKey(tag)) {
-                for (ArgList list : user.getMind().getProducedDomains().get(this).get(tag)) {
+        if (user.getMind().getProducedDomains().containsKey(id)) {
+            if (user.getMind().getProducedDomains().get(id).containsKey(tag)) {
+                for (ArgList list : user.getMind().getProducedDomains().get(id).get(tag)) {
                     if (arguments.equalsBase(list)) {
                         return true;
                     }
@@ -562,15 +532,15 @@ public class Domain implements Externalizable, Identifiable {
 //
 
     public void setProduced(int tag) {
-        if (!user.getMind().getProducedDomains().containsKey(this)) {
-            user.getMind().getProducedDomains().put(this, new HashMap<>());
+        if (!user.getMind().getProducedDomains().containsKey(id)) {
+            user.getMind().getProducedDomains().put(id, new HashMap<>());
         }
-        if (!user.getMind().getProducedDomains().get(this).containsKey(tag)) {
-            user.getMind().getProducedDomains().get(this).put(tag, new HashSet<>());
+        if (!user.getMind().getProducedDomains().get(id).containsKey(tag)) {
+            user.getMind().getProducedDomains().get(id).put(tag, new HashSet<>());
         }
         if (!isProduced(tag)) {
 //            try {
-            user.getMind().getProducedDomains().get(this).get(tag).add(arguments.convertBase());
+            user.getMind().getProducedDomains().get(id).get(tag).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -582,8 +552,8 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public boolean isCalculated(ArgList arguments) {
-        if (user.getMind().getCalculatedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getCalculatedDomains().get(this)) {
+        if (user.getMind().getCalculatedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getCalculatedDomains().get(id)) {
                 if (arguments.equalsBase(list)) {
                     return true;
                 }
@@ -608,12 +578,12 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     public void setCalculated() {
-        if (!user.getMind().getCalculatedDomains().containsKey(this)) {
-            user.getMind().getCalculatedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getCalculatedDomains().containsKey(id)) {
+            user.getMind().getCalculatedDomains().put(id, new HashSet<>());
         }
         if (!isCalculated()) {
 //            try {
-            user.getMind().getCalculatedDomains().get(this).add(arguments.convertBase());
+            user.getMind().getCalculatedDomains().get(id).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -687,8 +657,8 @@ public class Domain implements Externalizable, Identifiable {
             }
             for (Argument a : arguments) {
                 if (a.isVSet()
-                        && user.getMind().getQueryValues().containsKey(a.getV().getTVar())
-                        && user.getMind().getQueryValues().get(a.getV().getTVar()).contains(a.getV())) {
+                        && user.getMind().getQueryValues().containsKey(a.getV().getTVar().getId())
+                        && user.getMind().getQueryValues().get(a.getV().getTVar().getId()).contains(a.getV().getId())) {
                     return true;
                 }
             }
@@ -771,8 +741,8 @@ public class Domain implements Externalizable, Identifiable {
         StringBuffer buffer = new StringBuffer();
         buffer.append(antc);
         buffer.append(predicate.getId());
-        buffer.append(arguments.hashCode());
         buffer.append(right.getId());
+        buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
     }
 

@@ -45,8 +45,6 @@ public class Mind {
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
 
-    private final Set<Tree> usedTrees = new HashSet<>();
-
     private HypotesisStore hypotesis = null;                                // Список гипотез
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
@@ -55,35 +53,20 @@ public class Mind {
     private Calculator calculator = null;                             // Калькулятор
     private Analiser analiser = null;                                   // Анализатор
     private Compiler compiler = null;                                   // Компилятор
-    private LibraryStore library = null;                            // Системная библиотека функций и предикатов
-
-
-    private final Set<Tree> closedTrees = new HashSet<>();
-    private final Set<Tree> excludedTrees = new HashSet<>();
-    private HypotesisStore excluded = null;                                // Список исключенных гипотез
-
-    private final Map<Domain, Set<ArgList>> closedDomains = new HashMap<>();
-    private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
-    private final Map<Domain, Map<Integer, Set<ArgList>>> producedDomains = new HashMap<>();
-    private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
-    private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
     private Linker linker = null;                                         // Линкер
 
+    private LibraryStore library = null;                            // Системная библиотека функций и предикатов
+    private HypotesisStore excluded = null;                                // Список исключенных гипотез
 
-    private final Map<TVariable, Set<TValue>> blockedValues = new HashMap<>();
-    private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
-    private final Map<TVariable, Set<TValue>> closedValues = new HashMap<>();
+    private final Set<Long> usedTrees = new HashSet<>();
+    private final Set<Long> closedTrees = new HashSet<>();
 
-    private transient Map<Object, Object> termsLink = null;
-    private transient Map<Object, Object> domainsLink = null;
-    private transient Map<Object, Object> tVariablesLink = null;
-    private transient Map<Object, Object> tValuesLink = null;
-    private transient Map<Object, Object> fValuesLink = null;
-    private transient Map<Object, Object> functionsLink = null;
-    private transient Map<Object, Object> predicatesLink = null;
-    private transient Map<Object, Object> rightsLink = null;
-    private transient Map<Object, Object> recordsLink = null;
-    private transient Map<Object, Object> treesLink = null;
+    private final Map<Long, Set<ArgList>> usedDomains = new HashMap<>();
+    private final Map<Long, Map<Integer, Set<ArgList>>> producedDomains = new HashMap<>();
+    private final Map<Long, Set<ArgList>> calculatedDomains = new HashMap<>();
+    private final Map<Long, Set<ArgList>> excludedDomains = new HashMap<>();
+
+    private final Map<Long, Set<Long>> queryValues = new HashMap<>();
 
     private boolean changed = false;
     private Boolean queryResult = null;
@@ -91,7 +74,6 @@ public class Mind {
     private QueryPass queryPass = QueryPass.SILENCE;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
-
 
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
@@ -572,11 +554,6 @@ public class Mind {
 //            d.getKey().setRight(rights.get(d.getValue()));
 //        }
 
-        termsLink = null;
-        domainsLink = null;
-//        solveLinks = null;
-        tVariablesLink = null;
-
     }
 
 //    public ScriptEngine getScryptEngine() {
@@ -594,63 +571,19 @@ public class Mind {
         return Version.VERSION_S;
     }
 
-    public Map<Object, Object> getTermsLink() {
-        return termsLink;
-    }
-
-    public Map<Object, Object> getDomainsLink() {
-        return domainsLink;
-    }
-
-    //    public Map<Solution, Long> getSolveLinks() {
-//        return solveLinks;
-//    }
-    public Map<Object, Object> getTVariablesLink() {
-        return tVariablesLink;
-    }
-
-
-    public Map<Object, Object> getTValuesLink() {
-        return tValuesLink;
-    }
-
-    public Map<Object, Object> getFValuesLink() {
-        return fValuesLink;
-    }
-
-    public Map<Object, Object> getFunctionsLink() {
-        return functionsLink;
-    }
-
-    public Map<Object, Object> getPredicatesLink() {
-        return predicatesLink;
-    }
-
-    public Map<Object, Object> getRightsLink() {
-        return rightsLink;
-    }
-
-    public Map<Object, Object> getRecordsLink() {
-        return recordsLink;
-    }
-
-    public Map<Object, Object> getTreesLink() {
-        return treesLink;
-    }
-
-    public Map<Domain, Set<ArgList>> getUsedDomains() {
+    public Map<Long, Set<ArgList>> getUsedDomains() {
         return usedDomains;
     }
 
-    public Map<Domain, Set<ArgList>> getExcludedDomains() {
+    public Map<Long, Set<ArgList>> getExcludedDomains() {
         return excludedDomains;
     }
 
-    public Map<Domain, Map<Integer, Set<ArgList>>> getProducedDomains() {
+    public Map<Long, Map<Integer, Set<ArgList>>> getProducedDomains() {
         return producedDomains;
     }
 
-    public Map<Domain, Set<ArgList>> getCalculatedDomains() {
+    public Map<Long, Set<ArgList>> getCalculatedDomains() {
         return calculatedDomains;
     }
 
@@ -658,15 +591,11 @@ public class Mind {
 //        return storedDomains;
 //    }
 
-    public Set<Tree> getUsedTrees() {
+    public Set<Long> getUsedTrees() {
         return usedTrees;
     }
 
-    public Map<Domain, Set<ArgList>> getClosedDomains() {
-        return closedDomains;
-    }
-
-    public Set<Tree> getClosedTrees() {
+    public Set<Long> getClosedTrees() {
         return closedTrees;
     }
 
@@ -693,20 +622,8 @@ public class Mind {
 //    }
 
 
-    public Set<Tree> getExcludedTrees() {
-        return excludedTrees;
-    }
-
-    public Map<TVariable, Set<TValue>> getQueryValues() {
+    public Map<Long, Set<Long>> getQueryValues() {
         return queryValues;
-    }
-
-    public Map<TVariable, Set<TValue>> getBlockedValues() {
-        return blockedValues;
-    }
-
-    public Map<TVariable, Set<TValue>> getClosedValues() {
-        return closedValues;
     }
 
     //TODO: Для отладки все закоментил
@@ -1063,10 +980,8 @@ public class Mind {
 
         mind.getUsedTrees().clear();
         mind.getClosedTrees().clear();
-        mind.getExcludedTrees().clear();
 
         mind.getUsedDomains().clear();
-        mind.getClosedDomains().clear();
         mind.getQueryValues().clear();
 
 //        mind.clearQueryStatus();

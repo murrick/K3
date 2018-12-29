@@ -154,7 +154,13 @@ public class Right implements Externalizable, Identifiable {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(query);
+        buffer.append(generated);
+        for(Tree t : tree) {
+            buffer.append(t.getId());
+        }
+        return buffer.toString().hashCode();
     }
 
     @Override

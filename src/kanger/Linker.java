@@ -442,8 +442,8 @@ public class Linker {
 //
     private boolean updateDatabase(boolean logging) {
         boolean result = false;
-        for (Map.Entry<Domain, Map<Integer, Set<ArgList>>> e : user.getMind().getProducedDomains().entrySet()) {
-            Domain d = e.getKey();
+        for (Map.Entry<Long, Map<Integer, Set<ArgList>>> e : user.getMind().getProducedDomains().entrySet()) {
+            Domain d = user.getMind().getDomains().get(e.getKey());
             for (Map.Entry<Integer, Set<ArgList>> tags : e.getValue().entrySet()) {
                 for (ArgList args : tags.getValue()) {
                     result = true;

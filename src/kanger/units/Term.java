@@ -29,8 +29,8 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
     private DataType type = DataType.VOID;
     private Object value = null;
 
-    private Term name = null;             // Оригинальное имя c-переменной
     private int index = 0;              // Индекс c-переменной
+    private Term name = null;             // Оригинальное имя c-переменной
     private Right right = null;          // Ссылка на правило
 
     private Term next = null;      // Следующая запись
@@ -288,7 +288,10 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(type.ordinal());
+        buffer.append(value.hashCode());
+         return buffer.toString().hashCode();
     }
 
     @Override

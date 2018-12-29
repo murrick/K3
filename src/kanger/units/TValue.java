@@ -105,10 +105,10 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable 
     }
 
     public void setQuery() {
-        if (!user.getMind().getQueryValues().containsKey(tVar)) {
-            user.getMind().getQueryValues().put(tVar, new HashSet<>());
+        if (!user.getMind().getQueryValues().containsKey(tVar.getId())) {
+            user.getMind().getQueryValues().put(tVar.getId(), new HashSet<>());
         }
-        user.getMind().getQueryValues().get(tVar).add(this);
+        user.getMind().getQueryValues().get(tVar.getId()).add(id);
     }
 
     //    public void setBlocked() {
@@ -122,17 +122,6 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable 
 //        return mind.getBlockedValues().containsKey(tVar.getId()) && mind.getBlockedValues().get(tVar.getId()).contains(id);
 //    }
 //
-    public void setClosed() {
-        if (!user.getMind().getClosedValues().containsKey(tVar)) {
-            user.getMind().getClosedValues().put(tVar, new HashSet<>());
-        }
-        user.getMind().getClosedValues().get(tVar).add(this);
-    }
-
-    public boolean isClosed() {
-        return user.getMind().getClosedValues().containsKey(tVar) && user.getMind().getClosedValues().get(tVar).contains(this);
-    }
-
     //    public boolean isRelativeFor(TValue slave) {
 //        for (Domain m : dstSolves) {
 //            if (slave.getSrcSolves().contains(m)) {
@@ -151,7 +140,11 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable 
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(id);
+//        buffer.append(value.getId());
+//        buffer.append(tVar.getId());
+        return buffer.toString().hashCode();
     }
 
     @Override

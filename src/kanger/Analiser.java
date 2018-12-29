@@ -511,7 +511,6 @@ public class Analiser {
 //        mind.getQueuedDomains().clear();
         user.getMind().getUsedTrees().clear();
 //        user.getMind().getClosedTrees().clear();
-        user.getMind().getClosedDomains().clear();
         user.getMind().getSolutions().clear();
         user.getMind().getValues().clear();
 
@@ -762,7 +761,6 @@ public class Analiser {
 
     public boolean checkDatabase(boolean logging) {
         boolean result = false;
-        user.getMind().getClosedDomains().clear();
         for (Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
