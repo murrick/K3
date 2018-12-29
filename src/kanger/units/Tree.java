@@ -140,8 +140,14 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
-    }
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(right.getId());
+        buffer.append(generated);
+        for(Domain d : sequence) {
+            buffer.append(d.getId());
+        }
+        return buffer.toString().hashCode();
+    }    
 
     @Override
     public boolean equals(Object t) {

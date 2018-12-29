@@ -174,7 +174,16 @@ public class FValue implements Externalizable, Identifiable {
         }
         return s;
     }
-
+   
+    @Override
+    public int hashCode() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(function.getId());
+        buffer.append(value.getId());
+        buffer.append(condition.hashCode());
+        return buffer.toString().hashCode();
+    }
+        
     @Override
     public String toString() {
         if (!function.isCalculable() && getValue() != null) {

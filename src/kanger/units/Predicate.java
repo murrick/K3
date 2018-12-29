@@ -196,4 +196,12 @@ public class Predicate implements Externalizable, Identifiable {
 //        }
 //        return list;
 //    }
+   
+    @Override
+    public int hashCode() {
+        StringBuffer buffer = new StringBuffer();       
+        buffer.append(name.getId());
+        buffer.append(range);
+        return buffer.toString().hashCode();
+    }
 }

@@ -280,4 +280,13 @@ public class Function implements Externalizable, Identifiable {
     public FValue getCurrent() {
         return user.getMind().getFValues().find(this);
     }
+   
+    @Override
+    public int hashCode() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(name.getId());
+        buffer.append(range);
+        buffer.append(arguments.hashCode());
+        return buffer.toString().hashCode();
+    }
 }
