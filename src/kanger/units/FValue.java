@@ -4,12 +4,13 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 
 import java.io.*;
 
-public class FValue implements Externalizable {
+public class FValue implements Externalizable, Identifiable {
     private long id = -1;
     private Function function = null;
     private Term value = null;
@@ -53,10 +54,12 @@ public class FValue implements Externalizable {
         dos.writeObject(condition);
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
 
+    @Override
     public long getId() {
         return id;
     }

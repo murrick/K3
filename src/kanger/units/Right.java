@@ -1,6 +1,7 @@
 package kanger.units;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.Set;
  * <p>
  * Список правил
  */
-public class Right implements Externalizable {
+public class Right implements Externalizable, Identifiable {
 
     private long id = -1;                       // ID Правила
     private Term orig = null;                   // Оригинальная строка
@@ -65,10 +66,12 @@ public class Right implements Externalizable {
         return tree;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }

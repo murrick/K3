@@ -1,6 +1,7 @@
 package kanger.units;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.Set;
  * <p>
  * Элемент ветви дерева
  */
-public class Tree implements Comparable<Tree>, Externalizable {
+public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
 
     private long id = -1;                                       // Идентификатор
     private List<Domain> sequence = new ArrayList<>();          // Домены
@@ -90,10 +91,12 @@ public class Tree implements Comparable<Tree>, Externalizable {
         user.getMind().getUsedTrees().add(this);
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }

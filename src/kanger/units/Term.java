@@ -5,6 +5,7 @@ import kanger.compiler.PTree;
 import kanger.enums.DataType;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 
@@ -20,7 +21,7 @@ import java.util.List;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Object>, Externalizable {
+public class Term implements Comparable<Object>, Externalizable, Identifiable {
 
     public static final double FLT_EPSILON = 0.00000000001;
 
@@ -215,10 +216,12 @@ public class Term implements Comparable<Object>, Externalizable {
         return type;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }

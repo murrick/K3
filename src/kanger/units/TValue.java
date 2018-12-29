@@ -2,7 +2,7 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.interfaces.IValue;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.Cause;
 
 import java.io.*;
@@ -13,7 +13,7 @@ import java.util.TreeSet;
 /**
  * Created by murray on 13.12.16.
  */
-public class TValue implements Comparable<TValue>, Externalizable {
+public class TValue implements Comparable<TValue>, Externalizable, Identifiable {
 
 
     private long id = -1;                   // Идентификатор значения переменной
@@ -73,10 +73,12 @@ public class TValue implements Comparable<TValue>, Externalizable {
     }
 
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }

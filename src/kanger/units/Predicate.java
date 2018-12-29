@@ -1,6 +1,7 @@
 package kanger.units;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 
 import java.io.*;
 import java.util.HashSet;
@@ -9,7 +10,7 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
-public class Predicate implements Externalizable {
+public class Predicate implements Externalizable, Identifiable {
 
     private long id = -1;                   // Идентификатор
     private Term name = null;               // Имя предиката
@@ -54,10 +55,12 @@ public class Predicate implements Externalizable {
         this.range = range;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }

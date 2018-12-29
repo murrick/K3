@@ -2,13 +2,14 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.Cause;
 
 import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Record implements Comparable<Record>, Externalizable {
+public class Record implements Comparable<Record>, Externalizable, Identifiable {
     private long id = -1;
     private Domain domain = null;
     private int tag = -1;
@@ -53,10 +54,12 @@ public class Record implements Comparable<Record>, Externalizable {
         return domain;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }

@@ -2,7 +2,7 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.interfaces.IValue;
+import kanger.interfaces.Identifiable;
 
 import java.io.*;
 import java.util.HashSet;
@@ -13,7 +13,7 @@ import java.util.Set;
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable implements Comparable<Object>, Externalizable {
+public class TVariable implements Comparable<Object>, Externalizable, Identifiable {
 
     private long id = -1;                   // Идентификатор переменной
     private Term name = null;               // Оригинальное подкванторное имя
@@ -52,10 +52,12 @@ public class TVariable implements Comparable<Object>, Externalizable {
         this.name = tName;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
