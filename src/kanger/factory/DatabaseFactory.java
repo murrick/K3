@@ -91,7 +91,6 @@ public class DatabaseFactory {
             Right r = user.getMind().getRights().add();
             Tree t = user.getMind().getTrees().add();
             t.setRight(r);
-            t.setGenerated();
             t.setUsed();
             Domain d = user.getMind().getDomains().add(pred, antc, list, r);
             d.setRight(r);

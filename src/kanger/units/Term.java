@@ -287,13 +287,18 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
     }
 
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(type.ordinal());
         buffer.append(value.hashCode());
          return buffer.toString().hashCode();
     }
-
+   
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+    
     @Override
     public boolean equals(Object t) {
         return t != null && t instanceof Term && ((Term) t).getId() == id;

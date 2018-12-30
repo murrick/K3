@@ -737,7 +737,7 @@ public class Domain implements Externalizable, Identifiable {
     }
 
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(antc);
         buffer.append(predicate.getId());
@@ -745,6 +745,12 @@ public class Domain implements Externalizable, Identifiable {
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
     }
+
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+       
 
     @Override
     public boolean equals(Object d) {

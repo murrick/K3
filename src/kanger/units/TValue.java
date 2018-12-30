@@ -139,12 +139,17 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable 
 //
 
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(id);
 //        buffer.append(value.getId());
 //        buffer.append(tVar.getId());
         return buffer.toString().hashCode();
+    }
+   
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
     }
 
     @Override

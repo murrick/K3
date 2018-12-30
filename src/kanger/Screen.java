@@ -704,7 +704,7 @@ public class Screen {
         int depth = 0;
         for (Tree t : r.getTree()) {
             List<String> v = new ArrayList<>();
-            v.add((t.isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
+            v.add((t.getRight().isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
             list.add(v);
             int len = 0;
             for (Domain d : t.getSequence()) {

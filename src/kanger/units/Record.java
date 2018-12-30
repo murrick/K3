@@ -103,12 +103,17 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable 
     }
 
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(domain.isAntc());
         buffer.append(domain.getPredicate().getId());
         buffer.append(domain.getArguments().hashCode());
         return buffer.toString().hashCode();
+    }
+    
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
     }
 
     @Override

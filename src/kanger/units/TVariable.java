@@ -295,14 +295,19 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     }
 
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(right.getId());
         buffer.append(name.getId());
         buffer.append(index);
         return buffer.toString().hashCode();
     }
-
+   
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+    
     @Override
     public boolean equals(Object t) {
         return !(t == null || !(t instanceof TVariable)) && ((TVariable) t).id == id;

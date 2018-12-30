@@ -153,7 +153,7 @@ public class Right implements Externalizable, Identifiable {
     }
 
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(query);
         buffer.append(generated);
@@ -162,7 +162,12 @@ public class Right implements Externalizable, Identifiable {
         }
         return buffer.toString().hashCode();
     }
-
+   
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
+    
     @Override
     public boolean equals(Object t) {
         return !(t == null || !(t instanceof Right)) && ((Right) t).id == id;
