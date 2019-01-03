@@ -6,5 +6,5 @@ public interface Identifiable {
 
     void setId(long id);
 
-    int hashCode();
+    int getHash();
 }

@@ -19,7 +19,6 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
     private long id = -1;                                       // Идентификатор
     private List<Domain> sequence = new ArrayList<>();          // Домены
     private Right right = null;
-    private boolean generated = false;
 
     private Tree next = null;
     private User user = null;
@@ -38,7 +37,6 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
             sequence.add((Domain) dis.readObject());
         }
         right = (Right) dis.readObject();
-        generated = dis.readBoolean();
     }
 
     @Override
@@ -49,16 +47,6 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
             dos.writeObject(d);
         }
         dos.writeObject(right);
-        dos.writeBoolean(generated);
-    }
-
-
-    public void setGenerated() {
-        this.generated = true;
-    }
-
-    public boolean isGenerated() {
-        return generated;
     }
 
     public List<Domain> getSequence() {
@@ -139,15 +127,19 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
     }
 
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(right.getId());
-        buffer.append(generated);
         for(Domain d : sequence) {
             buffer.append(d.getId());
         }
         return buffer.toString().hashCode();
     }    
+   
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
 
     @Override
     public boolean equals(Object t) {
@@ -200,24 +192,6 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
     public void setClosed() {
         user.getMind().getClosedTrees().add(id);
     }
-
-//    public boolean isExcluded() {
-//        for(Domain d : sequence) {
-//            if(d.isExcluded()) {
-//                return true;
-//            }
-//        }
-//        return false;
-//        return user.getMind().getExcludedTrees().contains(this);
-//    }
-
-//    public void setExcluded(boolean excluded) {
-//        if (excluded) {
-//            user.getMind().getExcludedTrees().add(this);
-//        } else {
-//            user.getMind().getExcludedTrees().remove(this);
-//        }
-//    }
 
     public List<Function> getFunctions() {
         List<Function> list = new ArrayList<>();

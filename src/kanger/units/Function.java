@@ -282,11 +282,16 @@ public class Function implements Externalizable, Identifiable {
     }
    
     @Override
-    public int hashCode() {
+    public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(name.getId());
         buffer.append(range);
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
+    }
+    
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
     }
 }
