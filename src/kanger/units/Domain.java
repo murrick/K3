@@ -795,38 +795,38 @@ public class Domain implements Externalizable, Identifiable {
     }
 
 
-    public boolean isIntersected(Domain d) {
-        List<TValue> tValues = arguments.getTValues(true);
-        if (tValues.isEmpty()) {
-            return false;
-        } else {
-            boolean found = false;
-            for (TValue v : tValues) {
-                for (int i = 0; i < d.getPredicate().getRange(); ++i) {
-                    Argument a = d.get(i);
-                    if (a.isEmpty()) {
-                        return false;
-                    } else {
-                        if (a.getValue().getId() == v.getValue().getId()) {
-                            for (Cause s : v.getCauses()) {
-                                if (s.getSrc().getPredicate().getId() == d.getPredicate().getId() && s.getIndex() == i) {
-                                    found = true;
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-//                    if (found) {
-//                        break;
+//    public boolean isIntersected(Domain d) {
+//        List<TValue> tValues = arguments.getTValues(true);
+//        if (tValues.isEmpty()) {
+//            return false;
+//        } else {
+//            boolean found = false;
+//            for (TValue v : tValues) {
+//                for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+//                    Argument a = d.get(i);
+//                    if (a.isEmpty()) {
+//                        return false;
+//                    } else {
+//                        if (a.getValue().getId() == v.getValue().getId()) {
+//                            for (Cause s : v.getCauses()) {
+//                                if (s.getSrc().getPredicate().getId() == d.getPredicate().getId() && s.getIndex() == i) {
+//                                    found = true;
+//                                    return true;
+//                                }
+//                            }
+//                        }
 //                    }
-                }
-            }
-//            if (!found) {
-//                return false;
+////                    if (found) {
+////                        break;
+////                    }
+//                }
 //            }
-            return true;
-        }
-    }
+////            if (!found) {
+////                return false;
+////            }
+//            return true;
+//        }
+//    }
 //    public int getValOrder(int i) {
 //    }
 }
