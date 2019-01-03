@@ -5,8 +5,8 @@ import kanger.enums.LibMode;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.primitives.Domain;
-import kanger.primitives.Function;
+import kanger.units.Domain;
+import kanger.units.Function;
 
 import java.io.DataInputStream;
 import java.io.IOException;

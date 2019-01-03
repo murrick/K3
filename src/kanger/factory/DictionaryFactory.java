@@ -2,7 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.primitives.Term;
+import kanger.units.Term;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
+import java.util.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -23,6 +24,11 @@ public class DictionaryFactory {
 
     private Stack<Object[]> stack = new Stack<>();
     private User user = null;
+   
+    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
+    private Map<Long, Term> idCache = new HashMap<>();
+    private DictionaryFactory base = null;
+    
 
     public DictionaryFactory(User user) {
         this.user = user;
@@ -39,19 +45,18 @@ public class DictionaryFactory {
             lastID = 0;
             varIndex = 0;
         }
+        this.base = base;
         stack.clear();
         mark();
     }
 
-    public void commit(DictionaryFactory base, Collection vars) {
-        List<Term> list = new ArrayList();
+    public void commit(DictionaryFactory base, Collection<Object> vars) {
+        List<Term> list = new ArrayList<>();
         for (Term p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
         for (Term p : list) {
-            p.setNext(root);
-            root = p;
-            p.setId(lastID++);
+            append(p);
             if (p.isCVariable()) {
                 vars.add(p);
             }
@@ -64,12 +69,23 @@ public class DictionaryFactory {
             return p;
         } else {
             p = new Term(o, user);
-            p.setNext(root);
-            root = p;
-            p.setRight(user.getMind().getRights().getRoot());
-            p.setId(lastID++);
+            
+            append(p);
             return p;
         }
+    }
+   
+    private void append(Term term) {
+        term.setNext(root);
+        root = term;
+        term.setId(lastID++);
+       
+        int hash = term.getHash();
+        if(!hashCache.containsKey(hash)) {
+            hashCache.put(hash, new HashSet<Long>());
+        }
+        hashCache.get(hash).add(term.getId());
+        idCache.put(term.getId(), term);
     }
 
     public Term find(Object o) {
@@ -86,8 +102,9 @@ public class DictionaryFactory {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
+        t.setRight(user.getMind().getRights().getRoot());
         t.setIndex(i);
-        t.setName(name);
+        t.setName(add(name));
         return t;
     }
 
@@ -139,7 +156,7 @@ public class DictionaryFactory {
         int count = size();
         dos.writeInt(count);
         for (Term d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+//            d.writeCompiledData(dos);
         }
     }
 
@@ -148,9 +165,9 @@ public class DictionaryFactory {
         lastID = dis.readLong();
         varIndex = dis.readInt();
         int count = dis.readInt();
-        Term a = null, b;
+        Term a = null, b = null;
         while (count-- > 0) {
-            b = new Term(dis, user);
+//            b = new Term(dis, user);
             if (a != null) {
                 a.setNext(b);
             } else {

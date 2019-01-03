@@ -1,12 +1,11 @@
 package kanger;
 
 import kanger.enums.LogMode;
-import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
+import kanger.units.Domain;
+import kanger.units.Record;
+import kanger.units.TValue;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Set;
 
 // !@x a(x) -> b(x), @y b(y) -> c(y), @z c(z) -> d(z);
@@ -512,7 +511,6 @@ public class Analiser {
 //        mind.getQueuedDomains().clear();
         user.getMind().getUsedTrees().clear();
 //        user.getMind().getClosedTrees().clear();
-        user.getMind().getClosedDomains().clear();
         user.getMind().getSolutions().clear();
         user.getMind().getValues().clear();
 
@@ -763,7 +761,6 @@ public class Analiser {
 
     public boolean checkDatabase(boolean logging) {
         boolean result = false;
-        user.getMind().getClosedDomains().clear();
         for (Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {

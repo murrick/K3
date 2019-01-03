@@ -8,6 +8,9 @@ package kanger.primitives;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.units.Predicate;
+import kanger.units.Right;
+import kanger.units.Term;
 
 import java.util.*;
 

@@ -2,6 +2,9 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.primitives.*;
+import kanger.units.Domain;
+import kanger.units.Right;
+import kanger.units.Tree;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -121,7 +124,7 @@ public class RightFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Right r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos);
+//            r.writeCompiledData(dos);
         }
     }
 
@@ -129,9 +132,9 @@ public class RightFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        Right a = null, b;
+        Right a = null, b = null;
         while (count-- > 0) {
-            b = new Right(user).readCompiledData(dis);
+//            b = new Right(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

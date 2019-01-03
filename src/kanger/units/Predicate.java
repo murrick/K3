@@ -1,28 +1,21 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.*;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
- * <p>
- * Описание предиката. Голова предиката ссылается на список решений для него.
- * Список решений состоит из строк со значениями параметров. Флажок cuted служит
- * для отмены какого-либо решения. Собственно говоря предикат со списком решений
- * является единицей базы данных.
  */
-public class Predicate {
+public class Predicate implements Externalizable, Identifiable {
 
     private long id = -1;                   // Идентификатор
     private Term name = null;               // Имя предиката
     private int range = 0;                  // К-во параметров
+
     private Predicate next = null;          // Следующий предикат
 
     private User user = null;
@@ -31,16 +24,17 @@ public class Predicate {
         this.user = user;
     }
 
-    public Predicate readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        name = user.getMind().getTerms().get(dis.readLong());
+        name = (Term) dis.readObject();
         range = dis.readInt();
-        return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(name.getId());
+        dos.writeObject(name);
         dos.writeInt(range);
     }
 
@@ -61,10 +55,12 @@ public class Predicate {
         this.range = range;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
@@ -200,4 +196,17 @@ public class Predicate {
 //        }
 //        return list;
 //    }
+   
+    @Override
+    public int getHash() {
+        StringBuffer buffer = new StringBuffer();       
+        buffer.append(name.getId());
+        buffer.append(range);
+        return buffer.toString().hashCode();
+    }
+    
+    @Override
+    public int hashCode() {
+        return ("" + id).hashCode();
+    }
 }

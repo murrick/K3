@@ -1,9 +1,9 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.TValue;
-import kanger.primitives.TVariable;
-import kanger.primitives.Term;
+import kanger.units.TValue;
+import kanger.units.TVariable;
+import kanger.units.Term;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -266,7 +266,7 @@ public class TValueFactory {
         int count = size();
         dos.writeInt(count);
         for (TValue d = root; d != null; d = d.getNext()) {
-            d.writeCompiledData(dos);
+//            d.writeCompiledData(dos);
         }
     }
 
@@ -274,9 +274,9 @@ public class TValueFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        TValue a = null, b;
+        TValue a = null, b = null;
         while (count-- > 0) {
-            b = new TValue(user).readCompiledData(dis);
+//            b = new TValue(user).readCompiledData(dis);
             if (a != null) {
                 a.setNext(b);
             } else {

@@ -7,9 +7,8 @@ import kanger.enums.LibMode;
 import kanger.enums.Tools;
 import kanger.interfaces.IRunnable;
 import kanger.primitives.ArgList;
-import kanger.primitives.Argument;
-import kanger.primitives.Function;
-import kanger.primitives.Term;
+import kanger.units.Function;
+import kanger.units.Term;
 
 import java.util.*;
 

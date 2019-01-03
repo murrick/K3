@@ -1,15 +1,13 @@
 package kanger.primitives;
 
-import kanger.User;
-import kanger.enums.ArgumentType;
+import kanger.units.TValue;
+import kanger.units.TVariable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArgList extends ArrayList<Argument> {
+public class ArgList extends ArrayList<Argument> implements Externalizable {
 
     public ArgList() {
         super();
@@ -23,20 +21,22 @@ public class ArgList extends ArrayList<Argument> {
         super(lis);
     }
 
-    public ArgList(DataInputStream dis, User user) throws IOException {
-        int count = dis.readInt();
-        while (count-- > 0) {
-            Argument a = new Argument(dis, user);
-            add(a);
-        }
-    }
-    public void writeCompiledData(DataOutputStream dos, User user) throws IOException {
-        dos.writeInt(size());
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeInt(size());
         for(Argument a : this) {
-            a.writeCompiledData(dos, user);
+            out.writeObject(a);
         }
     }
 
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        int count = in.readInt();
+        while (count-- > 0) {
+            Argument a = (Argument) in.readObject();
+            add(a);
+        }
+    }
 
     @Override
     public int hashCode() {

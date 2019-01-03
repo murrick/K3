@@ -1,17 +1,15 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.interfaces.Identifiable;
+import kanger.primitives.Cause;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
+import java.io.*;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-public class Record implements Comparable<Record> {
+public class Record implements Comparable<Record>, Externalizable, Identifiable {
     private long id = -1;
     private Domain domain = null;
     private int tag = -1;
@@ -29,25 +27,26 @@ public class Record implements Comparable<Record> {
         this.user = user;
     }
 
-    public Record readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        domain = user.getMind().getDomains().get(dis.readLong());
+        domain = (Domain) dis.readObject();
         tag = dis.readInt();
         int count = dis.readInt();
         while(count-- > 0) {
-            Cause c = new Cause(dis, user);
+            Cause c = (Cause) dis.readObject();
             causes.add(c);
         }
-        return this;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(domain.getId());
+        dos.writeObject(domain);
         dos.writeInt(tag);
         dos.writeInt(causes.size());
         for(Cause c : causes) {
-            c.writeCompiledData(dos, user);
+            dos.writeObject(c);
         }
     }
 
@@ -55,10 +54,12 @@ public class Record implements Comparable<Record> {
         return domain;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
@@ -101,6 +102,15 @@ public class Record implements Comparable<Record> {
         return prefix + domain.toString();
     }
 
+    @Override
+    public int getHash() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(domain.isAntc());
+        buffer.append(domain.getPredicate().getId());
+        buffer.append(domain.getArguments().hashCode());
+        return buffer.toString().hashCode();
+    }
+    
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

@@ -1,8 +1,8 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Predicate;
-import kanger.primitives.Term;
+import kanger.units.Predicate;
+import kanger.units.Term;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -129,7 +129,7 @@ public class PredicateFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Predicate p = root; p != null; p = p.getNext()) {
-            p.writeCompiledData(dos);
+//            p.writeCompiledData(dos);
         }
         List<Long[]> links = new ArrayList<>();
         //TODO: Save causes
@@ -153,9 +153,9 @@ public class PredicateFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        Predicate a = null, b;
+        Predicate a = null, b = null;
         while (count-- > 0) {
-            b = new Predicate(user).readCompiledData(dis);
+//            b = new Predicate(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

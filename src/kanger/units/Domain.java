@@ -1,15 +1,15 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.enums.Tools;
-import kanger.exception.ParametersIncompleteException;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
+import kanger.primitives.Cause;
+import kanger.interfaces.Identifiable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -17,59 +17,41 @@ import java.util.*;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Domain {
+public class Domain implements Externalizable, Identifiable {
 
-    private Predicate predicate = null;                         // Ссылка на описатель предиката
-    private Right right;                                        // Ссылка на правило
-    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
-    private boolean antc = true;                                // ! или ?
     private long id = -1;                                       // id домена
+    private boolean antc = true;                                // ! или ?
+    private Predicate predicate = null;                         // Ссылка на описатель предиката
+    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
+    private Right right;                                        // Ссылка на правило
     private Domain next = null;                                 // Следующий элемент
 
     private Stack<List<TValue>> tStack = new Stack<>();
     private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
-//    private Set<Domain> parents = new HashSet<>();              // Родительские домены для БД
 
     private User user = null;
 
+    //TODO Нужен конструктор по умолчанию
     public Domain(User user) {
         this.user = user;
     }
 
-    public Domain readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        right = user.getMind().getRights().get(dis.readLong());
-        predicate = user.getMind().getPredicates().get(dis.readLong());
-        arguments = new ArgList(dis, user);
         antc = dis.readBoolean();
-
-        int count = dis.readInt();
-        while (count-- > 0) {
-            ArgList args = new ArgList(dis, user);
-            causes.put(args, new TreeSet<>());
-            int cnt = dis.readInt();
-            while(cnt-- > 0) {
-                Cause c = new Cause(dis, user);
-                causes.get(args).add(c);
-            }
-        }
-        return this;
+        predicate = (Predicate) dis.readObject();
+        arguments = (ArgList) dis.readObject();
+        right = (Right) dis.readObject();
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(right.getId());
-        dos.writeLong(predicate.getId());
-        arguments.writeCompiledData(dos, user);
         dos.writeBoolean(antc);
-        dos.writeInt(causes.size());
-        for(Map.Entry<ArgList, SortedSet<Cause>> e : causes.entrySet()) {
-            e.getKey().writeCompiledData(dos, user);
-            dos.writeInt(e.getValue().size());
-            for(Cause c : e.getValue()) {
-                c.writeCompiledData(dos, user);
-            }
-        }
+        dos.writeObject(predicate);
+        dos.writeObject(arguments);
+        dos.writeObject(right);
     }
 
     public Predicate getPredicate() {
@@ -88,10 +70,12 @@ public class Domain {
         this.right = right;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
@@ -289,11 +273,10 @@ public class Domain {
             suffix += " " + id;
         }
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix += /*isDest() ||*/ isQuery(arguments) || isClosed(arguments) || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
+            suffix += /*isDest() ||*/ isQuery(arguments)  || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
                     ? " " +
                     //(isDest() ? "A" : "") +
                     (isQuery() ? "Q" : "") +
-                    (isClosed() ? "C" : "") +
 //                    (isUsed() ? "U" : "") +
                     (isExcluded() ? "X" : "") +
                     //(isProduced() ? "P" : "") +
@@ -438,38 +421,9 @@ public class Domain {
     }
 
 
-    public boolean isClosed() {
-        return isClosed(arguments);
-    }
-
-    public boolean isClosed(ArgList arguments) {
-        if (user.getMind().getClosedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getClosedDomains().get(this)) {
-                if (arguments.equalsBase(list)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void setClosed() {
-        if (!user.getMind().getClosedDomains().containsKey(this)) {
-            user.getMind().getClosedDomains().put(this, new HashSet<>());
-        }
-        if (!isClosed()) {
-//            try {
-            user.getMind().getClosedDomains().get(this).add(arguments.convertBase());
-//            } catch (ParametersIncompleteException e) {
-////                e.printStackTrace();
-//            }
-        }
-    }
-
-
     public boolean isUsed() {
-        if (user.getMind().getUsedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getUsedDomains().get(this)) {
+        if (user.getMind().getUsedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getUsedDomains().get(id)) {
                 if (arguments.equalsBase(list)) {
                     return true;
                 }
@@ -479,12 +433,12 @@ public class Domain {
     }
 
     public void setUsed() {
-        if (!user.getMind().getUsedDomains().containsKey(this)) {
-            user.getMind().getUsedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getUsedDomains().containsKey(id)) {
+            user.getMind().getUsedDomains().put(id, new HashSet<>());
         }
         if (!isUsed()) {
 //            try {
-            user.getMind().getUsedDomains().get(this).add(arguments.convertBase());
+            user.getMind().getUsedDomains().get(id).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -492,8 +446,8 @@ public class Domain {
     }
 
     public boolean isExcluded(ArgList args) {
-        if (user.getMind().getExcludedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
+        if (user.getMind().getExcludedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getExcludedDomains().get(id)) {
                 if (args.equalsBase(list)) {
                     return true;
                 }
@@ -503,8 +457,8 @@ public class Domain {
     }
 
     public boolean isExcluded() {
-        if (user.getMind().getExcludedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
+        if (user.getMind().getExcludedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getExcludedDomains().get(id)) {
                 if (arguments.equalsBase(list)) {
                     return true;
                 }
@@ -514,12 +468,12 @@ public class Domain {
     }
 
     public void setExcluded(ArgList args) {
-        if (!user.getMind().getExcludedDomains().containsKey(this)) {
-            user.getMind().getExcludedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getExcludedDomains().containsKey(id)) {
+            user.getMind().getExcludedDomains().put(id, new HashSet<>());
         }
         if (!isExcluded(args)) {
 //            try {
-            user.getMind().getExcludedDomains().get(this).add(args.convertBase());
+            user.getMind().getExcludedDomains().get(id).add(args.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -527,12 +481,12 @@ public class Domain {
     }
 
     public void setExcluded() {
-        if (!user.getMind().getExcludedDomains().containsKey(this)) {
-            user.getMind().getExcludedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getExcludedDomains().containsKey(id)) {
+            user.getMind().getExcludedDomains().put(id, new HashSet<>());
         }
         if (!isExcluded()) {
 //            try {
-            user.getMind().getExcludedDomains().get(this).add(arguments.convertBase());
+            user.getMind().getExcludedDomains().get(id).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -540,9 +494,9 @@ public class Domain {
     }
 
     public boolean isProduced(int tag) {
-        if (user.getMind().getProducedDomains().containsKey(this)) {
-            if (user.getMind().getProducedDomains().get(this).containsKey(tag)) {
-                for (ArgList list : user.getMind().getProducedDomains().get(this).get(tag)) {
+        if (user.getMind().getProducedDomains().containsKey(id)) {
+            if (user.getMind().getProducedDomains().get(id).containsKey(tag)) {
+                for (ArgList list : user.getMind().getProducedDomains().get(id).get(tag)) {
                     if (arguments.equalsBase(list)) {
                         return true;
                     }
@@ -578,15 +532,15 @@ public class Domain {
 //
 
     public void setProduced(int tag) {
-        if (!user.getMind().getProducedDomains().containsKey(this)) {
-            user.getMind().getProducedDomains().put(this, new HashMap<>());
+        if (!user.getMind().getProducedDomains().containsKey(id)) {
+            user.getMind().getProducedDomains().put(id, new HashMap<>());
         }
-        if (!user.getMind().getProducedDomains().get(this).containsKey(tag)) {
-            user.getMind().getProducedDomains().get(this).put(tag, new HashSet<>());
+        if (!user.getMind().getProducedDomains().get(id).containsKey(tag)) {
+            user.getMind().getProducedDomains().get(id).put(tag, new HashSet<>());
         }
         if (!isProduced(tag)) {
 //            try {
-            user.getMind().getProducedDomains().get(this).get(tag).add(arguments.convertBase());
+            user.getMind().getProducedDomains().get(id).get(tag).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -598,8 +552,8 @@ public class Domain {
     }
 
     public boolean isCalculated(ArgList arguments) {
-        if (user.getMind().getCalculatedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getCalculatedDomains().get(this)) {
+        if (user.getMind().getCalculatedDomains().containsKey(id)) {
+            for (ArgList list : user.getMind().getCalculatedDomains().get(id)) {
                 if (arguments.equalsBase(list)) {
                     return true;
                 }
@@ -624,12 +578,12 @@ public class Domain {
     }
 
     public void setCalculated() {
-        if (!user.getMind().getCalculatedDomains().containsKey(this)) {
-            user.getMind().getCalculatedDomains().put(this, new HashSet<>());
+        if (!user.getMind().getCalculatedDomains().containsKey(id)) {
+            user.getMind().getCalculatedDomains().put(id, new HashSet<>());
         }
         if (!isCalculated()) {
 //            try {
-            user.getMind().getCalculatedDomains().get(this).add(arguments.convertBase());
+            user.getMind().getCalculatedDomains().get(id).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -703,8 +657,8 @@ public class Domain {
             }
             for (Argument a : arguments) {
                 if (a.isVSet()
-                        && user.getMind().getQueryValues().containsKey(a.getV().getTVar())
-                        && user.getMind().getQueryValues().get(a.getV().getTVar()).contains(a.getV())) {
+                        && user.getMind().getQueryValues().containsKey(a.getV().getTVar().getId())
+                        && user.getMind().getQueryValues().get(a.getV().getTVar().getId()).contains(a.getV().getId())) {
                     return true;
                 }
             }
@@ -783,9 +737,20 @@ public class Domain {
     }
 
     @Override
+    public int getHash() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(antc);
+        buffer.append(predicate.getId());
+        buffer.append(right.getId());
+        buffer.append(arguments.hashCode());
+        return buffer.toString().hashCode();
+    }
+
+    @Override
     public int hashCode() {
         return ("" + id).hashCode();
     }
+       
 
     @Override
     public boolean equals(Object d) {

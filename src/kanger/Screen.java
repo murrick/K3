@@ -12,6 +12,7 @@ import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
 import kanger.test.KangerTest;
+import kanger.units.*;
 
 import java.io.*;
 import java.util.*;
@@ -703,7 +704,7 @@ public class Screen {
         int depth = 0;
         for (Tree t : r.getTree()) {
             List<String> v = new ArrayList<>();
-            v.add((t.isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : "") + (!t.getExcludes().isEmpty() ? "X" : ""));
+            v.add((t.getRight().isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
             list.add(v);
             int len = 0;
             for (Domain d : t.getSequence()) {

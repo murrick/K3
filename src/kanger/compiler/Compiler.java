@@ -6,6 +6,7 @@ import kanger.enums.ParseError;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.*;
+import kanger.units.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -99,7 +100,7 @@ public class Compiler {
                 }
             case Enums.CON: {
                 if (antc) {
-                    Tree x = r.cloneTree(t, true);
+                    Tree x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), antc, replacements, list);
                     construct(r, x, root.getRight(), antc, replacements, list);
@@ -123,7 +124,7 @@ public class Compiler {
                     construct(r, t, root.getRight(), antc, replacements, tmp);
                     list.addAll(tmp);
                 } else {
-                    Tree x = r.cloneTree(t, !antc);
+                    Tree x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), antc, replacements, list);
                     construct(r, x, root.getRight(), antc, replacements, list);
@@ -140,7 +141,7 @@ public class Compiler {
                     construct(r, t, root.getRight(), antc, replacements, tmp);
                     list.addAll(tmp);
                 } else {
-                    Tree x = r.cloneTree(t, true);
+                    Tree x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), !antc, replacements, list);
                     construct(r, x, root.getRight(), antc, replacements, list);

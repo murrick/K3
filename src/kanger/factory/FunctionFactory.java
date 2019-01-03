@@ -1,8 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Domain;
-import kanger.primitives.Function;
+import kanger.units.Function;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -111,7 +110,7 @@ public class FunctionFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Function r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos);
+//            r.writeCompiledData(dos);
         }
     }
 
@@ -119,9 +118,9 @@ public class FunctionFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        Function a = null, b;
+        Function a = null, b = null;
         while (count-- > 0) {
-            b = new Function(user).readCompiledData(dis);
+//            b = new Function(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

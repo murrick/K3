@@ -1,7 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.Tree;
+import kanger.units.Tree;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -113,7 +113,7 @@ public class TreeFactory {
         dos.writeLong(lastID);
         dos.writeInt(size());
         for (Tree r = root; r != null; r = r.getNext()) {
-            r.writeCompiledData(dos);
+//            r.writeCompiledData(dos);
         }
     }
 
@@ -121,9 +121,9 @@ public class TreeFactory {
         clear();
         lastID = dis.readLong();
         int count = dis.readInt();
-        Tree a = null, b;
+        Tree a = null, b = null;
         while (count-- > 0) {
-            b = new Tree(user).readCompiledData(dis);
+//            b = new Tree(user).readCompiledData(dis);
             if (a == null) {
                 root = b;
             } else {

@@ -1,10 +1,13 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
 import kanger.compiler.PTree;
 import kanger.enums.DataType;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
+import kanger.interfaces.Identifiable;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -18,19 +21,19 @@ import java.util.List;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Object> {
+public class Term implements Comparable<Object>, Externalizable, Identifiable {
 
     public static final double FLT_EPSILON = 0.00000000001;
 
+    private long id = -1;                // Идентификатор
     private DataType type = DataType.VOID;
     private Object value = null;
-    private long id = -1;                // Идентификатор
-    private Right right = null;          // Ссылка на правило
-    private Term next = null;      // Следующая запись
 
-    private String name = "";             // Оригинальное имя c-переменной
     private int index = 0;              // Индекс c-переменной
+    private Term name = null;             // Оригинальное имя c-переменной
+    private Right right = null;          // Ссылка на правило
 
+    private Term next = null;      // Следующая запись
     private User user = null;
 
     public Term(User user) {
@@ -42,12 +45,10 @@ public class Term implements Comparable<Object> {
         construct(str);
     }
 
-    public Term readCompiledData(DataInputStream din) throws IOException, ClassNotFoundException {
+    @Override
+    public void readExternal(ObjectInput din) throws IOException, ClassNotFoundException {
         id = din.readLong();
         type = DataType.values()[din.readInt()];
-        name = din.readUTF();
-        index = din.readInt();
-        right = user.getMind().getRights().get(din.readLong());
         switch (type) {
             case DATE:
                 value = new Date(din.readLong());
@@ -55,14 +56,14 @@ public class Term implements Comparable<Object> {
             case NUMERIC:
                 value = din.readDouble();
                 break;
+            case SET:
             case INTERVAL:
                 if (din.readBoolean()) {
-                    List<Term> list = new ArrayList<>();
+                    value = new ArrayList<Term>();
                     for (int i = 0; i < din.readInt(); ++i) {
-                        Term t = new Term(din, user);
-                        list.add(t);
+                        Term t = (Term) din.readObject();
+                        ((List<Term>) value).add(t);
                     }
-                    value = list;
                 } else {
                     value = din.readUTF();
                 }
@@ -71,18 +72,21 @@ public class Term implements Comparable<Object> {
                 value = din.readUTF();
                 break;
             case TERM:
-                value = new ObjectInputStream(din).readObject();
+                value = din.readObject();
                 break;
         }
-        return this;
+
+        index = din.readInt();
+        if(index > 0) {
+            name = (Term) din.readObject();
+            right = (Right) din.readObject();
+        }
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
         dos.writeInt(type.ordinal());
-        dos.writeUTF(name);
-        dos.writeInt(index);
-        dos.writeLong(right.getId());
         switch (type) {
             case DATE:
                 dos.writeLong(((Date) value).getTime());
@@ -96,7 +100,7 @@ public class Term implements Comparable<Object> {
                     dos.writeBoolean(true);
                     dos.writeInt(((Collection) value).size());
                     for (Term t : (Collection<Term>) value) {
-                        t.writeCompiledData(dos);
+                        dos.writeObject(t);
                     }
                 } else {
                     dos.writeBoolean(false);
@@ -107,8 +111,13 @@ public class Term implements Comparable<Object> {
                 dos.writeUTF((String) value);
                 break;
             case TERM:
-                new ObjectOutputStream(dos).writeObject(value);
+                dos.writeObject(value);
                 break;
+        }
+        dos.writeInt(index);
+        if(index > 0) {
+            dos.writeObject(name);
+            dos.writeObject(right);
         }
     }
 
@@ -207,10 +216,12 @@ public class Term implements Comparable<Object> {
         return type;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
@@ -263,7 +274,7 @@ public class Term implements Comparable<Object> {
                     case Enums.DEBUG_LEVEL_DEBUG:
                         return formatValue();
                     default:
-                        return name;
+                        return name.toString();
                 }
             } else if (type == DataType.DATE) {
                 return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format((Date) value);
@@ -276,10 +287,18 @@ public class Term implements Comparable<Object> {
     }
 
     @Override
+    public int getHash() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(type.ordinal());
+        buffer.append(value.hashCode());
+         return buffer.toString().hashCode();
+    }
+   
+    @Override
     public int hashCode() {
         return ("" + id).hashCode();
     }
-
+    
     @Override
     public boolean equals(Object t) {
         return t != null && t instanceof Term && ((Term) t).getId() == id;
@@ -293,11 +312,11 @@ public class Term implements Comparable<Object> {
         this.value = value;
     }
 
-    public String getName() {
+    public Term getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(Term name) {
         this.name = name;
     }
 

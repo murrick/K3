@@ -1,10 +1,9 @@
-package kanger.primitives;
+package kanger.units;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,14 +14,12 @@ import java.util.Set;
  * <p>
  * Элемент ветви дерева
  */
-public class Tree implements Comparable<Tree>{
+public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
 
-    private List<Domain> sequence = new ArrayList<>();          // Домены
     private long id = -1;                                       // Идентификатор
+    private List<Domain> sequence = new ArrayList<>();          // Домены
     private Right right = null;
-    private boolean generated = false;
 
-    private Set<Long> excludes = new HashSet<>();
     private Tree next = null;
     private User user = null;
 
@@ -32,38 +29,24 @@ public class Tree implements Comparable<Tree>{
         this.user = user;
     }
 
-    public Tree readCompiledData(DataInputStream dis) throws IOException {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        right = user.getMind().getRights().get(dis.readLong());
-        generated = dis.readBoolean();
         int count = dis.readInt();
         while (count-- > 0) {
-            sequence.add(user.getMind().getDomains().get(dis.readLong()));
+            sequence.add((Domain) dis.readObject());
         }
-        return this;
+        right = (Right) dis.readObject();
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(right.getId());
-        dos.writeBoolean(generated);
         dos.writeInt(sequence.size());
         for (Domain d : sequence) {
-            dos.writeLong(d.getId());
+            dos.writeObject(d);
         }
-    }
-
-
-    public void setGenerated() {
-        this.generated = true;
-    }
-
-    public boolean isGenerated() {
-        return generated;
-    }
-
-    public Set<Long> getExcludes() {
-        return excludes;
+        dos.writeObject(right);
     }
 
     public List<Domain> getSequence() {
@@ -89,17 +72,19 @@ public class Tree implements Comparable<Tree>{
 //            }
 //        }
 //        return false;
-        return user.getMind().getUsedTrees().contains(this);
+        return user.getMind().getUsedTrees().contains(id);
     }
 
     public void setUsed() {
-        user.getMind().getUsedTrees().add(this);
+        user.getMind().getUsedTrees().add(id);
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
@@ -126,7 +111,6 @@ public class Tree implements Comparable<Tree>{
         Tree t = user.getMind().getTrees().add();
         t.setRight(right);
         t.sequence.addAll(sequence);
-        t.excludes.addAll(excludes);
         return t;
     }
 
@@ -142,10 +126,16 @@ public class Tree implements Comparable<Tree>{
         return s;
     }
 
-    public boolean isExcluded(Tree t) {
-        return excludes.contains(t.getId());
-    }
-
+    @Override
+    public int getHash() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(right.getId());
+        for(Domain d : sequence) {
+            buffer.append(d.getId());
+        }
+        return buffer.toString().hashCode();
+    }    
+   
     @Override
     public int hashCode() {
         return ("" + id).hashCode();
@@ -196,30 +186,12 @@ public class Tree implements Comparable<Tree>{
     }
 
     public boolean isClosed() {
-        return user.getMind().getClosedTrees().contains(this);
+        return user.getMind().getClosedTrees().contains(id);
     }
 
     public void setClosed() {
-        user.getMind().getClosedTrees().add(this);
+        user.getMind().getClosedTrees().add(id);
     }
-
-//    public boolean isExcluded() {
-//        for(Domain d : sequence) {
-//            if(d.isExcluded()) {
-//                return true;
-//            }
-//        }
-//        return false;
-//        return user.getMind().getExcludedTrees().contains(this);
-//    }
-
-//    public void setExcluded(boolean excluded) {
-//        if (excluded) {
-//            user.getMind().getExcludedTrees().add(this);
-//        } else {
-//            user.getMind().getExcludedTrees().remove(this);
-//        }
-//    }
 
     public List<Function> getFunctions() {
         List<Function> list = new ArrayList<>();
