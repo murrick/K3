@@ -2,6 +2,7 @@ package kanger;
 
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
+import kanger.storage.Data;
 import kanger.storage.Index;
 import kanger.units.Term;
 
@@ -60,6 +61,16 @@ public class Kanger {
 
 
         try {
+            try (Data d = new Data()){
+                d.open("test.data");
+                d.set(-1, new Term( "One", user));
+                long offset01 = d.getCurrentOffset();
+                d.set(-1, new Term("Two", user));
+                long offset02 = d.getCurrentOffset();
+
+                System.out.println(d.get(offset01));
+                System.out.println(d.get(offset02));
+            }
             try (Index x = new Index()) {
                 x.setBlockSize(5);
                 x.open("test.index");
@@ -83,19 +94,22 @@ public class Kanger {
                 System.out.println("W:" + x.getWriteCounter());
                 System.out.println("--------------");
 
+                x.dropReadCounter();
+                x.dropWriteCounter();
+
                 x.set(1, 1000001, 0);
                 x.set(23, 9877, 0);
                 x.set(2, 9877, 0);
                 x.remove(6);
 
-                System.out.println("R:" + x.getReadCounter());
-                System.out.println("W:" + x.getWriteCounter());
-
                 for (Index.IndexOne o : x) {
                     System.out.println(o);
                 }
+                System.out.println("R:" + x.getReadCounter());
+                System.out.println("W:" + x.getWriteCounter());
+
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
 

@@ -61,19 +61,19 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 }
             } while (ras.length() >= ras.getFilePointer() + RECORD_SIZE);
         } catch (FileNotFoundException ex) {
-            ras = new RandomAccessFile(file, "rw");
-            ras.seek(0);
-            ras.writeShort(version);
-            ras.writeInt(blockSize);
-            ras.writeLong(size);
-            changed = true;
-            IndexOne one = new IndexOne();
-            one.setFlags((byte) BLOCK_MARK);
-            one.setId(0);
-            one.setOffset(ras.getFilePointer());
-            one.setSize(0);
-            baseIndex.put(one.getId(), one);
-            ras.close();
+            try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
+                ras.seek(0);
+                ras.writeShort(version);
+                ras.writeInt(blockSize);
+                ras.writeLong(size);
+                changed = true;
+                IndexOne one = new IndexOne();
+                one.setFlags((byte) BLOCK_MARK);
+                one.setId(0);
+                one.setOffset(ras.getFilePointer());
+                one.setSize(0);
+                baseIndex.put(one.getId(), one);
+            }
             ras = new RandomAccessFile(file, "r");
         }
     }
@@ -83,6 +83,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         flush();
         this.file = null;
         this.ras = null;
+        this.size = 0;
         this.baseIndex.clear();
         this.currentBlock.clear();
     }
