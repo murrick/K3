@@ -2,7 +2,11 @@ package kanger;
 
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
+import kanger.storage.Index;
 import kanger.units.Term;
+
+import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -55,6 +59,47 @@ public class Kanger {
         Mind mind = new Mind(user);
 
 
+        try {
+            try (Index x = new Index()) {
+                x.setBlockSize(5);
+                x.open("test.index");
+                x.set(1, 0001, 0);
+                x.set(2, 0002, 0);
+                x.set(9, 9879, 0);
+                x.set(5, 9872, 0);
+                x.set(8, 9873, 0);
+                x.set(7, 0007, 0);
+                x.set(6, 9875, 0);
+                x.set(4, 9876, 0);
+                x.set(3, 9877, 0);
+
+                Iterator<Index.IndexOne> z = x.iterator();
+                while (z.hasNext()) {
+                    System.out.println(z.next());
+                }
+
+
+                System.out.println("R:" + x.getReadCounter());
+                System.out.println("W:" + x.getWriteCounter());
+                System.out.println("--------------");
+
+                x.set(1, 1000001, 0);
+                x.set(23, 9877, 0);
+                x.set(2, 9877, 0);
+                x.remove(6);
+
+                System.out.println("R:" + x.getReadCounter());
+                System.out.println("W:" + x.getWriteCounter());
+
+                for (Index.IndexOne o : x) {
+                    System.out.println(o);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.exit(0);
 
 //        new LibraryStrings(mind);
 //        new LibraryMath(mind);
