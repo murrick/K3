@@ -1,15 +1,17 @@
 package kanger.storage;
 
-import kanger.interfaces.Identifiable;
-
 import java.io.*;
 import java.util.Arrays;
+import java.util.Iterator;
 
-public class Data implements Closeable {
+public class Data implements Closeable, Iterable<Externalizable> {
     private static final int DELETED = 0x01;
     private static final short VERSION = 0x0301;
+    private static final long HEADER_SIZE = 2L + 8L + 8L;
+    private static final long SIZE_OFFSET = 2L + 8L;
 
     private int version = VERSION;
+    private long headerSize = HEADER_SIZE;
     private boolean changed = false;
     private File file = null;
     private RandomAccessFile ras = null;
@@ -31,10 +33,16 @@ public class Data implements Closeable {
         this.file = file;
         try {
             ras = new RandomAccessFile(file, "r");
+            ras.seek(0);
+            version = ras.readShort();
+            headerSize = ras.readLong();
+            size = ras.readLong();
+            changed = false;
         } catch (FileNotFoundException ex) {
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 ras.seek(0);
                 ras.writeShort(version);
+                ras.writeLong(headerSize);
                 ras.writeLong(size);
                 changed = true;
             }
@@ -64,23 +72,26 @@ public class Data implements Closeable {
                 changed = false;
             }
 
-            ras.seek(offset);
-            blockSize = ras.readLong();
-            dataSize = ras.readLong();
-            if (dataSize == 0) {
-                return null;
+            if (offset < ras.length()) {
+                ras.seek(offset);
+                blockSize = ras.readLong();
+                dataSize = ras.readLong();
+                if (dataSize == 0) {
+                    data = null;
+                } else {
+                    buffer = new byte[(int) dataSize];
+                    ras.read(buffer);
+                    ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
+                    ObjectInputStream ois = new ObjectInputStream(bis);
+                    data = (Externalizable) ois.readObject();
+                    ++readCounter;
+                }
+                currentOffset = offset;
             } else {
-                buffer = new byte[(int) dataSize];
-                ras.read(buffer);
-                ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
-                ObjectInputStream ois = new ObjectInputStream(bis);
-                data = (Externalizable) ois.readObject();
-                ++readCounter;
-                return data;
+                data = null;
             }
-        } else {
-            return data;
         }
+        return data;
     }
 
     public void set(long offset, Externalizable o) throws IOException {
@@ -90,10 +101,11 @@ public class Data implements Closeable {
         }
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        o.writeExternal(new ObjectOutputStream(bos));
+        ObjectOutputStream out = new ObjectOutputStream(bos);
+        out.writeObject(o);
         byte[] tmp = bos.toByteArray();
 
-        if(offset != currentOffset || buffer == null || !Arrays.equals(tmp, buffer)) {
+        if (offset != currentOffset || buffer == null || !Arrays.equals(tmp, buffer)) {
             currentOffset = offset;
             data = o;
             buffer = tmp;
@@ -107,23 +119,39 @@ public class Data implements Closeable {
     public void remove(long offset) throws IOException {
         try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
             ras.seek(offset + 8);
-            ras.writeLong(0L);
+            if (ras.getFilePointer() == offset + 8) {
+                long size = ras.readLong();
+                if (size != 0) {
+                    ras.seek(offset + 8);
+                    ras.writeLong(0L);
+                    --size;
+                    ras.seek(SIZE_OFFSET);
+                    ras.writeLong(size);
+                }
+            }
         }
     }
 
     private void saveCurrentBlock() throws IOException {
-        if(buffer != null && data != null) {
+        if (buffer != null && data != null) {
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
-
+                long oldSize = size;
                 if (currentOffset != -1) {
                     ras.seek(currentOffset);
                     blockSize = ras.readLong();
                     if (blockSize >= dataSize) {
                         ras.writeLong(dataSize);
                         ras.write(buffer);
+                    } else if (currentOffset + blockSize >= ras.length()) {
+                        blockSize = dataSize;
+                        ras.seek(currentOffset);
+                        ras.writeLong(blockSize);
+                        ras.writeLong(dataSize);
+                        ras.write(buffer);
                     } else {
                         ras.writeLong(0L);
                         currentOffset = -1;
+                        --size;
                     }
                 }
                 if (currentOffset == -1) {
@@ -133,8 +161,13 @@ public class Data implements Closeable {
                     ras.writeLong(blockSize);
                     ras.writeLong(dataSize);
                     ras.write(buffer);
+                    ++size;
                 }
                 ++writeCounter;
+                if (oldSize != size) {
+                    ras.seek(SIZE_OFFSET);
+                    ras.writeLong(size);
+                }
             }
         }
     }
@@ -181,5 +214,50 @@ public class Data implements Closeable {
 
     public long getCurrentOffset() {
         return currentOffset;
+    }
+
+
+    @Override
+    public Iterator<Externalizable> iterator() {
+        try {
+            flush();
+            currentOffset = -1;
+        } catch (IOException e) {
+            return null;
+        }
+
+        return new Iterator<Externalizable>() {
+            @Override
+            public boolean hasNext() {
+                try {
+                    if (currentOffset == -1) {
+                        if (ras.length() >= headerSize + 8 + 8) {
+                            ras.seek(headerSize);
+                            long blockSize = ras.readLong();
+                            return ras.length() >= headerSize + 8 + 8 + blockSize;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return ras.length() >= currentOffset + 8 + 8 + 8 + 8 + blockSize;
+                    }
+                } catch (IOException e) {
+                    return false;
+                }
+            }
+
+            @Override
+            public Externalizable next() {
+                try {
+                    if (currentOffset == -1) {
+                        return get(headerSize);
+                    } else {
+                        return get(currentOffset + blockSize + 8 + 8);
+                    }
+                } catch (ClassNotFoundException | IOException e) {
+                    return null;
+                }
+            }
+        };
     }
 }

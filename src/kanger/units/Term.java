@@ -9,7 +9,10 @@ import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +38,9 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
 
     private Term next = null;      // Следующая запись
     private User user = null;
+
+    public Term() {
+    }
 
     public Term(User user) {
         this.user = user;

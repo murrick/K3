@@ -6,6 +6,7 @@ import kanger.storage.Data;
 import kanger.storage.Index;
 import kanger.units.Term;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -67,9 +68,22 @@ public class Kanger {
                 long offset01 = d.getCurrentOffset();
                 d.set(-1, new Term("Two", user));
                 long offset02 = d.getCurrentOffset();
+//
+                Object o1 = d.get(offset01);
+                Object o2 = d.get(offset02);
+//                System.out.println(o1);
+//                System.out.println(o2);
 
-                System.out.println(d.get(offset01));
-                System.out.println(d.get(offset02));
+                for (Externalizable e : d) {
+                    System.out.println(e);
+                }
+
+                d.remove(offset01);
+
+                System.out.println("--------------");
+                for (Externalizable e : d) {
+                    System.out.println(e);
+                }
             }
             try (Index x = new Index()) {
                 x.setBlockSize(5);
