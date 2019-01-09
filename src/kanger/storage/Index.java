@@ -37,16 +37,14 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         try {
             ras = new RandomAccessFile(file, "r");
-            long pos = 0;
-            ras.seek(pos);
             version = ras.readShort();
             do {
                 IndexOne one = new IndexOne().readFrom(ras);
-                if (!one.isDeleted() && one.isBlockMark()) {
+                if (!one.isDeleted() && one.isBlockMark() && one.getSize() > 0) {
                     baseIndex.put(one.getId(), one);
-                    ras.seek(ras.getFilePointer() + one.getSize());
+                    ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
                 } else if (ras.length() > ras.getFilePointer()) {
-                    ras.seek(ras.getFilePointer() + one.getSize());
+                    ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
                 } else {
                     break;
                 }
@@ -146,16 +144,19 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private void saveCurrentBlock() throws IOException {
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
         if (head != null) {
-            IndexOne empty = new IndexOne();
-            empty.setDeleted(true);
-            empty.getData().add(0L);
+            boolean isLast = head.getId() == baseIndex.lastKey();
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 ras.seek(head.getData().get(0));
                 long blockLength = head.getData().get(1);
-                if (currentBlock.size() > BLOCK_SIZE || (blockLength > 0 && blockLength < getBlockLength(currentBlock.values()))) {
+                if (currentBlock.size() > BLOCK_SIZE || (/*!isLast &&*/ blockLength > 0 && blockLength < getBlockLength(currentBlock.values()))) {
                     TreeMap<Long, IndexOne> blockOne = new TreeMap<>();
                     TreeMap<Long, IndexOne> blockTwo = new TreeMap<>();
                     int current = 0;
+                    if(blockLength == 0) {
+                        blockLength = getBlockLength(currentBlock.values());
+                        head.getData().remove(1);
+                        head.getData().add(blockLength);
+                    }
                     for (IndexOne one : currentBlock.values()) {
                         if (current < blockLength / 2) {
                             blockOne.put(one.getId(), one);
@@ -170,26 +171,34 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                         blockTwo.put(one.getId(), one);
                     }
 
-                    head.getData().clear();
-                    head.getData().add(ras.getFilePointer());
-                    head.getData().add(blockLength);
-                    head.setSize(blockOne.size());
-                    head.setId(blockOne.firstKey());
-                    head.writeTo(ras);
-                    for (IndexOne io : blockOne.values()) {
-                        io.writeTo(ras);
+//                    head.getData().remove(1);
+//                    head.getData().add(blockLength);
+                    if(blockOne.size() > 0) {
+                        head.setSize(blockOne.size());
+                        head.setId(blockOne.firstKey());
+                        head.writeTo(ras);
+                        for (IndexOne io : blockOne.values()) {
+                            io.writeTo(ras);
+                        }
+                        if (blockLength > getBlockLength(blockOne.values())) {
+                            byte[] temp = new byte[(int) (blockLength - getBlockLength(blockOne.values()))];
+                            ras.write(temp);
+                        }
+                        currentBlock.clear();
+                        currentBlock.putAll(blockOne);
+                    } else {
+                        currentBlock.clear();
+                        head.setDeleted(true);
+                        head.setSize(0);
+                        head.writeTo(ras);
+                        baseIndex.remove(head.getId());
                     }
-                    if (blockLength > getBlockLength(blockOne.values())) {
-                        byte[] temp = new byte[(int) (blockLength - getBlockLength(blockOne.values()))];
-                        ras.write(temp);
-                    }
-                    currentBlock.clear();
-                    currentBlock.putAll(blockOne);
 
                     ras.seek(ras.length());
+                    blockLength = getBlockLength(blockTwo.values()) * 2L;
                     IndexOne tail = new IndexOne();
                     tail.getData().add(ras.getFilePointer());
-                    tail.getData().add(getBlockLength(currentBlock.values()) * 2L);
+                    tail.getData().add(blockLength);
                     tail.setBlockMark(true);
                     tail.setId(blockTwo.firstKey());
                     tail.setSize(blockTwo.size());
@@ -199,24 +208,28 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     for (IndexOne io : blockTwo.values()) {
                         io.writeTo(ras);
                     }
-                    if (tail.getSize() > getBlockLength(blockTwo.values())) {
-                        byte[] temp = new byte[tail.getSize() - getBlockLength(blockTwo.values())];
+                    if (blockLength > getBlockLength(blockTwo.values())) {
+                        byte[] temp = new byte[(int) (blockLength - getBlockLength(blockTwo.values()))];
                         ras.write(temp);
                     }
-                } else {
-                    if (blockLength == 0) {
-                        blockLength = getBlockLength(currentBlock.values());
+                    if(currentBlock.isEmpty()) {
+                        currentBlock.putAll(blockTwo);
                     }
-                    head.getData().clear();
-                    head.getData().add(ras.getFilePointer());
-                    head.getData().add(blockLength);
+
+                } else {
+//                    if (blockLength == 0 || (isLast && blockLength < getBlockLength(currentBlock.values()))) {
+//                        blockLength = getBlockLength(currentBlock.values());
+//                    }
+//                    head.getData().clear();
+//                    head.getData().add(ras.getFilePointer());
+//                    head.getData().add(blockLength);
                     head.setSize(currentBlock.size());
                     head.writeTo(ras);
                     for (IndexOne io : currentBlock.values()) {
                         io.writeTo(ras);
                     }
-                    if (head.getSize() > getBlockLength(currentBlock.values())) {
-                        byte[] temp = new byte[head.getSize() - getBlockLength(currentBlock.values())];
+                    if (blockLength > getBlockLength(currentBlock.values())) {
+                        byte[] temp = new byte[(int) (blockLength - getBlockLength(currentBlock.values()))];
                         ras.write(temp);
                     }
                 }
@@ -266,8 +279,8 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             baseIndex.remove(top.getId());
             top.setId(currentBlock.firstKey());
             top.setSize(currentBlock.size());
-            top.getData().remove(1);
-            top.getData().add((long) getBlockLength(currentBlock.values()));
+//            top.getData().remove(1);
+//            top.getData().add((long) getBlockLength(currentBlock.values()));
             baseIndex.put(top.getId(), top);
             changed = true;
             if (currentBlock.size() > BLOCK_SIZE) {
@@ -427,7 +440,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             out.writeByte(flags);
             out.writeInt(size);
             out.writeLong(id);
-            out.writeInt(data.size());
             for (long x : data) {
                 out.writeLong(x);
             }
@@ -437,7 +449,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             flags = in.readByte();
             size = in.readInt();
             id = in.readLong();
-            int cnt = in.readInt();
+            int cnt = isBlockMark() ? 2  : size;
             data.clear();
             while (cnt-- > 0) {
                 data.add(in.readLong());
@@ -447,9 +459,8 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         public int getRecordSize() {
             return Byte.BYTES
+                    + Integer.BYTES
                     + Long.BYTES
-                    + Integer.BYTES
-                    + Integer.BYTES
                     + Long.BYTES * data.size();
         }
 

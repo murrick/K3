@@ -8,7 +8,9 @@ import kanger.units.Term;
 
 import java.io.Externalizable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -62,31 +64,32 @@ public class Kanger {
 
 
         try {
-            try (Data d = new Data()){
-                d.open("test.data");
-                d.set(-1, new Term( "One", user));
-                long offset01 = d.getCurrentOffset();
-                d.set(-1, new Term("Two", user));
-                long offset02 = d.getCurrentOffset();
+
+//            try (Data d = new Data()){
+//                d.open("test.data");
+//                d.set(-1, new Term( "One", user));
+//                long offset01 = d.getCurrentOffset();
+//                d.set(-1, new Term("Two", user));
+//                long offset02 = d.getCurrentOffset();
+////
+//                Object o1 = d.get(offset01);
+//                Object o2 = d.get(offset02);
+////                System.out.println(o1);
+////                System.out.println(o2);
 //
-                Object o1 = d.get(offset01);
-                Object o2 = d.get(offset02);
-//                System.out.println(o1);
-//                System.out.println(o2);
-
-                for (Externalizable e : d) {
-                    System.out.println(e);
-                }
-
-                d.remove(offset01);
-
-                System.out.println("--------------");
-                for (Externalizable e : d) {
-                    System.out.println(e);
-                }
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
+//                for (Externalizable e : d) {
+//                    System.out.println(e);
+//                }
+//
+//                d.remove(offset01);
+//
+//                System.out.println("--------------");
+//                for (Externalizable e : d) {
+//                    System.out.println(e);
+//                }
+//            } catch (ClassNotFoundException e) {
+//                e.printStackTrace();
+//            }
 
             try (Index x = new Index()) {
                 x.open("test.index");
@@ -123,6 +126,20 @@ public class Kanger {
                 }
                 System.out.println("R:" + x.getReadCounter());
                 System.out.println("W:" + x.getWriteCounter());
+
+                for(int i=0; i< 100; ++i) {
+                    List<Long> keys = new ArrayList<>();
+                    keys.addAll(x.getOne(7).getData());
+                    keys.add(i + 0x7700L);
+                    x.set(7, keys);
+                }
+
+                for (Index.IndexOne o : x) {
+                    System.out.println(o);
+                }
+                System.out.println("R:" + x.getReadCounter());
+                System.out.println("W:" + x.getWriteCounter());
+
 
             }
         } catch (IOException e) {
