@@ -84,19 +84,21 @@ public class Kanger {
                 for (Externalizable e : d) {
                     System.out.println(e);
                 }
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
+
             try (Index x = new Index()) {
-                x.setBlockSize(5);
                 x.open("test.index");
-                x.set(1, 0001, 0);
-                x.set(2, 0002, 0);
-                x.set(9, 9879, 0);
-                x.set(5, 9872, 0);
-                x.set(8, 9873, 0);
-                x.set(7, 0007, 0);
-                x.set(6, 9875, 0);
-                x.set(4, 9876, 0);
-                x.set(3, 9877, 0);
+                x.set(1, 0001);
+                x.set(2, 0002);
+                x.set(9, 9879);
+                x.set(5, 9872);
+                x.set(8, 9873);
+                x.set(7, 0007);
+                x.set(6, 9875);
+                x.set(4, 9876);
+                x.set(3, 9877);
 
                 Iterator<Index.IndexOne> z = x.iterator();
                 while (z.hasNext()) {
@@ -111,9 +113,9 @@ public class Kanger {
                 x.dropReadCounter();
                 x.dropWriteCounter();
 
-                x.set(1, 1000001, 0);
-                x.set(23, 9877, 0);
-                x.set(2, 9877, 0);
+                x.set(1, 1000001);
+                x.set(23, 9877);
+                x.set(2, 9877);
                 x.remove(6);
 
                 for (Index.IndexOne o : x) {
@@ -123,7 +125,7 @@ public class Kanger {
                 System.out.println("W:" + x.getWriteCounter());
 
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
