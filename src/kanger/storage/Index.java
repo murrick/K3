@@ -1,29 +1,24 @@
 package kanger.storage;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.NavigableMap;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     private static final int DELETED = 0x01;
     private static final int BLOCK_MARK = 0x10;
 
-    private static final long RECORD_SIZE = 1L + 8L + 8L + 8L;
-    private static final long SIZE_OFFSET = 2L + 4L;
-    private static final int BLOCK_SIZE = 1000;
+    private static final int BLOCK_SIZE = 5; //1000;
     private static final short VERSION = 0x0301;
 
     private int version = VERSION;
-    private int blockSize = BLOCK_SIZE;
-    private long size = 0;
-    private boolean changed = false;
+
     private NavigableMap<Long, IndexOne> baseIndex = new TreeMap<>();
     private NavigableMap<Long, IndexOne> currentBlock = new TreeMap<>();
+
     private File file = null;
     private RandomAccessFile ras = null;
+    private boolean changed = false;
     private long currentId = 0;
     private long blockId = 0;
 
@@ -45,33 +40,29 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             long pos = 0;
             ras.seek(pos);
             version = ras.readShort();
-            blockSize = ras.readInt();
-            size = ras.readLong();
             do {
-                int flags = ras.readByte();
-                ras.seek(ras.getFilePointer() - 1);
-                if ((flags & DELETED) == 0 && (flags & BLOCK_MARK) != 0) {
-                    IndexOne one = new IndexOne().readFrom(ras);
+                IndexOne one = new IndexOne().readFrom(ras);
+                if (!one.isDeleted() && one.isBlockMark()) {
                     baseIndex.put(one.getId(), one);
-                    ras.seek(ras.getFilePointer() + (RECORD_SIZE * blockSize));
-                } else if (ras.length() >= ras.getFilePointer() + RECORD_SIZE) {
-                    ras.seek(ras.getFilePointer() + RECORD_SIZE);
+                    ras.seek(ras.getFilePointer() + one.getSize());
+                } else if (ras.length() > ras.getFilePointer()) {
+                    ras.seek(ras.getFilePointer() + one.getSize());
                 } else {
                     break;
                 }
-            } while (ras.length() >= ras.getFilePointer() + RECORD_SIZE);
+            } while (ras.length() > ras.getFilePointer());
         } catch (FileNotFoundException ex) {
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 ras.seek(0);
                 ras.writeShort(version);
-                ras.writeInt(blockSize);
-                ras.writeLong(size);
                 changed = true;
                 IndexOne one = new IndexOne();
-                one.setFlags((byte) BLOCK_MARK);
+                one.setBlockMark(true);
                 one.setId(0);
-                one.setOffset(ras.getFilePointer());
                 one.setSize(0);
+                one.getData().add(ras.getFilePointer());
+                one.getData().add(0L);
+                one.writeTo(ras);
                 baseIndex.put(one.getId(), one);
             }
             ras = new RandomAccessFile(file, "r");
@@ -81,26 +72,17 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     @Override
     public void close() throws IOException {
         flush();
-        this.file = null;
-        this.ras = null;
-        this.size = 0;
-        this.baseIndex.clear();
-        this.currentBlock.clear();
+        ras.close();
+        file = null;
+        ras = null;
+        baseIndex.clear();
+        currentBlock.clear();
     }
 
     public void flush() throws IOException {
         if (changed) {
             saveCurrentBlock();
             changed = false;
-        }
-    }
-
-    public long get(long id) throws IOException {
-        IndexOne io = getOne(id);
-        if (io != null) {
-            return io.getOffset();
-        } else {
-            return -1L;
         }
     }
 
@@ -136,7 +118,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     public IndexOne getOne(long id) throws IOException {
         if (currentBlock.containsKey(id)) {
             IndexOne io = currentBlock.get(id);
-            if (io == null || (io.getFlags() & DELETED) != 0) {
+            if (io == null || io.isDeleted()) {
                 return null;
             } else {
                 return io;
@@ -145,7 +127,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             IndexOne head = getHead(id);
             loadBlock(head);
             IndexOne io = currentBlock.get(id);
-            if (io == null || (io.getFlags() & DELETED) != 0) {
+            if (io == null || io.isDeleted()) {
                 return null;
             } else {
                 return io;
@@ -153,42 +135,63 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
+    private int getBlockLength(Collection<IndexOne> block) {
+        int size = 0;
+        for (IndexOne one : block) {
+            size += one.getRecordSize();
+        }
+        return size;
+    }
+
     private void saveCurrentBlock() throws IOException {
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
         if (head != null) {
             IndexOne empty = new IndexOne();
-            empty.setFlags((byte) DELETED);
+            empty.setDeleted(true);
+            empty.getData().add(0L);
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
-                ras.seek(head.getOffset());
-                if (head.getSize() > blockSize) {
-                    SortedMap<Long, IndexOne> blockOne = new TreeMap<>();
-                    SortedMap<Long, IndexOne> blockTwo = new TreeMap<>();
+                ras.seek(head.getData().get(0));
+                long blockLength = head.getData().get(1);
+                if (currentBlock.size() > BLOCK_SIZE || (blockLength > 0 && blockLength < getBlockLength(currentBlock.values()))) {
+                    TreeMap<Long, IndexOne> blockOne = new TreeMap<>();
+                    TreeMap<Long, IndexOne> blockTwo = new TreeMap<>();
                     int current = 0;
-                    for (IndexOne io : currentBlock.values()) {
-                        if (current++ < head.getSize() / 2) {
-                            blockOne.put(io.getId(), io);
+                    for (IndexOne one : currentBlock.values()) {
+                        if (current < blockLength / 2) {
+                            blockOne.put(one.getId(), one);
                         } else {
-                            blockTwo.put(io.getId(), io);
+                            blockTwo.put(one.getId(), one);
                         }
+                        current += one.getRecordSize();
+                    }
+                    while (getBlockLength(blockOne.values()) > blockLength) {
+                        IndexOne one = blockOne.lastEntry().getValue();
+                        blockOne.remove(one.getId());
+                        blockTwo.put(one.getId(), one);
                     }
 
+                    head.getData().clear();
+                    head.getData().add(ras.getFilePointer());
+                    head.getData().add(blockLength);
                     head.setSize(blockOne.size());
                     head.setId(blockOne.firstKey());
                     head.writeTo(ras);
                     for (IndexOne io : blockOne.values()) {
                         io.writeTo(ras);
                     }
-                    for (int i = (int) head.getSize(); i < blockSize; ++i) {
-                        empty.writeTo(ras);
+                    if (blockLength > getBlockLength(blockOne.values())) {
+                        byte[] temp = new byte[(int) (blockLength - getBlockLength(blockOne.values()))];
+                        ras.write(temp);
                     }
                     currentBlock.clear();
                     currentBlock.putAll(blockOne);
 
                     ras.seek(ras.length());
                     IndexOne tail = new IndexOne();
-                    tail.setFlags((byte) BLOCK_MARK);
+                    tail.getData().add(ras.getFilePointer());
+                    tail.getData().add(getBlockLength(currentBlock.values()) * 2L);
+                    tail.setBlockMark(true);
                     tail.setId(blockTwo.firstKey());
-                    tail.setOffset(ras.getFilePointer());
                     tail.setSize(blockTwo.size());
                     baseIndex.put(tail.getId(), tail);
 
@@ -196,20 +199,27 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     for (IndexOne io : blockTwo.values()) {
                         io.writeTo(ras);
                     }
-                    for (int i = (int) tail.getSize(); i < blockSize; ++i) {
-                        empty.writeTo(ras);
+                    if (tail.getSize() > getBlockLength(blockTwo.values())) {
+                        byte[] temp = new byte[tail.getSize() - getBlockLength(blockTwo.values())];
+                        ras.write(temp);
                     }
                 } else {
+                    if (blockLength == 0) {
+                        blockLength = getBlockLength(currentBlock.values());
+                    }
+                    head.getData().clear();
+                    head.getData().add(ras.getFilePointer());
+                    head.getData().add(blockLength);
+                    head.setSize(currentBlock.size());
                     head.writeTo(ras);
                     for (IndexOne io : currentBlock.values()) {
                         io.writeTo(ras);
                     }
-                    for (int i = (int) head.getSize(); i < blockSize; ++i) {
-                        empty.writeTo(ras);
+                    if (head.getSize() > getBlockLength(currentBlock.values())) {
+                        byte[] temp = new byte[head.getSize() - getBlockLength(currentBlock.values())];
+                        ras.write(temp);
                     }
                 }
-                ras.seek(SIZE_OFFSET);
-                ras.writeLong(size);
                 ++writeCounter;
             }
         }
@@ -222,16 +232,11 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 changed = false;
             }
             currentBlock.clear();
-            ras.seek(head.getOffset() + RECORD_SIZE);
-            for (int i = 0; i < blockSize && head.getSize() > currentBlock.size(); ++i) {
-                int flags = ras.readByte();
-                ras.seek(ras.getFilePointer() - 1);
-                if ((flags & DELETED) == 0 && (flags & BLOCK_MARK) == 0) {
-                    IndexOne one = new IndexOne().readFrom(ras);
+            ras.seek(head.getData().get(0) + head.getRecordSize());
+            for (int i = 0; i < head.getSize(); ++i) {
+                IndexOne one = new IndexOne().readFrom(ras);
+                if (!one.isDeleted()) {
                     currentBlock.put(one.getId(), one);
-                } else {
-                    ras.seek(ras.getFilePointer() + RECORD_SIZE);
-                    --i;
                 }
             }
             if (head.getSize() != currentBlock.size()) {
@@ -241,29 +246,37 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    public void set(long id, long offset, long size) throws IOException {
+    public void set(long id, long offset) throws IOException {
+        List<Long> list = new ArrayList<Long>() {{
+            add(offset);
+        }};
+        set(id, list);
+    }
+
+    public void set(long id, List<Long> offset) throws IOException {
         IndexOne io = getOne(id);
         if (io == null) {
             IndexOne top = getHead(id);
             loadBlock(top);
             io = new IndexOne();
             io.setId(id);
-            io.setOffset(offset);
-            io.setSize(size);
+            io.getData().addAll(offset);
+            io.setSize(offset.size());
             currentBlock.put(io.getId(), io);
             baseIndex.remove(top.getId());
             top.setId(currentBlock.firstKey());
             top.setSize(currentBlock.size());
+            top.getData().remove(1);
+            top.getData().add((long) getBlockLength(currentBlock.values()));
             baseIndex.put(top.getId(), top);
-            ++this.size;
             changed = true;
-            if (currentBlock.size() > blockSize) {
+            if (currentBlock.size() > BLOCK_SIZE) {
                 saveCurrentBlock();
                 changed = false;
             }
-        } else if (io.getOffset() != offset || io.getSize() != size) {
-            io.setOffset(offset);
-            io.setSize(size);
+        } else if (!io.getData().equals(offset)) {
+            io.getData().clear();
+            io.getData().addAll(offset);
             changed = true;
         }
     }
@@ -280,16 +293,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     public boolean isClosed() {
         return ras == null;
-    }
-
-    public int getBlockSize() {
-        return blockSize;
-    }
-
-    public void setBlockSize(int blockSize) {
-        if (isClosed()) {
-            this.blockSize = blockSize;
-        }
     }
 
     public int getVersion() {
@@ -359,10 +362,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
 
     public class IndexOne {
-        private byte flags;
-        private long id;
-        private long offset;
-        private long size;
+        private byte flags = 0;
+        private long id = -1;
+        private int size = 0;
+        private List<Long> data = new ArrayList<>();
 
         public long getId() {
             return id;
@@ -380,39 +383,78 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             this.flags = flags;
         }
 
-        public long getSize() {
+        public int getSize() {
             return size;
         }
 
-        public void setSize(long size) {
+        public void setSize(int size) {
             this.size = size;
         }
 
-        public long getOffset() {
-            return offset;
+        public List<Long> getData() {
+            return data;
         }
 
-        public void setOffset(long offset) {
-            this.offset = offset;
+        public void setData(List<Long> data) {
+            this.data = data;
+        }
+
+        public boolean isDeleted() {
+            return (flags & DELETED) != 0;
+        }
+
+        public void setDeleted(boolean on) {
+            if (on) {
+                flags |= DELETED;
+            } else {
+                flags &= ~DELETED;
+            }
+        }
+
+        public boolean isBlockMark() {
+            return (flags & BLOCK_MARK) != 0;
+        }
+
+        public void setBlockMark(boolean on) {
+            if (on) {
+                flags |= BLOCK_MARK;
+            } else {
+                flags &= ~BLOCK_MARK;
+            }
         }
 
         public void writeTo(RandomAccessFile out) throws IOException {
             out.writeByte(flags);
+            out.writeInt(size);
             out.writeLong(id);
-            out.writeLong(offset);
-            out.writeLong(size);
+            out.writeInt(data.size());
+            for (long x : data) {
+                out.writeLong(x);
+            }
         }
 
         public IndexOne readFrom(RandomAccessFile in) throws IOException {
             flags = in.readByte();
+            size = in.readInt();
             id = in.readLong();
-            offset = in.readLong();
-            size = in.readLong();
+            int cnt = in.readInt();
+            data.clear();
+            while (cnt-- > 0) {
+                data.add(in.readLong());
+            }
             return this;
         }
 
+        public int getRecordSize() {
+            return Byte.BYTES
+                    + Long.BYTES
+                    + Integer.BYTES
+                    + Integer.BYTES
+                    + Long.BYTES * data.size();
+        }
+
         public String toString() {
-            return id + "=" + offset;
+            return id + "=" + data;
         }
     }
 
