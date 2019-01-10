@@ -63,97 +63,97 @@ public class Kanger {
         Mind mind = new Mind(user);
 
 
-        try {
-
-//            try (Data d = new Data()){
-//                d.open("test.data");
-//                d.set(-1, new Term( "One", user));
-//                long offset01 = d.getCurrentOffset();
-//                d.set(-1, new Term("Two", user));
-//                long offset02 = d.getCurrentOffset();
+//        try {
+//
+////            try (Data d = new Data()){
+////                d.open("test.data");
+////                d.set(-1, new Term( "One", user));
+////                long offset01 = d.getCurrentOffset();
+////                d.set(-1, new Term("Two", user));
+////                long offset02 = d.getCurrentOffset();
+//////
+////                Object o1 = d.get(offset01);
+////                Object o2 = d.get(offset02);
+//////                System.out.println(o1);
+//////                System.out.println(o2);
 ////
-//                Object o1 = d.get(offset01);
-//                Object o2 = d.get(offset02);
-////                System.out.println(o1);
-////                System.out.println(o2);
+////                for (Externalizable e : d) {
+////                    System.out.println(e);
+////                }
+////
+////                d.remove(offset01);
+////
+////                System.out.println("--------------");
+////                for (Externalizable e : d) {
+////                    System.out.println(e);
+////                }
+////            } catch (ClassNotFoundException e) {
+////                e.printStackTrace();
+////            }
 //
-//                for (Externalizable e : d) {
-//                    System.out.println(e);
+//            try (Index x = new Index()) {
+//                x.open("test.index");
+//
+//                for (Index.IndexOne o : x) {
+//                    System.out.println(o);
+//                }
+//                System.out.println("R:" + x.getReadCounter());
+//                System.out.println("W:" + x.getWriteCounter());
+//
+//                x.set(1, 0001);
+//                x.set(2, 0002);
+//                x.set(9, 9879);
+//                x.set(5, 9872);
+//                x.set(8, 9873);
+//                x.set(7, 0007);
+//                x.set(6, 9875);
+//                x.set(4, 9876);
+//                x.set(3, 9877);
+//
+//                Iterator<Index.IndexOne> z = x.iterator();
+//                while (z.hasNext()) {
+//                    System.out.println(z.next());
 //                }
 //
-//                d.remove(offset01);
 //
+//                System.out.println("R:" + x.getReadCounter());
+//                System.out.println("W:" + x.getWriteCounter());
 //                System.out.println("--------------");
-//                for (Externalizable e : d) {
-//                    System.out.println(e);
+//
+//                x.dropReadCounter();
+//                x.dropWriteCounter();
+//
+//                x.set(1, 1000001);
+//                x.set(23, 9877);
+//                x.set(2, 9877);
+//                x.remove(6);
+//
+//                for (Index.IndexOne o : x) {
+//                    System.out.println(o);
 //                }
-//            } catch (ClassNotFoundException e) {
-//                e.printStackTrace();
+//                System.out.println("R:" + x.getReadCounter());
+//                System.out.println("W:" + x.getWriteCounter());
+//
+//                for(int i=0; i< 100; ++i) {
+//                    List<Long> keys = new ArrayList<>();
+//                    keys.addAll(x.getOne(7).getData());
+//                    keys.add(i + 0x7700L);
+//                    x.set(7, keys);
+//                }
+//
+//                for (Index.IndexOne o : x) {
+//                    System.out.println(o);
+//                }
+//                System.out.println("R:" + x.getReadCounter());
+//                System.out.println("W:" + x.getWriteCounter());
+//
+//
 //            }
-
-            try (Index x = new Index()) {
-                x.open("test.index");
-
-                for (Index.IndexOne o : x) {
-                    System.out.println(o);
-                }
-                System.out.println("R:" + x.getReadCounter());
-                System.out.println("W:" + x.getWriteCounter());
-
-                x.set(1, 0001);
-                x.set(2, 0002);
-                x.set(9, 9879);
-                x.set(5, 9872);
-                x.set(8, 9873);
-                x.set(7, 0007);
-                x.set(6, 9875);
-                x.set(4, 9876);
-                x.set(3, 9877);
-
-                Iterator<Index.IndexOne> z = x.iterator();
-                while (z.hasNext()) {
-                    System.out.println(z.next());
-                }
-
-
-                System.out.println("R:" + x.getReadCounter());
-                System.out.println("W:" + x.getWriteCounter());
-                System.out.println("--------------");
-
-                x.dropReadCounter();
-                x.dropWriteCounter();
-
-                x.set(1, 1000001);
-                x.set(23, 9877);
-                x.set(2, 9877);
-                x.remove(6);
-
-                for (Index.IndexOne o : x) {
-                    System.out.println(o);
-                }
-                System.out.println("R:" + x.getReadCounter());
-                System.out.println("W:" + x.getWriteCounter());
-
-                for(int i=0; i< 100; ++i) {
-                    List<Long> keys = new ArrayList<>();
-                    keys.addAll(x.getOne(7).getData());
-                    keys.add(i + 0x7700L);
-                    x.set(7, keys);
-                }
-
-                for (Index.IndexOne o : x) {
-                    System.out.println(o);
-                }
-                System.out.println("R:" + x.getReadCounter());
-                System.out.println("W:" + x.getWriteCounter());
-
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        System.exit(0);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        System.exit(0);
 
 //        new LibraryStrings(mind);
 //        new LibraryMath(mind);

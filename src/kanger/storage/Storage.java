@@ -2,77 +2,76 @@ package kanger.storage;
 
 import kanger.interfaces.Identifiable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.*;
 
-public class Storage {
+public class Storage implements Closeable {
 
-    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
-    private Map<Long, StorageOne> idCache = new HashMap<>();
+    private Index index = null;
+    private Index hash = null;
+    private Data data = null;
 
-    public Identifiable get(long id) {
-        if (idCache.containsKey(id)) {
-            return idCache.get(id).getObject();
-        } else {
-            return getFromStorage(id);
+    private String name = "";
+
+    public void open(String name) throws IOException {
+        this.name = name;
+
+        index = new Index();
+        index.open(name + ".index");
+
+        hash = new Index();
+        hash.open(name + ".hash");
+
+        data = new Data();
+        data.open(name + ".data");
+    }
+
+    @Override
+    public void close() throws IOException {
+        if(index != null && !index.isClosed()) {
+            index.close();
+        }
+        if(hash != null && !hash.isClosed()) {
+            hash.close();
+        }
+        if(data != null && !data.isClosed()) {
+            data.close();
         }
     }
 
-    public void release(long id) {
-        if (idCache.containsKey(id)) {
-            if (idCache.get(id).decCounter() <= 0) {
-                idCache.remove(id);
+    public void flush() throws IOException {
+        index.flush();
+        hash.flush();
+        data.flush();
+    }
+
+    public void add(Identifiable one) throws IOException {
+        long offset = data.add(one);
+        index.set(one.getId(), offset);
+        hash.add(one.getHash(), offset);
+    }
+
+    public Identifiable get(long id) throws IOException, ClassNotFoundException {
+        Index.IndexOne x = index.getOne(id);
+        if(x != null) {
+            return data.get(x.getData().get(0));
+        } else {
+            return null;
+        }
+    }
+
+    public List<Identifiable> getByHash(long hash) throws IOException, ClassNotFoundException {
+        List<Identifiable> list = new ArrayList<>();
+        Index.IndexOne x = index.getOne(hash);
+        if(x != null) {
+            for(long offset : x.getData()) {
+                Identifiable o = data.get(offset);
+                if(o != null) {
+                    list.add(o);
+                }
             }
         }
+        return list;
     }
-
-    private Identifiable getFromStorage(long id) {
-        return null;
-    }
-
-    public class StorageOne {
-        private Identifiable object;
-        private long timeCreated;
-        private long counter;
-
-        public StorageOne(Identifiable object) {
-            this.object = object;
-            this.counter = 0;
-            this.timeCreated = System.currentTimeMillis();
-        }
-
-        public long incCounter() {
-            return ++counter;
-        }
-
-        public long decCounter() {
-            return --counter;
-        }
-
-        public Identifiable getObject() {
-            return object;
-        }
-
-        public void setObject(Identifiable object) {
-            this.object = object;
-        }
-
-        public long getTimeCreated() {
-            return timeCreated;
-        }
-
-        public void setTimeCreated(long timeCreated) {
-            this.timeCreated = timeCreated;
-        }
-
-        public long getCounter() {
-            return counter;
-        }
-
-        public void setCounter(long counter) {
-            this.counter = counter;
-        }
-    }
-
 }

@@ -8,7 +8,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private static final int DELETED = 0x01;
     private static final int BLOCK_MARK = 0x10;
 
-    private static final int BLOCK_SIZE = 5; //1000;
+    private static final int BLOCK_SIZE = 1000;
     private static final short VERSION = 0x0301;
 
     private int version = VERSION;
@@ -19,6 +19,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private File file = null;
     private RandomAccessFile ras = null;
     private boolean changed = false;
+    private int blockSize = BLOCK_SIZE;
     private long currentId = 0;
     private long blockId = 0;
 
@@ -38,6 +39,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         try {
             ras = new RandomAccessFile(file, "r");
             version = ras.readShort();
+            blockSize = ras.readInt();
             do {
                 IndexOne one = new IndexOne().readFrom(ras);
                 if (!one.isDeleted() && one.isBlockMark() && one.getSize() > 0) {
@@ -53,6 +55,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 ras.seek(0);
                 ras.writeShort(version);
+                ras.writeInt(blockSize);
                 changed = true;
                 IndexOne one = new IndexOne();
                 one.setBlockMark(true);
@@ -263,6 +266,18 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
+
+    public void add(long id, long offset) throws IOException {
+        IndexOne io = getOne(id);
+        if(io == null) {
+            set(id, offset);
+        } else if(!io.getData().contains(offset)){
+            io.getData().add(offset);
+            io.setSize(io.getData().size());
+            changed = true;
+        }
+    }
+
     public void set(long id, long offset) throws IOException {
         List<Long> list = new ArrayList<Long>() {{
             add(offset);
@@ -283,8 +298,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             baseIndex.remove(top.getId());
             top.setId(currentBlock.firstKey());
             top.setSize(currentBlock.size());
-//            top.getData().remove(1);
-//            top.getData().add((long) getBlockLength(currentBlock.values()));
             baseIndex.put(top.getId(), top);
             changed = true;
             if (currentBlock.size() > BLOCK_SIZE) {
@@ -323,6 +336,14 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     public File getFile() {
         return file;
+    }
+
+    public int getBlockSize() {
+        return blockSize;
+    }
+
+    public void setBlockSize(int blockSize) {
+        this.blockSize = blockSize;
     }
 
     public int getReadCounter() {

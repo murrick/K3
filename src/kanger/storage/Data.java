@@ -1,10 +1,12 @@
 package kanger.storage;
 
+import kanger.interfaces.Identifiable;
+
 import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public class Data implements Closeable, Iterable<Externalizable> {
+public class Data implements Closeable, Iterable<Identifiable> {
     private static final int DELETED = 0x01;
     private static final short VERSION = 0x0301;
     private static final long HEADER_SIZE = 2L + 8L + 8L;
@@ -19,7 +21,7 @@ public class Data implements Closeable, Iterable<Externalizable> {
     private long currentOffset = -1;
     private long blockSize = 0;
     private long dataSize = 0;
-    private Externalizable data = null;
+    private Identifiable data = null;
     private byte[] buffer = null;
 
     private int readCounter = 0;
@@ -53,9 +55,10 @@ public class Data implements Closeable, Iterable<Externalizable> {
     @Override
     public void close() throws IOException {
         flush();
-        this.file = null;
-        this.ras = null;
-        this.size = 0;
+        ras.close();
+        file = null;
+        ras = null;
+        size = 0;
     }
 
     public void flush() throws IOException {
@@ -65,7 +68,7 @@ public class Data implements Closeable, Iterable<Externalizable> {
         }
     }
 
-    public Externalizable get(long offset) throws IOException, ClassNotFoundException {
+    public Identifiable get(long offset) throws IOException, ClassNotFoundException {
         if (offset != currentOffset) {
             if (changed) {
                 saveCurrentBlock();
@@ -83,7 +86,7 @@ public class Data implements Closeable, Iterable<Externalizable> {
                     ras.read(buffer);
                     ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
                     ObjectInputStream ois = new ObjectInputStream(bis);
-                    data = (Externalizable) ois.readObject();
+                    data = (Identifiable) ois.readObject();
                     ++readCounter;
                 }
                 currentOffset = offset;
@@ -94,7 +97,12 @@ public class Data implements Closeable, Iterable<Externalizable> {
         return data;
     }
 
-    public void set(long offset, Externalizable o) throws IOException {
+    public long add(Identifiable o) throws IOException {
+        set(-1, o);
+        return currentOffset;
+    }
+
+    public void set(long offset, Identifiable o) throws IOException {
         if (changed) {
             saveCurrentBlock();
             changed = false;
@@ -188,7 +196,7 @@ public class Data implements Closeable, Iterable<Externalizable> {
         return dataSize;
     }
 
-    public Externalizable getData() {
+    public Identifiable getData() {
         return data;
     }
 
@@ -216,9 +224,13 @@ public class Data implements Closeable, Iterable<Externalizable> {
         return currentOffset;
     }
 
+    public boolean isClosed() {
+        return ras == null;
+    }
+
 
     @Override
-    public Iterator<Externalizable> iterator() {
+    public Iterator<Identifiable> iterator() {
         try {
             flush();
             currentOffset = -1;
@@ -226,20 +238,20 @@ public class Data implements Closeable, Iterable<Externalizable> {
             return null;
         }
 
-        return new Iterator<Externalizable>() {
+        return new Iterator<Identifiable>() {
             @Override
             public boolean hasNext() {
                 try {
                     if (currentOffset == -1) {
-                        if (ras.length() >= headerSize + 8 + 8) {
+                        if (ras.length() >= headerSize + Long.BYTES * 2) {
                             ras.seek(headerSize);
                             long blockSize = ras.readLong();
-                            return ras.length() >= headerSize + 8 + 8 + blockSize;
+                            return ras.length() >= headerSize + Long.BYTES * 2 + blockSize;
                         } else {
                             return false;
                         }
                     } else {
-                        return ras.length() >= currentOffset + 8 + 8 + 8 + 8 + blockSize;
+                        return ras.length() >= currentOffset + Long.BYTES * 4 + blockSize;
                     }
                 } catch (IOException e) {
                     return false;
@@ -247,12 +259,12 @@ public class Data implements Closeable, Iterable<Externalizable> {
             }
 
             @Override
-            public Externalizable next() {
+            public Identifiable next() {
                 try {
                     if (currentOffset == -1) {
                         return get(headerSize);
                     } else {
-                        return get(currentOffset + blockSize + 8 + 8);
+                        return get(currentOffset + blockSize + Long.BYTES * 2);
                     }
                 } catch (ClassNotFoundException | IOException e) {
                     return null;
