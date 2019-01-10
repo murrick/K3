@@ -4,11 +4,14 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.interfaces.Identifiable;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
@@ -63,6 +66,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         this.next = next;
     }
 
+    @Override
     public Function getNext() {
         return next;
     }

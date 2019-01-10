@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.primitives.UnitIterator;
 import kanger.units.Function;
 
 import java.io.DataInputStream;
@@ -16,7 +17,6 @@ public class FunctionFactory implements Iterable<Function> {
     private Function root = null;
     private long lastID = 0;
 
-    private Function current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user= null;
@@ -134,26 +134,6 @@ public class FunctionFactory implements Iterable<Function> {
 
     @Override
     public Iterator<Function> iterator() {
-        current = null;
-        return new Iterator<Function>() {
-            @Override
-            public boolean hasNext() {
-                if(current == null) {
-                    return root != null;
-                } else {
-                    return current.getNext() != null;
-                }
-            }
-
-            @Override
-            public Function next() {
-                if(current == null) {
-                    current = root;
-                } else {
-                    current = current.getNext();
-                }
-                return current;
-            }
-        };
+        return new UnitIterator(root);
     }
 }

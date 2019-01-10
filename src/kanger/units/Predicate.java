@@ -3,7 +3,10 @@ package kanger.units;
 import kanger.User;
 import kanger.interfaces.Identifiable;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -73,6 +76,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         this.id = id;
     }
 
+    @Override
     public Predicate getNext() {
         return next;
     }
@@ -113,7 +117,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     public Set<Tree> getLinkedTrees() {
         Set<Tree> set = new HashSet<>();
-        for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
+        for (Tree t : user.getMind().getTrees()) {
             for (Domain d : t.getSequence()) {
                 if (getId() == d.getPredicate().getId()) {
                     set.add(t);

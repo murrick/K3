@@ -8,7 +8,10 @@ import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 public class FValue implements Externalizable, Identifiable<Function> {
     private long id = -1;
@@ -110,6 +113,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
         this.next = next;
     }
 
+    @Override
     public FValue getNext() {
         return next;
     }

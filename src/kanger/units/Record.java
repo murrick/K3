@@ -5,7 +5,10 @@ import kanger.enums.Enums;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.Cause;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -67,6 +70,7 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
         this.id = id;
     }
 
+    @Override
     public Record getNext() {
         return next;
     }

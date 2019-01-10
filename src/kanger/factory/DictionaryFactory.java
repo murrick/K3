@@ -2,15 +2,13 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.primitives.UnitIterator;
+import kanger.units.Right;
 import kanger.units.Term;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
 import java.util.*;
 
 /**
@@ -21,8 +19,6 @@ public class DictionaryFactory implements Iterable<Term> {
     private Term root = null;
     private long lastID = 0;
     private int varIndex = 0;           // Счетчик C-переменных
-
-    private Term current = null;
 
     private Stack<Object[]> stack = new Stack<>();
     private User user = null;
@@ -100,11 +96,11 @@ public class DictionaryFactory implements Iterable<Term> {
         return null;
     }
 
-    public Term createCVar(String name) {
+    public Term createCVar(Right r, String name) {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
-        t.setRight(user.getMind().getRights().getRoot());
+        t.setRight(r);
         t.setIndex(i);
         t.setName(add(name));
         return t;
@@ -193,26 +189,6 @@ public class DictionaryFactory implements Iterable<Term> {
 
     @Override
     public Iterator<Term> iterator() {
-        current = null;
-        return new Iterator<Term>() {
-            @Override
-            public boolean hasNext() {
-                if(current == null) {
-                    return root != null;
-                } else {
-                    return current.getNext() != null;
-                }
-            }
-
-            @Override
-            public Term next() {
-                if(current == null) {
-                    current = root;
-                } else {
-                    current = current.getNext();
-                }
-                return current;
-            }
-        };
+        return new UnitIterator(root);
     }
 }

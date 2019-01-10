@@ -240,6 +240,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         this.right = r;
     }
 
+    @Override
     public Term getNext() {
         return next;
     }

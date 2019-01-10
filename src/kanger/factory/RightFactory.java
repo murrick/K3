@@ -1,7 +1,9 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.*;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
+import kanger.primitives.UnitIterator;
 import kanger.units.Domain;
 import kanger.units.Right;
 import kanger.units.Tree;
@@ -22,7 +24,6 @@ public class RightFactory implements Iterable<Right> {
     private Right root = null;
     private long lastID = 0;
 
-    private Right current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -82,13 +83,14 @@ public class RightFactory implements Iterable<Right> {
         return null;
     }
 
-    public Right getRoot() {
-        return root;
-    }
-
-    public void setRoot(Right o) {
-        root = o;
-    }
+//    public Right getRoot() {
+//        return root;
+//    }
+//
+//    public void setRoot(Right o) {
+//        root = o;
+//    }
+//
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -148,7 +150,7 @@ public class RightFactory implements Iterable<Right> {
 
     public void add(Domain d) {
         Right r = add();
-        Tree t = user.getMind().getTrees().add();
+        Tree t = user.getMind().getTrees().add(r);
         r.getTree().add(t);
         ArgList arg = new ArgList();
         for (Argument a : d.getArguments()) {
@@ -159,26 +161,6 @@ public class RightFactory implements Iterable<Right> {
 
     @Override
     public Iterator<Right> iterator() {
-        current = null;
-        return new Iterator<Right>() {
-            @Override
-            public boolean hasNext() {
-                if(current == null) {
-                    return root != null;
-                } else {
-                    return current.getNext() != null;
-                }
-            }
-
-            @Override
-            public Right next() {
-                if(current == null) {
-                    current = root;
-                } else {
-                    current = current.getNext();
-                }
-                return current;
-            }
-        };
+        return new UnitIterator(root);
     }
 }

@@ -3,11 +3,12 @@ package kanger.units;
 import kanger.User;
 import kanger.interfaces.Identifiable;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -76,6 +77,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         this.id = id;
     }
 
+    @Override
     public Right getNext() {
         return next;
     }

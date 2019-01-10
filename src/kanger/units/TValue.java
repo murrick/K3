@@ -5,7 +5,10 @@ import kanger.enums.Enums;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.Cause;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -98,6 +101,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         this.tVar = tVar;
     }
 
+    @Override
     public TValue getNext() {
         return next;
     }

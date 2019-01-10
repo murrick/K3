@@ -5,7 +5,9 @@ import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.interfaces.IRunnable;
-import kanger.primitives.*;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
+import kanger.primitives.Cause;
 import kanger.units.*;
 
 import java.util.*;
@@ -38,7 +40,7 @@ public class Linker {
         }
 
         final Set<Domain> waiters = new HashSet<>();
-        for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
+        for (Tree tree : user.getMind().getTrees()) {
             if (tree.getSequence().size() == 1) {
                 if (!tree.getSequence().get(0).getArguments().getTVariables(true).isEmpty()) {
                     waiters.add(tree.getSequence().get(0));
@@ -69,7 +71,7 @@ public class Linker {
 
             SortedSet<Tree> treeSet = new TreeSet<>();
 //            if (right == null) {
-            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
+            for (Tree tree : user.getMind().getTrees()) {
                 treeSet.add(tree);
             }
 //            } else {
@@ -86,7 +88,7 @@ public class Linker {
 //                }
 //            }
 
-            for (Right r = user.getMind().getRights().getRoot(); r != null; r = r.getNext()) {
+            for (Right r : user.getMind().getRights()) {
 
                 user.getMind().getProducedDomains().clear();
 //            user.getMind().getExcludedDomains().clear();
@@ -134,7 +136,7 @@ public class Linker {
         boolean result = false;
         if (tvars == null) {
             tvars = new TreeSet<>();
-            for (TVariable t = user.getMind().getTVars().getRoot(); t != null; t = t.getNext()) {
+            for (TVariable t : user.getMind().getTVars()) {
                 tvars.add(t);
             }
         }

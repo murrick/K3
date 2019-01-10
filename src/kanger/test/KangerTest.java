@@ -4,11 +4,15 @@ import kanger.Mind;
 import kanger.User;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
-import kanger.primitives.*;
+import kanger.primitives.Argument;
+import kanger.primitives.Hypotese;
 import kanger.units.*;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class KangerTest {
 
@@ -26,7 +30,7 @@ public class KangerTest {
     }
 
     private void showResult(Boolean assertResult) throws RuntimeErrorException {
-        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+        for (Right r : mind.getRights()) {
             if (!r.isGenerated() && !r.isQuery()) {
                 System.out.println("Right: " + r.toString());
             }

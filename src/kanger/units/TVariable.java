@@ -4,9 +4,10 @@ import kanger.User;
 import kanger.enums.Enums;
 import kanger.interfaces.Identifiable;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -158,6 +159,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         this.right = right;
     }
 
+    @Override
     public TVariable getNext() {
         return next;
     }

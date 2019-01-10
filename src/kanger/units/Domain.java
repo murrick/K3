@@ -4,12 +4,15 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.Cause;
-import kanger.interfaces.Identifiable;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 
 /**
@@ -807,7 +810,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     public Set<Tree> getParentTrees() {
         Set<Tree> set = new HashSet<>();
-        for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
+        for (Tree t : user.getMind().getTrees()) {
             if (t.getSequence().contains(this)) {
                 set.add(t);
             }

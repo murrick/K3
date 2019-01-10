@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.primitives.UnitIterator;
 import kanger.units.FValue;
 import kanger.units.Function;
 
@@ -16,7 +17,6 @@ public class FValueFactory implements Iterable<FValue> {
     private FValue root = null;
     private long lastID = 0;
 
-    private FValue current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -232,26 +232,6 @@ public class FValueFactory implements Iterable<FValue> {
 
     @Override
     public Iterator<FValue> iterator() {
-        current = null;
-        return new Iterator<FValue>() {
-            @Override
-            public boolean hasNext() {
-                if(current == null) {
-                    return root != null;
-                } else {
-                    return current.getNext() != null;
-                }
-            }
-
-            @Override
-            public FValue next() {
-                if(current == null) {
-                    current = root;
-                } else {
-                    current = current.getNext();
-                }
-                return current;
-            }
-        };
+        return new UnitIterator(root);
     }
 }

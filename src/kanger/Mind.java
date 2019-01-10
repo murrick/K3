@@ -12,7 +12,8 @@ import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.factory.*;
-import kanger.primitives.*;
+import kanger.primitives.ArgList;
+import kanger.primitives.Hypotese;
 import kanger.stores.*;
 import kanger.units.*;
 
@@ -658,14 +659,14 @@ public class Mind {
         return queryResult;
     }
 
-    public Right getQuery() {
-        for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
-            if (r.isQuery()) {
-                return r;
-            }
-        }
-        return null;
-    }
+//    public Right getQuery() {
+//        for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
+//            if (r.isQuery()) {
+//                return r;
+//            }
+//        }
+//        return null;
+//    }
 
     public boolean isSystem(Predicate p) {
         return calculator.exists(p);

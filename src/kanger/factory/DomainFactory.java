@@ -1,7 +1,9 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.*;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
+import kanger.primitives.UnitIterator;
 import kanger.units.Domain;
 import kanger.units.Predicate;
 import kanger.units.Right;
@@ -22,7 +24,6 @@ public class DomainFactory implements Iterable<Domain> {
     private Domain root = null;
     private long lastID = 0;
 
-    private Domain current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -174,26 +175,6 @@ public class DomainFactory implements Iterable<Domain> {
 
     @Override
     public Iterator<Domain> iterator() {
-        current = null;
-        return new Iterator<Domain>() {
-            @Override
-            public boolean hasNext() {
-                if(current == null) {
-                    return root != null;
-                } else {
-                    return current.getNext() != null;
-                }
-            }
-
-            @Override
-            public Domain next() {
-                if(current == null) {
-                    current = root;
-                } else {
-                    current = current.getNext();
-                }
-                return current;
-            }
-        };
+        return new UnitIterator(root);
     }
 }

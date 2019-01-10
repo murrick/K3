@@ -10,7 +10,9 @@ import kanger.enums.LogMode;
 import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
-import kanger.primitives.*;
+import kanger.primitives.Cause;
+import kanger.primitives.Hypotese;
+import kanger.primitives.LogEntry;
 import kanger.test.KangerTest;
 import kanger.units.*;
 
@@ -491,7 +493,7 @@ public class Screen {
 //    }
 
     public static void showTValues(Mind mind) {
-        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+        for (Right r : mind.getRights()) {
             List<TVariable> tvs = r.getTVariables(true);
             if (!tvs.isEmpty()) {
                 System.out.printf("Right %03d: %s;\n", r.getId(), r.getOrig());
@@ -771,7 +773,7 @@ public class Screen {
 
     public static void showRights(Mind mind, boolean showTree) {
 //        int i = 0;
-        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+        for (Right r : mind.getRights()) {
             System.out.printf("%sRight %03d%s: %s\n",
                     showTree ? "\n --- " : "",
                     r.getId(),

@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.primitives.UnitIterator;
 import kanger.units.TValue;
 import kanger.units.TVariable;
 import kanger.units.Term;
@@ -13,7 +14,7 @@ import java.util.*;
 /**
  * Created by murray on 25.05.15.
  */
-public class TValueFactory {
+public class TValueFactory implements Iterable<TValue> {
 
     private TValue root = null;
     private Map<TVariable, Long> current = new HashMap<>();
@@ -178,9 +179,10 @@ public class TValueFactory {
         return root;
     }
 
-    public void setRoot(TValue o) {
-        root = o;
-    }
+//    public void setRoot(TValue o) {
+//        root = o;
+//    }
+//
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -285,6 +287,11 @@ public class TValueFactory {
             }
             a = b;
         }
+    }
+
+    @Override
+    public Iterator<TValue> iterator() {
+        return new UnitIterator(root);
     }
 
 //    public long getCommitID() {

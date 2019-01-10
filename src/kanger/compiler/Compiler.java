@@ -5,7 +5,8 @@ import kanger.enums.Enums;
 import kanger.enums.ParseError;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
-import kanger.primitives.*;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
 import kanger.units.*;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class Compiler {
 //        NodeFactory n = new NodeFactory();
 //        construct(n, root, antc, Node.STILL);
 //        t = recurseTree(n.getRoot());
-        Tree t = user.getMind().getTrees().add();
+        Tree t = user.getMind().getTrees().add(r);
         r.getTree().add(t);
         construct(r, t, root, antc, new HashMap<String, Argument>(), new ArrayList<Tree>());
 //        user.getMind().getSolutions().clear();
@@ -76,7 +77,7 @@ public class Compiler {
 
             case Enums.AQN:
             case Enums.PQN: {
-                antc = compileQuantor(root, antc, replacements);
+                antc = compileQuantor(r, root, antc, replacements);
                 construct(r, t, root.getRight(), antc, replacements, list);
             }
             break;
@@ -95,7 +96,7 @@ public class Compiler {
                     root.setLeft(left.getRight());
                     left.setRight(root);
                     root = left;
-                    compilePredicate(t, root, antc, replacements);
+                    compilePredicate(r, t, root, antc, replacements);
                     break;
                 }
             case Enums.CON: {
@@ -153,19 +154,19 @@ public class Compiler {
                 if (root.getLeft() == null) {
                     construct(r, t, root.getRight(), antc, replacements, list);
                 } else {
-                    compilePredicate(t, root, antc, replacements);
+                    compilePredicate(r, t, root, antc, replacements);
                 }
             }
             break;
 
             default: {
-                compilePredicate(t, root, antc, replacements);
+                compilePredicate(r, t, root, antc, replacements);
             }
         }
         clones.addAll(list);
     }
 
-    private boolean compileQuantor(PTree root, boolean antc, Map<String, Argument> replacements) throws ParseErrorException {
+    private boolean compileQuantor(Right r, PTree root, boolean antc, Map<String, Argument> replacements) throws ParseErrorException {
         String varName = root.getLeft().getName();
 
         if (replacements.containsKey(varName)) {
@@ -174,20 +175,20 @@ public class Compiler {
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
-            p = new Argument(user.getMind().getTVars().createTVar());
+            p = new Argument(user.getMind().getTVars().createTVar(r));
             p.getT().setName(user.getMind().getTerms().add(varName));
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
-            p = new Argument(user.getMind().getTerms().createCVar(varName));
+            p = new Argument(user.getMind().getTerms().createCVar(r, varName));
         }
         replacements.put(varName, p);
         return antc;
     }
 
-    private Tree compilePredicate(Tree t, PTree root, boolean antc, Map<String, Argument> replacements) {
+    private Tree compilePredicate(Right r, Tree t, PTree root, boolean antc, Map<String, Argument> replacements) {
 //        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
 
         Domain d = new Domain(user);
-        d.setRight(user.getMind().getRights().getRoot());
+        d.setRight(r);
 
         ArgList arg = new ArgList();
         Predicate pred = null;

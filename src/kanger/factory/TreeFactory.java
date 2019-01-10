@@ -1,19 +1,22 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.primitives.UnitIterator;
+import kanger.units.Right;
 import kanger.units.Tree;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
  */
-public class TreeFactory {
+public class TreeFactory implements Iterable<Tree> {
 
     private Tree root = null;
     private long lastID = 0;
@@ -51,10 +54,10 @@ public class TreeFactory {
         }
     }
 
-    public Tree add() {
+    public Tree add(Right r) {
         Tree p = new Tree(user);
         p.setId(++lastID);
-        p.setRight(user.getMind().getRights().getRoot());
+        p.setRight(r);
         p.setNext(root);
         root = p;
         return p;
@@ -69,13 +72,14 @@ public class TreeFactory {
         return null;
     }
 
-    public Tree getRoot() {
-        return root;
-    }
-
-    public void setRoot(Tree o) {
-        root = o;
-    }
+//    public Tree getRoot() {
+//        return root;
+//    }
+//
+//    public void setRoot(Tree o) {
+//        root = o;
+//    }
+//
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -133,4 +137,8 @@ public class TreeFactory {
         }
     }
 
+    @Override
+    public Iterator<Tree> iterator() {
+        return new UnitIterator(root);
+    }
 }

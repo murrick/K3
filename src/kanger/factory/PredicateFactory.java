@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.primitives.UnitIterator;
 import kanger.units.Predicate;
 import kanger.units.Term;
 
@@ -20,7 +21,6 @@ public class PredicateFactory implements Iterable<Predicate> {
     private Predicate root = null;
     private long lastID = 0;
 
-    private Predicate current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -179,26 +179,6 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     @Override
     public Iterator<Predicate> iterator() {
-        current = null;
-        return new Iterator<Predicate>() {
-            @Override
-            public boolean hasNext() {
-                if(current == null) {
-                    return root != null;
-                } else {
-                    return current.getNext() != null;
-                }
-            }
-
-            @Override
-            public Predicate next() {
-                if(current == null) {
-                    current = root;
-                } else {
-                    current = current.getNext();
-                }
-                return current;
-            }
-        };
+        return new UnitIterator(root);
     }
 }

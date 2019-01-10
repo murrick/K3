@@ -1,7 +1,8 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.*;
+import kanger.primitives.ArgList;
+import kanger.primitives.UnitIterator;
 import kanger.units.*;
 
 import java.io.DataInputStream;
@@ -18,7 +19,7 @@ public class DatabaseFactory implements Iterable<Record>{
     private long lastID = 0;
     private int lastTag = 0;
 
-    private Record current = null;
+//    private Record current = null;
 //    private Record stop = null;
 //    private DatabaseFactory next = null;
 
@@ -95,8 +96,8 @@ public class DatabaseFactory implements Iterable<Record>{
                 }
             }
             Right r = user.getMind().getRights().add();
-            Tree t = user.getMind().getTrees().add();
-            t.setRight(r);
+            Tree t = user.getMind().getTrees().add(r);
+//            t.setRight(r);
             t.setUsed();
             Domain d = user.getMind().getDomains().add(pred, antc, list, r);
             d.setRight(r);
@@ -235,34 +236,6 @@ public class DatabaseFactory implements Iterable<Record>{
 //
     @Override
     public Iterator<Record> iterator() {
-        current = null;
-        return new Iterator<Record>() {
-            @Override
-            public boolean hasNext() {
-                if(current == null) {
-                    return root != null;
-//                } else if(stop != null) {
-//                    return current.getNext() != null && current.getNext().getId() > stop.getId();
-                } else {
-                    return current.getNext() != null;
-                }
-            }
-
-            @Override
-            public Record next() {
-                if(current == null) {
-                    current = root;
-//                } else if(stop != null) {
-//                    if(current.getNext() == null || current.getNext().getId() <= stop.getId()) {
-//                        current = null;
-//                    } else {
-//                        current = current.getNext();
-//                    }
-                } else {
-                    current = current.getNext();
-                }
-                return current;
-            }
-        };
+        return new UnitIterator(root);
     }
 }

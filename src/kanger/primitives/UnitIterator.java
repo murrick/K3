@@ -4,7 +4,7 @@ import kanger.interfaces.Identifiable;
 
 import java.util.Iterator;
 
-public class UnitIterator implements Iterator<Identifiable> {
+public class UnitIterator implements Iterator {
 
     Identifiable current = null;
     Identifiable root = null;

@@ -3,7 +3,10 @@ package kanger.units;
 import kanger.User;
 import kanger.interfaces.Identifiable;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -97,6 +100,7 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
         this.right = right;
     }
 
+    @Override
     public Tree getNext() {
         return next;
     }
@@ -108,7 +112,7 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
 
     @Override
     public Tree clone() {
-        Tree t = user.getMind().getTrees().add();
+        Tree t = user.getMind().getTrees().add(right);
         t.setRight(right);
         t.sequence.addAll(sequence);
         return t;

@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.primitives.UnitIterator;
 import kanger.units.Right;
 import kanger.units.TVariable;
 
@@ -12,7 +13,7 @@ import java.util.*;
 /**
  * Created by murray on 25.05.15.
  */
-public class TVariableFactory {
+public class TVariableFactory implements Iterable<TVariable> {
 
     private TVariable root = null;
     private long lastID = 0;
@@ -51,11 +52,11 @@ public class TVariableFactory {
         }
     }
 
-    public TVariable createTVar() {
+    public TVariable createTVar(Right r) {
         TVariable p = new TVariable(user);
         p.setId(++lastID);
         p.setIndex(user.getMind().getTerms().nextVarIndex());
-        p.setRight(user.getMind().getRights().getRoot());
+        p.setRight(r);
         p.setNext(root);
         root = p;
         return p;
@@ -80,13 +81,14 @@ public class TVariableFactory {
         return null;
     }
 
-    public TVariable getRoot() {
-        return root;
-    }
-
-    public void setRoot(TVariable o) {
-        root = o;
-    }
+//    public TVariable getRoot() {
+//        return root;
+//    }
+//
+//    public void setRoot(TVariable o) {
+//        root = o;
+//    }
+//
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -145,4 +147,8 @@ public class TVariableFactory {
         }
     }
 
+    @Override
+    public Iterator<TVariable> iterator() {
+        return new UnitIterator(root);
+    }
 }
