@@ -15,7 +15,7 @@ import java.io.*;
  * <p>
  * Домен для функции. Может быть рекурсивным на уровне структуры TList.
  */
-public class Function implements Externalizable, Identifiable {
+public class Function implements Externalizable, Identifiable<Function> {
 
     private long id = -1;
     private Term name = null;
@@ -24,6 +24,10 @@ public class Function implements Externalizable, Identifiable {
 
     private Function next = null;
     private User user = null;
+
+    public Function() {
+
+    }
 
     public Function(User user) {
         this.user = user;
@@ -289,7 +293,12 @@ public class Function implements Externalizable, Identifiable {
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
     }
-    
+
+    @Override
+    public boolean equalsTo(Function to) {
+        return false;
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

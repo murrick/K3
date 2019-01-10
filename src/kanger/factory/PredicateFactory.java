@@ -8,17 +8,19 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
  */
-public class PredicateFactory {
+public class PredicateFactory implements Iterable<Predicate> {
 
     private Predicate root = null;
     private long lastID = 0;
 
+    private Predicate current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -45,7 +47,7 @@ public class PredicateFactory {
         for (Predicate p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
             list.add(0, p);
         }
-        for (Predicate p : list) { 
+        for (Predicate p : list) {
             p.setNext(root);
             root = p;
             p.setId(lastID++);
@@ -68,8 +70,9 @@ public class PredicateFactory {
     }
 
     public Object find(Term line, int range) {
+        Predicate temp = new Predicate(line, range);
         for (Predicate p = root; p != null; p = p.getNext()) {
-            if (line.getId() == p.getName().getId() && p.getRange() == range) {
+            if (p.equalsTo(temp)) {
                 return p;
             }
         }
@@ -85,14 +88,14 @@ public class PredicateFactory {
         return null;
     }
 
-    public Predicate getRoot() {
-        return root;
-    }
-
-    public void setRoot(Predicate root) {
-        this.root = root;
-    }
-
+//    public Predicate getRoot() {
+//        return root;
+//    }
+//
+//    public void setRoot(Predicate root) {
+//        this.root = root;
+//    }
+//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getPredicates());
@@ -106,13 +109,13 @@ public class PredicateFactory {
     }
 
     private void release() {
-        if(!stack.empty()) {
+        if (!stack.empty()) {
             Object[] pop = stack.pop();
             Predicate saved = (Predicate) pop[0];
             lastID = (long) pop[1];
             root = saved;
         }
-        if(stack.isEmpty()) {
+        if (stack.isEmpty()) {
             mark();
         }
     }
@@ -141,7 +144,7 @@ public class PredicateFactory {
 //            }
 //        }
         dos.writeInt(links.size());
-        for(Long[] l : links) {
+        for (Long[] l : links) {
             dos.writeLong(l[0]);
             dos.writeLong(l[1]);
             dos.writeLong(l[2]);
@@ -174,4 +177,28 @@ public class PredicateFactory {
 //        }
     }
 
+    @Override
+    public Iterator<Predicate> iterator() {
+        current = null;
+        return new Iterator<Predicate>() {
+            @Override
+            public boolean hasNext() {
+                if(current == null) {
+                    return root != null;
+                } else {
+                    return current.getNext() != null;
+                }
+            }
+
+            @Override
+            public Predicate next() {
+                if(current == null) {
+                    current = root;
+                } else {
+                    current = current.getNext();
+                }
+                return current;
+            }
+        };
+    }
 }

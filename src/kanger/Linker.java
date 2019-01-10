@@ -31,7 +31,7 @@ public class Linker {
         user.getMind().getClosedTrees().clear();
 
 
-        for (Function f = user.getMind().getFunctions().getRoot(); f != null; f = f.getNext()) {
+        for (Function f : user.getMind().getFunctions()) {
             if (!f.isCalculable()) {
                 new Calculator(user).calculate(f, logging);
             }

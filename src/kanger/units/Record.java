@@ -9,7 +9,7 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Record implements Comparable<Record>, Externalizable, Identifiable {
+public class Record implements Comparable<Record>, Externalizable, Identifiable<Domain> {
     private long id = -1;
     private Domain domain = null;
     private int tag = -1;
@@ -17,6 +17,9 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable 
 
     private Record next = null;
     private User user = null;
+
+    public Record() {
+    }
 
     public Record(Domain domain) {
         this.domain = domain;
@@ -33,7 +36,7 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable 
         domain = (Domain) dis.readObject();
         tag = dis.readInt();
         int count = dis.readInt();
-        while(count-- > 0) {
+        while (count-- > 0) {
             Cause c = (Cause) dis.readObject();
             causes.add(c);
         }
@@ -45,7 +48,7 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable 
         dos.writeObject(domain);
         dos.writeInt(tag);
         dos.writeInt(causes.size());
-        for(Cause c : causes) {
+        for (Cause c : causes) {
             dos.writeObject(c);
         }
     }
@@ -110,7 +113,32 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable 
         buffer.append(domain.getArguments().hashCode());
         return buffer.toString().hashCode();
     }
-    
+
+    @Override
+    public boolean equalsTo(Domain x) {
+        if (x.isAntc() == domain.isAntc()
+                && x.getPredicate().getId() == domain.getPredicate().getId()
+                && x.getPredicate().getRange() == domain.getPredicate().getRange()) {
+            int i = 0;
+            for (; i < domain.getPredicate().getRange(); ++i) {
+                if (!x.get(i).isEmpty()
+                        && !domain.getArguments().get(i).isEmpty()
+                        && x.get(i).getValue().getId() != domain.getArguments().get(i).getValue().getId()) {
+                    break;
+                }
+
+                TValue a = x.get(i).isTSet() ? x.get(i).getT().getCurrent() : x.get(i).getV();
+                TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT().getCurrent() : domain.getArguments().get(i).getV();
+                if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
+                    break;
+                }
+            }
+            return i == domain.getPredicate().getRange();
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

@@ -14,7 +14,7 @@ import java.util.Set;
  * <p>
  * Список правил
  */
-public class Right implements Externalizable, Identifiable {
+public class Right implements Externalizable, Identifiable<Right> {
 
     private long id = -1;                       // ID Правила
     private Term orig = null;                   // Оригинальная строка
@@ -112,41 +112,41 @@ public class Right implements Externalizable, Identifiable {
 
 
 
-    public Set<Right> getActualRights() {
-        Set<Right> set = new HashSet<>();
-        Set<Predicate> preds = new HashSet<>();
-        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
-            if (d.getRight().getId() == id) {
-                preds.add(d.getPredicate());
-            }
-        }
-        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
-            if (d.getRight().getId() != id && preds.contains(d.getPredicate())) {
-                set.add(d.getRight());
-            }
-        }
-        return set;
-    }
-
-    public Set<Tree> getActualTrees() {
-        Set<Tree> set = new HashSet<>();
-        Set<Predicate> preds = new HashSet<>();
-        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
-            if (d.getRight().getId() == id) {
-                preds.add(d.getPredicate());
-            }
-        }
-        for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
-            for (Domain d : t.getSequence()) {
-                if (preds.contains(d.getPredicate())) {
-                    set.add(t);
-                    break;
-                }
-            }
-        }
-        return set;
-    }
-
+//    public Set<Right> getActualRights() {
+//        Set<Right> set = new HashSet<>();
+//        Set<Predicate> preds = new HashSet<>();
+//        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+//            if (d.getRight().getId() == id) {
+//                preds.add(d.getPredicate());
+//            }
+//        }
+//        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+//            if (d.getRight().getId() != id && preds.contains(d.getPredicate())) {
+//                set.add(d.getRight());
+//            }
+//        }
+//        return set;
+//    }
+//
+//    public Set<Tree> getActualTrees() {
+//        Set<Tree> set = new HashSet<>();
+//        Set<Predicate> preds = new HashSet<>();
+//        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+//            if (d.getRight().getId() == id) {
+//                preds.add(d.getPredicate());
+//            }
+//        }
+//        for (Tree t = user.getMind().getTrees().getRoot(); t != null; t = t.getNext()) {
+//            for (Domain d : t.getSequence()) {
+//                if (preds.contains(d.getPredicate())) {
+//                    set.add(t);
+//                    break;
+//                }
+//            }
+//        }
+//        return set;
+//    }
+//
     @Override
     public String toString() {
         return orig.toString();
@@ -162,7 +162,12 @@ public class Right implements Externalizable, Identifiable {
         }
         return buffer.toString().hashCode();
     }
-   
+
+    @Override
+    public boolean equalsTo(Right to) {
+        return false;
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

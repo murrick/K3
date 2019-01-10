@@ -674,7 +674,7 @@ public class Screen {
 //
 //
     public static void showBase(Mind mind, boolean showCauses, String param) throws RuntimeErrorException {
-        for (Predicate p = mind.getPredicates().getRoot(); p != null; p = p.getNext()) {
+        for (Predicate p : mind.getPredicates()) {
             if (!p.getSolves().isEmpty() && !mind.isSystem(p) && (param == null || param.equals(p.getName()))) {
                 showPred(mind, p, showCauses);
                 System.out.printf("\n");
@@ -912,8 +912,8 @@ public class Screen {
         System.out.printf("Are you sure to remove right " + id + " [y/N]? ");
         String s = new Scanner(System.in).nextLine();
         if (s.charAt(0) == 'Y' || s.charAt(0) == 'y') {
-
-            mind.removeInsertionRight(r);
+//TODO: Нужно реализовать удаление правила
+//            mind.removeInsertionRight(r);
             mind.setChanged(true);
         }
     }

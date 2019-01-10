@@ -156,8 +156,9 @@ public class TValueFactory {
 //    }
 //
     public TValue find(TVariable tv, Term v) {
+        TValue temp = new TValue(tv, v);
         for (TValue t = root; t != null; t = t.getNext()) {
-            if (tv.getId() == t.getTVar().getId() && t.getValue().getId() == v.getId()) {
+            if (t.equalsTo(temp)) {
                 return t;
             }
         }

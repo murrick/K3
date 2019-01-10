@@ -17,7 +17,7 @@ import java.util.*;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Domain implements Externalizable, Identifiable {
+public class Domain implements Externalizable, Identifiable<Domain> {
 
     private long id = -1;                                       // id домена
     private boolean antc = true;                                // ! или ?
@@ -31,7 +31,20 @@ public class Domain implements Externalizable, Identifiable {
 
     private User user = null;
 
-    //TODO Нужен конструктор по умолчанию
+    public Domain() {
+    }
+
+    public Domain(Predicate pred, boolean antc, ArgList args, Right r) {
+        this(pred, antc, args);
+        setRight(r);
+    }
+
+    public Domain(Predicate pred, boolean antc, ArgList args) {
+        setPredicate(pred);
+        setAntc(antc);
+        getArguments().addAll(args);
+    }
+
     public Domain(User user) {
         this.user = user;
     }
@@ -80,6 +93,7 @@ public class Domain implements Externalizable, Identifiable {
         this.id = id;
     }
 
+    @Override
     public Domain getNext() {
         return next;
     }
@@ -744,6 +758,29 @@ public class Domain implements Externalizable, Identifiable {
         buffer.append(right.getId());
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
+    }
+
+    @Override
+    public boolean equalsTo(Domain to) {
+        if (to.isAntc() == antc
+                && to.getPredicate().getId() == predicate.getId()
+                && to.getRight().getId() == right.getId()) {
+            int i = 0;
+            for (; i < predicate.getRange(); ++i) {
+                if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT().getId() == arguments.get(i).getT().getId())
+                        || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF().getId() == arguments.get(i).getF().getId())
+                        || (!to.get(i).isTSet() && !arguments.get(i).isTSet()
+                        && !to.get(i).isFSet() && !arguments.get(i).isFSet()
+                        && !to.get(i).isEmpty() && !arguments.get(i).isEmpty()
+                        && to.get(i).getValue().getId() == arguments.get(i).getValue().getId())) {
+                } else {
+                    break;
+                }
+            }
+            return i == predicate.getRange();
+        } else {
+            return false;
+        }
     }
 
     @Override

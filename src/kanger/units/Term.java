@@ -24,7 +24,7 @@ import java.util.List;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Object>, Externalizable, Identifiable {
+public class Term implements Comparable<Object>, Externalizable, Identifiable<Term> {
 
     public static final double FLT_EPSILON = 0.00000000001;
 
@@ -299,7 +299,12 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable {
         buffer.append(value.hashCode());
          return buffer.toString().hashCode();
     }
-   
+
+    @Override
+    public boolean equalsTo(Term to) {
+        return compareTo(to) == 0;
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

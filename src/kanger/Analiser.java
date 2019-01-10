@@ -532,7 +532,10 @@ public class Analiser {
             }
 
             boolean occurs = false;
-            for (Record r = user.getMind().getDatabase().getRoot(); r != stop; r = r.getNext()) {
+            for (Record r : user.getMind().getDatabase()) {
+                if(stop != null && r.getId() == stop.getId()) {
+                    break;
+                }
                 Domain d = r.getDomain();
                 if (!d.isQuery()
 //                        && !(user.getMind().getQueryPass() == QueryPass.CHECKFALSE && !d.isAntc())
@@ -761,7 +764,7 @@ public class Analiser {
 
     public boolean checkDatabase(boolean logging) {
         boolean result = false;
-        for (Record p = user.getMind().getDatabase().getRoot(); p != null; p = p.getNext()) {
+        for (Record p : user.getMind().getDatabase()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
                 int i = 0;

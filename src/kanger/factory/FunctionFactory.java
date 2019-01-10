@@ -7,14 +7,16 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
-public class FunctionFactory { 
+public class FunctionFactory implements Iterable<Function> {
 
     private Function root = null;
     private long lastID = 0;
 
+    private Function current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user= null;
@@ -65,14 +67,14 @@ public class FunctionFactory {
         return null;
     }
 
-    public Function getRoot() {
-        return root;
-    }
-
-    public void setRoot(Function o) {
-        root = o;
-    }
-
+//    public Function getRoot() {
+//        return root;
+//    }
+//
+//    public void setRoot(Function o) {
+//        root = o;
+//    }
+//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFunctions());
@@ -130,4 +132,28 @@ public class FunctionFactory {
         }
     }
 
+    @Override
+    public Iterator<Function> iterator() {
+        current = null;
+        return new Iterator<Function>() {
+            @Override
+            public boolean hasNext() {
+                if(current == null) {
+                    return root != null;
+                } else {
+                    return current.getNext() != null;
+                }
+            }
+
+            @Override
+            public Function next() {
+                if(current == null) {
+                    current = root;
+                } else {
+                    current = current.getNext();
+                }
+                return current;
+            }
+        };
+    }
 }

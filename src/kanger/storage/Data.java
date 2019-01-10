@@ -7,17 +7,13 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 public class Data implements Closeable, Iterable<Identifiable> {
-    private static final int DELETED = 0x01;
     private static final short VERSION = 0x0301;
-    private static final long HEADER_SIZE = 2L + 8L + 8L;
-    private static final long SIZE_OFFSET = 2L + 8L;
 
     private int version = VERSION;
-    private long headerSize = HEADER_SIZE;
+    private int headerSize = 0;
     private boolean changed = false;
     private File file = null;
     private RandomAccessFile ras = null;
-    private long size = 0;
     private long currentOffset = -1;
     private long blockSize = 0;
     private long dataSize = 0;
@@ -37,15 +33,14 @@ public class Data implements Closeable, Iterable<Identifiable> {
             ras = new RandomAccessFile(file, "r");
             ras.seek(0);
             version = ras.readShort();
-            headerSize = ras.readLong();
-            size = ras.readLong();
+            headerSize = ras.readInt();
             changed = false;
         } catch (FileNotFoundException ex) {
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 ras.seek(0);
                 ras.writeShort(version);
-                ras.writeLong(headerSize);
-                ras.writeLong(size);
+                headerSize = (int) (ras.getFilePointer() + Integer.BYTES);
+                ras.writeInt(headerSize);
                 changed = true;
             }
             ras = new RandomAccessFile(file, "r");
@@ -58,7 +53,6 @@ public class Data implements Closeable, Iterable<Identifiable> {
         ras.close();
         file = null;
         ras = null;
-        size = 0;
     }
 
     public void flush() throws IOException {
@@ -97,6 +91,7 @@ public class Data implements Closeable, Iterable<Identifiable> {
         return data;
     }
 
+
     public long add(Identifiable o) throws IOException {
         set(-1, o);
         return currentOffset;
@@ -132,9 +127,6 @@ public class Data implements Closeable, Iterable<Identifiable> {
                 if (size != 0) {
                     ras.seek(offset + 8);
                     ras.writeLong(0L);
-                    --size;
-                    ras.seek(SIZE_OFFSET);
-                    ras.writeLong(size);
                 }
             }
         }
@@ -143,7 +135,6 @@ public class Data implements Closeable, Iterable<Identifiable> {
     private void saveCurrentBlock() throws IOException {
         if (buffer != null && data != null) {
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
-                long oldSize = size;
                 if (currentOffset != -1) {
                     ras.seek(currentOffset);
                     blockSize = ras.readLong();
@@ -159,7 +150,6 @@ public class Data implements Closeable, Iterable<Identifiable> {
                     } else {
                         ras.writeLong(0L);
                         currentOffset = -1;
-                        --size;
                     }
                 }
                 if (currentOffset == -1) {
@@ -169,13 +159,8 @@ public class Data implements Closeable, Iterable<Identifiable> {
                     ras.writeLong(blockSize);
                     ras.writeLong(dataSize);
                     ras.write(buffer);
-                    ++size;
                 }
                 ++writeCounter;
-                if (oldSize != size) {
-                    ras.seek(SIZE_OFFSET);
-                    ras.writeLong(size);
-                }
             }
         }
     }
@@ -186,10 +171,6 @@ public class Data implements Closeable, Iterable<Identifiable> {
 
     public boolean isChanged() {
         return changed;
-    }
-
-    public long getSize() {
-        return size;
     }
 
     public long getDataSize() {
@@ -228,6 +209,9 @@ public class Data implements Closeable, Iterable<Identifiable> {
         return ras == null;
     }
 
+    public File getFile() {
+        return file;
+    }
 
     @Override
     public Iterator<Identifiable> iterator() {

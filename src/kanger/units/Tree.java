@@ -14,7 +14,7 @@ import java.util.Set;
  * <p>
  * Элемент ветви дерева
  */
-public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
+public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree> {
 
     private long id = -1;                                       // Идентификатор
     private List<Domain> sequence = new ArrayList<>();          // Домены
@@ -134,8 +134,13 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable {
             buffer.append(d.getId());
         }
         return buffer.toString().hashCode();
-    }    
-   
+    }
+
+    @Override
+    public boolean equalsTo(Tree to) {
+        return false;
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

@@ -12,11 +12,15 @@ import java.util.*;
 /**
  * Created by murray on 25.05.15.
  */
-public class DatabaseFactory {
+public class DatabaseFactory implements Iterable<Record>{
 
     private Record root = null;
     private long lastID = 0;
     private int lastTag = 0;
+
+    private Record current = null;
+//    private Record stop = null;
+//    private DatabaseFactory next = null;
 
     private Stack<Object[]> stack = new Stack<>();
 
@@ -29,11 +33,13 @@ public class DatabaseFactory {
 
     public void transaction(DatabaseFactory base) {
         if (base != null) {
+//            next = base;
             root = base.root;
             lastID = base.lastID;
             lastTag = base.lastTag;
         } else {
             root = null;
+//            next = null;
             lastID = 0;
             lastTag = 0;
         }
@@ -113,28 +119,10 @@ public class DatabaseFactory {
     }
 
     public Record find(Predicate pred, boolean antc, ArgList arg) {
+        Domain temp = new Domain(pred, antc, arg);
         for (Record p = root; p != null; p = p.getNext()) {
-            Domain x = p.getDomain();
-            if (x.isAntc() == antc
-                && x.getPredicate() == pred
-                && x.getPredicate().getRange() == pred.getRange()) {
-                int i = 0;
-                for (; i < pred.getRange(); ++i) {
-                    if (!x.get(i).isEmpty()
-                        && !arg.get(i).isEmpty()
-                        && x.get(i).getValue().getId() != arg.get(i).getValue().getId()) {
-                        break;
-                    }
-
-                    TValue a = x.get(i).isTSet() ? x.get(i).getT().getCurrent() : x.get(i).getV();
-                    TValue b = arg.get(i).isTSet() ? arg.get(i).getT().getCurrent() : arg.get(i).getV();
-                    if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
-                        break;
-                    }
-                }
-                if (i == pred.getRange()) {
-                    return p;
-                }
+            if(p.equalsTo(temp)) {
+                return p;
             }
         }
         return null;
@@ -154,9 +142,10 @@ public class DatabaseFactory {
         return root;
     }
 
-    public void setRoot(Record o) {
-        root = o;
-    }
+//    public void setRoot(Record o) {
+//        root = o;
+//    }
+//
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -233,5 +222,47 @@ public class DatabaseFactory {
             set.addAll(d.getDomain().getArguments().getTVariables(full));
         }
         return set;
+    }
+
+//    public DatabaseFactory localOnly(boolean local) {
+//        if(local && next != null) {
+//            stop = next.root;
+//        } else {
+//            stop = null;
+//        }
+//        return this;
+//    }
+//
+    @Override
+    public Iterator<Record> iterator() {
+        current = null;
+        return new Iterator<Record>() {
+            @Override
+            public boolean hasNext() {
+                if(current == null) {
+                    return root != null;
+//                } else if(stop != null) {
+//                    return current.getNext() != null && current.getNext().getId() > stop.getId();
+                } else {
+                    return current.getNext() != null;
+                }
+            }
+
+            @Override
+            public Record next() {
+                if(current == null) {
+                    current = root;
+//                } else if(stop != null) {
+//                    if(current.getNext() == null || current.getNext().getId() <= stop.getId()) {
+//                        current = null;
+//                    } else {
+//                        current = current.getNext();
+//                    }
+                } else {
+                    current = current.getNext();
+                }
+                return current;
+            }
+        };
     }
 }

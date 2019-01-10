@@ -3,6 +3,7 @@ package kanger.storage;
 import kanger.interfaces.Identifiable;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -73,5 +74,35 @@ public class Storage implements Closeable {
             }
         }
         return list;
+    }
+
+    public boolean isClosed() {
+        return data.isClosed();
+    }
+
+    public void reindex() throws IOException {
+        if(!isClosed()) {
+            File tempFile = File.createTempFile(name, ".temp");
+            Data tempData = new Data();
+            tempData.open(tempFile);
+
+            index.clear();
+            hash.clear();
+
+            for(Identifiable one : data) {
+                if(one != null) {
+                    long offset = tempData.add(one);
+                    index.set(one.getId(), offset);
+                    hash.add(one.getHash(), offset);
+                }
+            }
+
+            tempData.close();
+            data.close();
+            data.getFile().delete();
+            tempFile.renameTo(data.getFile());
+            data.open(data.getFile());
+            flush();
+        }
     }
 }

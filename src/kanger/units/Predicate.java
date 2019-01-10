@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
-public class Predicate implements Externalizable, Identifiable {
+public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     private long id = -1;                   // Идентификатор
     private Term name = null;               // Имя предиката
@@ -19,6 +19,14 @@ public class Predicate implements Externalizable, Identifiable {
     private Predicate next = null;          // Следующий предикат
 
     private User user = null;
+
+    public Predicate() {
+    }
+
+    public Predicate(Term name, int range) {
+        this.name = name;
+        this.range = range;
+    }
 
     public Predicate(User user) {
         this.user = user;
@@ -85,7 +93,7 @@ public class Predicate implements Externalizable, Identifiable {
 //            }
 //        }
 
-        for (Record d = user.getMind().getDatabase().getRoot(); d != null; d = d.getNext()) {
+        for (Record d : user.getMind().getDatabase()) {
             if (getId() == d.getDomain().getPredicate().getId()) {
                 set.add(d.getDomain());
             }
@@ -95,7 +103,7 @@ public class Predicate implements Externalizable, Identifiable {
 
     public Set<Domain> getRelates() {
         Set<Domain> set = new HashSet<>();
-        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d : user.getMind().getDomains()) {
             if (getId() == d.getPredicate().getId()) {
                 set.add(d);
             }
@@ -118,7 +126,7 @@ public class Predicate implements Externalizable, Identifiable {
 
     public Set<Right> getLinkedRights() {
         Set<Right> set = new HashSet<>();
-        for(Domain d : getRelates()) {
+        for (Domain d : getRelates()) {
             set.add(d.getRight());
         }
         return set;
@@ -126,7 +134,7 @@ public class Predicate implements Externalizable, Identifiable {
 
     public Set<TVariable> getTVariables(boolean full) {
         Set<TVariable> set = new HashSet<>();
-        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+        for (Domain d : user.getMind().getDomains()) {
             if (getId() == d.getPredicate().getId()) {
                 set.addAll(d.getArguments().getTVariables(full));
                 break;
@@ -196,15 +204,20 @@ public class Predicate implements Externalizable, Identifiable {
 //        }
 //        return list;
 //    }
-   
+
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();       
+        StringBuffer buffer = new StringBuffer();
         buffer.append(name.getId());
         buffer.append(range);
         return buffer.toString().hashCode();
     }
-    
+
+    @Override
+    public boolean equalsTo(Predicate to) {
+        return to.getName().getId() == getName().getId() && getRange() == to.getRange();
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

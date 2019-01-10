@@ -8,13 +8,15 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
-public class FValueFactory {
+public class FValueFactory implements Iterable<FValue> {
     private FValue root = null;
     private long lastID = 0;
 
+    private FValue current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -75,19 +77,8 @@ public class FValueFactory {
 
     public FValue find(Function f) {
         for (FValue t = root; t != null; t = t.getNext()) {
-            if (f.getId() == t.getFunc().getId()
-                    && (f.getArguments().get(f.getRange()).isEmpty()
-                    || t.getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId())) {
-                boolean complete = true;
-                for (int i = 0; i < f.getRange(); ++i) {
-                    if (!f.getArguments().get(i).isEmpty() && f.getArguments().get(i).getValue().getId() != t.getCondition().get(i).getValue().getId()) {
-                        complete = false;
-                        break;
-                    }
-                }
-                if (complete) {
-                    return t;
-                }
+            if (t.equalsTo(f)) {
+                return t;
             }
         }
         return null;
@@ -106,10 +97,10 @@ public class FValueFactory {
         return root;
     }
 
-    public void setRoot(FValue o) {
-        root = o;
-    }
-
+//    public void setRoot(FValue o) {
+//        root = o;
+//    }
+//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFValues());
@@ -239,4 +230,28 @@ public class FValueFactory {
     }
 
 
+    @Override
+    public Iterator<FValue> iterator() {
+        current = null;
+        return new Iterator<FValue>() {
+            @Override
+            public boolean hasNext() {
+                if(current == null) {
+                    return root != null;
+                } else {
+                    return current.getNext() != null;
+                }
+            }
+
+            @Override
+            public FValue next() {
+                if(current == null) {
+                    current = root;
+                } else {
+                    current = current.getNext();
+                }
+                return current;
+            }
+        };
+    }
 }

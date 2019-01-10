@@ -10,17 +10,19 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
  */
-public class DomainFactory {
+public class DomainFactory implements Iterable<Domain> {
 
     private Domain root = null;
     private long lastID = 0;
 
+    private Domain current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -87,25 +89,10 @@ public class DomainFactory {
     }
 
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) {
+        Domain temp = new Domain(pred, antc, arg, r);
         for (Domain p = root; p != null; p = p.getNext()) {
-            if (p.isAntc() == antc
-                    && p.getPredicate() == pred
-                    && p.getRight().getId() == r.getId()) {
-                int i = 0;
-                for (; i < pred.getRange(); ++i) {
-                    if ((p.get(i).isTSet() && arg.get(i).isTSet() && p.get(i).getT().getId() == arg.get(i).getT().getId())
-                            || (p.get(i).isFSet() && arg.get(i).isFSet() && p.get(i).getF().getId() == arg.get(i).getF().getId())
-                            || (!p.get(i).isTSet() && !arg.get(i).isTSet()
-                            && !p.get(i).isFSet() && !arg.get(i).isFSet()
-                            && !p.get(i).isEmpty() && !arg.get(i).isEmpty()
-                            && p.get(i).getValue().getId() == arg.get(i).getValue().getId())) {
-                    } else {
-                        break;
-                    }
-                }
-                if (i == pred.getRange()) {
-                    return p;
-                }
+            if(p.equalsTo(temp)) {
+                return p;
             }
         }
         return null;
@@ -120,14 +107,14 @@ public class DomainFactory {
         return null;
     }
 
-    public Domain getRoot() {
-        return root;
-    }
-
-    public void setRoot(Domain o) {
-        root = o;
-    }
-
+//    public Domain getRoot() {
+//        return root;
+//    }
+//
+//    public void setRoot(Domain o) {
+//        root = o;
+//    }
+//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getDomains());
@@ -185,4 +172,28 @@ public class DomainFactory {
         }
     }
 
+    @Override
+    public Iterator<Domain> iterator() {
+        current = null;
+        return new Iterator<Domain>() {
+            @Override
+            public boolean hasNext() {
+                if(current == null) {
+                    return root != null;
+                } else {
+                    return current.getNext() != null;
+                }
+            }
+
+            @Override
+            public Domain next() {
+                if(current == null) {
+                    current = root;
+                } else {
+                    current = current.getNext();
+                }
+                return current;
+            }
+        };
+    }
 }

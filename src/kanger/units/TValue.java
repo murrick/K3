@@ -13,7 +13,7 @@ import java.util.TreeSet;
 /**
  * Created by murray on 13.12.16.
  */
-public class TValue implements Comparable<TValue>, Externalizable, Identifiable {
+public class TValue implements Comparable<TValue>, Externalizable, Identifiable<TValue> {
 
 
     private long id = -1;                   // Идентификатор значения переменной
@@ -24,6 +24,13 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable 
     private TValue next = null;          // Следующая переменная
     private User user = null;
 
+    public TValue() {
+    }
+
+    public TValue(TVariable var, Term val) {
+        tVar = var;
+        value = val;
+    }
 
     public TValue(User user) {
         this.user = user;
@@ -146,7 +153,12 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable 
 //        buffer.append(tVar.getId());
         return buffer.toString().hashCode();
     }
-   
+
+    @Override
+    public boolean equalsTo(TValue to) {
+        return to.getTVar().getId() == getTVar().getId() && getValue().getId() == to.getValue().getId();
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();

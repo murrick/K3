@@ -13,7 +13,7 @@ import java.util.Set;
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable implements Comparable<Object>, Externalizable, Identifiable {
+public class TVariable implements Comparable<Object>, Externalizable, Identifiable<TVariable> {
 
     private long id = -1;                   // Идентификатор переменной
     private Term name = null;               // Оригинальное подкванторное имя
@@ -302,7 +302,12 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         buffer.append(index);
         return buffer.toString().hashCode();
     }
-   
+
+    @Override
+    public boolean equalsTo(TVariable to) {
+        return false;
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();
@@ -349,16 +354,16 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //        return mind.getTValues().nextTop(this, v);
 //    }
 
-    public Set<Domain> getUsage() {
-        Set<Domain> set = new HashSet<>();
-        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
-            if (d.contains(this)) {
-                set.add(d);
-            }
-        }
-        return set;
-    }
-
+//    public Set<Domain> getUsage() {
+//        Set<Domain> set = new HashSet<>();
+//        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+//            if (d.contains(this)) {
+//                set.add(d);
+//            }
+//        }
+//        return set;
+//    }
+//
     //    public void mark() {
 //        if (!mind.getTValues().containsKey(this)) {
 //            mind.getTValues().put(this, new TValueFactory(mind));

@@ -10,17 +10,19 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
  */
-public class RightFactory {
+public class RightFactory implements Iterable<Right> {
 
     private Right root = null;
     private long lastID = 0;
 
+    private Right current = null;
     private Stack<Object[]> stack = new Stack<>();
 
     private User user = null;
@@ -153,5 +155,30 @@ public class RightFactory {
             arg.add(new Argument(a.getValue()));
         }
         t.getSequence().add(user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), arg, r));
+    }
+
+    @Override
+    public Iterator<Right> iterator() {
+        current = null;
+        return new Iterator<Right>() {
+            @Override
+            public boolean hasNext() {
+                if(current == null) {
+                    return root != null;
+                } else {
+                    return current.getNext() != null;
+                }
+            }
+
+            @Override
+            public Right next() {
+                if(current == null) {
+                    current = root;
+                } else {
+                    current = current.getNext();
+                }
+                return current;
+            }
+        };
     }
 }

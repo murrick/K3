@@ -10,7 +10,7 @@ import kanger.primitives.Argument;
 
 import java.io.*;
 
-public class FValue implements Externalizable, Identifiable {
+public class FValue implements Externalizable, Identifiable<Function> {
     private long id = -1;
     private Function function = null;
     private Term value = null;
@@ -18,6 +18,9 @@ public class FValue implements Externalizable, Identifiable {
 
     private FValue next = null;
     private User user = null;
+
+    public FValue() {
+    }
 
     public FValue(User user) {
         this.user = user;
@@ -174,7 +177,7 @@ public class FValue implements Externalizable, Identifiable {
         }
         return s;
     }
-   
+
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
@@ -183,12 +186,30 @@ public class FValue implements Externalizable, Identifiable {
         buffer.append(condition.hashCode());
         return buffer.toString().hashCode();
     }
-    
+
+    @Override
+    public boolean equalsTo(Function f) {
+        if (f.getId() == getFunc().getId()
+                && (f.getArguments().get(f.getRange()).isEmpty()
+                || getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId())) {
+            boolean complete = true;
+            for (int i = 0; i < f.getRange(); ++i) {
+                if (!f.getArguments().get(i).isEmpty() && f.getArguments().get(i).getValue().getId() != getCondition().get(i).getValue().getId()) {
+                    complete = false;
+                    break;
+                }
+            }
+            return complete;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public int hashCode() {
         return ("" + id).hashCode();
     }
-        
+
     @Override
     public String toString() {
         if (!function.isCalculable() && getValue() != null) {

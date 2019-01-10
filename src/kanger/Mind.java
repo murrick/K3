@@ -398,93 +398,93 @@ public class Mind {
      *
      * @param r
      */
-    private void removeRightRecord(Right r) {
-        if (rights.getRoot() == r) {
-            rights.setRoot(r.getNext());
-        } else {
-            for (Right p = rights.getRoot(); p != null; p = p.getNext()) {
-                if (p.getNext() == r) {
-                    p.setNext(r.getNext());
-                    break;
-                }
-            }
-        }
-    }
-
-    private void removeTreeRecords(Right r) {
-        Tree o = null;
-        for (Tree t = trees.getRoot(); t != null; t = t.getNext()) {
-
-            if (t.getRight() == r) {
-                if (o == null) {
-                    trees.setRoot(t.getNext());
-                } else {
-                    o.setNext(t.getNext());
-                }
-            } else {
-                o = t;
-            }
-        }
-    }
-
-    private void removeDomainRecords(Right r) {
-        Domain o = null;
-        for (Domain t = domains.getRoot(); t != null; t = t.getNext()) {
-
-            if (t.getRight() == r) {
-                if (o == null) {
-                    domains.setRoot(t.getNext());
-                } else {
-                    o.setNext(t.getNext());
-                }
-            } else {
-                o = t;
-            }
-        }
-    }
-
-    private void removeTVarRecords(Right r) {
-        TVariable o = null;
-        for (TVariable t = tVars.getRoot(); t != null; t = t.getNext()) {
-
-            if (t.getRight() == r) {
-                if (o == null) {
-                    tVars.setRoot(t.getNext());
-                } else {
-                    o.setNext(t.getNext());
-                }
-            } else {
-                o = t;
-            }
-        }
-    }
-
-    private void removeCVarRecords(Right r) {
-        Term o = null;
-        for (Term t = terms.getRoot(); t != null; t = t.getNext()) {
-            if (t.getRight() == r && t.isCVariable()) {
-                if (o == null) {
-                    terms.setRoot(t.getNext());
-                } else {
-                    o.setNext(t.getNext());
-                }
-            } else {
-                o = t;
-            }
-        }
-    }
-
-    public void removeInsertionRight(Right r) {
-        clear();
-
-        removeTVarRecords(r);
-        removeCVarRecords(r);
-        removeDomainRecords(r);
-        removeTreeRecords(r);
-        removeRightRecord(r);
-
-//        mark();
-    }
+//    private void removeRightRecord(Right r) {
+//        if (rights.getRoot() == r) {
+//            rights.setRoot(r.getNext());
+//        } else {
+//            for (Right p = rights.getRoot(); p != null; p = p.getNext()) {
+//                if (p.getNext() == r) {
+//                    p.setNext(r.getNext());
+//                    break;
+//                }
+//            }
+//        }
+//    }
+//
+//    private void removeTreeRecords(Right r) {
+//        Tree o = null;
+//        for (Tree t = trees.getRoot(); t != null; t = t.getNext()) {
+//
+//            if (t.getRight() == r) {
+//                if (o == null) {
+//                    trees.setRoot(t.getNext());
+//                } else {
+//                    o.setNext(t.getNext());
+//                }
+//            } else {
+//                o = t;
+//            }
+//        }
+//    }
+//
+//    private void removeDomainRecords(Right r) {
+//        Domain o = null;
+//        for (Domain t = domains.getRoot(); t != null; t = t.getNext()) {
+//
+//            if (t.getRight() == r) {
+//                if (o == null) {
+//                    domains.setRoot(t.getNext());
+//                } else {
+//                    o.setNext(t.getNext());
+//                }
+//            } else {
+//                o = t;
+//            }
+//        }
+//    }
+//
+//    private void removeTVarRecords(Right r) {
+//        TVariable o = null;
+//        for (TVariable t = tVars.getRoot(); t != null; t = t.getNext()) {
+//
+//            if (t.getRight() == r) {
+//                if (o == null) {
+//                    tVars.setRoot(t.getNext());
+//                } else {
+//                    o.setNext(t.getNext());
+//                }
+//            } else {
+//                o = t;
+//            }
+//        }
+//    }
+//
+//    private void removeCVarRecords(Right r) {
+//        Term o = null;
+//        for (Term t = terms.getRoot(); t != null; t = t.getNext()) {
+//            if (t.getRight() == r && t.isCVariable()) {
+//                if (o == null) {
+//                    terms.setRoot(t.getNext());
+//                } else {
+//                    o.setNext(t.getNext());
+//                }
+//            } else {
+//                o = t;
+//            }
+//        }
+//    }
+//
+//    public void removeInsertionRight(Right r) {
+//        clear();
+//
+//        removeTVarRecords(r);
+//        removeCVarRecords(r);
+//        removeDomainRecords(r);
+//        removeTreeRecords(r);
+//        removeRightRecord(r);
+//
+////        mark();
+//    }
 
     public String getSourceFileName() {
         return sourceFileName;
@@ -974,55 +974,55 @@ public class Mind {
         }
     }
 
-    private List<Right> killInsertion(Mind mind, Right target, boolean withRelatedRights) {
-        int flag = 0;
-        mind.clear();
-
-        mind.getUsedTrees().clear();
-        mind.getClosedTrees().clear();
-
-        mind.getUsedDomains().clear();
-        mind.getQueryValues().clear();
-
-//        mind.clearQueryStatus();
-
-        List<Right> rr = new ArrayList<>();
-
-        if (mind.getHypotesisStore().size() > 0) {
-            for (Hypotese h : (List<Hypotese>) mind.getHypotesisStore().getRoot()) {
-//                h.getPredicate().deleteSolve(h.getSolve());
-                if (withRelatedRights) {
-
-                    for (Right r : h.getRights()) {
-                        rr.add(r);
-                        mind.removeInsertionRight(r);
-                    }
-                }
-            }
-        }
-//        else if (target.getWidth() == 1 && target.getHeight() == 1) {
-//            Solution s = target.getTVariable().getD().getPredicate().deleteSolve(target.getTVariable().getD().getArguments());
-//            if (withRelatedRights && s != null) {
-//                if (s.getRight() != null) {
-//                    rr.createTVar(s.getRight());
-//                    mind.removeInsertionRight(s.getRight());
+//    private List<Right> killInsertion(Mind mind, Right target, boolean withRelatedRights) {
+//        int flag = 0;
+//        mind.clear();
+//
+//        mind.getUsedTrees().clear();
+//        mind.getClosedTrees().clear();
+//
+//        mind.getUsedDomains().clear();
+//        mind.getQueryValues().clear();
+//
+////        mind.clearQueryStatus();
+//
+//        List<Right> rr = new ArrayList<>();
+//
+//        if (mind.getHypotesisStore().size() > 0) {
+//            for (Hypotese h : (List<Hypotese>) mind.getHypotesisStore().getRoot()) {
+////                h.getPredicate().deleteSolve(h.getSolve());
+//                if (withRelatedRights) {
+//
+//                    for (Right r : h.getRights()) {
+//                        rr.add(r);
+//                        mind.removeInsertionRight(r);
+//                    }
 //                }
 //            }
 //        }
-
-//        mind.mark();
-        return rr;
-
-//        List<Right> todoo = new ArrayList<>();
-//        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
-//            if (r.equals(target)) {
-//                todoo.createTVar(r);
-//            }
-//        }
-//        for (Right r : todoo) {
-//            mind.removeInsertionRight(r);
-//        }
-    }
+////        else if (target.getWidth() == 1 && target.getHeight() == 1) {
+////            Solution s = target.getTVariable().getD().getPredicate().deleteSolve(target.getTVariable().getD().getArguments());
+////            if (withRelatedRights && s != null) {
+////                if (s.getRight() != null) {
+////                    rr.createTVar(s.getRight());
+////                    mind.removeInsertionRight(s.getRight());
+////                }
+////            }
+////        }
+//
+////        mind.mark();
+//        return rr;
+//
+////        List<Right> todoo = new ArrayList<>();
+////        for (Right r = mind.getRights().getRoot(); r != null; r = r.getNext()) {
+////            if (r.equals(target)) {
+////                todoo.createTVar(r);
+////            }
+////        }
+////        for (Right r : todoo) {
+////            mind.removeInsertionRight(r);
+////        }
+//    }
 
 }
 

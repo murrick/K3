@@ -16,19 +16,21 @@ import java.util.*;
 /**
  * Created by murray on 25.05.15.
  */
-public class DictionaryFactory {
+public class DictionaryFactory implements Iterable<Term> {
 
     private Term root = null;
     private long lastID = 0;
     private int varIndex = 0;           // Счетчик C-переменных
 
+    private Term current = null;
+
     private Stack<Object[]> stack = new Stack<>();
     private User user = null;
-   
+
     private Map<Integer, Set<Long>> hashCache = new HashMap<>();
     private Map<Long, Term> idCache = new HashMap<>();
     private DictionaryFactory base = null;
-    
+
 
     public DictionaryFactory(User user) {
         this.user = user;
@@ -69,19 +71,19 @@ public class DictionaryFactory {
             return p;
         } else {
             p = new Term(o, user);
-            
+
             append(p);
             return p;
         }
     }
-   
+
     private void append(Term term) {
         term.setNext(root);
         root = term;
         term.setId(lastID++);
-       
+
         int hash = term.getHash();
-        if(!hashCache.containsKey(hash)) {
+        if (!hashCache.containsKey(hash)) {
             hashCache.put(hash, new HashSet<Long>());
         }
         hashCache.get(hash).add(term.getId());
@@ -91,7 +93,7 @@ public class DictionaryFactory {
     public Term find(Object o) {
         Term t = new Term(o, user);
         for (Term dic = root; dic != null; dic = dic.getNext()) {
-            if (dic.compareTo(t) == 0) {
+            if (dic.equalsTo(t)) {
                 return dic;
             }
         }
@@ -117,13 +119,13 @@ public class DictionaryFactory {
         return null;
     }
 
-    public Term getRoot() {
-        return root;
-    }
+//    public Term getRoot() {
+//        return root;
+//    }
 
-    public void setRoot(Term o) {
-        root = o;
-    }
+//    public void setRoot(Term o) {
+//        root = o;
+//    }
 
     private void mark() {
         stack.push(new Object[]{root, lastID, varIndex});
@@ -189,4 +191,28 @@ public class DictionaryFactory {
         return ++varIndex;
     }
 
+    @Override
+    public Iterator<Term> iterator() {
+        current = null;
+        return new Iterator<Term>() {
+            @Override
+            public boolean hasNext() {
+                if(current == null) {
+                    return root != null;
+                } else {
+                    return current.getNext() != null;
+                }
+            }
+
+            @Override
+            public Term next() {
+                if(current == null) {
+                    current = root;
+                } else {
+                    current = current.getNext();
+                }
+                return current;
+            }
+        };
+    }
 }
