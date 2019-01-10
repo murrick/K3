@@ -144,11 +144,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private void saveCurrentBlock() throws IOException {
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
         if (head != null) {
-            boolean isLast = head.getId() == baseIndex.lastKey();
             try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
-                ras.seek(head.getData().get(0));
+                boolean isLast = head.getData().get(1) == 0 || head.getData().get(0) + head.getRecordSize() + head.getData().get(1) >= ras.length();
                 long blockLength = head.getData().get(1);
-                if (currentBlock.size() > BLOCK_SIZE || (/*!isLast &&*/ blockLength > 0 && blockLength < getBlockLength(currentBlock.values()))) {
+                if (currentBlock.size() > BLOCK_SIZE || (!isLast && blockLength > 0 && blockLength < getBlockLength(currentBlock.values()))) {
                     TreeMap<Long, IndexOne> blockOne = new TreeMap<>();
                     TreeMap<Long, IndexOne> blockTwo = new TreeMap<>();
                     int current = 0;
@@ -176,6 +175,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     if(blockOne.size() > 0) {
                         head.setSize(blockOne.size());
                         head.setId(blockOne.firstKey());
+                        ras.seek(head.getData().get(0));
                         head.writeTo(ras);
                         for (IndexOne io : blockOne.values()) {
                             io.writeTo(ras);
@@ -190,12 +190,15 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                         currentBlock.clear();
                         head.setDeleted(true);
                         head.setSize(0);
+                        ras.seek(head.getData().get(0));
                         head.writeTo(ras);
                         baseIndex.remove(head.getId());
                     }
 
                     ras.seek(ras.length());
-                    blockLength = getBlockLength(blockTwo.values()) * 2L;
+                    if(blockLength < getBlockLength(blockTwo.values())) {
+                        blockLength = getBlockLength(blockTwo.values());
+                    }
                     IndexOne tail = new IndexOne();
                     tail.getData().add(ras.getFilePointer());
                     tail.getData().add(blockLength);
@@ -217,13 +220,14 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     }
 
                 } else {
-//                    if (blockLength == 0 || (isLast && blockLength < getBlockLength(currentBlock.values()))) {
-//                        blockLength = getBlockLength(currentBlock.values());
-//                    }
+                    if (blockLength == 0 || (isLast && blockLength < getBlockLength(currentBlock.values()))) {
+                        blockLength = getBlockLength(currentBlock.values());
+                    }
 //                    head.getData().clear();
 //                    head.getData().add(ras.getFilePointer());
 //                    head.getData().add(blockLength);
                     head.setSize(currentBlock.size());
+                    ras.seek(head.getData().get(0));
                     head.writeTo(ras);
                     for (IndexOne io : currentBlock.values()) {
                         io.writeTo(ras);
@@ -290,6 +294,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         } else if (!io.getData().equals(offset)) {
             io.getData().clear();
             io.getData().addAll(offset);
+            io.setSize(offset.size());
             changed = true;
         }
     }

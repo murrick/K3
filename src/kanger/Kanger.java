@@ -93,6 +93,13 @@ public class Kanger {
 
             try (Index x = new Index()) {
                 x.open("test.index");
+
+                for (Index.IndexOne o : x) {
+                    System.out.println(o);
+                }
+                System.out.println("R:" + x.getReadCounter());
+                System.out.println("W:" + x.getWriteCounter());
+
                 x.set(1, 0001);
                 x.set(2, 0002);
                 x.set(9, 9879);
