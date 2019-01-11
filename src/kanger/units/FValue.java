@@ -163,7 +163,8 @@ public class FValue implements Externalizable, Identifiable<Function> {
 //    }
 
     private String formatParam(Argument t) {
-        Operation op = Parser.getOp(function.getName().toString(), function.getRange());
+        Term name = user.getMind().getTerms().get(function.getNameId());
+        Operation op = Parser.getOp(name.toString(), function.getRange());
         boolean isOp = op != null && op.getRange() == function.getRange();
         String s = "";
         if (t.isFSet()) {
@@ -219,10 +220,11 @@ public class FValue implements Externalizable, Identifiable<Function> {
         if (!function.isCalculable() && getValue() != null) {
             return getValue().toString();
         } else {
-            Operation op = Parser.getOp(function.getName().toString(), function.getRange());
+            Term name = user.getMind().getTerms().get(function.getNameId());
+            Operation op = Parser.getOp(name.toString(), function.getRange());
             String s = "";
             if (op == null || op.getRange() != function.getRange()) {
-                s = String.format("%s(", function.getName().toString());
+                s = String.format("%s(", name.toString());
                 for (int i = 0; i < function.getRange(); ++i) {
                     s += formatParam(condition.get(i));
                     if (i + 1 < function.getRange()) {

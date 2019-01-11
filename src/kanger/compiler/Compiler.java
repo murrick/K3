@@ -253,7 +253,7 @@ public class Compiler {
                 Function f = user.getMind().getFunctions().add(); //new Function(mind);
                 parseArgs(d, f.getArguments(), root.getLeft(), level + 1, replacements);
                 parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-                f.setName(user.getMind().getTerms().add(root.getName()));
+                f.setNameId(user.getMind().getTerms().add(root.getName()).getId());
                 f.setRange(f.getArguments().size());
                 Argument t = new Argument(f);
                 arg.add(t);
@@ -265,7 +265,7 @@ public class Compiler {
             // вложенная функция
             Function f = user.getMind().getFunctions().add(); //new Function(mind);
             parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-            f.setName(user.getMind().getTerms().add(root.getLeft().getName()));
+            f.setNameId(user.getMind().getTerms().add(root.getLeft().getName()).getId());
             f.setRange(f.getArguments().size());
             Argument t = new Argument(f);
             arg.add(t);

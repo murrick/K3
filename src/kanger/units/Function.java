@@ -21,7 +21,7 @@ import java.io.ObjectOutput;
 public class Function implements Externalizable, Identifiable<Function> {
 
     private long id = -1;
-    private Term name = null;
+    private long nameId = -1;
     private int range = 0;
     private ArgList arguments = new ArgList();     // Параметры
 
@@ -39,7 +39,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        name = (Term) dis.readObject();
+        nameId = dis.readLong();
         range = dis.readInt();
         arguments = (ArgList) dis.readObject();
     }
@@ -47,7 +47,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(name);
+        dos.writeLong(nameId);
         dos.writeInt(range);
         dos.writeObject(arguments);
     }
@@ -127,15 +127,16 @@ public class Function implements Externalizable, Identifiable<Function> {
 //    }
 
 
-    public Term getName() {
-        return name;
+    public long getNameId() {
+        return nameId;
     }
 
-    public void setName(Term name) {
-        this.name = name;
+    public void setNameId(long nameId) {
+        this.nameId = nameId;
     }
 
     private String formatParam(Argument t) {
+        Term name = user.getMind().getTerms().get(nameId);
         Operation op = Parser.getOp(name.toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
@@ -160,6 +161,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
     public String toString() {
+        Term name = user.getMind().getTerms().get(nameId);
         if (!isCalculable() && getValue() != null) {
             return getValue().toString();
         } else {
@@ -292,7 +294,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(name.getId());
+        buffer.append(nameId);
         buffer.append(range);
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
