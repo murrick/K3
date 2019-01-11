@@ -20,11 +20,9 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private RandomAccessFile ras = null;
     private boolean changed = false;
     private int blockSize = BLOCK_SIZE;
-    private long currentId = 0;
-    private long blockId = 0;
 
-    private int readCounter = 0;
-    private int writeCounter = 0;
+    private volatile int readCounter = 0;
+    private volatile int writeCounter = 0;
 
     public void open(String fileName) throws IOException {
         open(new File(fileName));
@@ -46,7 +44,11 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     baseIndex.put(one.getId(), one);
                     ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
                 } else if (ras.length() > ras.getFilePointer()) {
-                    ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
+                    if(one.isBlockMark()) {
+                        ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
+                    } else {
+                        ras.seek(one.getData().get(0) + one.getSize() * Long.BYTES + one.getRecordSize());
+                    }
                 } else {
                     break;
                 }
@@ -61,7 +63,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     public void close() throws IOException {
         flush();
         ras.close();
-        file = null;
         ras = null;
         baseIndex.clear();
         currentBlock.clear();
@@ -95,16 +96,31 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    private long getNext(long id) throws IOException {
+    private long getNext(long id, NavigableMap<Long, IndexOne> block) throws IOException {
         IndexOne head = getHead(id);
-        loadBlock(head);
+        loadBlock(head, block);
         Long next = currentBlock.higherKey(id);
         if (next != null) {
             return next;
         } else if (baseIndex.higherKey(head.getId()) != null) {
             head = baseIndex.higherEntry(head.getId()).getValue();
-            loadBlock(head);
+            loadBlock(head, block);
             return currentBlock.firstKey();
+        } else {
+            return -1;
+        }
+    }
+
+    private long getPrevious(long id, NavigableMap<Long, IndexOne> block) throws IOException {
+        IndexOne head = getTail(id);
+        loadBlock(head, block);
+        Long next = id == -1 ? currentBlock.lastKey() : currentBlock.lowerKey(id);
+        if (next != null) {
+            return next;
+        } else if (baseIndex.lowerKey(head.getId()) != null) {
+            head = baseIndex.lowerEntry(head.getId()).getValue();
+            loadBlock(head, block);
+            return currentBlock.lastKey();
         } else {
             return -1;
         }
@@ -124,9 +140,28 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         return head;
     }
 
+    private IndexOne getTail(long id) {
+        IndexOne head;
+        if (baseIndex.size() == 1) {
+            head = baseIndex.get(baseIndex.firstKey());
+        } else if (baseIndex.containsKey(id)) {
+            head = baseIndex.get(id);
+        } else if (!baseIndex.tailMap(id).isEmpty()) {
+            head = baseIndex.get(baseIndex.tailMap(id).firstKey());
+        } else {
+            head = baseIndex.get(baseIndex.tailMap(id).lastKey());
+        }
+        return head;
+    }
+
+
     public IndexOne getOne(long id) throws IOException {
-        if (currentBlock.containsKey(id)) {
-            IndexOne io = currentBlock.get(id);
+        return getOne(id, currentBlock);
+    }
+
+    private IndexOne getOne(long id, NavigableMap<Long, IndexOne> block) throws IOException {
+        if (block.containsKey(id)) {
+            IndexOne io = block.get(id);
             if (io == null || io.isDeleted()) {
                 return null;
             } else {
@@ -134,8 +169,8 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             }
         } else {
             IndexOne head = getHead(id);
-            loadBlock(head);
-            IndexOne io = currentBlock.get(id);
+            loadBlock(head, block);
+            IndexOne io = block.get(id);
             if (io == null || io.isDeleted()) {
                 return null;
             } else {
@@ -162,7 +197,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     TreeMap<Long, IndexOne> blockOne = new TreeMap<>();
                     TreeMap<Long, IndexOne> blockTwo = new TreeMap<>();
                     int current = 0;
-                    if(blockLength == 0) {
+                    if (blockLength == 0) {
                         blockLength = getBlockLength(currentBlock.values());
                         head.getData().remove(1);
                         head.getData().add(blockLength);
@@ -183,7 +218,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
 //                    head.getData().remove(1);
 //                    head.getData().add(blockLength);
-                    if(blockOne.size() > 0) {
+                    if (blockOne.size() > 0) {
                         head.setSize(blockOne.size());
                         head.setId(blockOne.firstKey());
                         ras.seek(head.getData().get(0));
@@ -207,7 +242,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     }
 
                     ras.seek(ras.length());
-                    if(blockLength < getBlockLength(blockTwo.values())) {
+                    if (blockLength < getBlockLength(blockTwo.values())) {
                         blockLength = getBlockLength(blockTwo.values());
                     }
                     IndexOne tail = new IndexOne();
@@ -226,7 +261,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                         byte[] temp = new byte[(int) (blockLength - getBlockLength(blockTwo.values()))];
                         ras.write(temp);
                     }
-                    if(currentBlock.isEmpty()) {
+                    if (currentBlock.isEmpty()) {
                         currentBlock.putAll(blockTwo);
                     }
 
@@ -234,9 +269,8 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     if (blockLength == 0 || (isLast && blockLength < getBlockLength(currentBlock.values()))) {
                         blockLength = getBlockLength(currentBlock.values());
                     }
-//                    head.getData().clear();
-//                    head.getData().add(ras.getFilePointer());
-//                    head.getData().add(blockLength);
+                    head.getData().remove(1);
+                    head.getData().add(blockLength);
                     head.setSize(currentBlock.size());
                     ras.seek(head.getData().get(0));
                     head.writeTo(ras);
@@ -253,22 +287,21 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    private void loadBlock(IndexOne head) throws IOException {
-        if (currentBlock.isEmpty() || head.getId() != currentBlock.firstKey()) {
-            if (changed) {
-                saveCurrentBlock();
-                changed = false;
+    private void loadBlock(IndexOne head, NavigableMap<Long, IndexOne> block) throws IOException {
+        if (block.isEmpty() || head.getId() != block.firstKey()) {
+            if (block == currentBlock) {
+                flush();
             }
-            currentBlock.clear();
+            block.clear();
             ras.seek(head.getData().get(0) + head.getRecordSize());
             for (int i = 0; i < head.getSize(); ++i) {
                 IndexOne one = new IndexOne().readFrom(ras);
                 if (!one.isDeleted()) {
-                    currentBlock.put(one.getId(), one);
+                    block.put(one.getId(), one);
                 }
             }
-            if (head.getSize() != currentBlock.size()) {
-                head.setSize(currentBlock.size());
+            if (head.getSize() != block.size()) {
+                head.setSize(block.size());
             }
             ++readCounter;
         }
@@ -276,10 +309,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
 
     public void add(long id, long offset) throws IOException {
-        IndexOne io = getOne(id);
-        if(io == null) {
+        IndexOne io = getOne(id, currentBlock);
+        if (io == null) {
             set(id, offset);
-        } else if(!io.getData().contains(offset)){
+        } else if (!io.getData().contains(offset)) {
             io.getData().add(offset);
             io.setSize(io.getData().size());
             changed = true;
@@ -294,10 +327,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     }
 
     public void set(long id, List<Long> offset) throws IOException {
-        IndexOne io = getOne(id);
+        IndexOne io = getOne(id, currentBlock);
         if (io == null) {
             IndexOne top = getHead(id);
-            loadBlock(top);
+            loadBlock(top, currentBlock);
             io = new IndexOne();
             io.setId(id);
             io.getData().addAll(offset);
@@ -309,8 +342,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             baseIndex.put(top.getId(), top);
             changed = true;
             if (currentBlock.size() > BLOCK_SIZE) {
-                saveCurrentBlock();
-                changed = false;
+                flush();
             }
         } else if (!io.getData().equals(offset)) {
             io.getData().clear();
@@ -322,7 +354,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     public void remove(long id) throws IOException {
         IndexOne head = getHead(id);
-        loadBlock(head);
+        loadBlock(head, currentBlock);
         if (currentBlock.containsKey(id)) {
             currentBlock.remove(id);
             head.setSize(head.getSize() - 1);
@@ -373,46 +405,19 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     @Override
     public Iterator<IndexOne> iterator() {
         try {
-            flush();
-            currentId = -1;
-            blockId = baseIndex.firstKey();
-            loadBlock(baseIndex.get(blockId));
+            return new IndexIterator();
         } catch (IOException e) {
             return null;
         }
-
-        return new Iterator<IndexOne>() {
-
-            @Override
-            public void remove() {
-                // TODO: Implement this method
-            }
-
-            @Override
-            public boolean hasNext() {
-                try {
-                    return getNext(currentId) != -1;
-                } catch (IOException e) {
-                    return false;
-                }
-            }
-
-            @Override
-            public IndexOne next() {
-                try {
-                    currentId = getNext(currentId);
-                    if (currentId != -1) {
-                        return getOne(currentId);
-                    } else {
-                        return null;
-                    }
-                } catch (IOException e) {
-                    return null;
-                }
-            }
-        };
     }
 
+    public Iterator<IndexOne> iterator(boolean backward) {
+        try {
+            return new IndexIterator(backward);
+        } catch (IOException e) {
+            return null;
+        }
+    }
 
     public class IndexOne {
         private byte flags = 0;
@@ -489,7 +494,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             flags = in.readByte();
             size = in.readInt();
             id = in.readLong();
-            int cnt = isBlockMark() ? 2  : size;
+            int cnt = isBlockMark() ? 2 : size;
             data.clear();
             while (cnt-- > 0) {
                 data.add(in.readLong());
@@ -506,6 +511,63 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         public String toString() {
             return id + "=" + data;
+        }
+    }
+
+    public class IndexIterator implements Iterator<Index.IndexOne> {
+
+        private NavigableMap<Long, Index.IndexOne> block = new TreeMap<>();
+
+        private long currentId = 0;
+        private long blockId = 0;
+        private boolean backward = false;
+
+        public IndexIterator() throws IOException {
+            flush();
+            currentId = -1;
+            blockId = backward ? baseIndex.lastKey() : baseIndex.firstKey();
+            loadBlock(baseIndex.get(blockId), block);
+        }
+
+        public IndexIterator(boolean backward) throws IOException {
+            this();
+            this.backward = backward;
+        }
+
+        @Override
+        public void remove() {
+
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                if(backward) {
+                    return getPrevious(currentId, block) != -1;
+                } else {
+                    return getNext(currentId, block) != -1;
+                }
+            } catch (IOException e) {
+                return false;
+            }
+        }
+
+        @Override
+        public Index.IndexOne next() {
+            try {
+                if(backward) {
+                    currentId = getPrevious(currentId, block);
+                } else {
+                    currentId = getNext(currentId, block);
+                }
+                if (currentId != -1) {
+                    return getOne(currentId, block);
+                } else {
+                    return null;
+                }
+            } catch (IOException e) {
+                return null;
+            }
         }
     }
 

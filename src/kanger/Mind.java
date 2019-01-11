@@ -397,7 +397,7 @@ public class Mind {
      * Удаление правила из дерева вывода
      * <p>
      *
-     * @param r
+//     * @param r
      */
 //    private void removeRightRecord(Right r) {
 //        if (rights.getRoot() == r) {

@@ -39,6 +39,9 @@ public class Data implements Closeable, Iterable<Identifiable> {
         try {
             ras = new RandomAccessFile(file, "r");
             ras.seek(0);
+            if(ras.length() == 0) {
+                throw new FileNotFoundException("Empty file. Create new");
+            }
             version = ras.readShort();
             headerSize = ras.readInt();
             changed = false;
@@ -58,7 +61,6 @@ public class Data implements Closeable, Iterable<Identifiable> {
     public void close() throws IOException {
         flush();
         ras.close();
-        file = null;
         ras = null;
     }
 
@@ -141,11 +143,10 @@ public class Data implements Closeable, Iterable<Identifiable> {
 
 
     public long add(Identifiable o) throws IOException {
-        set(-1, o);
-        return currentOffset;
+        return set(-1, o);
     }
 
-    public void set(long offset, Identifiable o) throws IOException {
+    public long set(long offset, Identifiable o) throws IOException {
         if (changed) {
             saveCurrentBlock();
             changed = false;
@@ -169,14 +170,10 @@ public class Data implements Closeable, Iterable<Identifiable> {
             cache.remove(one);
             cache.add(one);
         }
+        return currentOffset;
     }
 
     public void remove(long offset) throws IOException {
-        if(cacheIndex.containsKey(offset)) {
-            DataOne one = cacheIndex.get(offset);
-            cache.remove(one);
-            cacheIndex.remove(offset);
-        }
         try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
             ras.seek(offset + 8);
             if (ras.getFilePointer() == offset + 8) {
@@ -184,6 +181,11 @@ public class Data implements Closeable, Iterable<Identifiable> {
                 if (size != 0) {
                     ras.seek(offset + 8);
                     ras.writeLong(0L);
+                }
+                if(cacheIndex.containsKey(offset)) {
+                    DataOne one = cacheIndex.get(offset);
+                    cache.remove(one);
+                    cacheIndex.remove(offset);
                 }
             }
         }

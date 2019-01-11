@@ -5,6 +5,7 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Data;
 import kanger.storage.Index;
+import kanger.storage.Storage;
 import kanger.units.Term;
 
 import java.io.Externalizable;
@@ -63,6 +64,41 @@ public class Kanger {
         User user = new User();
         Mind mind = new Mind(user);
 
+//        try (Storage data = new Storage().open("test")) {
+//            Term t = mind.getTerms().add("Это просто ноль");
+//            data.add(t);
+//            t = mind.getTerms().add("Это первый");
+//            data.add(t);
+//            t = mind.getTerms().add("Это торой");
+//            data.add(t);
+//            t = mind.getTerms().add("Это третий");
+//            data.add(t);
+//            t = mind.getTerms().add("Это четвертый");
+//            data.add(t);
+//
+//            System.out.println("2:=" + data.get(2));
+//            System.out.println("0:=" + data.get(0));
+//            System.out.println("8:=" + data.get(8));
+//
+//            System.out.println("ХЭШ " + data.getByHash(new Term( "Это третий", user).getHash()));
+//            System.out.println("------------");
+//
+//            for(Identifiable x : data) {
+//                System.out.println(x.getId() + " == " + x);
+//            }
+//
+//            data.reindex();
+//
+//            System.out.println("------------");
+//            for(Identifiable x : data) {
+//                System.out.println(x.getId() + " == " + x);
+//            }
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
 
 //        if(false) {
 //            try {
@@ -90,6 +126,8 @@ public class Kanger {
 //                        System.out.println(e);
 //                    }
 //                } catch (ClassNotFoundException e) {
+//                    e.printStackTrace();
+//                } catch (IOException e) {
 //                    e.printStackTrace();
 //                }
 //
