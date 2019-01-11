@@ -8,7 +8,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private static final int DELETED = 0x01;
     private static final int BLOCK_MARK = 0x10;
 
-    private static final int BLOCK_SIZE = 1000;
+    private static final int BLOCK_SIZE = 512;
     private static final short VERSION = 0x0301;
 
     private int version = VERSION;
@@ -286,7 +286,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    public void set(long id, long offset) throws IOException {
+    public void set(long id, final long offset) throws IOException {
         List<Long> list = new ArrayList<Long>() {{
             add(offset);
         }};
@@ -382,6 +382,12 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
 
         return new Iterator<IndexOne>() {
+
+            @Override
+            public void remove() {
+                // TODO: Implement this method
+            }
+
             @Override
             public boolean hasNext() {
                 try {

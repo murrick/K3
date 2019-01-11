@@ -6,6 +6,12 @@ import java.util.Iterator;
 
 public class UnitIterator implements Iterator {
 
+    @Override
+    public void remove() {
+        // TODO: Implement this method
+    }
+
+
     Identifiable current = null;
     Identifiable root = null;
 

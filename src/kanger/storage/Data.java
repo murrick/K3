@@ -5,23 +5,30 @@ import kanger.interfaces.Identifiable;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.*;
 
 public class Data implements Closeable, Iterable<Identifiable> {
     private static final short VERSION = 0x0301;
+    private static final int CACHE_SIZE = 512;
 
     private int version = VERSION;
     private int headerSize = 0;
     private boolean changed = false;
     private File file = null;
     private RandomAccessFile ras = null;
+    
     private long currentOffset = -1;
     private long blockSize = 0;
     private long dataSize = 0;
     private Identifiable data = null;
-    private byte[] buffer = null;
-
+    private byte[] buffer = null;   
+    private int cacheSise = CACHE_SIZE;
+    
     private int readCounter = 0;
     private int writeCounter = 0;
+   
+    private List<DataOne> cache = new ArrayList<>();
+    private Map<Long, DataOne> cacheIndex = new HashMap<>();
 
     public void open(String fileName) throws IOException {
         open(new File(fileName));
@@ -59,6 +66,13 @@ public class Data implements Closeable, Iterable<Identifiable> {
         if (changed) {
             saveCurrentBlock();
             changed = false;
+           
+            if(cacheIndex.containsKey(currentOffset)) {
+                DataOne one = cacheIndex.get(currentOffset);
+                cache.remove(one);
+                cacheIndex.remove(currentOffset);
+            }
+            addToCache();
         }
     }
 
@@ -69,7 +83,20 @@ public class Data implements Closeable, Iterable<Identifiable> {
                 changed = false;
             }
 
-            if (offset < ras.length()) {
+            if(cacheIndex.containsKey(offset)) {
+                
+                DataOne one = cacheIndex.get(offset);
+                blockSize = one.getBlockSize();
+                dataSize = one.getDataSize();
+                data = one.getData();
+                buffer = one.getBuffer();
+                currentOffset = offset;
+                
+                cache.remove(one);
+                cache.add(one);
+                
+            } else if (offset < ras.length()) {
+                
                 ras.seek(offset);
                 blockSize = ras.readLong();
                 dataSize = ras.readLong();
@@ -84,11 +111,32 @@ public class Data implements Closeable, Iterable<Identifiable> {
                     ++readCounter;
                 }
                 currentOffset = offset;
+                addToCache();
+
+                
             } else {
                 data = null;
             }
         }
         return data;
+    }
+
+    private void addToCache() {
+        DataOne one = new DataOne();
+        one.setBlockSize(blockSize);
+        one.setDataSize(dataSize);
+        one.setData(data);
+        one.setBuffer(buffer);
+        one.setOffset(currentOffset);
+
+        cache.add(one);
+        cacheIndex.put(currentOffset, one);
+
+        while(cache.size() > cacheSise) {
+            one = cache.get(0);
+            cache.remove(0);
+            cacheIndex.remove(one.getOffset());
+        }
     }
 
 
@@ -116,10 +164,19 @@ public class Data implements Closeable, Iterable<Identifiable> {
             changed = true;
 
             flush();
+        } else {
+            DataOne one = cacheIndex.get(currentOffset);
+            cache.remove(one);
+            cache.add(one);
         }
     }
 
     public void remove(long offset) throws IOException {
+        if(cacheIndex.containsKey(offset)) {
+            DataOne one = cacheIndex.get(offset);
+            cache.remove(one);
+            cacheIndex.remove(offset);
+        }
         try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
             ras.seek(offset + 8);
             if (ras.getFilePointer() == offset + 8) {
@@ -212,6 +269,16 @@ public class Data implements Closeable, Iterable<Identifiable> {
     public File getFile() {
         return file;
     }
+   
+
+    public void setCacheSise(int cacheSise) {
+        this.cacheSise = cacheSise;
+    }
+
+    public int getCacheSise() {
+        return cacheSise;
+    }
+    
 
     @Override
     public Iterator<Identifiable> iterator() {
@@ -223,6 +290,12 @@ public class Data implements Closeable, Iterable<Identifiable> {
         }
 
         return new Iterator<Identifiable>() {
+
+            @Override
+            public void remove() {
+                // TODO: Implement this method
+            }
+
             @Override
             public boolean hasNext() {
                 try {
@@ -256,4 +329,54 @@ public class Data implements Closeable, Iterable<Identifiable> {
             }
         };
     }
+   
+    public class DataOne {
+        private long offset = -1;
+        private long blockSize = 0;
+        private long dataSize = 0;
+        private Identifiable data = null;
+        private byte[] buffer = null;     
+
+
+        public void setOffset(long offset) {
+            this.offset = offset;
+        }
+
+        public long getOffset() {
+            return offset;
+        }
+
+        public void setBlockSize(long blockSize) {
+            this.blockSize = blockSize;
+        }
+
+        public long getBlockSize() {
+            return blockSize;
+        }
+
+        public void setDataSize(long dataSize) {
+            this.dataSize = dataSize;
+        }
+
+        public long getDataSize() {
+            return dataSize;
+        }
+
+        public void setData(Identifiable data) {
+            this.data = data;
+        }
+
+        public Identifiable getData() {
+            return data;
+        }
+
+        public void setBuffer(byte[] buffer) {
+            this.buffer = buffer;
+        }
+
+        public byte[] getBuffer() {
+            return buffer;
+        }
+    }
+    
 }
