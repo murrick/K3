@@ -1,9 +1,13 @@
 package kanger.primitives;
 
 import kanger.enums.ArgumentType;
+import kanger.interfaces.Identifiable;
 import kanger.units.*;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Created by murray on 26.05.15.
@@ -18,34 +22,12 @@ public class Argument implements Externalizable {
     public Argument() {
     }
 
-    public Argument(Object o) {
-        if (o instanceof Term) {
-            type = ArgumentType.TERM;
-        } else if (o instanceof TVariable) {
-            return ArgumentType.TVRIABLE;
-        } else if (o instanceof TValue) {
-            return ArgumentType.TVALUE;
-        } else if (o instanceof FValue) {
-            return ArgumentType.FVALUE;
-        } else if (o instanceof Function) {
-            return ArgumentType.FUNCTION;
-        } else {
-            return ArgumentType.EMPTY;
-        }
+    public Argument(Identifiable o) {
+        type = detectType(o);
+        objectId = type == ArgumentType.EMPTY ? -1 : o.getId();
     }
 
-    @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        o = dis.readObject();
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeObject(o);
-    }
-
-
-    public ArgumentType getType() {
+    public static ArgumentType detectType(Object o) {
         if (o instanceof Term) {
             return ArgumentType.TERM;
         } else if (o instanceof TVariable) {
@@ -61,10 +43,27 @@ public class Argument implements Externalizable {
         }
     }
 
-    public Term getValue() {
-        switch (getType()) {
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
+        type = ArgumentType.values()[dis.readInt()];
+        objectId = dis.readLong();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
+        dos.writeInt(type.ordinal());
+        dos.writeLong(objectId);
+    }
+
+
+    public ArgumentType getType() {
+        return type;
+    }
+
+    public long getValueId() {
+        switch (type) {
             case TERM:
-                return (Term) o;
+                return objectId;
             case TVRIABLE:
                 return ((TVariable) o).getValue();
             case TVALUE:
@@ -79,7 +78,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public boolean setValue(Term t) {
+    public boolean setValueId(long id) {
         switch (getType()) {
             case EMPTY:
                 o = t;
