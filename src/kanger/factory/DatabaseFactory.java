@@ -67,7 +67,7 @@ public class DatabaseFactory implements Iterable<Record>{
     }
 
     public Record add(Domain d) {
-        Record p = find(d.getPredicate(), d.isAntc(), d.getArguments());
+        Record p = find(d.getPredicateId(), d.isAntc(), d.getArguments());
         if (p != null) {
             return p;
         } else {
@@ -81,8 +81,8 @@ public class DatabaseFactory implements Iterable<Record>{
     }
 
 
-    public Record add(Predicate pred, boolean antc, boolean isQuery, ArgList arg) {
-        Record p = find(pred, antc, arg);
+    public Record add(long predicateId, boolean antc, boolean isQuery, ArgList arg) {
+        Record p = find(predicateId, antc, arg);
         if (p != null) {
             return p;
         } else {
@@ -99,8 +99,8 @@ public class DatabaseFactory implements Iterable<Record>{
             Tree t = user.getMind().getTrees().add(r);
 //            t.setRight(r);
             t.setUsed();
-            Domain d = user.getMind().getDomains().add(pred, antc, list, r);
-            d.setRight(r);
+            Domain d = user.getMind().getDomains().add(predicateId, antc, list, r.getId());
+            d.setRightId(r.getId());
             t.getSequence().add(d);
             r.getTree().add(t);
             r.setGenerated(true);
@@ -116,11 +116,11 @@ public class DatabaseFactory implements Iterable<Record>{
     }
 
     public Record find(Domain d) {
-        return find(d.getPredicate(), d.isAntc(), d.getArguments());
+        return find(d.getPredicateId(), d.isAntc(), d.getArguments());
     }
 
-    public Record find(Predicate pred, boolean antc, ArgList arg) {
-        Domain temp = new Domain(pred, antc, arg);
+    public Record find(long predicateId, boolean antc, ArgList arg) {
+        Domain temp = new Domain(predicateId, antc, arg);
         for (Record p = root; p != null; p = p.getNext()) {
             if(p.equalsTo(temp)) {
                 return p;

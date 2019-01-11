@@ -24,9 +24,9 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     private long id = -1;                                       // id домена
     private boolean antc = true;                                // ! или ?
-    private Predicate predicate = null;                         // Ссылка на описатель предиката
+    private long predicateId = -1;                         // Ссылка на описатель предиката
     private ArgList arguments = new ArgList();       // Массив подстановочных переменных
-    private Right right;                                        // Ссылка на правило
+    private long rightId = -1;                                        // Ссылка на правило
     private Domain next = null;                                 // Следующий элемент
 
     private Stack<List<TValue>> tStack = new Stack<>();
@@ -37,13 +37,13 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public Domain() {
     }
 
-    public Domain(Predicate pred, boolean antc, ArgList args, Right r) {
-        this(pred, antc, args);
-        setRight(r);
+    public Domain(long predicateId, boolean antc, ArgList args, long rightId) {
+        this(predicateId, antc, args);
+        setRightId(rightId);
     }
 
-    public Domain(Predicate pred, boolean antc, ArgList args) {
-        setPredicate(pred);
+    public Domain(long predicateId, boolean antc, ArgList args) {
+        setPredicateId(predicateId);
         setAntc(antc);
         getArguments().addAll(args);
     }
@@ -56,34 +56,34 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
         antc = dis.readBoolean();
-        predicate = (Predicate) dis.readObject();
+        predicateId = dis.readLong();
         arguments = (ArgList) dis.readObject();
-        right = (Right) dis.readObject();
+        rightId = dis.readLong();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
         dos.writeBoolean(antc);
-        dos.writeObject(predicate);
+        dos.writeLong(predicateId);
         dos.writeObject(arguments);
-        dos.writeObject(right);
+        dos.writeLong(rightId);
     }
 
-    public Predicate getPredicate() {
-        return predicate;
+    public long getPredicateId() {
+        return predicateId;
     }
 
-    public void setPredicate(Predicate predicate) {
-        this.predicate = predicate;
+    public void setPredicateId(long predicateId) {
+        this.predicateId = predicateId;
     }
 
-    public Right getRight() {
-        return right;
+    public long getRightId() {
+        return rightId;
     }
 
-    public void setRight(Right right) {
-        this.right = right;
+    public void setRightId(long rightId) {
+        this.rightId = rightId;
     }
 
     @Override
@@ -160,7 +160,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     private boolean sourceExists(Cause c) {
         for (Cause x : causes.get(arguments)) {
-            if (x.getSrc().getPredicate().getId() == c.getSrc().getPredicate().getId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
+            if (x.getSrc().getPredicateId() == c.getSrc().getPredicateId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
                 return true;
             }
         }
@@ -197,6 +197,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     public Set<TVariable> getRelatedTVariables(boolean full) {
         Set<TVariable> set = new HashSet<>();
+        Predicate predicate = user.getMind().getPredicates().get(predicateId);
         for(Domain d : predicate.getRelates()) {
             set.addAll(d.getArguments().getTVariables(full));
         }
@@ -250,6 +251,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     public String toString(ArgList arguments) {
         String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
+        Predicate predicate = user.getMind().getPredicates().get(predicateId);
         Operation op = Parser.getOp(predicate.getName().toString(), predicate.getRange());
         if (op == null) {
             s += predicate.getName() + "(";
@@ -307,7 +309,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
 
     public boolean equalsBase(Domain o) {
-        if (predicate.getId() != o.getPredicate().getId()) {
+        if (predicateId != o.getPredicateId()) {
             return false;
         }
         if (arguments.size() != o.getArguments().size()) {
@@ -612,7 +614,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public boolean isStored(ArgList args) {
-        return user.getMind().getDatabase().find(predicate, antc, args) != null;
+        return user.getMind().getDatabase().find(predicateId, antc, args) != null;
     }
 
     public Record setStored() {
@@ -620,10 +622,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public Record createStored() {
-        return user.getMind().getDatabase().add(predicate, antc, isQuery(), arguments);
+        return user.getMind().getDatabase().add(predicateId, antc, isQuery(), arguments);
     }
 
     public boolean isSystem() {
+        Predicate predicate = user.getMind().getPredicates().get(predicateId);
         return Parser.getOp(predicate.getName().toString(), predicate.getRange()) != null;
     }
 
@@ -661,6 +664,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public boolean isQuery(ArgList arguments) {
+        //TODO: ОПТИМИЗИРОВАТЬ, больно толстый запрос для проверки одного флага
+        Right right = user.getMind().getRights().get(rightId);
         if (right == null) {
             return false;
         }
@@ -757,8 +762,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(antc);
-        buffer.append(predicate.getId());
-        buffer.append(right.getId());
+        buffer.append(predicateId);
+        buffer.append(rightId);
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
     }
@@ -766,9 +771,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     @Override
     public boolean equalsTo(Domain to) {
         if (to.isAntc() == antc
-                && to.getPredicate().getId() == predicate.getId()
-                && to.getRight().getId() == right.getId()) {
+                && to.getPredicateId() == predicateId
+                && to.getRightId() == rightId) {
             int i = 0;
+            //TODO: ОПТИМИЗАЦИЯ, хранить ранг в домене
+            Predicate predicate = user.getMind().getPredicates().get(predicateId);
             for (; i < predicate.getRange(); ++i) {
                 if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT().getId() == arguments.get(i).getT().getId())
                         || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF().getId() == arguments.get(i).getF().getId())

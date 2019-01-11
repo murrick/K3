@@ -74,7 +74,8 @@ public class Calculator {
      */
     public int execute(Domain d) {
         int k = -1;
-        String n = d.getPredicate().getName() + "(" + d.getPredicate().getRange() + ")";
+        Predicate predicate = user.getMind().getPredicates().get(d.getPredicateId());
+        String n = predicate.getName() + "(" + predicate.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         if (op != null) {
 

@@ -58,26 +58,26 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
 
-    public Domain add(Right r) {
+    public Domain add(long rightId) {
         Domain p = new Domain(user);
         p.setNext(root);
-        p.setRight(r);
+        p.setRightId(rightId);
         p.setId(lastID++);
         root = p;
         return p;
     }
 
 
-    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) {
-        Domain p = find(pred, antc, arg, r);
+    public Domain add(long predicateId, boolean antc, ArgList arg, long rightId) {
+        Domain p = find(predicateId, antc, arg, rightId);
         if (p != null) {
             return p;
         } else {
             p = new Domain(user);
             p.setNext(root);
-            p.setPredicate(pred);
+            p.setPredicateId(predicateId);
             p.setAntc(antc);
-            p.setRight(r);
+            p.setRightId(rightId);
             p.setId(lastID++);
             if (arg != null) {
                 for (Argument t : arg) {
@@ -89,8 +89,8 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) {
-        Domain temp = new Domain(pred, antc, arg, r);
+    public Domain find(long predicateId, boolean antc, ArgList arg, long rightId) {
+        Domain temp = new Domain(predicateId, antc, arg, rightId);
         for (Domain p = root; p != null; p = p.getNext()) {
             if(p.equalsTo(temp)) {
                 return p;

@@ -87,9 +87,9 @@ public class KangerTest {
         Hypotese h = new Hypotese(user);
         h.setAntc(antc);
         if (predicate instanceof Predicate) {
-            h.setPredicate((Predicate) predicate);
+            h.setPredicateId(((Predicate) predicate).getId());
         } else {
-            h.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
+            h.setPredicateId(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length).getId());
         }
 
         if (params[0] instanceof Collection) {
@@ -104,9 +104,9 @@ public class KangerTest {
         Domain d = new Domain(user);
         d.setAntc(antc);
         if (predicate instanceof Predicate) {
-            d.setPredicate((Predicate) predicate);
+            d.setPredicateId(((Predicate) predicate).getId());
         } else {
-            d.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
+            d.setPredicateId(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length).getId());
         }
         for (Object p : params) {
             if (p instanceof Term) {

@@ -33,14 +33,14 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
     }
 
-    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) {
+    public Hypotese add(boolean antc, boolean isQuery, long predicateId, ArgList arg) {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
             root = new ArrayList<>();
         }
-        Hypotese h = find(antc, pred, arg);
+        Hypotese h = find(antc, predicateId, arg);
         if (h != null) {
             if (isQuery) {
                 h.setQuery(isQuery);
@@ -50,7 +50,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? antc : !antc;
             h = new Hypotese(user);
             h.setAntc(antc);
-            h.setPredicate(pred);
+            h.setPredicateId(predicateId);
             h.addParams(arg);
             h.setQuery(isQuery);
             root.add(h);
@@ -99,13 +99,13 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) {
+    public Hypotese find(Boolean antc, long predicateId, ArgList arg) {
         if (root == null) {
             return null;
         }
         for (Hypotese h : root) {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? h.isAntc() : !h.isAntc();
-            if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == antc)) {
+            if (h.getPredicateId() == predicateId && (antc == null || h.isAntc() == antc)) {
 
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
@@ -128,7 +128,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         for (Hypotese h : root) {
-            if (h.getPredicate().getId() == hy.getPredicate().getId() && h.isAntc() == hy.isAntc()) {
+            if (h.getPredicateId() == hy.getPredicateId() && h.isAntc() == hy.isAntc()) {
 
                 int i = 0;
                 if (hy.getSolve().size() == h.getSolve().size()) {

@@ -156,7 +156,7 @@ public class RightFactory implements Iterable<Right> {
         for (Argument a : d.getArguments()) {
             arg.add(new Argument(a.getValue()));
         }
-        t.getSequence().add(user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), arg, r));
+        t.getSequence().add(user.getMind().getDomains().add(d.getPredicateId(), d.isAntc(), arg, r.getId()));
     }
 
     @Override

@@ -19,7 +19,7 @@ import java.util.*;
  */
 public class Hypotese implements Comparable<Hypotese> {
 
-    private Predicate predicate = null;
+    private long predicateId = -1;
     private List<Term> solve = new ArrayList<>();
     private Set<Right> rights = new HashSet<>();
     private boolean antc = true;
@@ -41,12 +41,12 @@ public class Hypotese implements Comparable<Hypotese> {
         return deleted;
     }
 
-    public Predicate getPredicate() {
-        return predicate;
+    public long getPredicateId() {
+        return predicateId;
     }
 
-    public void setPredicate(Predicate predicate) {
-        this.predicate = predicate;
+    public void setPredicateId(long predicateId) {
+        this.predicateId = predicateId;
     }
 
     public List<Term> getSolve() {
@@ -105,6 +105,7 @@ public class Hypotese implements Comparable<Hypotese> {
 
     @Override
     public String toString() {
+        Predicate predicate = user.getMind().getPredicates().get(predicateId);
         int i, j;
         int cnum[] = new int[predicate.getRange()];
         int cptr[] = new int[predicate.getRange()];
@@ -182,7 +183,7 @@ public class Hypotese implements Comparable<Hypotese> {
         if (tag != o.getTag()) {
             return tag - o.getTag();
         } else {
-            return predicate.getName().compareTo(o.getPredicate().getName());
+            return (int) (predicateId - o.getPredicateId());
         }
     }
 }

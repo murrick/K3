@@ -113,18 +113,21 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(domain.isAntc());
-        buffer.append(domain.getPredicate().getId());
+        buffer.append(domain.getPredicateId());
         buffer.append(domain.getArguments().hashCode());
         return buffer.toString().hashCode();
     }
 
     @Override
     public boolean equalsTo(Domain x) {
+        //TODO: ОПТИМИЗАЦИЯ, Хранить ранг в домене
+        int range = user.getMind().getPredicates().get(domain.getPredicateId()).getRange();
+        int rangeX = user.getMind().getPredicates().get(x.getPredicateId()).getRange();
         if (x.isAntc() == domain.isAntc()
-                && x.getPredicate().getId() == domain.getPredicate().getId()
-                && x.getPredicate().getRange() == domain.getPredicate().getRange()) {
+                && x.getPredicateId() == domain.getPredicateId()
+                && rangeX == range) {
             int i = 0;
-            for (; i < domain.getPredicate().getRange(); ++i) {
+            for (; i < range; ++i) {
                 if (!x.get(i).isEmpty()
                         && !domain.getArguments().get(i).isEmpty()
                         && x.get(i).getValue().getId() != domain.getArguments().get(i).getValue().getId()) {
@@ -137,7 +140,7 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
                     break;
                 }
             }
-            return i == domain.getPredicate().getRange();
+            return i == range;
         } else {
             return false;
         }
