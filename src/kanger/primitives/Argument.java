@@ -12,13 +12,26 @@ import java.io.*;
  */
 public class Argument implements Externalizable {
 
-    private Object o = null;
+    private ArgumentType type = ArgumentType.EMPTY;
+    private long objectId = -1;
 
     public Argument() {
     }
 
-    public Argument(Object d) {
-        o = d;
+    public Argument(Object o) {
+        if (o instanceof Term) {
+            type = ArgumentType.TERM;
+        } else if (o instanceof TVariable) {
+            return ArgumentType.TVRIABLE;
+        } else if (o instanceof TValue) {
+            return ArgumentType.TVALUE;
+        } else if (o instanceof FValue) {
+            return ArgumentType.FVALUE;
+        } else if (o instanceof Function) {
+            return ArgumentType.FUNCTION;
+        } else {
+            return ArgumentType.EMPTY;
+        }
     }
 
     @Override
@@ -57,6 +70,7 @@ public class Argument implements Externalizable {
             case TVALUE:
                 return ((TValue) o).getValue();
             case FVALUE:
+                Term v = user.
                 return ((FValue) o).getValue();
             case FUNCTION:
                 return ((Function) o).getValue();

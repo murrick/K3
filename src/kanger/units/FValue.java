@@ -15,8 +15,8 @@ import java.io.ObjectOutput;
 
 public class FValue implements Externalizable, Identifiable<Function> {
     private long id = -1;
-    private Function function = null;
-    private Term value = null;
+    private long functionId = -1;
+    private long valueId = -1;
     private ArgList condition = new ArgList();
 
     private FValue next = null;
@@ -30,8 +30,8 @@ public class FValue implements Externalizable, Identifiable<Function> {
     }
 
     public FValue(Function f, User user) {
-        function = f;
-        value = f.getArguments().get(f.getRange()).getValue();
+        functionId = f.getId();
+        valueId = f.getArguments().get(f.getRange()).getValue().getId();
         for (Argument a : f.getArguments()) {
             if (a.isTSet()) {
                 condition.add(new Argument(a.getT().getCurrent()));
@@ -47,16 +47,16 @@ public class FValue implements Externalizable, Identifiable<Function> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        function = (Function) dis.readObject();
-        value = (Term) dis.readObject();
+        functionId = dis.readLong();
+        valueId = dis.readLong();
         condition = (ArgList) dis.readObject();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(function);
-        dos.writeObject(value);
+        dos.writeLong(functionId);
+        dos.writeLong(valueId);
         dos.writeObject(condition);
     }
 
@@ -70,14 +70,14 @@ public class FValue implements Externalizable, Identifiable<Function> {
         return id;
     }
 
-    public Term setValue(Term value) {
-        this.value = value;
-        return value;
-    }
+//    public Term setValue(Term value) {
+//        this.value = value;
+//        return value;
+//    }
+//
 
-
-    public Term getValue() {
-        return value;
+    public long getValueId() {
+        return valueId;
     }
 
 //    @Override
@@ -101,12 +101,12 @@ public class FValue implements Externalizable, Identifiable<Function> {
 //        return condition;
 //    }
 
-    public void setFunction(Function function) {
-        this.function = function;
+    public void setFunctionId(long functionId) {
+        this.functionId = functionId;
     }
 
-    public Function getFunc() {
-        return function;
+    public long getFunctionId() {
+        return functionId;
     }
 
     public void setNext(FValue next) {
@@ -163,6 +163,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
 //    }
 
     private String formatParam(Argument t) {
+        Function function = user.getMind().getFunctions().get(functionId);
         Term name = user.getMind().getTerms().get(function.getNameId());
         Operation op = Parser.getOp(name.toString(), function.getRange());
         boolean isOp = op != null && op.getRange() == function.getRange();
@@ -186,17 +187,17 @@ public class FValue implements Externalizable, Identifiable<Function> {
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(function.getId());
-        buffer.append(value.getId());
+        buffer.append(functionId);
+        buffer.append(valueId);
         buffer.append(condition.hashCode());
         return buffer.toString().hashCode();
     }
 
     @Override
     public boolean equalsTo(Function f) {
-        if (f.getId() == getFunc().getId()
+        if (f.getId() == functionId
                 && (f.getArguments().get(f.getRange()).isEmpty()
-                || getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId())) {
+                || valueId == f.getArguments().get(f.getRange()).getValue().getId())) {
             boolean complete = true;
             for (int i = 0; i < f.getRange(); ++i) {
                 if (!f.getArguments().get(i).isEmpty() && f.getArguments().get(i).getValue().getId() != getCondition().get(i).getValue().getId()) {
@@ -217,8 +218,10 @@ public class FValue implements Externalizable, Identifiable<Function> {
 
     @Override
     public String toString() {
-        if (!function.isCalculable() && getValue() != null) {
-            return getValue().toString();
+        Function function = user.getMind().getFunctions().get(functionId);
+        Term value = user.getMind().getTerms().get(valueId);
+        if (!function.isCalculable() && value != null) {
+            return value.toString();
         } else {
             Term name = user.getMind().getTerms().get(function.getNameId());
             Operation op = Parser.getOp(name.toString(), function.getRange());
@@ -250,8 +253,8 @@ public class FValue implements Externalizable, Identifiable<Function> {
             String res = "";
             if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
 //                if (getResult() != null) {
-                if (getValue() != null) {
-                    res = " {= " + getValue() + "}";
+                if (value != null) {
+                    res = " {= " + value + "}";
                 } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
                     res = " [= " + condition.get(function.getRange()).getValue() + "]";
                 }
