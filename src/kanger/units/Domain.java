@@ -26,13 +26,16 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     private boolean antc = true;                                // ! или ?
     private Predicate predicate = null;                         // Ссылка на описатель предиката
     private ArgList arguments = new ArgList();       // Массив подстановочных переменных
-    private Right right;                                        // Ссылка на правило
+    private Right right = null;                                        // Ссылка на правило
     private Domain next = null;                                 // Следующий элемент
 
     private Stack<List<TValue>> tStack = new Stack<>();
     private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
 
     private User user = null;
+
+    private transient long predicateId = -1;
+    private transient long rightId = -1;
 
     public Domain() {
     }
@@ -56,18 +59,24 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
         antc = dis.readBoolean();
-        predicate = (Predicate) dis.readObject();
+        predicateId = dis.readLong();
         arguments = (ArgList) dis.readObject();
-        right = (Right) dis.readObject();
+        rightId = dis.readLong();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
         dos.writeBoolean(antc);
-        dos.writeObject(predicate);
+        dos.writeLong(predicate.getId());
         dos.writeObject(arguments);
-        dos.writeObject(right);
+        dos.writeLong(right.getId());
+    }
+
+    public void linkExternal() {
+        predicate = user.getMind().getPredicates().get(predicateId);
+        right = user.getMind().getRights().get(rightId);
+        arguments.linkExternal(user);
     }
 
     public Predicate getPredicate() {

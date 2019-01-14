@@ -26,8 +26,12 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     private Tree next = null;
     private User user = null;
 
-    //    private boolean closed = false;
-//    private boolean used = false;
+    private transient long rightId = -1;
+    private transient List<Long> sequenceIds = new ArrayList<>();
+
+    public Tree() {
+    }
+
     public Tree(User user) {
         this.user = user;
     }
@@ -35,21 +39,29 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        rightId = dis.readLong();
         int count = dis.readInt();
+        sequenceIds.clear();
         while (count-- > 0) {
-            sequence.add((Domain) dis.readObject());
+            sequenceIds.add(dis.readLong());
         }
-        right = (Right) dis.readObject();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeLong(right.getId());
         dos.writeInt(sequence.size());
         for (Domain d : sequence) {
-            dos.writeObject(d);
+            dos.writeLong(d.getId());
         }
-        dos.writeObject(right);
+    }
+
+    public void linkExternal() {
+        right = user.getMind().getRights().get(rightId);
+        for (Domain d : sequence) {
+            d.linkExternal();
+        }
     }
 
     public List<Domain> getSequence() {

@@ -27,6 +27,9 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     private TValue next = null;          // Следующая переменная
     private User user = null;
 
+    private transient long valueId = -1;
+    private transient long tVarId = -1;
+
     public TValue() {
     }
 
@@ -48,9 +51,10 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        value = (Term) dis.readObject();
-        tVar = (TVariable) dis.readObject();
+        valueId = dis.readLong();
+        tVarId = dis.readLong();
         int count = dis.readInt();
+        causes.clear();
         while (count-- > 0) {
             Cause c = (Cause) dis.readObject();
             causes.add(c);
@@ -60,14 +64,21 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(value);
-        dos.writeObject(tVar);
+        dos.writeLong(value.getId());
+        dos.writeLong(tVar.getId());
         dos.writeInt(causes.size());
         for (Cause c : causes) {
             dos.writeObject(c);
         }
     }
 
+    public void linkExternal() {
+        value = user.getMind().getTerms().get(valueId);
+        tVar = user.getMind().getTVars().get(tVarId);
+        for (Cause c : causes) {
+            c.linkExternal(user);
+        }
+    }
 
     public Term getValue() {
         return value;

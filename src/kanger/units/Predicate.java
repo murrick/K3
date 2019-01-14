@@ -23,6 +23,8 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     private User user = null;
 
+    private transient long nameId = -1;
+
     public Predicate() {
     }
 
@@ -38,17 +40,20 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        name = (Term) dis.readObject();
+        nameId = dis.readLong();
         range = dis.readInt();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(name);
+        dos.writeLong(nameId);
         dos.writeInt(range);
     }
 
+    public void linkExternal() {
+        name = user.getMind().getTerms().get(nameId);
+    }
 
     public Term getName() {
         return name;

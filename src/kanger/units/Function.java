@@ -28,6 +28,8 @@ public class Function implements Externalizable, Identifiable<Function> {
     private Function next = null;
     private User user = null;
 
+    private transient long nameId = -1;
+
     public Function() {
 
     }
@@ -39,7 +41,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        name = (Term) dis.readObject();
+        nameId = dis.readLong();
         range = dis.readInt();
         arguments = (ArgList) dis.readObject();
     }
@@ -47,9 +49,14 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(name);
+        dos.writeLong(name.getId());
         dos.writeInt(range);
         dos.writeObject(arguments);
+    }
+
+    public void linkExternal() {
+        name = user.getMind().getTerms().get(nameId);
+        arguments.linkExternal(user);
     }
 
     @Override

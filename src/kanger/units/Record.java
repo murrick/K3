@@ -21,6 +21,8 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     private Record next = null;
     private User user = null;
 
+    private transient long domainId = -1;
+
     public Record() {
     }
 
@@ -36,7 +38,7 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        domain = (Domain) dis.readObject();
+        domainId = dis.readLong();
         tag = dis.readInt();
         int count = dis.readInt();
         while (count-- > 0) {
@@ -48,11 +50,18 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(domain);
+        dos.writeLong(domain.getId());
         dos.writeInt(tag);
         dos.writeInt(causes.size());
         for (Cause c : causes) {
             dos.writeObject(c);
+        }
+    }
+
+    public void linkExternal() {
+        domain = user.getMind().getDomains().get(domainId);
+        for (Cause c : causes) {
+            c.linkExternal(user);
         }
     }
 

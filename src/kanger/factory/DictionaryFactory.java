@@ -3,6 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.enums.Enums;
 import kanger.primitives.UnitIterator;
+import kanger.storage.Cache;
 import kanger.units.Right;
 import kanger.units.Term;
 
@@ -21,11 +22,12 @@ public class DictionaryFactory implements Iterable<Term> {
     private int varIndex = 0;           // Счетчик C-переменных
 
     private Stack<Object[]> stack = new Stack<>();
+    private Cache cache = new Cache();
     private User user = null;
 
-    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
-    private Map<Long, Term> idCache = new HashMap<>();
-    private DictionaryFactory base = null;
+//    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
+//    private Map<Long, Term> idCache = new HashMap<>();
+//    private DictionaryFactory base = null;
 
 
     public DictionaryFactory(User user) {
@@ -38,12 +40,13 @@ public class DictionaryFactory implements Iterable<Term> {
             root = base.root;
             lastID = base.lastID;
             varIndex = base.varIndex;
+            cache.reindex(root);
         } else {
             root = null;
             lastID = 0;
             varIndex = 0;
         }
-        this.base = base;
+//        this.base = base;
         stack.clear();
         mark();
     }
@@ -67,7 +70,6 @@ public class DictionaryFactory implements Iterable<Term> {
             return p;
         } else {
             p = new Term(o, user);
-
             append(p);
             return p;
         }
@@ -77,13 +79,7 @@ public class DictionaryFactory implements Iterable<Term> {
         term.setNext(root);
         root = term;
         term.setId(lastID++);
-
-        int hash = term.getHash();
-        if (!hashCache.containsKey(hash)) {
-            hashCache.put(hash, new HashSet<Long>());
-        }
-        hashCache.get(hash).add(term.getId());
-        idCache.put(term.getId(), term);
+        cache.add(term);
     }
 
     public Term find(Object o) {

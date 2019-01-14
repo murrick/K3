@@ -26,6 +26,12 @@ public class Right implements Externalizable, Identifiable<Right> {
     private Right next = null;                  // Следующее правило
     private User user = null;
 
+    private transient long origId = -1;
+    private transient List<Long> treeIds = new ArrayList<>();
+
+    public Right() {
+    }
+
     public Right(User user) {
         this.user = user;
     }
@@ -33,25 +39,34 @@ public class Right implements Externalizable, Identifiable<Right> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        orig = (Term) dis.readObject();
+        origId = dis.readLong();
         query = dis.readBoolean();
         generated = dis.readBoolean();
         int count = dis.readInt();
+        treeIds.clear();
         while (count-- > 0) {
-            Tree t = (Tree) dis.readObject();
-            tree.add(t);
+            treeIds.add(dis.readLong());
         }
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(orig);
+        dos.writeLong(orig.getId());
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
         dos.writeInt(tree.size());
         for (Tree r : tree) {
-            dos.writeObject(r);
+            dos.writeLong(r.getId());
+        }
+    }
+
+    public void linkExternal() {
+        orig = user.getMind().getTerms().get(origId);
+        tree.clear();
+        for(long id : treeIds) {
+            Tree t = user.getMind().getTrees().get(id);
+            tree.add(t);
         }
     }
 

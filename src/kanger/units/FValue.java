@@ -22,6 +22,9 @@ public class FValue implements Externalizable, Identifiable<Function> {
     private FValue next = null;
     private User user = null;
 
+    private transient long functionId = -1;
+    private transient long valueId = -1;
+
     public FValue() {
     }
 
@@ -47,18 +50,25 @@ public class FValue implements Externalizable, Identifiable<Function> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        function = (Function) dis.readObject();
-        value = (Term) dis.readObject();
+        functionId = dis.readLong();
+        valueId = dis.readLong();
         condition = (ArgList) dis.readObject();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(function);
-        dos.writeObject(value);
+        dos.writeLong(function.getId());
+        dos.writeLong(value.getId());
         dos.writeObject(condition);
     }
+
+    public void linkExternal() {
+        function = user.getMind().getFunctions().get(functionId);
+        value = user.getMind().getTerms().get(valueId);
+        condition.linkExternal(user);
+    }
+
 
     @Override
     public void setId(long id) {

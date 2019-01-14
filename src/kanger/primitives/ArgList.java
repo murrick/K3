@@ -1,5 +1,6 @@
 package kanger.primitives;
 
+import kanger.User;
 import kanger.units.TValue;
 import kanger.units.TVariable;
 
@@ -35,6 +36,12 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         while (count-- > 0) {
             Argument a = (Argument) in.readObject();
             add(a);
+        }
+    }
+
+    public void linkExternal(User user) {
+        for(Argument a : this) {
+            a.linkExternal(user);
         }
     }
 

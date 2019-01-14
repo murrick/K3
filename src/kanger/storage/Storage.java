@@ -88,7 +88,7 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         }
     }
 
-    public List<Identifiable> getByHash(long h) throws IOException, ClassNotFoundException {
+    public List<Identifiable> find(long h) throws IOException, ClassNotFoundException {
         List<Identifiable> list = new ArrayList<>();
         Index.IndexOne x = hash.getOne(h);
         if (x != null) {

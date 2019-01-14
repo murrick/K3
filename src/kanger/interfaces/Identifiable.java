@@ -11,4 +11,6 @@ public interface Identifiable<T> {
     boolean equalsTo(T to);
 
     Identifiable getNext();
+
+    void linkExternal();
 }

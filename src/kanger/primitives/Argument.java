@@ -1,6 +1,8 @@
 package kanger.primitives;
 
+import kanger.User;
 import kanger.enums.ArgumentType;
+import kanger.interfaces.Identifiable;
 import kanger.units.*;
 
 import java.io.*;
@@ -12,25 +14,51 @@ import java.io.*;
  */
 public class Argument implements Externalizable {
 
-    private Object o = null;
+    private Identifiable o = null;
+
+    private transient long id = -1;
+    private transient ArgumentType type = ArgumentType.EMPTY;
 
     public Argument() {
     }
 
-    public Argument(Object d) {
+    public Argument(Identifiable d) {
         o = d;
     }
 
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        o = dis.readObject();
+        id = dis.readLong();
+        type = ArgumentType.values()[dis.readInt()];
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeObject(o);
+        dos.writeLong(o.getId());
+        dos.writeInt(getType().ordinal());
     }
 
+    public void linkExternal(User user) {
+        switch (type) {
+            case TERM:
+                o = user.getMind().getTerms().get(id);
+                break;
+            case TVRIABLE:
+                o = user.getMind().getTVars().get(id);
+                break;
+            case TVALUE:
+                o = user.getMind().getTValues().get(id);
+                break;
+            case FUNCTION:
+                o = user.getMind().getFunctions().get(id);
+                break;
+            case FVALUE:
+                o = user.getMind().getFValues().get(id);
+                break;
+            default:
+                o = null;
+        }
+    }
 
     public ArgumentType getType() {
         if (o instanceof Term) {

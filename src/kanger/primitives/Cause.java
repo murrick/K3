@@ -1,5 +1,6 @@
 package kanger.primitives;
 
+import kanger.User;
 import kanger.units.Domain;
 
 import java.io.*;
@@ -9,6 +10,9 @@ public class Cause implements Externalizable, Comparable<Cause> {
     private Domain dst = null;
     private ArgList arguments = null;
     private int index = -1;
+
+    private transient long srcId = -1;
+    private transient long dstId = -1;
 
     public Cause() {
 
@@ -24,17 +28,23 @@ public class Cause implements Externalizable, Comparable<Cause> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         index = dis.readInt();
-        src = (Domain) dis.readObject();
-        dst = (Domain) dis.readObject();
+        srcId = dis.readLong();
+        dstId = dis.readLong();
         arguments = (ArgList) dis.readObject();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeInt(index);
-        dos.writeObject(src);
-        dos.writeObject(dst);
+        dos.writeLong(src.getId());
+        dos.writeLong(dst.getId());
         dos.writeObject(arguments);
+    }
+
+    public void linkExternal(User user) {
+        src = user.getMind().getDomains().get(srcId);
+        dst = user.getMind().getDomains().get(dstId);
+        arguments.linkExternal(user);
     }
 
     public Domain getSrc() {

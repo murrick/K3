@@ -80,7 +80,7 @@ public class Kanger {
 //            System.out.println("0:=" + data.get(0));
 //            System.out.println("8:=" + data.get(8));
 //
-//            System.out.println("ХЭШ " + data.getByHash(new Term( "Это третий", user).getHash()));
+//            System.out.println("ХЭШ " + data.find(new Term( "Это третий", user).getHash()));
 //            System.out.println("------------");
 //
 //            for(Identifiable x : data) {

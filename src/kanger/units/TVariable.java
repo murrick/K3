@@ -24,6 +24,9 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     private TVariable next = null;          // Следующая переменная
     private User user = null;
 
+    private transient long nameId = -1;
+    private transient long rightId = -1;
+
     public TVariable(User user) {
         this.user = user;
     }
@@ -31,19 +34,23 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
-        name = (Term) dis.readObject();
+        nameId = dis.readLong();
         index = dis.readInt();
-        right = (Right) dis.readObject();
+        rightId = dis.readLong();
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeObject(name);
+        dos.writeLong(name.getId());
         dos.writeInt(index);
-        dos.writeObject(right);
+        dos.writeLong(right.getId());
     }
 
+    public void linkExternal() {
+        name = user.getMind().getTerms().get(nameId);
+        right = user.getMind().getRights().get(rightId);
+    }
 
     public Term getName() {
         return name;
