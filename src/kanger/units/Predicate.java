@@ -103,7 +103,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 //        }
 
         for (Record d : user.getMind().getDatabase()) {
-            if (getId() == d.getDomain().getPredicate().getId()) {
+            if (getId() == d.getDomain().getPredicateId()) {
                 set.add(d.getDomain());
             }
         }
@@ -113,7 +113,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     public Set<Domain> getRelates() {
         Set<Domain> set = new HashSet<>();
         for (Domain d : user.getMind().getDomains()) {
-            if (getId() == d.getPredicate().getId()) {
+            if (getId() == d.getPredicateId()) {
                 set.add(d);
             }
         }
@@ -124,7 +124,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         Set<Tree> set = new HashSet<>();
         for (Tree t : user.getMind().getTrees()) {
             for (Domain d : t.getSequence()) {
-                if (getId() == d.getPredicate().getId()) {
+                if (getId() == d.getPredicateId()) {
                     set.add(t);
                     break;
                 }
@@ -133,33 +133,33 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         return set;
     }
 
-    public Set<Right> getLinkedRights() {
-        Set<Right> set = new HashSet<>();
-        for (Domain d : getRelates()) {
-            set.add(d.getRight());
-        }
-        return set;
-    }
+//    public Set<Long> getLinkedRights() {
+//        Set<Right> set = new HashSet<>();
+//        for (Domain d : getRelates()) {
+//            set.add(d.getRight());
+//        }
+//        return set;
+//    }
 
-    public Set<TVariable> getTVariables(boolean full) {
-        Set<TVariable> set = new HashSet<>();
-        for (Domain d : user.getMind().getDomains()) {
-            if (getId() == d.getPredicate().getId()) {
-                set.addAll(d.getArguments().getTVariables(full));
-                break;
-            }
-        }
-        return set;
-    }
-
-    public Domain containsSolve(Domain d) {
-        for (Domain x : getSolves()) {
-            if (x.isStored() && d.equalsBase(x)) {
-                return x;
-            }
-        }
-        return null;
-    }
+//    public Set<TVariable> getTVariables(boolean full) {
+//        Set<TVariable> set = new HashSet<>();
+//        for (Domain d : user.getMind().getDomains()) {
+//            if (getId() == d.getPredicate().getId()) {
+//                set.addAll(d.getArguments().getTVariables(full));
+//                break;
+//            }
+//        }
+//        return set;
+//    }
+//
+//    public Domain containsSolve(Domain d) {
+//        for (Domain x : getSolves()) {
+//            if (x.isStored() && d.equalsBase(x)) {
+//                return x;
+//            }
+//        }
+//        return null;
+//    }
 
 //    public boolean checkSolves() {
 //        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {

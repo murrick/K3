@@ -67,7 +67,7 @@ public class Linker {
             saveF = user.getMind().getFValues().getRoot();
 
 
-            final Map<Right, Set<Cause>> causes = new HashMap<>();
+            final Map<Long, Set<Cause>> causes = new HashMap<>();
 
             SortedSet<Tree> treeSet = new TreeSet<>();
 //            if (right == null) {
@@ -164,17 +164,18 @@ public class Linker {
         return result;
     }
 
-    private boolean linkDomains(Tree treeSlave, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean linkDomains(Tree treeSlave, Map<Long, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
         if (treeSlave.getSequence().size() == 1) {
             for (Domain slave : treeSlave.getSequence()) {
-                for (Tree treeMaster : slave.getPredicate().getLinkedTrees()) {
+                Predicate slavePredicate = user.getMind().getPredicates().get(slave.getPredicateId());
+                for (Tree treeMaster : slavePredicate.getLinkedTrees()) {
                     for (Domain master : treeMaster.getSequence()) {
-                        if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
+                        if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
 
-                            TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
-                            TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
+                            TValue[] substMaster = new TValue[slavePredicate.getRange()];
+                            TValue[] substSlave = new TValue[slavePredicate.getRange()];
 
                             user.getMind().getTValues().mark();
                             user.getMind().getFValues().mark();
@@ -182,7 +183,7 @@ public class Linker {
                             boolean success = true;
                             boolean applied = false;
 
-                            for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                            for (int i = 0; i < slavePredicate.getRange(); ++i) {
 
                                 if (master.get(i).isTSet()
                                         && !slave.get(i).isEmpty()
@@ -238,10 +239,12 @@ public class Linker {
         return result;
     }
 
-    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Long, Set<Cause>> causes, boolean logging) {
         Right r = null;
         boolean occurrs = false;
-        for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+        //TODO: ОПТИМИЗАЦИЯ, Ранг в домен
+        Predicate slavePredicate = user.getMind().getPredicates().get(slave.getPredicateId());
+        for (int i = 0; i < slavePredicate.getRange(); ++i) {
             if (subst[i] != null) {
                 boolean caused = false;
                 Cause s = new Cause(i, master, slave);
@@ -252,10 +255,10 @@ public class Linker {
                 if (caused || !master.isExcluded(slave.getArguments())) {
                     r = subst[i].getTVar().getRight();
                     if (caused) {
-                        if (!causes.containsKey(r)) {
-                            causes.put(r, new HashSet<>());
+                        if (!causes.containsKey(r.getId())) {
+                            causes.put(r.getId(), new HashSet<>());
                         }
-                        causes.get(r).add(s);
+                        causes.get(r.getId()).add(s);
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
                         }
@@ -279,7 +282,7 @@ public class Linker {
         return r != null;
     }
 
-    private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Long, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
         boolean occurs = false;
@@ -293,9 +296,11 @@ public class Linker {
 
             for (Domain d : tree.getSequence()) {
                 for (Domain master : waiters) {
-                    if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
+                    if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
-                        for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                        //TODO: ОПТИМИЗАЦИЯ, Ранг в домен
+                        Predicate predicate = user.getMind().getPredicates().get(d.getPredicateId());
+                        for (int i = 0; i < predicate.getRange(); ++i) {
                             if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {
                             } else if (master.get(i).isEmpty()
                                     || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {
@@ -335,7 +340,7 @@ public class Linker {
                 if (!d.isStored()) {
                     result = true;
                     d.setProduced(user.getMind().getDatabase().getTag());
-                    d.addCauses(causes.get(d.getRight()));
+                    d.addCauses(causes.get(d.getRightId()));
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                         logCauses(d);
@@ -348,7 +353,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced(user.getMind().getDatabase().getTag());
-                        d.addCauses(causes.get(d.getRight()));
+                        d.addCauses(causes.get(d.getRightId()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
                             logCauses(d);
@@ -362,7 +367,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced(user.getMind().getDatabase().getTag());
-                        d.addCauses(causes.get(d.getRight()));
+                        d.addCauses(causes.get(d.getRightId()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
                             logCauses(d);
@@ -389,7 +394,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced(user.getMind().getDatabase().getTag());
-                        d.addCauses(causes.get(d.getRight()));
+                        d.addCauses(causes.get(d.getRightId()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
                             logCauses(d);
@@ -414,7 +419,8 @@ public class Linker {
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
+                    Right right = user.getMind().getRights().get(c.getDst().getRightId());
+                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + right);
                     rightShowed = true;
                 }
                 user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
@@ -450,7 +456,9 @@ public class Linker {
                 for (ArgList args : tags.getValue()) {
                     result = true;
 
-                    for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                    //TODO: ОПТИМИЗАЦИЯ, Ранг в домен
+                    Predicate predicate = user.getMind().getPredicates().get(d.getPredicateId());
+                    for (int i = 0; i < predicate.getRange(); ++i) {
                         if (d.getArguments().get(i).isTSet()) {
                             if (d.getArguments().get(i).getT().find(args.get(i).getValue()) != null) {
                                 d.getArguments().get(i).getT().setValue(args.get(i).getValue());
@@ -491,7 +499,7 @@ public class Linker {
     }
 
 
-    public boolean calcFunctions(Tree master, Map<Right, Set<Cause>> causes, boolean logging) {
+    public boolean calcFunctions(Tree master, Map<Long, Set<Cause>> causes, boolean logging) {
         boolean result = false;
 
         if (!master.getFunctions().isEmpty()) {

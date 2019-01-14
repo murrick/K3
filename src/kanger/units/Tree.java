@@ -187,13 +187,13 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
         return list;
     }
 
-    public Set<Tree> getRelatedTrees() {
-        Set<Tree> list = new HashSet<>();
-        for (Domain d : sequence) {
-            list.addAll(d.getPredicate().getLinkedTrees());
-        }
-        return list;
-    }
+//    public Set<Tree> getRelatedTrees() {
+//        Set<Tree> list = new HashSet<>();
+//        for (Domain d : sequence) {
+//            list.addAll(d.getPredicate().getLinkedTrees());
+//        }
+//        return list;
+//    }
 
 
     public List<Domain> getSystem() {
@@ -224,7 +224,7 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
 
     public boolean contains(Domain dom) {
         for (Domain d : sequence) {
-            if (d.getPredicate().getId() == dom.getPredicate().getId()) {
+            if (d.getPredicateId() == dom.getPredicateId()) {
                 return true;
             }
             for (TVariable t : dom.getArguments().getTVariables(true)) {

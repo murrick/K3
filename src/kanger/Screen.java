@@ -579,9 +579,10 @@ public class Screen {
             indent += "\t";
         }
 
-        Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
+        Record dest = mind.getDatabase().find(d.getPredicateId(), d.isAntc(), d.getArguments());
         if (dest != null && !dest.getCauses().isEmpty()) {
-            System.out.printf("\t\t%sRight: %s\n", indent, dest.getCauses().toArray(new Cause[]{})[0].getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
+            Right right = mind.getRights().get(dest.getCauses().toArray(new Cause[]{})[0].getDst().getRightId());
+            System.out.printf("\t\t%sRight: %s\n", indent, right.toString().replaceAll("\n", " ").replaceAll("  ", " "));
             for (Cause c : dest.getCauses()) {
                 System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString(c.getArguments()));
                 showCauses(mind, c.getSrc(), level + 1);

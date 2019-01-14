@@ -188,7 +188,7 @@ public class Compiler {
 //        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
 
         Domain d = new Domain(user);
-        d.setRight(r);
+        d.setRightId(r.getId());
 
         ArgList arg = new ArgList();
         Predicate pred = null;
@@ -231,11 +231,11 @@ public class Compiler {
             parseArgs(d, arg, root.getRight(), 1, replacements);
             pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getLeft().getName()), arg.size());
         }
-        d.setPredicate(pred);
+        d.setPredicateId(pred.getId());
         d.setAntc(antc);
         d.getArguments().addAll(arg);
 
-        d = user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRight());
+        d = user.getMind().getDomains().add(d.getPredicateId(), d.isAntc(), d.getArguments(), d.getRightId());
         t.getSequence().add(d);
         return t;
     }
@@ -253,7 +253,7 @@ public class Compiler {
                 Function f = user.getMind().getFunctions().add(); //new Function(mind);
                 parseArgs(d, f.getArguments(), root.getLeft(), level + 1, replacements);
                 parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-                f.setName(user.getMind().getTerms().add(root.getName()));
+                f.setNameId(user.getMind().getTerms().add(root.getName()).getId());
                 f.setRange(f.getArguments().size());
                 Argument t = new Argument(f);
                 arg.add(t);
@@ -265,7 +265,7 @@ public class Compiler {
             // вложенная функция
             Function f = user.getMind().getFunctions().add(); //new Function(mind);
             parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-            f.setName(user.getMind().getTerms().add(root.getLeft().getName()));
+            f.setNameId(user.getMind().getTerms().add(root.getLeft().getName()).getId());
             f.setRange(f.getArguments().size());
             Argument t = new Argument(f);
             arg.add(t);

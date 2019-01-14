@@ -9,6 +9,7 @@ import kanger.primitives.Argument;
 import kanger.units.Domain;
 import kanger.units.Function;
 import kanger.units.Predicate;
+import kanger.units.Term;
 
 /**
  * Created by murray on 27.05.15.
@@ -74,7 +75,8 @@ public class Calculator {
      */
     public int execute(Domain d) {
         int k = -1;
-        String n = d.getPredicate().getName() + "(" + d.getPredicate().getRange() + ")";
+        Predicate predicate = user.getMind().getPredicates().get(d.getPredicateId());
+        String n = predicate.getName() + "(" + predicate.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         if (op != null) {
 
@@ -102,7 +104,8 @@ public class Calculator {
 
     public int execute(Function fu) /*throws RuntimeErrorException*/ {
         int k = -1;
-        String n = fu.getName() + "(" + fu.getRange() + ")";
+        Term name = user.getMind().getTerms().get(fu.getNameId());
+        String n = name + "(" + fu.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         if (op != null) {
 
@@ -134,7 +137,8 @@ public class Calculator {
     }
 
     public boolean exists(Function f) {
-        String n = f.getName() + "(" + f.getRange() + ")";
+        Term name = user.getMind().getTerms().get(f.getNameId());
+        String n = name.toString() + "(" + f.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         return op != null && functions.getSysOps().get(n).getMode() == LibMode.FUNCTION;
     }
@@ -154,7 +158,8 @@ public class Calculator {
             String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
             return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         } else if (o instanceof Function) {
-            String n = ((Function) o).getName() + "(" + ((Function) o).getRange() + ")";
+            Term name = user.getMind().getTerms().get(((Function) o).getNameId());
+            String n = name.toString() + "(" + ((Function) o).getRange() + ")";
             return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         } else {
             String key = o.toString();
