@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * Created by murray on 25.05.15.
  */
-public class DictionaryFactory implements Iterable<Term> {
+public class DictionaryFactory /*implements Iterable<Term>*/ {
 
     //    private Term root = null;
     private long lastID = 0;
@@ -234,9 +234,9 @@ public class DictionaryFactory implements Iterable<Term> {
         return ++varIndex;
     }
 
-    @Override
-    public Iterator iterator() {
-        return cache.iterator();
-//        return new UnitIterator(root);
-    }
+//    @Override
+//    public Iterator iterator() {
+//        return cache.iterator();
+////        return new UnitIterator(root);
+//    }
 }
