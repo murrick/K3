@@ -27,7 +27,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     private Predicate predicate = null;                         // Ссылка на описатель предиката
     private ArgList arguments = new ArgList();       // Массив подстановочных переменных
     private Right right = null;                                        // Ссылка на правило
-    private Domain next = null;                                 // Следующий элемент
+//    private Domain next = null;                                 // Следующий элемент
 
     private Stack<List<TValue>> tStack = new Stack<>();
     private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
@@ -105,14 +105,14 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         this.id = id;
     }
 
-    @Override
-    public Domain getNext() {
-        return next;
-    }
-
-    public void setNext(Domain next) {
-        this.next = next;
-    }
+//    @Override
+//    public Domain getNext() {
+//        return next;
+//    }
+//
+//    public void setNext(Domain next) {
+//        this.next = next;
+//    }
 
     public Argument get(int i) {
         return arguments.get(i);

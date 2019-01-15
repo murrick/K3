@@ -1,10 +1,13 @@
 package kanger.primitives;
 
+import kanger.User;
 import kanger.interfaces.Identifiable;
+import kanger.storage.Storage;
 
 import java.util.Iterator;
 
 public class UnitIterator implements Iterator {
+
 
     @Override
     public void remove() {
@@ -12,29 +15,30 @@ public class UnitIterator implements Iterator {
     }
 
 
-    Identifiable current = null;
-    Identifiable root = null;
+    Iterator<Identifiable> cache = null;
+    Storage storage = null;
 
-    public UnitIterator(Identifiable root) {
-        this.root = root;
+    public UnitIterator(Iterator cache, Storage storage) {
+        this.cache = cache;
+        this.storage = storage;
     }
 
     @Override
     public boolean hasNext() {
-        if (current == null) {
-            return root != null;
+        if(!cache.hasNext()) {
+            if(storage == null) {
+                return false;
+            } else {
+                cache = storage.iterator();
+                return cache.hasNext();
+            }
         } else {
-            return current.getNext() != null;
+            return true;
         }
     }
 
     @Override
     public Identifiable next() {
-        if (current == null) {
-            current = root;
-        } else {
-            current = current.getNext();
-        }
-        return current;
+        return cache.next();
     }
 }

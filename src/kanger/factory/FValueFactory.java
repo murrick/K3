@@ -1,7 +1,9 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.UnitIterator;
+import kanger.storage.Cache;
 import kanger.units.FValue;
 import kanger.units.Function;
 
@@ -14,11 +16,12 @@ import java.util.List;
 import java.util.Stack;
 
 public class FValueFactory implements Iterable<FValue> {
-    private FValue root = null;
+
+    private static final String SCHEMA = "fvalues";
+
     private long lastID = 0;
 
-    private Stack<Object[]> stack = new Stack<>();
-
+    private Cache cache = new Cache();
     private User user = null;
 
     public FValueFactory(User user) {
@@ -28,25 +31,25 @@ public class FValueFactory implements Iterable<FValue> {
 
     public void transaction(FValueFactory base) {
         if (base != null) {
-            root = base.root;
             lastID = base.lastID;
+            cache.add(base.cache);
         } else {
-            root = null;
             lastID = 0;
+            cache.clear();
         }
-        stack.clear();
-        mark();
     }
 
     public void commit(FValueFactory base) {
         List<FValue> list = new ArrayList();
-        for (FValue p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (cache.getLast() != null && p.getId() <= cache.getLast().getId()) {
+                break;
+            }
+            list.add((FValue) p);
         }
         for (FValue p : list) {
-            p.setNext(root);
-            root = p;
             p.setId(lastID++);
+            cache.add(p);
         }
     }
 
@@ -55,9 +58,8 @@ public class FValueFactory implements Iterable<FValue> {
         if (t == null) {
             if (f.isComplete()) {
                 t = new FValue(f, user);
-                t.setNext(root);
-                root = t;
                 t.setId(lastID++);
+                cache.add(t);
             } else {
                 return null;
             }

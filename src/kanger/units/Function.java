@@ -25,7 +25,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     private int range = 0;
     private ArgList arguments = new ArgList();     // Параметры
 
-    private Function next = null;
+//    private Function next = null;
     private User user = null;
 
     private transient long nameId = -1;
@@ -54,7 +54,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal() {
+    public void linkExternal() throws IOException, ClassNotFoundException {
         name = user.getMind().getTerms().get(nameId);
         arguments.linkExternal(user);
     }
@@ -69,14 +69,14 @@ public class Function implements Externalizable, Identifiable<Function> {
         return id;
     }
 
-    public void setNext(Function next) {
-        this.next = next;
-    }
-
-    @Override
-    public Function getNext() {
-        return next;
-    }
+//    public void setNext(Function next) {
+//        this.next = next;
+//    }
+//
+//    @Override
+//    public Function getNext() {
+//        return next;
+//    }
 
     public int getRange() {
         return range;

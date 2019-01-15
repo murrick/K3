@@ -1,12 +1,16 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.UnitIterator;
+import kanger.storage.Cache;
+import kanger.storage.Storage;
 import kanger.units.Domain;
 import kanger.units.Predicate;
 import kanger.units.Right;
+import kanger.units.Term;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -21,11 +25,14 @@ import java.util.Stack;
  */
 public class DomainFactory implements Iterable<Domain> {
 
-    private Domain root = null;
+    private static final String SCHEMA = "domains";
+
+//    private Domain root = null;
     private long lastID = 0;
 
-    private Stack<Object[]> stack = new Stack<>();
+//    private Stack<Object[]> stack = new Stack<>();
 
+    private Cache cache = new Cache();
     private User user = null;
 
     public DomainFactory(User user) {
@@ -35,35 +42,38 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void transaction(DomainFactory base) {
         if (base != null) {
-            root = base.root;
+//            root = base.root;
             lastID = base.lastID;
+            cache.add(base.cache);
         } else {
-            root = null;
+//            root = null;
             lastID = 0;
+            cache.clear();
         }
-        stack.clear();
-        mark();
+//        stack.clear();
+//        mark();
     }
 
     public void commit(DomainFactory base) {
         List<Domain> list = new ArrayList();
-        for (Domain p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (cache.getLast() != null && p.getId() <= cache.getLast().getId()) {
+                break;
+            }
+            list.add((Domain) p);
         }
         for (Domain p : list) {
-            p.setNext(root);
-            root = p;
             p.setId(lastID++);
+            cache.add(p);
         }
     }
 
 
     public Domain add(Right r) {
         Domain p = new Domain(user);
-        p.setNext(root);
         p.setRight(r);
         p.setId(lastID++);
-        root = p;
+        cache.add(p);
         return p;
     }
 
@@ -74,7 +84,6 @@ public class DomainFactory implements Iterable<Domain> {
             return p;
         } else {
             p = new Domain(user);
-            p.setNext(root);
             p.setPredicate(pred);
             p.setAntc(antc);
             p.setRight(r);
@@ -84,28 +93,40 @@ public class DomainFactory implements Iterable<Domain> {
                     p.add(t);
                 }
             }
-            root = p;
+            cache.add(p);
             return p;
         }
     }
 
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) {
         Domain temp = new Domain(pred, antc, arg, r);
-        for (Domain p = root; p != null; p = p.getNext()) {
-            if(p.equalsTo(temp)) {
-                return p;
+        for (Identifiable one : cache.find(temp.getHash())) {
+            if (one.equalsTo(temp)) {
+                return (Domain) one;
+            }
+        }
+        if (!user.isClosed()) {
+            try {
+                for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                    if (one.equalsTo(temp)) {
+                        return (Domain) one;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
         return null;
     }
 
-    public Domain get(long id) {
-        for (Domain p = root; p != null; p = p.getNext()) {
-            if (p.getId() == id) {
-                return p;
-            }
+    public Domain get(long id) throws IOException, ClassNotFoundException {
+        Domain d = (Domain) cache.get(id);
+        if(d == null) {
+            d = (Domain) user.getStorage(SCHEMA).get(id);
         }
-        return null;
+        return d;
     }
 
 //    public Domain getRoot() {
@@ -125,56 +146,58 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
 
-    private void mark() {
-        stack.push(new Object[]{root, lastID});
-    }
-
-    private void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            Domain saved = (Domain) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if (stack.empty()) {
-            mark();
-        }
-    }
+//    private void mark() {
+//        stack.push(new Object[]{root, lastID});
+//    }
+//
+//    private void release() {
+//        if (!stack.empty()) {
+//            Object[] pop = stack.pop();
+//            Domain saved = (Domain) pop[0];
+//            lastID = (long) pop[1];
+//            root = saved;
+//        }
+//        if (stack.empty()) {
+//            mark();
+//        }
+//    }
 
     public int size() {
-        int cnt = 0;
-        for (Domain q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
+        return cache.size();
+//        int cnt = 0;
+//        for (Domain q = root; q != null; q = q.getNext()) {
+//            ++cnt;
+//        }
+//        return cnt;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
-        dos.writeInt(size());
-        for (Domain d = root; d != null; d = d.getNext()) {
-//            d.writeCompiledData(dos);
-        }
-    }
-
-    public void readCompiledData(DataInputStream dis) throws IOException {
-        clear();
-        lastID = dis.readLong();
-        int count = dis.readInt();
-        Domain a = null, b = null;
-        while (count-- > 0) {
-//            b = new Domain(user).readCompiledData(dis);
-            if (a == null) {
-                root = b;
-            } else {
-                a.setNext(b);
-            }
-            a = b;
-        }
-    }
+//    public void writeCompiledData(DataOutputStream dos) throws IOException {
+//        dos.writeLong(lastID);
+//        dos.writeInt(size());
+//        for (Domain d = root; d != null; d = d.getNext()) {
+////            d.writeCompiledData(dos);
+//        }
+//    }
+//
+//    public void readCompiledData(DataInputStream dis) throws IOException {
+//        clear();
+//        lastID = dis.readLong();
+//        int count = dis.readInt();
+//        Domain a = null, b = null;
+//        while (count-- > 0) {
+////            b = new Domain(user).readCompiledData(dis);
+//            if (a == null) {
+//                root = b;
+//            } else {
+//                a.setNext(b);
+//            }
+//            a = b;
+//        }
+//    }
 
     @Override
     public Iterator<Domain> iterator() {
-        return new UnitIterator(root);
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new UnitIterator(cache.iterator(), storage);
     }
 }

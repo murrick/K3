@@ -1,5 +1,7 @@
 package kanger.interfaces;
 
+import java.io.IOException;
+
 public interface Identifiable<T> {
 
     long getId();
@@ -10,7 +12,7 @@ public interface Identifiable<T> {
 
     boolean equalsTo(T to);
 
-    Identifiable getNext();
+//    Identifiable getNext();
 
-    void linkExternal();
+    void linkExternal() throws IOException, ClassNotFoundException;
 }
