@@ -4,6 +4,8 @@ import kanger.User;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.UnitIterator;
 import kanger.storage.Cache;
+import kanger.storage.Storage;
+import kanger.units.Domain;
 import kanger.units.FValue;
 import kanger.units.Function;
 
@@ -78,28 +80,41 @@ public class FValueFactory implements Iterable<FValue> {
 //
 
     public FValue find(Function f) {
-        for (FValue t = root; t != null; t = t.getNext()) {
-            if (t.equalsTo(f)) {
-                return t;
+        FValue temp = new FValue(f, user);
+        for (Identifiable one : cache.find(temp.getHash())) {
+            if (one.equalsTo(temp)) {
+                return (FValue) one;
+            }
+        }
+        if (!user.isClosed()) {
+            try {
+                for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                    if (one.equalsTo(temp)) {
+                        return (FValue) one;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
         return null;
     }
 
-    public FValue get(long id) {
-        for (FValue t = root; t != null; t = t.getNext()) {
-            if (id == t.getId()) {
-                return t;
-            }
+    public FValue get(long id) throws IOException, ClassNotFoundException {
+        FValue d = (FValue) cache.get(id);
+        if (d == null) {
+            d = (FValue) user.getStorage(SCHEMA).get(id);
         }
-        return null;
+        return d;
     }
 
-    public FValue getRoot() {
-        return root;
-    }
+//    public FValue getRoot() {
+//        return root;
+//    }
 
-//    public void setRoot(FValue o) {
+    //    public void setRoot(FValue o) {
 //        root = o;
 //    }
 //
@@ -112,26 +127,16 @@ public class FValueFactory implements Iterable<FValue> {
     }
 
     public void mark() {
-        stack.push(new Object[]{root, lastID});
+        cache.mark();
     }
 
 
     public void commit() {
-        if (stack.size() > 1) {
-            stack.pop();
-        }
+        cache.commit();
     }
 
     public void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            FValue saved = (FValue) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if (stack.isEmpty()) {
-            mark();
-        }
+        lastID = cache.release() + 1;
     }
 
     //    public void commit() {
@@ -190,50 +195,52 @@ public class FValueFactory implements Iterable<FValue> {
 
 
     public int size() {
-        int cnt = 0;
-        for (FValue q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
+        return cache.size();
+//        int cnt = 0;
+//        for (FValue q = root; q != null; q = q.getNext()) {
+//            ++cnt;
+//        }
+//        return cnt;
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
-        int count = size();
-        dos.writeInt(count);
-        for (FValue d = root; d != null; d = d.getNext()) {
-//            d.writeCompiledData(dos);
-        }
-    }
+//    public void writeCompiledData(DataOutputStream dos) throws IOException {
+//        dos.writeLong(lastID);
+//        int count = size();
+//        dos.writeInt(count);
+//        for (FValue d = root; d != null; d = d.getNext()) {
+////            d.writeCompiledData(dos);
+//        }
+//    }
+//
+//    public void readCompiledData(DataInputStream dis) throws IOException, ClassNotFoundException {
+//        clear();
+//        lastID = dis.readLong();
+//        int count = dis.readInt();
+//        FValue a = null, b = null;
+//        while (count-- > 0) {
+////            b = new FValue(user).readCompiledData(dis);
+//            if (a != null) {
+//                a.setNext(b);
+//            } else {
+//                root = b;
+//            }
+//            a = b;
+//        }
+//    }
 
-    public void readCompiledData(DataInputStream dis) throws IOException, ClassNotFoundException {
-        clear();
-        lastID = dis.readLong();
-        int count = dis.readInt();
-        FValue a = null, b = null;
-        while (count-- > 0) {
-//            b = new FValue(user).readCompiledData(dis);
-            if (a != null) {
-                a.setNext(b);
-            } else {
-                root = b;
-            }
-            a = b;
-        }
-    }
-
-    public FValue getMark() {
-        if (!stack.empty()) {
-            Object[] pop = stack.peek();
-            return (FValue) pop[0];
-        } else {
-            return null;
-        }
-    }
-
+//    public FValue getMark() {
+//        if (!stack.empty()) {
+//            Object[] pop = stack.peek();
+//            return (FValue) pop[0];
+//        } else {
+//            return null;
+//        }
+//    }
+//
 
     @Override
     public Iterator<FValue> iterator() {
-        return new UnitIterator(root);
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new UnitIterator(cache.iterator(), storage);
     }
 }

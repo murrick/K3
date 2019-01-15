@@ -8,11 +8,12 @@ public class Cache implements Iterable<Identifiable> {
 
     private NavigableMap<Long, Identifiable> index = new TreeMap<>();
     private Map<Integer, Set<Identifiable>> hash = new HashMap<>();
+    private Stack<Long> stack = new Stack<>();
 
     public void add(Identifiable one) {
         index.put(one.getId(), one);
         int h = one.getHash();
-        if(!hash.containsKey(h)) {
+        if (!hash.containsKey(h)) {
             hash.put(h, new HashSet<>());
         }
         hash.get(h).add(one);
@@ -32,7 +33,7 @@ public class Cache implements Iterable<Identifiable> {
     }
 
     public Identifiable getFirst() {
-        if(index.firstEntry() != null) {
+        if (index.firstEntry() != null) {
             return index.firstEntry().getValue();
         } else {
             return null;
@@ -40,7 +41,7 @@ public class Cache implements Iterable<Identifiable> {
     }
 
     public Identifiable getLast() {
-        if(index.lastEntry() != null) {
+        if (index.lastEntry() != null) {
             return index.lastEntry().getValue();
         } else {
             return null;
@@ -57,11 +58,11 @@ public class Cache implements Iterable<Identifiable> {
 
     public void remove(long id) {
         Identifiable one = get(id);
-        if(one != null) {
+        if (one != null) {
             int h = one.getHash();
-            if(hash.containsKey(h)) {
+            if (hash.containsKey(h)) {
                 hash.get(h).remove(one);
-                if(hash.get(h).isEmpty()) {
+                if (hash.get(h).isEmpty()) {
                     hash.remove(h);
                 }
             }
@@ -74,15 +75,46 @@ public class Cache implements Iterable<Identifiable> {
         hash.clear();
     }
 
-    public void reindex(Identifiable root) {
-        clear();
-        for(Identifiable one = root; one != null; one = one.getNext()) {
-            add(one);
+//    public void reindex(Identifiable root) {
+//        clear();
+//        //TODO: реализовать обход
+////        for(Identifiable one = root; one != null; one = one.getNext()) {
+////            add(one);
+////        }
+//    }
+
+    public void mark() {
+        stack.push(index.lastKey());
+    }
+
+    public long commit() {
+        if (!stack.isEmpty()) {
+            return stack.pop();
+        } else {
+            return -1;
         }
     }
 
-    private long getNext(long id, NavigableMap<Long, Identifiable> block)  {
-        if(block.isEmpty()) {
+    public long release() {
+        if (!stack.isEmpty()) {
+            long id = stack.pop();
+            List<Long> toDelete = new ArrayList<>();
+            for (long idx : index.tailMap(id).keySet()) {
+                if (idx != id) {
+                    toDelete.add(idx);
+                }
+            }
+            for (long idx : toDelete) {
+                remove(idx);
+            }
+            return id;
+        } else {
+            return -1;
+        }
+    }
+
+    private long getNext(long id, NavigableMap<Long, Identifiable> block) {
+        if (block.isEmpty()) {
             return -1;
         } else {
             Long next = block.higherKey(id);
@@ -95,7 +127,7 @@ public class Cache implements Iterable<Identifiable> {
     }
 
     private long getPrevious(long id, NavigableMap<Long, Identifiable> block) {
-        if(block.isEmpty()) {
+        if (block.isEmpty()) {
             return -1;
         } else {
             Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
@@ -120,7 +152,7 @@ public class Cache implements Iterable<Identifiable> {
         private long currentId = 0;
         private boolean backward = false;
 
-        public CacheIterator()  {
+        public CacheIterator() {
             currentId = -1;
             block.putAll(index);
         }
@@ -137,25 +169,25 @@ public class Cache implements Iterable<Identifiable> {
 
         @Override
         public boolean hasNext() {
-                if(backward) {
-                    return getPrevious(currentId, block) != -1;
-                } else {
-                    return getNext(currentId, block) != -1;
-                }
+            if (backward) {
+                return getPrevious(currentId, block) != -1;
+            } else {
+                return getNext(currentId, block) != -1;
+            }
         }
 
         @Override
         public Identifiable next() {
-                if(backward) {
-                    currentId = getPrevious(currentId, block);
-                } else {
-                    currentId = getNext(currentId, block);
-                }
-                if (currentId != -1) {
-                    return block.get(currentId);
-                } else {
-                    return null;
-                }
+            if (backward) {
+                currentId = getPrevious(currentId, block);
+            } else {
+                currentId = getNext(currentId, block);
+            }
+            if (currentId != -1) {
+                return block.get(currentId);
+            } else {
+                return null;
+            }
         }
     }
 

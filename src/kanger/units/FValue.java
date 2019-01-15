@@ -19,7 +19,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
     private Term value = null;
     private ArgList condition = new ArgList();
 
-    private FValue next = null;
+//    private FValue next = null;
     private User user = null;
 
     private transient long functionId = -1;
@@ -63,7 +63,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
         dos.writeObject(condition);
     }
 
-    public void linkExternal() {
+    public void linkExternal() throws IOException, ClassNotFoundException {
         function = user.getMind().getFunctions().get(functionId);
         value = user.getMind().getTerms().get(valueId);
         condition.linkExternal(user);
@@ -119,14 +119,14 @@ public class FValue implements Externalizable, Identifiable<Function> {
         return function;
     }
 
-    public void setNext(FValue next) {
-        this.next = next;
-    }
+//    public void setNext(FValue next) {
+//        this.next = next;
+//    }
 
-    @Override
-    public FValue getNext() {
-        return next;
-    }
+//    @Override
+//    public FValue getNext() {
+//        return next;
+//    }
 
 
 //    public boolean isActual(Function f) {
