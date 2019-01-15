@@ -521,59 +521,59 @@ public class Mind {
         this.compiledFileName = compiledFileName;
     }
 
-    public void writeCompiledData(OutputStream os) throws IOException, RuntimeErrorException {
-        analise(true);
-
-        DataOutputStream dos = new DataOutputStream(os);
-        dos.writeInt(19640207);
-        dos.writeUTF("K3");
-        dos.writeByte(0);
-        dos.writeUTF(Version.VERSION_S);
-        dos.writeByte(0);
-
-        GZIPOutputStream zos = new GZIPOutputStream(os);
-        dos = new DataOutputStream(zos);
-        this.terms.writeCompiledData(dos);
-        this.tVars.writeCompiledData(dos);
-        this.predicates.writeCompiledData(dos);
-        this.domains.writeCompiledData(dos);
-        this.rights.writeCompiledData(dos);
-        zos.finish();
-    }
-
-    public void readCompiledData(InputStream is) throws IOException, ClassNotFoundException, ParseErrorException {
-        clear();
-
-        DataInputStream dis = new DataInputStream(is);
-
-        int signature = dis.readInt();
-        String key = dis.readUTF();
-        dis.readByte();
-        String version = dis.readUTF();
-        dis.readByte();
-
-        GZIPInputStream zis = new GZIPInputStream(is);
-        dis = new DataInputStream(zis);
-        this.terms.readCompiledData(dis);
-        this.tVars.readCompiledData(dis);
-        this.predicates.readCompiledData(dis);
-        this.domains.readCompiledData(dis);
-        this.rights.readCompiledData(dis);
-//        for (Map.Entry<Term, Long> d : termsLink.entrySet()) {
-//            d.getKey().setRight(rights.get(d.getValue()));
-//        }
-//        for (Map.Entry<Domain, Long> d : domainsLink.entrySet()) {
-//            d.getKey().setRight(rights.get(d.getValue()));
-//        }
-        //TODO: Загрузка causes
-//        for(Map.Entry<Solution,Long> d: solveLinks.entrySet()) {
-//            d.getKey().setRight(rights.createCVar(d.getValue()));
-//        }
-//        for (Map.Entry<TVariable, Long> d : tVariablesLink.entrySet()) {
-//            d.getKey().setRight(rights.get(d.getValue()));
-//        }
-
-    }
+//    public void writeCompiledData(OutputStream os) throws IOException, RuntimeErrorException {
+//        analise(true);
+//
+//        DataOutputStream dos = new DataOutputStream(os);
+//        dos.writeInt(19640207);
+//        dos.writeUTF("K3");
+//        dos.writeByte(0);
+//        dos.writeUTF(Version.VERSION_S);
+//        dos.writeByte(0);
+//
+//        GZIPOutputStream zos = new GZIPOutputStream(os);
+//        dos = new DataOutputStream(zos);
+//        this.terms.writeCompiledData(dos);
+//        this.tVars.writeCompiledData(dos);
+//        this.predicates.writeCompiledData(dos);
+//        this.domains.writeCompiledData(dos);
+//        this.rights.writeCompiledData(dos);
+//        zos.finish();
+//    }
+//
+//    public void readCompiledData(InputStream is) throws IOException, ClassNotFoundException, ParseErrorException {
+//        clear();
+//
+//        DataInputStream dis = new DataInputStream(is);
+//
+//        int signature = dis.readInt();
+//        String key = dis.readUTF();
+//        dis.readByte();
+//        String version = dis.readUTF();
+//        dis.readByte();
+//
+//        GZIPInputStream zis = new GZIPInputStream(is);
+//        dis = new DataInputStream(zis);
+//        this.terms.readCompiledData(dis);
+//        this.tVars.readCompiledData(dis);
+//        this.predicates.readCompiledData(dis);
+//        this.domains.readCompiledData(dis);
+//        this.rights.readCompiledData(dis);
+////        for (Map.Entry<Term, Long> d : termsLink.entrySet()) {
+////            d.getKey().setRight(rights.get(d.getValue()));
+////        }
+////        for (Map.Entry<Domain, Long> d : domainsLink.entrySet()) {
+////            d.getKey().setRight(rights.get(d.getValue()));
+////        }
+//        //TODO: Загрузка causes
+////        for(Map.Entry<Solution,Long> d: solveLinks.entrySet()) {
+////            d.getKey().setRight(rights.createCVar(d.getValue()));
+////        }
+////        for (Map.Entry<TVariable, Long> d : tVariablesLink.entrySet()) {
+////            d.getKey().setRight(rights.get(d.getValue()));
+////        }
+//
+//    }
 
 //    public ScriptEngine getScryptEngine() {
 //        return scryptEngine;
@@ -815,7 +815,7 @@ public class Mind {
                     if (getLibrary().remove(op.toString())) {
                         getLog().add(LogMode.ANALIZER, "SUCCESS: Function removed: " + op.toString());
                     } else {
-                        getLog().add(LogMode.ANALIZER, "WARNING: Unable to remove function: " + op.toString());
+                        getLog().add(LogMode.ANALIZER, "WARNING: Unable to delete function: " + op.toString());
                     }
                 }
                 break;

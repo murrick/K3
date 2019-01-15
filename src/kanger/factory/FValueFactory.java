@@ -87,25 +87,23 @@ public class FValueFactory implements Iterable<FValue> {
             }
         }
         if (!user.isClosed()) {
-            try {
-                for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
-                    if (one.equalsTo(temp)) {
-                        return (FValue) one;
-                    }
+            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                if (one.equalsTo(temp)) {
+                    return (FValue) one;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return null;
     }
 
-    public FValue get(long id) throws IOException, ClassNotFoundException {
+    public FValue get(long id) {
         FValue d = (FValue) cache.get(id);
         if (d == null) {
-            d = (FValue) user.getStorage(SCHEMA).get(id);
+            try {
+                d = (FValue) user.getStorage(SCHEMA).get(id);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         return d;
     }
@@ -129,7 +127,6 @@ public class FValueFactory implements Iterable<FValue> {
     public void mark() {
         cache.mark();
     }
-
 
     public void commit() {
         cache.commit();
@@ -195,7 +192,7 @@ public class FValueFactory implements Iterable<FValue> {
 
 
     public int size() {
-        return cache.size();
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
 //        int cnt = 0;
 //        for (FValue q = root; q != null; q = q.getNext()) {
 //            ++cnt;

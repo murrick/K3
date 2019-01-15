@@ -119,7 +119,7 @@ public class Kanger {
 //                        System.out.println(e);
 //                    }
 //
-//                    d.remove(offset01);
+//                    d.delete(offset01);
 //
 //                    System.out.println("--------------");
 //                    for (Identifiable e : d) {
@@ -166,7 +166,7 @@ public class Kanger {
 //                    x.set(1, 1000001);
 //                    x.set(23, 9877);
 //                    x.set(2, 9877);
-//                    x.remove(6);
+//                    x.delete(6);
 //
 //                    for (Index.IndexOne o : x) {
 //                        System.out.println(o);

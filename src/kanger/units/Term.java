@@ -36,7 +36,6 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     private Term name = null;             // Оригинальное имя c-переменной
     private Right right = null;          // Ссылка на правило
 
-//    private Term next = null;      // Следующая запись
     private User user = null;
 
     public Term() {
@@ -241,15 +240,6 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     public void setRight(Right r) {
         this.right = r;
     }
-
-    @Override
-    public Term getNext() {
-        return null;
-    }
-
-//    public void setNext(Term next) {
-//        this.next = next;
-//    }
 
     public boolean isCVariable() {
         return index > 0;

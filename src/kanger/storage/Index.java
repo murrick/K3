@@ -219,7 +219,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                         blockTwo.put(one.getId(), one);
                     }
 
-//                    head.getData().remove(1);
+//                    head.getData().delete(1);
 //                    head.getData().add(blockLength);
                     if (blockOne.size() > 0) {
                         head.setSize(blockOne.size());
@@ -428,6 +428,16 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         } catch (IOException e) {
             return null;
         }
+    }
+
+    public int size() {
+        int size = 0;
+        if(!isClosed()) {
+            for(IndexOne one : baseIndex.values()) {
+                size += one.getSize();
+            }
+        }
+        return size;
     }
 
     public class IndexOne {

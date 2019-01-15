@@ -1,13 +1,14 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.UnitIterator;
+import kanger.storage.Cache;
+import kanger.storage.Storage;
 import kanger.units.TValue;
 import kanger.units.TVariable;
 import kanger.units.Term;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -16,12 +17,13 @@ import java.util.*;
  */
 public class TValueFactory implements Iterable<TValue> {
 
-    private TValue root = null;
+    private static final String SCHEMA = "tvalues";
+
     private Map<TVariable, Long> current = new HashMap<>();
+    private Map<TVariable, Iterator<TValue>> scanner = new HashMap<>();
     private long lastID = 0;
 
-    private Stack<Object[]> stack = new Stack<>();
-
+    private Cache cache = new Cache();
     private User user = null;
 
     public TValueFactory(User user) {
@@ -31,26 +33,26 @@ public class TValueFactory implements Iterable<TValue> {
 
     public void transaction(TValueFactory base) {
         if (base != null) {
-            root = base.root;
             lastID = base.lastID;
+            cache.add(base.cache);
         } else {
-            root = null;
             lastID = 0;
+            cache.clear();
         }
         current.clear();
-        stack.clear();
-        mark();
     }
 
     public void commit(TValueFactory base) {
         List<TValue> list = new ArrayList();
-        for (TValue p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (cache.getLast() != null && p.getId() <= cache.getLast().getId()) {
+                break;
+            }
+            list.add((TValue) p);
         }
         for (TValue p : list) {
-            p.setNext(root);
-            root = p;
             p.setId(lastID++);
+            cache.add(p);
         }
     }
 
@@ -59,11 +61,9 @@ public class TValueFactory implements Iterable<TValue> {
         if (t == null) {
             t = new TValue(tv, o, user);
             t.setTVar(tv);
-            t.setNext(root);
-            root = t;
             t.setId(lastID++);
+            cache.add(t);
         }
-
         return t;
     }
 
@@ -76,40 +76,32 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
     public boolean isEmpty(TVariable tv) {
-        return root == null || !current.containsKey(tv);
+        return size() == 0 || !current.containsKey(tv);
     }
 
 
     // Мотаем в обратную сторону
     public TValue rewind(TVariable tv) {
-        if (root == null) {
-            return null;
-        }
-        TValue n = null;
-        for (TValue x = root; x != null; x = x.getNext()) {
-            if (x.getTVar().getId() == tv.getId()) {
-                n = x;
-            }
-        }
-        return n;
+        scanner.put(tv, iterator());
+        return next(tv);
     }
 
-    public boolean isMarked(TValue v) {
-        if (stack.isEmpty() || stack.peek()[0] == null) {
-            return false;
-        } else if (v.getId() == ((TValue) stack.peek()[0]).getId()) {
-            return true;
-        }
-        for (TValue x = root; x != null; x = x.getNext()) {
-            if (x.getId() == ((TValue) stack.peek()[0]).getId()) {
-                return true;
-            } else if (v.getId() == x.getId()) {
-                return false;
-            }
-        }
-        return false;
-    }
-
+//    public boolean isMarked(TValue v) {
+//        if (stack.isEmpty() || stack.peek()[0] == null) {
+//            return false;
+//        } else if (v.getId() == ((TValue) stack.peek()[0]).getId()) {
+//            return true;
+//        }
+//        for (TValue x = root; x != null; x = x.getNext()) {
+//            if (x.getId() == ((TValue) stack.peek()[0]).getId()) {
+//                return true;
+//            } else if (v.getId() == x.getId()) {
+//                return false;
+//            }
+//        }
+//        return false;
+//    }
+//
     //    public TValue rewindTop(TVariable tv) {
 //        if (root == null || root == getMark()) {
 //            return null;
@@ -126,20 +118,14 @@ public class TValueFactory implements Iterable<TValue> {
 //        }
 //    }
 //
-    public TValue next(TValue v) {
-        if (root == null) {
-            return null;
-        }
+    public TValue next(TVariable tv) {
         TValue n = null;
-        for (TValue x = root; x != null; x = x.getNext()) {
-            if (x.getTVar().getId() == v.getTVar().getId()) {
-                if (x.getId() != v.getId()) {
-                    n = x;
-                } else {
-                    break;
-                }
+        while (scanner.get(tv).hasNext()) {
+            TValue x = scanner.get(tv).next();
+            if (x.getTVar().getId() == tv.getId()) {
+                n = x;
+                break;
             }
-
         }
         return n;
     }
@@ -158,26 +144,36 @@ public class TValueFactory implements Iterable<TValue> {
 //
     public TValue find(TVariable tv, Term v) {
         TValue temp = new TValue(tv, v);
-        for (TValue t = root; t != null; t = t.getNext()) {
-            if (t.equalsTo(temp)) {
-                return t;
+        for (Identifiable one : cache.find(temp.getHash())) {
+            if (one.equalsTo(temp)) {
+                return (TValue) one;
+            }
+        }
+        if (!user.isClosed()) {
+            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                if (one.equalsTo(temp)) {
+                    return (TValue) one;
+                }
             }
         }
         return null;
     }
 
-    public TValue get(long id) {
-        for (TValue t = root; t != null; t = t.getNext()) {
-            if (id == t.getId()) {
-                return t;
+    public TValue get(long id)  {
+        TValue d = (TValue) cache.get(id);
+        if (d == null) {
+            try {
+                d = (TValue) user.getStorage(SCHEMA).get(id);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
-        return null;
+        return d;
     }
 
-    public TValue getRoot() {
-        return root;
-    }
+//    public TValue getRoot() {
+//        return root;
+//    }
 
 //    public void setRoot(TValue o) {
 //        root = o;
@@ -193,42 +189,26 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
     public void mark() {
-        stack.push(new Object[]{root, lastID});
+        cache.mark();
     }
 
-
     public void commit() {
-        if (stack.size() > 1) {
-//            ++commitID;
-            Object[] curr = stack.pop();
-//            for(TValue v = root; v != null && (curr[0] == null || v.getId() != ((TValue)curr[0]).getId()); v = v.getNext()) {
-//                v.setCommitId(commitID);
-//            }
-        }
+        cache.commit();
     }
 
     public void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            TValue saved = (TValue) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if (stack.isEmpty()) {
-            mark();
-        }
+        lastID = cache.release() + 1;
     }
 
-
-    public TValue getMark() {
-        if (!stack.empty()) {
-            Object[] pop = stack.peek();
-            return (TValue) pop[0];
-        } else {
-            return null;
-        }
-    }
-
+//    public TValue getMark() {
+//        if (!stack.empty()) {
+//            Object[] pop = stack.peek();
+//            return (TValue) pop[0];
+//        } else {
+//            return null;
+//        }
+//    }
+//
     public TValue set(TVariable tv, TValue v) {
         if (v == null) {
             current.remove(tv);
@@ -238,60 +218,50 @@ public class TValueFactory implements Iterable<TValue> {
         return v;
     }
 
-    public void remove(TVariable tv) {
-        TValue t = get(tv);
-        if (t != null) {
-            if (t.getId() == root.getId()) {
-                root = t.getNext();
-                t.setNext(null);
-            } else {
-                for (TValue x = root; x != null; x = x.getNext()) {
-                    if (x.getNext() != null && x.getNext().getId() == t.getId()) {
-                        x.setNext(t.getNext());
-                        t.setNext(null);
-                    }
-                }
-            }
-//            rewind(tv);
-        }
-    }
+//    public void remove(TVariable tv) throws IOException, ClassNotFoundException {
+//        TValue t = get(tv);
+//        if (t != null) {
+//            if(cache.containsKey(t.getId())) {
+//                cache.remove(t.getId());
+//            } else if(!user.isClosed()) {
+//                user.getStorage(SCHEMA).remove(t.getId());
+//            }
+//        }
+//    }
 
     public int size() {
-        int cnt = 0;
-        for (TValue q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
-        int count = size();
-        dos.writeInt(count);
-        for (TValue d = root; d != null; d = d.getNext()) {
-//            d.writeCompiledData(dos);
-        }
-    }
-
-    public void readCompiledData(DataInputStream dis) throws IOException, ClassNotFoundException {
-        clear();
-        lastID = dis.readLong();
-        int count = dis.readInt();
-        TValue a = null, b = null;
-        while (count-- > 0) {
-//            b = new TValue(user).readCompiledData(dis);
-            if (a != null) {
-                a.setNext(b);
-            } else {
-                root = b;
-            }
-            a = b;
-        }
-    }
-
+//    public void writeCompiledData(DataOutputStream dos) throws IOException {
+//        dos.writeLong(lastID);
+//        int count = size();
+//        dos.writeInt(count);
+//        for (TValue d = root; d != null; d = d.getNext()) {
+////            d.writeCompiledData(dos);
+//        }
+//    }
+//
+//    public void readCompiledData(DataInputStream dis) throws IOException, ClassNotFoundException {
+//        clear();
+//        lastID = dis.readLong();
+//        int count = dis.readInt();
+//        TValue a = null, b = null;
+//        while (count-- > 0) {
+////            b = new TValue(user).readCompiledData(dis);
+//            if (a != null) {
+//                a.setNext(b);
+//            } else {
+//                root = b;
+//            }
+//            a = b;
+//        }
+//    }
+//
     @Override
     public Iterator<TValue> iterator() {
-        return new UnitIterator(root);
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new UnitIterator(cache.iterator(), storage);
     }
 
 //    public long getCommitID() {

@@ -80,8 +80,8 @@ public class SolutionsStore {
         return root;
     }
 
-//    public void remove(Solution s) {
-//        root.remove(s);
+//    public void delete(Solution s) {
+//        root.delete(s);
 //    }
 
     public void clear() {

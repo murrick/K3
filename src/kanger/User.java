@@ -50,7 +50,7 @@ public class User {
     public void remove() throws IOException {
         if(!isClosed()) {
             for (Map.Entry<String, Storage> e : storage.entrySet()) {
-                e.getValue().remove();
+                e.getValue().delete();
             }
         }
         storage = null;

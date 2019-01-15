@@ -88,7 +88,7 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         }
     }
 
-    public List<Identifiable> find(long h) throws IOException, ClassNotFoundException {
+    public List<Identifiable> find(long h) {
         List<Identifiable> list = new ArrayList<>();
         try {
             Index.IndexOne x = hash.getOne(h);
@@ -150,7 +150,7 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         return new StorageIterator();
     }
 
-    public void remove() throws IOException {
+    public void delete() throws IOException {
         boolean wasOpened = false;
         if (index != null && !index.isClosed()) {
             index.close();
@@ -169,6 +169,14 @@ public class Storage implements Closeable, Iterable<Identifiable> {
             index.getFile().delete();
             hash.getFile().delete();
             data.getFile().delete();
+        }
+    }
+
+    public int size() {
+        if(!isClosed()) {
+            return index.size();
+        } else {
+            return 0;
         }
     }
 

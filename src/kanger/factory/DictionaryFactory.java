@@ -122,16 +122,10 @@ public class DictionaryFactory implements Iterable<Term> {
             }
         }
         if (!user.isClosed()) {
-            try {
-                for (Identifiable one : user.getStorage(SCHEMA).find(t.getHash())) {
-                    if (one.equalsTo(t)) {
-                        return (Term) one;
-                    }
+            for (Identifiable one : user.getStorage(SCHEMA).find(t.getHash())) {
+                if (one.equalsTo(t)) {
+                    return (Term) one;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
 //        for (Term dic = root; dic != null; dic = dic.getNext()) {
@@ -152,10 +146,14 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    public Term get(long id) throws IOException, ClassNotFoundException {
+    public Term get(long id) {
         Term t = (Term) cache.get(id);
         if(t == null) {
-            t = (Term) user.getStorage(SCHEMA).get(id);
+            try {
+                t = (Term) user.getStorage(SCHEMA).get(id);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         return t;
 //        for (Term dic = root; dic != null; dic = dic.getNext()) {
@@ -192,7 +190,7 @@ public class DictionaryFactory implements Iterable<Term> {
 //    }
 
     public int size() {
-        return cache.size();
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
 //        int cnt = 0;
 //        for (Term q = root; q != null; q = q.getNext()) {
 //            ++cnt;

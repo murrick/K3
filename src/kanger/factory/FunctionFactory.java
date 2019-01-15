@@ -64,10 +64,14 @@ public class FunctionFactory implements Iterable<Function> {
         return p;
     }
 
-    public Function get(long id) throws IOException, ClassNotFoundException {
+    public Function get(long id)  {
         Function d = (Function) cache.get(id);
         if (d == null) {
-            d = (Function) user.getStorage(SCHEMA).get(id);
+            try {
+                d = (Function) user.getStorage(SCHEMA).get(id);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         return d;
     }
@@ -106,7 +110,7 @@ public class FunctionFactory implements Iterable<Function> {
 //    }
 
     public int size() {
-        return cache.size();
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
 //        int cnt = 0;
 //        for (Function q = root; q != null; q = q.getNext()) {
 //            ++cnt;

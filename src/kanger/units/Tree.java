@@ -23,7 +23,7 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     private List<Domain> sequence = new ArrayList<>();          // Домены
     private Right right = null;
 
-    private Tree next = null;
+//    private Tree next = null;
     private User user = null;
 
     private transient long rightId = -1;
@@ -112,14 +112,14 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
         this.right = right;
     }
 
-    @Override
-    public Tree getNext() {
-        return next;
-    }
-
-    public void setNext(Tree next) {
-        this.next = next;
-    }
+//    @Override
+//    public Tree getNext() {
+//        return next;
+//    }
+//
+//    public void setNext(Tree next) {
+//        this.next = next;
+//    }
 
 
     @Override

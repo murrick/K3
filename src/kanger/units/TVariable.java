@@ -21,7 +21,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     private int index = 0;                  // Сквозной индекс переменной
     private Right right = null;             // Ссылка на правило
 
-    private TVariable next = null;          // Следующая переменная
+//    private TVariable next = null;          // Следующая переменная
     private User user = null;
 
     private transient long nameId = -1;
@@ -47,7 +47,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         dos.writeLong(right.getId());
     }
 
-    public void linkExternal() {
+    public void linkExternal() throws IOException, ClassNotFoundException {
         name = user.getMind().getTerms().get(nameId);
         right = user.getMind().getRights().get(rightId);
     }
@@ -78,7 +78,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         this.index = index;
     }
 
-    public Term getValue() {
+    public Term getValue()  {
         if (user.getMind().getTValues().get(this) != null) {
             return user.getMind().getTValues().get(this).getValue();
         } else {
@@ -122,13 +122,13 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //        }
     }
 
-    public void clear() {
-        user.getMind().getTValues().remove(this);
-//        if (mind.getTValues().createCVar(this).isEmpty()) {
-//            mind.getTValues().createCVar(this).setRoot(null);
-//            mind.getSubstituted().createTVar(this);
-//        }
-    }
+//    public void clear() {
+//        user.getMind().getTValues().remove(this);
+////        if (mind.getTValues().createCVar(this).isEmpty()) {
+////            mind.getTValues().createCVar(this).setRoot(null);
+////            mind.getSubstituted().createTVar(this);
+////        }
+//    }
 
     //    public TSubst addValue(Term value) throws TValueOutOfOrderException {
 //        if (!mind.getTValues().containsKey(this)) {
@@ -166,14 +166,14 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         this.right = right;
     }
 
-    @Override
-    public TVariable getNext() {
-        return next;
-    }
+//    @Override
+//    public TVariable getNext() {
+//        return next;
+//    }
 
-    public void setNext(TVariable next) {
-        this.next = next;
-    }
+//    public void setNext(TVariable next) {
+//        this.next = next;
+//    }
 
 //    public List<Domain> getSrcSolves() {
 //        if (user.getMind().getTValues().get(this) != null) {
@@ -351,8 +351,8 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         return user.getMind().getTValues().rewind(this);
     }
 
-    public TValue next(TValue v) {
-        return user.getMind().getTValues().next(v);
+    public TValue next() {
+        return user.getMind().getTValues().next(this);
     }
 
 //    public TValue rewindTop() {
@@ -394,7 +394,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //
 //    public void clear() {
 //        if (mind.getTValues().containsKey(this)) {
-//            mind.getTValues().remove(this);
+//            mind.getTValues().delete(this);
 //        }
 //    }
 //
@@ -405,7 +405,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //        mind.getQueryValues().createCVar(id).createTVar(getValue().getId());
 //    }
 
-    public boolean isQuery() {
+    public boolean isQuery()  {
         return !isEmpty()
                 && user.getMind().getQueryValues().containsKey(this.getId())
                 && user.getMind().getQueryValues().get(this).contains(getCurrent().getId());

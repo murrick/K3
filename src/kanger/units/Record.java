@@ -18,7 +18,7 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     private int tag = -1;
     private Set<Cause> causes = new HashSet<>();
 
-    private Record next = null;
+//    private Record next = null;
     private User user = null;
 
     private transient long domainId = -1;
@@ -79,14 +79,14 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
         this.id = id;
     }
 
-    @Override
-    public Record getNext() {
-        return next;
-    }
-
-    public void setNext(Record next) {
-        this.next = next;
-    }
+//    @Override
+//    public Record getNext() {
+//        return next;
+//    }
+//
+//    public void setNext(Record next) {
+//        this.next = next;
+//    }
 
     public int getTag() {
         return tag;

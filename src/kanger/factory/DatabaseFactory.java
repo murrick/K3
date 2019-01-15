@@ -151,10 +151,14 @@ public class DatabaseFactory implements Iterable<Record> {
         return null;
     }
 
-    public Record get(long id) throws IOException, ClassNotFoundException {
+    public Record get(long id) {
         Record t = (Record) cache.get(id);
         if (t == null) {
-            t = (Record) user.getStorage(SCHEMA).get(id);
+            try {
+                t = (Record) user.getStorage(SCHEMA).get(id);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         return t;
     }
@@ -200,7 +204,7 @@ public class DatabaseFactory implements Iterable<Record> {
 //    }
 
     public int size() {
-        return cache.size();
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
 //        int cnt = 0;
 //        for (Record q = root; q != null; q = q.getNext()) {
 //            ++cnt;

@@ -122,7 +122,7 @@ public class Calculator {
 //            }
 
             k = (Integer) op.getProc().run(fu);
-//            fu.getArguments().remove(op.getRange());
+//            fu.getArguments().delete(op.getRange());
         }
         return k;
     }

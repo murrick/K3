@@ -271,7 +271,7 @@ public class Screen {
 //                                line = "";
 //                            } else {
 //                            if (LINE_EDITOR_ENABLE) {
-//                                reader.getHistory().getHistoryList().remove(0);
+//                                reader.getHistory().getHistoryList().delete(0);
 //                                reader.getHistory().addToHistory(line);
 //                            } else {
                             // StringSelection selec = new StringSelection(line);
@@ -939,7 +939,7 @@ public class Screen {
             return;
         }
         System.out.println(r.getOrig());
-        System.out.printf("Are you sure to remove right " + id + " [y/N]? ");
+        System.out.printf("Are you sure to delete right " + id + " [y/N]? ");
         String s = new Scanner(System.in).nextLine();
         if (s.charAt(0) == 'Y' || s.charAt(0) == 'y') {
 //TODO: Нужно реализовать удаление правила

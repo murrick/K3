@@ -113,6 +113,10 @@ public class Cache implements Iterable<Identifiable> {
         }
     }
 
+    public boolean containsKey(long id) {
+        return index.containsKey(id);
+    }
+
     private long getNext(long id, NavigableMap<Long, Identifiable> block) {
         if (block.isEmpty()) {
             return -1;

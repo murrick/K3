@@ -121,10 +121,14 @@ public class DomainFactory implements Iterable<Domain> {
         return null;
     }
 
-    public Domain get(long id) throws IOException, ClassNotFoundException {
+    public Domain get(long id) {
         Domain d = (Domain) cache.get(id);
         if(d == null) {
-            d = (Domain) user.getStorage(SCHEMA).get(id);
+            try {
+                d = (Domain) user.getStorage(SCHEMA).get(id);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         return d;
     }
@@ -163,7 +167,7 @@ public class DomainFactory implements Iterable<Domain> {
 //    }
 
     public int size() {
-        return cache.size();
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
 //        int cnt = 0;
 //        for (Domain q = root; q != null; q = q.getNext()) {
 //            ++cnt;

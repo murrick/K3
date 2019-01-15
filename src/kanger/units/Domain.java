@@ -135,7 +135,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        if (on) {
 //            mind.getAcceptorDomains().createTVar(id);
 //        } else {
-//            mind.getAcceptorDomains().remove(id);
+//            mind.getAcceptorDomains().delete(id);
 //        }
 //    }
 //

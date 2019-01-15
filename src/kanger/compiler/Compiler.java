@@ -216,11 +216,11 @@ public class Compiler {
 //                arg = new ArgList();
 //                if(tmp.get(tmp.size()-1).isTSet()) {
 //                    arg.add(tmp.get(tmp.size()-1));
-//                    tmp.remove(tmp.size()-1);
+//                    tmp.delete(tmp.size()-1);
 //                    arg.add(0, new Argument(user.getMind().getTerms().add(tmp)));
 //                } else {
 //                    arg.add(tmp.get(0));
-//                    tmp.remove(0);
+//                    tmp.delete(0);
 //                    arg.add(new Argument(user.getMind().getTerms().add(tmp)));
 //                }
 //            }
