@@ -59,7 +59,7 @@ public class Kanger {
             "!age(Sarah, 4);\n" +
             "\n";
 
-    public static void main(String[] args) throws ParseErrorException, RuntimeErrorException {
+    public static void main(String[] args) throws ParseErrorException, RuntimeErrorException, IOException {
 
         User user = new User();
         Mind mind = new Mind(user);
@@ -419,6 +419,7 @@ public class Kanger {
 //        mind.query("?n(nnn);");
 
 //        mind.compile(text);
+
         Screen.session(user);
 
 ////            mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +

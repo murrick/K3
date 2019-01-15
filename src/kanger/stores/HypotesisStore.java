@@ -128,14 +128,13 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return null;
         }
         for (Hypotese h : root) {
-            if (h.getPredicate().getId() == hy.getPredicate().getId() && h.isAntc() == hy.isAntc()) {
-
+            if (h.getPredicate().getId() == hy.getPredicate().getId() && h.isAntc() == hy.isAntc() && hy.getSolve().size() == h.getSolve().size()) {
                 int i = 0;
-                if (hy.getSolve().size() == h.getSolve().size()) {
-                    for (; i < h.getSolve().size(); ++i) {
-                        if (h.getSolve().get(i) != null && hy.getSolve().get(i) != null && !h.getSolve().get(i).equals(hy.getSolve().get(i))) {
-                            break;
-                        }
+                for (; i < h.getSolve().size(); ++i) {
+                    if (!h.getSolve().get(i).isEmpty()
+                            && !hy.getSolve().get(i).isEmpty()
+                            && !h.getSolve().get(i).equalsTo(hy.getSolve().get(i))) {
+                        break;
                     }
                 }
                 if (i == h.getSolve().size()) {

@@ -69,7 +69,7 @@ public class Screen {
 //                }
 //                if (!LINE_EDITOR_ENABLE || reader == null) {
                 System.out.printf("\n: ");
-                if(again) {
+                if (again) {
                     line = lastQuery;
                     System.out.printf("%s\n", line);
                     again = false;
@@ -186,12 +186,32 @@ public class Screen {
                         case 'G':
                             loadSource(mind);
                             break;
-                        case 'Z':
-                            saveCompiled(mind);
-                            break;
+//                        case 'Z':
+//                            saveCompiled(mind);
+//                            break;
                         case 'U':
-                            loadCompiled(mind);
+                            if(line.split(" ").length == 2) {
+                                user.use(line.split("\\ ")[1]);
+                                System.out.println("Used database " + user.getStorageName());
+                            } else if(!user.isClosed()) {
+                                System.out.println("Used database " + user.getStorageName());
+                            } else {
+                                System.out.println("No database used");
+                            }
                             break;
+                        case 'D':
+                            if(!user.isClosed()) {
+                                System.out.printf("Are you sure to drop database " + user.getStorageName() + "? [y/N]? ");
+                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    user.remove();
+                                    System.out.println("Database files removed");
+                                }
+                            } else {
+                                System.out.println("No database used");
+                            }
+                            break;
+
                         case 'O':
                             if (line.length() == 1) {
                                 showOptions(mind);
@@ -233,8 +253,9 @@ public class Screen {
                                         mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
                                         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
                                         break;
+                                    case 't':
                                     case 'T':
-                                        KangerTest.test(user, "set_");
+                                        KangerTest.test(user, "set_" + (line.length() > 3 ? line.substring(3) : ""));
                                         break;
                                 }
                             }
@@ -309,8 +330,15 @@ public class Screen {
             } catch (RuntimeErrorException e) {
                 System.out.println(e.toString());
                 //e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
+        }
+        try {
+            user.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         System.out.println("KANGER III Session closed");
 

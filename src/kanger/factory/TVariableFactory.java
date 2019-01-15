@@ -98,6 +98,10 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
     }
 
+    public void update() {
+
+    }
+
     private void mark() {
         stack.push(new Object[]{root, lastID});
     }

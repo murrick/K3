@@ -8,11 +8,10 @@ import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.*;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class KangerTest {
 
@@ -25,8 +24,8 @@ public class KangerTest {
     }
 
     public void setUp() throws Exception {
-        user = new User();
-        mind = new Mind(user);
+//        user = new User();
+//        mind = new Mind(user);
     }
 
     private void showResult(Boolean assertResult) throws RuntimeErrorException {
@@ -118,13 +117,14 @@ public class KangerTest {
         return new Record(d);
     }
 
-    public static boolean test(User user, String prefix) {
+    public static boolean test(User user, String prefix) throws IOException {
         kanger.test.KangerTest cls = new kanger.test.KangerTest(user);
         int failCount = 0;
         int successCount = 0;
         long startTime = System.currentTimeMillis();
         System.out.println("Init test system...");
         try {
+            user.use("test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -167,6 +167,8 @@ public class KangerTest {
 
         } catch (Exception e) {
             e.printStackTrace(System.err);
+        } finally {
+            user.remove();
         }
 
         return failCount == 0;

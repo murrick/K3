@@ -206,7 +206,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     public Set<TVariable> getRelatedTVariables(boolean full) {
         Set<TVariable> set = new HashSet<>();
-        for(Domain d : predicate.getRelates()) {
+        for (Domain d : predicate.getRelates()) {
             set.addAll(d.getArguments().getTVariables(full));
         }
         return set;
@@ -299,7 +299,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
             suffix += " " + id;
         }
         if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix += /*isDest() ||*/ isQuery(arguments)  || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
+            suffix += /*isDest() ||*/ isQuery(arguments) || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
                     ? " " +
                     //(isDest() ? "A" : "") +
                     (isQuery() ? "Q" : "") +
@@ -325,8 +325,10 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         for (int i = 0; i < arguments.size(); ++i) {
             if (arguments.get(i).isEmpty() || o.getArguments().get(i).isEmpty()) {
                 return false;
-            }
-            if (arguments.get(i).getValue().getId() != o.getArguments().get(i).getValue().getId()) {
+            } else if (id != -1 && o.getId() != -1
+                    && arguments.get(i).getValue().getId() != o.getArguments().get(i).getValue().getId()) {
+                return false;
+            } else if (!arguments.get(i).getValue().equalsTo(o.getArguments().get(i).getValue())) {
                 return false;
             }
         }
@@ -799,7 +801,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public int hashCode() {
         return ("" + id).hashCode();
     }
-       
+
 
     @Override
     public boolean equals(Object d) {

@@ -53,6 +53,9 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     break;
                 }
             } while (ras.length() > ras.getFilePointer());
+            if(baseIndex.isEmpty()) {
+                clear();
+            }
         } catch (FileNotFoundException ex) {
             clear();
             ras = new RandomAccessFile(file, "r");
@@ -127,7 +130,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     }
 
     private IndexOne getHead(long id) {
-        IndexOne head;
+        IndexOne head = null;
         if (baseIndex.size() == 1) {
             head = baseIndex.get(baseIndex.firstKey());
         } else if (baseIndex.containsKey(id)) {
@@ -141,7 +144,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     }
 
     private IndexOne getTail(long id) {
-        IndexOne head;
+        IndexOne head = null;
         if (baseIndex.size() == 1) {
             head = baseIndex.get(baseIndex.firstKey());
         } else if (baseIndex.containsKey(id)) {
@@ -294,16 +297,20 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             }
             block.clear();
             ras.seek(head.getData().get(0) + head.getRecordSize());
+            boolean wasRead = false;
             for (int i = 0; i < head.getSize(); ++i) {
                 IndexOne one = new IndexOne().readFrom(ras);
                 if (!one.isDeleted()) {
                     block.put(one.getId(), one);
                 }
+                wasRead = true;
             }
             if (head.getSize() != block.size()) {
                 head.setSize(block.size());
             }
-            ++readCounter;
+            if(wasRead) {
+                ++readCounter;
+            }
         }
     }
 
@@ -358,6 +365,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         if (currentBlock.containsKey(id)) {
             currentBlock.remove(id);
             head.setSize(head.getSize() - 1);
+            baseIndex.remove(head.getId());
+            head.setId(currentBlock.firstKey());
+            head.setSize(currentBlock.size());
+            baseIndex.put(head.getId(), head);
             changed = true;
         }
     }

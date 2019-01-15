@@ -166,11 +166,21 @@ public class Mind {
             }
         }
 
-        user.setMind(this);
-        log.commit(m.getLog());
+        terms.update();
+        tVars.update();
 
+        user.setMind(this);
+
+        log.commit(m.getLog());
         queryResult = (Boolean) m.getQueryResult();
-//        querySource = m.getQuerySource();
+
+        if(!user.isClosed()) {
+            try {
+                user.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void release(Mind m) {
@@ -201,6 +211,14 @@ public class Mind {
         values.clear();
         hypotesis.clear();
         excluded.clear();
+
+        if(!user.isClosed()) {
+            try {
+                user.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
 //        log.clear();
 

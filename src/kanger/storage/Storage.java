@@ -90,20 +90,33 @@ public class Storage implements Closeable, Iterable<Identifiable> {
 
     public List<Identifiable> find(long h) throws IOException, ClassNotFoundException {
         List<Identifiable> list = new ArrayList<>();
-        Index.IndexOne x = hash.getOne(h);
-        if (x != null) {
-            for (long offset : x.getData()) {
-                Identifiable o = data.get(offset);
-                if (o != null) {
-                    list.add(o);
+        try {
+            Index.IndexOne x = hash.getOne(h);
+            if (x != null) {
+                for (long offset : x.getData()) {
+                    Identifiable o = data.get(offset);
+                    if (o != null) {
+                        list.add(o);
+                    }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return list;
     }
 
     public boolean isClosed() {
-        return data.isClosed();
+        return data == null || data.isClosed();
+    }
+
+    public void clear() throws IOException {
+        if(!isClosed()) {
+            data.clear();
+            index.clear();
+            hash.clear();
+            flush();
+        }
     }
 
     public void reindex() throws IOException {
@@ -135,6 +148,28 @@ public class Storage implements Closeable, Iterable<Identifiable> {
     @Override
     public Iterator<Identifiable> iterator() {
         return new StorageIterator();
+    }
+
+    public void remove() throws IOException {
+        boolean wasOpened = false;
+        if (index != null && !index.isClosed()) {
+            index.close();
+            wasOpened = true;
+        }
+        if (hash != null && !hash.isClosed()) {
+            hash.close();
+            wasOpened = true;
+        }
+        if (data != null && !data.isClosed()) {
+            data.close();
+            wasOpened = true;
+        }
+
+        if(wasOpened) {
+            index.getFile().delete();
+            hash.getFile().delete();
+            data.getFile().delete();
+        }
     }
 
     public class StorageIterator implements Iterator<Identifiable> {

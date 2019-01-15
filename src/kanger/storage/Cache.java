@@ -18,11 +18,36 @@ public class Cache implements Iterable<Identifiable> {
         hash.get(h).add(one);
     }
 
+    public void add(Cache cache) {
+        index.putAll(cache.index);
+        hash.putAll(cache.hash);
+    }
+
     public Identifiable get(long id) {
         return index.get(id);
     }
 
-    public List<Identifiable> find(long h) {
+    public int size() {
+        return index.size();
+    }
+
+    public Identifiable getFirst() {
+        if(index.firstEntry() != null) {
+            return index.firstEntry().getValue();
+        } else {
+            return null;
+        }
+    }
+
+    public Identifiable getLast() {
+        if(index.lastEntry() != null) {
+            return index.lastEntry().getValue();
+        } else {
+            return null;
+        }
+    }
+
+    public List<Identifiable> find(int h) {
         List<Identifiable> list = new ArrayList<>();
         if (hash.containsKey(h)) {
             list.addAll(hash.get(h));
@@ -57,20 +82,28 @@ public class Cache implements Iterable<Identifiable> {
     }
 
     private long getNext(long id, NavigableMap<Long, Identifiable> block)  {
-        Long next = block.higherKey(id);
-        if (next != null) {
-            return next;
-        } else {
+        if(block.isEmpty()) {
             return -1;
+        } else {
+            Long next = block.higherKey(id);
+            if (next != null) {
+                return next;
+            } else {
+                return -1;
+            }
         }
     }
 
     private long getPrevious(long id, NavigableMap<Long, Identifiable> block) {
-        Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
-        if (next != null) {
-            return next;
-        } else {
+        if(block.isEmpty()) {
             return -1;
+        } else {
+            Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
+            if (next != null) {
+                return next;
+            } else {
+                return -1;
+            }
         }
     }
 
