@@ -5,8 +5,9 @@ import kanger.interfaces.Identifiable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class Storage implements Closeable, Iterable<Identifiable> {
 
@@ -82,13 +83,14 @@ public class Storage implements Closeable, Iterable<Identifiable> {
     public Identifiable get(long id) throws IOException, ClassNotFoundException {
         Index.IndexOne x = index.getOne(id);
         if (x != null) {
-            return data.get(x.getData().get(0));
+            Identifiable one = data.get(x.getData().get(0));
+            return one;
         } else {
             return null;
         }
     }
 
-    public List<Identifiable> find(long h) throws IOException, ClassNotFoundException {
+    public List<Identifiable> find(long h) {
         List<Identifiable> list = new ArrayList<>();
         try {
             Index.IndexOne x = hash.getOne(h);
@@ -104,6 +106,14 @@ public class Storage implements Closeable, Iterable<Identifiable> {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public long firstKey() {
+        return index.firstKey();
+    }
+
+    public long lastKey() throws IOException {
+        return index.lastKey();
     }
 
     public boolean isClosed() {
@@ -145,6 +155,13 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         }
     }
 
+    public int size() {
+        if (!isClosed()) {
+            return index.size();
+        } else {
+            return 0;
+        }
+    }
     @Override
     public Iterator<Identifiable> iterator() {
         return new StorageIterator();

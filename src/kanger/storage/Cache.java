@@ -8,6 +8,8 @@ public class Cache implements Iterable<Identifiable> {
 
     private NavigableMap<Long, Identifiable> index = new TreeMap<>();
     private Map<Integer, Set<Identifiable>> hash = new HashMap<>();
+    private Stack<Long> stack = new Stack<>();
+
 
     public void add(Identifiable one) {
         index.put(one.getId(), one);
@@ -31,19 +33,19 @@ public class Cache implements Iterable<Identifiable> {
         return index.size();
     }
 
-    public Identifiable getFirst() {
-        if(index.firstEntry() != null) {
-            return index.firstEntry().getValue();
+    public long firstKey() {
+        if (index.firstKey() != null) {
+            return index.firstKey();
         } else {
-            return null;
+            return -1;
         }
     }
 
-    public Identifiable getLast() {
-        if(index.lastEntry() != null) {
-            return index.lastEntry().getValue();
+    public long lastKey() {
+        if (index.lastKey() != null) {
+            return index.lastKey();
         } else {
-            return null;
+            return -1;
         }
     }
 
@@ -74,11 +76,47 @@ public class Cache implements Iterable<Identifiable> {
         hash.clear();
     }
 
-    public void reindex(Identifiable root) {
-        clear();
-        for(Identifiable one = root; one != null; one = one.getNext()) {
-            add(one);
+    public void mark() {
+        if (index.isEmpty()) {
+            stack.push(-1L);
+        } else {
+            stack.push(index.lastKey());
         }
+    }
+
+    public long commit() {
+        if (!stack.isEmpty()) {
+            return stack.pop();
+        } else {
+            return -1;
+        }
+    }
+
+    public long release() {
+        if (!stack.isEmpty()) {
+            long id = stack.pop();
+            if (id == -1L) {
+                index.clear();
+                hash.clear();
+            } else {
+                List<Long> toDelete = new ArrayList<>();
+                for (long idx : index.tailMap(id).keySet()) {
+                    if (idx > id) {
+                        toDelete.add(idx);
+                    }
+                }
+                for (long idx : toDelete) {
+                    remove(idx);
+                }
+            }
+            return id;
+        } else {
+            return -1;
+        }
+    }
+
+    public boolean containsKey(long id) {
+        return index.containsKey(id);
     }
 
     private long getNext(long id, NavigableMap<Long, Identifiable> block)  {

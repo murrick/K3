@@ -1,5 +1,6 @@
 package kanger;
 
+import kanger.factory.*;
 import kanger.storage.Storage;
 
 import java.io.IOException;
@@ -20,13 +21,13 @@ public class User {
             close();
         }
         storage = new HashMap<>();
-        storage.put("database", new Storage());
-        storage.put("dictionary", new Storage());
-        storage.put("domains", new Storage());
-        storage.put("functions", new Storage());
+        storage.put(DatabaseFactory.SCHEMA, new Storage());
+        storage.put(DictionaryFactory.SCHEMA, new Storage());
+        storage.put(DomainFactory.SCHEMA, new Storage());
+        storage.put(FunctionFactory.SCHEMA, new Storage());
         storage.put("fvalues", new Storage());
-        storage.put("predicates", new Storage());
-        storage.put("rights", new Storage());
+        storage.put(PredicateFactory.SCHEMA, new Storage());
+        storage.put(RightFactory.SCHEMA, new Storage());
         storage.put("trees", new Storage());
         storage.put("tvalues", new Storage());
         storage.put("tvariables", new Storage());

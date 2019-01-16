@@ -413,6 +413,34 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         writeCounter = 0;
     }
 
+    public int size() {
+        int size = 0;
+        if (!isClosed()) {
+            for (IndexOne one : baseIndex.values()) {
+                size += one.getSize();
+            }
+        }
+        return size;
+    }
+
+    public long firstKey() {
+        if (baseIndex.firstKey() != null) {
+            return baseIndex.firstKey();
+        } else {
+            return -1;
+        }
+    }
+
+    public long lastKey() throws IOException {
+        if (baseIndex.lastKey() != null) {
+            NavigableMap<Long, IndexOne> block = new TreeMap<>();
+            loadBlock(baseIndex.lastEntry().getValue(), block);
+            return block.lastKey();
+        } else {
+            return -1;
+        }
+    }
+
     @Override
     public Iterator<IndexOne> iterator() {
         try {
@@ -553,6 +581,9 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         @Override
         public boolean hasNext() {
             try {
+                if (size() == 0) {
+                    return false;
+                }
                 if(backward) {
                     return getPrevious(currentId, block) != -1;
                 } else {

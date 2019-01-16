@@ -51,7 +51,7 @@ public class Linker {
         }
 
 
-        Record saveR;
+        long saveR;
         TValue saveT;
         FValue saveF;
 
@@ -62,7 +62,7 @@ public class Linker {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
 
-            saveR = user.getMind().getDatabase().getRoot();
+            saveR = user.getMind().getDatabase().getLastId();
             saveT = user.getMind().getTValues().getRoot();
             saveF = user.getMind().getFValues().getRoot();
 
@@ -126,7 +126,7 @@ public class Linker {
             }
 
 
-        } while (saveR != user.getMind().getDatabase().getRoot()
+        } while (saveR != user.getMind().getDatabase().getLastId()
                 || saveT != user.getMind().getTValues().getRoot()
                 || saveF != user.getMind().getFValues().getRoot()
         );

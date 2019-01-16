@@ -1,7 +1,8 @@
 package kanger;
 
 import kanger.enums.LogMode;
-import kanger.primitives.*;
+import kanger.primitives.Argument;
+import kanger.primitives.Hypotese;
 import kanger.units.Domain;
 import kanger.units.Record;
 import kanger.units.TValue;
@@ -526,21 +527,19 @@ public class Analiser {
 
 //            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
             //todo только из базы?
-            Record stop = null;
-            if (user.getMind().getNext() != null) {
-                stop = user.getMind().getNext().getDatabase().getRoot();
-            }
+//            Record stop = null;
+//            if (user.getMind().getNext() != null) {
+//                stop = user.getMind().getNext().getDatabase().getRoot();
+//            }
 
             boolean occurs = false;
             for (Record r : user.getMind().getDatabase()) {
-                if(stop != null && r.getId() == stop.getId()) {
+                if (r.getId() < user.getMind().getDatabase().getFirstId()) {
                     break;
                 }
                 Domain d = r.getDomain();
                 if (!d.isQuery()
-//                        && !(user.getMind().getQueryPass() == QueryPass.CHECKFALSE && !d.isAntc())
-                        &&
-                        user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                        && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     h.setTag(r.getTag());
                     occurs = true;
@@ -779,8 +778,11 @@ public class Analiser {
                 }
                 result = true;
             } else {
-                for (Record q = p.getNext(); q != null; q = q.getNext()) {
-                    if (p.getDomain().equalsBase(q.getDomain()) && p.getDomain().isAntc() != q.getDomain().isAntc()) {
+                for (Record q : user.getMind().getDatabase()) {
+                    if (//q.getId() < p.getId()
+                        //&&
+                            p.getDomain().equalsBase(q.getDomain())
+                                    && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
 //                    Set<Domain> sequence = new HashSet<>();
 

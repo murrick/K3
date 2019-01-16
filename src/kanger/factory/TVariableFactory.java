@@ -54,7 +54,7 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     public TVariable createTVar(Right r) {
         TVariable p = new TVariable(user);
-        p.setId(++lastID);
+        p.setId(lastID++);
         p.setIndex(user.getMind().getTerms().nextVarIndex());
         p.setRight(r);
         p.setNext(root);

@@ -19,8 +19,6 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     private Term name = null;               // Имя предиката
     private int range = 0;                  // К-во параметров
 
-    private Predicate next = null;          // Следующий предикат
-
     private User user = null;
 
     private transient long nameId = -1;
@@ -83,12 +81,12 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     @Override
     public Predicate getNext() {
-        return next;
+        return null;
     }
 
-    public void setNext(Predicate next) {
-        this.next = next;
-    }
+//    public void setNext(Predicate next) {
+//        this.next = next;
+//    }
 
     public Set<Domain> getSolves() {
         Set<Domain> set = new HashSet<>();
@@ -103,7 +101,8 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 //        }
 
         for (Record d : user.getMind().getDatabase()) {
-            if (getId() == d.getDomain().getPredicate().getId()) {
+            //TODO: Откуда тут null????
+            if (/*d != null &&*/ getId() == d.getDomain().getPredicate().getId()) {
                 set.add(d.getDomain());
             }
         }

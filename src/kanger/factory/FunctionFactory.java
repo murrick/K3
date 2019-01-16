@@ -1,24 +1,28 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.UnitIterator;
+import kanger.interfaces.Identifiable;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
+import kanger.primitives.DataIterator;
+import kanger.storage.Cache;
+import kanger.storage.Storage;
 import kanger.units.Function;
+import kanger.units.Term;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 public class FunctionFactory implements Iterable<Function> {
 
-    private Function root = null;
-    private long lastID = 0;
+    public static final String SCHEMA = "functions";
 
-    private Stack<Object[]> stack = new Stack<>();
+    private long lastId = 0;
+    private long firstId = 0;
 
+    private Cache cache = new Cache();
     private User user= null;
 
     public FunctionFactory(User user) {
@@ -28,53 +32,78 @@ public class FunctionFactory implements Iterable<Function> {
 
     public void transaction(FunctionFactory base) {
         if (base != null) {
-            root = base.root;
-            lastID = base.lastID;
+            lastId = base.lastId;
+            firstId = base.lastId;
+            cache.add(base.cache);
         } else {
-            root = null;
-            lastID = 0;
+            lastId = 0;
+            firstId = 0;
+            cache.clear();
         }
-        stack.clear();
-        mark();
     }
 
     public void commit(FunctionFactory base) {
         List<Function> list = new ArrayList();
-        for (Function p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (p.getId() < base.firstId) {
+                break;
+            }
+            list.add(0, (Function) p);
         }
         for (Function p : list) {
-            p.setNext(root);
-            root = p;
-            p.setId(lastID++);
+            p.setId(lastId++);
+            cache.add(p);
         }
     }
 
-    public Function add() {
+    public void update() {
+        if (!user.isClosed()) {
+            try {
+                for (Identifiable p : cache) {
+                    if (p.getId() < firstId) {
+                        break;
+                    }
+                    user.getStorage(SCHEMA).add(p);
+                }
+                cache.clear();
+                firstId = lastId;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    public Function add(Term name, ArgList arguments) {
         Function p = new Function(user);
-        p.setId(++lastID);
-        p.setNext(root);
-        root = p;
+        p.setName(name);
+        p.setRange(arguments.size());
+        p.getArguments().addAll(arguments);
+        p.getArguments().add(new Argument());
+        p.setId(lastId++);
+        cache.add(p);
         return p;
     }
 
     public Function get(long id) {
-        for (Function r = root; r != null; r = r.getNext()) {
-            if (r.getId() == id) {
-                return r;
+        Function t = (Function) cache.get(id);
+        if (t == null) {
+            try {
+                t = (Function) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    cache.add(t);
+                    t.linkExternal();
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                //TODO: Сделать runtime error
+                e.printStackTrace();
             }
         }
-        return null;
+        return t;
     }
 
-//    public Function getRoot() {
-//        return root;
-//    }
-//
-//    public void setRoot(Function o) {
-//        root = o;
-//    }
-//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFunctions());
@@ -84,56 +113,13 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
 
-    private void mark() {
-        stack.push(new Object[]{root, lastID});
-    }
-
-    private void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            Function saved = (Function) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if(stack.isEmpty()) {
-            mark();
-        }
-    }
-
     public int size() {
-        int cnt = 0;
-        for (Function q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
-        dos.writeInt(size());
-        for (Function r = root; r != null; r = r.getNext()) {
-//            r.writeCompiledData(dos);
-        }
-    }
-
-    public void readCompiledData(DataInputStream dis) throws IOException {
-        clear();
-        lastID = dis.readLong();
-        int count = dis.readInt();
-        Function a = null, b = null;
-        while (count-- > 0) {
-//            b = new Function(user).readCompiledData(dis);
-            if (a == null) {
-                root = b;
-            } else {
-                a.setNext(b);
-            }
-            a = b;
-        }
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
     @Override
     public Iterator<Function> iterator() {
-        return new UnitIterator(root);
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new DataIterator(cache, storage);
     }
 }

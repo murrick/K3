@@ -12,13 +12,13 @@ import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Record implements Comparable<Record>, Externalizable, Identifiable<Domain> {
+public class Record implements Comparable<Record>, Externalizable, Identifiable<Record> {
     private long id = -1;
     private Domain domain = null;
     private int tag = -1;
     private Set<Cause> causes = new HashSet<>();
 
-    private Record next = null;
+    //    private Record next = null;
     private User user = null;
 
     private transient long domainId = -1;
@@ -81,12 +81,12 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
 
     @Override
     public Record getNext() {
-        return next;
+        return null;
     }
 
-    public void setNext(Record next) {
-        this.next = next;
-    }
+//    public void setNext(Record next) {
+//        this.next = next;
+//    }
 
     public int getTag() {
         return tag;
@@ -128,7 +128,8 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     }
 
     @Override
-    public boolean equalsTo(Domain x) {
+    public boolean equalsTo(Record rec) {
+        Domain x = rec.getDomain();
         if (x.isAntc() == domain.isAntc()
                 && x.getPredicate().getId() == domain.getPredicate().getId()
                 && x.getPredicate().getRange() == domain.getPredicate().getRange()) {

@@ -1,28 +1,29 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.UnitIterator;
+import kanger.interfaces.Identifiable;
+import kanger.primitives.DataIterator;
+import kanger.storage.Cache;
+import kanger.storage.Storage;
 import kanger.units.Predicate;
 import kanger.units.Term;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
  */
 public class PredicateFactory implements Iterable<Predicate> {
 
-    private Predicate root = null;
-    private long lastID = 0;
+    public static final String SCHEMA = "predicates";
 
-    private Stack<Object[]> stack = new Stack<>();
+    private long lastId = 0;
+    private long firstId = 0;
 
+    private Cache cache = new Cache();
     private User user = null;
 
     public PredicateFactory(User user) {
@@ -32,63 +33,97 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public void transaction(PredicateFactory base) {
         if (base != null) {
-            root = base.root;
-            lastID = base.lastID;
+            lastId = base.lastId;
+            firstId = base.lastId;
+            cache.add(base.cache);
         } else {
-            root = null;
-            lastID = 0;
+            lastId = 0;
+            firstId = 0;
+            cache.clear();
         }
-        stack.clear();
-        mark();
     }
 
     public void commit(PredicateFactory base) {
         List<Predicate> list = new ArrayList();
-        for (Predicate p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (p.getId() < base.firstId) {
+                break;
+            }
+            list.add(0, (Predicate) p);
         }
         for (Predicate p : list) {
-            p.setNext(root);
-            root = p;
-            p.setId(lastID++);
+            p.setId(lastId++);
+            cache.add(p);
+        }
+    }
+
+    public void update() {
+        if (!user.isClosed()) {
+            try {
+                for (Identifiable p : cache) {
+                    if (p.getId() < firstId) {
+                        break;
+                    }
+                    user.getStorage(SCHEMA).add(p);
+                }
+                cache.clear();
+                firstId = lastId;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public Predicate add(Term line, int range) {
-        Predicate p = (Predicate) find(line, range);
+        Predicate p = find(line, range);
         if (p != null) {
             return p;
         } else {
             p = new Predicate(user);
-            p.setId(lastID++);
-            p.setNext(root);
+            p.setId(lastId++);
             p.setRange(range);
             p.setName(line);
-            root = p;
+            cache.add(p);
             return p;
         }
     }
 
-    public Object find(Term line, int range) {
+    public Predicate find(Term line, int range) {
         Predicate temp = new Predicate(line, range);
-        for (Predicate p = root; p != null; p = p.getNext()) {
-            if (p.equalsTo(temp)) {
-                return p;
+        for (Identifiable one : cache.find(temp.getHash())) {
+            if (one.equalsTo(temp)) {
+                return (Predicate) one;
+            }
+        }
+        if (!user.isClosed()) {
+            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                if (one.equalsTo(temp)) {
+                    return (Predicate) one;
+                }
             }
         }
         return null;
     }
 
     public Predicate get(long id) {
-        for (Predicate p = root; p != null; p = p.getNext()) {
-            if (id == p.getId()) {
-                return p;
+        Predicate t = (Predicate) cache.get(id);
+        if (t == null) {
+            try {
+                t = (Predicate) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    cache.add(t);
+                    t.linkExternal();
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
-        return null;
+        return t;
     }
 
-//    public Predicate getRoot() {
+    //    public Predicate getRoot() {
 //        return root;
 //    }
 //
@@ -104,81 +139,14 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    private void mark() {
-        stack.push(new Object[]{root, lastID});
-    }
-
-    private void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            Predicate saved = (Predicate) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if (stack.isEmpty()) {
-            mark();
-        }
-    }
-
     public int size() {
-        int cnt = 0;
-        for (Predicate q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
-        dos.writeInt(size());
-        for (Predicate p = root; p != null; p = p.getNext()) {
-//            p.writeCompiledData(dos);
-        }
-        List<Long[]> links = new ArrayList<>();
-        //TODO: Save causes
-//        for(Predicate p = root; p != null; p = p.getNext()) {
-//            for(Solution s = p.getSolve(); s != null; s = s.getNext()) {
-//                for(Solution x : s.getCauses()) {
-//                    links.createTVar(new Long[]{s.getPredicate().getId(), s.getId(), x.getPredicate().getId(), x.getId()});
-//                }
-//            }
-//        }
-        dos.writeInt(links.size());
-        for (Long[] l : links) {
-            dos.writeLong(l[0]);
-            dos.writeLong(l[1]);
-            dos.writeLong(l[2]);
-            dos.writeLong(l[3]);
-        }
-    }
-
-    public void readCompiledData(DataInputStream dis) throws IOException {
-        clear();
-        lastID = dis.readLong();
-        int count = dis.readInt();
-        Predicate a = null, b = null;
-        while (count-- > 0) {
-//            b = new Predicate(user).readCompiledData(dis);
-            if (a == null) {
-                root = b;
-            } else {
-                a.setNext(b);
-            }
-            a = b;
-        }
-        //TODO: Load causes
-//        count = dis.readInt();
-//        while (count-- > 0) {
-//            Predicate p = createCVar(dis.readLong());
-//            Solution s = p.getSolve(dis.readLong());
-//            Predicate xp = createCVar(dis.readLong());
-//            Solution xs = xp.getSolve(dis.readLong());
-//            s.getCauses().createTVar(xs);
-//        }
-    }
 
     @Override
     public Iterator<Predicate> iterator() {
-        return new UnitIterator(root);
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new DataIterator(cache, storage);
     }
 }

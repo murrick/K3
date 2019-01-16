@@ -250,11 +250,10 @@ public class Compiler {
                 parseArgs(d, arg, root.getRight(), level + 1, replacements);
             } else {
                 // системная функция
-                Function f = user.getMind().getFunctions().add(); //new Function(mind);
-                parseArgs(d, f.getArguments(), root.getLeft(), level + 1, replacements);
-                parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-                f.setName(user.getMind().getTerms().add(root.getName()));
-                f.setRange(f.getArguments().size());
+                ArgList arguments = new ArgList();
+                parseArgs(d, arguments, root.getLeft(), level + 1, replacements);
+                parseArgs(d, arguments, root.getRight(), level + 1, replacements);
+                Function f = user.getMind().getFunctions().add(user.getMind().getTerms().add(root.getName()), arguments);
                 Argument t = new Argument(f);
                 arg.add(t);
             }
@@ -263,10 +262,9 @@ public class Compiler {
             parseArgs(d, arg, root.getRight(), level + 1, replacements);
         } else if (root.getName().charAt(0) == Enums.LB) {
             // вложенная функция
-            Function f = user.getMind().getFunctions().add(); //new Function(mind);
-            parseArgs(d, f.getArguments(), root.getRight(), level + 1, replacements);
-            f.setName(user.getMind().getTerms().add(root.getLeft().getName()));
-            f.setRange(f.getArguments().size());
+            ArgList arguments = new ArgList();
+            parseArgs(d, arguments, root.getRight(), level + 1, replacements);
+            Function f = user.getMind().getFunctions().add(user.getMind().getTerms().add(root.getLeft().getName()), arguments);
             Argument t = new Argument(f);
             arg.add(t);
         } else if (root.getName().equals("..")) {

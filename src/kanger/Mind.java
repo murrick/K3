@@ -17,10 +17,8 @@ import kanger.primitives.Hypotese;
 import kanger.stores.*;
 import kanger.units.*;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 //import javax.script.ScriptEngine;
 //import javax.script.ScriptEngineManager;
@@ -168,6 +166,12 @@ public class Mind {
 
         terms.update();
         tVars.update();
+        predicates.update();
+        domains.update();
+        database.update();
+        rights.update();
+        functions.update();
+
 
         user.setMind(this);
 
@@ -521,63 +525,6 @@ public class Mind {
         this.compiledFileName = compiledFileName;
     }
 
-    public void writeCompiledData(OutputStream os) throws IOException, RuntimeErrorException {
-        analise(true);
-
-        DataOutputStream dos = new DataOutputStream(os);
-        dos.writeInt(19640207);
-        dos.writeUTF("K3");
-        dos.writeByte(0);
-        dos.writeUTF(Version.VERSION_S);
-        dos.writeByte(0);
-
-        GZIPOutputStream zos = new GZIPOutputStream(os);
-        dos = new DataOutputStream(zos);
-        this.terms.writeCompiledData(dos);
-        this.tVars.writeCompiledData(dos);
-        this.predicates.writeCompiledData(dos);
-        this.domains.writeCompiledData(dos);
-        this.rights.writeCompiledData(dos);
-        zos.finish();
-    }
-
-    public void readCompiledData(InputStream is) throws IOException, ClassNotFoundException, ParseErrorException {
-        clear();
-
-        DataInputStream dis = new DataInputStream(is);
-
-        int signature = dis.readInt();
-        String key = dis.readUTF();
-        dis.readByte();
-        String version = dis.readUTF();
-        dis.readByte();
-
-        GZIPInputStream zis = new GZIPInputStream(is);
-        dis = new DataInputStream(zis);
-        this.terms.readCompiledData(dis);
-        this.tVars.readCompiledData(dis);
-        this.predicates.readCompiledData(dis);
-        this.domains.readCompiledData(dis);
-        this.rights.readCompiledData(dis);
-//        for (Map.Entry<Term, Long> d : termsLink.entrySet()) {
-//            d.getKey().setRight(rights.get(d.getValue()));
-//        }
-//        for (Map.Entry<Domain, Long> d : domainsLink.entrySet()) {
-//            d.getKey().setRight(rights.get(d.getValue()));
-//        }
-        //TODO: Загрузка causes
-//        for(Map.Entry<Solution,Long> d: solveLinks.entrySet()) {
-//            d.getKey().setRight(rights.createCVar(d.getValue()));
-//        }
-//        for (Map.Entry<TVariable, Long> d : tVariablesLink.entrySet()) {
-//            d.getKey().setRight(rights.get(d.getValue()));
-//        }
-
-    }
-
-//    public ScriptEngine getScryptEngine() {
-//        return scryptEngine;
-//    }
 
     public Boolean query(String line) throws ParseErrorException, RuntimeErrorException {
         querySource = line;

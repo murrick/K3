@@ -23,7 +23,6 @@ public class Right implements Externalizable, Identifiable<Right> {
     private boolean generated = false;         // Правило добавлено в процессе выводс
     private List<Tree> tree = new ArrayList<>();      // Ссылка на дерево правила
 
-    private Right next = null;                  // Следующее правило
     private User user = null;
 
     private transient long origId = -1;
@@ -94,11 +93,7 @@ public class Right implements Externalizable, Identifiable<Right> {
 
     @Override
     public Right getNext() {
-        return next;
-    }
-
-    public void setNext(Right next) {
-        this.next = next;
+        return null;
     }
 
     public Term getOrig() {

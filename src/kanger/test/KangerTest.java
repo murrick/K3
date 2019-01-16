@@ -10,8 +10,10 @@ import kanger.units.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class KangerTest {
 
@@ -124,7 +126,9 @@ public class KangerTest {
         long startTime = System.currentTimeMillis();
         System.out.println("Init test system...");
         try {
-            user.use("test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
+            //TODO: В дальнейшем отключить бд для тестов
+            user.close();
+//            user.use("test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);

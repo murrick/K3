@@ -1,12 +1,13 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
-import kanger.primitives.UnitIterator;
+import kanger.primitives.DataIterator;
+import kanger.storage.Cache;
+import kanger.storage.Storage;
 import kanger.units.*;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -15,16 +16,19 @@ import java.util.*;
  */
 public class DatabaseFactory implements Iterable<Record>{
 
-    private Record root = null;
-    private long lastID = 0;
+    public static final String SCHEMA = "database";
+
+    private long lastId = 0;
+    private long firstId = 0;
     private int lastTag = 0;
 
 //    private Record current = null;
 //    private Record stop = null;
 //    private DatabaseFactory next = null;
 
-    private Stack<Object[]> stack = new Stack<>();
+//    private Stack<Object[]> stack = new Stack<>();
 
+    private Cache cache = new Cache();
     private User user = null;
 
     public DatabaseFactory(User user) {
@@ -34,37 +38,61 @@ public class DatabaseFactory implements Iterable<Record>{
 
     public void transaction(DatabaseFactory base) {
         if (base != null) {
-//            next = base;
-            root = base.root;
-            lastID = base.lastID;
+            lastId = base.lastId;
+            firstId = base.lastId;
             lastTag = base.lastTag;
+            cache.add(base.cache);
         } else {
-            root = null;
+//            root = null;
 //            next = null;
-            lastID = 0;
+            lastId = 0;
+            firstId = 0;
             lastTag = 0;
+            cache.clear();
         }
-        stack.clear();
-        mark();
+//        stack.clear();
+//        mark();
     }
 
     public void commit(DatabaseFactory base) {
         List<Record> list = new ArrayList();
-        for (Record p = base.root; p != null && (root == null || p.getDomain().getId() != root.getDomain().getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (p.getId() < base.firstId) {
+                break;
+            }
+            list.add(0, (Record) p);
         }
         Map<Integer, Integer> map = new HashMap<>();
         for (Record p : list) {
-            p.setNext(root);
-            root = p;
-
             if (!map.containsKey(p.getTag())) {
                 map.put(p.getTag(), ++lastTag);
             }
             p.setTag(map.get(p.getTag()));
-            p.setId(lastID++);
+            p.setId(lastId++);
+            cache.add(p);
         }
     }
+
+    public void update() {
+        if (!user.isClosed()) {
+            try {
+                for (Identifiable p : cache) {
+                    if (p.getId() < firstId) {
+                        break;
+                    }
+                    user.getStorage(SCHEMA).add(p);
+                }
+                cache.clear();
+                firstId = lastId;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
 
     public Record add(Domain d) {
         Record p = find(d.getPredicate(), d.isAntc(), d.getArguments());
@@ -72,10 +100,9 @@ public class DatabaseFactory implements Iterable<Record>{
             return p;
         } else {
             Record r = new Record(d);
-            r.setNext(root);
-            root = r;
-            r.setId(lastID++);
+            r.setId(lastId++);
             r.setTag(lastTag);
+            cache.add(r);
             return r;
         }
     }
@@ -120,28 +147,43 @@ public class DatabaseFactory implements Iterable<Record>{
     }
 
     public Record find(Predicate pred, boolean antc, ArgList arg) {
-        Domain temp = new Domain(pred, antc, arg);
-        for (Record p = root; p != null; p = p.getNext()) {
-            if(p.equalsTo(temp)) {
-                return p;
+        Domain d = new Domain(pred, antc, arg);
+        Record temp = new Record(d);
+        for (Identifiable one : cache.find(temp.getHash())) {
+            if (one.equalsTo(temp)) {
+                return (Record) one;
+            }
+        }
+        if (!user.isClosed()) {
+            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                if (one.equalsTo(temp)) {
+                    return (Record) one;
+                }
             }
         }
         return null;
     }
 
     public Record get(long id) {
-        for (Record p = root; p != null; p = p.getNext()) {
-            if (p.getId() == id) {
-                return p;
+        Record t = (Record) cache.get(id);
+        if (t == null) {
+            try {
+                t = (Record) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    cache.add(t);
+                    t.linkExternal();
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
-        return null;
+        return t;
     }
 
 
-    public Record getRoot() {
-        return root;
-    }
+//    public Record getRoot() {
+//        return root;
+//    }
 
 //    public void setRoot(Record o) {
 //        root = o;
@@ -156,56 +198,30 @@ public class DatabaseFactory implements Iterable<Record>{
         }
     }
 
-    public void mark() {
-        stack.push(new Object[]{root, lastID});
-    }
-
-    public void commit() {
-        if (!stack.empty()) {
-            stack.pop();
-        }
-    }
-
-    public void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            Record saved = (Record) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if (stack.empty()) {
-            mark();
-        }
-    }
-
+    //    public void mark() {
+//        stack.push(new Object[]{root, lastId});
+//    }
+//
+//    public void commit() {
+//        if (!stack.empty()) {
+//            stack.pop();
+//        }
+//    }
+//
+//    public void release() {
+//        if (!stack.empty()) {
+//            Object[] pop = stack.pop();
+//            Record saved = (Record) pop[0];
+//            lastId = (long) pop[1];
+//            root = saved;
+//        }
+//        if (stack.empty()) {
+//            mark();
+//        }
+//    }
+//
     public int size() {
-        int cnt = 0;
-        for (Record q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeInt(size());
-        for (Record d = root; d != null; d = d.getNext()) {
-            dos.writeLong(d.getDomain().getId());
-        }
-    }
-
-    public void readCompiledData(DataInputStream dis) throws IOException {
-        clear();
-        int count = dis.readInt();
-        Record a = null, b;
-        while (count-- > 0) {
-            b = new Record(user.getMind().getDomains().get(dis.readLong()));
-            if (a == null) {
-                root = b;
-            } else {
-                a.setNext(b);
-            }
-            a = b;
-        }
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
     public int incTag() {
@@ -217,25 +233,17 @@ public class DatabaseFactory implements Iterable<Record>{
         return lastTag;
     }
 
-    public Set<TVariable> getTVariables(boolean full) {
-        Set<TVariable> set = new HashSet<>();
-        for (Record d = root; d != null; d = d.getNext()) {
-            set.addAll(d.getDomain().getArguments().getTVariables(full));
-        }
-        return set;
+    public long getFirstId() {
+        return firstId;
     }
 
-//    public DatabaseFactory localOnly(boolean local) {
-//        if(local && next != null) {
-//            stop = next.root;
-//        } else {
-//            stop = null;
-//        }
-//        return this;
-//    }
-//
+    public long getLastId() {
+        return lastId;
+    }
+
     @Override
     public Iterator<Record> iterator() {
-        return new UnitIterator(root);
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new DataIterator(cache, storage);
     }
 }

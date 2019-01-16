@@ -10,6 +10,7 @@ public interface Identifiable<T> {
 
     boolean equalsTo(T to);
 
+    //TODO: getNext() Удалить после отладки!
     Identifiable getNext();
 
     void linkExternal();

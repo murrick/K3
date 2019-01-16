@@ -3,7 +3,6 @@ package kanger.factory;
 import kanger.User;
 import kanger.enums.Enums;
 import kanger.interfaces.Identifiable;
-import kanger.primitives.UnitIterator;
 import kanger.storage.Cache;
 import kanger.units.Right;
 import kanger.units.Term;
@@ -11,15 +10,20 @@ import kanger.units.Term;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by murray on 25.05.15.
  */
 public class DictionaryFactory /*implements Iterable<Term>*/ {
 
+    public static final String SCHEMA = "dictionary";
+
     //    private Term root = null;
-    private long lastID = 0;
+    private long lastId = 0;
+    private long firstId = 0;
     private int varIndex = 0;           // Счетчик C-переменных
 
     //    private Stack<Object[]> stack = new Stack<>();
@@ -39,12 +43,14 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
     public void transaction(DictionaryFactory base) {
         if (base != null) {
 //            root = base.root;
-            lastID = base.lastID;
+            lastId = base.lastId;
+            firstId = base.firstId;
             varIndex = base.varIndex;
             cache.add(base.cache);
         } else {
 //            root = null;
-            lastID = 0;
+            lastId = 0;
+            firstId = 0;
             varIndex = 0;
             cache.clear();
 //            if(!user.isClosed()) {
@@ -63,7 +69,7 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
     public void commit(DictionaryFactory base, Collection<Object> vars) {
         List<Term> list = new ArrayList<>();
         for (Identifiable p : base.cache) {
-            if (cache.getLast() != null && p.getId() <= cache.getLast().getId()) {
+            if (p.getId() < base.firstId) {
                 break;
             }
             list.add((Term) p);
@@ -72,7 +78,8 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
 //            list.add(0, p);
 //        }
         for (Term p : list) {
-            append(p);
+            p.setId(lastId++);
+            cache.add(p);
             if (p.isCVariable()) {
                 vars.add(p);
             }
@@ -84,9 +91,13 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
-                    user.getStorage("dictionary").add(p);
+                    if (p.getId() < firstId) {
+                        break;
+                    }
+                    user.getStorage(SCHEMA).add(p);
                 }
                 cache.clear();
+                firstId = lastId;
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -101,17 +112,12 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
             return p;
         } else {
             p = new Term(o, user);
-            append(p);
+            p.setId(lastId++);
+            cache.add(p);
             return p;
         }
     }
 
-    private void append(Term term) {
-//        term.setNext(root);
-//        root = term;
-        term.setId(lastID++);
-        cache.add(term);
-    }
 
     public Term find(Object o) {
         Term t = new Term(o, user);
@@ -121,16 +127,10 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
             }
         }
         if (!user.isClosed()) {
-            try {
-                for (Identifiable one : user.getStorage("dictionary").find(t.getHash())) {
-                    if (one.equalsTo(t)) {
-                        return (Term) one;
-                    }
+            for (Identifiable one : user.getStorage(SCHEMA).find(t.getHash())) {
+                if (one.equalsTo(t)) {
+                    return (Term) one;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
 //        for (Term dic = root; dic != null; dic = dic.getNext()) {
@@ -152,13 +152,26 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
     }
 
     public Term get(long id) {
-        return (Term) cache.get(id);
+        Term t = (Term) cache.get(id);
+        if (t == null) {
+            try {
+                t = (Term) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    cache.add(t);
+                    t.linkExternal();
+
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
 //        for (Term dic = root; dic != null; dic = dic.getNext()) {
 //            if (id == dic.getId()) {
 //                return dic;
 //            }
 //        }
-//        return null;
+        return t;
     }
 
 //    public Term getRoot() {
@@ -170,14 +183,14 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
 //    }
 
 //    private void mark() {
-//        stack.push(new Object[]{root, lastID, varIndex});
+//        stack.push(new Object[]{root, lastId, varIndex});
 //    }
 //
 //    private void release() {
 //        if (!stack.empty()) {
 //            Object[] pop = stack.pop();
 //            Term saved = (Term) pop[0];
-//            lastID = (long) pop[1];
+//            lastId = (long) pop[1];
 //            varIndex = (int) pop[2];
 //            root = saved;
 //        }
@@ -196,7 +209,7 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
     }
 
     public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
+        dos.writeLong(lastId);
         dos.writeInt(varIndex);
         int count = size();
         dos.writeInt(count);
@@ -207,7 +220,7 @@ public class DictionaryFactory /*implements Iterable<Term>*/ {
 
     public void readCompiledData(DataInputStream dis) throws IOException, ClassNotFoundException {
         clear();
-        lastID = dis.readLong();
+        lastId = dis.readLong();
         varIndex = dis.readInt();
         int count = dis.readInt();
         Term a = null, b = null;

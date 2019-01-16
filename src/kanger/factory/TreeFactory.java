@@ -56,7 +56,7 @@ public class TreeFactory implements Iterable<Tree> {
 
     public Tree add(Right r) {
         Tree p = new Tree(user);
-        p.setId(++lastID);
+        p.setId(lastID++);
         p.setRight(r);
         p.setNext(root);
         root = p;
