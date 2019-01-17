@@ -53,8 +53,9 @@ public class Function implements Externalizable, Identifiable<Function> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(name == null) {
+            this.user = user;
             name = user.getMind().getTerms().get(nameId);
             arguments.linkExternal(user);
         }

@@ -56,11 +56,12 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
         }
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(sequence.isEmpty()) {
+            this.user = user;
             right = user.getMind().getRights().get(rightId);
             for (Domain d : sequence) {
-                d.linkExternal();
+                d.linkExternal(user);
             }
         }
     }

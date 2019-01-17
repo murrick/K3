@@ -134,7 +134,7 @@ public class DomainFactory implements Iterable<Domain> {
                 t = (Domain) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -167,6 +167,21 @@ public class DomainFactory implements Iterable<Domain> {
     @Override
     public Iterator<Domain> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage);
+        return new DomainIterator(true, cache, storage);
     }
+
+    public class DomainIterator extends DataIterator {
+
+        public DomainIterator(boolean backward, Cache cache, Storage storage) {
+            super(backward, cache, storage);
+        }
+
+        @Override
+        public Identifiable next() {
+            Identifiable next = super.next();
+            next.linkExternal(user);
+            return next;
+        }
+    }
+
 }

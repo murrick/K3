@@ -93,7 +93,7 @@ public class TreeFactory implements Iterable<Tree>{
                 t = (Tree) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -117,7 +117,21 @@ public class TreeFactory implements Iterable<Tree>{
     @Override
     public Iterator<Tree> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage);
+        return new TreeIterator(true, cache, storage);
+    }
+
+    public class TreeIterator extends DataIterator {
+
+        public TreeIterator(boolean backward, Cache cache, Storage storage) {
+            super(backward, cache, storage);
+        }
+
+        @Override
+        public Identifiable next() {
+            Identifiable next = super.next();
+            next.linkExternal(user);
+            return next;
+        }
     }
 
 }

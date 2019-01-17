@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FValueFactory { //implements Iterable<FValue> {
+public class FValueFactory {
 
     public static final String SCHEMA = "fvalues";
 
@@ -109,7 +109,7 @@ public class FValueFactory { //implements Iterable<FValue> {
                 t = (FValue) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -148,8 +148,4 @@ public class FValueFactory { //implements Iterable<FValue> {
         return lastId;
     }
 
-//    @Override
-//    public Iterator<FValue> iterator() {
-//        return new UnitIterator(root);
-//    }
 }

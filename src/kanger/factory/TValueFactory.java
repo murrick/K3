@@ -18,7 +18,7 @@ import java.util.*;
 /**
  * Created by murray on 25.05.15.
  */
-public class TValueFactory /*implements Iterable<TValue>*/ {
+public class TValueFactory {
 
     public static final String SCHEMA = "tvalues";
 
@@ -129,7 +129,7 @@ public class TValueFactory /*implements Iterable<TValue>*/ {
                 t = (TValue) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -193,6 +193,7 @@ public class TValueFactory /*implements Iterable<TValue>*/ {
             while(super.hasNext()) {
                 next = (TValue) super.next();
                 if(next.getTVar().getId() == tVariable.getId()) {
+                    next.linkExternal(user);
                     return true;
                 }
             }

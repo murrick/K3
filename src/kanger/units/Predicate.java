@@ -45,12 +45,13 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(nameId);
+        dos.writeLong(name.getId());
         dos.writeInt(range);
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(name == null) {
+            this.user = user;
             name = user.getMind().getTerms().get(nameId);
         }
     }
@@ -84,8 +85,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     public Set<Domain> getSolves() {
         Set<Domain> set = new HashSet<>();
         for (Record d : user.getMind().getDatabase()) {
-            //TODO: Откуда тут null????
-            if (/*d != null &&*/ getId() == d.getDomain().getPredicate().getId()) {
+            if (getId() == d.getDomain().getPredicate().getId()) {
                 set.add(d.getDomain());
             }
         }

@@ -60,8 +60,9 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(tree.isEmpty()) {
+            this.user = user;
             orig = user.getMind().getTerms().get(origId);
             tree.clear();
             for (long id : treeIds) {

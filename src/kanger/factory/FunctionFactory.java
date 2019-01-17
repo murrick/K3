@@ -94,7 +94,7 @@ public class FunctionFactory implements Iterable<Function> {
                 t = (Function) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 //TODO: Сделать runtime error
@@ -120,6 +120,21 @@ public class FunctionFactory implements Iterable<Function> {
     @Override
     public Iterator<Function> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage);
+        return new FunctionIterator(true, cache, storage);
     }
+
+    public class FunctionIterator extends DataIterator {
+
+        public FunctionIterator(boolean backward, Cache cache, Storage storage) {
+            super(backward, cache, storage);
+        }
+
+        @Override
+        public Identifiable next() {
+            Identifiable next = super.next();
+            next.linkExternal(user);
+            return next;
+        }
+    }
+
 }

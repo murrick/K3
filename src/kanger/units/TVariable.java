@@ -46,8 +46,9 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         dos.writeLong(right.getId());
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(name == null) {
+            this.user = user;
             name = user.getMind().getTerms().get(nameId);
             right = user.getMind().getRights().get(rightId);
         }

@@ -114,7 +114,7 @@ public class PredicateFactory implements Iterable<Predicate> {
                 t = (Predicate) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -147,6 +147,21 @@ public class PredicateFactory implements Iterable<Predicate> {
     @Override
     public Iterator<Predicate> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage);
+        return new PredicateIterator(true, cache, storage);
     }
+
+    public class PredicateIterator extends DataIterator {
+
+        public PredicateIterator(boolean backward, Cache cache, Storage storage) {
+            super(backward, cache, storage);
+        }
+
+        @Override
+        public Identifiable next() {
+            Identifiable next = super.next();
+            next.linkExternal(user);
+            return next;
+        }
+    }
+
 }

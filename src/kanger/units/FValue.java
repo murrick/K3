@@ -63,8 +63,9 @@ public class FValue implements Externalizable, Identifiable<Function> {
         dos.writeObject(condition);
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(function == null) {
+            this.user = user;
             function = user.getMind().getFunctions().get(functionId);
             value = user.getMind().getTerms().get(valueId);
             condition.linkExternal(user);

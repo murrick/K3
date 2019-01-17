@@ -93,7 +93,7 @@ public class RightFactory implements Iterable<Right> {
                 t = (Right) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -128,6 +128,21 @@ public class RightFactory implements Iterable<Right> {
     @Override
     public Iterator<Right> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage);
+        return new RightIterator(true, cache, storage);
     }
+
+    public class RightIterator extends DataIterator {
+
+        public RightIterator(boolean backward, Cache cache, Storage storage) {
+            super(backward, cache, storage);
+        }
+
+        @Override
+        public Identifiable next() {
+            Identifiable next = super.next();
+            next.linkExternal(user);
+            return next;
+        }
+    }
+
 }

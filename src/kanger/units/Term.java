@@ -127,7 +127,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         }
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
     }
 
     private void construct(Object o) {

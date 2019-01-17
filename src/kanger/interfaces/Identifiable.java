@@ -1,5 +1,7 @@
 package kanger.interfaces;
 
+import kanger.User;
+
 public interface Identifiable<T> {
 
     long getId();
@@ -10,5 +12,5 @@ public interface Identifiable<T> {
 
     boolean equalsTo(T to);
 
-    void linkExternal();
+    void linkExternal(User user);
 }

@@ -102,13 +102,13 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private long getNext(long id, NavigableMap<Long, IndexOne> block) throws IOException {
         IndexOne head = getHead(id);
         loadBlock(head, block);
-        Long next = currentBlock.higherKey(id);
+        Long next = block.higherKey(id);
         if (next != null) {
             return next;
         } else if (baseIndex.higherKey(head.getId()) != null) {
             head = baseIndex.higherEntry(head.getId()).getValue();
             loadBlock(head, block);
-            return currentBlock.firstKey();
+            return block.firstKey();
         } else {
             return -1;
         }
@@ -117,13 +117,13 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private long getPrevious(long id, NavigableMap<Long, IndexOne> block) throws IOException {
         IndexOne head = getTail(id);
         loadBlock(head, block);
-        Long next = id == -1 ? currentBlock.lastKey() : currentBlock.lowerKey(id);
+        Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
         if (next != null) {
             return next;
         } else if (baseIndex.lowerKey(head.getId()) != null) {
             head = baseIndex.lowerEntry(head.getId()).getValue();
             loadBlock(head, block);
-            return currentBlock.lastKey();
+            return block.lastKey();
         } else {
             return -1;
         }

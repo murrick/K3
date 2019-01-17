@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * Created by murray on 25.05.15.
  */
-public class DatabaseFactory implements Iterable<Record>{
+public class DatabaseFactory implements Iterable<Record> {
 
     public static final String SCHEMA = "database";
 
@@ -93,7 +93,6 @@ public class DatabaseFactory implements Iterable<Record>{
     }
 
 
-
     public Record add(Domain d) {
         Record p = find(d.getPredicate(), d.isAntc(), d.getArguments());
         if (p != null) {
@@ -115,9 +114,9 @@ public class DatabaseFactory implements Iterable<Record>{
         } else {
             ArgList list = null;
             if (arg != null) {
-                if(isQuery) {
+                if (isQuery) {
                     list = arg.convert();
-                    for(TValue t : list.getTValues(true)) t.setQuery();
+                    for (TValue t : list.getTValues(true)) t.setQuery();
                 } else {
                     list = arg.convertBase();
                 }
@@ -171,7 +170,7 @@ public class DatabaseFactory implements Iterable<Record>{
                 t = (Record) user.getStorage(SCHEMA).get(id);
                 if (t != null) {
                     cache.add(t);
-                    t.linkExternal();
+                    t.linkExternal(user);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -244,6 +243,20 @@ public class DatabaseFactory implements Iterable<Record>{
     @Override
     public Iterator<Record> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage);
+        return new RecordIterator(true, cache, storage);
+    }
+
+    public class RecordIterator extends DataIterator {
+
+        public RecordIterator(boolean backward, Cache cache, Storage storage) {
+            super(backward, cache, storage);
+        }
+
+        @Override
+        public Identifiable next() {
+            Identifiable next = super.next();
+            next.linkExternal(user);
+            return next;
+        }
     }
 }

@@ -73,8 +73,9 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(predicate == null) {
+            this.user = user;
             predicate = user.getMind().getPredicates().get(predicateId);
             right = user.getMind().getRights().get(rightId);
             arguments.linkExternal(user);

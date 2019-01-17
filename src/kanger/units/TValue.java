@@ -72,8 +72,9 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         }
     }
 
-    public void linkExternal() {
+    public void linkExternal(User user) {
         if(value == null) {
+            this.user = user;
             value = user.getMind().getTerms().get(valueId);
             tVar = user.getMind().getTVars().get(tVarId);
             for (Cause c : causes) {
