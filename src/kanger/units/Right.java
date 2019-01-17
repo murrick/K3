@@ -61,11 +61,13 @@ public class Right implements Externalizable, Identifiable<Right> {
     }
 
     public void linkExternal() {
-        orig = user.getMind().getTerms().get(origId);
-        tree.clear();
-        for(long id : treeIds) {
-            Tree t = user.getMind().getTrees().get(id);
-            tree.add(t);
+        if(tree.isEmpty()) {
+            orig = user.getMind().getTerms().get(origId);
+            tree.clear();
+            for (long id : treeIds) {
+                Tree t = user.getMind().getTrees().get(id);
+                tree.add(t);
+            }
         }
     }
 
@@ -89,11 +91,6 @@ public class Right implements Externalizable, Identifiable<Right> {
     @Override
     public void setId(long id) {
         this.id = id;
-    }
-
-    @Override
-    public Right getNext() {
-        return null;
     }
 
     public Term getOrig() {

@@ -1,24 +1,23 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.UnitIterator;
+import kanger.interfaces.Identifiable;
+import kanger.storage.Cache;
 import kanger.units.FValue;
 import kanger.units.Function;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
-public class FValueFactory implements Iterable<FValue> {
-    private FValue root = null;
-    private long lastID = 0;
+public class FValueFactory { //implements Iterable<FValue> {
 
-    private Stack<Object[]> stack = new Stack<>();
+    public static final String SCHEMA = "fvalues";
 
+    private long lastId = 0;
+    private long firstId = 0;
+
+    private Cache cache = new Cache();
     private User user = null;
 
     public FValueFactory(User user) {
@@ -28,25 +27,46 @@ public class FValueFactory implements Iterable<FValue> {
 
     public void transaction(FValueFactory base) {
         if (base != null) {
-            root = base.root;
-            lastID = base.lastID;
+            lastId = base.lastId;
+            firstId = base.lastId;
+            cache.add(base.cache);
         } else {
-            root = null;
-            lastID = 0;
+            lastId = 0;
+            firstId = 0;
+            cache.clear();
         }
-        stack.clear();
-        mark();
     }
 
     public void commit(FValueFactory base) {
         List<FValue> list = new ArrayList();
-        for (FValue p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (p.getId() < base.firstId) {
+                break;
+            }
+            list.add(0, (FValue) p);
         }
         for (FValue p : list) {
-            p.setNext(root);
-            root = p;
-            p.setId(lastID++);
+            p.setId(lastId++);
+            cache.add(p);
+        }
+    }
+
+    public void update() {
+        if (!user.isClosed()) {
+            try {
+                for (Identifiable p : cache) {
+                    if (p.getId() < firstId) {
+                        break;
+                    }
+                    user.getStorage(SCHEMA).add(p);
+                }
+                cache.clear();
+                firstId = lastId;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -55,9 +75,8 @@ public class FValueFactory implements Iterable<FValue> {
         if (t == null) {
             if (f.isComplete()) {
                 t = new FValue(f, user);
-                t.setNext(root);
-                root = t;
-                t.setId(lastID++);
+                t.setId(lastId++);
+                cache.add(t);
             } else {
                 return null;
             }
@@ -65,42 +84,40 @@ public class FValueFactory implements Iterable<FValue> {
         return t;
     }
 
-//    public FValue get(Function f) {
-//        for (FValue v = root; v != null; v = v.getNext()) {
-//            if (v.getFunc().getId() == f.getId() && v.isActual(f)) {
-//                return v;
-//            }
-//        }
-//        return null;
-//    }
-//
 
     public FValue find(Function f) {
-        for (FValue t = root; t != null; t = t.getNext()) {
-            if (t.equalsTo(f)) {
-                return t;
+        FValue temp = new FValue(f, user);
+        for (Identifiable one : cache.find(temp.getHash())) {
+            if (one.equalsTo(f)) {
+                return (FValue) one;
+            }
+        }
+        if (!user.isClosed()) {
+            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                if (one.equalsTo(f)) {
+                    return (FValue) one;
+                }
             }
         }
         return null;
     }
 
     public FValue get(long id) {
-        for (FValue t = root; t != null; t = t.getNext()) {
-            if (id == t.getId()) {
-                return t;
+        FValue t = (FValue) cache.get(id);
+        if (t == null) {
+            try {
+                t = (FValue) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    cache.add(t);
+                    t.linkExternal();
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
-        return null;
+        return t;
     }
 
-    public FValue getRoot() {
-        return root;
-    }
-
-//    public void setRoot(FValue o) {
-//        root = o;
-//    }
-//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFValues());
@@ -110,128 +127,29 @@ public class FValueFactory implements Iterable<FValue> {
     }
 
     public void mark() {
-        stack.push(new Object[]{root, lastID});
+        cache.mark();
     }
 
 
     public void commit() {
-        if (stack.size() > 1) {
-            stack.pop();
-        }
+        cache.commit();
     }
 
     public void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            FValue saved = (FValue) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if (stack.isEmpty()) {
-            mark();
-        }
+        cache.release();
     }
-
-    //    public void commit() {
-//        if (!stack.empty()) {
-//            Object[] pop = stack.pop();
-//            FValue saved = (FValue) pop[0];
-//            lastID = (long) pop[1];
-//
-//            FValue t = root;
-//            FValue q = root;
-//            while (t != null && t != saved) {
-//                if (!t.isClosed()) {
-//                    if (t == root) {
-//                        root = t = q = t.getNext();
-//                    } else {
-//                        q.setNext(t.getNext());
-//                        t = q.getNext();
-//                    }
-//                } else {
-//                    q = t;
-//                    t = t.getNext();
-//                }
-//            }
-//        }
-//        if (stack.isEmpty()) {
-//            mark();
-//        }
-//    }
-//
-//    public void release() {
-//        if (!stack.empty()) {
-//            Object[] pop = stack.pop();
-//            FValue saved = (FValue) pop[0];
-////            lastID = (long) pop[1];
-//
-//            FValue t = root;
-//            FValue q = root;
-//            while (t != null && t != saved) {
-////                if (t.isBlocked()) {
-////                    if (t == root) {
-////                        root = t = q = t.getNext();
-////                    } else {
-////                        q.setNext(t.getNext());
-////                        t = q.getNext();
-////                    }
-////                } else {
-//                    q = t;
-//                    t = t.getNext();
-////                }
-//            }
-//        }
-//        if (stack.isEmpty()) {
-//            mark();
-//        }
-//    }
 
 
     public int size() {
-        int cnt = 0;
-        for (FValue q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
-        int count = size();
-        dos.writeInt(count);
-        for (FValue d = root; d != null; d = d.getNext()) {
-//            d.writeCompiledData(dos);
-        }
+    public long getLastId() {
+        return lastId;
     }
 
-    public void readCompiledData(DataInputStream dis) throws IOException, ClassNotFoundException {
-        clear();
-        lastID = dis.readLong();
-        int count = dis.readInt();
-        FValue a = null, b = null;
-        while (count-- > 0) {
-//            b = new FValue(user).readCompiledData(dis);
-            if (a != null) {
-                a.setNext(b);
-            } else {
-                root = b;
-            }
-            a = b;
-        }
-    }
-
-    public FValue getMark() {
-        if (!stack.empty()) {
-            Object[] pop = stack.peek();
-            return (FValue) pop[0];
-        } else {
-            return null;
-        }
-    }
-
-
-    @Override
-    public Iterator<FValue> iterator() {
-        return new UnitIterator(root);
-    }
+//    @Override
+//    public Iterator<FValue> iterator() {
+//        return new UnitIterator(root);
+//    }
 }

@@ -167,6 +167,6 @@ public class DomainFactory implements Iterable<Domain> {
     @Override
     public Iterator<Domain> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(cache, storage);
+        return new DataIterator(true, cache, storage);
     }
 }

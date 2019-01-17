@@ -244,6 +244,6 @@ public class DatabaseFactory implements Iterable<Record>{
     @Override
     public Iterator<Record> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(cache, storage);
+        return new DataIterator(true, cache, storage);
     }
 }

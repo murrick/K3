@@ -33,6 +33,10 @@ public class Cache implements Iterable<Identifiable> {
         return index.size();
     }
 
+    public boolean isEmpty() {
+        return index.isEmpty();
+    }
+
     public long firstKey() {
         if (index.firstKey() != null) {
             return index.firstKey();
@@ -149,6 +153,10 @@ public class Cache implements Iterable<Identifiable> {
     @Override
     public Iterator<Identifiable> iterator() {
         return new CacheIterator(true);
+    }
+
+    public Iterator<Identifiable> iterator(boolean backward) {
+        return new CacheIterator(backward);
     }
 
     public class CacheIterator implements Iterator<Identifiable> {

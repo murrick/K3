@@ -79,7 +79,6 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-
     public Right add() {
         Right p = new Right(user);
         p.setId(lastId++);
@@ -129,6 +128,6 @@ public class RightFactory implements Iterable<Right> {
     @Override
     public Iterator<Right> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(cache, storage);
+        return new DataIterator(true, cache, storage);
     }
 }

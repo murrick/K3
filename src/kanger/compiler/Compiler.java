@@ -175,8 +175,7 @@ public class Compiler {
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
-            p = new Argument(user.getMind().getTVars().createTVar(r));
-            p.getT().setName(user.getMind().getTerms().add(varName));
+            p = new Argument(user.getMind().getTVars().createTVar(user.getMind().getTerms().add(varName), r));
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(user.getMind().getTerms().createCVar(r, varName));
         }

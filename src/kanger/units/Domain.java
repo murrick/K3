@@ -74,9 +74,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public void linkExternal() {
-        predicate = user.getMind().getPredicates().get(predicateId);
-        right = user.getMind().getRights().get(rightId);
-        arguments.linkExternal(user);
+        if(predicate == null) {
+            predicate = user.getMind().getPredicates().get(predicateId);
+            right = user.getMind().getRights().get(rightId);
+            arguments.linkExternal(user);
+        }
     }
 
     public Predicate getPredicate() {
@@ -104,15 +106,6 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public void setId(long id) {
         this.id = id;
     }
-
-    @Override
-    public Domain getNext() {
-        return null;
-    }
-
-//    public void setNext(Domain next) {
-//        this.next = next;
-//    }
 
     public Argument get(int i) {
         return arguments.get(i);
@@ -694,14 +687,14 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
-    public boolean isSingleInTree() {
-        for (Tree t : getParentTrees()) {
-            if (t.getSequence().size() == 1) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    public boolean isSingleInTree() {
+//        for (Tree t : getParentTrees()) {
+//            if (t.getSequence().size() == 1) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
 //    public boolean isComplete() {
 //        for (TVariable t : getTVariables(true)) {
@@ -819,16 +812,16 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return complete;
     }
 
-    public Set<Tree> getParentTrees() {
-        Set<Tree> set = new HashSet<>();
-        for (Tree t : user.getMind().getTrees()) {
-            if (t.getSequence().contains(this)) {
-                set.add(t);
-            }
-        }
-        return set;
-    }
-
+//    public Set<Tree> getParentTrees() {
+//        Set<Tree> set = new HashSet<>();
+//        for (Tree t : user.getMind().getTrees()) {
+//            if (t.getSequence().contains(this)) {
+//                set.add(t);
+//            }
+//        }
+//        return set;
+//    }
+//
     public void pushValues() {
         List<TValue> list = new ArrayList<>();
         for (TVariable t : arguments.getTVariables(true)) {

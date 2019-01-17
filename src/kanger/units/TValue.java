@@ -24,7 +24,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     private TVariable tVar = null;
     private SortedSet<Cause> causes = new TreeSet<>();
 
-    private TValue next = null;          // Следующая переменная
+//    private TValue next = null;          // Следующая переменная
     private User user = null;
 
     private transient long valueId = -1;
@@ -73,10 +73,12 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     }
 
     public void linkExternal() {
-        value = user.getMind().getTerms().get(valueId);
-        tVar = user.getMind().getTVars().get(tVarId);
-        for (Cause c : causes) {
-            c.linkExternal(user);
+        if(value == null) {
+            value = user.getMind().getTerms().get(valueId);
+            tVar = user.getMind().getTVars().get(tVarId);
+            for (Cause c : causes) {
+                c.linkExternal(user);
+            }
         }
     }
 
@@ -110,15 +112,6 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
 
     public void setTVar(TVariable tVar) {
         this.tVar = tVar;
-    }
-
-    @Override
-    public TValue getNext() {
-        return next;
-    }
-
-    public void setNext(TValue next) {
-        this.next = next;
     }
 
     @Override

@@ -11,9 +11,9 @@ public class DataIterator implements Iterator {
     Iterator<Identifiable> cache = null;
     Iterator<Identifiable> storage = null;
 
-    public DataIterator(Cache cache, Storage storage) {
-        this.cache = cache.iterator();
-        this.storage = storage == null ? null : storage.iterator();
+    public DataIterator(boolean backward, Cache cache, Storage storage) {
+        this.cache = cache.iterator(backward);
+        this.storage = storage == null ? null : storage.iterator(backward);
     }
 
     @Override

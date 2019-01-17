@@ -21,7 +21,6 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     private int index = 0;                  // Сквозной индекс переменной
     private Right right = null;             // Ссылка на правило
 
-    private TVariable next = null;          // Следующая переменная
     private User user = null;
 
     private transient long nameId = -1;
@@ -48,8 +47,10 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     }
 
     public void linkExternal() {
-        name = user.getMind().getTerms().get(nameId);
-        right = user.getMind().getRights().get(rightId);
+        if(name == null) {
+            name = user.getMind().getTerms().get(nameId);
+            right = user.getMind().getRights().get(rightId);
+        }
     }
 
     public Term getName() {
@@ -122,13 +123,13 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //        }
     }
 
-    public void clear() {
-        user.getMind().getTValues().remove(this);
-//        if (mind.getTValues().createCVar(this).isEmpty()) {
-//            mind.getTValues().createCVar(this).setRoot(null);
-//            mind.getSubstituted().createTVar(this);
-//        }
-    }
+//    public void clear() {
+//        user.getMind().getTValues().remove(this);
+////        if (mind.getTValues().createCVar(this).isEmpty()) {
+////            mind.getTValues().createCVar(this).setRoot(null);
+////            mind.getSubstituted().createTVar(this);
+////        }
+//    }
 
     //    public TSubst addValue(Term value) throws TValueOutOfOrderException {
 //        if (!mind.getTValues().containsKey(this)) {
@@ -166,127 +167,6 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         this.right = right;
     }
 
-    @Override
-    public TVariable getNext() {
-        return next;
-    }
-
-    public void setNext(TVariable next) {
-        this.next = next;
-    }
-
-//    public List<Domain> getSrcSolves() {
-//        if (user.getMind().getTValues().get(this) != null) {
-//            return user.getMind().getTValues().get(this).getSrcSolves();
-//        } else {
-//            return null;
-//        }
-//    }
-//
-//    public List<Domain> getSrcSolves(Domain slave) {
-//        if (user.getMind().getTValues().get(this) != null) {
-//            List<Domain> list = new ArrayList<>();
-//            for (Domain d : user.getMind().getTValues().get(this).getSrcSolves()) {
-//                if (slave.equalsSolve(d)) {
-//                    list.add(d);
-//                }
-//            }
-//            return list;
-//        } else {
-//            return null;
-//        }
-//    }
-
-//    public void setSrcSolve(Domain d) {
-//        if (mind.getTValues().containsKey(this)) {
-//            mind.getTValues().put(this, new TValue());
-//        } else {
-//            mind.getTValues().createCVar(this).setSrcSolve(d);
-//        }
-//    }
-
-    //    public Domain getSrcValue() {
-//        if (mind.getTValues().containsKey(this)) {
-//            return mind.getTValues().createCVar(this).getSrcSolve();
-//        } else {
-//            return null;
-//        }
-//    }
-//
-//    public List<Domain> getDstSolves() {
-//        if (user.getMind().getTValues().get(this) != null) {
-//            return user.getMind().getTValues().get(this).getDstSolves();
-//        } else {
-//            return null;
-//        }
-//    }
-//
-//    public int getDstIndex(Domain d) {
-//        if (user.getMind().getTValues().get(this) != null) {
-//            int pos = user.getMind().getTValues().get(this).getDstSolves().indexOf(d);
-//            if (pos != -1) {
-//                return user.getMind().getTValues().get(this).getPosSolves().get(pos);
-//            } else {
-//                return -1;
-//            }
-//        } else {
-//            return -1;
-//        }
-//    }
-//
-//    public Domain getSrcSolve(int index) {
-//        if (user.getMind().getTValues().get(this) != null) {
-//            int pos = user.getMind().getTValues().get(this).getPosSolves().indexOf(index);
-//            if (pos != -1) {
-//                return user.getMind().getTValues().get(this).getSrcSolves().get(pos);
-//            } else {
-//                return null;
-//            }
-//        } else {
-//            return null;
-//        }
-//    }
-
-//    public List<Integer> getPosSolves() {
-//        if (mind.getTValues().get(this) != null) {
-//            return mind.getTValues().get(this).getPosSolves();
-//        } else {
-//            return null;
-//        }
-//    }
-
-//    public void setDstSolve(Domain d) {
-//        if (mind.getTValues().containsKey(this)) {
-//            mind.getTValues().put(this, new TValue());
-//        } else {
-//            mind.getTValues().createCVar(this).setDstSolve(d);
-//        }
-//    }
-
-//    public Domain getDstValue() {
-//        if (mind.getTValues().containsKey(this)) {
-//            return mind.getTValues().createCVar(this).getDstSolve();
-//        } else {
-//            return null;
-//        }
-//    }
-//
-//    public boolean isDestFor(Domain d) {
-//        if (mind.getTValues().containsKey(this)) {
-//            return mind.getTValues().createCVar(this).isDestFor(d);
-//        } else {
-//            return false;
-//        }
-//    }
-
-    //    public Predicate getPredicate() {
-//        return p;
-//    }
-//
-//    public void setPredicate(Predicate p) {
-//        this.p = p;
-//    }
-//
     public String getVarName() {
         switch (user.getMind().getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_INFO:
@@ -347,13 +227,13 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         return user.getMind().getTValues().isEmpty(this) || user.getMind().getTValues().get(this) == null;
     }
 
-    public TValue rewind() {
-        return user.getMind().getTValues().rewind(this);
-    }
-
-    public TValue next(TValue v) {
-        return user.getMind().getTValues().next(v);
-    }
+//    public TValue rewind() {
+//        return user.getMind().getTValues().rewind(this);
+//    }
+//
+//    public TValue next(TValue v) {
+//        return user.getMind().getTValues().next(v);
+//    }
 
 //    public TValue rewindTop() {
 //        return mind.getTValues().rewindTop(this);

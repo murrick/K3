@@ -164,7 +164,11 @@ public class Storage implements Closeable, Iterable<Identifiable> {
     }
     @Override
     public Iterator<Identifiable> iterator() {
-        return new StorageIterator();
+        return new StorageIterator(true);
+    }
+
+    public Iterator<Identifiable> iterator(boolean backward) {
+        return new StorageIterator(backward);
     }
 
     public void remove() throws IOException {
@@ -191,7 +195,11 @@ public class Storage implements Closeable, Iterable<Identifiable> {
 
     public class StorageIterator implements Iterator<Identifiable> {
 
-        Iterator iterator = index.iterator(true);
+        Iterator iterator;
+
+        public StorageIterator(boolean backward) {
+            iterator = index.iterator(backward);
+        }
 
         @Override
         public void remove() {

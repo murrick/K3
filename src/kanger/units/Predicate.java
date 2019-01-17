@@ -50,7 +50,9 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     }
 
     public void linkExternal() {
-        name = user.getMind().getTerms().get(nameId);
+        if(name == null) {
+            name = user.getMind().getTerms().get(nameId);
+        }
     }
 
     public Term getName() {
@@ -79,27 +81,8 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         this.id = id;
     }
 
-    @Override
-    public Predicate getNext() {
-        return null;
-    }
-
-//    public void setNext(Predicate next) {
-//        this.next = next;
-//    }
-
     public Set<Domain> getSolves() {
         Set<Domain> set = new HashSet<>();
-//        for(long id : mind.getProducedDomains().keySet()) {
-//            Domain d = mind.getDomains().get(id);
-//            if(d.getPredicate().getId() == getId()) {
-//                for(List<Long> args : mind.getProducedDomains().get(id)) {
-//                    Solution s = new Solution(mind, d.isAntc(), d.getPredicate(), d.getArguments());
-//                    set.add(s);
-//                }
-//            }
-//        }
-
         for (Record d : user.getMind().getDatabase()) {
             //TODO: Откуда тут null????
             if (/*d != null &&*/ getId() == d.getDomain().getPredicate().getId()) {

@@ -54,8 +54,10 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
     public void linkExternal() {
-        name = user.getMind().getTerms().get(nameId);
-        arguments.linkExternal(user);
+        if(name == null) {
+            name = user.getMind().getTerms().get(nameId);
+            arguments.linkExternal(user);
+        }
     }
 
     @Override
@@ -66,11 +68,6 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public long getId() {
         return id;
-    }
-
-    @Override
-    public Function getNext() {
-        return null;
     }
 
     public int getRange() {

@@ -1,7 +1,10 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.primitives.UnitIterator;
+import kanger.interfaces.Identifiable;
+import kanger.primitives.DataIterator;
+import kanger.storage.Cache;
+import kanger.storage.Storage;
 import kanger.units.Right;
 import kanger.units.Tree;
 
@@ -11,18 +14,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * Created by murray on 25.05.15.
  */
-public class TreeFactory implements Iterable<Tree> {
+public class TreeFactory implements Iterable<Tree>{
 
-    private Tree root = null;
-    private long lastID = 0;
+    public static final String SCHEMA = "trees";
 
-    private Stack<Object[]> stack = new Stack<>();
+    private long lastId = 0;
+    private long firstId = 0;
 
+    private Cache cache = new Cache();
     private User user = null;
 
     public TreeFactory(User user) {
@@ -32,54 +35,72 @@ public class TreeFactory implements Iterable<Tree> {
 
     public void transaction(TreeFactory base) {
         if (base != null) {
-            root = base.root;
-            lastID = base.lastID;
+            lastId = base.lastId;
+            firstId = base.lastId;
+            cache.add(base.cache);
         } else {
-            root = null;
-            lastID = 0;
+            lastId = 0;
+            firstId = 0;
+            cache.clear();
         }
-        stack.clear();
-        mark();
     }
 
     public void commit(TreeFactory base) {
         List<Tree> list = new ArrayList();
-        for (Tree p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-            list.add(0, p);
+        for (Identifiable p : base.cache) {
+            if (p.getId() < base.firstId) {
+                break;
+            }
+            list.add(0, (Tree) p);
         }
         for (Tree p : list) {
-            p.setNext(root);
-            root = p;
-            p.setId(lastID++);
+            p.setId(lastId++);
+            cache.add(p);
+        }
+    }
+
+    public void update() {
+        if (!user.isClosed()) {
+            try {
+                for (Identifiable p : cache) {
+                    if (p.getId() < firstId) {
+                        break;
+                    }
+                    user.getStorage(SCHEMA).add(p);
+                }
+                cache.clear();
+                firstId = lastId;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public Tree add(Right r) {
         Tree p = new Tree(user);
-        p.setId(lastID++);
+        p.setId(lastId++);
         p.setRight(r);
-        p.setNext(root);
-        root = p;
+        cache.add(p);
         return p;
     }
 
     public Tree get(long id) {
-        for (Tree r = root; r != null; r = r.getNext()) {
-            if (r.getId() == id) {
-                return r;
+        Tree t = (Tree) cache.get(id);
+        if (t == null) {
+            try {
+                t = (Tree) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    cache.add(t);
+                    t.linkExternal();
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
-        return null;
+        return t;
     }
-
-//    public Tree getRoot() {
-//        return root;
-//    }
-//
-//    public void setRoot(Tree o) {
-//        root = o;
-//    }
-//
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -89,56 +110,14 @@ public class TreeFactory implements Iterable<Tree> {
         }
     }
 
-    private void mark() {
-        stack.push(new Object[]{root, lastID});
-    }
-
-    private void release() {
-        if (!stack.empty()) {
-            Object[] pop = stack.pop();
-            Tree saved = (Tree) pop[0];
-            lastID = (long) pop[1];
-            root = saved;
-        }
-        if(stack.isEmpty()) {
-            mark();
-        }
-    }
-
     public int size() {
-        int cnt = 0;
-        for (Tree q = root; q != null; q = q.getNext()) {
-            ++cnt;
-        }
-        return cnt;
-    }
-
-    public void writeCompiledData(DataOutputStream dos) throws IOException {
-        dos.writeLong(lastID);
-        dos.writeInt(size());
-        for (Tree r = root; r != null; r = r.getNext()) {
-//            r.writeCompiledData(dos);
-        }
-    }
-
-    public void readCompiledData(DataInputStream dis) throws IOException {
-        clear();
-        lastID = dis.readLong();
-        int count = dis.readInt();
-        Tree a = null, b = null;
-        while (count-- > 0) {
-//            b = new Tree(user).readCompiledData(dis);
-            if (a == null) {
-                root = b;
-            } else {
-                a.setNext(b);
-            }
-            a = b;
-        }
+        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
     @Override
     public Iterator<Tree> iterator() {
-        return new UnitIterator(root);
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new DataIterator(true, cache, storage);
     }
+
 }

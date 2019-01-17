@@ -117,7 +117,6 @@ public class Data implements Closeable, Iterable<Identifiable> {
                 currentOffset = offset;
                 addToCache();
 
-
             } else {
                 data = null;
             }

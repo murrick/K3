@@ -166,12 +166,14 @@ public class Mind {
 
         terms.update();
         tVars.update();
+        tValues.update();
+        fValues.update();
         predicates.update();
         domains.update();
         database.update();
         rights.update();
+        trees.update();
         functions.update();
-
 
         user.setMind(this);
 

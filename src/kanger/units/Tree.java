@@ -23,7 +23,6 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     private List<Domain> sequence = new ArrayList<>();          // Домены
     private Right right = null;
 
-    private Tree next = null;
     private User user = null;
 
     private transient long rightId = -1;
@@ -58,9 +57,11 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     }
 
     public void linkExternal() {
-        right = user.getMind().getRights().get(rightId);
-        for (Domain d : sequence) {
-            d.linkExternal();
+        if(sequence.isEmpty()) {
+            right = user.getMind().getRights().get(rightId);
+            for (Domain d : sequence) {
+                d.linkExternal();
+            }
         }
     }
 
@@ -111,16 +112,6 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     public void setRight(Right right) {
         this.right = right;
     }
-
-    @Override
-    public Tree getNext() {
-        return next;
-    }
-
-    public void setNext(Tree next) {
-        this.next = next;
-    }
-
 
     @Override
     public Tree clone() {
@@ -187,15 +178,15 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
         return list;
     }
 
-    public Set<Tree> getRelatedTrees() {
-        Set<Tree> list = new HashSet<>();
-        for (Domain d : sequence) {
-            list.addAll(d.getPredicate().getLinkedTrees());
-        }
-        return list;
-    }
-
-
+//    public Set<Tree> getRelatedTrees() {
+//        Set<Tree> list = new HashSet<>();
+//        for (Domain d : sequence) {
+//            list.addAll(d.getPredicate().getLinkedTrees());
+//        }
+//        return list;
+//    }
+//
+//
     public List<Domain> getSystem() {
         List<Domain> list = new ArrayList<>();
         for (Domain d : sequence) {

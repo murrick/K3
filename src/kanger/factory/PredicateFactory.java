@@ -147,6 +147,6 @@ public class PredicateFactory implements Iterable<Predicate> {
     @Override
     public Iterator<Predicate> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(cache, storage);
+        return new DataIterator(true, cache, storage);
     }
 }

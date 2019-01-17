@@ -59,9 +59,11 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     }
 
     public void linkExternal() {
-        domain = user.getMind().getDomains().get(domainId);
-        for (Cause c : causes) {
-            c.linkExternal(user);
+        if(domain == null) {
+            domain = user.getMind().getDomains().get(domainId);
+            for (Cause c : causes) {
+                c.linkExternal(user);
+            }
         }
     }
 
@@ -79,15 +81,6 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
         this.id = id;
     }
 
-    @Override
-    public Record getNext() {
-        return null;
-    }
-
-//    public void setNext(Record next) {
-//        this.next = next;
-//    }
-
     public int getTag() {
         return tag;
     }
@@ -95,15 +88,6 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     public void setTag(int tag) {
         this.tag = tag;
     }
-
-    //    public boolean isQuery() {
-//        return query;
-//    }
-//
-//    public void setQuery() {
-//        this.query = true;
-//    }
-//
 
     public Set<Cause> getCauses() {
         return causes;

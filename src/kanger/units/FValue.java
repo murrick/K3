@@ -19,7 +19,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
     private Term value = null;
     private ArgList condition = new ArgList();
 
-    private FValue next = null;
+//    private FValue next = null;
     private User user = null;
 
     private transient long functionId = -1;
@@ -64,9 +64,11 @@ public class FValue implements Externalizable, Identifiable<Function> {
     }
 
     public void linkExternal() {
-        function = user.getMind().getFunctions().get(functionId);
-        value = user.getMind().getTerms().get(valueId);
-        condition.linkExternal(user);
+        if(function == null) {
+            function = user.getMind().getFunctions().get(functionId);
+            value = user.getMind().getTerms().get(valueId);
+            condition.linkExternal(user);
+        }
     }
 
 
@@ -119,33 +121,6 @@ public class FValue implements Externalizable, Identifiable<Function> {
         return function;
     }
 
-    public void setNext(FValue next) {
-        this.next = next;
-    }
-
-    @Override
-    public FValue getNext() {
-        return next;
-    }
-
-
-//    public boolean isActual(Function f) {
-//        for (int i = 0; i < function.getRange(); ++i) {
-//            if (function.getArguments().get(i).getDirtyValue() == null
-//                    || condition.get(i).getValue() == null
-//                    || function.getArguments().get(i).getDirtyValue().getId() != condition.get(i).getValue().getId()) {
-//                return false;
-//            }
-//        }
-////        for (Map.Entry<Long, Long> e : condition.entrySet()) {
-////            TVariable tv = mind.getTVars().get(e.getKey());
-////            if (tv == null || tv.isEmpty() || tv.getCurrent().getId() != e.getValue()) {
-////                return false;
-////            }
-////        }
-//        return true;
-//    }
-
     public Argument getCondition(int index) {
         return condition.get(index);
     }
@@ -153,24 +128,6 @@ public class FValue implements Externalizable, Identifiable<Function> {
     public ArgList getCondition() {
         return condition;
     }
-
-//    public boolean isClosed() {
-//        for (long id : condition.values()) {
-//            if (mind.getTValues().get(id) == null || !mind.getTValues().get(id).isClosed()) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-//
-//    public boolean isBlocked() {
-//        for (long id : condition.values()) {
-//            if (mind.getTValues().get(id) != null && mind.getTValues().get(id).isBlocked()) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 
     private String formatParam(Argument t) {
         Operation op = Parser.getOp(function.getName().toString(), function.getRange());
@@ -196,7 +153,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(function.getId());
-        buffer.append(value.getId());
+        buffer.append(value == null ? 0 : value.getId());
         buffer.append(condition.hashCode());
         return buffer.toString().hashCode();
     }
@@ -268,4 +225,5 @@ public class FValue implements Externalizable, Identifiable<Function> {
             return s + res;
         }
     }
+
 }

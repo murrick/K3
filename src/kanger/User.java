@@ -2,6 +2,7 @@ package kanger;
 
 import kanger.factory.*;
 import kanger.storage.Storage;
+import kanger.units.TValue;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,12 +26,12 @@ public class User {
         storage.put(DictionaryFactory.SCHEMA, new Storage());
         storage.put(DomainFactory.SCHEMA, new Storage());
         storage.put(FunctionFactory.SCHEMA, new Storage());
-        storage.put("fvalues", new Storage());
+        storage.put(FValueFactory.SCHEMA, new Storage());
         storage.put(PredicateFactory.SCHEMA, new Storage());
         storage.put(RightFactory.SCHEMA, new Storage());
-        storage.put("trees", new Storage());
-        storage.put("tvalues", new Storage());
-        storage.put("tvariables", new Storage());
+        storage.put(TreeFactory.SCHEMA, new Storage());
+        storage.put(TValueFactory.SCHEMA, new Storage());
+        storage.put(TVariableFactory.SCHEMA, new Storage());
 
         for (Map.Entry<String, Storage> e : storage.entrySet()) {
             e.getValue().open(name + "." + e.getKey());

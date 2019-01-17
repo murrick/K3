@@ -120,6 +120,6 @@ public class FunctionFactory implements Iterable<Function> {
     @Override
     public Iterator<Function> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(cache, storage);
+        return new DataIterator(true, cache, storage);
     }
 }

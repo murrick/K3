@@ -190,17 +190,17 @@ public class Screen {
 //                            saveCompiled(mind);
 //                            break;
                         case 'U':
-                            if(line.split(" ").length == 2) {
+                            if (line.split(" ").length == 2) {
                                 user.use(line.split("\\ ")[1]);
                                 System.out.println("Used database " + user.getStorageName());
-                            } else if(!user.isClosed()) {
+                            } else if (!user.isClosed()) {
                                 System.out.println("Used database " + user.getStorageName());
                             } else {
                                 System.out.println("No database used");
                             }
                             break;
                         case 'D':
-                            if(!user.isClosed()) {
+                            if (!user.isClosed()) {
                                 System.out.printf("Are you sure to drop database " + user.getStorageName() + "? [y/N]? ");
                                 String s = new Scanner(System.in).nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
@@ -526,12 +526,11 @@ public class Screen {
             if (!tvs.isEmpty()) {
                 System.out.printf("Right %03d: %s;\n", r.getId(), r.getOrig());
                 for (TVariable tv : tvs) {
-                    TValue v = tv.rewind();
-                    if (v != null) {
+                    Iterator<TValue> iterator = mind.getTValues().iterator(tv);
+                    if (iterator.hasNext()) {
                         do {
-//                            mind.getTValues().set(tv, v);
-                            System.out.println("\t" + tv.getVarName() + "=" + v.getValue());
-                        } while ((v = tv.next(v)) != null);
+                            System.out.println("\t" + tv.getVarName() + "=" + iterator.next().getValue());
+                        } while (iterator.hasNext());
                     }
                 }
             }
@@ -787,12 +786,13 @@ public class Screen {
             showTree(mind, r);
         } else {
             TVariable t = tset.last(); //.get(tIndex);
-            TValue v = t.rewind();
-            if (v != null) {
+            Iterator<TValue> iterator = mind.getTValues().iterator(t);
+            if (iterator.hasNext()) {
                 do {
+                    TValue v = iterator.next();
                     mind.getTValues().set(t, v);
                     showTreeWithValues(mind, r, tset.headSet(t));
-                } while ((v = t.next(v)) != null);
+                } while (iterator.hasNext());
             } else {
                 showTreeWithValues(mind, r, tset.headSet(t));
             }

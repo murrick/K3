@@ -242,15 +242,6 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         this.right = r;
     }
 
-    @Override
-    public Term getNext() {
-        return null;
-    }
-
-//    public void setNext(Term next) {
-//        this.next = next;
-//    }
-
     public boolean isCVariable() {
         return index > 0;
     }

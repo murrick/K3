@@ -32,7 +32,6 @@ public class Linker {
 
         user.getMind().getClosedTrees().clear();
 
-
         for (Function f : user.getMind().getFunctions()) {
             if (!f.isCalculable()) {
                 new Calculator(user).calculate(f, logging);
@@ -50,10 +49,9 @@ public class Linker {
             }
         }
 
-
         long saveR;
-        TValue saveT;
-        FValue saveF;
+        long saveT;
+        long saveF;
 
         int passCounter = 0;
         do {
@@ -63,17 +61,17 @@ public class Linker {
             }
 
             saveR = user.getMind().getDatabase().getLastId();
-            saveT = user.getMind().getTValues().getRoot();
-            saveF = user.getMind().getFValues().getRoot();
+            saveT = user.getMind().getTValues().getLastId();
+            saveF = user.getMind().getFValues().getLastId();
 
 
             final Map<Right, Set<Cause>> causes = new HashMap<>();
 
-            SortedSet<Tree> treeSet = new TreeSet<>();
-//            if (right == null) {
-            for (Tree tree : user.getMind().getTrees()) {
-                treeSet.add(tree);
-            }
+//            SortedSet<Tree> treeSet = new TreeSet<>();
+////            if (right == null) {
+//            for (Tree tree : user.getMind().getTrees()) {
+//                treeSet.add(tree);
+//            }
 //            } else {
 //                Set<Right> rights = new HashSet<>();
 //                for (Tree tree : right.getTree()) {
@@ -91,6 +89,17 @@ public class Linker {
             for (Right r : user.getMind().getRights()) {
 
                 user.getMind().getProducedDomains().clear();
+//                final Set<Domain> waiters = new HashSet<>();
+//                for (Tree tree : r.getTree()) {
+//                    if (tree.getSequence().size() == 1) {
+//                        if (!tree.getSequence().get(0).getArguments().getTVariables(true).isEmpty()) {
+//                            waiters.add(tree.getSequence().get(0));
+//                        } else {
+//                            tree.getSequence().get(0).setStored();
+//                        }
+//                    }
+//                }
+
 //            user.getMind().getExcludedDomains().clear();
                 //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
 
@@ -127,34 +136,32 @@ public class Linker {
 
 
         } while (saveR != user.getMind().getDatabase().getLastId()
-                || saveT != user.getMind().getTValues().getRoot()
-                || saveF != user.getMind().getFValues().getRoot()
+                || saveT != user.getMind().getTValues().getLastId()
+                || saveF != user.getMind().getFValues().getLastId()
         );
     }
 
     private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, IRunnable runnable) {
         boolean result = false;
-        if (tvars == null) {
-            tvars = new TreeSet<>();
-            for (TVariable t : user.getMind().getTVars()) {
-                tvars.add(t);
-            }
-        }
+//        if (tvars == null) {
+//            tvars = new TreeSet<>();
+//            for (TVariable t : user.getMind().getTVars()) {
+//                tvars.add(t);
+//            }
+//        }
         if (tvars.isEmpty()) {
-
             result = (boolean) runnable.run(logging);
-
         } else {
             TVariable t = tvars.last();
-            TValue v = t.rewind();
-            if (v != null) {
+            Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
+            if (iterator.hasNext()) {
                 do {
+                    TValue v = iterator.next();
                     user.getMind().getTValues().set(t, v);
                     if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                         result = true;
                     }
-                } while ((v = t.next(v)) != null);
-
+                } while (iterator.hasNext());
             } else {
                 if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                     result = true;
@@ -169,6 +176,7 @@ public class Linker {
         boolean result = false;
         if (treeSlave.getSequence().size() == 1) {
             for (Domain slave : treeSlave.getSequence()) {
+                //TODO: Что-то надо придумывать с потоком getLinkedTrees
                 for (Tree treeMaster : slave.getPredicate().getLinkedTrees()) {
                     for (Domain master : treeMaster.getSequence()) {
                         if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
@@ -450,7 +458,7 @@ public class Linker {
                 for (ArgList args : tags.getValue()) {
                     result = true;
 
-                    for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                    for (int i = 0; i < args.size(); /*d.getPredicate().getRange();*/ ++i) {
                         if (d.getArguments().get(i).isTSet()) {
                             if (d.getArguments().get(i).getT().find(args.get(i).getValue()) != null) {
                                 d.getArguments().get(i).getT().setValue(args.get(i).getValue());
