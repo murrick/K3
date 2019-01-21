@@ -57,7 +57,7 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     }
 
     public void linkExternal(User user) {
-        if(sequence.isEmpty()) {
+        if (sequence.isEmpty()) {
             this.user = user;
             right = user.getMind().getRights().get(rightId);
             for (Domain d : sequence) {
@@ -138,7 +138,7 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(right.getId());
-        for(Domain d : sequence) {
+        for (Domain d : sequence) {
             buffer.append(d.getId());
         }
         return buffer.toString().hashCode();
@@ -163,23 +163,23 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
         Set<TVariable> list = new HashSet<>();
         for (Domain d : sequence) {
             for (TVariable t : d.getArguments().getTVariables(full)) {
-                    list.add(t);
+                list.add(t);
             }
         }
         return list;
     }
 
-    public Set<TVariable> getRelatedTVariables(boolean full) {
-        Set<TVariable> list = new HashSet<>();
-        for (Domain d : sequence) {
-            for (TVariable t : d.getRelatedTVariables(full)) {
-                    list.add(t);
-            }
-        }
-        return list;
-    }
+//    public Set<TVariable> getRelatedTVariables(boolean full) {
+//        Set<TVariable> list = new HashSet<>();
+//        for (Domain d : sequence) {
+//            for (TVariable t : d.getRelatedTVariables(full)) {
+//                list.add(t);
+//            }
+//        }
+//        return list;
+//    }
 
-//    public Set<Tree> getRelatedTrees() {
+    //    public Set<Tree> getRelatedTrees() {
 //        Set<Tree> list = new HashSet<>();
 //        for (Domain d : sequence) {
 //            list.addAll(d.getPredicate().getLinkedTrees());
@@ -212,6 +212,15 @@ public class Tree implements Comparable<Tree>, Externalizable, Identifiable<Tree
             list.addAll(d.getFunctions());
         }
         return list;
+    }
+
+    public boolean contains(Predicate predicate) {
+        for (Domain d : sequence) {
+            if (d.getPredicate().getId() == predicate.getId()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean contains(Domain dom) {

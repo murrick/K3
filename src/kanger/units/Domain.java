@@ -201,13 +201,13 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         this.antc = antc;
     }
 
-    public Set<TVariable> getRelatedTVariables(boolean full) {
-        Set<TVariable> set = new HashSet<>();
-        for (Domain d : predicate.getRelates()) {
-            set.addAll(d.getArguments().getTVariables(full));
-        }
-        return set;
-    }
+//    public Set<TVariable> getRelatedTVariables(boolean full) {
+//        Set<TVariable> set = new HashSet<>();
+//        for (Domain d : predicate.getRelates()) {
+//            set.addAll(d.getArguments().getTVariables(full));
+//        }
+//        return set;
+//    }
 
 //    public Set<Domain> getParents() {
 //        return parents;

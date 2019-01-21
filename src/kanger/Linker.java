@@ -177,7 +177,7 @@ public class Linker {
         if (treeSlave.getSequence().size() == 1) {
             for (Domain slave : treeSlave.getSequence()) {
                 //TODO: Что-то надо придумывать с потоком getLinkedTrees
-                for (Tree treeMaster : slave.getPredicate().getLinkedTrees()) {
+                for (Tree treeMaster : user.getMind().getRights().getLinkedTrees(slave.getPredicate())) {
                     for (Domain master : treeMaster.getSequence()) {
                         if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
 

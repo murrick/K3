@@ -120,9 +120,18 @@ public class Right implements Externalizable, Identifiable<Right> {
         return x;
     }
 
+    public boolean contains(Predicate predicate) {
+        for(Tree t : tree) {
+            if(t.contains(predicate)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 
-//    public Set<Right> getActualRights() {
+
+    //    public Set<Right> getActualRights() {
 //        Set<Right> set = new HashSet<>();
 //        Set<Predicate> preds = new HashSet<>();
 //        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {

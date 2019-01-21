@@ -8,13 +8,12 @@ import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
 import kanger.storage.Storage;
 import kanger.units.Domain;
+import kanger.units.Predicate;
 import kanger.units.Right;
 import kanger.units.Tree;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -142,6 +141,141 @@ public class RightFactory implements Iterable<Right> {
             Identifiable next = super.next();
             next.linkExternal(user);
             return next;
+        }
+    }
+
+    public LinkedRights getLinkedRights(Predicate predicate) {
+        return new LinkedRights(predicate);
+    }
+
+    public class LinkedRights implements Iterable<Right> {
+        private Predicate predicate;
+        private Right current;
+        private Iterator<Right> iterator;
+
+        public LinkedRights(Predicate p) {
+            predicate = p;
+            iterator = new RightIterator(true, cache, user.isClosed() ? null : user.getStorage(SCHEMA));
+            current = null;
+            boolean found = false;
+            while (iterator.hasNext()) {
+                current = iterator.next();
+                if (current.contains(predicate)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                current = null;
+            }
+        }
+
+        @Override
+        public Iterator<Right> iterator() {
+            return new Iterator<Right>() {
+                @Override
+                public boolean hasNext() {
+                    return current != null;
+                }
+
+                @Override
+                public Right next() {
+                    Right right = current;
+                    boolean found = false;
+                    while (iterator.hasNext()) {
+                        current = iterator.next();
+                        if (current.contains(predicate)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        current = null;
+                    }
+                    return right;
+                }
+            };
+        }
+    }
+
+
+    public LinkedTrees getLinkedTrees(Predicate predicate) {
+        return new LinkedTrees(predicate);
+    }
+
+    public class LinkedTrees implements Iterable<Tree> {
+        private Predicate predicate;
+        private Right current;
+        private int index = -1;
+        private Iterator<Right> iterator;
+
+        public LinkedTrees(Predicate p) {
+            predicate = p;
+            iterator = new RightIterator(true, cache, user.isClosed() ? null : user.getStorage(SCHEMA));
+            current = null;
+            boolean found = false;
+            while (iterator.hasNext()) {
+                current = iterator.next();
+                for (index = 0; index < current.getTree().size(); ++index) {
+                    if (current.getTree().get(index).contains(predicate)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    break;
+                }
+            }
+            if (!found) {
+                current = null;
+                index = -1;
+            }
+        }
+
+        @Override
+        public Iterator<Tree> iterator() {
+            return new Iterator<Tree>() {
+                @Override
+                public boolean hasNext() {
+                    return current != null && index != -1;
+                }
+
+                @Override
+                public Tree next() {
+                    Right right = current;
+                    int ix = index;
+                    boolean found = false;
+
+                    ++index;
+                    for (; index < current.getTree().size(); ++index) {
+                        if (current.getTree().get(index).contains(predicate)) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        while (iterator.hasNext()) {
+                            current = iterator.next();
+                            for (index = 0; index < current.getTree().size(); ++index) {
+                                if (current.getTree().get(index).contains(predicate)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found) {
+                                break;
+                            }
+                        }
+                    }
+                    if (!found) {
+                        current = null;
+                        index = -1;
+                    }
+
+                    return right.getTree().get(ix);
+                }
+            };
         }
     }
 
