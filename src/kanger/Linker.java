@@ -422,10 +422,10 @@ public class Linker {
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
+                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + user.getMind().getDomains().get(c.getDstId()).getRight());
                     rightShowed = true;
                 }
-                user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
+                user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + user.getMind().getDomains().get(c.getSrcId()).toString(c.getArguments()));
             }
         }
     }

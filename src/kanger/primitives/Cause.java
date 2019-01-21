@@ -6,13 +6,10 @@ import kanger.units.Domain;
 import java.io.*;
 
 public class Cause implements Externalizable, Comparable<Cause> {
-    private Domain src = null;
-    private Domain dst = null;
+    private long srcId = -1;
+    private long dstId = -1;
     private ArgList arguments = null;
     private int index = -1;
-
-    private transient long srcId = -1;
-    private transient long dstId = -1;
 
     public Cause() {
 
@@ -20,8 +17,8 @@ public class Cause implements Externalizable, Comparable<Cause> {
 
     public Cause(int index, Domain dst, Domain src) {
         this.index = index;
-        this.dst = dst;
-        this.src = src;
+        this.dstId = dst.getId();
+        this.srcId = src.getId();
         this.arguments = src.getArguments().convertBase();
     }
 
@@ -36,31 +33,21 @@ public class Cause implements Externalizable, Comparable<Cause> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeInt(index);
-        dos.writeLong(src.getId());
-        dos.writeLong(dst.getId());
+        dos.writeLong(srcId);
+        dos.writeLong(dstId);
         dos.writeObject(arguments);
     }
 
     public void linkExternal(User user) {
-        src = user.getMind().getDomains().get(srcId);
-        dst = user.getMind().getDomains().get(dstId);
         arguments.linkExternal(user);
     }
 
-    public Domain getSrc() {
-        return src;
+    public long getSrcId() {
+        return srcId;
     }
 
-    public void setSrc(Domain src) {
-        this.src = src;
-    }
-
-    public Domain getDst() {
-        return dst;
-    }
-
-    public void setDst(Domain dst) {
-        this.dst = dst;
+    public long getDstId() {
+        return dstId;
     }
 
     public int getIndex() {
@@ -82,8 +69,8 @@ public class Cause implements Externalizable, Comparable<Cause> {
     @Override
     public int hashCode() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(this.src.getId());
-        buffer.append(this.dst.getId());
+        buffer.append(this.srcId);
+        buffer.append(this.dstId);
         buffer.append(this.index);
 //        for(Argument a: arguments) {
 //            buffer.append(a.getValue().getId());
@@ -100,10 +87,10 @@ public class Cause implements Externalizable, Comparable<Cause> {
     public boolean equals(Object o) {
         return o != null
                 && o instanceof Cause
-                && src != null && dst != null
-                && ((Cause) o).getSrc() != null && ((Cause) o).getDst() != null
-                && src.getId() == ((Cause) o).getSrc().getId()
-                && dst.getId() == ((Cause) o).getDst().getId()
+                && srcId != -1 && dstId != -1
+                && ((Cause) o).getSrcId() != -1 && ((Cause) o).getDstId() != -1
+                && srcId == ((Cause) o).getSrcId()
+                && dstId == ((Cause) o).getDstId()
                 && index == ((Cause) o).getIndex()
                 && equalsParams(((Cause) o).getArguments());
     }
@@ -125,10 +112,10 @@ public class Cause implements Externalizable, Comparable<Cause> {
 
     @Override
     public int compareTo(Cause o) {
-        if (o.getDst().getId() != dst.getId()) {
-            return (int) (o.getDst().getId() - dst.getId());
+        if (o.getDstId() != dstId) {
+            return (int) (o.getDstId() - dstId);
         } else {
-            return (int) (o.getSrc().getId() - src.getId());
+            return (int) (o.getSrcId() - srcId);
         }
     }
 }

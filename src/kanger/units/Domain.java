@@ -163,7 +163,9 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     private boolean sourceExists(Cause c) {
         for (Cause x : causes.get(arguments)) {
-            if (x.getSrc().getPredicate().getId() == c.getSrc().getPredicate().getId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
+            Domain xSrc = user.getMind().getDomains().get(x.getSrcId());
+            Domain cSrc = user.getMind().getDomains().get(c.getSrcId());
+            if (xSrc.getPredicate().getId() == cSrc.getPredicate().getId() && xSrc.getArguments().equalsBase(cSrc.getArguments())) {
                 return true;
             }
         }
@@ -179,7 +181,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                 this.causes.get(current).clear();
             }
             for (Cause c : causes) {
-                if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
+                Domain cSrc = user.getMind().getDomains().get(c.getSrcId());
+                if (c.getArguments().equalsBase(cSrc.getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
                     this.causes.get(arguments).add(c);
                 }
             }
@@ -403,8 +406,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
             TValue v = arguments.get(index).isVSet() ? arguments.get(index).getV() : arguments.get(index).getT().getCurrent();
             for (Cause s : v.getCauses()) {
                 if (s.getIndex() == index
-                        && s.getDst().getId() == id
-                        && s.getSrc().getId() == d.getId()) {
+                        && s.getDstId() == id
+                        && s.getSrcId() == d.getId()) {
                     return true;
                 }
             }

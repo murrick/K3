@@ -608,10 +608,16 @@ public class Screen {
 
         Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
         if (dest != null && !dest.getCauses().isEmpty()) {
-            System.out.printf("\t\t%sRight: %s\n", indent, dest.getCauses().toArray(new Cause[]{})[0].getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
+
+            boolean rightShowed = false;
             for (Cause c : dest.getCauses()) {
-                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString(c.getArguments()));
-                showCauses(mind, c.getSrc(), level + 1);
+                Domain dst = mind.getDomains().get(c.getDstId());
+                Domain src = mind.getDomains().get(c.getSrcId());
+                if(!rightShowed) {
+                    System.out.printf("\t\t%sRight: %s\n", indent, dst.getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
+                }
+                System.out.printf("\t\t%sCause: %s\n", indent, src.toString(c.getArguments()));
+                showCauses(mind, src, level + 1);
             }
         }
     }
