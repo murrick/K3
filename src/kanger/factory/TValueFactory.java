@@ -5,13 +5,10 @@ import kanger.interfaces.Identifiable;
 import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
 import kanger.storage.Storage;
-import kanger.units.Domain;
 import kanger.units.TValue;
 import kanger.units.TVariable;
 import kanger.units.Term;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -104,7 +101,7 @@ public class TValueFactory {
     }
 
     public boolean isEmpty(TVariable tv) {
-        return cache.isEmpty() || !current.containsKey(tv);
+        return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
     public TValue find(TVariable tv, Term v) {

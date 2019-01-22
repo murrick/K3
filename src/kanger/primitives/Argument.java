@@ -58,6 +58,9 @@ public class Argument implements Externalizable {
             default:
                 o = null;
         }
+        if(o != null) {
+            o.linkExternal(user);
+        }
     }
 
     public ArgumentType getType() {

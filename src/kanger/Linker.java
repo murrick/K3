@@ -314,6 +314,7 @@ public class Linker {
 
             for (Domain d : tree) {
                 for (Domain master : waiters) {
+
                     if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
                         for (int i = 0; i < d.getPredicate().getRange(); ++i) {
