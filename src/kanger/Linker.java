@@ -30,8 +30,6 @@ public class Linker {
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
 
-        user.getMind().getClosedTrees().clear();
-
         for (Function f : user.getMind().getFunctions()) {
             if (!f.isCalculable()) {
                 new Calculator(user).calculate(f, logging);
@@ -39,12 +37,21 @@ public class Linker {
         }
 
         final Set<Domain> waiters = new HashSet<>();
-        for (Tree tree : user.getMind().getTrees()) {
-            if (tree.getSequence().size() == 1) {
-                if (!tree.getSequence().get(0).getArguments().getTVariables(true).isEmpty()) {
-                    waiters.add(tree.getSequence().get(0));
-                } else {
-                    tree.getSequence().get(0).setStored();
+        final Map<Long, Set<Long>> links = new HashMap<>();
+        for(Right r : user.getMind().getRights()) {
+            for (List<Domain> tree : r.getTree()) {
+                if (tree.size() == 1) {
+                    if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
+                        waiters.add(tree.get(0));
+                    } else {
+                        tree.get(0).setStored();
+                    }
+                }
+                for(Domain d : tree) {
+                    if(!links.containsKey(d.getPredicate().getId())) {
+                        links.put(d.getPredicate().getId(), new HashSet<>());
+                    }
+                    links.get(d.getPredicate().getId()).add(r.getId());
                 }
             }
         }
@@ -104,11 +111,13 @@ public class Linker {
                 //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
 
 //            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-                for (Tree tree : r.getTree()) {
+                for (List<Domain> tree : r.getTree()) {
 
-                    final Tree t = tree;
+                    final List<Domain> t = tree;
                     SortedSet<TVariable> tvars = new TreeSet<>();
-                    tvars.addAll(t.getTVariables(true));
+                    for(Domain d : tree) {
+                        tvars.addAll(d.getArguments().getTVariables(true));
+                    }
 
                     rotateVariables(tvars, logging, new IRunnable() {
                         @Override
@@ -116,7 +125,7 @@ public class Linker {
                             boolean result = false;
                             boolean logging = (boolean) o;
 
-                            if (linkDomains(t, causes, logging)) {
+                            if (linkDomains(t, links, causes, logging)) {
                                 result = true;
                             }
                             if (calcFunctions(t, causes, logging)) {
@@ -171,71 +180,75 @@ public class Linker {
         return result;
     }
 
-    private boolean linkDomains(Tree treeSlave, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean linkDomains(List<Domain> treeSlave, Map<Long, Set<Long>>  links, Map<Right, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
-        if (treeSlave.getSequence().size() == 1) {
-            for (Domain slave : treeSlave.getSequence()) {
-                //TODO: Что-то надо придумывать с потоком getLinkedTrees
-                for (Tree treeMaster : user.getMind().getRights().getLinkedTrees(slave.getPredicate())) {
-                    for (Domain master : treeMaster.getSequence()) {
-                        if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
+        if (treeSlave.size() == 1) {
+            for (Domain slave : treeSlave) {
+                if (links.containsKey(slave.getPredicate().getId())) {
+                    for (long id : links.get(slave.getPredicate().getId())) {
+                        Right right = user.getMind().getRights().get(id);
+                        for (List<Domain> treeMaster : right.getTree()) {
+                            for (Domain master : treeMaster) {
+                                if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
 
-                            TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
-                            TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
+                                    TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
+                                    TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
 
-                            user.getMind().getTValues().mark();
-                            user.getMind().getFValues().mark();
+                                    user.getMind().getTValues().mark();
+                                    user.getMind().getFValues().mark();
 
-                            boolean success = true;
-                            boolean applied = false;
+                                    boolean success = true;
+                                    boolean applied = false;
 
-                            for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                                    for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
 
-                                if (master.get(i).isTSet()
-                                        && !slave.get(i).isEmpty()
-                                        && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                    TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
-                                    if (s == null) {
-                                        s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
-                                        result = true;
+                                        if (master.get(i).isTSet()
+                                                && !slave.get(i).isEmpty()
+                                                && master.getVarOrder(i) >= slave.getVarOrder(i)) {
+                                            TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
+                                            if (s == null) {
+                                                s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
+                                                result = true;
+                                            }
+                                            substMaster[i] = s;
+                                            applied = true;
+                                        }
+
+                                        if (slave.get(i).isTSet()
+                                                && !master.get(i).isEmpty()
+                                                && slave.getVarOrder(i) >= master.getVarOrder(i)) {
+                                            TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
+                                            if (s == null) {
+                                                s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
+                                                result = true;
+                                            }
+                                            substSlave[i] = s;
+                                            applied = true;
+                                        }
+
+                                        if (!applied) {
+                                            if (master.get(i).isEmpty()
+                                                    || slave.get(i).isEmpty()
+                                                    || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                                                success = false;
+                                                break;
+                                            } else {
+                                                substMaster[i] = null;
+                                                substSlave[i] = null;
+                                            }
+                                        }
                                     }
-                                    substMaster[i] = s;
-                                    applied = true;
-                                }
-
-                                if (slave.get(i).isTSet()
-                                        && !master.get(i).isEmpty()
-                                        && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                    TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
-                                    if (s == null) {
-                                        s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
-                                        result = true;
-                                    }
-                                    substSlave[i] = s;
-                                    applied = true;
-                                }
-
-                                if (!applied) {
-                                    if (master.get(i).isEmpty()
-                                            || slave.get(i).isEmpty()
-                                            || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
-                                        success = false;
-                                        break;
+                                    if (success) {
+                                        user.getMind().getTValues().commit();
+                                        user.getMind().getFValues().commit();
+                                        markExcluded(substMaster, master, slave, causes, logging);
+                                        markExcluded(substSlave, slave, master, causes, logging);
                                     } else {
-                                        substMaster[i] = null;
-                                        substSlave[i] = null;
+                                        user.getMind().getTValues().release();
+                                        user.getMind().getFValues().release();
                                     }
                                 }
-                            }
-                            if (success) {
-                                user.getMind().getTValues().commit();
-                                user.getMind().getFValues().commit();
-                                markExcluded(substMaster, master, slave, causes, logging);
-                                markExcluded(substSlave, slave, master, causes, logging);
-                            } else {
-                                user.getMind().getTValues().release();
-                                user.getMind().getFValues().release();
                             }
                         }
                     }
@@ -287,7 +300,7 @@ public class Linker {
         return r != null;
     }
 
-    private boolean linkDatabase(Tree tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean linkDatabase(List<Domain> tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
 
         boolean result = false;
         boolean occurs = false;
@@ -299,7 +312,7 @@ public class Linker {
             Set<Domain> assumed = new HashSet<>();
             Set<Domain> stored = new HashSet<>();
 
-            for (Domain d : tree.getSequence()) {
+            for (Domain d : tree) {
                 for (Domain master : waiters) {
                     if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
@@ -319,7 +332,7 @@ public class Linker {
                 }
             }
 
-            for (Domain d : tree.getSequence()) {
+            for (Domain d : tree) {
                 if (d.isCalculated()) {
                     calculated.add(d);
                 } else if (d.isSystem() || !d.isComplete()) {
@@ -363,7 +376,7 @@ public class Linker {
                         }
                     }
                 }
-            } else if (!calculated.isEmpty() && tree.getSequence().size() == calculated.size()) {
+            } else if (!calculated.isEmpty() && tree.size() == calculated.size()) {
                 occurs = true;
                 for (Domain d : calculated) {
 //                    d.addCauses(causes.get(d.getRight()));
@@ -379,10 +392,10 @@ public class Linker {
                 }
             }
 
-            if (!occurs && !assumed.isEmpty() && tree.getSequence().size() > 1) {
+            if (!occurs && !assumed.isEmpty() && tree.size() > 1) {
                 candidates.clear();
                 excluded.clear();
-                for (Domain d : tree.getSequence()) {
+                for (Domain d : tree) {
                     if (d.isComplete() && !d.isCalculated() && !d.isSystem() && !assumed.contains(d)) {
                         if (!d.isExcluded()) {
                             candidates.add(d);
@@ -499,13 +512,12 @@ public class Linker {
     }
 
 
-    public boolean calcFunctions(Tree master, Map<Right, Set<Cause>> causes, boolean logging) {
+    public boolean calcFunctions(List<Domain> master, Map<Right, Set<Cause>> causes, boolean logging) {
         boolean result = false;
 
-        if (!master.getFunctions().isEmpty()) {
             if (checkSystem(master, logging)) {
-                for (Domain d : master.getSequence()) {
-                    for (Function f : d.getFunctions()) {
+                for (Domain d : master) {
+                    for (Function f : d.getArguments().getFunctions()) {
                         if (f.isCalculable() && f.isEmpty()) {
                             if (new Calculator(user).calculate(f, logging)) {
                                 result = true;
@@ -514,7 +526,6 @@ public class Linker {
                         }
                     }
                 }
-            }
         }
 
         if (result && logging) {
@@ -523,9 +534,9 @@ public class Linker {
         return result;
     }
 
-    public boolean checkSystem(Tree tree, boolean logging) {
+    public boolean checkSystem(List<Domain> tree, boolean logging) {
         boolean block = false;
-        for (Domain d : tree.getSequence()) {
+        for (Domain d : tree) {
             if (d.isSystem()) {
 
                 d.pushValues();

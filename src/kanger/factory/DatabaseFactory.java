@@ -122,12 +122,10 @@ public class DatabaseFactory implements Iterable<Record> {
                 }
             }
             Right r = user.getMind().getRights().add();
-            Tree t = user.getMind().getTrees().add(r);
-//            t.setRight(r);
-            t.setUsed();
+            List<Domain> t = new ArrayList<>();
             Domain d = user.getMind().getDomains().add(pred, antc, list, r);
             d.setRight(r);
-            t.getSequence().add(d);
+            t.add(d);
             r.getTree().add(t);
             r.setGenerated(true);
 

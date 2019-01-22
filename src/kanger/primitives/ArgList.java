@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.units.Function;
 import kanger.units.TValue;
 import kanger.units.TVariable;
 
@@ -142,6 +143,27 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
         return list;
     }
+
+    public List<Function> getFunctions() {
+        List<Function> list = new ArrayList<>();
+        for (Argument a : this) {
+            if (a.isFSet()) {
+                if (!list.contains(a.getF())) {
+                    list.add(a.getF());
+                }
+//                if (full) {
+//                    List<Function> temp = a.getF().getArguments().getFunctions(full);
+//                    for (Function t : temp) {
+//                        if (!list.contains(t)) {
+//                            list.add(t);
+//                        }
+//                    }
+//                }
+            }
+        }
+        return list;
+    }
+
 
     public List<TVariable> getTVariables(boolean full) {
         List<TVariable> list = new ArrayList<>();

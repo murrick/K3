@@ -17,16 +17,16 @@ import java.util.List;
  */
 public class Right implements Externalizable, Identifiable<Right> {
 
-    private long id = -1;                       // ID Правила
-    private Term orig = null;                   // Оригинальная строка
-    private boolean query = false;             // Вновь введенное правило
-    private boolean generated = false;         // Правило добавлено в процессе выводс
-    private List<Tree> tree = new ArrayList<>();      // Ссылка на дерево правила
+    private long id = -1;                                   // ID Правила
+    private Term orig = null;                               // Оригинальная строка
+    private boolean query = false;                          // Вновь введенное правило
+    private boolean generated = false;                      // Правило добавлено в процессе выводс
+    private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
 
     private User user = null;
 
     private transient long origId = -1;
-    private transient List<Long> treeIds = new ArrayList<>();
+    private transient List<List<Long>> treeIds = new ArrayList<>();
 
     public Right() {
     }
@@ -41,10 +41,15 @@ public class Right implements Externalizable, Identifiable<Right> {
         origId = dis.readLong();
         query = dis.readBoolean();
         generated = dis.readBoolean();
-        int count = dis.readInt();
         treeIds.clear();
+        int count = dis.readInt();
         while (count-- > 0) {
-            treeIds.add(dis.readLong());
+            List<Long> branch = new ArrayList<>();
+            int len = dis.readInt();
+            while(len-- > 0) {
+                branch.add(dis.readLong());
+            }
+            treeIds.add(branch);
         }
     }
 
@@ -55,8 +60,11 @@ public class Right implements Externalizable, Identifiable<Right> {
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
         dos.writeInt(tree.size());
-        for (Tree r : tree) {
-            dos.writeLong(r.getId());
+        for (List<Domain> branch : tree) {
+            dos.writeInt(branch.size());
+            for(Domain domain : branch) {
+                dos.writeLong(domain.getId());
+            }
         }
     }
 
@@ -65,9 +73,13 @@ public class Right implements Externalizable, Identifiable<Right> {
             this.user = user;
             orig = user.getMind().getTerms().get(origId);
             tree.clear();
-            for (long id : treeIds) {
-                Tree t = user.getMind().getTrees().get(id);
-                tree.add(t);
+            for (List<Long> ids : treeIds) {
+                List<Domain> branch = new ArrayList<>();
+                for(long id : ids) {
+                    Domain domain = user.getMind().getDomains().get(id);
+                    branch.add(domain);
+                }
+                tree.add(branch);
             }
         }
     }
@@ -80,7 +92,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         return generated;
     }
 
-    public List<Tree> getTree() {
+    public List<List<Domain>> getTree() {
         return tree;
     }
 
@@ -114,16 +126,19 @@ public class Right implements Externalizable, Identifiable<Right> {
         return tree.size();
     }
 
-    public Tree cloneTree(Tree t) {
-        Tree x = t.clone();
-        tree.add(x);
-        return x;
+    public List<Domain> cloneTree(List<Domain> branch) {
+        List<Domain> list = new ArrayList<>();
+        list.addAll(branch);
+        tree.add(list);
+        return list;
     }
 
     public boolean contains(Predicate predicate) {
-        for(Tree t : tree) {
-            if(t.contains(predicate)) {
-                return true;
+        for(List<Domain> list : tree) {
+            for(Domain d : list) {
+                if(d.getPredicate().getId() == predicate.getId()) {
+                    return true;
+                }
             }
         }
         return false;
@@ -176,8 +191,10 @@ public class Right implements Externalizable, Identifiable<Right> {
         StringBuffer buffer = new StringBuffer();
         buffer.append(query);
         buffer.append(generated);
-        for(Tree t : tree) {
-            buffer.append(t.getId());
+        for(List<Domain> list : tree) {
+            for(Domain d : list) {
+                buffer.append(d.getId());
+            }
         }
         return buffer.toString().hashCode();
     }
@@ -191,24 +208,24 @@ public class Right implements Externalizable, Identifiable<Right> {
     public int hashCode() {
         return ("" + id).hashCode();
     }
-    
+
     @Override
     public boolean equals(Object t) {
         return !(t == null || !(t instanceof Right)) && ((Right) t).id == id;
     }
 
-    public List<TVariable> getTVariables(boolean full) {
-        List<TVariable> list = new ArrayList<>();
-        for (Tree x : tree) {
-            for (TVariable t : x.getTVariables(full)) {
-                if (!list.contains(t)) {
-                    list.add(t);
-                }
-            }
-        }
-        return list;
-    }
-    
+//    public List<TVariable> getTVariables(boolean full) {
+//        List<TVariable> list = new ArrayList<>();
+//        for (Tree x : tree) {
+//            for (TVariable t : x.getTVariables(full)) {
+//                if (!list.contains(t)) {
+//                    list.add(t);
+//                }
+//            }
+//        }
+//        return list;
+//    }
+
 //    public boolean equalsBase(Right r) { 
 //        if(r == null || !(r instanceof Right)) { 
 //            return false;

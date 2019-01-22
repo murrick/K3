@@ -35,9 +35,9 @@ public class Compiler {
 //        NodeFactory n = new NodeFactory();
 //        construct(n, root, antc, Node.STILL);
 //        t = recurseTree(n.getRoot());
-        Tree t = user.getMind().getTrees().add(r);
+        List<Domain> t = new ArrayList<>();
         r.getTree().add(t);
-        construct(r, t, root, antc, new HashMap<String, Argument>(), new ArrayList<Tree>());
+        construct(r, t, root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>());
 //        user.getMind().getSolutions().clear();
 //        user.getMind().getValues().clear();
 
@@ -64,9 +64,9 @@ public class Compiler {
         return r;
     }
 
-    private void construct(Right r, Tree t, PTree root, boolean antc, Map<String, Argument> replacements, List<Tree> clones) throws ParseErrorException {
-        List<Tree> list = new ArrayList<>();
-        List<Tree> tmp = new ArrayList<>();
+    private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones) throws ParseErrorException {
+        List<List<Domain>> list = new ArrayList<>();
+        List<List<Domain>> tmp = new ArrayList<>();
         if(root == null) {
             throw new ParseErrorException(0, ParseError.EMPTY);
         }
@@ -101,13 +101,13 @@ public class Compiler {
                 }
             case Enums.CON: {
                 if (antc) {
-                    Tree x = r.cloneTree(t);
+                    List<Domain> x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), antc, replacements, list);
                     construct(r, x, root.getRight(), antc, replacements, list);
                 } else {
                     construct(r, t, root.getLeft(), antc, replacements, list);
-                    for (Tree x : list) {
+                    for (List<Domain> x : list) {
                         construct(r, x, root.getRight(), antc, replacements, tmp);
                     }
                     construct(r, t, root.getRight(), antc, replacements, tmp);
@@ -119,13 +119,13 @@ public class Compiler {
             case Enums.DIS: {
                 if (antc) {
                     construct(r, t, root.getLeft(), antc, replacements, list);
-                    for (Tree x : list) {
+                    for (List<Domain> x : list) {
                         construct(r, x, root.getRight(), antc, replacements, tmp);
                     }
                     construct(r, t, root.getRight(), antc, replacements, tmp);
                     list.addAll(tmp);
                 } else {
-                    Tree x = r.cloneTree(t);
+                    List<Domain> x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), antc, replacements, list);
                     construct(r, x, root.getRight(), antc, replacements, list);
@@ -136,13 +136,13 @@ public class Compiler {
             case Enums.IMP: {
                 if (antc) {
                     construct(r, t, root.getLeft(), !antc, replacements, list);
-                    for (Tree z : list) {
+                    for (List<Domain> z : list) {
                         construct(r, z, root.getRight(), antc, replacements, tmp);
                     }
                     construct(r, t, root.getRight(), antc, replacements, tmp);
                     list.addAll(tmp);
                 } else {
-                    Tree x = r.cloneTree(t);
+                    List<Domain> x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), !antc, replacements, list);
                     construct(r, x, root.getRight(), antc, replacements, list);
@@ -183,7 +183,7 @@ public class Compiler {
         return antc;
     }
 
-    private Tree compilePredicate(Right r, Tree t, PTree root, boolean antc, Map<String, Argument> replacements) {
+    private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements) {
 //        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
 
         Domain d = new Domain(user);
@@ -235,8 +235,7 @@ public class Compiler {
         d.getArguments().addAll(arg);
 
         d = user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRight());
-        t.getSequence().add(d);
-        return t;
+        t.add(d);
     }
 
     private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) {

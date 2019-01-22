@@ -180,6 +180,7 @@ public class TValueFactory {
     }
 
     public class TValueIterator extends DataIterator {
+
         private TVariable tVariable;
         private TValue next = null;
 

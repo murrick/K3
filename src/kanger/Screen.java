@@ -136,9 +136,9 @@ public class Screen {
                         case 'X':
                             showLog(mind, LogMode.ALL);
                             break;
-                        case 'T':
-                            showTValues(mind);
-                            break;
+//                        case 'T':
+//                            showTValues(mind);
+//                            break;
 //                    case 'A':
 //                        lastQuery = savedQuery;
 //                        break;
@@ -520,22 +520,22 @@ public class Screen {
 //        System.out.printf(formatFunc(f));
 //    }
 
-    public static void showTValues(Mind mind) {
-        for (Right r : mind.getRights()) {
-            List<TVariable> tvs = r.getTVariables(true);
-            if (!tvs.isEmpty()) {
-                System.out.printf("Right %03d: %s;\n", r.getId(), r.getOrig());
-                for (TVariable tv : tvs) {
-                    Iterator<TValue> iterator = mind.getTValues().iterator(tv);
-                    if (iterator.hasNext()) {
-                        do {
-                            System.out.println("\t" + tv.getVarName() + "=" + iterator.next().getValue());
-                        } while (iterator.hasNext());
-                    }
-                }
-            }
-        }
-    }
+//    public static void showTValues(Mind mind) {
+//        for (Right r : mind.getRights()) {
+//            List<TVariable> tvs = r.getTVariables(true);
+//            if (!tvs.isEmpty()) {
+//                System.out.printf("Right %03d: %s;\n", r.getId(), r.getOrig());
+//                for (TVariable tv : tvs) {
+//                    Iterator<TValue> iterator = mind.getTValues().iterator(tv);
+//                    if (iterator.hasNext()) {
+//                        do {
+//                            System.out.println("\t" + tv.getVarName() + "=" + iterator.next().getValue());
+//                        } while (iterator.hasNext());
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     public static void showFunctions(Mind mind, boolean showSys) {
 
@@ -737,12 +737,12 @@ public class Screen {
 //        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
         List<List<String>> list = new ArrayList<>();
         int depth = 0;
-        for (Tree t : r.getTree()) {
+        for (List<Domain> t : r.getTree()) {
             List<String> v = new ArrayList<>();
-            v.add((t.getRight().isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
+//            v.add((t.getRight().isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
             list.add(v);
             int len = 0;
-            for (Domain d : t.getSequence()) {
+            for (Domain d : t) {
                 String s = d.toString(); // + (d.isUsed() ? " *" : "");
                 len = Math.max(len, s.length());
                 v.add(s);
@@ -816,16 +816,16 @@ public class Screen {
                             (r.isQuery() ? "Q" : "") : "",
                     r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
-                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
+//                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
                     int save = mind.getDebugLevel();
                     mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
                     showTree(mind, r);
                     mind.setDebugLevel(save);
-                } else {
-                    SortedSet<TVariable> tset = new TreeSet<>();
-                    tset.addAll(r.getTVariables(true));
-                    showTreeWithValues(mind, r, tset);
-                }
+//                } else {
+//                    SortedSet<TVariable> tset = new TreeSet<>();
+//                    tset.addAll(r.getTVariables(true));
+//                    showTreeWithValues(mind, r, tset);
+//                }
             }
         }
     }

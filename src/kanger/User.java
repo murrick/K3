@@ -29,7 +29,7 @@ public class User {
         storage.put(FValueFactory.SCHEMA, new Storage());
         storage.put(PredicateFactory.SCHEMA, new Storage());
         storage.put(RightFactory.SCHEMA, new Storage());
-        storage.put(TreeFactory.SCHEMA, new Storage());
+//        storage.put(TreeFactory.SCHEMA, new Storage());
         storage.put(TValueFactory.SCHEMA, new Storage());
         storage.put(TVariableFactory.SCHEMA, new Storage());
 

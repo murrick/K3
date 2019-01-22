@@ -38,7 +38,7 @@ public class Mind {
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
     private RightFactory rights = null;                             // Список правил
-    private TreeFactory trees = null;                                // Список секвенций
+//    private TreeFactory trees = null;                                // Список секвенций
     private TVariableFactory tVars = null;                      // t-переменные
     private TValueFactory tValues = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
@@ -57,8 +57,8 @@ public class Mind {
     private LibraryStore library = null;                            // Системная библиотека функций и предикатов
     private HypotesisStore excluded = null;                                // Список исключенных гипотез
 
-    private final Set<Long> usedTrees = new HashSet<>();
-    private final Set<Long> closedTrees = new HashSet<>();
+//    private final Set<Long> usedTrees = new HashSet<>();
+//    private final Set<Long> closedTrees = new HashSet<>();
 
     private final Map<Long, Set<ArgList>> usedDomains = new HashMap<>();
     private final Map<Long, Map<Integer, Set<ArgList>>> producedDomains = new HashMap<>();
@@ -95,7 +95,7 @@ public class Mind {
         predicates.transaction(root.getPredicates());
         domains.transaction(root.getDomains());
         rights.transaction(root.getRights());
-        trees.transaction(root.getTrees());
+//        trees.transaction(root.getTrees());
         database.transaction(root.getDatabase());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
@@ -113,7 +113,7 @@ public class Mind {
         predicates = new PredicateFactory(user);                 // Предикаты
         domains = new DomainFactory(user);                          // Список доменов
         rights = new RightFactory(user);                             // Список правил
-        trees = new TreeFactory(user);                                // Список секвенций
+//        trees = new TreeFactory(user);                                // Список секвенций
 
         tVars = new TVariableFactory(user);                      // t-переменные
         tValues = new TValueFactory(user);                          // Подставленные значения
@@ -146,7 +146,7 @@ public class Mind {
         domains.commit(m.getDomains());
         database.commit(m.getDatabase());
         rights.commit(m.getRights());
-        trees.commit(m.getTrees());
+//        trees.commit(m.getTrees());
         functions.commit(m.getFunctions());
 
 //        log.commit(m.getLog());
@@ -172,7 +172,7 @@ public class Mind {
         domains.update();
         database.update();
         rights.update();
-        trees.update();
+//        trees.update();
         functions.update();
 
         user.setMind(this);
@@ -209,7 +209,7 @@ public class Mind {
         tVars.clear();
         tValues.clear();
         rights.clear();
-        trees.clear();
+//        trees.clear();
         functions.clear();
         fValues.clear();
 
@@ -303,9 +303,9 @@ public class Mind {
         return rights;
     }
 
-    public TreeFactory getTrees() {
-        return trees;
-    }
+//    public TreeFactory getTrees() {
+//        return trees;
+//    }
 
     public TVariableFactory getTVars() {
         return tVars;
@@ -559,13 +559,13 @@ public class Mind {
 //        return storedDomains;
 //    }
 
-    public Set<Long> getUsedTrees() {
-        return usedTrees;
-    }
+//    public Set<Long> getUsedTrees() {
+//        return usedTrees;
+//    }
 
-    public Set<Long> getClosedTrees() {
-        return closedTrees;
-    }
+//    public Set<Long> getClosedTrees() {
+//        return closedTrees;
+//    }
 
 //    public Set<Function> getDefined() {
 //        return defined;

@@ -435,16 +435,16 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return Tools.getTValues(arguments, full);
 //    }
 //
-    public List<Function> getFunctions() {
-        List<Function> list = new ArrayList<>();
-        for (Argument a : arguments) {
-            if (a.isFSet()) {
-                list.add(a.getF());
-            }
-        }
-        return list;
-    }
-
+//    public List<Function> getFunctions() {
+//        List<Function> list = new ArrayList<>();
+//        for (Argument a : arguments) {
+//            if (a.isFSet()) {
+//                list.add(a.getF());
+//            }
+//        }
+//        return list;
+//    }
+//
 
     public boolean isUsed() {
         if (user.getMind().getUsedDomains().containsKey(id)) {
