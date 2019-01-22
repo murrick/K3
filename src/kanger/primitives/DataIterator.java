@@ -8,30 +8,48 @@ import java.util.Iterator;
 
 public class DataIterator implements Iterator {
 
-    Iterator<Identifiable> cache = null;
-    Iterator<Identifiable> storage = null;
+    private Iterator<Identifiable> cache = null;
+    private Iterator<Identifiable> storage = null;
+    private boolean backward;
 
     public DataIterator(boolean backward, Cache cache, Storage storage) {
+        this.backward = backward;
         this.cache = cache.iterator(backward);
         this.storage = storage == null ? null : storage.iterator(backward);
     }
 
     @Override
     public boolean hasNext() {
-        if (!cache.hasNext()) {
-            if (storage == null) {
-                return false;
+        if(storage != null) {
+            if(backward) {
+                if(!cache.hasNext()) {
+                    return storage.hasNext();
+                } else {
+                    return true;
+                }
             } else {
-                return storage.hasNext();
+                if(!storage.hasNext()) {
+                    return cache.hasNext();
+                } else {
+                    return true;
+                }
             }
         } else {
-            return true;
+            return cache.hasNext();
         }
     }
 
     @Override
     public Identifiable next() {
-        return cache.hasNext() ? cache.next() : storage.next();
+        if (storage != null) {
+            if (backward) {
+                return cache.hasNext() ? cache.next() : storage.next();
+            } else {
+                return storage.hasNext() ? storage.next() : cache.next();
+            }
+        } else {
+            return cache.next();
+        }
     }
 
     @Override

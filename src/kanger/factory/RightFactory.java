@@ -173,6 +173,13 @@ public class RightFactory implements Iterable<Right> {
         @Override
         public Iterator<Right> iterator() {
             return new Iterator<Right>() {
+
+                @Override
+                public void remove() {
+                    // TODO: Implement this method
+                }
+
+                
                 @Override
                 public boolean hasNext() {
                     return current != null;
@@ -235,6 +242,13 @@ public class RightFactory implements Iterable<Right> {
         @Override
         public Iterator<Tree> iterator() {
             return new Iterator<Tree>() {
+
+                @Override
+                public void remove() {
+                    // TODO: Implement this method
+                }
+
+                
                 @Override
                 public boolean hasNext() {
                     return current != null && index != -1;
