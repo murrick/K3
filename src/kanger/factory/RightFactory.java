@@ -25,6 +25,7 @@ public class RightFactory implements Iterable<Right> {
     private long firstId = 0;
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
     public RightFactory(User user) {
@@ -33,6 +34,8 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public void transaction(RightFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -40,7 +43,6 @@ public class RightFactory implements Iterable<Right> {
         } else {
             lastId = 0;
             firstId = 0;
-            cache.clear();
         }
     }
 
@@ -87,14 +89,17 @@ public class RightFactory implements Iterable<Right> {
     public Right get(long id) {
         Right t = (Right) cache.get(id);
         if (t == null) {
-            try {
-                t = (Right) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (Right) load.get(id);
+            if (t == null) {
+                try {
+                    t = (Right) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return t;

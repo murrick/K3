@@ -62,6 +62,7 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
         if(domain == null) {
             this.user = user;
             domain = user.getMind().getDomains().get(domainId);
+            domain.linkExternal(user);
             for (Cause c : causes) {
                 c.linkExternal(user);
             }

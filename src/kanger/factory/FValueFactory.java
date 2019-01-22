@@ -18,6 +18,7 @@ public class FValueFactory {
     private long firstId = 0;
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
     public FValueFactory(User user) {
@@ -26,6 +27,8 @@ public class FValueFactory {
     }
 
     public void transaction(FValueFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -33,7 +36,6 @@ public class FValueFactory {
         } else {
             lastId = 0;
             firstId = 0;
-            cache.clear();
         }
     }
 
@@ -105,14 +107,17 @@ public class FValueFactory {
     public FValue get(long id) {
         FValue t = (FValue) cache.get(id);
         if (t == null) {
-            try {
-                t = (FValue) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (FValue) load.get(id);
+            if (t == null) {
+                try {
+                    t = (FValue) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return t;

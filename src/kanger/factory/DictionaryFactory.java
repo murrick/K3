@@ -28,6 +28,7 @@ public class DictionaryFactory {
 
     //    private Stack<Object[]> stack = new Stack<>();
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
 //    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
@@ -41,29 +42,18 @@ public class DictionaryFactory {
     }
 
     public void transaction(DictionaryFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
-//            root = base.root;
             lastId = base.lastId;
             firstId = base.firstId;
             varIndex = base.varIndex;
             cache.add(base.cache);
         } else {
-//            root = null;
             lastId = 0;
             firstId = 0;
             varIndex = 0;
-            cache.clear();
-//            if(!user.isClosed()) {
-//                try {
-//                    user.getStorage().clear();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
         }
-//        this.base = base;
-//        stack.clear();
-//        mark();
     }
 
     public void commit(DictionaryFactory base, Collection<Object> vars) {
@@ -74,9 +64,6 @@ public class DictionaryFactory {
             }
             list.add((Term) p);
         }
-//        for (Term p = base.root; p != null && (root == null || p.getId() != root.getId()); p = p.getNext()) {
-//            list.add(0, p);
-//        }
         for (Term p : list) {
             p.setId(lastId++);
             cache.add(p);
@@ -154,23 +141,18 @@ public class DictionaryFactory {
     public Term get(long id) {
         Term t = (Term) cache.get(id);
         if (t == null) {
-            try {
-                t = (Term) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
-
+            t = (Term) load.get(id);
+            if (t == null) {
+                try {
+                    t = (Term) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
-
-//        for (Term dic = root; dic != null; dic = dic.getNext()) {
-//            if (id == dic.getId()) {
-//                return dic;
-//            }
-//        }
         return t;
     }
 

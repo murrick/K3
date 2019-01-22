@@ -23,6 +23,7 @@ public class TVariableFactory {
     private long firstId = 0;
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
     public TVariableFactory(User user) {
@@ -31,6 +32,8 @@ public class TVariableFactory {
     }
 
     public void transaction(TVariableFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -38,7 +41,6 @@ public class TVariableFactory {
         } else {
             lastId = 0;
             firstId = 0;
-            cache.clear();
         }
     }
 
@@ -89,14 +91,17 @@ public class TVariableFactory {
     public TVariable get(long id) {
         TVariable t = (TVariable) cache.get(id);
         if (t == null) {
-            try {
-                t = (TVariable) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (TVariable) load.get(id);
+            if (t == null) {
+                try {
+                    t = (TVariable) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return t;

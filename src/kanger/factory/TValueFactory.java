@@ -28,6 +28,7 @@ public class TValueFactory {
     private Map<TVariable, TValue> current = new HashMap<>();
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
     public TValueFactory(User user) {
@@ -36,6 +37,9 @@ public class TValueFactory {
     }
 
     public void transaction(TValueFactory base) {
+        cache.clear();
+        load.clear();
+        current.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -43,9 +47,7 @@ public class TValueFactory {
         } else {
             lastId = 0;
             firstId = 0;
-            cache.clear();
         }
-        current.clear();
     }
 
     public void commit(TValueFactory base) {
@@ -125,14 +127,17 @@ public class TValueFactory {
     public TValue get(long id) {
         TValue t = (TValue) cache.get(id);
         if (t == null) {
-            try {
-                t = (TValue) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (TValue) load.get(id);
+            if (t == null) {
+                try {
+                    t = (TValue) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return t;

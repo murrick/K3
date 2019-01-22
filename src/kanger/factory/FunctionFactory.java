@@ -23,6 +23,7 @@ public class FunctionFactory implements Iterable<Function> {
     private long firstId = 0;
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user= null;
 
     public FunctionFactory(User user) {
@@ -31,6 +32,8 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
     public void transaction(FunctionFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -38,7 +41,6 @@ public class FunctionFactory implements Iterable<Function> {
         } else {
             lastId = 0;
             firstId = 0;
-            cache.clear();
         }
     }
 
@@ -90,15 +92,18 @@ public class FunctionFactory implements Iterable<Function> {
     public Function get(long id) {
         Function t = (Function) cache.get(id);
         if (t == null) {
-            try {
-                t = (Function) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (Function) load.get(id);
+            if (t == null) {
+                try {
+                    t = (Function) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    //TODO: Сделать runtime error
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                //TODO: Сделать runtime error
-                e.printStackTrace();
             }
         }
         return t;

@@ -27,6 +27,7 @@ public class DomainFactory implements Iterable<Domain> {
     private long firstId = 0;
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
     public DomainFactory(User user) {
@@ -35,6 +36,8 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void transaction(DomainFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -42,7 +45,6 @@ public class DomainFactory implements Iterable<Domain> {
         } else {
             lastId = 0;
             firstId = 0;
-            cache.clear();
         }
     }
 
@@ -130,14 +132,17 @@ public class DomainFactory implements Iterable<Domain> {
     public Domain get(long id) {
         Domain t = (Domain) cache.get(id);
         if (t == null) {
-            try {
-                t = (Domain) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (Domain) load.get(id);
+            if (t == null) {
+                try {
+                    t = (Domain) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return t;

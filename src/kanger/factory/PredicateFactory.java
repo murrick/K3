@@ -24,6 +24,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     private long firstId = 0;
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
     public PredicateFactory(User user) {
@@ -32,6 +33,8 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public void transaction(PredicateFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -39,7 +42,6 @@ public class PredicateFactory implements Iterable<Predicate> {
         } else {
             lastId = 0;
             firstId = 0;
-            cache.clear();
         }
     }
 
@@ -110,14 +112,17 @@ public class PredicateFactory implements Iterable<Predicate> {
     public Predicate get(long id) {
         Predicate t = (Predicate) cache.get(id);
         if (t == null) {
-            try {
-                t = (Predicate) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (Predicate) load.get(id);
+            if (t == null) {
+                try {
+                    t = (Predicate) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return t;

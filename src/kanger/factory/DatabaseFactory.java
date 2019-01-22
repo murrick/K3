@@ -29,6 +29,7 @@ public class DatabaseFactory implements Iterable<Record> {
 //    private Stack<Object[]> stack = new Stack<>();
 
     private Cache cache = new Cache();
+    private Cache load = new Cache();
     private User user = null;
 
     public DatabaseFactory(User user) {
@@ -37,6 +38,8 @@ public class DatabaseFactory implements Iterable<Record> {
     }
 
     public void transaction(DatabaseFactory base) {
+        cache.clear();
+        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -48,7 +51,6 @@ public class DatabaseFactory implements Iterable<Record> {
             lastId = 0;
             firstId = 0;
             lastTag = 0;
-            cache.clear();
         }
 //        stack.clear();
 //        mark();
@@ -91,7 +93,6 @@ public class DatabaseFactory implements Iterable<Record> {
             }
         }
     }
-
 
     public Record add(Domain d) {
         Record p = find(d.getPredicate(), d.isAntc(), d.getArguments());
@@ -164,14 +165,17 @@ public class DatabaseFactory implements Iterable<Record> {
     public Record get(long id) {
         Record t = (Record) cache.get(id);
         if (t == null) {
-            try {
-                t = (Record) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    cache.add(t);
-                    t.linkExternal(user);
+            t = (Record) load.get(id);
+            if(t == null) {
+                try {
+                    t = (Record) user.getStorage(SCHEMA).get(id);
+                    if (t != null) {
+                        load.add(t);
+                        t.linkExternal(user);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
         return t;
