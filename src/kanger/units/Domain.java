@@ -765,8 +765,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(antc);
-        buffer.append(predicate.getId());
-        buffer.append(right.getId());
+        buffer.append(predicate == null ? predicateId : predicate.getId());
+        buffer.append(right == null ? rightId : right.getId());
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
     }

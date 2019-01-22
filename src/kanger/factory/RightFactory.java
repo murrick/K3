@@ -94,8 +94,8 @@ public class RightFactory implements Iterable<Right> {
                 try {
                     t = (Right) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
-                        load.add(t);
                         t.linkExternal(user);
+                        load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();

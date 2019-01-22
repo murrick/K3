@@ -96,6 +96,7 @@ public class FValueFactory {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                one.linkExternal(user);
                 if (one.equalsTo(f)) {
                     return (FValue) one;
                 }
@@ -112,8 +113,8 @@ public class FValueFactory {
                 try {
                     t = (FValue) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
-                        load.add(t);
                         t.linkExternal(user);
+                        load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();

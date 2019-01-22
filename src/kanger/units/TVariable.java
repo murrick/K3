@@ -26,6 +26,9 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     private transient long nameId = -1;
     private transient long rightId = -1;
 
+    public TVariable() {
+    }
+
     public TVariable(User user) {
         this.user = user;
     }
@@ -47,7 +50,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     }
 
     public void linkExternal(User user) {
-        if(name == null) {
+        if (name == null) {
             this.user = user;
             name = user.getMind().getTerms().get(nameId);
             right = user.getMind().getRights().get(rightId);
@@ -187,8 +190,8 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(right.getId());
-        buffer.append(name.getId());
+        buffer.append(right == null ? rightId : right.getId());
+        buffer.append(name == null ? nameId : name.getId());
         buffer.append(index);
         return buffer.toString().hashCode();
     }
@@ -202,7 +205,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     public int hashCode() {
         return ("" + id).hashCode();
     }
-    
+
     @Override
     public boolean equals(Object t) {
         return !(t == null || !(t instanceof TVariable)) && ((TVariable) t).id == id;

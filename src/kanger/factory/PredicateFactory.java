@@ -101,6 +101,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                one.linkExternal(user);
                 if (one.equalsTo(temp)) {
                     return (Predicate) one;
                 }
@@ -117,8 +118,8 @@ public class PredicateFactory implements Iterable<Predicate> {
                 try {
                     t = (Predicate) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
-                        load.add(t);
                         t.linkExternal(user);
+                        load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();

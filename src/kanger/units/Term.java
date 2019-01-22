@@ -128,6 +128,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     }
 
     public void linkExternal(User user) {
+        this.user = user;
     }
 
     private void construct(Object o) {
@@ -385,6 +386,13 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         value = null;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }
 
 //TODO ТИП данных blob

@@ -121,6 +121,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                one.linkExternal(user);
                 if (one.equalsTo(temp)) {
                     return (Domain) one;
                 }
@@ -137,8 +138,8 @@ public class DomainFactory implements Iterable<Domain> {
                 try {
                     t = (Domain) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
-                        load.add(t);
                         t.linkExternal(user);
+                        load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();

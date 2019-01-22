@@ -808,6 +808,7 @@ public class Screen {
     public static void showRights(Mind mind, boolean showTree) {
 //        int i = 0;
         for (Right r : mind.getRights()) {
+
             System.out.printf("%sRight %03d%s: %s\n",
                     showTree ? "\n --- " : "",
                     r.getId(),

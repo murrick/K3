@@ -97,8 +97,8 @@ public class FunctionFactory implements Iterable<Function> {
                 try {
                     t = (Function) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
-                        load.add(t);
                         t.linkExternal(user);
+                        load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     //TODO: Сделать runtime error

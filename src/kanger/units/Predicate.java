@@ -199,7 +199,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(name.getId());
+        buffer.append(name == null ? nameId : name.getId());
         buffer.append(range);
         return buffer.toString().hashCode();
     }
