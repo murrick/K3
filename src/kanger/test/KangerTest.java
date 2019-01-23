@@ -48,9 +48,15 @@ public class KangerTest {
 //            mind.getValues().normalize();
             System.out.println("Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (TValue log : mind.getValues().getRoot()) {
-                String s = String.format("\tValue %03d: ", ++i);
-                System.out.println(s + log.toString());
+            for (List<TValue> row : mind.getValues().getRoot()) {
+                String s = String.format("\tRow %03d: ", ++i);
+                for (TValue log : row) {
+                    if(i != 1) {
+                        s += " ";
+                    }
+                    s += log.toString();
+                }
+                System.out.println(s);
             }
         }
         if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {

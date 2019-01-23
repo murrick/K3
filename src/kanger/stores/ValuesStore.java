@@ -2,6 +2,7 @@ package kanger.stores;
 
 import kanger.User;
 import kanger.units.TValue;
+import kanger.units.TVariable;
 import kanger.units.Term;
 
 import java.util.*;
@@ -11,7 +12,7 @@ import java.util.*;
  */
 public class ValuesStore {
 
-    private List<TValue> root = null;
+    private List<List<TValue>> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -50,6 +51,15 @@ public class ValuesStore {
 //        return m;
 //    }
 
+    private boolean containsTVar(List<TValue> row, TValue t) {
+        for(TValue v : row) {
+            if(v.getTVar().getId() == t.getTVar().getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public TValue add(int tag, TValue t) {
         if (!enableStore) {
             return null;
@@ -57,8 +67,19 @@ public class ValuesStore {
         if (root == null) {
             root = new ArrayList<>();
         }
-        if (!root.contains(t)) {
-            root.add(t);
+
+        boolean found = false;
+        for(List<TValue> row : root) {
+            if(containsTVar(row, t)) {
+                row.add(t);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            List<TValue> row = new ArrayList<>();
+            row.add(t);
+            root.add(row);
         }
         return t;
     }
@@ -83,9 +104,10 @@ public class ValuesStore {
      * Плюс сортировка
      */
 
-//    public void normalize() {
+    public void normalize() {
+
 //        List<Map<TVariable, TValue>> cnt = new ArrayList<>();
-//        for (List<TValue> s : root.values()) {
+//        for (List<TValue> s : root) {
 //            for(TValue v : s) {
 //                boolean done = false;
 //                for (Map<TVariable, TValue> map : cnt) {
@@ -108,9 +130,9 @@ public class ValuesStore {
 //        for (Map<TVariable, TValue> s : cnt) {
 //            List<TValue> set = new ArrayList<>();
 //            set.addAll(s.values());
-//            root.put(++i, set);
+//            root.add(set);
 //        }
-//
+
 //        Set<TVariable> retain = new HashSet<>();
 //        for (List<TValue> s : root.values()) {
 //            for (TValue v : s) {
@@ -153,7 +175,7 @@ public class ValuesStore {
 //        for (List<TValue> s : list) {
 //            root.put(++i, s);
 //        }
-//    }
+    }
 
     public void enable(boolean e) {
         enableStore = e;
@@ -170,9 +192,11 @@ public class ValuesStore {
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
         if(root != null) {
-                for (TValue t : root) {
-                    if (name == null || name.equals(t.getTVar().getName().getValue())) {
-                        list.add(t.getValue());
+                for (List<TValue> row : root) {
+                    for (TValue t : row) {
+                        if (name == null || name.equals(t.getTVar().getName().getValue())) {
+                            list.add(t.getValue());
+                        }
                     }
                 }
         }
@@ -183,7 +207,7 @@ public class ValuesStore {
 //        return root.indexOf(s);
 //    }
 
-    public List<TValue> getRoot() {
+    public List<List<TValue>> getRoot() {
         return root;
     }
 
