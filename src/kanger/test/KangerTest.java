@@ -119,11 +119,12 @@ public class KangerTest {
     }
 
     public static boolean test(User user, String prefix) throws IOException {
+        System.out.println("Init test system...");
         kanger.test.KangerTest cls = new kanger.test.KangerTest(user);
-        int failCount = 0;
         int successCount = 0;
         long startTime = System.currentTimeMillis();
-        System.out.println("Init test system...");
+        List<String> fails = new ArrayList<>();
+        Map<String, Double> list = new TreeMap<>();
         try {
             //TODO: В дальнейшем отключить бд для тестов
             user.close();
@@ -133,7 +134,6 @@ public class KangerTest {
             setUp.setAccessible(true);
             setUp.invoke(cls);
 
-            Map<String, Double> list = new TreeMap<>();
             for (Method method : cls.getClass().getDeclaredMethods()) {
                 if (method.getName().startsWith(prefix)) {
                     list.put(method.getName(), 0.0);
@@ -155,7 +155,7 @@ public class KangerTest {
                     list.put(name, ((System.currentTimeMillis() - t) / 1000.0));
                     ++successCount;
                 } catch (Exception e) {
-                    ++failCount;
+                    fails.add(name);
                     e.printStackTrace(System.err);
                 }
             }
@@ -163,10 +163,17 @@ public class KangerTest {
             for (Map.Entry<String, Double> e : list.entrySet()) {
                 System.out.println(e.getKey() + "\t" + e.getValue() + " sec");
             }
+            if(!fails.isEmpty()) {
+                System.out.println("====================================================");
+                System.out.println("Fails:");
+                for(String s : fails) {
+                    System.out.println(s);
+                }
+            }
             System.out.println("====================================================");
             System.out.println(" Timing: " + ((System.currentTimeMillis() - startTime) / 1000.0));
             System.out.println("Success: " + successCount);
-            System.out.println("  Fails: " + failCount);
+            System.out.println("  Fails: " + fails.size());
 
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -174,7 +181,7 @@ public class KangerTest {
             user.remove();
         }
 
-        return failCount == 0;
+        return fails.isEmpty();
     }
 
     private static void fail(String msg) throws RuntimeErrorException {
@@ -1768,6 +1775,18 @@ public class KangerTest {
         showResult(true);
         if (mind.getValues().size() != 1) {
             fail("Expected 1 values");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_07_0A() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.query("?$x $y index(qwerty) -> index(x), y : x;");
+        showResult(true);
+        if (mind.getValues().size() != 7) {
+            fail("Expected 7 values");
         }
         System.out.println("OK");
         System.out.println("====================================================");
