@@ -2,7 +2,7 @@ package kanger.compiler;
 
 import kanger.Mind;
 import kanger.enums.LibMode;
-import kanger.interfaces.IRunnable;
+import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.units.Domain;
@@ -24,13 +24,13 @@ public class SysOp {
     private final List<String> params = new ArrayList<>();
     private LibMode mode = LibMode.UNKNOWN;
     private String name = "";                   /* predefined name */
-    private IRunnable proc = null;              /* called procedure */
+    private Reactor proc = null;              /* called procedure */
     private int range = 0;
     private SysOp next = null;
 //    private boolean registered = false;
 
     public SysOp(final Mind mind) {
-        proc = new IRunnable() {
+        proc = new Reactor() {
             @Override
             public Object run(Object o) /*throws RuntimeErrorException*/ {
 
@@ -106,7 +106,7 @@ public class SysOp {
     }
 
 
-    public SysOp(LibMode mode, String name, int range, IRunnable proc) {
+    public SysOp(LibMode mode, String name, int range, Reactor proc) {
         this.mode = mode;
         this.name = name;
         this.proc = proc;
@@ -132,11 +132,11 @@ public class SysOp {
         this.name = name;
     }
 
-    public IRunnable getProc() {
+    public Reactor getProc() {
         return proc;
     }
 
-    public void setProc(IRunnable proc) {
+    public void setProc(Reactor proc) {
         this.proc = proc;
     }
 

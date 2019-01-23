@@ -761,6 +761,8 @@ public class Analiser {
 //
 //    }
 
+    //TODO: !index(qwerty); ?$x $y index(x), y : x;
+
     public boolean checkDatabase(boolean logging) {
         boolean result = false;
         for (Record p : user.getMind().getDatabase()) {

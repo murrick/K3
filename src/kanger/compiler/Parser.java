@@ -46,8 +46,8 @@ public class Parser {
             new Operation("~", "", 1, 1, 1, false, false),
 
             /* 12 */
-            new Operation("in", "_in", 12, 2, 0, false, false),
-            new Operation("in", "_in", 12, 3, 0, false, false),
+            new Operation(":", "_in", 12, 2, 0, false, false),
+            new Operation(":", "_in", 12, 3, 0, false, false),
             new Operation("<=", "_le", 12, 2, 0, false, false),
             new Operation("<", "_lr", 12, 2, 0, false, false),
             new Operation(">=", "_ge", 12, 2, 0, false, false),

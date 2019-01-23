@@ -35,7 +35,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         this.currentBlock.clear();
 
         try {
-            ras = new RandomAccessFile(file, "r");
+            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
             version = ras.readShort();
             blockSize = ras.readInt();
             do {
@@ -58,7 +58,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             }
         } catch (FileNotFoundException ex) {
             clear();
-            ras = new RandomAccessFile(file, "r");
+            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
         }
     }
 
@@ -79,7 +79,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     }
 
     public void clear() throws IOException {
-        try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
+        String path = file.getAbsolutePath();
+        path = path.substring(0, path.length() - file.getName().length());
+        new File(path).mkdirs();
+        try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
             baseIndex.clear();
             currentBlock.clear();
             ras.seek(0);
@@ -193,7 +196,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private void saveCurrentBlock() throws IOException {
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
         if (head != null) {
-            try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
+            try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
                 boolean isLast = head.getData().get(1) == 0 || head.getData().get(0) + head.getRecordSize() + head.getData().get(1) >= ras.length();
                 long blockLength = head.getData().get(1);
                 if (currentBlock.size() > BLOCK_SIZE || (!isLast && blockLength > 0 && blockLength < getBlockLength(currentBlock.values()))) {

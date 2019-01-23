@@ -3,8 +3,6 @@ package kanger.storage;
 import kanger.interfaces.Identifiable;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.*;
 
 public class Data implements Closeable, Iterable<Identifiable> {
@@ -37,14 +35,14 @@ public class Data implements Closeable, Iterable<Identifiable> {
     public void open(File file) throws IOException {
         this.file = file;
         try {
-            ras = new RandomAccessFile(file, "r");
+            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
             ras.seek(0);
             version = ras.readShort();
             headerSize = ras.readInt();
             changed = false;
         } catch (FileNotFoundException ex) {
             clear();
-            ras = new RandomAccessFile(file, "r");
+            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
         }
     }
 
@@ -56,7 +54,10 @@ public class Data implements Closeable, Iterable<Identifiable> {
     }
 
     public void clear() throws IOException {
-        try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
+        String path = file.getAbsolutePath();
+        path = path.substring(0, path.length() - file.getName().length());
+        new File(path).mkdirs();
+        try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
             ras.seek(0);
             ras.setLength(0);
             ras.writeShort(version);
@@ -175,7 +176,7 @@ public class Data implements Closeable, Iterable<Identifiable> {
     }
 
     public void remove(long offset) throws IOException {
-        try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
+        try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
             ras.seek(offset + 8);
             if (ras.getFilePointer() == offset + 8) {
                 long size = ras.readLong();
@@ -194,7 +195,7 @@ public class Data implements Closeable, Iterable<Identifiable> {
 
     private void saveCurrentBlock() throws IOException {
         if (buffer != null && data != null) {
-            try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
+            try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
                 if (currentOffset != -1) {
                     ras.seek(currentOffset);
                     blockSize = ras.readLong();

@@ -4,7 +4,7 @@ import kanger.User;
 import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
-import kanger.interfaces.IRunnable;
+import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.units.Domain;
 import kanger.units.Term;
@@ -27,7 +27,7 @@ public class Predicates {
         /// Системные предикаты
         {
 
-            put("_eq(2)", new SysOp(LibMode.PREDICATE, "_eq", 2, new IRunnable() {
+            put("_eq(2)", new SysOp(LibMode.PREDICATE, "_eq", 2, new Reactor() {
 
                 @Override
                 public Object run(Object o) {
@@ -57,7 +57,7 @@ public class Predicates {
 
 
         {
-            put("_ne(2)", new SysOp(LibMode.PREDICATE, "_ne", 2, new IRunnable() {
+            put("_ne(2)", new SysOp(LibMode.PREDICATE, "_ne", 2, new Reactor() {
                 public Object run(Object o) {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
@@ -75,7 +75,7 @@ public class Predicates {
         }
 
         {
-            put("_gr(2)", new SysOp(LibMode.PREDICATE, "_gr", 2, new IRunnable() {
+            put("_gr(2)", new SysOp(LibMode.PREDICATE, "_gr", 2, new Reactor() {
                 public Object run(Object o) {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
@@ -91,7 +91,7 @@ public class Predicates {
         }
 
         {
-            put("_ge(2)", new SysOp(LibMode.PREDICATE, "_ge", 2, new IRunnable() {
+            put("_ge(2)", new SysOp(LibMode.PREDICATE, "_ge", 2, new Reactor() {
                 public Object run(Object o) {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
@@ -107,7 +107,7 @@ public class Predicates {
         }
 
         {
-            put("_lr(2)", new SysOp(LibMode.PREDICATE, "_lr", 2, new IRunnable() {
+            put("_lr(2)", new SysOp(LibMode.PREDICATE, "_lr", 2, new Reactor() {
                 public Object run(Object o) {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
@@ -123,7 +123,7 @@ public class Predicates {
         }
 
         {
-            put("_le(2)", new SysOp(LibMode.PREDICATE, "_le", 2, new IRunnable() {
+            put("_le(2)", new SysOp(LibMode.PREDICATE, "_le", 2, new Reactor() {
                 public Object run(Object o) {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
@@ -139,7 +139,7 @@ public class Predicates {
         }
 
         {
-            put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new IRunnable() {
+            put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new Reactor() {
                 public Object run(Object o) {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
@@ -224,7 +224,7 @@ public class Predicates {
         }
 
         {
-            put("_in(3)", new SysOp(LibMode.PREDICATE, "_in", 3, new IRunnable() {
+            put("_in(3)", new SysOp(LibMode.PREDICATE, "_in", 3, new Reactor() {
                 public Object run(Object o) {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();

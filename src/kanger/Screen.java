@@ -10,9 +10,11 @@ import kanger.enums.LogMode;
 import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.Reactor;
 import kanger.primitives.Cause;
 import kanger.primitives.Hypotese;
 import kanger.primitives.LogEntry;
+import kanger.storage.Storage;
 import kanger.test.KangerTest;
 import kanger.units.*;
 
@@ -180,9 +182,9 @@ public class Screen {
 //                            }
 //                        }
 //                        break;
-                        case 'P':
-                            saveSource(mind);
-                            break;
+//                        case 'P':
+//                            saveSource(mind);
+//                            break;
                         case 'G':
                             loadSource(mind);
                             break;
@@ -206,6 +208,25 @@ public class Screen {
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                     user.remove();
                                     System.out.println("Database files removed");
+                                }
+                            } else {
+                                System.out.println("No database used");
+                            }
+                            break;
+
+                        case 'P':
+                            if (!user.isClosed()) {
+                                System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
+                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    user.reindex(new Reactor() {
+                                        @Override
+                                        public Object run(Object o) {
+                                            System.out.println("Processing " + ((Storage) o).getName());
+                                            return null;
+                                        }
+                                    });
+                                    System.out.println("Database packed and reindexed");
                                 }
                             } else {
                                 System.out.println("No database used");
@@ -369,7 +390,6 @@ public class Screen {
                 if (type == LogMode.ALL || log.getType() == type) {
                     System.out.println(log.getRecord());
                 }
-
             }
 //            System.out.println();
         }
@@ -489,26 +509,22 @@ public class Screen {
                 "Available KEYWORDS:\n\n"
                         + "   H[ELP]    - Get this message\n"
                         + "\n"
-                        + "   ?         - Check for Rights Collisions\n"
-                        + "   B[ASE]    - View DataBase contents\n"
-                        + "   R[IGHTS]  - View compiled-structured Rights list\n"
-                        + "   F[UNCS]   - View defined Functions list\n"
-                        + "   K[ILL]    - Remove right\n"
-                        + "   L[IST]    - View Hypothesis list after last work\n"
-                        + "   I[NSERT]  - Insert Hypothesis as right\n"
-                        + "   A[GAIN]   - Repeat last question\n"
-                        + "   X[PLAIN]  - Show explanation log\n"
-                        + "   S[OLVES]  - Show solves list\n"
-                        + "   V[ALUES]  - Show values list\n"
-                        //                        + "   TEXT    - Show source text\n"
-                        + "   C[LEAR]   - Clear workspace\n"
-                        + "   O[PTIONS] - Set workspace options\n"
-                        //                        + "   ERASE   - Clear all working memory\n"
+                        + "   ?            - Check for Rights Collisions\n"
+                        + "   B[ASE]       - View DataBase contents\n"
+                        + "   R[IGHTS]     - View compiled-structured Rights list\n"
+                        + "   F[UNCS]      - View defined Functions list\n"
+                        + "   L[IST]       - View Hypothesis list after last work\n"
+                        + "   I[NSERT]     - Insert Hypothesis as right\n"
+                        + "   X[PLAIN]     - Show explanation log\n"
+                        + "   S[OLVES]     - Show solves list\n"
+                        + "   V[ALUES]     - Show values list\n"
+                        + "   U[SE] <name> - Create or open existing database\n"
+                        + "   D[ROP]       - Drop currently opened database\n"
+                        + "   P[ACK]       - Pack and reindex currently opened database\n"
+                        + "   C[LEAR]      - Clear workspace and currently opened database\n"
+                        + "   O[PTIONS]    - Set workspace options\n"
                         + "\n"
-                        //                        + "   PUT     - Save Source file\n"
                         + "   G[ET]     - Load Source file from disk\n"
-                        + "   Z[IP]     - Save compiled code\n"
-                        + "   U[NZIP]   - Load compiled code from file\n"
                         + "\n"
                         + "   Q[UIT]    - Quit KANGER\n"
                         + "\n"
@@ -996,12 +1012,12 @@ public class Screen {
     public static boolean loadSource(Mind mind) throws ParseErrorException, RuntimeErrorException {
         Scanner scanner = new Scanner(System.in);
 //        if (checkChg(mind)) {
-        List<String> list = new ArrayList<>();
+        List<File> list = new ArrayList<>();
         File[] dir = new File(System.getProperty("user.dir")).listFiles();
         if (dir != null) {
             for (File f : dir) {
                 if (!f.isDirectory() && f.getName().contains(".k")) {
-                    list.add(f.getName());
+                    list.add(f);
                 }
             }
         }
@@ -1011,8 +1027,8 @@ public class Screen {
             int i = 0;
             int n = 1;
             int cnt = 4;
-            for (String name : list) {
-                System.out.printf("\t%d: %s", n, name);
+            for (File f : list) {
+                System.out.printf("\t%d: %s", n, f.getName());
                 if (++i >= cnt) {
                     System.out.println();
                     i = 0;
@@ -1028,28 +1044,27 @@ public class Screen {
 //                }
         System.out.printf("\nEnter file name %s%s: ", list.isEmpty() ? "" : "or file number", mind.getSourceFileName().isEmpty() ? "" : " (" + mind.getSourceFileName() + ")");
         String line = scanner.nextLine();
-
+        File f = null;
         try {
             int ps = Integer.parseInt(line);
             ps -= 1;
             if (ps < list.size()) {
-                line = list.get(ps);
+                f = list.get(ps);
             }
         } catch (Exception ex) {
         }
 
-        if (line.trim().isEmpty()) {
-            line = mind.getSourceFileName();
+        if (f == null) {
+            f = new File(System.getProperty("user.dir") + File.separatorChar + mind.getSourceFileName());
         }
-        return loadSourceFile(mind, line);
+        return loadSourceFile(mind, f);
 //        }
 //        return false;
     }
 
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
-    public static boolean loadSourceFile(Mind mind, String line) throws ParseErrorException, RuntimeErrorException {
+    public static boolean loadSourceFile(Mind mind, File f) throws ParseErrorException, RuntimeErrorException {
         try {
-            File f = new File(line);
             if (f.exists()) {
                 final int length = (int) f.length();
                 if (length != 0) {
@@ -1059,22 +1074,22 @@ public class Screen {
                     StringBuffer buf = new StringBuffer(new String(cbuf).replace("\r\n", "\r"));
                     isr.close();
 
-                    mind.setSourceFileName(line);
+                    mind.setSourceFileName(f.getName());
                     boolean res = mind.compile(buf.toString());
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                         System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                     }
                     if (res) {
-                        System.out.printf("File %s loaded\n", line);
+                        System.out.printf("File %s loaded\n", f.getName());
                     } else {
                         System.out.printf("Use XPLAIN command for analisys\n");
                     }
                     return res;
                 } else {
-                    System.out.printf("WARNING: File %s is empty\n", line);
+                    System.out.printf("WARNING: File %s is empty\n", f.getName());
                 }
             } else {
-                System.out.printf("WARNING: File %s not found\n", line);
+                System.out.printf("WARNING: File %s not found\n", f.getName());
             }
         } catch (IOException ex) {
             System.out.printf("ERROR: %s\n", ex);

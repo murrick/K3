@@ -4,7 +4,7 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
-import kanger.interfaces.IRunnable;
+import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.Cause;
@@ -119,7 +119,7 @@ public class Linker {
                         tvars.addAll(d.getArguments().getTVariables(true));
                     }
 
-                    rotateVariables(tvars, logging, new IRunnable() {
+                    rotateVariables(tvars, logging, new Reactor() {
                         @Override
                         public Object run(Object o) {
                             boolean result = false;
@@ -150,7 +150,7 @@ public class Linker {
         );
     }
 
-    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, IRunnable runnable) {
+    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, Reactor runnable) {
         boolean result = false;
 //        if (tvars == null) {
 //            tvars = new TreeSet<>();
@@ -377,7 +377,8 @@ public class Linker {
                         }
                     }
                 }
-            } else if (!calculated.isEmpty() && tree.size() == calculated.size()) {
+                //TODO: Сомнительно, но вроде работает с ?$x $y index(qwerty) -> index(x), y : x;
+            } else if (!calculated.isEmpty() && candidates.isEmpty() /*&& tree.size() - excluded.size() == calculated.size()*/) {
                 occurs = true;
                 for (Domain d : calculated) {
 //                    d.addCauses(causes.get(d.getRight()));

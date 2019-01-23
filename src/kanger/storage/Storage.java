@@ -5,6 +5,8 @@ import kanger.interfaces.Identifiable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -120,6 +122,10 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         return data == null || data.isClosed();
     }
 
+    public String getName() {
+        return name;
+    }
+
     public void clear() throws IOException {
         if(!isClosed()) {
             data.clear();
@@ -148,8 +154,8 @@ public class Storage implements Closeable, Iterable<Identifiable> {
 
             tempData.close();
             data.close();
-            data.getFile().delete();
-            tempFile.renameTo(data.getFile());
+            data.getFile().getAbsoluteFile().delete();
+            tempFile.renameTo(data.getFile().getAbsoluteFile());
             data.open(data.getFile());
             flush();
         }
@@ -187,9 +193,9 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         }
 
         if(wasOpened) {
-            index.getFile().delete();
-            hash.getFile().delete();
-            data.getFile().delete();
+            index.getFile().getAbsoluteFile().delete();
+            hash.getFile().getAbsoluteFile().delete();
+            data.getFile().getAbsoluteFile().delete();
         }
     }
 

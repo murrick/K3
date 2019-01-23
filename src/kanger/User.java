@@ -1,8 +1,8 @@
 package kanger;
 
 import kanger.factory.*;
+import kanger.interfaces.Reactor;
 import kanger.storage.Storage;
-import kanger.units.TValue;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -53,6 +53,16 @@ public class User {
         if(!isClosed()) {
             for (Map.Entry<String, Storage> e : storage.entrySet()) {
                 e.getValue().remove();
+            }
+        }
+        storage = null;
+    }
+
+    public void reindex(Reactor reactor) throws IOException {
+        if(!isClosed()) {
+            for (Map.Entry<String, Storage> e : storage.entrySet()) {
+                reactor.run(e.getValue());
+                e.getValue().reindex();
             }
         }
         storage = null;

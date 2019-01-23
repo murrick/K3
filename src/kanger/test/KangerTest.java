@@ -8,6 +8,7 @@ import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -126,7 +127,7 @@ public class KangerTest {
         try {
             //TODO: В дальнейшем отключить бд для тестов
             user.close();
-            user.use("test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
+//            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -1014,7 +1015,7 @@ public class KangerTest {
     public void set_04_0F() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x num(x);");
         showResult(true);
         if (!exists("x", 0.0)) {
@@ -1058,7 +1059,7 @@ public class KangerTest {
     public void set_04_10() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x num(x) && x > 5;");
         showResult(true);
         if (!exists("x", 6.0)) {
@@ -1084,7 +1085,7 @@ public class KangerTest {
     public void set_04_11() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x num(x) && x <= 3;");
         showResult(true);
         if (!exists("x", 0.0)) {
@@ -1109,7 +1110,7 @@ public class KangerTest {
     public void set_04_12() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x $y num(x) && num(y) && x + y = 7;");
         showResult(true);
         if (!exists("x", 0.0) || !exists("y", 7.0)) {
@@ -1159,7 +1160,7 @@ public class KangerTest {
     public void set_04_13() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.compile("!@x x in 0..10 -> num(x);");
+        mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x $y num(x) && num(y) && x * y = 12;");
         showResult(true);
         if (!exists("x", 2.0) || !exists("y", 6.0)) {
@@ -1617,7 +1618,7 @@ public class KangerTest {
                 "!age(Tom, 12);" +
                 "!age(Sarah, 4);"
         );
-        mind.query("?$x $y age(x,y), y in {10..37};");
+        mind.query("?$x $y age(x,y), y : {10..37};");
         showResult(true);
         if (!exists("x", "John")) {
             fail("Expected x: John");
@@ -1657,7 +1658,7 @@ public class KangerTest {
                 "!age(Tom, 12);" +
                 "!age(Sarah, 4);"
         );
-        mind.query("?$x $y age(x,y), y in {10,37};");
+        mind.query("?$x $y age(x,y), y : {10,37};");
         showResult(true);
         if (!exists("x", "John")) {
             fail("Expected x: John");
@@ -1676,7 +1677,7 @@ public class KangerTest {
     public void set_07_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?$x x in '2018-03-01'..'2018-04-19', 38 hours 40 minutes, x > '2018-03-07';");
+        mind.query("?$x x : '2018-03-01'..'2018-04-19', 38 hours 40 minutes, x > '2018-03-07';");
         showResult(true);
         if (mind.getValues().size() != 27) {
             fail("Expected 27 values");
@@ -1688,7 +1689,7 @@ public class KangerTest {
     public void set_07_02() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?'2018-03-07' in '2018-03-01'..'2018-04-19';");
+        mind.query("?'2018-03-07' : '2018-03-01'..'2018-04-19';");
         showResult(true);
         System.out.println("OK");
         System.out.println("====================================================");
@@ -1697,7 +1698,7 @@ public class KangerTest {
     public void set_07_03() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?er in qwerty;");
+        mind.query("?er : qwerty;");
         showResult(true);
         System.out.println("OK");
         System.out.println("====================================================");
@@ -1706,7 +1707,7 @@ public class KangerTest {
     public void set_07_04() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?'(.*)er(.*)' in qwerty;");
+        mind.query("?'(.*)er(.*)' : qwerty;");
         showResult(true);
         System.out.println("OK");
         System.out.println("====================================================");
@@ -1715,7 +1716,7 @@ public class KangerTest {
     public void set_07_05() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?$x x in qwerty;");
+        mind.query("?$x x : qwerty;");
         showResult(true);
         if (mind.getValues().size() != 6) {
             fail("Expected 6 values");
@@ -1727,7 +1728,7 @@ public class KangerTest {
     public void set_07_06() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?$x x in qwerty,'(.*)er(.*)';");
+        mind.query("?$x x : qwerty,'(.*)er(.*)';");
         showResult(true);
         if (mind.getValues().size() != 2) {
             fail("Expected 2 values");
@@ -1739,7 +1740,7 @@ public class KangerTest {
     public void set_07_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?$x x in qwerty,'(.*)er(.*)', x=qw;");
+        mind.query("?$x x : qwerty,'(.*)er(.*)', x=qw;");
         showResult(true);
         if (mind.getValues().size() != 1) {
             fail("Expected 1 values");
@@ -1751,7 +1752,7 @@ public class KangerTest {
     public void set_07_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?$x x in qwerty,'(.*)er(.*)', x=ty;");
+        mind.query("?$x x : qwerty,'(.*)er(.*)', x=ty;");
         showResult(true);
         if (mind.getValues().size() != 1) {
             fail("Expected 1 values");
@@ -1763,7 +1764,7 @@ public class KangerTest {
     public void set_07_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
-        mind.query("?$x x in qwerty,'(.*)er(.*)', x != ty;");
+        mind.query("?$x x : qwerty,'(.*)er(.*)', x != ty;");
         showResult(true);
         if (mind.getValues().size() != 1) {
             fail("Expected 1 values");
