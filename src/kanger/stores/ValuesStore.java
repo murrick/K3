@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by murray on 28.05.15.
  */
-public class ValuesStore {
+public class ValuesStore implements Iterable<Map<String, Object>> {
 
     private List<List<TValue>> root = null;
     private boolean enableStore = true;
@@ -51,37 +51,46 @@ public class ValuesStore {
 //        return m;
 //    }
 
+    private boolean contains(TValue v) {
+        if (root != null) {
+            for (List<TValue> row : root) {
+                if (row.contains(v)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean containsTVar(List<TValue> row, TValue t) {
-        for(TValue v : row) {
-            if(v.getTVar().getId() == t.getTVar().getId()) {
+        for (TValue v : row) {
+            if (v.getTVar().getId() == t.getTVar().getId()) {
                 return true;
             }
         }
         return false;
     }
 
-    public TValue add(int tag, TValue t) {
-        if (!enableStore) {
-            return null;
-        }
-        if (root == null) {
-            root = new ArrayList<>();
-        }
+    public void add(int tag, TValue t) {
+        if (enableStore && !contains(t)) {
+            if (root == null) {
+                root = new ArrayList<>();
+            }
 
-        boolean found = false;
-        for(List<TValue> row : root) {
-            if(containsTVar(row, t)) {
+            boolean found = false;
+            for (List<TValue> row : root) {
+                if (!containsTVar(row, t)) {
+                    row.add(t);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                List<TValue> row = new ArrayList<>();
                 row.add(t);
-                found = true;
-                break;
+                root.add(row);
             }
         }
-        if (!found) {
-            List<TValue> row = new ArrayList<>();
-            row.add(t);
-            root.add(row);
-        }
-        return t;
     }
 
     /*
@@ -191,14 +200,14 @@ public class ValuesStore {
 
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
-        if(root != null) {
-                for (List<TValue> row : root) {
-                    for (TValue t : row) {
-                        if (name == null || name.equals(t.getTVar().getName().getValue())) {
-                            list.add(t.getValue());
-                        }
+        if (root != null) {
+            for (List<TValue> row : root) {
+                for (TValue t : row) {
+                    if (name == null || name.equals(t.getTVar().getName().getValue())) {
+                        list.add(t.getValue());
                     }
                 }
+            }
         }
         return list;
     }
@@ -218,14 +227,47 @@ public class ValuesStore {
     }
 
     public int size() {
-        if(root == null) {
+        if (root == null) {
             return 0;
         } else {
-            return root.size();
+            int count = 0;
+            for (List<TValue> row : root) {
+                count += row.size();
+            }
+            return count;
         }
     }
 
     public boolean isEmpty() {
         return root == null || root.isEmpty();
+    }
+
+    @Override
+    public Iterator<Map<String, Object>> iterator() {
+        return new ValuesIterator();
+    }
+
+    public class ValuesIterator implements Iterator<Map<String, Object>> {
+
+        Iterator<List<TValue>> iterator = root.iterator();
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public Map<String, Object> next() {
+            SortedMap<String, Object> row = new TreeMap<>();
+            for(TValue v : iterator.next()) {
+                row.put(v.getTVar().getName().toString(), v.getValue().getValue());
+            }
+            return row;
+        }
+
+        @Override
+        public void remove() {
+
+        }
     }
 }

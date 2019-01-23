@@ -938,7 +938,7 @@ public class Mind {
             for (List<TValue> row : mind.getValues().getRoot()) {
                 String s = String.format("\tRow %03d: ", ++i);
                 for (TValue log : row) {
-                    if(i != 1) {
+                    if(!s.endsWith(" ")) {
                         s += " ";
                     }
                     s += log.toString();

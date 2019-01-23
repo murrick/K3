@@ -48,13 +48,13 @@ public class KangerTest {
 //            mind.getValues().normalize();
             System.out.println("Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (List<TValue> row : mind.getValues().getRoot()) {
+            for (Map<String, Object> row : mind.getValues()) {
                 String s = String.format("\tRow %03d: ", ++i);
-                for (TValue log : row) {
-                    if(i != 1) {
+                for (Map.Entry<String, Object> log : row.entrySet()) {
+                    if(!s.endsWith(" ")) {
                         s += " ";
                     }
-                    s += log.toString();
+                    s += log.getKey() + "=" + log.getValue();
                 }
                 System.out.println(s);
             }
@@ -1645,7 +1645,7 @@ public class KangerTest {
         if (!exists("y", 12.0)) {
             fail("Expected x: 12");
         }
-        if (mind.getValues().getRoot().size() != 4) {
+        if (mind.getValues().size() != 4) {
             fail("Expected 4 values");
         }
         System.out.println("OK");
@@ -1679,7 +1679,7 @@ public class KangerTest {
         if (!exists("y", 37.0)) {
             fail("Expected x: 37");
         }
-        if (mind.getValues().getRoot().size() != 2) {
+        if (mind.getValues().size() != 2) {
             fail("Expected 2 values");
         }
         System.out.println("OK");
