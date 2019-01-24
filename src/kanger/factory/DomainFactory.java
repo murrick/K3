@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -73,10 +74,8 @@ public class DomainFactory implements Iterable<Domain> {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
@@ -92,7 +91,7 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
 
-    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) {
+    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws RuntimeErrorException {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
@@ -112,7 +111,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) {
+    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws RuntimeErrorException {
         Domain temp = new Domain(pred, antc, arg, r);
         for (Identifiable one : cache.find(temp.getHash())) {
             if (one.equalsTo(temp)) {
@@ -130,11 +129,11 @@ public class DomainFactory implements Iterable<Domain> {
         return null;
     }
 
-    public Domain get(long id) {
+    public Domain get(long id) throws RuntimeErrorException {
         Domain t = (Domain) cache.get(id);
         if (t == null) {
             t = (Domain) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (Domain) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -142,9 +141,13 @@ public class DomainFactory implements Iterable<Domain> {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("Domain id=" + id + " not found");
         }
         return t;
     }
@@ -185,7 +188,11 @@ public class DomainFactory implements Iterable<Domain> {
         @Override
         public Identifiable next() {
             Identifiable next = super.next();
-            next.linkExternal(user);
+            try {
+                next.linkExternal(user);
+            } catch (RuntimeErrorException e) {
+                e.printStackTrace(System.err);
+            }
             return next;
         }
     }

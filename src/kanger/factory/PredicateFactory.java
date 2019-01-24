@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
@@ -70,15 +71,13 @@ public class PredicateFactory implements Iterable<Predicate> {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
 
-    public Predicate add(Term line, int range) {
+    public Predicate add(Term line, int range) throws RuntimeErrorException {
         Predicate p = find(line, range);
         if (p != null) {
             return p;
@@ -92,7 +91,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public Predicate find(Term line, int range) {
+    public Predicate find(Term line, int range) throws RuntimeErrorException {
         Predicate temp = new Predicate(line, range);
         for (Identifiable one : cache.find(temp.getHash())) {
             if (one.equalsTo(temp)) {
@@ -110,11 +109,11 @@ public class PredicateFactory implements Iterable<Predicate> {
         return null;
     }
 
-    public Predicate get(long id) {
+    public Predicate get(long id) throws RuntimeErrorException {
         Predicate t = (Predicate) cache.get(id);
         if (t == null) {
             t = (Predicate) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (Predicate) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -122,9 +121,13 @@ public class PredicateFactory implements Iterable<Predicate> {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("Predicate id=" + id + " not found");
         }
         return t;
     }
@@ -165,7 +168,11 @@ public class PredicateFactory implements Iterable<Predicate> {
         @Override
         public Identifiable next() {
             Identifiable next = super.next();
-            next.linkExternal(user);
+            try {
+                next.linkExternal(user);
+            } catch (RuntimeErrorException e) {
+                e.printStackTrace(System.err);
+            }
             return next;
         }
     }

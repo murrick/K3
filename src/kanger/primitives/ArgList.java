@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.units.Function;
 import kanger.units.TValue;
 import kanger.units.TVariable;
@@ -40,7 +41,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
-    public void linkExternal(User user) {
+    public void linkExternal(User user) throws RuntimeErrorException {
         for(Argument a : this) {
             a.linkExternal(user);
         }
@@ -49,10 +50,14 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
     @Override
     public int hashCode() {
         StringBuffer buffer = new StringBuffer();
-        for (Argument a : this) {
-            if (!a.isEmpty()) {
-                buffer.append(a.getValue().getId());
+        try {
+            for (Argument a : this) {
+                if (!a.isEmpty()) {
+                    buffer.append(a.getValue().getId());
+                }
             }
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
         }
         return buffer.toString().hashCode();
     }
@@ -68,18 +73,22 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             }
             if (arg != null && arg.size() == size()) {
                 int i = 0;
-                for (; i < arg.size(); ++i) {
-                    if (!get(i).isEmpty()
-                            && !arg.get(i).isEmpty()
-                            && get(i).getValue().getId() != arg.get(i).getValue().getId()) {
-                        break;
-                    }
+                try {
+                    for (; i < arg.size(); ++i) {
+                        if (!get(i).isEmpty()
+                                && !arg.get(i).isEmpty()
+                                && get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                            break;
+                        }
 
-                    TValue a = get(i).isTSet() ? get(i).getT().getCurrent() : get(i).getV();
-                    TValue b = arg.get(i).isTSet() ? arg.get(i).getT().getCurrent() : arg.get(i).getV();
-                    if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
-                        break;
+                        TValue a = get(i).isTSet() ? get(i).getT().getCurrent() : get(i).getV();
+                        TValue b = arg.get(i).isTSet() ? arg.get(i).getT().getCurrent() : arg.get(i).getV();
+                        if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
+                            break;
+                        }
                     }
+                } catch (RuntimeErrorException e) {
+                    e.printStackTrace(System.err);
                 }
                 if (i == arg.size()) {
                     return true;
@@ -99,12 +108,16 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             }
             if (arg != null && arg.size() == size()) {
                 int i = 0;
-                for (; i < arg.size(); ++i) {
-                    if (!get(i).isEmpty()
-                            && !arg.get(i).isEmpty()
-                            && get(i).getValue().getId() != arg.get(i).getValue().getId()) {
-                        break;
+                try {
+                    for (; i < arg.size(); ++i) {
+                        if (!get(i).isEmpty()
+                                && !arg.get(i).isEmpty()
+                                && get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                            break;
+                        }
                     }
+                } catch (RuntimeErrorException e) {
+                    e.printStackTrace(System.err);
                 }
                 if (i == arg.size()) {
                     return true;

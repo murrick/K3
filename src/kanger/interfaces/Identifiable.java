@@ -1,6 +1,7 @@
 package kanger.interfaces;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 
 public interface Identifiable<T> {
 
@@ -12,5 +13,5 @@ public interface Identifiable<T> {
 
     boolean equalsTo(T to);
 
-    void linkExternal(User user);
+    void linkExternal(User user) throws RuntimeErrorException;
 }

@@ -105,7 +105,7 @@ public class Storage implements Closeable, Iterable<Identifiable> {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         }
         return list;
     }

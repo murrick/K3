@@ -5,6 +5,7 @@ import kanger.compiler.PTree;
 import kanger.enums.DataType;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -28,6 +29,8 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
 
     public static final double FLT_EPSILON = 0.00000000001;
 
+    private static final long serialVersionUID = 196402070008L;
+
     private long id = -1;                // Идентификатор
     private DataType type = DataType.VOID;
     private Object value = null;
@@ -46,7 +49,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         this.user = user;
     }
 
-    public Term(Object str, User user) {
+    public Term(Object str, User user) throws RuntimeErrorException {
         this.user = user;
         construct(str);
     }
@@ -131,7 +134,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         this.user = user;
     }
 
-    private void construct(Object o) {
+    private void construct(Object o) throws RuntimeErrorException {
         value = null;
         if (o instanceof Number) {
             type = DataType.NUMERIC;
@@ -203,7 +206,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         }
     }
 
-    private Object conatructInterval(String ch) {
+    private Object conatructInterval(String ch) throws RuntimeErrorException {
         if (ch.contains("..")) {
             if(ch.startsWith("{") && ch.endsWith("}")) {
                 ch = ch.substring(1, ch.length()-1);

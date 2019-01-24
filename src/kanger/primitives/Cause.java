@@ -1,15 +1,19 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.units.Domain;
 
 import java.io.*;
 
 public class Cause implements Externalizable, Comparable<Cause> {
-    private long srcId = -1;
-    private long dstId = -1;
+    private Domain src = null;
+    private Domain dst = null;
     private ArgList arguments = null;
     private int index = -1;
+
+    private transient long srcId = -1;
+    private transient long dstId = -1;
 
     public Cause() {
 
@@ -17,8 +21,8 @@ public class Cause implements Externalizable, Comparable<Cause> {
 
     public Cause(int index, Domain dst, Domain src) {
         this.index = index;
-        this.dstId = dst.getId();
-        this.srcId = src.getId();
+        this.dst = dst;
+        this.src = src;
         this.arguments = src.getArguments().convertBase();
     }
 
@@ -33,21 +37,23 @@ public class Cause implements Externalizable, Comparable<Cause> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeInt(index);
-        dos.writeLong(srcId);
-        dos.writeLong(dstId);
+        dos.writeLong(src.getId());
+        dos.writeLong(dst.getId());
         dos.writeObject(arguments);
     }
 
-    public void linkExternal(User user) {
+    public void linkExternal(User user) throws RuntimeErrorException {
+        src = user.getMind().getDomains().get(srcId);
+        dst = user.getMind().getDomains().get(dstId);
         arguments.linkExternal(user);
     }
 
-    public long getSrcId() {
-        return srcId;
+    public Domain getSrc() {
+        return src;
     }
 
-    public long getDstId() {
-        return dstId;
+    public Domain getDst() {
+        return dst;
     }
 
     public int getIndex() {
@@ -69,8 +75,8 @@ public class Cause implements Externalizable, Comparable<Cause> {
     @Override
     public int hashCode() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(this.srcId);
-        buffer.append(this.dstId);
+        buffer.append(src == null ? srcId : src.getId());
+        buffer.append(dst == null ? dstId : dst.getId());
         buffer.append(this.index);
 //        for(Argument a: arguments) {
 //            buffer.append(a.getValue().getId());
@@ -85,17 +91,22 @@ public class Cause implements Externalizable, Comparable<Cause> {
 
     @Override
     public boolean equals(Object o) {
-        return o != null
-                && o instanceof Cause
-                && srcId != -1 && dstId != -1
-                && ((Cause) o).getSrcId() != -1 && ((Cause) o).getDstId() != -1
-                && srcId == ((Cause) o).getSrcId()
-                && dstId == ((Cause) o).getDstId()
-                && index == ((Cause) o).getIndex()
-                && equalsParams(((Cause) o).getArguments());
+        try {
+            return o != null
+                    && o instanceof Cause
+                    && src != null && dst != null
+                    && ((Cause) o).getSrc() != null && ((Cause) o).getDst() != null
+                    && src.getId() == ((Cause) o).getSrc().getId()
+                    && dst.getId() == ((Cause) o).getDst().getId()
+                    && index == ((Cause) o).getIndex()
+                    && equalsParams(((Cause) o).getArguments());
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
+            return false;
+        }
     }
 
-    public boolean equalsParams(ArgList a) {
+    public boolean equalsParams(ArgList a) throws RuntimeErrorException {
         if (arguments == null && a == null) {
             return true;
         } else if (arguments != null && a != null && arguments.size() == a.size()) {
@@ -112,10 +123,10 @@ public class Cause implements Externalizable, Comparable<Cause> {
 
     @Override
     public int compareTo(Cause o) {
-        if (o.getDstId() != dstId) {
-            return (int) (o.getDstId() - dstId);
+        if (o.getDst().getId() != dst.getId()) {
+            return (int) (o.getDst().getId() - dst.getId());
         } else {
-            return (int) (o.getSrcId() - srcId);
+            return (int) (o.getSrc().getId() - src.getId());
         }
     }
 }

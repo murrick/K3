@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.DataIterator;
@@ -20,7 +21,6 @@ public class DatabaseFactory implements Iterable<Record> {
 
     private long lastId = 0;
     private long firstId = 0;
-    private int lastTag = 0;
 
 //    private Record current = null;
 //    private Record stop = null;
@@ -43,17 +43,11 @@ public class DatabaseFactory implements Iterable<Record> {
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            lastTag = base.lastTag;
             cache.add(base.cache);
         } else {
-//            root = null;
-//            next = null;
             lastId = 0;
             firstId = 0;
-            lastTag = 0;
         }
-//        stack.clear();
-//        mark();
     }
 
     public void commit(DatabaseFactory base) {
@@ -66,10 +60,6 @@ public class DatabaseFactory implements Iterable<Record> {
         }
         Map<Integer, Integer> map = new HashMap<>();
         for (Record p : list) {
-            if (!map.containsKey(p.getTag())) {
-                map.put(p.getTag(), ++lastTag);
-            }
-            p.setTag(map.get(p.getTag()));
             p.setId(lastId++);
             cache.add(p);
         }
@@ -86,29 +76,26 @@ public class DatabaseFactory implements Iterable<Record> {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
 
-    public Record add(Domain d) {
+    public Record add(Domain d) throws RuntimeErrorException {
         Record p = find(d.getPredicate(), d.isAntc(), d.getArguments());
         if (p != null) {
             return p;
         } else {
             Record r = new Record(d);
             r.setId(lastId++);
-            r.setTag(lastTag);
             cache.add(r);
             return r;
         }
     }
 
 
-    public Record add(Predicate pred, boolean antc, boolean isQuery, ArgList arg) {
+    public Record add(Predicate pred, boolean antc, boolean isQuery, ArgList arg) throws RuntimeErrorException {
         Record p = find(pred, antc, arg);
         if (p != null) {
             return p;
@@ -140,11 +127,11 @@ public class DatabaseFactory implements Iterable<Record> {
         }
     }
 
-    public Record find(Domain d) {
+    public Record find(Domain d) throws RuntimeErrorException {
         return find(d.getPredicate(), d.isAntc(), d.getArguments());
     }
 
-    public Record find(Predicate pred, boolean antc, ArgList arg) {
+    public Record find(Predicate pred, boolean antc, ArgList arg) throws RuntimeErrorException {
         Domain d = new Domain(pred, antc, arg);
         Record temp = new Record(d);
         for (Identifiable one : cache.find(temp.getHash())) {
@@ -163,11 +150,11 @@ public class DatabaseFactory implements Iterable<Record> {
         return null;
     }
 
-    public Record get(long id) {
+    public Record get(long id) throws RuntimeErrorException {
         Record t = (Record) cache.get(id);
         if (t == null) {
             t = (Record) load.get(id);
-            if(t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (Record) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -175,9 +162,13 @@ public class DatabaseFactory implements Iterable<Record> {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("Record id=" + id + " not found");
         }
         return t;
     }
@@ -226,15 +217,6 @@ public class DatabaseFactory implements Iterable<Record> {
         return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
-    public int incTag() {
-        ++lastTag;
-        return lastTag;
-    }
-
-    public int getTag() {
-        return lastTag;
-    }
-
     public long getFirstId() {
         return firstId;
     }
@@ -258,7 +240,11 @@ public class DatabaseFactory implements Iterable<Record> {
         @Override
         public Identifiable next() {
             Identifiable next = super.next();
-            next.linkExternal(user);
+            try {
+                next.linkExternal(user);
+            } catch (RuntimeErrorException e) {
+                e.printStackTrace(System.err);
+            }
             return next;
         }
     }

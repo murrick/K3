@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -22,6 +23,7 @@ import java.util.*;
  */
 public class Domain implements Externalizable, Identifiable<Domain> {
 
+    private static final long serialVersionUID = 196402070001L;
     private long id = -1;                                       // id домена
     private boolean antc = true;                                // ! или ?
     private Predicate predicate = null;                         // Ссылка на описатель предиката
@@ -73,8 +75,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal(User user) {
-        if(predicate == null) {
+    public void linkExternal(User user) throws RuntimeErrorException {
+        if (predicate == null) {
             this.user = user;
             predicate = user.getMind().getPredicates().get(predicateId);
             right = user.getMind().getRights().get(rightId);
@@ -161,18 +163,16 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return causes.get(arguments);
 //    }
 
-    private boolean sourceExists(Cause c) {
+    private boolean sourceExists(Cause c) throws RuntimeErrorException {
         for (Cause x : causes.get(arguments)) {
-            Domain xSrc = user.getMind().getDomains().get(x.getSrcId());
-            Domain cSrc = user.getMind().getDomains().get(c.getSrcId());
-            if (xSrc.getPredicate().getId() == cSrc.getPredicate().getId() && xSrc.getArguments().equalsBase(cSrc.getArguments())) {
+            if (x.getSrc().getPredicate().getId() == c.getSrc().getPredicate().getId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
                 return true;
             }
         }
         return false;
     }
 
-    public void addCauses(Collection<Cause> causes) {
+    public void addCauses(Collection<Cause> causes) throws RuntimeErrorException {
         if (causes != null) {
             ArgList current = arguments.convertBase();
             if (!this.causes.containsKey(current)) {
@@ -181,8 +181,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                 this.causes.get(current).clear();
             }
             for (Cause c : causes) {
-                Domain cSrc = user.getMind().getDomains().get(c.getSrcId());
-                if (c.getArguments().equalsBase(cSrc.getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
+                if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
                     this.causes.get(arguments).add(c);
                 }
             }
@@ -230,7 +229,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 //    s += ");";
 //    return s;
-    private String formatParam(Argument t) {
+    private String formatParam(Argument t) throws RuntimeErrorException {
         String s = "";
         if (t.isFSet()) {
             s += t.getF().toString();
@@ -254,28 +253,28 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
 
-    public String toString(ArgList arguments) {
-        String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
-        Operation op = Parser.getOp(predicate.getName().toString(), predicate.getRange());
-        if (op == null) {
-            s += predicate.getName() + "(";
-            int i = 0;
-            for (Argument t : arguments) {
-                s += formatParam(t);
-                if (i + 1 != predicate.getRange()) {
-                    s += (char) Enums.COMMA;
+    public String toString(ArgList arguments)  {
+        try {
+            String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
+            Operation op = Parser.getOp(predicate.getName().toString(), predicate.getRange());
+            if (op == null) {
+                s += predicate.getName() + "(";
+                int i = 0;
+                for (Argument t : arguments) {
+                    s += formatParam(t);
+                    if (i + 1 != predicate.getRange()) {
+                        s += (char) Enums.COMMA;
+                    }
+                    ++i;
                 }
-                ++i;
-            }
-            s += ")";
-        } else if (op.getRange() == 1) {
-            if (op.isPost()) {
-                s += formatParam(arguments.get(0)) + op.getName();
+                s += ")";
+            } else if (op.getRange() == 1) {
+                if (op.isPost()) {
+                    s += formatParam(arguments.get(0)) + op.getName();
+                } else {
+                    s += op.getName() + formatParam(arguments.get(0));
+                }
             } else {
-                s += op.getName() + formatParam(arguments.get(0));
-            }
-        } else {
-            try {
                 for (int i = 0; i < op.getRange(); ++i) {
                     s += formatParam(arguments.get(i));
                     if (i + 1 < op.getRange()) {
@@ -286,33 +285,38 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                         }
                     }
                 }
-            } catch (IndexOutOfBoundsException ex) {
-                System.out.print(ex);
             }
-        }
 
-        String suffix = "";
-        if ((user.getMind().getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
-            suffix += " " + id;
+            String suffix = "";
+            if ((user.getMind().getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
+                suffix += " " + id;
+            }
+            if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
+                try {
+                    suffix += /*isDest() ||*/ isQuery(arguments) || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
+                            ? " " +
+                            //(isDest() ? "A" : "") +
+                            (isQuery() ? "Q" : "") +
+                            //                    (isUsed() ? "U" : "") +
+                            (isExcluded() ? "X" : "") +
+                            //(isProduced() ? "P" : "") +
+                            (isStored() ? "B" : "") +
+                            (isCalculated() ? "S" : "") +
+                            " "
+                            : "";
+                } catch (RuntimeErrorException e) {
+                    e.printStackTrace(System.err);
+                }
+            }
+            return s + ";" + suffix;
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
+            return "";
         }
-        if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-            suffix += /*isDest() ||*/ isQuery(arguments) || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
-                    ? " " +
-                    //(isDest() ? "A" : "") +
-                    (isQuery() ? "Q" : "") +
-//                    (isUsed() ? "U" : "") +
-                    (isExcluded() ? "X" : "") +
-                    //(isProduced() ? "P" : "") +
-                    (isStored() ? "B" : "") +
-                    (isCalculated() ? "S" : "") +
-                    " "
-                    : "";
-        }
-        return s + ";" + suffix;
     }
 
 
-    public boolean equalsBase(Domain o) {
+    public boolean equalsBase(Domain o) throws RuntimeErrorException {
         if (predicate.getId() != o.getPredicate().getId()) {
             return false;
         }
@@ -365,7 +369,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return success;
 //    }
 
-    public int getOverlaps(ArgList arg) {
+    public int getOverlaps(ArgList arg) throws RuntimeErrorException {
         Set<Long> ids = new HashSet<>();
         for (Argument a : arguments) {
             for (Argument b : arg) {
@@ -401,21 +405,21 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        mind.getSources().createCVar(this).createTVar(d);
 //    }
 
-    public boolean isDestFor(int index, Domain d) {
-        if (index < arguments.size() && ((arguments.get(index).isTSet() && !arguments.get(index).getT().isEmpty()) || arguments.get(index).isVSet())) {
-            TValue v = arguments.get(index).isVSet() ? arguments.get(index).getV() : arguments.get(index).getT().getCurrent();
-            for (Cause s : v.getCauses()) {
-                if (s.getIndex() == index
-                        && s.getDstId() == id
-                        && s.getSrcId() == d.getId()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-
-    }
-
+//    public boolean isDestFor(int index, Domain d) {
+//        if (index < arguments.size() && ((arguments.get(index).isTSet() && !arguments.get(index).getT().isEmpty()) || arguments.get(index).isVSet())) {
+//            TValue v = arguments.get(index).isVSet() ? arguments.get(index).getV() : arguments.get(index).getT().getCurrent();
+//            for (Cause s : v.getCauses()) {
+//                if (s.getIndex() == index
+//                        && s.getDstId() == id
+//                        && s.getSrcId() == d.getId()) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//
+//    }
+//
 //    public boolean isDest() {
 //        for (TVariable t : getTVariables(false)) {
 //            if (!t.isEmpty() && t.getDstSolves() != null && /*contains(t)) {*/ t.getDstSolves().contains(this)) {
@@ -518,13 +522,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
-    public boolean isProduced(int tag) {
+    public boolean isProduced() {
         if (user.getMind().getProducedDomains().containsKey(id)) {
-            if (user.getMind().getProducedDomains().get(id).containsKey(tag)) {
-                for (ArgList list : user.getMind().getProducedDomains().get(id).get(tag)) {
-                    if (arguments.equalsBase(list)) {
-                        return true;
-                    }
+            for (ArgList list : user.getMind().getProducedDomains().get(id)) {
+                if (arguments.equalsBase(list)) {
+                    return true;
                 }
             }
         }
@@ -556,16 +558,13 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 //
 
-    public void setProduced(int tag) {
+    public void setProduced() {
         if (!user.getMind().getProducedDomains().containsKey(id)) {
-            user.getMind().getProducedDomains().put(id, new HashMap<>());
+            user.getMind().getProducedDomains().put(id, new HashSet<>());
         }
-        if (!user.getMind().getProducedDomains().get(id).containsKey(tag)) {
-            user.getMind().getProducedDomains().get(id).put(tag, new HashSet<>());
-        }
-        if (!isProduced(tag)) {
+        if (!isProduced()) {
 //            try {
-            user.getMind().getProducedDomains().get(id).get(tag).add(arguments.convertBase());
+            user.getMind().getProducedDomains().get(id).add(arguments.convertBase());
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -615,19 +614,19 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
-    public boolean isStored() {
+    public boolean isStored() throws RuntimeErrorException {
         return user.getMind().getDatabase().find(this) != null;
     }
 
-    public boolean isStored(ArgList args) {
+    public boolean isStored(ArgList args) throws RuntimeErrorException {
         return user.getMind().getDatabase().find(predicate, antc, args) != null;
     }
 
-    public Record setStored() {
+    public Record setStored() throws RuntimeErrorException {
         return user.getMind().getDatabase().add(this);
     }
 
-    public Record createStored() {
+    public Record createStored() throws RuntimeErrorException {
         return user.getMind().getDatabase().add(predicate, antc, isQuery(), arguments);
     }
 
@@ -635,7 +634,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return Parser.getOp(predicate.getName().toString(), predicate.getRange()) != null;
     }
 
-    public int execSystem() {
+    public int execSystem() throws RuntimeErrorException {
         if (isSystem()) {
             return user.getMind().executeSystem(this);
         }
@@ -738,7 +737,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return cnt;
 //    }
 
-    public int getVarOrder(int pos) {
+    public int getVarOrder(int pos) throws RuntimeErrorException {
         List<Integer> list = new ArrayList<>();
         SortedMap<Integer, Integer> sort = new TreeMap<>();
         int plains = 0;
@@ -778,14 +777,18 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                 && to.getRight().getId() == right.getId()) {
             int i = 0;
             for (; i < predicate.getRange(); ++i) {
-                if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT().getId() == arguments.get(i).getT().getId())
-                        || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF().getId() == arguments.get(i).getF().getId())
-                        || (!to.get(i).isTSet() && !arguments.get(i).isTSet()
-                        && !to.get(i).isFSet() && !arguments.get(i).isFSet()
-                        && !to.get(i).isEmpty() && !arguments.get(i).isEmpty()
-                        && to.get(i).getValue().getId() == arguments.get(i).getValue().getId())) {
-                } else {
-                    break;
+                try {
+                    if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT().getId() == arguments.get(i).getT().getId())
+                            || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF().getId() == arguments.get(i).getF().getId())
+                            || (!to.get(i).isTSet() && !arguments.get(i).isTSet()
+                            && !to.get(i).isFSet() && !arguments.get(i).isFSet()
+                            && !to.get(i).isEmpty() && !arguments.get(i).isEmpty()
+                            && to.get(i).getValue().getId() == arguments.get(i).getValue().getId())) {
+                    } else {
+                        break;
+                    }
+                } catch (RuntimeErrorException e) {
+                    e.printStackTrace(System.err);
                 }
             }
             return i == predicate.getRange();
@@ -816,7 +819,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return complete;
     }
 
-//    public Set<Tree> getParentTrees() {
+    //    public Set<Tree> getParentTrees() {
 //        Set<Tree> set = new HashSet<>();
 //        for (Tree t : user.getMind().getTrees()) {
 //            if (t.getSequence().contains(this)) {

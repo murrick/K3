@@ -89,7 +89,7 @@ public class KangerTest {
 //        return false;
 //    }
 
-    public Hypotese createHypotese(User user, boolean antc, Object predicate, Object... params) {
+    public Hypotese createHypotese(User user, boolean antc, Object predicate, Object... params) throws RuntimeErrorException {
         Hypotese h = new Hypotese(user);
         h.setAntc(antc);
         if (predicate instanceof Predicate) {
@@ -106,7 +106,7 @@ public class KangerTest {
         return h;
     }
 
-    public Record createRecord(User user, boolean antc, Object predicate, Object... params) {
+    public Record createRecord(User user, boolean antc, Object predicate, Object... params) throws RuntimeErrorException {
         Domain d = new Domain(user);
         d.setAntc(antc);
         if (predicate instanceof Predicate) {

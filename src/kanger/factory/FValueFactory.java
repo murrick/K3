@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.FValue;
@@ -64,15 +65,13 @@ public class FValueFactory {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
 
-    public FValue add(Function f) {
+    public FValue add(Function f) throws RuntimeErrorException {
         FValue t = find(f);
         if (t == null) {
             if (f.isComplete()) {
@@ -87,7 +86,7 @@ public class FValueFactory {
     }
 
 
-    public FValue find(Function f) {
+    public FValue find(Function f) throws RuntimeErrorException {
         FValue temp = new FValue(f, user);
         for (Identifiable one : cache.find(temp.getHash())) {
             if (one.equalsTo(f)) {
@@ -105,11 +104,11 @@ public class FValueFactory {
         return null;
     }
 
-    public FValue get(long id) {
+    public FValue get(long id) throws RuntimeErrorException {
         FValue t = (FValue) cache.get(id);
         if (t == null) {
             t = (FValue) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (FValue) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -117,9 +116,13 @@ public class FValueFactory {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("TValue id=" + id + " not found");
         }
         return t;
     }

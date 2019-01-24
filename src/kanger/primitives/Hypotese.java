@@ -8,6 +8,7 @@ package kanger.primitives;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.exception.RuntimeErrorException;
 import kanger.units.Predicate;
 import kanger.units.Right;
 import kanger.units.Term;
@@ -25,7 +26,6 @@ public class Hypotese implements Comparable<Hypotese> {
     private boolean antc = true;
     private boolean deleted = false;
     private boolean query = false;
-    private int tag = -1;
 
     private User user = null;
 
@@ -82,15 +82,7 @@ public class Hypotese implements Comparable<Hypotese> {
         this.query = query;
     }
 
-    public int getTag() {
-        return tag;
-    }
-
-    public void setTag(int tag) {
-        this.tag = tag;
-    }
-
-    public void addParams(Collection params) {
+    public void addParams(Collection params) throws RuntimeErrorException {
         for (Object p : params) {
             if (p instanceof Argument) {
                 solve.add(((Argument) p).getValue());
@@ -179,10 +171,6 @@ public class Hypotese implements Comparable<Hypotese> {
 
     @Override
     public int compareTo(Hypotese o) {
-        if (tag != o.getTag()) {
-            return tag - o.getTag();
-        } else {
-            return predicate.getName().compareTo(o.getPredicate().getName());
-        }
+        return predicate.getName().compareTo(o.getPredicate().getName());
     }
 }

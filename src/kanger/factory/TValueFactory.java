@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
@@ -72,15 +73,13 @@ public class TValueFactory {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
 
-    public TValue add(TVariable tv, Term o) {
+    public TValue add(TVariable tv, Term o) throws RuntimeErrorException {
         TValue t = find(tv, o);
         if (t == null) {
             t = new TValue(tv, o, user);
@@ -104,7 +103,7 @@ public class TValueFactory {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
-    public TValue find(TVariable tv, Term v) {
+    public TValue find(TVariable tv, Term v) throws RuntimeErrorException {
         TValue temp = new TValue(tv, v);
         for (Identifiable one : cache.find(temp.getHash())) {
             if (one.equalsTo(temp)) {
@@ -122,11 +121,11 @@ public class TValueFactory {
         return null;
     }
 
-    public TValue get(long id) {
+    public TValue get(long id) throws RuntimeErrorException {
         TValue t = (TValue) cache.get(id);
         if (t == null) {
             t = (TValue) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (TValue) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -134,9 +133,13 @@ public class TValueFactory {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("TValue id=" + id + " not found");
         }
         return t;
     }
@@ -197,8 +200,13 @@ public class TValueFactory {
             while(super.hasNext()) {
                 next = (TValue) super.next();
                 if(next.getTVar().getId() == tVariable.getId()) {
-                    next.linkExternal(user);
-                    return true;
+                    try {
+                        next.linkExternal(user);
+                        return true;
+                    } catch (RuntimeErrorException e) {
+                        e.printStackTrace(System.err);
+                        return false;
+                    }
                 }
             }
             next = null;

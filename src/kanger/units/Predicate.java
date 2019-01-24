@@ -1,6 +1,7 @@
 package kanger.units;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 
 import java.io.Externalizable;
@@ -14,6 +15,8 @@ import java.util.Set;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Predicate implements Externalizable, Identifiable<Predicate> {
+
+    private static final long serialVersionUID = 196402070004L;
 
     private long id = -1;                   // Идентификатор
     private Term name = null;               // Имя предиката
@@ -49,7 +52,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         dos.writeInt(range);
     }
 
-    public void linkExternal(User user) {
+    public void linkExternal(User user) throws RuntimeErrorException {
         if(name == null) {
             this.user = user;
             name = user.getMind().getTerms().get(nameId);

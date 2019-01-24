@@ -71,7 +71,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         return false;
     }
 
-    public void add(int tag, TValue t) {
+    public void add(TValue t) {
         if (enableStore && !contains(t)) {
             if (root == null) {
                 root = new ArrayList<>();

@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -19,6 +20,8 @@ import java.io.ObjectOutput;
  * Домен для функции. Может быть рекурсивным на уровне структуры TList.
  */
 public class Function implements Externalizable, Identifiable<Function> {
+
+    private static final long serialVersionUID = 196402070002L;
 
     private long id = -1;
     private Term name = null;
@@ -53,7 +56,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal(User user) {
+    public void linkExternal(User user) throws RuntimeErrorException {
         if(name == null) {
             this.user = user;
             name = user.getMind().getTerms().get(nameId);
@@ -83,7 +86,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         return arguments;
     }
 
-    public Term getValue() {
+    public Term getValue() throws RuntimeErrorException {
         FValue c = getCurrent();
         if (c != null) {
             return getCurrent().getValue();
@@ -93,7 +96,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
 
-    public Object setValue(Term r) {
+    public Object setValue(Term r) throws RuntimeErrorException {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
@@ -102,10 +105,15 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
     public boolean isEmpty() {
-        return getValue() == null;
+        try {
+            return getValue() == null;
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
+            return true;
+        }
     }
 
-    public boolean setParameter(int i, Term r) {
+    public boolean setParameter(int i, Term r) throws RuntimeErrorException {
 //        if(i == range) {
 //            TSubst s = setResult(r);
 //            s.setSolves(owner, owner);
@@ -135,7 +143,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         this.name = name;
     }
 
-    private String formatParam(Argument t) {
+    private String formatParam(Argument t) throws RuntimeErrorException {
         Operation op = Parser.getOp(name.toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
@@ -160,46 +168,51 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
     public String toString() {
-        if (!isCalculable() && getValue() != null) {
-            return getValue().toString();
-        } else {
-            Operation op = Parser.getOp(name.toString(), range);
-            String s = "";
-            if (op == null || op.getRange() != range) {
-                s = String.format("%s(", name.toString());
-                for (int i = 0; i < range; ++i) {
-                    s += formatParam(arguments.get(i));
-                    if (i + 1 < range) {
-                        s += (char) Enums.COMMA;
-                    }
-                }
-                s += ")";
-            } else if (op.getRange() == 1) {
-                if (op.isPost()) {
-                    s = formatParam(arguments.get(0)) + op.getName();
-                } else {
-                    s = op.getName() + formatParam(arguments.get(0));
-                }
+        try {
+            if (!isCalculable() && getValue() != null) {
+                return getValue().toString();
             } else {
-                for (int i = 0; i < op.getRange(); ++i) {
-                    s += formatParam(arguments.get(i));
-                    if (i + 1 < op.getRange()) {
-                        s += " " + op.getName() + " ";
+                Operation op = Parser.getOp(name.toString(), range);
+                String s = "";
+                if (op == null || op.getRange() != range) {
+                    s = String.format("%s(", name.toString());
+                    for (int i = 0; i < range; ++i) {
+                        s += formatParam(arguments.get(i));
+                        if (i + 1 < range) {
+                            s += (char) Enums.COMMA;
+                        }
+                    }
+                    s += ")";
+                } else if (op.getRange() == 1) {
+                    if (op.isPost()) {
+                        s = formatParam(arguments.get(0)) + op.getName();
+                    } else {
+                        s = op.getName() + formatParam(arguments.get(0));
+                    }
+                } else {
+                    for (int i = 0; i < op.getRange(); ++i) {
+                        s += formatParam(arguments.get(i));
+                        if (i + 1 < op.getRange()) {
+                            s += " " + op.getName() + " ";
+                        }
                     }
                 }
-            }
 
-            String res = "";
-            if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
-//                if (getResult() != null) {
-                if (getCurrent() != null) {
-                    res = " {= " + getValue() + "}";
-                } else if (arguments.size() > range && !arguments.get(range).isEmpty()) {
-                    res = " [= " + arguments.get(range).getValue() + "]";
+                String res = "";
+                if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+    //                if (getResult() != null) {
+                    if (getCurrent() != null) {
+                        res = " {= " + getValue() + "}";
+                    } else if (arguments.size() > range && !arguments.get(range).isEmpty()) {
+                        res = " [= " + arguments.get(range).getValue() + "]";
+                    }
                 }
+                //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
+                return s + res;
             }
-            //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
-            return s + res;
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
+            return "";
         }
     }
 
@@ -237,7 +250,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 //        }
 //    }
 
-    public void clear() {
+    public void clear() throws RuntimeErrorException {
         setValue(null);
     }
 
@@ -258,7 +271,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 //        return f != null && f.isActual(this); // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
 //    }
 //
-    public boolean isComplete() {
+    public boolean isComplete() throws RuntimeErrorException {
         for (Argument a : arguments) {
             if (a.getValue() == null) {
                 return false;
@@ -285,7 +298,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 //    }
 
 
-    public FValue getCurrent() {
+    public FValue getCurrent() throws RuntimeErrorException {
         return user.getMind().getFValues().find(this);
     }
    

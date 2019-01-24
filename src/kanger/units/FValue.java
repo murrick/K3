@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -14,12 +15,15 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class FValue implements Externalizable, Identifiable<Function> {
+
+    private static final long serialVersionUID = 196402070003L;
+
     private long id = -1;
     private Function function = null;
     private Term value = null;
     private ArgList condition = new ArgList();
 
-//    private FValue next = null;
+    //    private FValue next = null;
     private User user = null;
 
     private transient long functionId = -1;
@@ -32,7 +36,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
         this.user = user;
     }
 
-    public FValue(Function f, User user) {
+    public FValue(Function f, User user) throws RuntimeErrorException {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue();
         for (Argument a : f.getArguments()) {
@@ -63,8 +67,8 @@ public class FValue implements Externalizable, Identifiable<Function> {
         dos.writeObject(condition);
     }
 
-    public void linkExternal(User user) {
-        if(function == null) {
+    public void linkExternal(User user) throws RuntimeErrorException {
+        if (function == null) {
             this.user = user;
             function = user.getMind().getFunctions().get(functionId);
             value = user.getMind().getTerms().get(valueId);
@@ -130,7 +134,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
         return condition;
     }
 
-    private String formatParam(Argument t) {
+    private String formatParam(Argument t) throws RuntimeErrorException {
         Operation op = Parser.getOp(function.getName().toString(), function.getRange());
         boolean isOp = op != null && op.getRange() == function.getRange();
         String s = "";
@@ -161,18 +165,23 @@ public class FValue implements Externalizable, Identifiable<Function> {
 
     @Override
     public boolean equalsTo(Function f) {
-        if (f.getId() == getFunc().getId()
-                && (f.getArguments().get(f.getRange()).isEmpty()
-                || getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId())) {
-            boolean complete = true;
-            for (int i = 0; i < f.getRange(); ++i) {
-                if (!f.getArguments().get(i).isEmpty() && f.getArguments().get(i).getValue().getId() != getCondition().get(i).getValue().getId()) {
-                    complete = false;
-                    break;
+        try {
+            if (f.getId() == getFunc().getId()
+                    && (f.getArguments().get(f.getRange()).isEmpty()
+                    || getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId())) {
+                boolean complete = true;
+                for (int i = 0; i < f.getRange(); ++i) {
+                    if (!f.getArguments().get(i).isEmpty() && f.getArguments().get(i).getValue().getId() != getCondition().get(i).getValue().getId()) {
+                        complete = false;
+                        break;
+                    }
                 }
+                return complete;
+            } else {
+                return false;
             }
-            return complete;
-        } else {
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
             return false;
         }
     }
@@ -187,43 +196,48 @@ public class FValue implements Externalizable, Identifiable<Function> {
         if (!function.isCalculable() && getValue() != null) {
             return getValue().toString();
         } else {
-            Operation op = Parser.getOp(function.getName().toString(), function.getRange());
-            String s = "";
-            if (op == null || op.getRange() != function.getRange()) {
-                s = String.format("%s(", function.getName().toString());
-                for (int i = 0; i < function.getRange(); ++i) {
-                    s += formatParam(condition.get(i));
-                    if (i + 1 < function.getRange()) {
-                        s += (char) Enums.COMMA;
+            try {
+                Operation op = Parser.getOp(function.getName().toString(), function.getRange());
+                String s = "";
+                if (op == null || op.getRange() != function.getRange()) {
+                    s = String.format("%s(", function.getName().toString());
+                    for (int i = 0; i < function.getRange(); ++i) {
+                        s += formatParam(condition.get(i));
+                        if (i + 1 < function.getRange()) {
+                            s += (char) Enums.COMMA;
+                        }
                     }
-                }
-                s += ")";
-            } else if (op.getRange() == 1) {
-                if (op.isPost()) {
-                    s = formatParam(condition.get(0)) + op.getName();
+                    s += ")";
+                } else if (op.getRange() == 1) {
+                    if (op.isPost()) {
+                        s = formatParam(condition.get(0)) + op.getName();
+                    } else {
+                        s = op.getName() + formatParam(condition.get(0));
+                    }
                 } else {
-                    s = op.getName() + formatParam(condition.get(0));
-                }
-            } else {
-                for (int i = 0; i < op.getRange(); ++i) {
-                    s += formatParam(condition.get(i));
-                    if (i + 1 < op.getRange()) {
-                        s += " " + op.getName() + " ";
+                    for (int i = 0; i < op.getRange(); ++i) {
+                        s += formatParam(condition.get(i));
+                        if (i + 1 < op.getRange()) {
+                            s += " " + op.getName() + " ";
+                        }
                     }
                 }
-            }
 
-            String res = "";
-            if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+                String res = "";
+                if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
 //                if (getResult() != null) {
-                if (getValue() != null) {
-                    res = " {= " + getValue() + "}";
-                } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
-                    res = " [= " + condition.get(function.getRange()).getValue() + "]";
+                    if (getValue() != null) {
+                        res = " {= " + getValue() + "}";
+                    } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
+                        res = " [= " + condition.get(function.getRange()).getValue() + "]";
+                    }
                 }
+                //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
+                return s + res;
+            } catch (RuntimeErrorException e) {
+                e.printStackTrace(System.err);
+                return "";
             }
-            //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
-            return s + res;
         }
     }
 

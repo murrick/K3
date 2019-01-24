@@ -1,5 +1,6 @@
 package kanger;
 
+import kanger.exception.RuntimeErrorException;
 import kanger.factory.*;
 import kanger.interfaces.Reactor;
 import kanger.storage.Storage;
@@ -58,7 +59,7 @@ public class User {
         storage = null;
     }
 
-    public void reindex(Reactor reactor) throws IOException {
+    public void reindex(Reactor reactor) throws IOException, RuntimeErrorException {
         if(!isClosed()) {
             for (Map.Entry<String, Storage> e : storage.entrySet()) {
                 reactor.run(e.getValue());

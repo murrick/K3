@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.Right;
@@ -71,9 +72,9 @@ public class TVariableFactory {
                 cache.clear();
                 firstId = lastId;
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
     }
@@ -88,11 +89,11 @@ public class TVariableFactory {
         return p;
     }
 
-    public TVariable get(long id) {
+    public TVariable get(long id) throws RuntimeErrorException {
         TVariable t = (TVariable) cache.get(id);
         if (t == null) {
             t = (TVariable) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (TVariable) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -100,9 +101,13 @@ public class TVariableFactory {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("TVariable id=" + id + " not found");
         }
         return t;
     }

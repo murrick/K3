@@ -144,9 +144,9 @@ public class Screen {
 //                    case 'A':
 //                        lastQuery = savedQuery;
 //                        break;
-                        case 'K':
-                            killRight(mind);
-                            break;
+//                        case 'K':
+//                            killRight(mind);
+//                            break;
 //                        case 'T':
 //                            showText(mind);
 //                            break;
@@ -278,6 +278,23 @@ public class Screen {
                                     case 'T':
                                         KangerTest.test(user, "set_" + (line.length() > 3 ? line.substring(3) : ""));
                                         break;
+                                    case 'm':
+                                    case 'M':
+                                        System.out.println("Memory status:");
+                                        System.out.println("Database: " + mind.getDatabase().size());
+                                        System.out.println("Dictionary: " + mind.getTerms().size());
+                                        System.out.println("Domains: " + mind.getDomains().size());
+                                        System.out.println("Functions: " + mind.getFunctions().size());
+                                        System.out.println("FValues: " + mind.getFValues().size());
+                                        System.out.println("Predicates: " + mind.getPredicates().size());
+                                        System.out.println("Rights: " + mind.getRights().size());
+                                        System.out.println("TValues: " + mind.getTValues().size());
+                                        System.out.println("TVariables: " + mind.getTValues().size());
+                                        System.out.println();
+                                        System.out.println("Hypotesis: " + mind.getHypotesisStore().size());
+                                        System.out.println("Solutions: " + mind.getSolutions().size());
+                                        System.out.println("Values: " + mind.getValues().size());
+                                        break;
                                 }
                             }
                             break;
@@ -349,17 +366,17 @@ public class Screen {
                 line = "";
 //                incomplete = "";
             } catch (RuntimeErrorException e) {
-                System.out.println(e.toString());
-                //e.printStackTrace();
+//                System.out.println(e.toString());
+                e.printStackTrace(System.err);
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
 
         }
         try {
             user.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         }
         System.out.println("KANGER III Session closed");
 
@@ -611,7 +628,7 @@ public class Screen {
 //        return str;
 //    }
     //
-    public static void showCauses(Mind mind, Domain d, int level) {
+    public static void showCauses(Mind mind, Domain d, int level) throws RuntimeErrorException {
         //ПРЕДОХРАНИТЕЛЬ
         if (level > 20) {
             return;
@@ -627,13 +644,11 @@ public class Screen {
 
             boolean rightShowed = false;
             for (Cause c : dest.getCauses()) {
-                Domain dst = mind.getDomains().get(c.getDstId());
-                Domain src = mind.getDomains().get(c.getSrcId());
                 if(!rightShowed) {
-                    System.out.printf("\t\t%sRight: %s\n", indent, dst.getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
+                    System.out.printf("\t\t%sRight: %s\n", indent, c.getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
                 }
-                System.out.printf("\t\t%sCause: %s\n", indent, src.toString(c.getArguments()));
-                showCauses(mind, src, level + 1);
+                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString(c.getArguments()));
+                showCauses(mind, c.getSrc(), level + 1);
             }
         }
     }
@@ -953,62 +968,62 @@ public class Screen {
         return String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
     }
 
-    public static void killRight(Mind mind) {
-        System.out.printf("Enter Right Number: ");
-        int id = Integer.parseInt(new Scanner(System.in).nextLine());
-        Right r = mind.getRights().get(id);
-        if (r == null) {
-            System.out.printf("ERROR: Wrong number\n");
-            return;
-        }
-        System.out.println(r.getOrig());
-        System.out.printf("Are you sure to remove right " + id + " [y/N]? ");
-        String s = new Scanner(System.in).nextLine();
-        if (s.charAt(0) == 'Y' || s.charAt(0) == 'y') {
-//TODO: Нужно реализовать удаление правила
-//            mind.removeInsertionRight(r);
-            mind.setChanged(true);
-        }
-    }
-
-    public static boolean saveSource(Mind context) {
-        Scanner scanner = new Scanner(System.in);
-        if (context.getSourceFileName().isEmpty()) {
-            context.setSourceFileName("context.k");
-        }
-
-
-        System.out.printf("Enter file name for save (%s): ", context.getSourceFileName());
-        String line = scanner.nextLine();
-        if (!line.isEmpty()) {
-            context.setSourceFileName(line);
-        } else {
-            line = context.getSourceFileName();
-        }
-
-        if (new File(line).exists()) {
-            System.out.print("WARNING: File already exists. Overwrite [y/N] ? ");
-            String ch = scanner.nextLine();
-            if (!(ch.startsWith("y") || ch.startsWith("Y"))) {
-                return false;
-            }
-        }
-
-        try {
-            BufferedWriter f = new BufferedWriter(new FileWriter(new File(line)));
-            f.write("test");
-            f.flush();
-            f.close();
-            context.setChanged(false);
-
-            System.out.printf("File %s saved\n", line);
-            return true;
-        } catch (IOException ex) {
-            System.out.printf("ERROR: %s\n", ex);
-            return false;
-        }
-    }
-
+//    public static void killRight(Mind mind) {
+//        System.out.printf("Enter Right Number: ");
+//        int id = Integer.parseInt(new Scanner(System.in).nextLine());
+//        Right r = mind.getRights().get(id);
+//        if (r == null) {
+//            System.out.printf("ERROR: Wrong number\n");
+//            return;
+//        }
+//        System.out.println(r.getOrig());
+//        System.out.printf("Are you sure to remove right " + id + " [y/N]? ");
+//        String s = new Scanner(System.in).nextLine();
+//        if (s.charAt(0) == 'Y' || s.charAt(0) == 'y') {
+////TODO: Нужно реализовать удаление правила
+////            mind.removeInsertionRight(r);
+//            mind.setChanged(true);
+//        }
+//    }
+//
+//    public static boolean saveSource(Mind context) {
+//        Scanner scanner = new Scanner(System.in);
+//        if (context.getSourceFileName().isEmpty()) {
+//            context.setSourceFileName("context.k");
+//        }
+//
+//
+//        System.out.printf("Enter file name for save (%s): ", context.getSourceFileName());
+//        String line = scanner.nextLine();
+//        if (!line.isEmpty()) {
+//            context.setSourceFileName(line);
+//        } else {
+//            line = context.getSourceFileName();
+//        }
+//
+//        if (new File(line).exists()) {
+//            System.out.print("WARNING: File already exists. Overwrite [y/N] ? ");
+//            String ch = scanner.nextLine();
+//            if (!(ch.startsWith("y") || ch.startsWith("Y"))) {
+//                return false;
+//            }
+//        }
+//
+//        try {
+//            BufferedWriter f = new BufferedWriter(new FileWriter(new File(line)));
+//            f.write("test");
+//            f.flush();
+//            f.close();
+//            context.setChanged(false);
+//
+//            System.out.printf("File %s saved\n", line);
+//            return true;
+//        } catch (IOException ex) {
+//            System.out.printf("ERROR: %s\n", ex);
+//            return false;
+//        }
+//    }
+//
     public static boolean loadSource(Mind mind) throws ParseErrorException, RuntimeErrorException {
         Scanner scanner = new Scanner(System.in);
 //        if (checkChg(mind)) {

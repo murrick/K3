@@ -2,6 +2,7 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.Cause;
 
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -18,11 +20,12 @@ import java.util.TreeSet;
  */
 public class TValue implements Comparable<TValue>, Externalizable, Identifiable<TValue> {
 
+    private static final long serialVersionUID = 196402070009L;
 
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
-    private SortedSet<Cause> causes = new TreeSet<>();
+    private Set<Cause> causes = new HashSet<>();
 
 //    private TValue next = null;          // Следующая переменная
     private User user = null;
@@ -72,7 +75,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         }
     }
 
-    public void linkExternal(User user) {
+    public void linkExternal(User user) throws RuntimeErrorException {
         if(value == null) {
             this.user = user;
             value = user.getMind().getTerms().get(valueId);
@@ -92,7 +95,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         return value;
     }
 
-    public SortedSet<Cause> getCauses() {
+    public Set<Cause> getCauses() {
         return causes;
     }
 

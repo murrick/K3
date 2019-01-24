@@ -1,6 +1,7 @@
 package kanger;
 
 import kanger.enums.LogMode;
+import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.Domain;
@@ -471,7 +472,7 @@ public class Analiser {
 //    }
 
 
-    public boolean analise(boolean logging) {
+    public boolean analise(boolean logging) throws RuntimeErrorException {
         boolean result = false;
         int counter = 0;
 
@@ -541,7 +542,6 @@ public class Analiser {
                 if (!d.isQuery()
                         && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
-                    h.setTag(r.getTag());
                     occurs = true;
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
@@ -637,14 +637,14 @@ public class Analiser {
 //    }
     //    ///////////////////////////////
 
-    private Domain contains(Domain d, Set<Domain> set) {
-        for (Domain x : set) {
-            if (x.equalsBase(d)) {
-                return x;
-            }
-        }
-        return null;
-    }
+//    private Domain contains(Domain d, Set<Domain> set) {
+//        for (Domain x : set) {
+//            if (x.equalsBase(d)) {
+//                return x;
+//            }
+//        }
+//        return null;
+//    }
 
 
 //    public void collectResults(Iterable<Domain> sequence) {
@@ -763,14 +763,14 @@ public class Analiser {
 
     //TODO: !index(qwerty); ?$x $y index(x), y : x;
 
-    public boolean checkDatabase(boolean logging) {
+    public boolean checkDatabase(boolean logging) throws RuntimeErrorException {
         boolean result = false;
         for (Record p : user.getMind().getDatabase()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
                 int i = 0;
                 for (TValue v : p.getDomain().getArguments().getTValues(true)) {
-                    user.getMind().getValues().add(++i, v);
+                    user.getMind().getValues().add(v);
                 }
 //                }
                 if (logging) {
@@ -819,14 +819,14 @@ public class Analiser {
                         if (p.getDomain().isQuery()) {
                             for (Argument a : p.getDomain().getArguments()) {
                                 if (a.isVSet()) {
-                                    user.getMind().getValues().add(p.getTag(), a.getV());
+                                    user.getMind().getValues().add(a.getV());
                                 }
                             }
                         }
                         if (q.getDomain().isQuery()) {
                             for (Argument a : q.getDomain().getArguments()) {
                                 if (a.isVSet()) {
-                                    user.getMind().getValues().add(p.getTag(), a.getV());
+                                    user.getMind().getValues().add(a.getV());
                                 }
                             }
                         }

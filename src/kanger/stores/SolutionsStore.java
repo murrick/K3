@@ -1,6 +1,7 @@
 package kanger.stores;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.units.Record;
 
 import java.util.SortedSet;
@@ -50,7 +51,7 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Record rec) {
+    public boolean contains(Record rec) throws RuntimeErrorException {
         for (Record r : root) {
             if (r.getDomain().equalsBase(rec.getDomain()) && r.getDomain().isAntc() == rec.getDomain().isAntc()) {
                 return true;

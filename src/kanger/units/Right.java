@@ -1,6 +1,7 @@
 package kanger.units;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 
 import java.io.Externalizable;
@@ -16,6 +17,8 @@ import java.util.List;
  * Список правил
  */
 public class Right implements Externalizable, Identifiable<Right> {
+
+    private static final long serialVersionUID = 196402070007L;
 
     private long id = -1;                                   // ID Правила
     private Term orig = null;                               // Оригинальная строка
@@ -68,7 +71,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
-    public void linkExternal(User user) {
+    public void linkExternal(User user) throws RuntimeErrorException {
         if(tree.isEmpty()) {
             this.user = user;
             orig = user.getMind().getTerms().get(origId);

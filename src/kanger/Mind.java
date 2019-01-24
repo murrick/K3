@@ -61,7 +61,7 @@ public class Mind {
 //    private final Set<Long> closedTrees = new HashSet<>();
 
     private final Map<Long, Set<ArgList>> usedDomains = new HashMap<>();
-    private final Map<Long, Map<Integer, Set<ArgList>>> producedDomains = new HashMap<>();
+    private final Map<Long, Set<ArgList>> producedDomains = new HashMap<>();
     private final Map<Long, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Long, Set<ArgList>> excludedDomains = new HashMap<>();
 
@@ -184,7 +184,7 @@ public class Mind {
             try {
                 user.flush();
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
     }
@@ -222,7 +222,7 @@ public class Mind {
             try {
                 user.clear();
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
 
@@ -351,11 +351,11 @@ public class Mind {
         changed = b;
     }
 
-    public void link(Right r, boolean logging) {
+    public void link(Right r, boolean logging) throws RuntimeErrorException {
         linker.link(r, logging);
     }
 
-    public Boolean analise(boolean logging) {
+    public Boolean analise(boolean logging) throws RuntimeErrorException {
         return analiser.analise(logging);
     }
 
@@ -547,7 +547,7 @@ public class Mind {
         return excludedDomains;
     }
 
-    public Map<Long, Map<Integer, Set<ArgList>>> getProducedDomains() {
+    public Map<Long, Set<ArgList>> getProducedDomains() {
         return producedDomains;
     }
 
@@ -643,11 +643,11 @@ public class Mind {
         return calculator.exists(f);
     }
 
-    public int executeSystem(Domain d) {
+    public int executeSystem(Domain d) throws RuntimeErrorException {
         return calculator.execute(d);
     }
 
-    public int executeSystem(Function f) {
+    public int executeSystem(Function f) throws RuntimeErrorException {
         return calculator.execute(f);
     }
 
@@ -929,7 +929,7 @@ public class Mind {
             int i = 0;
             for (Record log : mind.getSolutions().getRoot()) {
                 mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i,
-                        (log.getTag() != -1 && status ? log.getTag() + ":\t" : "") + log.toString()));
+                        log.toString()));
             }
         }
         if (mind.getValues().size() > 0) {

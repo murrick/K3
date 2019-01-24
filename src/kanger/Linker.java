@@ -4,6 +4,7 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -23,7 +24,7 @@ public class Linker {
         this.user = user;
     }
 
-    public void link(Right right, boolean logging) {
+    public void link(Right right, boolean logging) throws RuntimeErrorException {
 
         user.getMind().getProducedDomains().clear();
         user.getMind().getExcludedDomains().clear();
@@ -38,7 +39,7 @@ public class Linker {
 
         final Set<Domain> waiters = new HashSet<>();
         final Map<Long, Set<Long>> links = new HashMap<>();
-        for(Right r : user.getMind().getRights()) {
+        for (Right r : user.getMind().getRights()) {
             for (List<Domain> tree : r.getTree()) {
                 if (tree.size() == 1) {
                     if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
@@ -47,8 +48,8 @@ public class Linker {
                         tree.get(0).setStored();
                     }
                 }
-                for(Domain d : tree) {
-                    if(!links.containsKey(d.getPredicate().getId())) {
+                for (Domain d : tree) {
+                    if (!links.containsKey(d.getPredicate().getId())) {
                         links.put(d.getPredicate().getId(), new HashSet<>());
                     }
                     links.get(d.getPredicate().getId()).add(r.getId());
@@ -115,7 +116,7 @@ public class Linker {
 
                     final List<Domain> t = tree;
                     SortedSet<TVariable> tvars = new TreeSet<>();
-                    for(Domain d : tree) {
+                    for (Domain d : tree) {
                         tvars.addAll(d.getArguments().getTVariables(true));
                     }
 
@@ -125,14 +126,19 @@ public class Linker {
                             boolean result = false;
                             boolean logging = (boolean) o;
 
-                            if (linkDomains(t, links, causes, logging)) {
-                                result = true;
-                            }
-                            if (calcFunctions(t, causes, logging)) {
-                                result = true;
-                            }
-                            if (linkDatabase(t, waiters, causes, logging)) {
-                                result = true;
+                            try {
+                                if (linkDomains(t, links, causes, logging)) {
+                                    result = true;
+                                }
+                                if (calcFunctions(t, causes, logging)) {
+                                    result = true;
+                                }
+                                if (linkDatabase(t, waiters, causes, logging)) {
+                                    result = true;
+                                }
+                            } catch (RuntimeErrorException e) {
+                                e.printStackTrace(System.err);
+                                result = false;
                             }
 
                             return result;
@@ -150,7 +156,7 @@ public class Linker {
         );
     }
 
-    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, Reactor runnable) {
+    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, Reactor runnable) throws RuntimeErrorException {
         boolean result = false;
 //        if (tvars == null) {
 //            tvars = new TreeSet<>();
@@ -180,7 +186,7 @@ public class Linker {
         return result;
     }
 
-    private boolean linkDomains(List<Domain> treeSlave, Map<Long, Set<Long>>  links, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean linkDomains(List<Domain> treeSlave, Map<Long, Set<Long>> links, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
         if (treeSlave.size() == 1) {
@@ -300,7 +306,7 @@ public class Linker {
         return r != null;
     }
 
-    private boolean linkDatabase(List<Domain> tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean linkDatabase(List<Domain> tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
         boolean occurs = false;
@@ -356,7 +362,7 @@ public class Linker {
                 occurs = true;
                 if (!d.isStored()) {
                     result = true;
-                    d.setProduced(user.getMind().getDatabase().getTag());
+                    d.setProduced();
                     d.addCauses(causes.get(d.getRight()));
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
@@ -369,7 +375,7 @@ public class Linker {
 //                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.setProduced();
                         d.addCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
@@ -384,7 +390,7 @@ public class Linker {
 //                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.setProduced();
                         d.addCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
@@ -411,7 +417,7 @@ public class Linker {
 //                    d.addCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
-                        d.setProduced(user.getMind().getDatabase().getTag());
+                        d.setProduced();
                         d.addCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
@@ -421,7 +427,6 @@ public class Linker {
                 }
             }
             if (result) {
-                user.getMind().getDatabase().incTag();
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                 }
@@ -432,15 +437,15 @@ public class Linker {
         return result;
     }
 
-    private void logCauses(Domain d) {
+    private void logCauses(Domain d) throws RuntimeErrorException {
         boolean rightShowed = false;
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + user.getMind().getDomains().get(c.getDstId()).getRight());
+                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
                     rightShowed = true;
                 }
-                user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + user.getMind().getDomains().get(c.getSrcId()).toString(c.getArguments()));
+                user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
             }
         }
     }
@@ -465,44 +470,41 @@ public class Linker {
 //        }
 //    }
 //
-    private boolean updateDatabase(boolean logging) {
+    private boolean updateDatabase(boolean logging) throws RuntimeErrorException {
         boolean result = false;
-        for (Map.Entry<Long, Map<Integer, Set<ArgList>>> e : user.getMind().getProducedDomains().entrySet()) {
+        for (Map.Entry<Long, Set<ArgList>> e : user.getMind().getProducedDomains().entrySet()) {
             Domain d = user.getMind().getDomains().get(e.getKey());
-            for (Map.Entry<Integer, Set<ArgList>> tags : e.getValue().entrySet()) {
-                for (ArgList args : tags.getValue()) {
-                    result = true;
+            for (ArgList args : e.getValue()) {
+                result = true;
 
-                    for (int i = 0; i < args.size(); /*d.getPredicate().getRange();*/ ++i) {
-                        if (d.getArguments().get(i).isTSet()) {
-                            if (d.getArguments().get(i).getT().find(args.get(i).getValue()) != null) {
-                                d.getArguments().get(i).getT().setValue(args.get(i).getValue());
-                            }
-                        } else if (d.getArguments().get(i).isFSet()) {
-                            //TODO: Добавить обработку функций
+                for (int i = 0; i < args.size(); /*d.getPredicate().getRange();*/ ++i) {
+                    if (d.getArguments().get(i).isTSet()) {
+                        if (d.getArguments().get(i).getT().find(args.get(i).getValue()) != null) {
+                            d.getArguments().get(i).getT().setValue(args.get(i).getValue());
                         }
+                    } else if (d.getArguments().get(i).isFSet()) {
+                        //TODO: Добавить обработку функций
                     }
+                }
 
-                    Record x;
-                    if (d.getArguments().getTVariables(true).isEmpty()) {
-                        x = d.setStored();
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
-                        }
-                    } else {
-                        x = d.createStored();
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
-                        }
+                Record x;
+                if (d.getArguments().getTVariables(true).isEmpty()) {
+                    x = d.setStored();
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
                     }
-                    if (d.isCalculated()) {
-                        x.getDomain().setCalculated();
+                } else {
+                    x = d.createStored();
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
                     }
-                    x.setTag(tags.getKey());
-                    if (d.getCauses() != null) {
-                        x.getCauses().clear();
-                        x.getCauses().addAll(d.getCauses());
-                    }
+                }
+                if (d.isCalculated()) {
+                    x.getDomain().setCalculated();
+                }
+                if (d.getCauses() != null) {
+                    x.getCauses().clear();
+                    x.getCauses().addAll(d.getCauses());
                 }
             }
         }
@@ -514,20 +516,20 @@ public class Linker {
     }
 
 
-    public boolean calcFunctions(List<Domain> master, Map<Right, Set<Cause>> causes, boolean logging) {
+    public boolean calcFunctions(List<Domain> master, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
         boolean result = false;
 
-            if (checkSystem(master, logging)) {
-                for (Domain d : master) {
-                    for (Function f : d.getArguments().getFunctions()) {
-                        if (f.isCalculable() && f.isEmpty()) {
-                            if (new Calculator(user).calculate(f, logging)) {
-                                result = true;
+        if (checkSystem(master, logging)) {
+            for (Domain d : master) {
+                for (Function f : d.getArguments().getFunctions()) {
+                    if (f.isCalculable() && f.isEmpty()) {
+                        if (new Calculator(user).calculate(f, logging)) {
+                            result = true;
 
-                            }
                         }
                     }
                 }
+            }
         }
 
         if (result && logging) {
@@ -536,7 +538,7 @@ public class Linker {
         return result;
     }
 
-    public boolean checkSystem(List<Domain> tree, boolean logging) {
+    public boolean checkSystem(List<Domain> tree, boolean logging) throws RuntimeErrorException {
         boolean block = false;
         for (Domain d : tree) {
             if (d.isSystem()) {

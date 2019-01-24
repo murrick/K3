@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -71,10 +72,8 @@ public class RightFactory implements Iterable<Right> {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
@@ -86,11 +85,11 @@ public class RightFactory implements Iterable<Right> {
         return p;
     }
 
-    public Right get(long id) {
+    public Right get(long id) throws RuntimeErrorException {
         Right t = (Right) cache.get(id);
         if (t == null) {
             t = (Right) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (Right) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -98,9 +97,13 @@ public class RightFactory implements Iterable<Right> {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("Right id=" + id + " not found");
         }
         return t;
     }
@@ -117,7 +120,7 @@ public class RightFactory implements Iterable<Right> {
         return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
-    public void add(Domain d) {
+    public void add(Domain d) throws RuntimeErrorException {
         Right r = add();
         List<Domain> t = new ArrayList<>();
         r.getTree().add(t);
@@ -143,7 +146,11 @@ public class RightFactory implements Iterable<Right> {
         @Override
         public Identifiable next() {
             Identifiable next = super.next();
-            next.linkExternal(user);
+            try {
+                next.linkExternal(user);
+            } catch (RuntimeErrorException e) {
+                e.printStackTrace(System.err);
+            }
             return next;
         }
     }

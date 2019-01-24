@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -69,10 +70,8 @@ public class FunctionFactory implements Iterable<Function> {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
@@ -89,11 +88,11 @@ public class FunctionFactory implements Iterable<Function> {
         return p;
     }
 
-    public Function get(long id) {
+    public Function get(long id) throws RuntimeErrorException {
         Function t = (Function) cache.get(id);
         if (t == null) {
             t = (Function) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (Function) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -101,10 +100,13 @@ public class FunctionFactory implements Iterable<Function> {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    //TODO: Сделать runtime error
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("Function id=" + id + " not found");
         }
         return t;
     }
@@ -137,7 +139,11 @@ public class FunctionFactory implements Iterable<Function> {
         @Override
         public Identifiable next() {
             Identifiable next = super.next();
-            next.linkExternal(user);
+            try {
+                next.linkExternal(user);
+            } catch (RuntimeErrorException e) {
+                e.printStackTrace(System.err);
+            }
             return next;
         }
     }

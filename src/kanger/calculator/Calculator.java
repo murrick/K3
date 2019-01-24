@@ -5,6 +5,7 @@ import kanger.compiler.SysOp;
 import kanger.enums.Enums;
 import kanger.enums.LibMode;
 import kanger.enums.LogMode;
+import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Argument;
 import kanger.units.Domain;
 import kanger.units.Function;
@@ -32,7 +33,7 @@ public class Calculator {
      * @param fu
      * @return
      */
-    public boolean calculate(Function fu, boolean logging) /*throws RuntimeErrorException*/ {
+    public boolean calculate(Function fu, boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
 
@@ -72,7 +73,7 @@ public class Calculator {
      * TRUE или FALSE, либо -1 если предикат не
      * системный
      */
-    public int execute(Domain d) {
+    public int execute(Domain d) throws RuntimeErrorException {
         int k = -1;
         String n = d.getPredicate().getName() + "(" + d.getPredicate().getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
@@ -100,7 +101,7 @@ public class Calculator {
         return k;
     }
 
-    public int execute(Function fu) /*throws RuntimeErrorException*/ {
+    public int execute(Function fu) throws RuntimeErrorException {
         int k = -1;
         String n = fu.getName() + "(" + fu.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);

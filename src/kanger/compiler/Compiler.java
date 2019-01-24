@@ -64,7 +64,7 @@ public class Compiler {
         return r;
     }
 
-    private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones) throws ParseErrorException {
+    private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones) throws ParseErrorException, RuntimeErrorException {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
         if(root == null) {
@@ -166,7 +166,7 @@ public class Compiler {
         clones.addAll(list);
     }
 
-    private boolean compileQuantor(Right r, PTree root, boolean antc, Map<String, Argument> replacements) throws ParseErrorException {
+    private boolean compileQuantor(Right r, PTree root, boolean antc, Map<String, Argument> replacements) throws ParseErrorException, RuntimeErrorException {
         String varName = root.getLeft().getName();
 
         if (replacements.containsKey(varName)) {
@@ -183,7 +183,7 @@ public class Compiler {
         return antc;
     }
 
-    private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements) {
+    private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements) throws RuntimeErrorException {
 //        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
 
         Domain d = new Domain(user);
@@ -238,7 +238,7 @@ public class Compiler {
         t.add(d);
     }
 
-    private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) {
+    private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) throws RuntimeErrorException {
 //        int s;
 
         if (root == null) {

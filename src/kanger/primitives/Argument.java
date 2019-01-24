@@ -2,6 +2,7 @@ package kanger.primitives;
 
 import kanger.User;
 import kanger.enums.ArgumentType;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.units.*;
 
@@ -38,7 +39,7 @@ public class Argument implements Externalizable {
         dos.writeInt(getType().ordinal());
     }
 
-    public void linkExternal(User user) {
+    public void linkExternal(User user) throws RuntimeErrorException {
         switch (type) {
             case TERM:
                 o = user.getMind().getTerms().get(id);
@@ -79,7 +80,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public Term getValue() {
+    public Term getValue() throws RuntimeErrorException {
         switch (getType()) {
             case TERM:
                 return (Term) o;
@@ -96,7 +97,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public boolean setValue(Term t) {
+    public boolean setValue(Term t) throws RuntimeErrorException {
         switch (getType()) {
             case EMPTY:
                 o = t;
@@ -136,7 +137,12 @@ public class Argument implements Externalizable {
     }
 
     public boolean isEmpty() {
-        return getValue() == null;
+        try {
+            return getValue() == null;
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
+            return true;
+        }
     }
 
     public boolean isTSet() {
@@ -157,22 +163,27 @@ public class Argument implements Externalizable {
 
     @Override
     public String toString() {
-        Object val = getValue();
-        if (val != null) {
-            return val.toString();
-        } else {
-            return "null";
+        try {
+            Object val = getValue();
+            if (val != null) {
+                return val.toString();
+            } else {
+                return "null";
+            }
+        } catch (RuntimeErrorException e) {
+            e.printStackTrace(System.err);
+            return "";
         }
     }
 
 
-    public boolean isDefined() {
+    public boolean isDefined() throws RuntimeErrorException {
         Term t = getValue();
         return t != null && !t.isCVariable();
     }
 
 
-    public boolean isCVar() {
+    public boolean isCVar() throws RuntimeErrorException {
         return !isEmpty() && getValue().isCVariable();
     }
 

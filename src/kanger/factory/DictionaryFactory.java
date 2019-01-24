@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.enums.Enums;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.Right;
@@ -85,15 +86,13 @@ public class DictionaryFactory {
                 }
                 cache.clear();
                 firstId = lastId;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
             }
         }
     }
 
-    public Term add(Object o) {
+    public Term add(Object o) throws RuntimeErrorException {
         Term p = find(o);
         if (p != null) {
             return p;
@@ -106,7 +105,7 @@ public class DictionaryFactory {
     }
 
 
-    public Term find(Object o) {
+    public Term find(Object o) throws RuntimeErrorException {
         Term t = new Term(o, user);
         for (Identifiable one : cache.find(t.getHash())) {
             if (one.equalsTo(t)) {
@@ -129,7 +128,7 @@ public class DictionaryFactory {
         return null;
     }
 
-    public Term createCVar(Right r, String name) {
+    public Term createCVar(Right r, String name) throws RuntimeErrorException {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
@@ -139,11 +138,11 @@ public class DictionaryFactory {
         return t;
     }
 
-    public Term get(long id) {
+    public Term get(long id) throws RuntimeErrorException {
         Term t = (Term) cache.get(id);
         if (t == null) {
             t = (Term) load.get(id);
-            if (t == null) {
+            if (t == null && !user.isClosed()) {
                 try {
                     t = (Term) user.getStorage(SCHEMA).get(id);
                     if (t != null) {
@@ -151,9 +150,13 @@ public class DictionaryFactory {
                         load.add(t);
                     }
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
                 }
             }
+        }
+        if(t == null) {
+            throw new RuntimeErrorException("Term id=" + id + " not found");
         }
         return t;
     }
