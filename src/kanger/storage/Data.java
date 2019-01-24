@@ -1,15 +1,15 @@
 package kanger.storage;
 
+import kanger.Version;
 import kanger.interfaces.Identifiable;
 
 import java.io.*;
 import java.util.*;
 
 public class Data implements Closeable, Iterable<Identifiable> {
-    private static final short VERSION = 0x0301;
     private static final int CACHE_SIZE = 512;
 
-    private int version = VERSION;
+    private int version = Version.VERSION_CODE;
     private int headerSize = 0;
     private boolean changed = false;
     private File file = null;

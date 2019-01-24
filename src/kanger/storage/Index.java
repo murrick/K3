@@ -1,5 +1,7 @@
 package kanger.storage;
 
+import kanger.Version;
+
 import java.io.*;
 import java.util.*;
 
@@ -9,9 +11,8 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private static final int BLOCK_MARK = 0x10;
 
     private static final int BLOCK_SIZE = 512;
-    private static final short VERSION = 0x0301;
 
-    private int version = VERSION;
+    private int version = Version.VERSION_CODE;
 
     private NavigableMap<Long, IndexOne> baseIndex = new TreeMap<>();
     private NavigableMap<Long, IndexOne> currentBlock = new TreeMap<>();

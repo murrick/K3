@@ -1,0 +1,28 @@
+<project name="K3" default="init" basedir=".">
+    <description>
+        simple example increment build variable
+    </description>
+    <!-- set global properties for this build -->
+    <property name="src" location="./src"/>
+
+    <tstamp>
+        <format property="build.time" pattern="yyyy-MM-dd_HH:mm:ss"/>
+    </tstamp>
+
+    <target name="init">
+        <!--echo file="myAntOut.txt">My first ant ${src} ${line.separator}</echo-->
+
+        <buildnumber/>
+        <replaceregexp file="${src}/kanger/Version.java"
+                       match="public\s+static\s+final\s+String\s+REVISION\s+=\s+&quot;.*&quot;;"
+                       replace="public static final String REVISION = &quot;${build.number}&quot;;"
+                       byline="true"
+        />
+        <replaceregexp file="${src}/kanger/Version.java"
+                       match="public\s+static\s+final\s+String\s+DATE\s+=\s+&quot;.*&quot;;"
+                       replace="public static final String DATE = &quot;${build.time}&quot;;"
+                       byline="true"
+        />
+
+    </target>
+</project>

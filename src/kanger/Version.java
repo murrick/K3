@@ -16,12 +16,12 @@ public abstract class Version {
 
     public static final int VERSION = 3;
     public static final int RELEASE = 2;
-    public static final int REVISION = Integer.parseInt("$LastChangedRevision: 67 $".replace("$LastChangedRevision:", "").replace("$", "").trim());
-    public static final Date DATE = parseDate("$LastChangedDate: 2019-01-24 11:24:18 +0300 (Thu, 19 Jan 2017) $".replace("$LastChangedDate:", "").replace("$", "").trim());
-    public static final int YEAR = getYear(DATE);
-    public static final int VERSION_B = (VERSION << 24) | (RELEASE << 16) | REVISION;
-    public static final String VERSION_S = String.format("%d.%d.%d", VERSION, RELEASE, REVISION);
-    public static final String DATE_S = formatDate(DATE);
+    public static final String REVISION = "74";
+    public static final String DATE = "2019-01-24_17:08:24";
+    public static final int YEAR = getYear(parseDate(DATE));
+    public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
+    public static final String VERSION_S = String.format("%d.%d.%s", VERSION, RELEASE, REVISION);
+    public static final String DATE_S = formatDate(parseDate(DATE));
 
     private static String formatDate(Date date) {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(date);
@@ -34,7 +34,7 @@ public abstract class Version {
     private static Date parseDate(String date) {
         Date d = null;
         try {
-            d = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").parse(date);
+            d = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").parse(date);
         } catch (ParseException ex) {
             //
         }
