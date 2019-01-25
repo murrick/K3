@@ -62,7 +62,7 @@ public class TValueFactory {
         }
     }
 
-    public void update() {
+    public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
@@ -75,6 +75,7 @@ public class TValueFactory {
                 firstId = lastId;
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
     }
@@ -121,25 +122,26 @@ public class TValueFactory {
         return null;
     }
 
-    public TValue get(long id) throws RuntimeErrorException {
+    public TValue get(long id) {
         TValue t = (TValue) cache.get(id);
         if (t == null) {
             t = (TValue) load.get(id);
-            if (t == null && !user.isClosed()) {
-                try {
-                    t = (TValue) user.getStorage(SCHEMA).get(id);
-                    if (t != null) {
-                        t.linkExternal(user);
-                        load.add(t);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
-                }
-            }
         }
-        if(t == null) {
-            throw new RuntimeErrorException("TValue id=" + id + " not found");
+        return t;
+    }
+
+    public TValue load(long id) throws RuntimeErrorException {
+        TValue t = null;
+        if (!user.isClosed()) {
+            try {
+                t = (TValue) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    load.add(t);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
         }
         return t;
     }
@@ -191,22 +193,16 @@ public class TValueFactory {
         private TValue next = null;
 
         public TValueIterator(TVariable tVariable, Cache cache, Storage storage) {
-            super(false, cache, storage);
+            super(false, cache, storage, user);
             this.tVariable = tVariable;
         }
 
         @Override
         public boolean hasNext() {
-            while(super.hasNext()) {
+            while (super.hasNext()) {
                 next = (TValue) super.next();
-                if(next.getTVar().getId() == tVariable.getId()) {
-                    try {
-                        next.linkExternal(user);
-                        return true;
-                    } catch (RuntimeErrorException e) {
-                        e.printStackTrace(System.err);
-                        return false;
-                    }
+                if (next.getTVar().getId() == tVariable.getId()) {
+                    return true;
                 }
             }
             next = null;

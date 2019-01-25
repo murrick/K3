@@ -77,7 +77,7 @@ public class Mind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
-    public Mind(User user) {
+    public Mind(User user) throws RuntimeErrorException {
         this.user = user;
         user.setMind(this);
         init();
@@ -95,7 +95,6 @@ public class Mind {
         predicates.transaction(root.getPredicates());
         domains.transaction(root.getDomains());
         rights.transaction(root.getRights());
-//        trees.transaction(root.getTrees());
         database.transaction(root.getDatabase());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
@@ -136,8 +135,11 @@ public class Mind {
         linker = new Linker(user);                                         // Линкер
     }
 
-    public void commit(Mind m) {
+    public void commit(Mind m) throws RuntimeErrorException {
         SortedSet vars = new TreeSet<>();
+
+        user.setMind(this);
+
         terms.commit(m.getTerms(), vars);
         tVars.commit(m.getTVars(), vars);
         tValues.commit(m.getTValues());
@@ -146,7 +148,6 @@ public class Mind {
         domains.commit(m.getDomains());
         database.commit(m.getDatabase());
         rights.commit(m.getRights());
-//        trees.commit(m.getTrees());
         functions.commit(m.getFunctions());
 
 //        log.commit(m.getLog());
@@ -164,31 +165,37 @@ public class Mind {
             }
         }
 
-        terms.update();
-        tVars.update();
-        tValues.update();
-        fValues.update();
-        predicates.update();
-        domains.update();
-        database.update();
-        rights.update();
-//        trees.update();
-        functions.update();
+        update();
 
-        user.setMind(this);
 
         log.commit(m.getLog());
         queryResult = (Boolean) m.getQueryResult();
 
-        if(!user.isClosed()) {
-            try {
-                user.flush();
-            } catch (IOException e) {
-                e.printStackTrace(System.err);
-            }
-        }
     }
 
+    public void update() throws RuntimeErrorException {
+
+        if(!user.isClosed()) {
+            try {
+                terms.update();
+                tVars.update();
+                tValues.update();
+                fValues.update();
+                predicates.update();
+                domains.update();
+                database.update();
+                rights.update();
+                functions.update();
+
+                user.flush();
+
+            } catch (IOException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
+        }
+
+    }
     public void release(Mind m) {
 
         user.setMind(this);
@@ -201,7 +208,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public void clear() {
+    public void clear() throws RuntimeErrorException {
         terms.clear();
         predicates.clear();
         database.clear();
@@ -209,7 +216,6 @@ public class Mind {
         tVars.clear();
         tValues.clear();
         rights.clear();
-//        trees.clear();
         functions.clear();
         fValues.clear();
 
@@ -223,6 +229,7 @@ public class Mind {
                 user.clear();
             } catch (IOException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
 
@@ -409,8 +416,7 @@ public class Mind {
         }
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
-            r = new Compiler(user).compileLine(p, suc);
-            ((Right) r).setOrig(user.getMind().getTerms().add(orig));
+            r = new Compiler(user).compileLine(p, suc, orig);
         }
 
         return r;

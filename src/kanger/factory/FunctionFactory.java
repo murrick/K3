@@ -1,6 +1,7 @@
 package kanger.factory;
 
 import kanger.User;
+import kanger.calculator.Calculator;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
@@ -25,7 +26,7 @@ public class FunctionFactory implements Iterable<Function> {
 
     private Cache cache = new Cache();
     private Cache load = new Cache();
-    private User user= null;
+    private User user = null;
 
     public FunctionFactory(User user) {
         this.user = user;
@@ -59,7 +60,7 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
-    public void update() {
+    public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
@@ -72,41 +73,48 @@ public class FunctionFactory implements Iterable<Function> {
                 firstId = lastId;
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
     }
 
 
-    public Function add(Term name, ArgList arguments) {
-        Function p = new Function(user);
-        p.setName(name);
-        p.setRange(arguments.size());
-        p.getArguments().addAll(arguments);
-        p.getArguments().add(new Argument());
-        p.setId(lastId++);
-        cache.add(p);
-        return p;
+    public Function add(Term name, ArgList arguments) throws RuntimeErrorException {
+        Function f = new Function(user);
+        f.setName(name);
+        f.setRange(arguments.size());
+        f.getArguments().addAll(arguments);
+        f.getArguments().add(new Argument());
+        f.setId(lastId++);
+        cache.add(f);
+
+        if (!f.isCalculable()) {
+            new Calculator(user).calculate(f, false);
+        }
+
+        return f;
     }
 
-    public Function get(long id) throws RuntimeErrorException {
+    public Function get(long id) {
         Function t = (Function) cache.get(id);
         if (t == null) {
             t = (Function) load.get(id);
-            if (t == null && !user.isClosed()) {
-                try {
-                    t = (Function) user.getStorage(SCHEMA).get(id);
-                    if (t != null) {
-                        t.linkExternal(user);
-                        load.add(t);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
-                }
-            }
         }
-        if(t == null) {
-            throw new RuntimeErrorException("Function id=" + id + " not found");
+        return t;
+    }
+
+    public Function load(long id) throws RuntimeErrorException {
+        Function t = null;
+        if (!user.isClosed()) {
+            try {
+                t = (Function) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    load.add(t);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
         }
         return t;
     }
@@ -127,25 +135,6 @@ public class FunctionFactory implements Iterable<Function> {
     @Override
     public Iterator<Function> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new FunctionIterator(true, cache, storage);
+        return new DataIterator(true, cache, storage, user);
     }
-
-    public class FunctionIterator extends DataIterator {
-
-        public FunctionIterator(boolean backward, Cache cache, Storage storage) {
-            super(backward, cache, storage);
-        }
-
-        @Override
-        public Identifiable next() {
-            Identifiable next = super.next();
-            try {
-                next.linkExternal(user);
-            } catch (RuntimeErrorException e) {
-                e.printStackTrace(System.err);
-            }
-            return next;
-        }
-    }
-
 }

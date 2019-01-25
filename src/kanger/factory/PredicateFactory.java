@@ -60,7 +60,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public void update() {
+    public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
@@ -73,6 +73,7 @@ public class PredicateFactory implements Iterable<Predicate> {
                 firstId = lastId;
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
     }
@@ -109,25 +110,26 @@ public class PredicateFactory implements Iterable<Predicate> {
         return null;
     }
 
-    public Predicate get(long id) throws RuntimeErrorException {
+    public Predicate get(long id) {
         Predicate t = (Predicate) cache.get(id);
         if (t == null) {
             t = (Predicate) load.get(id);
-            if (t == null && !user.isClosed()) {
-                try {
-                    t = (Predicate) user.getStorage(SCHEMA).get(id);
-                    if (t != null) {
-                        t.linkExternal(user);
-                        load.add(t);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
-                }
-            }
         }
-        if(t == null) {
-            throw new RuntimeErrorException("Predicate id=" + id + " not found");
+        return t;
+    }
+
+    public Predicate load(long id) throws RuntimeErrorException {
+        Predicate t = null;
+        if (!user.isClosed()) {
+            try {
+                t = (Predicate) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    load.add(t);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
         }
         return t;
     }
@@ -156,25 +158,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     @Override
     public Iterator<Predicate> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new PredicateIterator(true, cache, storage);
-    }
-
-    public class PredicateIterator extends DataIterator {
-
-        public PredicateIterator(boolean backward, Cache cache, Storage storage) {
-            super(backward, cache, storage);
-        }
-
-        @Override
-        public Identifiable next() {
-            Identifiable next = super.next();
-            try {
-                next.linkExternal(user);
-            } catch (RuntimeErrorException e) {
-                e.printStackTrace(System.err);
-            }
-            return next;
-        }
+        return new DataIterator(true, cache, storage, user);
     }
 
 }

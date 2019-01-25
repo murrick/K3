@@ -324,9 +324,11 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         if (io == null) {
             set(id, offset);
         } else if (!io.getData().contains(offset)) {
-            io.getData().add(offset);
-            io.setSize(io.getData().size());
-            changed = true;
+            if(!io.getData().contains(offset)) {
+                io.getData().add(offset);
+                io.setSize(io.getData().size());
+                changed = true;
+            }
         }
     }
 

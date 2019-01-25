@@ -54,7 +54,7 @@ public class FValueFactory {
         }
     }
 
-    public void update() {
+    public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
@@ -67,6 +67,7 @@ public class FValueFactory {
                 firstId = lastId;
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
     }
@@ -104,28 +105,30 @@ public class FValueFactory {
         return null;
     }
 
-    public FValue get(long id) throws RuntimeErrorException {
+    public FValue get(long id) {
         FValue t = (FValue) cache.get(id);
         if (t == null) {
             t = (FValue) load.get(id);
-            if (t == null && !user.isClosed()) {
-                try {
-                    t = (FValue) user.getStorage(SCHEMA).get(id);
-                    if (t != null) {
-                        t.linkExternal(user);
-                        load.add(t);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
-                }
-            }
-        }
-        if(t == null) {
-            throw new RuntimeErrorException("TValue id=" + id + " not found");
         }
         return t;
     }
+
+    public FValue load(long id) throws RuntimeErrorException {
+        FValue t = null;
+        if (!user.isClosed()) {
+            try {
+                t = (FValue) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    load.add(t);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
+        }
+        return t;
+    }
+
 
     public void clear() {
         if (user.getMind().getNext() != null) {

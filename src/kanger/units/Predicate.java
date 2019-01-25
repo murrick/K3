@@ -39,7 +39,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     }
 
     @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput dis) throws IOException {
         id = dis.readLong();
         nameId = dis.readLong();
         range = dis.readInt();
@@ -53,9 +53,11 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
+        this.user = user;
+        name = user.getMind().getTerms().get(nameId);
         if(name == null) {
-            this.user = user;
-            name = user.getMind().getTerms().get(nameId);
+            name = user.getMind().getTerms().load(nameId);
+            name.linkExternal(user);
         }
     }
 

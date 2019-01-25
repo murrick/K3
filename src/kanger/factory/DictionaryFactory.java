@@ -8,8 +8,6 @@ import kanger.storage.Cache;
 import kanger.units.Right;
 import kanger.units.Term;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,7 +73,7 @@ public class DictionaryFactory {
 
     }
 
-    public void update() {
+    public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
@@ -88,6 +86,7 @@ public class DictionaryFactory {
                 firstId = lastId;
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
     }
@@ -138,25 +137,26 @@ public class DictionaryFactory {
         return t;
     }
 
-    public Term get(long id) throws RuntimeErrorException {
+    public Term get(long id) {
         Term t = (Term) cache.get(id);
         if (t == null) {
             t = (Term) load.get(id);
-            if (t == null && !user.isClosed()) {
-                try {
-                    t = (Term) user.getStorage(SCHEMA).get(id);
-                    if (t != null) {
-                        t.linkExternal(user);
-                        load.add(t);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
-                }
-            }
         }
-        if(t == null) {
-            throw new RuntimeErrorException("Term id=" + id + " not found");
+        return t;
+    }
+
+    public Term load(long id) throws RuntimeErrorException {
+        Term t = null;
+        if (!user.isClosed()) {
+            try {
+                t = (Term) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    load.add(t);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
         }
         return t;
     }

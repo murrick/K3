@@ -3,10 +3,9 @@ package kanger.factory;
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
-import kanger.primitives.ArgList;
-import kanger.primitives.Argument;
 import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
+import kanger.storage.Index;
 import kanger.storage.Storage;
 import kanger.units.Domain;
 import kanger.units.Predicate;
@@ -25,6 +24,8 @@ public class RightFactory implements Iterable<Right> {
     private long lastId = 0;
     private long firstId = 0;
 
+    private Map<Predicate, List<Right>> predicatesLink = new HashMap<>();
+
     private Cache cache = new Cache();
     private Cache load = new Cache();
     private User user = null;
@@ -37,10 +38,16 @@ public class RightFactory implements Iterable<Right> {
     public void transaction(RightFactory base) {
         cache.clear();
         load.clear();
+        predicatesLink.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             cache.add(base.cache);
+            for(Map.Entry<Predicate, List<Right>> e : base.predicatesLink.entrySet()) {
+                List<Right> rights = new ArrayList<>();
+                rights.addAll(e.getValue());
+                predicatesLink.put(e.getKey(), rights);
+            }
         } else {
             lastId = 0;
             firstId = 0;
@@ -56,12 +63,11 @@ public class RightFactory implements Iterable<Right> {
             list.add(0, (Right) p);
         }
         for (Right p : list) {
-            p.setId(lastId++);
-            cache.add(p);
+            add(p);
         }
     }
 
-    public void update() {
+    public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
@@ -74,36 +80,61 @@ public class RightFactory implements Iterable<Right> {
                 firstId = lastId;
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
     }
 
-    public Right add() {
-        Right p = new Right(user);
-        p.setId(lastId++);
-        cache.add(p);
-        return p;
-    }
+    public Right add(Right r) {
+        r.setId(lastId++);
+        cache.add(r);
 
-    public Right get(long id) throws RuntimeErrorException {
-        Right t = (Right) cache.get(id);
-        if (t == null) {
-            t = (Right) load.get(id);
-            if (t == null && !user.isClosed()) {
-                try {
-                    t = (Right) user.getStorage(SCHEMA).get(id);
-                    if (t != null) {
-                        t.linkExternal(user);
-                        load.add(t);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
+        for (List<Domain> tree : r.getTree()) {
+            for (Domain d : tree) {
+                if (!predicatesLink.containsKey(d.getPredicate())) {
+                    predicatesLink.put(d.getPredicate(), new ArrayList<>());
+                }
+                if(!predicatesLink.get(d.getPredicate()).contains(r)) {
+                    predicatesLink.get(d.getPredicate()).add(r);
                 }
             }
         }
-        if(t == null) {
-            throw new RuntimeErrorException("Right id=" + id + " not found");
+
+        return r;
+    }
+
+    public void expand(Right r) throws RuntimeErrorException {
+        for (List<Domain> tree : r.getTree()) {
+            if (tree.size() == 1) {
+                if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
+                    user.getMind().getDomains().getWaiters().add(tree.get(0));
+                } else {
+                    tree.get(0).setStored();
+                }
+            }
+        }
+    }
+
+    public Right get(long id) {
+        Right t = (Right) cache.get(id);
+        if (t == null) {
+            t = (Right) load.get(id);
+        }
+        return t;
+    }
+
+    public Right load(long id) throws RuntimeErrorException {
+        Right t = null;
+        if (!user.isClosed()) {
+            try {
+                t = (Right) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    load.add(t);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
         }
         return t;
     }
@@ -120,188 +151,71 @@ public class RightFactory implements Iterable<Right> {
         return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
-    public void add(Domain d) throws RuntimeErrorException {
-        Right r = add();
-        List<Domain> t = new ArrayList<>();
-        r.getTree().add(t);
-        ArgList arg = new ArgList();
-        for (Argument a : d.getArguments()) {
-            arg.add(new Argument(a.getValue()));
-        }
-        t.add(user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), arg, r));
-    }
-
     @Override
     public Iterator<Right> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new RightIterator(true, cache, storage);
+        return new DataIterator(true, cache, storage, user);
     }
 
-    public class RightIterator extends DataIterator {
-
-        public RightIterator(boolean backward, Cache cache, Storage storage) {
-            super(backward, cache, storage);
-        }
-
-        @Override
-        public Identifiable next() {
-            Identifiable next = super.next();
-            try {
-                next.linkExternal(user);
-            } catch (RuntimeErrorException e) {
-                e.printStackTrace(System.err);
-            }
-            return next;
-        }
+    public Iterator<Right> iterator(Predicate predicate) throws RuntimeErrorException {
+        return new RightIterator(predicate);
     }
 
-    public LinkedRights getLinkedRights(Predicate predicate) {
-        return new LinkedRights(predicate);
-    }
+    public class RightIterator implements Iterator<Right> {
 
-    public class LinkedRights implements Iterable<Right> {
-        private Predicate predicate;
-        private Right current;
-        private Iterator<Right> iterator;
+        Iterator<Long> iterator = null;
+        Set<Long> rights = new HashSet<>();
 
-        public LinkedRights(Predicate p) {
-            predicate = p;
-            iterator = new RightIterator(true, cache, user.isClosed() ? null : user.getStorage(SCHEMA));
-            current = null;
-            boolean found = false;
-            while (iterator.hasNext()) {
-                current = iterator.next();
-                if (current.contains(predicate)) {
-                    found = true;
-                    break;
+        public RightIterator(Predicate p) throws RuntimeErrorException {
+            if (predicatesLink.containsKey(p)) {
+                for (Right r : predicatesLink.get(p)) {
+                    rights.add(r.getId());
                 }
             }
-            if (!found) {
-                current = null;
+            if (!user.isClosed()) {
+                try {
+                    Index.IndexOne one = user.getPredicatesLink().getOne(p.getId());
+                    if (one != null) {
+                        rights.addAll(one.getData());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace(System.err);
+                    throw new RuntimeErrorException(e.toString());
+                }
+            }
+            if (!rights.isEmpty()) {
+                iterator = rights.iterator();
             }
         }
 
         @Override
-        public Iterator<Right> iterator() {
-            return new Iterator<Right>() {
+        public boolean hasNext() {
+            if (iterator != null) {
+                return iterator.hasNext();
+            } else {
+                return false;
+            }
+        }
 
-                @Override
-                public void remove() {
-                    // TODO: Implement this method
-                }
-
-
-                @Override
-                public boolean hasNext() {
-                    return current != null;
-                }
-
-                @Override
-                public Right next() {
-                    Right right = current;
-                    boolean found = false;
-                    while (iterator.hasNext()) {
-                        current = iterator.next();
-                        if (current.contains(predicate)) {
-                            found = true;
-                            break;
-                        }
+        @Override
+        public Right next() {
+            Long id = iterator.next();
+            if (id != null) {
+                Right r = get(id);
+                if (r == null) {
+                    try {
+                        r = load(id);
+                        r.linkExternal(user);
+                    } catch (RuntimeErrorException e) {
+                        e.printStackTrace(System.err);
+                        return null;
                     }
-                    if (!found) {
-                        current = null;
-                    }
-                    return right;
                 }
-            };
+                return r;
+            } else {
+                return null;
+            }
+
         }
     }
-
-
-//    public LinkedTrees getLinkedTrees(Predicate predicate) {
-//        return new LinkedTrees(predicate);
-//    }
-//
-//    public class LinkedTrees implements Iterable<Tree> {
-//        private Predicate predicate;
-//        private Right current;
-//        private int index = -1;
-//        private Iterator<Right> iterator;
-//
-//        public LinkedTrees(Predicate p) {
-//            predicate = p;
-//            iterator = new RightIterator(true, cache, user.isClosed() ? null : user.getStorage(SCHEMA));
-//            current = null;
-//            boolean found = false;
-//            while (iterator.hasNext()) {
-//                current = iterator.next();
-//                for (index = 0; index < current.getTree().size(); ++index) {
-//                    if (current.getTree().get(index).contains(predicate)) {
-//                        found = true;
-//                        break;
-//                    }
-//                }
-//                if (found) {
-//                    break;
-//                }
-//            }
-//            if (!found) {
-//                current = null;
-//                index = -1;
-//            }
-//        }
-//
-//        @Override
-//        public Iterator<Tree> iterator() {
-//            return new Iterator<Tree>() {
-//
-//                @Override
-//                public void remove() {
-//                    // TODO: Implement this method
-//                }
-//
-//
-//                @Override
-//                public boolean hasNext() {
-//                    return current != null && index != -1;
-//                }
-//
-//                @Override
-//                public Tree next() {
-//                    Right right = current;
-//                    int ix = index;
-//                    boolean found = false;
-//
-//                    ++index;
-//                    for (; index < current.getTree().size(); ++index) {
-//                        if (current.getTree().get(index).contains(predicate)) {
-//                            found = true;
-//                            break;
-//                        }
-//                    }
-//
-//                    if (!found) {
-//                        while (iterator.hasNext()) {
-//                            current = iterator.next();
-//                            for (index = 0; index < current.getTree().size(); ++index) {
-//                                if (current.getTree().get(index).contains(predicate)) {
-//                                    found = true;
-//                                    break;
-//                                }
-//                            }
-//                            if (found) {
-//                                break;
-//                            }
-//                        }
-//                    }
-//                    if (!found) {
-//                        current = null;
-//                        index = -1;
-//                    }
-//
-//                    return right.getTree().get(ix);
-//                }
-//            };
-//        }
-//    }
-
 }

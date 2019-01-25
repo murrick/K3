@@ -60,13 +60,14 @@ public class Record implements Comparable<Record>, Externalizable, Identifiable<
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        if (domain == null) {
-            this.user = user;
-            domain = user.getMind().getDomains().get(domainId);
+        this.user = user;
+        domain = user.getMind().getDomains().get(domainId);
+        if(domain == null) {
+            domain = user.getMind().getDomains().load(domainId);
             domain.linkExternal(user);
-            for (Cause c : causes) {
-                c.linkExternal(user);
-            }
+        }
+        for (Cause c : causes) {
+            c.linkExternal(user);
         }
     }
 
