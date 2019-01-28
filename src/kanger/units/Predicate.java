@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -89,11 +90,14 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         this.id = id;
     }
 
-    public Set<Domain> getSolves() {
+    public Set<Domain> getSolves() throws RuntimeErrorException {
         Set<Domain> set = new HashSet<>();
-        for (Record d : user.getMind().getDatabase()) {
-            if (getId() == d.getDomain().getPredicate().getId()) {
-                set.add(d.getDomain());
+        Iterator<Right> iterator = user.getMind().getRights().baseIterator(null);
+        while (iterator.hasNext()) {
+            Right r = iterator.next();
+            if (user.getMind().getRights().getPredicatesLink().get(this).contains(r)) {
+                r.linkExternal(user);
+                set.add(r.getDomain());
             }
         }
         return set;

@@ -4,18 +4,19 @@ import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
-import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
-import kanger.storage.Storage;
 import kanger.units.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by murray on 25.05.15.
  */
-public class DatabaseFactory implements Iterable<Record> {
+public class DatabaseFactory /*implements Iterable<Record>*/ {
 
     public static final String SCHEMA = "database";
 
@@ -226,10 +227,10 @@ public class DatabaseFactory implements Iterable<Record> {
         return lastId;
     }
 
-    @Override
-    public Iterator<Record> iterator() {
-        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage, user);
-    }
+//    @Override
+//    public Iterator<Record> iterator() {
+//        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+//        return new DataIterator(true, cache, storage, user);
+//    }
 
 }

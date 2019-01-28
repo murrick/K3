@@ -3,6 +3,7 @@ package kanger.units;
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
+import kanger.primitives.Cause;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -24,7 +25,9 @@ public class Right implements Externalizable, Identifiable<Right> {
     private Term orig = null;                               // Оригинальная строка
     private boolean query = false;                          // Вновь введенное правило
     private boolean generated = false;                      // Правило добавлено в процессе выводс
+    private boolean stored = false;                         // Правило является записью БД
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
+    private List<Cause> causes = new ArrayList<>();
 
     private User user = null;
 
@@ -40,12 +43,19 @@ public class Right implements Externalizable, Identifiable<Right> {
         tree.add(t);
     }
 
+    public Right(Domain d) {
+        this(d.getUser());
+        this.stored = true;
+        this.tree.get(0).add(d);
+    }
+
     @Override
-    public void readExternal(ObjectInput dis) throws IOException {
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
         origId = dis.readLong();
         query = dis.readBoolean();
         generated = dis.readBoolean();
+        stored = dis.readBoolean();
         treeIds.clear();
         int count = dis.readInt();
         while (count-- > 0) {
@@ -56,6 +66,11 @@ public class Right implements Externalizable, Identifiable<Right> {
             }
             treeIds.add(branch);
         }
+        count = dis.readInt();
+        while (count-- > 0) {
+            Cause c = (Cause) dis.readObject();
+            causes.add(c);
+        }
     }
 
     @Override
@@ -64,6 +79,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         dos.writeLong(orig.getId());
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
+        dos.writeBoolean(stored);
         dos.writeInt(tree.size());
         for (List<Domain> branch : tree) {
             dos.writeInt(branch.size());
@@ -71,18 +87,22 @@ public class Right implements Externalizable, Identifiable<Right> {
                 dos.writeLong(domain.getId());
             }
         }
+        dos.writeInt(causes.size());
+        for (Cause c : causes) {
+            dos.writeObject(c);
+        }
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        if(orig == null && origId != -1) {
+        if (orig == null && origId != -1) {
             orig = user.getMind().getTerms().get(origId);
             if (orig == null) {
                 orig = user.getMind().getTerms().load(origId);
                 orig.linkExternal(user);
             }
         }
-        if(tree.isEmpty() && !treeIds.isEmpty()) {
+        if (tree.isEmpty() && !treeIds.isEmpty()) {
             for (List<Long> ids : treeIds) {
                 List<Domain> branch = new ArrayList<>();
                 for (long id : ids) {
@@ -96,6 +116,13 @@ public class Right implements Externalizable, Identifiable<Right> {
                 tree.add(branch);
             }
         }
+        for (Cause c : causes) {
+            c.linkExternal(user);
+        }
+    }
+
+    public Domain getDomain() {
+        return tree.get(0).get(0);
     }
 
     public void setGenerated(boolean generated) {
@@ -158,6 +185,17 @@ public class Right implements Externalizable, Identifiable<Right> {
         return false;
     }
 
+    public boolean isStored() {
+        return stored;
+    }
+
+    public void setStored() {
+        this.stored = true;
+    }
+
+    public List<Cause> getCauses() {
+        return causes;
+    }
 
     //    public Set<Right> getActualRights() {
 //        Set<Right> set = new HashSet<>();
@@ -204,6 +242,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         StringBuffer buffer = new StringBuffer();
         buffer.append(query);
         buffer.append(generated);
+        buffer.append(stored);
         for (List<Domain> list : tree) {
             for (Domain d : list) {
                 buffer.append(d.getId());
@@ -214,7 +253,37 @@ public class Right implements Externalizable, Identifiable<Right> {
 
     @Override
     public boolean equalsTo(Right to) {
-        return false;
+        if(stored) {
+            Domain x = to.getDomain();
+            Domain domain = tree.get(0).get(0);
+            if (x.isAntc() == domain.isAntc()
+                    && x.getPredicate().getId() == domain.getPredicate().getId()
+                    && x.getPredicate().getRange() == domain.getPredicate().getRange()) {
+                int i = 0;
+                try {
+                    for (; i < domain.getPredicate().getRange(); ++i) {
+                        if (!x.get(i).isEmpty()
+                                && !domain.getArguments().get(i).isEmpty()
+                                && x.get(i).getValue().getId() != domain.getArguments().get(i).getValue().getId()) {
+                            break;
+                        }
+
+                        TValue a = x.get(i).isTSet() ? x.get(i).getT().getCurrent() : x.get(i).getV();
+                        TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT().getCurrent() : domain.getArguments().get(i).getV();
+                        if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
+                            break;
+                        }
+                    }
+                } catch (RuntimeErrorException e) {
+                    e.printStackTrace(System.err);
+                }
+                return i == domain.getPredicate().getRange();
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     @Override

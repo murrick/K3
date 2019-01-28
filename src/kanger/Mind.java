@@ -933,7 +933,7 @@ public class Mind {
         if (mind.getSolutions().size() > 0) {
             mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
-            for (Record log : mind.getSolutions().getRoot()) {
+            for (Right log : mind.getSolutions().getRoot()) {
                 mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i,
                         log.toString()));
             }

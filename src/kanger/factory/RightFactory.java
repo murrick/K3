@@ -3,13 +3,12 @@ package kanger.factory;
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
+import kanger.primitives.ArgList;
 import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
 import kanger.storage.Index;
 import kanger.storage.Storage;
-import kanger.units.Domain;
-import kanger.units.Predicate;
-import kanger.units.Right;
+import kanger.units.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -43,7 +42,7 @@ public class RightFactory implements Iterable<Right> {
             lastId = base.lastId;
             firstId = base.lastId;
             cache.add(base.cache);
-            for(Map.Entry<Predicate, List<Right>> e : base.predicatesLink.entrySet()) {
+            for (Map.Entry<Predicate, List<Right>> e : base.predicatesLink.entrySet()) {
                 List<Right> rights = new ArrayList<>();
                 rights.addAll(e.getValue());
                 predicatesLink.put(e.getKey(), rights);
@@ -94,7 +93,7 @@ public class RightFactory implements Iterable<Right> {
                 if (!predicatesLink.containsKey(d.getPredicate())) {
                     predicatesLink.put(d.getPredicate(), new ArrayList<>());
                 }
-                if(!predicatesLink.get(d.getPredicate()).contains(r)) {
+                if (!predicatesLink.get(d.getPredicate()).contains(r)) {
                     predicatesLink.get(d.getPredicate()).add(r);
                 }
             }
@@ -102,6 +101,72 @@ public class RightFactory implements Iterable<Right> {
 
         return r;
     }
+
+    public Right add(Domain d) throws RuntimeErrorException {
+        Right p = find(d.getPredicate(), d.isAntc(), d.getArguments());
+        if (p != null) {
+            return p;
+        } else {
+            Right r = new Right(d);
+            r.setId(lastId++);
+            cache.add(r);
+            return r;
+        }
+    }
+
+
+    public Right add(Predicate pred, boolean antc, boolean isQuery, ArgList arg) throws RuntimeErrorException {
+        Right p = find(pred, antc, arg);
+        if (p != null) {
+            return p;
+        } else {
+            ArgList list = null;
+            if (arg != null) {
+                if (isQuery) {
+                    list = arg.convert();
+                    for (TValue t : list.getTValues(true)) t.setQuery();
+                } else {
+                    list = arg.convertBase();
+                }
+            }
+            Right r = new Right(user);
+            Domain d = user.getMind().getDomains().add(pred, antc, list, r);
+            r.getTree().get(0).add(d);
+            r.setGenerated(true);
+
+            int save = user.getMind().getDebugLevel();
+            user.getMind().setDebugLevel(0);
+            Term origin = user.getMind().getTerms().add(d.toString());
+            user.getMind().setDebugLevel(save);
+            r.setOrig(origin);
+
+            return user.getMind().getRights().add(r);
+        }
+    }
+
+    public Right find(Domain d) throws RuntimeErrorException {
+        return find(d.getPredicate(), d.isAntc(), d.getArguments());
+    }
+
+    public Right find(Predicate pred, boolean antc, ArgList arg) throws RuntimeErrorException {
+        Domain d = new Domain(pred, antc, arg);
+        Right temp = new Right(d);
+        for (Identifiable one : cache.find(temp.getHash())) {
+            if (one.equalsTo(temp)) {
+                return (Right) one;
+            }
+        }
+        if (!user.isClosed()) {
+            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                if (one.equalsTo(temp)) {
+                    one.linkExternal(user);
+                    return (Right) one;
+                }
+            }
+        }
+        return null;
+    }
+
 
     public void expand(Right r) throws RuntimeErrorException {
         for (List<Domain> tree : r.getTree()) {
@@ -151,6 +216,14 @@ public class RightFactory implements Iterable<Right> {
         return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
+    public long getFirstId() {
+        return firstId;
+    }
+
+    public long getLastId() {
+        return lastId;
+    }
+
     @Override
     public Iterator<Right> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
@@ -159,6 +232,10 @@ public class RightFactory implements Iterable<Right> {
 
     public Iterator<Right> iterator(Predicate predicate) throws RuntimeErrorException {
         return new RightIterator(predicate);
+    }
+
+    public Iterator<Right> baseIterator(Boolean antc) throws RuntimeErrorException {
+        return new DatabaseIterator(antc);
     }
 
     public class RightIterator implements Iterator<Right> {
@@ -217,5 +294,65 @@ public class RightFactory implements Iterable<Right> {
             }
 
         }
+    }
+
+    public class DatabaseIterator implements Iterator<Right> {
+
+        Iterator<Right> iterator = null;
+        Right next = null;
+        Boolean antc = null;
+
+        public DatabaseIterator(Boolean antc) throws RuntimeErrorException {
+            this.antc = antc;
+            this.iterator = iterator();
+            while (iterator.hasNext()) {
+                next = next();
+                if (next.isStored()) {
+                    if(this.antc != null) {
+                        next.linkExternal(user);
+                        if (next.getDomain().isAntc() == antc) {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        @Override
+        public Right next() {
+            Right current = next;
+            if (next != null) {
+                try {
+                    while (iterator.hasNext()) {
+                        next = next();
+                        if (next.isStored()) {
+                            if(antc != null) {
+                                next.linkExternal(user);
+                                if (next.getDomain().isAntc() == antc) {
+                                    break;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                } catch (RuntimeErrorException e) {
+                    next = null;
+                    e.printStackTrace();
+                }
+            }
+            return current;
+        }
+    }
+
+    public Map<Predicate, List<Right>> getPredicatesLink() {
+        return predicatesLink;
     }
 }

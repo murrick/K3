@@ -6,12 +6,13 @@ import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
-import kanger.units.*;
+import kanger.units.Domain;
+import kanger.units.Predicate;
+import kanger.units.Right;
+import kanger.units.Term;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class KangerTest {
@@ -40,7 +41,7 @@ public class KangerTest {
         if (mind.getSolutions().size() > 0) {
             System.out.println("Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
-            for (Record log : mind.getSolutions().getRoot()) {
+            for (Right log : mind.getSolutions().getRoot()) {
                 System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
             }
         }
@@ -106,7 +107,7 @@ public class KangerTest {
         return h;
     }
 
-    public Record createRecord(User user, boolean antc, Object predicate, Object... params) throws RuntimeErrorException {
+    public Right createRecord(User user, boolean antc, Object predicate, Object... params) throws RuntimeErrorException {
         Domain d = new Domain(user);
         d.setAntc(antc);
         if (predicate instanceof Predicate) {
@@ -121,7 +122,7 @@ public class KangerTest {
                 d.add(new Argument(user.getMind().getTerms().add(p)));
             }
         }
-        return new Record(d);
+        return new Right(d);
     }
 
     public static boolean test(User user, String prefix) throws IOException {
@@ -134,7 +135,7 @@ public class KangerTest {
         try {
             //TODO: В дальнейшем отключить бд для тестов
             user.close();
-            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
+//            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -205,7 +206,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?a(nnn);");
         showResult(true);
-        Record s = createRecord(user, true, "a", "nnn");
+        Right s = createRecord(user, true, "a", "nnn");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -223,7 +224,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?n(nnn);");
         showResult(false);
-        Record s = createRecord(user, false, "n", "nnn");
+        Right s = createRecord(user, false, "n", "nnn");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -624,7 +625,7 @@ public class KangerTest {
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
         showResult(true);
-        Record s = createRecord(user, false, "a", "z");
+        Right s = createRecord(user, false, "a", "z");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -1356,7 +1357,7 @@ public class KangerTest {
         );
         mind.query("?$x $y age(x, y) && y > 12;");
         showResult(true);
-        Record s = createRecord(user, true, "age", "John", 37.0);
+        Right s = createRecord(user, true, "age", "John", 37.0);
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -1393,7 +1394,7 @@ public class KangerTest {
         );
         mind.query("?$x $y age(x, y) && y >= 12;");
         showResult(true);
-        Record s = createRecord(user, true, "age", "Tom", 12.0);
+        Right s = createRecord(user, true, "age", "Tom", 12.0);
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -1440,7 +1441,7 @@ public class KangerTest {
         );
         mind.query("?$x $y $z father(x,y) && age(x, z) && z >= 30;");
         showResult(true);
-        Record s = createRecord(user, true, "father", "John", "Tom");
+        Right s = createRecord(user, true, "father", "John", "Tom");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -1479,7 +1480,7 @@ public class KangerTest {
         );
         mind.query("?$x male(x);");
         showResult(true);
-        Record s = createRecord(user, true, "male", "John");
+        Right s = createRecord(user, true, "male", "John");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }
@@ -1513,7 +1514,7 @@ public class KangerTest {
         );
         mind.query("?$x child(x, John);");
         showResult(true);
-        Record s = createRecord(user, true, "child", "Tom", "John");
+        Right s = createRecord(user, true, "child", "Tom", "John");
         if (!mind.getSolutions().contains(s)) {
             fail("Expected: " + s.toString());
         }

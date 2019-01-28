@@ -2,7 +2,7 @@ package kanger.stores;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
-import kanger.units.Record;
+import kanger.units.Right;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -12,7 +12,7 @@ import java.util.TreeSet;
  */
 public class SolutionsStore {
 
-    private SortedSet<Record> root = null;
+    private SortedSet<Right> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -34,7 +34,7 @@ public class SolutionsStore {
         }
     }
 
-    public Record add(Record d) {
+    public Right add(Right d) {
         if (!enableStore) {
             return null;
         }
@@ -51,8 +51,8 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Record rec) throws RuntimeErrorException {
-        for (Record r : root) {
+    public boolean contains(Right rec) throws RuntimeErrorException {
+        for (Right r : root) {
             if (r.getDomain().equalsBase(rec.getDomain()) && r.getDomain().isAntc() == rec.getDomain().isAntc()) {
                 return true;
             }
@@ -69,15 +69,15 @@ public class SolutionsStore {
         return enableStore;
     }
 
-    public Record get(int index) {
-        return root.toArray(new Record[]{})[index];
+    public Right get(int index) {
+        return root.toArray(new Right[]{})[index];
     }
 
 //    public int find(Solution o) {
 //        return root.indexOf(o);
 //    }
 
-    public SortedSet<Record> getRoot() {
+    public SortedSet<Right> getRoot() {
         return root;
     }
 
