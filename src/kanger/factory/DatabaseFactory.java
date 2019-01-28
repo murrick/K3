@@ -65,7 +65,7 @@ public class DatabaseFactory implements Iterable<Record> {
         }
     }
 
-    public void update() {
+    public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
             try {
                 for (Identifiable p : cache) {
@@ -78,6 +78,7 @@ public class DatabaseFactory implements Iterable<Record> {
                 firstId = lastId;
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
             }
         }
     }
@@ -109,12 +110,9 @@ public class DatabaseFactory implements Iterable<Record> {
                     list = arg.convertBase();
                 }
             }
-            Right r = user.getMind().getRights().add();
-            List<Domain> t = new ArrayList<>();
+            Right r = new Right(user);
             Domain d = user.getMind().getDomains().add(pred, antc, list, r);
-            d.setRight(r);
-            t.add(d);
-            r.getTree().add(t);
+            r.getTree().get(0).add(d);
             r.setGenerated(true);
 
             int save = user.getMind().getDebugLevel();
@@ -122,6 +120,8 @@ public class DatabaseFactory implements Iterable<Record> {
             Term origin = user.getMind().getTerms().add(d.toString());
             user.getMind().setDebugLevel(save);
             r.setOrig(origin);
+
+            user.getMind().getRights().add(r);
 
             return add(d);
         }
@@ -141,7 +141,6 @@ public class DatabaseFactory implements Iterable<Record> {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
-                one.linkExternal(user);
                 if (one.equalsTo(temp)) {
                     return (Record) one;
                 }
@@ -150,25 +149,26 @@ public class DatabaseFactory implements Iterable<Record> {
         return null;
     }
 
-    public Record get(long id) throws RuntimeErrorException {
+    public Record get(long id) {
         Record t = (Record) cache.get(id);
         if (t == null) {
             t = (Record) load.get(id);
-            if (t == null && !user.isClosed()) {
-                try {
-                    t = (Record) user.getStorage(SCHEMA).get(id);
-                    if (t != null) {
-                        t.linkExternal(user);
-                        load.add(t);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
-                }
-            }
         }
-        if(t == null) {
-            throw new RuntimeErrorException("Record id=" + id + " not found");
+        return t;
+    }
+
+    public Record load(long id) throws RuntimeErrorException {
+        Record t = null;
+        if (!user.isClosed()) {
+            try {
+                t = (Record) user.getStorage(SCHEMA).get(id);
+                if (t != null) {
+                    load.add(t);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeErrorException(e.toString());
+            }
         }
         return t;
     }
@@ -228,24 +228,7 @@ public class DatabaseFactory implements Iterable<Record> {
     @Override
     public Iterator<Record> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new RecordIterator(true, cache, storage);
+        return new DataIterator(true, cache, storage, user);
     }
 
-    public class RecordIterator extends DataIterator {
-
-        public RecordIterator(boolean backward, Cache cache, Storage storage) {
-            super(backward, cache, storage);
-        }
-
-        @Override
-        public Identifiable next() {
-            Identifiable next = super.next();
-            try {
-                next.linkExternal(user);
-            } catch (RuntimeErrorException e) {
-                e.printStackTrace(System.err);
-            }
-            return next;
-        }
-    }
 }

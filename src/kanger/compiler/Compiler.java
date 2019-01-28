@@ -25,42 +25,13 @@ public class Compiler {
         this.user = user;
     }
 
-    public Right compileLine(PTree root, boolean antc) throws ParseErrorException, RuntimeErrorException {
+    public Right compileLine(PTree root, boolean antc, String orig) throws ParseErrorException, RuntimeErrorException {
 
-        //mind.getReplacements().reset();
-//        user.getMind().getSolutions().clear();
-//        user.getMind().getValues().clear();
-        Right r = user.getMind().getRights().add();
-
-//        NodeFactory n = new NodeFactory();
-//        construct(n, root, antc, Node.STILL);
-//        t = recurseTree(n.getRoot());
-        List<Domain> t = new ArrayList<>();
-        r.getTree().add(t);
-        construct(r, t, root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>());
-//        user.getMind().getSolutions().clear();
-//        user.getMind().getValues().clear();
-
-//        r.setT(t);
-
-//        mind.getCalculator().recalculate(-13);
-        /*
-         * Если правило содержит одну ветку -
-         * пытаемся завалить в б.д. все полные предикаты
-         * из нее.
-         */
-//        if (t.getRight() == null) {
-////            for (Tree t = tree; t != null; t = t.getRight()) {
-//            for (Tree v = t; v != null; v = v.getDown()) {
-//                ArgList arg = new ArrayList<>();
-//                if (mind.getAnalyser().fillSolve(arg, v.getD(), v.getD().isAntc()) != 0) {
-//                    mind.getAnalyser().addBase(arg, v.getD(), false /*v.getD().getPredicate(), v.getD().isAntc()*/);
-//                }
-//            }
-////            }
-////            mind.getCalculator().recalculate(-13);
-//        }
-
+        Right r = new Right(user);
+        r.setOrig(user.getMind().getTerms().add(orig));
+        construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>());
+        user.getMind().getRights().add(r);
+        user.getMind().getRights().expand(r);
         return r;
     }
 

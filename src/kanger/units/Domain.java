@@ -76,12 +76,18 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        if (predicate == null) {
-            this.user = user;
-            predicate = user.getMind().getPredicates().get(predicateId);
-            right = user.getMind().getRights().get(rightId);
-            arguments.linkExternal(user);
+        this.user = user;
+        predicate = user.getMind().getPredicates().get(predicateId);
+        if(predicate == null) {
+            predicate = user.getMind().getPredicates().load(predicateId);
+            predicate.linkExternal(user);
         }
+        right = user.getMind().getRights().get(rightId);
+        if(right == null) {
+            right = user.getMind().getRights().load(rightId);
+            right.linkExternal(user);
+        }
+        arguments.linkExternal(user);
     }
 
     public Predicate getPredicate() {
@@ -253,7 +259,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
 
-    public String toString(ArgList arguments)  {
+    public String toString(ArgList arguments) {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
             Operation op = Parser.getOp(predicate.getName().toString(), predicate.getRange());

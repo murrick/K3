@@ -28,7 +28,7 @@ public class Argument implements Externalizable {
     }
 
     @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput dis) throws IOException {
         id = dis.readLong();
         type = ArgumentType.values()[dis.readInt()];
     }
@@ -40,27 +40,46 @@ public class Argument implements Externalizable {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        switch (type) {
-            case TERM:
-                o = user.getMind().getTerms().get(id);
-                break;
-            case TVRIABLE:
-                o = user.getMind().getTVars().get(id);
-                break;
-            case TVALUE:
-                o = user.getMind().getTValues().get(id);
-                break;
-            case FUNCTION:
-                o = user.getMind().getFunctions().get(id);
-                break;
-            case FVALUE:
-                o = user.getMind().getFValues().get(id);
-                break;
-            default:
-                o = null;
-        }
-        if(o != null) {
-            o.linkExternal(user);
+        if(o == null && type != ArgumentType.EMPTY) {
+            switch (type) {
+                case TERM:
+                    o = user.getMind().getTerms().get(id);
+                    if (o == null) {
+                        o = user.getMind().getTerms().load(id);
+                        o.linkExternal(user);
+                    }
+                    break;
+                case TVRIABLE:
+                    o = user.getMind().getTVars().get(id);
+                    if (o == null) {
+                        o = user.getMind().getTVars().load(id);
+                        o.linkExternal(user);
+                    }
+                    break;
+                case TVALUE:
+                    o = user.getMind().getTValues().get(id);
+                    if (o == null) {
+                        o = user.getMind().getTValues().load(id);
+                        o.linkExternal(user);
+                    }
+                    break;
+                case FUNCTION:
+                    o = user.getMind().getFunctions().get(id);
+                    if (o == null) {
+                        o = user.getMind().getFunctions().load(id);
+                        o.linkExternal(user);
+                    }
+                    break;
+                case FVALUE:
+                    o = user.getMind().getFValues().get(id);
+                    if (o == null) {
+                        o = user.getMind().getFValues().load(id);
+                        o.linkExternal(user);
+                    }
+                    break;
+                default:
+                    o = null;
+            }
         }
     }
 

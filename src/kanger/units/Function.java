@@ -57,11 +57,13 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
+        this.user = user;
+        name = user.getMind().getTerms().get(nameId);
         if(name == null) {
-            this.user = user;
-            name = user.getMind().getTerms().get(nameId);
-            arguments.linkExternal(user);
+            name = user.getMind().getTerms().load(nameId);
+            name.linkExternal(user);
         }
+        arguments.linkExternal(user);
     }
 
     @Override
@@ -200,7 +202,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 
                 String res = "";
                 if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
-    //                if (getResult() != null) {
+                    //                if (getResult() != null) {
                     if (getCurrent() != null) {
                         res = " {= " + getValue() + "}";
                     } else if (arguments.size() > range && !arguments.get(range).isEmpty()) {
@@ -301,7 +303,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     public FValue getCurrent() throws RuntimeErrorException {
         return user.getMind().getFValues().find(this);
     }
-   
+
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();

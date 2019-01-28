@@ -12,8 +12,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Created by murray on 13.12.16.
@@ -27,7 +25,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     private TVariable tVar = null;
     private Set<Cause> causes = new HashSet<>();
 
-//    private TValue next = null;          // Следующая переменная
+    //    private TValue next = null;          // Следующая переменная
     private User user = null;
 
     private transient long valueId = -1;
@@ -76,13 +74,19 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
+        this.user = user;
+        tVar = user.getMind().getTVars().get(tVarId);
+        if(tVar == null) {
+            tVar = user.getMind().getTVars().load(tVarId);
+            tVar.linkExternal(user);
+        }
+        value = user.getMind().getTerms().get(valueId);
         if(value == null) {
-            this.user = user;
-            value = user.getMind().getTerms().get(valueId);
-            tVar = user.getMind().getTVars().get(tVarId);
-            for (Cause c : causes) {
-                c.linkExternal(user);
-            }
+            value = user.getMind().getTerms().load(valueId);
+            value.linkExternal(user);
+        }
+        for (Cause c : causes) {
+            c.linkExternal(user);
         }
     }
 

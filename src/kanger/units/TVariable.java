@@ -37,7 +37,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     }
 
     @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput dis) throws IOException {
         id = dis.readLong();
         nameId = dis.readLong();
         index = dis.readInt();
@@ -53,10 +53,16 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        if (name == null) {
-            this.user = user;
-            name = user.getMind().getTerms().get(nameId);
-            right = user.getMind().getRights().get(rightId);
+        this.user = user;
+        name = user.getMind().getTerms().get(nameId);
+        if(name == null) {
+            name = user.getMind().getTerms().load(nameId);
+            name.linkExternal(user);
+        }
+        right = user.getMind().getRights().get(rightId);
+        if(right == null) {
+            right = user.getMind().getRights().load(rightId);
+            right.linkExternal(user);
         }
     }
 

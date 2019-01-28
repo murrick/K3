@@ -43,8 +43,20 @@ public class Cause implements Externalizable, Comparable<Cause> {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        src = user.getMind().getDomains().get(srcId);
-        dst = user.getMind().getDomains().get(dstId);
+        if(src == null && srcId != -1) {
+            src = user.getMind().getDomains().get(srcId);
+            if(src == null) {
+                src = user.getMind().getDomains().load(srcId);
+                src.linkExternal(user);
+            }
+        }
+        if(dst == null && dstId != -1) {
+            dst = user.getMind().getDomains().get(dstId);
+            if(dst == null) {
+                dst = user.getMind().getDomains().load(dstId);
+                dst.linkExternal(user);
+            }
+        }
         arguments.linkExternal(user);
     }
 

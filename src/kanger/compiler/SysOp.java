@@ -9,8 +9,6 @@ import kanger.primitives.Argument;
 import kanger.units.Domain;
 import kanger.units.Function;
 
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,20 +89,20 @@ public class SysOp {
 
     }
 
-    public SysOp(DataInputStream dis, Mind mind) throws IOException {
-        this(mind);
-        mode = LibMode.values()[dis.readInt()];
-        name = dis.readUTF();
-        int cnt = dis.readInt();
-        while (cnt-- > 0) {
-            scripts.add(dis.readUTF());
-        }
-        range = dis.readInt();
-        for (int i = 0; i < range; ++i) {
-            String param = dis.readUTF();
-            params.add(param);
-        }
-    }
+//    public SysOp(DataInputStream dis, Mind mind) throws IOException {
+//        this(mind);
+//        mode = LibMode.values()[dis.readInt()];
+//        name = dis.readUTF();
+//        int cnt = dis.readInt();
+//        while (cnt-- > 0) {
+//            scripts.add(dis.readUTF());
+//        }
+//        range = dis.readInt();
+//        for (int i = 0; i < range; ++i) {
+//            String param = dis.readUTF();
+//            params.add(param);
+//        }
+//    }
 
 
     public SysOp(LibMode mode, String name, int range, Reactor proc) {

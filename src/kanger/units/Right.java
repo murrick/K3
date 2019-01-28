@@ -36,10 +36,12 @@ public class Right implements Externalizable, Identifiable<Right> {
 
     public Right(User user) {
         this.user = user;
+        List<Domain> t = new ArrayList<>();
+        tree.add(t);
     }
 
     @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput dis) throws IOException {
         id = dis.readLong();
         origId = dis.readLong();
         query = dis.readBoolean();
@@ -49,7 +51,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         while (count-- > 0) {
             List<Long> branch = new ArrayList<>();
             int len = dis.readInt();
-            while(len-- > 0) {
+            while (len-- > 0) {
                 branch.add(dis.readLong());
             }
             treeIds.add(branch);
@@ -65,25 +67,31 @@ public class Right implements Externalizable, Identifiable<Right> {
         dos.writeInt(tree.size());
         for (List<Domain> branch : tree) {
             dos.writeInt(branch.size());
-            for(Domain domain : branch) {
+            for (Domain domain : branch) {
                 dos.writeLong(domain.getId());
             }
         }
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        if(tree.isEmpty()) {
-            this.user = user;
-            orig = user.getMind().getTerms().get(origId);
-            tree.clear();
-            for (List<Long> ids : treeIds) {
-                List<Domain> branch = new ArrayList<>();
-                for(long id : ids) {
-                    Domain domain = user.getMind().getDomains().get(id);
-                    branch.add(domain);
+        this.user = user;
+        orig = user.getMind().getTerms().get(origId);
+        if(orig == null) {
+            orig = user.getMind().getTerms().load(origId);
+            orig.linkExternal(user);
+        }
+        tree.clear();
+        for (List<Long> ids : treeIds) {
+            List<Domain> branch = new ArrayList<>();
+            for (long id : ids) {
+                Domain domain = user.getMind().getDomains().get(id);
+                if(domain == null) {
+                    domain = user.getMind().getDomains().load(id);
+                    domain.linkExternal(user);
                 }
-                tree.add(branch);
+                branch.add(domain);
             }
+            tree.add(branch);
         }
     }
 
@@ -137,16 +145,15 @@ public class Right implements Externalizable, Identifiable<Right> {
     }
 
     public boolean contains(Predicate predicate) {
-        for(List<Domain> list : tree) {
-            for(Domain d : list) {
-                if(d.getPredicate().getId() == predicate.getId()) {
+        for (List<Domain> list : tree) {
+            for (Domain d : list) {
+                if (d.getPredicate().getId() == predicate.getId()) {
                     return true;
                 }
             }
         }
         return false;
     }
-
 
 
     //    public Set<Right> getActualRights() {
@@ -194,8 +201,8 @@ public class Right implements Externalizable, Identifiable<Right> {
         StringBuffer buffer = new StringBuffer();
         buffer.append(query);
         buffer.append(generated);
-        for(List<Domain> list : tree) {
-            for(Domain d : list) {
+        for (List<Domain> list : tree) {
+            for (Domain d : list) {
                 buffer.append(d.getId());
             }
         }

@@ -31,31 +31,31 @@ public class Linker {
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
 
-        for (Function f : user.getMind().getFunctions()) {
-            if (!f.isCalculable()) {
-                new Calculator(user).calculate(f, logging);
-            }
-        }
-
-        final Set<Domain> waiters = new HashSet<>();
-        final Map<Long, Set<Long>> links = new HashMap<>();
-        for (Right r : user.getMind().getRights()) {
-            for (List<Domain> tree : r.getTree()) {
-                if (tree.size() == 1) {
-                    if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
-                        waiters.add(tree.get(0));
-                    } else {
-                        tree.get(0).setStored();
-                    }
-                }
-                for (Domain d : tree) {
-                    if (!links.containsKey(d.getPredicate().getId())) {
-                        links.put(d.getPredicate().getId(), new HashSet<>());
-                    }
-                    links.get(d.getPredicate().getId()).add(r.getId());
-                }
-            }
-        }
+//        for (Function f : user.getMind().getFunctions()) {
+//            if (!f.isCalculable()) {
+//                new Calculator(user).calculate(f, logging);
+//            }
+//        }
+//
+//        final Set<Domain> waiters = new HashSet<>();
+//        final Map<Long, Set<Long>> links = new HashMap<>();
+//        for (Right r : user.getMind().getRights()) {
+//            for (List<Domain> tree : r.getTree()) {
+//                if (tree.size() == 1) {
+//                    if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
+//                        waiters.add(tree.get(0));
+//                    } else {
+//                        tree.get(0).setStored();
+//                    }
+//                }
+//                for (Domain d : tree) {
+//                    if (!links.containsKey(d.getPredicate().getId())) {
+//                        links.put(d.getPredicate().getId(), new HashSet<>());
+//                    }
+//                    links.get(d.getPredicate().getId()).add(r.getId());
+//                }
+//            }
+//        }
 
         long saveR;
         long saveT;
@@ -127,13 +127,13 @@ public class Linker {
                             boolean logging = (boolean) o;
 
                             try {
-                                if (linkDomains(t, links, causes, logging)) {
+                                if (linkDomains(t, causes, logging)) {
                                     result = true;
                                 }
                                 if (calcFunctions(t, causes, logging)) {
                                     result = true;
                                 }
-                                if (linkDatabase(t, waiters, causes, logging)) {
+                                if (linkDatabase(t, causes, logging)) {
                                     result = true;
                                 }
                             } catch (RuntimeErrorException e) {
@@ -186,79 +186,79 @@ public class Linker {
         return result;
     }
 
-    private boolean linkDomains(List<Domain> treeSlave, Map<Long, Set<Long>> links, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
+    private boolean linkDomains(List<Domain> treeSlave, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
-                if (links.containsKey(slave.getPredicate().getId())) {
-                    for (long id : links.get(slave.getPredicate().getId())) {
-                        Right right = user.getMind().getRights().get(id);
-                        for (List<Domain> treeMaster : right.getTree()) {
-                            for (Domain master : treeMaster) {
-                                if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
+                Iterator<Right> iterator = user.getMind().getRights().iterator(slave.getPredicate());
+                while (iterator.hasNext()) {
+                    Right right = iterator.next();
+                    for (List<Domain> treeMaster : right.getTree()) {
+                        for (Domain master : treeMaster) {
+                            if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
 
-                                    TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
-                                    TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
+                                TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
+                                TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
 
-                                    user.getMind().getTValues().mark();
-                                    user.getMind().getFValues().mark();
+                                user.getMind().getTValues().mark();
+                                user.getMind().getFValues().mark();
 
-                                    boolean success = true;
-                                    boolean applied = false;
+                                boolean success = true;
+                                boolean applied = false;
 
-                                    for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                                for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
 
-                                        if (master.get(i).isTSet()
-                                                && !slave.get(i).isEmpty()
-                                                && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                            TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
-                                            if (s == null) {
-                                                s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
-                                                result = true;
-                                            }
-                                            substMaster[i] = s;
-                                            applied = true;
+                                    if (master.get(i).isTSet()
+                                            && !slave.get(i).isEmpty()
+                                            && master.getVarOrder(i) >= slave.getVarOrder(i)) {
+                                        TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
+                                        if (s == null) {
+                                            s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
+                                            result = true;
                                         }
+                                        substMaster[i] = s;
+                                        applied = true;
+                                    }
 
-                                        if (slave.get(i).isTSet()
-                                                && !master.get(i).isEmpty()
-                                                && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                            TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
-                                            if (s == null) {
-                                                s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
-                                                result = true;
-                                            }
-                                            substSlave[i] = s;
-                                            applied = true;
+                                    if (slave.get(i).isTSet()
+                                            && !master.get(i).isEmpty()
+                                            && slave.getVarOrder(i) >= master.getVarOrder(i)) {
+                                        TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
+                                        if (s == null) {
+                                            s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
+                                            result = true;
                                         }
+                                        substSlave[i] = s;
+                                        applied = true;
+                                    }
 
-                                        if (!applied) {
-                                            if (master.get(i).isEmpty()
-                                                    || slave.get(i).isEmpty()
-                                                    || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
-                                                success = false;
-                                                break;
-                                            } else {
-                                                substMaster[i] = null;
-                                                substSlave[i] = null;
-                                            }
+                                    if (!applied) {
+                                        if (master.get(i).isEmpty()
+                                                || slave.get(i).isEmpty()
+                                                || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                                            success = false;
+                                            break;
+                                        } else {
+                                            substMaster[i] = null;
+                                            substSlave[i] = null;
                                         }
                                     }
-                                    if (success) {
-                                        user.getMind().getTValues().commit();
-                                        user.getMind().getFValues().commit();
-                                        markExcluded(substMaster, master, slave, causes, logging);
-                                        markExcluded(substSlave, slave, master, causes, logging);
-                                    } else {
-                                        user.getMind().getTValues().release();
-                                        user.getMind().getFValues().release();
-                                    }
+                                }
+                                if (success) {
+                                    user.getMind().getTValues().commit();
+                                    user.getMind().getFValues().commit();
+                                    markExcluded(substMaster, master, slave, causes, logging);
+                                    markExcluded(substSlave, slave, master, causes, logging);
+                                } else {
+                                    user.getMind().getTValues().release();
+                                    user.getMind().getFValues().release();
                                 }
                             }
                         }
                     }
                 }
+
             }
         }
 
@@ -306,7 +306,7 @@ public class Linker {
         return r != null;
     }
 
-    private boolean linkDatabase(List<Domain> tree, Set<Domain> waiters, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
+    private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
         boolean occurs = false;
@@ -319,7 +319,7 @@ public class Linker {
             Set<Domain> stored = new HashSet<>();
 
             for (Domain d : tree) {
-                for (Domain master : waiters) {
+                for (Domain master : user.getMind().getDomains().getWaiters()) {
 
                     if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
@@ -437,7 +437,7 @@ public class Linker {
         return result;
     }
 
-    private void logCauses(Domain d) throws RuntimeErrorException {
+    private void logCauses(Domain d) {
         boolean rightShowed = false;
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {

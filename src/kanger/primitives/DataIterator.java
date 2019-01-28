@@ -1,5 +1,7 @@
 package kanger.primitives;
 
+import kanger.User;
+import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.storage.Storage;
@@ -11,8 +13,10 @@ public class DataIterator implements Iterator {
     private Iterator<Identifiable> cache = null;
     private Iterator<Identifiable> storage = null;
     private boolean backward;
+    private User user = null;
 
-    public DataIterator(boolean backward, Cache cache, Storage storage) {
+    public DataIterator(boolean backward, Cache cache, Storage storage, User user) {
+        this.user = user;
         this.backward = backward;
         this.cache = cache.iterator(backward);
         this.storage = storage == null ? null : storage.iterator(backward);
@@ -20,15 +24,15 @@ public class DataIterator implements Iterator {
 
     @Override
     public boolean hasNext() {
-        if(storage != null) {
-            if(backward) {
-                if(!cache.hasNext()) {
+        if (storage != null) {
+            if (backward) {
+                if (!cache.hasNext()) {
                     return storage.hasNext();
                 } else {
                     return true;
                 }
             } else {
-                if(!storage.hasNext()) {
+                if (!storage.hasNext()) {
                     return cache.hasNext();
                 } else {
                     return true;
@@ -43,9 +47,31 @@ public class DataIterator implements Iterator {
     public Identifiable next() {
         if (storage != null) {
             if (backward) {
-                return cache.hasNext() ? cache.next() : storage.next();
+                if (cache.hasNext()) {
+                    return cache.next();
+                } else {
+                    try {
+                        Identifiable next = storage.next();
+                        next.linkExternal(user);
+                        return next;
+                    } catch (RuntimeErrorException e) {
+                        e.printStackTrace(System.err);
+                        return null;
+                    }
+                }
             } else {
-                return storage.hasNext() ? storage.next() : cache.next();
+                if (storage.hasNext()) {
+                    try {
+                        Identifiable next = storage.next();
+                        next.linkExternal(user);
+                        return next;
+                    } catch (RuntimeErrorException e) {
+                        e.printStackTrace(System.err);
+                        return null;
+                    }
+                } else {
+                    return cache.next();
+                }
             }
         } else {
             return cache.next();

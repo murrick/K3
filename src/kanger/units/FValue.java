@@ -68,12 +68,18 @@ public class FValue implements Externalizable, Identifiable<Function> {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
+        this.user = user;
+        function = user.getMind().getFunctions().get(functionId);
         if (function == null) {
-            this.user = user;
-            function = user.getMind().getFunctions().get(functionId);
-            value = user.getMind().getTerms().get(valueId);
-            condition.linkExternal(user);
+            function = user.getMind().getFunctions().load(functionId);
+            function.linkExternal(user);
         }
+        value = user.getMind().getTerms().get(valueId);
+        if (value == null) {
+            value = user.getMind().getTerms().load(valueId);
+            value.linkExternal(user);
+        }
+        condition.linkExternal(user);
     }
 
 

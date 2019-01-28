@@ -5,8 +5,6 @@ import kanger.interfaces.Identifiable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -127,7 +125,7 @@ public class Storage implements Closeable, Iterable<Identifiable> {
     }
 
     public void clear() throws IOException {
-        if(!isClosed()) {
+        if (!isClosed()) {
             data.clear();
             index.clear();
             hash.clear();
@@ -135,8 +133,12 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         }
     }
 
-    public void reindex() throws IOException {
+    public long reindex() throws IOException {
         if (!isClosed()) {
+            flush();
+            long size = index.getFile().length()
+                    + hash.getFile().length()
+                    + data.getFile().length();
             File tempFile = new File(name + ".data.temp");
             Data tempData = new Data();
             tempData.open(tempFile);
@@ -158,6 +160,14 @@ public class Storage implements Closeable, Iterable<Identifiable> {
             tempFile.renameTo(data.getFile().getAbsoluteFile());
             data.open(data.getFile());
             flush();
+
+            return index.getFile().length()
+                    + hash.getFile().length()
+                    + data.getFile().length()
+                    - size;
+
+        } else {
+            return 0;
         }
     }
 
@@ -167,14 +177,6 @@ public class Storage implements Closeable, Iterable<Identifiable> {
         } else {
             return 0;
         }
-    }
-    @Override
-    public Iterator<Identifiable> iterator() {
-        return new StorageIterator(true);
-    }
-
-    public Iterator<Identifiable> iterator(boolean backward) {
-        return new StorageIterator(backward);
     }
 
     public void remove() throws IOException {
@@ -192,11 +194,21 @@ public class Storage implements Closeable, Iterable<Identifiable> {
             wasOpened = true;
         }
 
-        if(wasOpened) {
+        if (wasOpened) {
             index.getFile().getAbsoluteFile().delete();
             hash.getFile().getAbsoluteFile().delete();
             data.getFile().getAbsoluteFile().delete();
         }
+    }
+
+
+    @Override
+    public Iterator<Identifiable> iterator() {
+        return new StorageIterator(true);
+    }
+
+    public Iterator<Identifiable> iterator(boolean backward) {
+        return new StorageIterator(backward);
     }
 
     public class StorageIterator implements Iterator<Identifiable> {
