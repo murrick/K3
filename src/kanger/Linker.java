@@ -472,8 +472,8 @@ public class Linker {
 //
     private boolean updateDatabase(boolean logging) throws RuntimeErrorException {
         boolean result = false;
-        for (Map.Entry<Long, Set<ArgList>> e : user.getMind().getProducedDomains().entrySet()) {
-            Domain d = user.getMind().getDomains().get(e.getKey());
+        for (Map.Entry<Domain, Set<ArgList>> e : user.getMind().getProducedDomains().entrySet()) {
+            Domain d = e.getKey();
             for (ArgList args : e.getValue()) {
                 result = true;
 

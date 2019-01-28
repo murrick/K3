@@ -75,23 +75,26 @@ public class Right implements Externalizable, Identifiable<Right> {
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        orig = user.getMind().getTerms().get(origId);
-        if(orig == null) {
-            orig = user.getMind().getTerms().load(origId);
-            orig.linkExternal(user);
-        }
-        tree.clear();
-        for (List<Long> ids : treeIds) {
-            List<Domain> branch = new ArrayList<>();
-            for (long id : ids) {
-                Domain domain = user.getMind().getDomains().get(id);
-                if(domain == null) {
-                    domain = user.getMind().getDomains().load(id);
-                    domain.linkExternal(user);
-                }
-                branch.add(domain);
+        if(orig == null && origId != -1) {
+            orig = user.getMind().getTerms().get(origId);
+            if (orig == null) {
+                orig = user.getMind().getTerms().load(origId);
+                orig.linkExternal(user);
             }
-            tree.add(branch);
+        }
+        if(tree.isEmpty() && !treeIds.isEmpty()) {
+            for (List<Long> ids : treeIds) {
+                List<Domain> branch = new ArrayList<>();
+                for (long id : ids) {
+                    Domain domain = user.getMind().getDomains().get(id);
+                    if (domain == null) {
+                        domain = user.getMind().getDomains().load(id);
+                        domain.linkExternal(user);
+                    }
+                    branch.add(domain);
+                }
+                tree.add(branch);
+            }
         }
     }
 

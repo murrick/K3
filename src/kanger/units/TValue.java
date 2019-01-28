@@ -75,15 +75,19 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        tVar = user.getMind().getTVars().get(tVarId);
-        if(tVar == null) {
-            tVar = user.getMind().getTVars().load(tVarId);
-            tVar.linkExternal(user);
+        if(tVar == null && tVarId != -1) {
+            tVar = user.getMind().getTVars().get(tVarId);
+            if (tVar == null) {
+                tVar = user.getMind().getTVars().load(tVarId);
+                tVar.linkExternal(user);
+            }
         }
-        value = user.getMind().getTerms().get(valueId);
-        if(value == null) {
-            value = user.getMind().getTerms().load(valueId);
-            value.linkExternal(user);
+        if(value == null && valueId != -1) {
+            value = user.getMind().getTerms().get(valueId);
+            if (value == null) {
+                value = user.getMind().getTerms().load(valueId);
+                value.linkExternal(user);
+            }
         }
         for (Cause c : causes) {
             c.linkExternal(user);

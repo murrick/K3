@@ -60,10 +60,10 @@ public class Mind {
 //    private final Set<Long> usedTrees = new HashSet<>();
 //    private final Set<Long> closedTrees = new HashSet<>();
 
-    private final Map<Long, Set<ArgList>> usedDomains = new HashMap<>();
-    private final Map<Long, Set<ArgList>> producedDomains = new HashMap<>();
-    private final Map<Long, Set<ArgList>> calculatedDomains = new HashMap<>();
-    private final Map<Long, Set<ArgList>> excludedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> producedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
     private final Map<Long, Set<Long>> queryValues = new HashMap<>();
 
@@ -545,19 +545,19 @@ public class Mind {
         return Version.VERSION_S;
     }
 
-    public Map<Long, Set<ArgList>> getUsedDomains() {
+    public Map<Domain, Set<ArgList>> getUsedDomains() {
         return usedDomains;
     }
 
-    public Map<Long, Set<ArgList>> getExcludedDomains() {
+    public Map<Domain, Set<ArgList>> getExcludedDomains() {
         return excludedDomains;
     }
 
-    public Map<Long, Set<ArgList>> getProducedDomains() {
+    public Map<Domain, Set<ArgList>> getProducedDomains() {
         return producedDomains;
     }
 
-    public Map<Long, Set<ArgList>> getCalculatedDomains() {
+    public Map<Domain, Set<ArgList>> getCalculatedDomains() {
         return calculatedDomains;
     }
 

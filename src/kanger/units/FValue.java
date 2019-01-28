@@ -69,15 +69,19 @@ public class FValue implements Externalizable, Identifiable<Function> {
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        function = user.getMind().getFunctions().get(functionId);
-        if (function == null) {
-            function = user.getMind().getFunctions().load(functionId);
-            function.linkExternal(user);
+        if(function == null && functionId != -1) {
+            function = user.getMind().getFunctions().get(functionId);
+            if (function == null) {
+                function = user.getMind().getFunctions().load(functionId);
+                function.linkExternal(user);
+            }
         }
-        value = user.getMind().getTerms().get(valueId);
-        if (value == null) {
-            value = user.getMind().getTerms().load(valueId);
-            value.linkExternal(user);
+        if(value == null && valueId != -1) {
+            value = user.getMind().getTerms().get(valueId);
+            if (value == null) {
+                value = user.getMind().getTerms().load(valueId);
+                value.linkExternal(user);
+            }
         }
         condition.linkExternal(user);
     }

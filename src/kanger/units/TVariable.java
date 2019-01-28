@@ -54,15 +54,19 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        name = user.getMind().getTerms().get(nameId);
-        if(name == null) {
-            name = user.getMind().getTerms().load(nameId);
-            name.linkExternal(user);
+        if (name == null && nameId != -1) {
+            name = user.getMind().getTerms().get(nameId);
+            if (name == null) {
+                name = user.getMind().getTerms().load(nameId);
+                name.linkExternal(user);
+            }
         }
-        right = user.getMind().getRights().get(rightId);
-        if(right == null) {
-            right = user.getMind().getRights().load(rightId);
-            right.linkExternal(user);
+        if (right == null && rightId != -1) {
+            right = user.getMind().getRights().get(rightId);
+            if (right == null) {
+                right = user.getMind().getRights().load(rightId);
+                right.linkExternal(user);
+            }
         }
     }
 

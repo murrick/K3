@@ -134,7 +134,7 @@ public class KangerTest {
         try {
             //TODO: В дальнейшем отключить бд для тестов
             user.close();
-//            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
+            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
