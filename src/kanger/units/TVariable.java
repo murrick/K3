@@ -304,8 +304,8 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 
     public boolean isQuery() {
         return !isEmpty()
-                && user.getMind().getQueryValues().containsKey(this.getId())
-                && user.getMind().getQueryValues().get(this).contains(getCurrent().getId());
+                && user.getMind().getQueryValues().containsKey(this)
+                && user.getMind().getQueryValues().get(this).contains(getCurrent());
     }
 
 //    public boolean isBlocked() {

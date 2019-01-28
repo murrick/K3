@@ -132,10 +132,10 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     }
 
     public void setQuery() {
-        if (!user.getMind().getQueryValues().containsKey(tVar.getId())) {
-            user.getMind().getQueryValues().put(tVar.getId(), new HashSet<>());
+        if (!user.getMind().getQueryValues().containsKey(tVar)) {
+            user.getMind().getQueryValues().put(tVar, new HashSet<>());
         }
-        user.getMind().getQueryValues().get(tVar.getId()).add(id);
+        user.getMind().getQueryValues().get(tVar).add(this);
     }
 
     //    public void setBlocked() {

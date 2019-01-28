@@ -141,6 +141,7 @@ public class DatabaseFactory implements Iterable<Record> {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                one.linkExternal(user);
                 if (one.equalsTo(temp)) {
                     return (Record) one;
                 }

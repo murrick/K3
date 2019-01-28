@@ -677,8 +677,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
             }
             for (Argument a : arguments) {
                 if (a.isVSet()
-                        && user.getMind().getQueryValues().containsKey(a.getV().getTVar().getId())
-                        && user.getMind().getQueryValues().get(a.getV().getTVar().getId()).contains(a.getV().getId())) {
+                        && user.getMind().getQueryValues().containsKey(a.getV().getTVar())
+                        && user.getMind().getQueryValues().get(a.getV().getTVar()).contains(a.getV())) {
                     return true;
                 }
             }

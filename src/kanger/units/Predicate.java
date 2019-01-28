@@ -54,7 +54,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        if(name == null && nameId != -1) {
+        if (name == null && nameId != -1) {
             name = user.getMind().getTerms().get(nameId);
             if (name == null) {
                 name = user.getMind().getTerms().load(nameId);
@@ -213,7 +213,11 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     @Override
     public boolean equalsTo(Predicate to) {
-        return to.getName().getId() == getName().getId() && getRange() == to.getRange();
+        if (nameId != -1 && to.getName() != null) {
+            return to.getName().getId() == nameId && to.range == range;
+        } else {
+            return to.getName().getId() == getName().getId() && getRange() == to.getRange();
+        }
     }
 
     @Override

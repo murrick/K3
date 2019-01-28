@@ -65,7 +65,7 @@ public class Mind {
     private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
-    private final Map<Long, Set<Long>> queryValues = new HashMap<>();
+    private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
 
     private boolean changed = false;
     private Boolean queryResult = null;
@@ -596,7 +596,7 @@ public class Mind {
 //    }
 
 
-    public Map<Long, Set<Long>> getQueryValues() {
+    public Map<TVariable, Set<TValue>> getQueryValues() {
         return queryValues;
     }
 
@@ -1006,4 +1006,6 @@ public class Mind {
 
 }
 
+
+//TODO: При use: 1) Путает имена переменных, 2) Добавляет в результат %%, 3) Выводит море кривых гипотез
 

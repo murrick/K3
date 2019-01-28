@@ -172,6 +172,7 @@ public class Linker {
             if (iterator.hasNext()) {
                 do {
                     TValue v = iterator.next();
+                    v.linkExternal(user);
                     user.getMind().getTValues().set(t, v);
                     if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                         result = true;

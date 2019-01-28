@@ -114,6 +114,7 @@ public class DictionaryFactory {
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(t.getHash())) {
                 if (one.equalsTo(t)) {
+                    one.linkExternal(user);
                     return (Term) one;
                 }
             }

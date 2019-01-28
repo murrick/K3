@@ -97,6 +97,7 @@ public class FValueFactory {
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
                 if (one.equalsTo(f)) {
+                    one.linkExternal(user);
                     return (FValue) one;
                 }
             }
