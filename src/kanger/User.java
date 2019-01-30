@@ -28,7 +28,6 @@ public class User {
             close();
         }
         storage = new HashMap<>();
-        storage.put(DatabaseFactory.SCHEMA, new Storage());
         storage.put(DictionaryFactory.SCHEMA, new Storage());
         storage.put(DomainFactory.SCHEMA, new Storage());
         storage.put(FunctionFactory.SCHEMA, new Storage());

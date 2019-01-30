@@ -33,12 +33,10 @@ public class Mind {
     private Mind next = null;
     private User user = null;
 
-    private DatabaseFactory database = null;                     // База данных
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
     private RightFactory rights = null;                             // Список правил
-//    private TreeFactory trees = null;                                // Список секвенций
     private TVariableFactory tVars = null;                      // t-переменные
     private TValueFactory tValues = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
@@ -95,7 +93,6 @@ public class Mind {
         predicates.transaction(root.getPredicates());
         domains.transaction(root.getDomains());
         rights.transaction(root.getRights());
-        database.transaction(root.getDatabase());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
         functions.transaction(root.getFunctions());
@@ -107,7 +104,6 @@ public class Mind {
     }
 
     private void init() {
-        database = new DatabaseFactory(user);                     // База данных
         terms = new DictionaryFactory(user);                    // Словарь констант
         predicates = new PredicateFactory(user);                 // Предикаты
         domains = new DomainFactory(user);                          // Список доменов
@@ -146,7 +142,6 @@ public class Mind {
         fValues.commit(m.getFValues());
         predicates.commit(m.getPredicates());
         domains.commit(m.getDomains());
-        database.commit(m.getDatabase());
         rights.commit(m.getRights());
         functions.commit(m.getFunctions());
 
@@ -183,7 +178,6 @@ public class Mind {
                 fValues.update();
                 predicates.update();
                 domains.update();
-                database.update();
                 rights.update();
                 functions.update();
 
@@ -211,7 +205,6 @@ public class Mind {
     public void clear() throws RuntimeErrorException {
         terms.clear();
         predicates.clear();
-        database.clear();
         domains.clear();
         tVars.clear();
         tValues.clear();
@@ -288,10 +281,6 @@ public class Mind {
 
     public DictionaryFactory getTerms() {
         return terms;
-    }
-
-    public DatabaseFactory getDatabase() {
-        return database;
     }
 
     public PredicateFactory getPredicates() {
@@ -933,7 +922,7 @@ public class Mind {
         if (mind.getSolutions().size() > 0) {
             mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
-            for (Record log : mind.getSolutions().getRoot()) {
+            for (Right log : mind.getSolutions().getRoot()) {
                 mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i,
                         log.toString()));
             }
@@ -953,6 +942,7 @@ public class Mind {
             }
         }
     }
+
 
 //    private List<Right> killInsertion(Mind mind, Right target, boolean withRelatedRights) {
 //        int flag = 0;

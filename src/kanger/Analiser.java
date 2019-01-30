@@ -5,10 +5,8 @@ import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.Domain;
-import kanger.units.Record;
+import kanger.units.Right;
 import kanger.units.TValue;
-
-import java.util.Set;
 
 // !@x a(x) -> b(x), @y b(y) -> c(y), @z c(z) -> d(z);
 
@@ -534,8 +532,8 @@ public class Analiser {
 //            }
 
             boolean occurs = false;
-            for (Record r : user.getMind().getDatabase()) {
-                if (r.getId() < user.getMind().getDatabase().getFirstId()) {
+            for (Right r : user.getMind().getRights().getDatabase()) {
+                if (r.getId() < user.getMind().getRights().getFirstId()) {
                     break;
                 }
                 Domain d = r.getDomain();
@@ -765,7 +763,7 @@ public class Analiser {
 
     public boolean checkDatabase(boolean logging) throws RuntimeErrorException {
         boolean result = false;
-        for (Record p : user.getMind().getDatabase()) {
+        for (Right p : user.getMind().getRights().getDatabase()) {
             if (p.getDomain().isCalculated()) {
 //                if (p.getDomain().isQuery()) {
                 int i = 0;
@@ -780,7 +778,7 @@ public class Analiser {
                 }
                 result = true;
             } else {
-                for (Record q : user.getMind().getDatabase()) {
+                for (Right q : user.getMind().getRights().getDatabase()) {
                     if (//q.getId() < p.getId()
                         //&&
                             p.getDomain().equalsBase(q.getDomain())

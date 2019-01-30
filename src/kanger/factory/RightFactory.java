@@ -3,12 +3,11 @@ package kanger.factory;
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
+import kanger.primitives.ArgList;
 import kanger.primitives.DataIterator;
 import kanger.storage.RightsCache;
 import kanger.storage.Storage;
-import kanger.units.Domain;
-import kanger.units.Predicate;
-import kanger.units.Right;
+import kanger.units.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -132,6 +131,57 @@ public class RightFactory implements Iterable<Right> {
         return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
+    public Right add(Domain domain) throws RuntimeErrorException {
+        Right p = find(domain);
+        if (p != null) {
+            return p;
+        } else {
+            ArgList list = null;
+            if (domain.isQuery()) {
+                list = domain.getArguments().convert();
+                for (TValue t : list.getTValues(true)) t.setQuery();
+            } else {
+                list = domain.getArguments().convertBase();
+            }
+            Right r = new Right(user);
+            Domain d = user.getMind().getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
+            r.getTree().get(0).add(d);
+            r.setGenerated();
+            r.setStored();
+
+            int save = user.getMind().getDebugLevel();
+            user.getMind().setDebugLevel(0);
+            Term origin = user.getMind().getTerms().add(d.toString());
+            user.getMind().setDebugLevel(save);
+            r.setOrig(origin);
+
+            return add(r);
+        }
+    }
+
+    public Right store(Domain d) {
+        cache.setStored(d.getRight());
+        return d.getRight();
+    }
+
+    public Right find(Domain domain) throws RuntimeErrorException {
+        for (Identifiable one : cache.find(domain.getHashBase())) {
+            if (((Right) one).equalsTo(domain)) {
+                return (Right) one;
+            }
+        }
+        if (!user.isClosed()) {
+            for (Identifiable one : user.getStorage(SCHEMA).find(domain.getHashBase())) {
+                one.linkExternal(user);
+                if (((Right) one).equalsTo(domain)) {
+                    return (Right) one;
+                }
+            }
+        }
+        return null;
+    }
+
+
     @Override
     public Iterator<Right> iterator() {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
@@ -144,5 +194,13 @@ public class RightFactory implements Iterable<Right> {
 
     public RightsCache.Links getLinks(Predicate predicate) {
         return cache.getLinks(predicate);
+    }
+
+    public long getLastId() {
+        return lastId;
+    }
+
+    public long getFirstId() {
+        return firstId;
     }
 }

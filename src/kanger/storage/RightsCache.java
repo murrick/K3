@@ -35,6 +35,11 @@ public class RightsCache extends Cache {
         }
     }
 
+    public void setStored(Right r) {
+        r.setStored();
+        stored.put(r.getId(), r);
+    }
+
     public void add(RightsCache base) {
         super.add(base);
         stored.putAll(base.stored);

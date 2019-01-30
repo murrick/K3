@@ -611,19 +611,22 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public boolean isStored() throws RuntimeErrorException {
-        return user.getMind().getDatabase().find(this) != null;
+        return user.getMind().getRights().find(this) != null;
     }
 
     public boolean isStored(ArgList args) throws RuntimeErrorException {
-        return user.getMind().getDatabase().find(predicate, antc, args) != null;
+        Domain d = new Domain(predicate, antc, args);
+        return user.getMind().getRights().find(d) != null;
     }
 
-    public Record setStored() throws RuntimeErrorException {
-        return user.getMind().getDatabase().add(this);
+    public Right setStored() {
+        Right r = user.getMind().getRights().store(this);
+        return r;
     }
 
-    public Record createStored() throws RuntimeErrorException {
-        return user.getMind().getDatabase().add(predicate, antc, isQuery(), arguments);
+    public Right createStored() throws RuntimeErrorException {
+        Right r = user.getMind().getRights().add(this);
+        return r;
     }
 
     public boolean isSystem() {

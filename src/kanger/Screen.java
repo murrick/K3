@@ -281,7 +281,7 @@ public class Screen {
                                     case 'm':
                                     case 'M':
                                         System.out.println("Memory status:");
-                                        System.out.println("Database: " + mind.getDatabase().size());
+                                        System.out.println("Database: " + mind.getRights().getDatabase().size());
                                         System.out.println("Dictionary: " + mind.getTerms().size());
                                         System.out.println("Domains: " + mind.getDomains().size());
                                         System.out.println("Functions: " + mind.getFunctions().size());
@@ -639,12 +639,12 @@ public class Screen {
             indent += "\t";
         }
 
-        Record dest = mind.getDatabase().find(d.getPredicate(), d.isAntc(), d.getArguments());
+        Right dest = mind.getRights().find(d);
         if (dest != null && !dest.getCauses().isEmpty()) {
 
             boolean rightShowed = false;
             for (Cause c : dest.getCauses()) {
-                if(!rightShowed) {
+                if (!rightShowed) {
                     System.out.printf("\t\t%sRight: %s\n", indent, c.getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
                 }
                 System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString(c.getArguments()));
@@ -843,16 +843,19 @@ public class Screen {
             System.out.printf("%sRight %03d%s: %s\n",
                     showTree ? "\n --- " : "",
                     r.getId(),
-                    r.isGenerated() || r.isQuery() ? " " +
+                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored())
+                            ? " " +
                             (r.isGenerated() ? "G" : "") +
-                            (r.isQuery() ? "Q" : "") : "",
+                            (r.isStored() ? "B" : "") +
+                            (r.isQuery() ? "Q" : "")
+                            : "",
                     r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
 //                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
-                    int save = mind.getDebugLevel();
-                    mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
-                    showTree(mind, r);
-                    mind.setDebugLevel(save);
+                int save = mind.getDebugLevel();
+                mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
+                showTree(mind, r);
+                mind.setDebugLevel(save);
 //                } else {
 //                    SortedSet<TVariable> tset = new TreeSet<>();
 //                    tset.addAll(r.getTVariables(true));
@@ -968,7 +971,7 @@ public class Screen {
         return String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
     }
 
-//    public static void killRight(Mind mind) {
+    //    public static void killRight(Mind mind) {
 //        System.out.printf("Enter Right Number: ");
 //        int id = Integer.parseInt(new Scanner(System.in).nextLine());
 //        Right r = mind.getRights().get(id);

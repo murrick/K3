@@ -2,17 +2,18 @@ package kanger.stores;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
-import kanger.units.Record;
+import kanger.units.Domain;
+import kanger.units.Right;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by murray on 28.05.15.
  */
 public class SolutionsStore {
 
-    private SortedSet<Record> root = null;
+    private Set<Right> root = null;
     private boolean enableStore = true;
 
     private User user = null;
@@ -28,18 +29,18 @@ public class SolutionsStore {
         clear();
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new TreeSet<>();
+                root = new HashSet<>();
             }
             root.addAll(base.getRoot());
         }
     }
 
-    public Record add(Record d) {
+    public Right add(Right d) {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
-            root = new TreeSet<>();
+            root = new HashSet<>();
         }
 //        Solution s = new Solution(d);
         if (!root.contains(d)) {
@@ -51,9 +52,9 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Record rec) throws RuntimeErrorException {
-        for (Record r : root) {
-            if (r.getDomain().equalsBase(rec.getDomain()) && r.getDomain().isAntc() == rec.getDomain().isAntc()) {
+    public boolean contains(Domain d) throws RuntimeErrorException {
+        for (Right r : root) {
+            if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
                 return true;
             }
         }
@@ -69,15 +70,15 @@ public class SolutionsStore {
         return enableStore;
     }
 
-    public Record get(int index) {
-        return root.toArray(new Record[]{})[index];
+    public Right get(int index) {
+        return root.toArray(new Right[]{})[index];
     }
 
 //    public int find(Solution o) {
 //        return root.indexOf(o);
 //    }
 
-    public SortedSet<Record> getRoot() {
+    public Set<Right> getRoot() {
         return root;
     }
 

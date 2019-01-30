@@ -68,7 +68,7 @@ public class Linker {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
 
-            saveR = user.getMind().getDatabase().getLastId();
+            saveR = user.getMind().getRights().getLastId();
             saveT = user.getMind().getTValues().getLastId();
             saveF = user.getMind().getFValues().getLastId();
 
@@ -150,7 +150,7 @@ public class Linker {
             }
 
 
-        } while (saveR != user.getMind().getDatabase().getLastId()
+        } while (saveR != user.getMind().getRights().getLastId()
                 || saveT != user.getMind().getTValues().getLastId()
                 || saveF != user.getMind().getFValues().getLastId()
         );
@@ -486,7 +486,7 @@ public class Linker {
                     }
                 }
 
-                Record x;
+                Right x;
                 if (d.getArguments().getTVariables(true).isEmpty()) {
                     x = d.setStored();
                     if (logging) {
