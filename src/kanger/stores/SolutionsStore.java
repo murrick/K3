@@ -53,9 +53,11 @@ public class SolutionsStore {
     }
 
     public boolean contains(Domain d) throws RuntimeErrorException {
-        for (Right r : root) {
-            if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
-                return true;
+        if(!isEmpty()) {
+            for (Right r : root) {
+                if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
+                    return true;
+                }
             }
         }
         return false;

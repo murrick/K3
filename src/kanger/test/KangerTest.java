@@ -625,18 +625,21 @@ public class KangerTest {
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
         showResult(true);
-        Domain s = createRecord(user, false, "a", "z");
-        if (!mind.getSolutions().contains(s)) {
-            fail("Expected: " + s.toString());
+        if(!mind.getSolutions().isEmpty()) {
+            fail("Expected no solves");
         }
-        s = s = createRecord(user, false, "c", "z");
-        if (!mind.getSolutions().contains(s)) {
-            fail("Expected: " + s.toString());
-        }
-        s = s = createRecord(user, true, "d", "z");
-        if (!mind.getSolutions().contains(s)) {
-            fail("Expected: " + s.toString());
-        }
+//        Domain s = createRecord(user, false, "a", "z");
+//        if (!mind.getSolutions().contains(s)) {
+//            fail("Expected: " + s.toString());
+//        }
+//        s = s = createRecord(user, false, "c", "z");
+//        if (!mind.getSolutions().contains(s)) {
+//            fail("Expected: " + s.toString());
+//        }
+//        s = s = createRecord(user, true, "d", "z");
+//        if (!mind.getSolutions().contains(s)) {
+//            fail("Expected: " + s.toString());
+//        }
         System.out.println("OK");
         System.out.println("====================================================");
     }
@@ -652,6 +655,11 @@ public class KangerTest {
             if (!mind.getHypotesisStore().contains(s)) {
                 fail("Expected: " + s.toString());
             }
+            s = createHypotese(user, true, "d", "z");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+
 //            s = createHypotese(user, true, "a", "z");
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
@@ -664,8 +672,8 @@ public class KangerTest {
 //            if (!mind.getHypotesisStore().contains(s)) {
 //                fail("Expected: " + s.toString());
 //            }
-            if (mind.getHypotesisStore().size() != 1) {
-                fail("Expected 1 hypotesis");
+            if (mind.getHypotesisStore().size() != 2) {
+                fail("Expected 2 hypotesis");
             }
             System.out.println("OK");
             System.out.println("====================================================");

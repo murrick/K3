@@ -88,8 +88,10 @@ public class RightFactory implements Iterable<Right> {
             if (tree.size() == 1) {
                 if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
                     user.getMind().getDomains().getWaiters().add(tree.get(0));
-                } else {
+                } else if(r.getTree().size() == 1){
                     tree.get(0).setStored();
+                } else {
+                    tree.get(0).createStored();
                 }
             }
         }
