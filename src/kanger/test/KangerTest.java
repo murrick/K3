@@ -8,10 +8,8 @@ import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class KangerTest {
@@ -134,7 +132,7 @@ public class KangerTest {
         try {
             //TODO: В дальнейшем отключить бд для тестов
             user.close();
-            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
+//            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);

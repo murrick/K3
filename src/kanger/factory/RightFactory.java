@@ -4,15 +4,16 @@ import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.DataIterator;
-import kanger.storage.Cache;
-import kanger.storage.Index;
+import kanger.storage.RightsCache;
 import kanger.storage.Storage;
 import kanger.units.Domain;
 import kanger.units.Predicate;
 import kanger.units.Right;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by murray on 25.05.15.
@@ -24,10 +25,8 @@ public class RightFactory implements Iterable<Right> {
     private long lastId = 0;
     private long firstId = 0;
 
-    private Map<Predicate, List<Right>> predicatesLink = new HashMap<>();
-
-    private Cache cache = new Cache();
-    private Cache load = new Cache();
+    private RightsCache cache = new RightsCache();
+    private RightsCache load = new RightsCache();
     private User user = null;
 
     public RightFactory(User user) {
@@ -38,16 +37,10 @@ public class RightFactory implements Iterable<Right> {
     public void transaction(RightFactory base) {
         cache.clear();
         load.clear();
-        predicatesLink.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             cache.add(base.cache);
-            for(Map.Entry<Predicate, List<Right>> e : base.predicatesLink.entrySet()) {
-                List<Right> rights = new ArrayList<>();
-                rights.addAll(e.getValue());
-                predicatesLink.put(e.getKey(), rights);
-            }
         } else {
             lastId = 0;
             firstId = 0;
@@ -88,18 +81,6 @@ public class RightFactory implements Iterable<Right> {
     public Right add(Right r) {
         r.setId(lastId++);
         cache.add(r);
-
-        for (List<Domain> tree : r.getTree()) {
-            for (Domain d : tree) {
-                if (!predicatesLink.containsKey(d.getPredicate())) {
-                    predicatesLink.put(d.getPredicate(), new ArrayList<>());
-                }
-                if(!predicatesLink.get(d.getPredicate()).contains(r)) {
-                    predicatesLink.get(d.getPredicate()).add(r);
-                }
-            }
-        }
-
         return r;
     }
 
@@ -157,65 +138,11 @@ public class RightFactory implements Iterable<Right> {
         return new DataIterator(true, cache, storage, user);
     }
 
-    public Iterator<Right> iterator(Predicate predicate) throws RuntimeErrorException {
-        return new RightIterator(predicate);
+    public RightsCache.Database getDatabase() {
+        return cache.getDatabase();
     }
 
-    public class RightIterator implements Iterator<Right> {
-
-        Iterator<Long> iterator = null;
-        Set<Long> rights = new HashSet<>();
-
-        public RightIterator(Predicate p) throws RuntimeErrorException {
-            if (predicatesLink.containsKey(p)) {
-                for (Right r : predicatesLink.get(p)) {
-                    rights.add(r.getId());
-                }
-            }
-            if (!user.isClosed()) {
-                try {
-                    Index.IndexOne one = user.getPredicatesLink().getOne(p.getId());
-                    if (one != null) {
-                        rights.addAll(one.getData());
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace(System.err);
-                    throw new RuntimeErrorException(e.toString());
-                }
-            }
-            if (!rights.isEmpty()) {
-                iterator = rights.iterator();
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (iterator != null) {
-                return iterator.hasNext();
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public Right next() {
-            Long id = iterator.next();
-            if (id != null) {
-                Right r = get(id);
-                if (r == null) {
-                    try {
-                        r = load(id);
-                        r.linkExternal(user);
-                    } catch (RuntimeErrorException e) {
-                        e.printStackTrace(System.err);
-                        return null;
-                    }
-                }
-                return r;
-            } else {
-                return null;
-            }
-
-        }
+    public RightsCache.Links getLinks(Predicate predicate) {
+        return cache.getLinks(predicate);
     }
 }

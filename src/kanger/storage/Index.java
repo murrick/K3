@@ -17,13 +17,24 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private NavigableMap<Long, IndexOne> baseIndex = new TreeMap<>();
     private NavigableMap<Long, IndexOne> currentBlock = new TreeMap<>();
 
-    private File file = null;
-    private RandomAccessFile ras = null;
-    private boolean changed = false;
-    private int blockSize = BLOCK_SIZE;
+    private File file;
+    private RandomAccessFile ras;
+    private boolean changed;
+    private int blockSize;
 
     private volatile int readCounter = 0;
     private volatile int writeCounter = 0;
+
+    public Index() {
+        file = null;
+        ras = null;
+        changed = false;
+        if(System.getProperties().containsKey("block.size")) {
+            blockSize = Integer.parseInt(System.getProperty("block.size"));
+        } else {
+            blockSize = BLOCK_SIZE;
+        }
+    }
 
     public void open(String fileName) throws IOException {
         open(new File(fileName));

@@ -192,9 +192,7 @@ public class Linker {
         boolean result = false;
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
-                Iterator<Right> iterator = user.getMind().getRights().iterator(slave.getPredicate());
-                while (iterator.hasNext()) {
-                    Right right = iterator.next();
+                for (Right right : user.getMind().getRights().getLinks(slave.getPredicate())) {
                     for (List<Domain> treeMaster : right.getTree()) {
                         for (Domain master : treeMaster) {
                             if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {

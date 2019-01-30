@@ -766,6 +766,14 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return buffer.toString().hashCode();
     }
 
+    public int getHashBase() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(antc);
+        buffer.append(predicate == null ? predicateId : predicate.getId());
+        buffer.append(arguments.hashCode());
+        return buffer.toString().hashCode();
+    }
+
     @Override
     public boolean equalsTo(Domain to) {
         if (to.isAntc() == antc

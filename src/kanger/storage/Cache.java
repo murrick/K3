@@ -6,10 +6,15 @@ import java.util.*;
 
 public class Cache implements Iterable<Identifiable> {
 
-    private NavigableMap<Long, Identifiable> index = new TreeMap<>();
-    private Map<Integer, Set<Identifiable>> hash = new HashMap<>();
-    private Stack<Long> stack = new Stack<>();
+    protected NavigableMap<Long, Identifiable> index;
+    private Map<Integer, Set<Identifiable>> hash;
+    private Stack<Long> stack;
 
+    public Cache() {
+        index = new TreeMap<>();
+        hash = new HashMap<>();
+        stack = new Stack<>();
+    }
 
     public void add(Identifiable one) {
         index.put(one.getId(), one);
@@ -123,7 +128,7 @@ public class Cache implements Iterable<Identifiable> {
         return index.containsKey(id);
     }
 
-    private long getNext(long id, NavigableMap<Long, Identifiable> block)  {
+    protected long getNext(long id, NavigableMap<Long, Identifiable> block)  {
         if(block.isEmpty()) {
             return -1;
         } else {
@@ -136,7 +141,7 @@ public class Cache implements Iterable<Identifiable> {
         }
     }
 
-    private long getPrevious(long id, NavigableMap<Long, Identifiable> block) {
+    protected long getPrevious(long id, NavigableMap<Long, Identifiable> block) {
         if(block.isEmpty()) {
             return -1;
         } else {

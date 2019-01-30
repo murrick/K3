@@ -113,7 +113,7 @@ public class DatabaseFactory implements Iterable<Record> {
             Right r = new Right(user);
             Domain d = user.getMind().getDomains().add(pred, antc, list, r);
             r.getTree().get(0).add(d);
-            r.setGenerated(true);
+            r.setGenerated();
 
             int save = user.getMind().getDebugLevel();
             user.getMind().setDebugLevel(0);

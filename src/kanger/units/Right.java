@@ -24,6 +24,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     private Term orig = null;                               // Оригинальная строка
     private boolean query = false;                          // Вновь введенное правило
     private boolean generated = false;                      // Правило добавлено в процессе выводс
+    private boolean stored = false;                         // Правило добавлено в процессе выводс
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
 
     private User user = null;
@@ -46,6 +47,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         origId = dis.readLong();
         query = dis.readBoolean();
         generated = dis.readBoolean();
+        stored = dis.readBoolean();
         treeIds.clear();
         int count = dis.readInt();
         while (count-- > 0) {
@@ -64,6 +66,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         dos.writeLong(orig.getId());
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
+        dos.writeBoolean(stored);
         dos.writeInt(tree.size());
         for (List<Domain> branch : tree) {
             dos.writeInt(branch.size());
@@ -98,12 +101,20 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
-    public void setGenerated(boolean generated) {
-        this.generated = generated;
+    public void setGenerated() {
+        this.generated = true;
     }
 
     public boolean isGenerated() {
         return generated;
+    }
+
+    public boolean isStored() {
+        return stored;
+    }
+
+    public void setStored() {
+        this.stored = true;
     }
 
     public List<List<Domain>> getTree() {
@@ -202,11 +213,9 @@ public class Right implements Externalizable, Identifiable<Right> {
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(query);
-        buffer.append(generated);
         for (List<Domain> list : tree) {
             for (Domain d : list) {
-                buffer.append(d.getId());
+                buffer.append(d.getHashBase());
             }
         }
         return buffer.toString().hashCode();
