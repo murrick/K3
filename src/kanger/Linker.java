@@ -543,7 +543,13 @@ public class Linker {
         for (Domain d : tree) {
             if (d.isSystem()) {
 
-                d.pushValues();
+//                d.pushValues();
+
+                List<TValue> list = new ArrayList<>();
+                for (TVariable t : d.getArguments().getTVariables(true)) {
+                    list.add(t.getCurrent());
+                }
+
                 int res = d.execSystem();
                 for (Argument a : d.getArguments()) {
                     if (a.isEmpty()) {
@@ -568,7 +574,15 @@ public class Linker {
                 if (block && logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
                 }
-                d.popValues();
+//                d.popValues();
+
+                List<TVariable> ts = d.getArguments().getTVariables(true);
+                for (int i = 0; i < ts.size(); ++i) {
+                    if (list.get(i) != null) {
+                        ts.get(i).setCurrent(list.get(i));
+                    }
+                }
+
 
             }
         }

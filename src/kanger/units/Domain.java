@@ -31,7 +31,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     private Right right = null;                                        // Ссылка на правило
 //    private Domain next = null;                                 // Следующий элемент
 
-    private Stack<List<TValue>> tStack = new Stack<>();
+//    private Stack<List<TValue>> tStack = new Stack<>();
 //    private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
 
     private User user = null;
@@ -847,23 +847,23 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return set;
 //    }
 //
-    public void pushValues() {
-        List<TValue> list = new ArrayList<>();
-        for (TVariable t : arguments.getTVariables(true)) {
-            list.add(t.getCurrent());
-        }
-        tStack.push(list);
-    }
-
-    public void popValues() {
-        List<TValue> list = tStack.pop();
-        List<TVariable> ts = arguments.getTVariables(true);
-        for (int i = 0; i < ts.size(); ++i) {
-            if (list.get(i) != null) {
-                ts.get(i).setCurrent(list.get(i));
-            }
-        }
-    }
+//    public void pushValues() {
+//        List<TValue> list = new ArrayList<>();
+//        for (TVariable t : arguments.getTVariables(true)) {
+//            list.add(t.getCurrent());
+//        }
+//        tStack.push(list);
+//    }
+//
+//    public void popValues() {
+//        List<TValue> list = tStack.pop();
+//        List<TVariable> ts = arguments.getTVariables(true);
+//        for (int i = 0; i < ts.size(); ++i) {
+//            if (list.get(i) != null) {
+//                ts.get(i).setCurrent(list.get(i));
+//            }
+//        }
+//    }
 
     public User getUser() {
         return user;
