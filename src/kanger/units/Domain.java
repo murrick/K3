@@ -32,7 +32,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    private Domain next = null;                                 // Следующий элемент
 
     private Stack<List<TValue>> tStack = new Stack<>();
-    private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
+//    private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
 
     private User user = null;
 
@@ -77,14 +77,14 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        if(predicate == null && predicateId != -1) {
+        if (predicate == null && predicateId != -1) {
             predicate = user.getMind().getPredicates().get(predicateId);
             if (predicate == null) {
                 predicate = user.getMind().getPredicates().load(predicateId);
                 predicate.linkExternal(user);
             }
         }
-        if(right == null && rightId != -1) {
+        if (right == null && rightId != -1) {
             right = user.getMind().getRights().get(rightId);
             if (right == null) {
                 right = user.getMind().getRights().load(rightId);
@@ -165,8 +165,13 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 
 
-    public SortedSet<Cause> getCauses() {
-        return causes.get(arguments.convertBase());
+    public Set<Cause> getCauses() {
+        ArgList args = arguments.convertBase();
+        if (user.getMind().getDomainCauses().containsKey(this) && user.getMind().getDomainCauses().get(this).containsKey(args)) {
+            return user.getMind().getDomainCauses().get(this).get(args);
+        } else {
+            return null;
+        }
     }
 
 //    public SortedSet<Cause> getCauses(ArgList arguments) {
@@ -174,25 +179,31 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 
     private boolean sourceExists(Cause c) throws RuntimeErrorException {
-        for (Cause x : causes.get(arguments)) {
-            if (x.getSrc().getPredicate().getId() == c.getSrc().getPredicate().getId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
-                return true;
+        Set<Cause> causes = getCauses();
+        if (causes != null) {
+            for (Cause x : getCauses()) {
+                if (x.getSrc().getPredicate().getId() == c.getSrc().getPredicate().getId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public void addCauses(Collection<Cause> causes) throws RuntimeErrorException {
+    public void setCauses(Collection<Cause> causes) throws RuntimeErrorException {
         if (causes != null) {
             ArgList current = arguments.convertBase();
-            if (!this.causes.containsKey(current)) {
-                this.causes.put(current, new TreeSet<>());
+            if (!user.getMind().getDomainCauses().containsKey(this)) {
+                user.getMind().getDomainCauses().put(this, new HashMap<>());
+            }
+            if (!user.getMind().getDomainCauses().get(this).containsKey(current)) {
+                user.getMind().getDomainCauses().get(this).put(current, new HashSet<>());
             } else {
-                this.causes.get(current).clear();
+                user.getMind().getDomainCauses().get(this).get(current).clear();
             }
             for (Cause c : causes) {
                 if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
-                    this.causes.get(arguments).add(c);
+                    user.getMind().getDomainCauses().get(this).get(arguments).add(c);
                 }
             }
         }

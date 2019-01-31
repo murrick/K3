@@ -13,6 +13,7 @@ import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.factory.*;
 import kanger.primitives.ArgList;
+import kanger.primitives.Cause;
 import kanger.primitives.Hypotese;
 import kanger.stores.*;
 import kanger.units.*;
@@ -63,6 +64,7 @@ public class Mind {
     private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
+    private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
 
     private boolean changed = false;
@@ -548,6 +550,10 @@ public class Mind {
 
     public Map<Domain, Set<ArgList>> getCalculatedDomains() {
         return calculatedDomains;
+    }
+
+    public Map<Domain, Map<ArgList, Set<Cause>>> getDomainCauses() {
+        return domainCauses;
     }
 
 //    public Map<Long, Set<List<Long>>> getStoredDomains() {

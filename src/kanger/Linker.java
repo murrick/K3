@@ -30,6 +30,7 @@ public class Linker {
         user.getMind().getExcludedDomains().clear();
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
+        user.getMind().getDomainCauses().clear();
 
 //        for (Function f : user.getMind().getFunctions()) {
 //            if (!f.isCalculable()) {
@@ -357,12 +358,12 @@ public class Linker {
 
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];
-//                d.addCauses(causes.get(d.getRight()));
+//                d.setCauses(causes.get(d.getRight()));
                 occurs = true;
                 if (!d.isStored()) {
                     result = true;
                     d.setProduced();
-                    d.addCauses(causes.get(d.getRight()));
+                    d.setCauses(causes.get(d.getRight()));
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                         logCauses(d);
@@ -371,11 +372,11 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
-//                    d.addCauses(causes.get(d.getRight()));
+//                    d.setCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.addCauses(causes.get(d.getRight()));
+                        d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
                             logCauses(d);
@@ -386,11 +387,11 @@ public class Linker {
             } else if (!calculated.isEmpty() && candidates.isEmpty() /*&& tree.size() - excluded.size() == calculated.size()*/) {
                 occurs = true;
                 for (Domain d : calculated) {
-//                    d.addCauses(causes.get(d.getRight()));
+//                    d.setCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.addCauses(causes.get(d.getRight()));
+                        d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
                             logCauses(d);
@@ -413,11 +414,11 @@ public class Linker {
                 }
                 if (candidates.size() == 1 && !excluded.isEmpty()) {
                     Domain d = candidates.toArray(new Domain[]{})[0];
-//                    d.addCauses(causes.get(d.getRight()));
+//                    d.setCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.addCauses(causes.get(d.getRight()));
+                        d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
                             logCauses(d);
