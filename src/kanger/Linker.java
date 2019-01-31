@@ -112,6 +112,7 @@ public class Linker {
 //            user.getMind().getExcludedDomains().clear();
                 //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
 
+
 //            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
                 for (List<Domain> tree : r.getTree()) {
 
@@ -149,6 +150,19 @@ public class Linker {
 
                 updateDatabase(logging);
             }
+
+//            if(saveT != user.getMind().getTValues().getLastId()) {
+//                long tag = user.getMind().getTValues().incTag();
+//                Iterator<TValue> iterator = user.getMind().getTValues().iterator();
+//                while (iterator.hasNext()) {
+//                    TValue v = iterator.next();
+//                    if (v.getId() >= saveT) {
+//                        v.setTag(saveT);
+//                    } else {
+//                        break;
+//                    }
+//                }
+//            }
 
 
         } while (saveR != user.getMind().getRights().getLastId()
@@ -310,7 +324,11 @@ public class Linker {
 
         boolean result = false;
         boolean occurs = false;
+
+        long tag = user.getMind().getTValues().incTag();
+
         if (checkSystem(tree, logging)) {
+
 
             Set<Domain> excluded = new HashSet<>();
             Set<Domain> calculated = new HashSet<>();
@@ -319,6 +337,7 @@ public class Linker {
             Set<Domain> stored = new HashSet<>();
 
             for (Domain d : tree) {
+
                 for (Domain master : user.getMind().getDomains().getWaiters()) {
 
                     if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
@@ -363,6 +382,7 @@ public class Linker {
                 if (!d.isStored()) {
                     result = true;
                     d.setProduced();
+                    d.setTag(tag);
                     d.setCauses(causes.get(d.getRight()));
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
@@ -376,6 +396,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
+                        d.setTag(tag);
                         d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
@@ -391,6 +412,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
+                        d.setTag(tag);
                         d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
@@ -418,6 +440,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
+                        d.setTag(tag);
                         d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);

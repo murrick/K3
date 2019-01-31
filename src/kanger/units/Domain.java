@@ -573,6 +573,23 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 //
 
+    public void setTag(long tag) {
+        if (!user.getMind().getDomainTags().containsKey(predicate)) {
+            user.getMind().getDomainTags().put(predicate, new HashMap<>());
+        }
+        user.getMind().getDomainTags().get(predicate).put(arguments.convertBase(), tag);
+    }
+
+    public long getTag() {
+        ArgList args = arguments.convertBase();
+        if (user.getMind().getDomainTags().containsKey(predicate)
+                && user.getMind().getDomainTags().get(predicate).containsKey(args)) {
+            return user.getMind().getDomainTags().get(predicate).get(args);
+        } else {
+            return -1;
+        }
+    }
+
     public void setProduced() {
         if (!user.getMind().getProducedDomains().containsKey(this)) {
             user.getMind().getProducedDomains().put(this, new HashSet<>());

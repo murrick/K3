@@ -64,12 +64,14 @@ public class Mind {
     private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
+    private final Map<Predicate, Map<ArgList, Long>> domainTags = new HashMap<>();
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
 
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
+    private Mind queryContext = null;
     private QueryPass queryPass = QueryPass.SILENCE;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
@@ -528,6 +530,7 @@ public class Mind {
     public Boolean query(String line) throws ParseErrorException, RuntimeErrorException {
         querySource = line;
         queryPass = QueryPass.SILENCE;
+        queryContext = null;
         queryResult = query(line, false);
         return queryResult;
     }
@@ -554,6 +557,10 @@ public class Mind {
 
     public Map<Domain, Map<ArgList, Set<Cause>>> getDomainCauses() {
         return domainCauses;
+    }
+
+    public Map<Predicate, Map<ArgList, Long>> getDomainTags() {
+        return domainTags;
     }
 
 //    public Map<Long, Set<List<Long>>> getStoredDomains() {
@@ -752,6 +759,7 @@ public class Mind {
                         setChanged(true);
                         res = true;
                     }
+                    queryContext = m;
                 } else {
                     release(m);
                 }
@@ -792,6 +800,7 @@ public class Mind {
                         excluded.commit(m.getHypotesisStore());
                         res = true;
                     }
+                    queryContext = m;
 
                 } else {
 
@@ -867,6 +876,7 @@ public class Mind {
                                     m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
                                     logResult(m);
                                     res = false;
+                                    queryContext = m;
                                 } else {
                                     hypotesis.commit(m.getHypotesisStore());
                                 }
@@ -903,6 +913,7 @@ public class Mind {
                                         m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
                                     }
                                 }
+                                queryContext = m;
                             }
                             release(m);
                         }
@@ -919,6 +930,29 @@ public class Mind {
         getLog().enable(storeL);
 
         getLog().add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
+
+
+        if(queryContext != null) {
+            for(Right solve : queryContext.getRights().getSolves()) {
+                Cause cause = null;
+                Iterator<Cause> iterator = solve.getCauses().iterator();
+                if(iterator.hasNext()) {
+                    cause = iterator.next();
+                }
+
+                System.out.println("--- " + solve.getDomain().getTag() + ": " + solve + (cause == null ? "" : " - " + cause.getDst().getRight()));
+            }
+            for(List<TValue> row: queryContext.getRights().getValues()) {
+                String s = "";
+                for(TValue v : row) {
+                    if(!s.isEmpty()) {
+                        s += " ";
+                    }
+                    s += v;
+                }
+                System.out.println("... " + s);
+            }
+        }
 
         return res;
     }
