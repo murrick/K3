@@ -574,21 +574,20 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //
 
     public void setTag(long tag) {
-        if (!user.getMind().getDomainTags().containsKey(predicate)) {
-            user.getMind().getDomainTags().put(predicate, new HashMap<>());
+        for(TVariable t : arguments.getTVariables(true)) {
+            t.getCurrent().setTag(tag);
         }
-        user.getMind().getDomainTags().get(predicate).put(arguments.convertBase(), tag);
     }
 
-    public long getTag() {
-        ArgList args = arguments.convertBase();
-        if (user.getMind().getDomainTags().containsKey(predicate)
-                && user.getMind().getDomainTags().get(predicate).containsKey(args)) {
-            return user.getMind().getDomainTags().get(predicate).get(args);
-        } else {
-            return -1;
-        }
-    }
+//    public Set<Long> getTag() {
+//        ArgList args = arguments;
+//        if (user.getMind().getDomainTags().containsKey(this)
+//                && user.getMind().getDomainTags().get(this).containsKey(args)) {
+//            return user.getMind().getDomainTags().get(this).get(args);
+//        } else {
+//            return new HashSet<>();
+//        }
+//    }
 
     public void setProduced() {
         if (!user.getMind().getProducedDomains().containsKey(this)) {

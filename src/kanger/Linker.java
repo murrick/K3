@@ -396,7 +396,7 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.setTag(tag);
+                        d.setTag(tag = user.getMind().getTValues().incTag());
                         d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
@@ -413,6 +413,7 @@ public class Linker {
                         result = true;
                         d.setProduced();
                         d.setTag(tag);
+                        tag = user.getMind().getTValues().incTag();
                         d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);

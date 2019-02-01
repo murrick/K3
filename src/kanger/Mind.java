@@ -64,8 +64,9 @@ public class Mind {
     private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
-    private final Map<Predicate, Map<ArgList, Long>> domainTags = new HashMap<>();
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
+
+    private final Map<Domain, Map<ArgList, Set<Long>>> domainTags = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
 
     private boolean changed = false;
@@ -559,7 +560,7 @@ public class Mind {
         return domainCauses;
     }
 
-    public Map<Predicate, Map<ArgList, Long>> getDomainTags() {
+    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
         return domainTags;
     }
 
@@ -940,7 +941,7 @@ public class Mind {
                     cause = iterator.next();
                 }
 
-                System.out.println("--- " + solve.getDomain().getTag() + ": " + solve + (cause == null ? "" : " - " + cause.getDst().getRight()));
+                System.out.println("--- " + solve + (cause == null ? "" : " - " + cause.getDst().getRight()));
             }
             for(List<TValue> row: queryContext.getRights().getValues()) {
                 String s = "";
