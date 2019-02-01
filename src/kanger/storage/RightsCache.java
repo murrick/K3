@@ -11,9 +11,9 @@ import java.util.*;
 public class RightsCache extends Cache {
 
     private NavigableMap<Long, Identifiable> stored;
-    private NavigableMap<Long, Set<Identifiable>> predicates;
+    private NavigableMap<Long, Set<Predicate>> predicates;
     private NavigableMap<Long, Long> solves;
-    private NavigableMap<Long, Set<Long>> tags;
+    private NavigableMap<Long, SortedSet<TValue>> tags;
 
     public RightsCache() {
         super();
@@ -26,7 +26,7 @@ public class RightsCache extends Cache {
     @Override
     public void add(Identifiable one) {
         super.add(one);
-        Set<Identifiable> list = new HashSet<>();
+        Set<Predicate> list = new HashSet<>();
         for (List<Domain> row : ((Right) one).getTree()) {
             for (Domain d : row) {
                 if (!list.contains(d.getPredicate())) {
@@ -87,16 +87,30 @@ public class RightsCache extends Cache {
     }
 
     public void addSolve(Right query, Right solve) {
-        solves.put(query.getId(), solve.getId());
-        long tag = query.getDomain().getTag();
-        if(!tags.containsKey(tag)) {
-            tags.put(tag, new HashSet<>());
+        solves.put(query.getId(), solve == null ? -1 : solve.getId());
+        long tag = -1;
+        List<TValue> list = query.getDomain().getArguments().getTValues(true);
+        boolean actual = false;
+        for (TValue v : list) {
+            if (!tags.containsKey(v.getTag())) {
+                if (tag == -1) {
+                    tag = v.getTag();
+                }
+            }
         }
-        tags.get(tag).add(query.getId());
+        for (TValue v : list) {
+            if (tag == -1) {
+                tag = v.getTag();
+            }
+            if (!tags.containsKey(tag)) {
+                tags.put(tag, new TreeSet<>());
+            }
+            tags.get(tag).add(v);
+        }
     }
 
     public void addSolve(Right query) {
-        solves.put(query.getId(), -1L);
+        addSolve(query, null);
     }
 
     // ****************** DATABASE
@@ -353,11 +367,8 @@ public class RightsCache extends Cache {
             public List<TValue> next() {
                 currentId = tags.higherKey(currentId);
                 List<TValue> list = new ArrayList<>();
-                for(long id : tags.get(currentId)) {
-                    list.addAll(((Right) get(id)).getDomain().getArguments().getTValues(true));
-                }
+                list.addAll(tags.get(currentId));
                 return list;
-
             }
         }
     }
