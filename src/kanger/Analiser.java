@@ -762,9 +762,12 @@ public class Analiser {
     //TODO: !index(qwerty); ?$x $y index(x), y : x;
 
     public boolean checkDatabase(boolean logging) throws RuntimeErrorException {
+
         boolean result = false;
         for (Right p : user.getMind().getRights().getDatabase()) {
             if (p.getDomain().isCalculated()) {
+                user.getMind().getRights().addSolve(p);
+
 //                if (p.getDomain().isQuery()) {
                 int i = 0;
                 for (TValue v : p.getDomain().getArguments().getTValues(true)) {
@@ -778,9 +781,8 @@ public class Analiser {
                 }
                 result = true;
             } else {
-                for (Right q : user.getMind().getRights().getDatabase()) {
-                    if (//q.getId() < p.getId()
-                        //&&
+                for (Right q : user.getMind().getRights().getDatabase(p.getId())) {
+                    if (//q.getId() < p.getId()                            &&
                             p.getDomain().equalsBase(q.getDomain())
                                     && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
@@ -815,13 +817,16 @@ public class Analiser {
 //                    }
 
                         if (p.getDomain().isQuery()) {
+                            user.getMind().getRights().addSolve(p, q);
+                            user.getMind().getSolutions().add(q);
                             for (Argument a : p.getDomain().getArguments()) {
                                 if (a.isVSet()) {
                                     user.getMind().getValues().add(a.getV());
                                 }
                             }
-                        }
-                        if (q.getDomain().isQuery()) {
+                        } else if (q.getDomain().isQuery()) {
+                            user.getMind().getRights().addSolve(q, p);
+                            user.getMind().getSolutions().add(p);
                             for (Argument a : q.getDomain().getArguments()) {
                                 if (a.isVSet()) {
                                     user.getMind().getValues().add(a.getV());
@@ -829,14 +834,14 @@ public class Analiser {
                             }
                         }
 
-                        if (p.getDomain().isQuery() && !q.getDomain().isQuery()) {
-                            user.getMind().getSolutions().add(q);
-                        } else if (!p.getDomain().isQuery() && q.getDomain().isQuery()) {
-                            user.getMind().getSolutions().add(p);
-//                        } else {
+//                        if (p.getDomain().isQuery() && !q.getDomain().isQuery()) {
 //                            user.getMind().getSolutions().add(q);
+//                        } else if (!p.getDomain().isQuery() && q.getDomain().isQuery()) {
 //                            user.getMind().getSolutions().add(p);
-                        }
+////                        } else {
+////                            user.getMind().getSolutions().add(q);
+////                            user.getMind().getSolutions().add(p);
+//                        }
 
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "Database coincidence: ");

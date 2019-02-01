@@ -22,6 +22,7 @@ public class TValueFactory {
 
     private long lastId = 0;
     private long firstId = 0;
+    private long tag = 0;
 
     private Map<TVariable, TValue> current = new HashMap<>();
 
@@ -184,7 +185,12 @@ public class TValueFactory {
 
     public Iterator<TValue> iterator(TVariable tVariable) {
         Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new TValueIterator(tVariable, cache, storage);
+        return new TValueIterator(false, tVariable, cache, storage);
+    }
+
+    public Iterator<TValue> iterator() {
+        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
+        return new TValueIterator(true, null, cache, storage);
     }
 
     public class TValueIterator extends DataIterator {
@@ -192,20 +198,27 @@ public class TValueFactory {
         private TVariable tVariable;
         private TValue next = null;
 
-        public TValueIterator(TVariable tVariable, Cache cache, Storage storage) {
-            super(false, cache, storage, user);
+        public TValueIterator(boolean backward, TVariable tVariable, Cache cache, Storage storage) {
+            super(backward, cache, storage, user);
             this.tVariable = tVariable;
         }
 
         @Override
         public boolean hasNext() {
-            while (super.hasNext()) {
-                next = (TValue) super.next();
-                if (next.getTVar().getId() == tVariable.getId()) {
+            if (tVariable != null) {
+                while (super.hasNext()) {
+                    next = (TValue) super.next();
+                    if (next.getTVar().getId() == tVariable.getId()) {
+                        return true;
+                    }
+                }
+                next = null;
+            } else {
+                if (super.hasNext()) {
+                    next = (TValue) super.next();
                     return true;
                 }
             }
-            next = null;
             return false;
         }
 
@@ -217,5 +230,9 @@ public class TValueFactory {
 
     public long getLastId() {
         return lastId;
+    }
+
+    public long incTag() {
+        return ++tag;
     }
 }

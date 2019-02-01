@@ -30,6 +30,7 @@ public class Linker {
         user.getMind().getExcludedDomains().clear();
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
+        user.getMind().getDomainCauses().clear();
 
 //        for (Function f : user.getMind().getFunctions()) {
 //            if (!f.isCalculable()) {
@@ -111,6 +112,7 @@ public class Linker {
 //            user.getMind().getExcludedDomains().clear();
                 //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
 
+
 //            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
                 for (List<Domain> tree : r.getTree()) {
 
@@ -148,6 +150,19 @@ public class Linker {
 
                 updateDatabase(logging);
             }
+
+//            if(saveT != user.getMind().getTValues().getLastId()) {
+//                long tag = user.getMind().getTValues().incTag();
+//                Iterator<TValue> iterator = user.getMind().getTValues().iterator();
+//                while (iterator.hasNext()) {
+//                    TValue v = iterator.next();
+//                    if (v.getId() >= saveT) {
+//                        v.setTag(saveT);
+//                    } else {
+//                        break;
+//                    }
+//                }
+//            }
 
 
         } while (saveR != user.getMind().getRights().getLastId()
@@ -309,7 +324,11 @@ public class Linker {
 
         boolean result = false;
         boolean occurs = false;
+
+        long tag = user.getMind().getTValues().incTag();
+
         if (checkSystem(tree, logging)) {
+
 
             Set<Domain> excluded = new HashSet<>();
             Set<Domain> calculated = new HashSet<>();
@@ -318,6 +337,7 @@ public class Linker {
             Set<Domain> stored = new HashSet<>();
 
             for (Domain d : tree) {
+
                 for (Domain master : user.getMind().getDomains().getWaiters()) {
 
                     if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
@@ -357,12 +377,13 @@ public class Linker {
 
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];
-//                d.addCauses(causes.get(d.getRight()));
+//                d.setCauses(causes.get(d.getRight()));
                 occurs = true;
                 if (!d.isStored()) {
                     result = true;
                     d.setProduced();
-                    d.addCauses(causes.get(d.getRight()));
+                    d.setTag(tag);
+                    d.setCauses(causes.get(d.getRight()));
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                         logCauses(d);
@@ -371,11 +392,12 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
-//                    d.addCauses(causes.get(d.getRight()));
+//                    d.setCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.addCauses(causes.get(d.getRight()));
+                        d.setTag(tag);
+                        d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
                             logCauses(d);
@@ -386,11 +408,12 @@ public class Linker {
             } else if (!calculated.isEmpty() && candidates.isEmpty() /*&& tree.size() - excluded.size() == calculated.size()*/) {
                 occurs = true;
                 for (Domain d : calculated) {
-//                    d.addCauses(causes.get(d.getRight()));
+//                    d.setCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.addCauses(causes.get(d.getRight()));
+                        d.setTag(tag);
+                        d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
                             logCauses(d);
@@ -413,11 +436,12 @@ public class Linker {
                 }
                 if (candidates.size() == 1 && !excluded.isEmpty()) {
                     Domain d = candidates.toArray(new Domain[]{})[0];
-//                    d.addCauses(causes.get(d.getRight()));
+//                    d.setCauses(causes.get(d.getRight()));
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.addCauses(causes.get(d.getRight()));
+                        d.setTag(tag);
+                        d.setCauses(causes.get(d.getRight()));
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
                             logCauses(d);
@@ -542,7 +566,13 @@ public class Linker {
         for (Domain d : tree) {
             if (d.isSystem()) {
 
-                d.pushValues();
+//                d.pushValues();
+
+                List<TValue> list = new ArrayList<>();
+                for (TVariable t : d.getArguments().getTVariables(true)) {
+                    list.add(t.getCurrent());
+                }
+
                 int res = d.execSystem();
                 for (Argument a : d.getArguments()) {
                     if (a.isEmpty()) {
@@ -567,7 +597,15 @@ public class Linker {
                 if (block && logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
                 }
-                d.popValues();
+//                d.popValues();
+
+                List<TVariable> ts = d.getArguments().getTVariables(true);
+                for (int i = 0; i < ts.size(); ++i) {
+                    if (list.get(i) != null) {
+                        ts.get(i).setCurrent(list.get(i));
+                    }
+                }
+
 
             }
         }

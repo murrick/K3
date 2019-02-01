@@ -23,6 +23,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     private long id = -1;                   // Идентификатор значения переменной
     private Term value = null;
     private TVariable tVar = null;
+//    private long tag = 0;
     private Set<Cause> causes = new HashSet<>();
 
     //    private TValue next = null;          // Следующая переменная
@@ -125,6 +126,14 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     public void setTVar(TVariable tVar) {
         this.tVar = tVar;
     }
+
+//    public long getTag() {
+//        return tag;
+//    }
+//
+//    public void setTag(long tag) {
+//        this.tag = tag;
+//    }
 
     @Override
     public String toString() {

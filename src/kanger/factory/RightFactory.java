@@ -83,6 +83,14 @@ public class RightFactory implements Iterable<Right> {
         return r;
     }
 
+    public void addSolve(Right query, Right solve) {
+        cache.addSolve(query, solve);
+    }
+
+    public void addSolve(Right query) {
+        cache.addSolve(query);
+    }
+
     public void expand(Right r) throws RuntimeErrorException {
         for (List<Domain> tree : r.getTree()) {
             if (tree.size() == 1) {
@@ -191,11 +199,23 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public RightsCache.Database getDatabase() {
-        return cache.getDatabase();
+        return cache.getDatabase(-1);
+    }
+
+    public RightsCache.Database getDatabase(long fromId) {
+        return cache.getDatabase(fromId);
     }
 
     public RightsCache.Links getLinks(Predicate predicate) {
         return cache.getLinks(predicate);
+    }
+
+    public RightsCache.Solves getSolves() {
+        return cache.getSolves();
+    }
+
+    public RightsCache.Values getValues() {
+        return cache.getValues();
     }
 
     public long getLastId() {
