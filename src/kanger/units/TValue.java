@@ -24,7 +24,6 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     private Term value = null;
     private TVariable tVar = null;
     private long tag = 0;
-    private boolean used = false;
     private Set<Cause> causes = new HashSet<>();
 
     //    private TValue next = null;          // Следующая переменная
@@ -103,14 +102,6 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     public Object setValue(Term value) {
         this.value = value;
         return value;
-    }
-
-    public boolean isUsed() {
-        return used;
-    }
-
-    public void setUsed() {
-        this.used = true;
     }
 
     public Set<Cause> getCauses() {

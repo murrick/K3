@@ -13,14 +13,16 @@ public class RightsCache extends Cache {
     private NavigableMap<Long, Identifiable> stored;
     private NavigableMap<Long, Set<Predicate>> predicates;
     private NavigableMap<Long, Long> solves;
-    private NavigableMap<Long, SortedSet<TValue>> tags;
+    private NavigableMap<Long, SortedSet<TValue>> tagsOrdinal;
+    private NavigableMap<Long, SortedSet<TValue>> tagsSystem;
 
     public RightsCache() {
         super();
         stored = new TreeMap<>();
         predicates = new TreeMap<>();
         solves = new TreeMap<>();
-        tags = new TreeMap<>();
+        tagsOrdinal = new TreeMap<>();
+        tagsSystem = new TreeMap<>();
     }
 
     @Override
@@ -89,8 +91,9 @@ public class RightsCache extends Cache {
     public void addSolve(Right query, Right solve) {
         solves.put(query.getId(), solve == null ? -1 : solve.getId());
         long tag = -1;
+
         List<TValue> list = query.getDomain().getArguments().getTValues(true);
-        boolean actual = false;
+        NavigableMap<Long, SortedSet<TValue>> tags = query.getDomain().isCalculated() ? tagsSystem : tagsOrdinal;
         for (TValue v : list) {
             if (!tags.containsKey(v.getTag())) {
                 if (tag == -1) {
@@ -331,6 +334,7 @@ public class RightsCache extends Cache {
 
     public class Values implements Iterable<List<TValue>> {
 
+        NavigableMap<Long, SortedSet<TValue>> tags;
         @Override
         public Iterator<List<TValue>> iterator() {
             return new ValuesIterator();
@@ -346,6 +350,7 @@ public class RightsCache extends Cache {
 
             public ValuesIterator() {
                 currentId = -1L;
+                tags = tagsOrdinal.isEmpty() ? tagsSystem : tagsOrdinal;
             }
 
 
