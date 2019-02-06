@@ -766,7 +766,7 @@ public class Analiser {
         boolean result = false;
         for (Right p : user.getMind().getRights().getDatabase()) {
             if (p.getDomain().isCalculated()) {
-                user.getMind().getRights().addSolve(p);
+//                user.getMind().getRights().addSolve(p);
 
 //                if (p.getDomain().isQuery()) {
                 int i = 0;
@@ -817,7 +817,8 @@ public class Analiser {
 //                    }
 
                         if (p.getDomain().isQuery()) {
-                            user.getMind().getRights().addSolve(p, q);
+//                            user.getMind().getRights().addSolve(p, q);
+                            p.setPair(q);
                             user.getMind().getSolutions().add(q);
                             for (Argument a : p.getDomain().getArguments()) {
                                 if (a.isVSet()) {
@@ -825,7 +826,8 @@ public class Analiser {
                                 }
                             }
                         } else if (q.getDomain().isQuery()) {
-                            user.getMind().getRights().addSolve(q, p);
+//                            user.getMind().getRights().addSolve(q, p);
+                            q.setPair(p);
                             user.getMind().getSolutions().add(p);
                             for (Argument a : q.getDomain().getArguments()) {
                                 if (a.isVSet()) {
