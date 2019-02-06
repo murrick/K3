@@ -1520,6 +1520,40 @@ public class KangerTest {
                 "!age(Tom, 12);" +
                 "!age(Sarah, 4);"
         );
+        mind.query("?$x female(x);");
+        showResult(true);
+        Domain s = createRecord(user, true, "female", "Sarah");
+        if (!mind.getSolutions().contains(s)) {
+            fail("Expected: " + s.toString());
+        }
+        if (!exists("x", "Sarah")) {
+            fail("Expected x: Sarah");
+        }
+        if (mind.getSolutions().size() != 1) {
+            fail("Expected 1 solution");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_06_06() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
         mind.query("?$x child(x, John);");
         showResult(true);
         Domain s = createRecord(user, true, "child", "Tom", "John");
@@ -1543,7 +1577,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_07() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1622,7 +1656,7 @@ public class KangerTest {
         }
     }
 
-    public void set_06_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_08() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1662,7 +1696,7 @@ public class KangerTest {
 
     }
 
-    public void set_06_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_09() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +

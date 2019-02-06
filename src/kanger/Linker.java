@@ -128,6 +128,11 @@ public class Linker {
                             boolean result = false;
                             boolean logging = (boolean) o;
 
+                            SortedSet<TValue> solve = new TreeSet<>();
+                            for (TVariable t : tvars) {
+                                solve.add(t.getCurrent());
+                            }
+
                             try {
                                 if (linkDomains(t, causes, logging)) {
                                     result = true;
