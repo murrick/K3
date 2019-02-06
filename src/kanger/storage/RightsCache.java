@@ -12,7 +12,6 @@ public class RightsCache extends Cache {
 
     private NavigableMap<Long, Identifiable> stored;
     private NavigableMap<Long, Set<Predicate>> predicates;
-    private NavigableMap<Long, Long> solves;
     private NavigableMap<Long, SortedSet<TValue>> tagsOrdinal;
     private NavigableMap<Long, SortedSet<TValue>> tagsSystem;
 
@@ -20,7 +19,6 @@ public class RightsCache extends Cache {
         super();
         stored = new TreeMap<>();
         predicates = new TreeMap<>();
-        solves = new TreeMap<>();
         tagsOrdinal = new TreeMap<>();
         tagsSystem = new TreeMap<>();
     }
@@ -88,33 +86,33 @@ public class RightsCache extends Cache {
         return id;
     }
 
-    public void addSolve(Right query, Right solve) {
-        solves.put(query.getId(), solve == null ? -1 : solve.getId());
-        long tag = -1;
+//    public void addSolve(Right query, Right solve) {
+//        solves.put(query.getId(), solve == null ? -1 : solve.getId());
+//        long tag = -1;
+//
+//        List<TValue> list = query.getDomain().getArguments().getTValues(true);
+//        NavigableMap<Long, SortedSet<TValue>> tags = query.getDomain().isCalculated() ? tagsSystem : tagsOrdinal;
+//        for (TValue v : list) {
+//            if (!tags.containsKey(v.getTag())) {
+//                if (tag == -1) {
+//                    tag = v.getTag();
+//                }
+//            }
+//        }
+//        for (TValue v : list) {
+//            if (tag == -1) {
+//                tag = v.getTag();
+//            }
+//            if (!tags.containsKey(tag)) {
+//                tags.put(tag, new TreeSet<>());
+//            }
+//            tags.get(tag).add(v);
+//        }
+//    }
 
-        List<TValue> list = query.getDomain().getArguments().getTValues(true);
-        NavigableMap<Long, SortedSet<TValue>> tags = query.getDomain().isCalculated() ? tagsSystem : tagsOrdinal;
-        for (TValue v : list) {
-            if (!tags.containsKey(v.getTag())) {
-                if (tag == -1) {
-                    tag = v.getTag();
-                }
-            }
-        }
-        for (TValue v : list) {
-            if (tag == -1) {
-                tag = v.getTag();
-            }
-            if (!tags.containsKey(tag)) {
-                tags.put(tag, new TreeSet<>());
-            }
-            tags.get(tag).add(v);
-        }
-    }
-
-    public void addSolve(Right query) {
-        addSolve(query, null);
-    }
+//    public void addSolve(Right query) {
+//        addSolve(query, null);
+//    }
 
     // ****************** DATABASE
 
@@ -264,31 +262,30 @@ public class RightsCache extends Cache {
 
     // ****************** SOLVES
 
-    public Solves getSolves() {
-        return new Solves();
+    public Solves getSolves(long fromId) {
+        return new Solves(fromId);
     }
 
     public class Solves implements Iterable<Right> {
+
+        private long fromId;
+
+        public Solves(long fromId) {
+            this.fromId = fromId;
+        }
 
         @Override
         public Iterator<Right> iterator() {
             return new SolvesIterator();
         }
 
-        public int size() {
-            return solves.size();
-        }
-
         public class SolvesIterator implements Iterator<Right> {
 
-            private long currentTag;
             private long currentId;
 
             public SolvesIterator() {
-                currentId = -1L;
-                currentTag = -1;
+                currentId = fromId;
             }
-
 
             @Override
             public void remove() {
@@ -297,30 +294,27 @@ public class RightsCache extends Cache {
 
             @Override
             public boolean hasNext() {
-                if (solves.isEmpty()) {
-                    return false;
-                } else {
-                    Long nextId;
-                    while ((nextId = solves.higherKey(currentId)) != null) {
-
-                        if (solves.get(nextId) != -1L) {
+                long id = -1;
+                do {
+                    id = getNext(currentId, stored);
+                    if (id != -1) {
+                        if (((Right) stored.get(id)).getPair() != null) {
                             return true;
                         } else {
-                            currentId = nextId;
+                            currentId = id;
                         }
                     }
-                    return false;
-                }
+                } while (id != -1);
+                return false;
             }
 
             @Override
             public Right next() {
-                currentId = solves.higherKey(currentId);
-                long solveId = solves.get(currentId);
-                if (solveId != -1) {
-                    return (Right) get(solveId);
+                currentId = getNext(currentId, stored);
+                if (currentId != -1) {
+                    return ((Right) stored.get(currentId)).getPair();
                 } else {
-                    return (Right) get(currentId);
+                    return null;
                 }
             }
         }
@@ -328,20 +322,21 @@ public class RightsCache extends Cache {
 
     // ****************** VALUES
 
-    public Values getValues() {
-        return new Values();
+    public Values getValues(long fromId) {
+        return new Values(fromId);
     }
 
     public class Values implements Iterable<List<TValue>> {
 
-        NavigableMap<Long, SortedSet<TValue>> tags;
+        private long fromId;
+
+        public Values(long fromId) {
+            this.fromId = fromId;
+        }
+
         @Override
         public Iterator<List<TValue>> iterator() {
             return new ValuesIterator();
-        }
-
-        public int size() {
-            return tags.size();
         }
 
         public class ValuesIterator implements Iterator<List<TValue>> {
@@ -349,8 +344,7 @@ public class RightsCache extends Cache {
             private long currentId;
 
             public ValuesIterator() {
-                currentId = -1L;
-                tags = tagsOrdinal.isEmpty() ? tagsSystem : tagsOrdinal;
+                currentId = fromId;
             }
 
 
@@ -361,19 +355,33 @@ public class RightsCache extends Cache {
 
             @Override
             public boolean hasNext() {
-                if (tags.isEmpty()) {
-                    return false;
-                } else {
-                    return tags.higherKey(currentId) != null;
-                }
+                long id = -1;
+                do {
+                    id = getNext(currentId, stored);
+                    if (id != -1) {
+                        Right r = (Right) stored.get(id);
+                        if (r.getPair() != null) {
+                            if (r.getSolve() != null) {
+                                return true;
+                            } else {
+                                currentId = id;
+                            }
+                        } else {
+                            currentId = id;
+                        }
+                    }
+                } while (id != -1);
+                return false;
             }
 
             @Override
             public List<TValue> next() {
-                currentId = tags.higherKey(currentId);
-                List<TValue> list = new ArrayList<>();
-                list.addAll(tags.get(currentId));
-                return list;
+                currentId = getNext(currentId, stored);
+                if (currentId != -1) {
+                    return ((Right) stored.get(currentId)).getSolve();
+                } else {
+                    return null;
+                }
             }
         }
     }

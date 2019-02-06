@@ -10,10 +10,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -28,9 +25,11 @@ public class Right implements Externalizable, Identifiable<Right> {
     private Term orig = null;                               // Оригинальная строка
     private boolean query = false;                          // Вновь введенное правило
     private boolean generated = false;                      // Правило добавлено в процессе выводс
-    private boolean stored = false;                         // Правило добавлено в процессе выводс
+    private boolean stored = false;                         // Правило добавлено в базу данных
+    private Right pair = null;                              // Закрывающее правило
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
-    private Set<Cause> causes = new HashSet<>();
+    private Set<Cause> causes = new HashSet<>();            // Дерево вывода
+    private List<TValue> solve = null;            // Значения переменных
 
     private User user = null;
 
@@ -146,6 +145,14 @@ public class Right implements Externalizable, Identifiable<Right> {
         return tree;
     }
 
+    public Right getPair() {
+        return pair;
+    }
+
+    public void setPair(Right pair) {
+        this.pair = pair;
+    }
+
     @Override
     public long getId() {
         return id;
@@ -170,6 +177,14 @@ public class Right implements Externalizable, Identifiable<Right> {
 
     public void setQuery(boolean current) {
         this.query = current;
+    }
+
+    public List<TValue> getSolve() {
+        return solve;
+    }
+
+    public void setSolve(List<TValue> solve) {
+        this.solve = solve;
     }
 
     public int size() {
