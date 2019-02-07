@@ -156,11 +156,11 @@ public class Hypotese implements Comparable<Hypotese> {
 //        if ((o instanceof Hypotese)
 //                && ((Hypotese) o).getPredicate().getId() == predicate.getId()
 //                && ((Hypotese) o).isAntc() == isAntc()
-//                && ((Hypotese) o).getSolve().size() == solve.size()) {
+//                && ((Hypotese) o).getSolves().size() == solve.size()) {
 //            for (int i = 0; i < solve.size(); ++i) {
 //                if (solve.get(i) != null
-//                        && ((Hypotese) o).getSolve().get(i) != null
-//                        && ((Hypotese) o).getSolve().get(i).getId() != solve.get(i).getId()) {
+//                        && ((Hypotese) o).getSolves().get(i) != null
+//                        && ((Hypotese) o).getSolves().get(i).getId() != solve.get(i).getId()) {
 //                    return false;
 //                }
 //                return true;

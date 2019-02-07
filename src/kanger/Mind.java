@@ -65,8 +65,9 @@ public class Mind {
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
+    private final Map<Domain, Map<ArgList, Set<TValue>>> domainSolves = new HashMap<>();
 
-    private final Map<Domain, Map<ArgList, Set<Long>>> domainTags = new HashMap<>();
+//    private final Map<Domain, Map<ArgList, Set<Long>>> domainTags = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
 
     private boolean changed = false;
@@ -560,9 +561,13 @@ public class Mind {
         return domainCauses;
     }
 
-    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
-        return domainTags;
+    public Map<Domain, Map<ArgList, Set<TValue>>> getDomainSolves() {
+        return domainSolves;
     }
+
+//    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
+//        return domainTags;
+//    }
 
 //    public Map<Long, Set<List<Long>>> getStoredDomains() {
 //        return storedDomains;
@@ -942,6 +947,7 @@ public class Mind {
                 }
 
                 System.out.println("--- " + solve + (cause == null ? "" : " - " + cause.getDst().getRight()));
+
             }
             for(List<TValue> row: queryContext.getRights().getValues()) {
                 String s = "";
@@ -1001,7 +1007,7 @@ public class Mind {
 //
 //        if (mind.getHypotesisStore().size() > 0) {
 //            for (Hypotese h : (List<Hypotese>) mind.getHypotesisStore().getRoot()) {
-////                h.getPredicate().deleteSolve(h.getSolve());
+////                h.getPredicate().deleteSolve(h.getSolves());
 //                if (withRelatedRights) {
 //
 //                    for (Right r : h.getRights()) {

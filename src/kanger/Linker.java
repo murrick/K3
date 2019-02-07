@@ -128,11 +128,6 @@ public class Linker {
                             boolean result = false;
                             boolean logging = (boolean) o;
 
-                            SortedSet<TValue> solve = new TreeSet<>();
-                            for (TVariable t : tvars) {
-                                solve.add(t.getCurrent());
-                            }
-
                             try {
                                 if (linkDomains(t, causes, logging)) {
                                     result = true;
@@ -140,13 +135,22 @@ public class Linker {
                                 if (calcFunctions(t, causes, logging)) {
                                     result = true;
                                 }
-                                if (linkDatabase(t, causes, logging)) {
+
+                                List<TValue> solve = new ArrayList<>();
+                                for (TVariable t : tvars) {
+                                    if(!t.isEmpty()) {
+                                        solve.add(t.getCurrent());
+                                    }
+                                }
+
+                                if (linkDatabase(t, causes, solve, logging)) {
                                     result = true;
                                 }
                             } catch (RuntimeErrorException e) {
                                 e.printStackTrace(System.err);
                                 result = false;
                             }
+
 
                             return result;
                         }
@@ -325,7 +329,7 @@ public class Linker {
         return r != null;
     }
 
-    private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
+    private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, List<TValue> solve, boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
         boolean occurs = false;
@@ -389,6 +393,7 @@ public class Linker {
                     d.setProduced();
                     d.setTag(tag);
                     d.setCauses(causes.get(d.getRight()));
+                    d.setSolves(solve);
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
                         logCauses(d);
@@ -403,6 +408,7 @@ public class Linker {
                         d.setProduced();
                         d.setTag(tag = user.getMind().getTValues().incTag());
                         d.setCauses(causes.get(d.getRight()));
+                        d.setSolves(solve);
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
                             logCauses(d);
@@ -419,6 +425,7 @@ public class Linker {
                         d.setProduced();
                         d.setTag(tag = user.getMind().getTValues().incTag());
                         d.setCauses(causes.get(d.getRight()));
+                        d.setSolves(solve);
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
                             logCauses(d);
@@ -447,6 +454,7 @@ public class Linker {
                         d.setProduced();
                         d.setTag(tag);
                         d.setCauses(causes.get(d.getRight()));
+                        d.setSolves(solve);
                         if (logging) {
                             user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
                             logCauses(d);
@@ -533,6 +541,10 @@ public class Linker {
                 if (d.getCauses() != null) {
                     x.getCauses().clear();
                     x.getCauses().addAll(d.getCauses());
+                }
+                if (d.getSolves() != null) {
+                    x.getSolves().clear();
+                    x.getSolves().addAll(d.getSolves());
                 }
             }
         }

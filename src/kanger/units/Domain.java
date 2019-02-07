@@ -174,6 +174,15 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
+    public Set<TValue> getSolves() {
+        ArgList args = arguments.convertBase();
+        if (user.getMind().getDomainCauses().containsKey(this) && user.getMind().getDomainCauses().get(this).containsKey(args)) {
+            return user.getMind().getDomainSolves().get(this).get(args);
+        } else {
+            return null;
+        }
+    }
+
 //    public SortedSet<Cause> getCauses(ArgList arguments) {
 //        return causes.get(arguments);
 //    }
@@ -203,9 +212,24 @@ public class Domain implements Externalizable, Identifiable<Domain> {
             }
             for (Cause c : causes) {
                 if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
-                    user.getMind().getDomainCauses().get(this).get(arguments).add(c);
+                    user.getMind().getDomainCauses().get(this).get(current).add(c);
                 }
             }
+        }
+    }
+
+    public void setSolves(Collection<TValue> solves) throws RuntimeErrorException {
+        if (solves != null) {
+            ArgList current = arguments.convertBase();
+            if (!user.getMind().getDomainSolves().containsKey(this)) {
+                user.getMind().getDomainSolves().put(this, new HashMap<>());
+            }
+            if (!user.getMind().getDomainSolves().get(this).containsKey(current)) {
+                user.getMind().getDomainSolves().get(this).put(current, new HashSet<>());
+            } else {
+                user.getMind().getDomainSolves().get(this).get(current).clear();
+            }
+            user.getMind().getDomainSolves().get(this).get(current).addAll(solves);
         }
     }
 
@@ -574,7 +598,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //
 
     public void setTag(long tag) {
-        for(TVariable t : arguments.getTVariables(true)) {
+        for (TVariable t : arguments.getTVariables(true)) {
             t.getCurrent().setTag(tag);
         }
     }

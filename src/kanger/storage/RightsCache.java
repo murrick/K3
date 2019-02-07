@@ -281,12 +281,10 @@ public class RightsCache extends Cache {
 
         public class SolvesIterator implements Iterator<Right> {
 
-            private long currentTag;
             private long currentId;
 
             public SolvesIterator() {
                 currentId = -1L;
-                currentTag = -1;
             }
 
 
@@ -334,23 +332,19 @@ public class RightsCache extends Cache {
 
     public class Values implements Iterable<List<TValue>> {
 
-        NavigableMap<Long, SortedSet<TValue>> tags;
         @Override
         public Iterator<List<TValue>> iterator() {
             return new ValuesIterator();
         }
 
-        public int size() {
-            return tags.size();
-        }
-
         public class ValuesIterator implements Iterator<List<TValue>> {
 
             private long currentId;
+            private Right currentRight;
 
             public ValuesIterator() {
                 currentId = -1L;
-                tags = tagsOrdinal.isEmpty() ? tagsSystem : tagsOrdinal;
+                currentRight = null;
             }
 
 
@@ -361,18 +355,27 @@ public class RightsCache extends Cache {
 
             @Override
             public boolean hasNext() {
-                if (tags.isEmpty()) {
+                if (solves.isEmpty()) {
                     return false;
                 } else {
-                    return tags.higherKey(currentId) != null;
+                    Long nextId;
+                    while ((nextId = solves.higherKey(currentId)) != null) {
+                        currentRight = (Right) get(nextId);
+                        if (currentRight.getSolves() != null && !currentRight.getSolves().isEmpty()) {
+                            return true;
+                        } else {
+                            currentId = nextId;
+                        }
+                    }
+                    return false;
                 }
             }
 
             @Override
             public List<TValue> next() {
-                currentId = tags.higherKey(currentId);
+                currentId = solves.higherKey(currentId);
                 List<TValue> list = new ArrayList<>();
-                list.addAll(tags.get(currentId));
+                list.addAll(currentRight.getSolves());
                 return list;
             }
         }

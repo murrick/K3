@@ -31,6 +31,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     private boolean stored = false;                         // Правило добавлено в процессе выводс
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<Cause> causes = new HashSet<>();
+    private Set<TValue> solves = new HashSet<>();
 
     private User user = null;
 
@@ -124,6 +125,10 @@ public class Right implements Externalizable, Identifiable<Right> {
 
     public Set<Cause> getCauses() {
         return causes;
+    }
+
+    public Set<TValue> getSolves() {
+        return solves;
     }
 
     public void setGenerated() {
