@@ -175,8 +175,12 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public Set<TValue> getSolves() {
+        return getSolves(arguments);
+    }
+
+    public Set<TValue> getSolves(ArgList arguments) {
         ArgList args = arguments.convertBase();
-        if (user.getMind().getDomainCauses().containsKey(this) && user.getMind().getDomainCauses().get(this).containsKey(args)) {
+        if (user.getMind().getDomainSolves().containsKey(this) && user.getMind().getDomainSolves().get(this).containsKey(args)) {
             return user.getMind().getDomainSolves().get(this).get(args);
         } else {
             return null;
@@ -218,7 +222,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
-    public void setSolves(Collection<TValue> solves) throws RuntimeErrorException {
+    public void setSolves(Collection<TValue> solves) {
         if (solves != null) {
             ArgList current = arguments.convertBase();
             if (!user.getMind().getDomainSolves().containsKey(this)) {

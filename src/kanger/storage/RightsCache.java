@@ -300,7 +300,6 @@ public class RightsCache extends Cache {
                 } else {
                     Long nextId;
                     while ((nextId = solves.higherKey(currentId)) != null) {
-
                         if (solves.get(nextId) != -1L) {
                             return true;
                         } else {
