@@ -103,6 +103,14 @@ public class Linker {
             for (Right r : user.getMind().getRights()) {
 
                 user.getMind().getProducedDomains().clear();
+
+                SortedSet<TVariable> tvars = new TreeSet<>();
+                for (List<Domain> tree : r.getTree()) {
+                    for (Domain d : tree) {
+                        tvars.addAll(d.getArguments().getTVariables(true));
+                    }
+                }
+
 //                final Set<Domain> waiters = new HashSet<>();
 //                for (Tree tree : r.getTree()) {
 //                    if (tree.getSequence().size() == 1) {
@@ -122,10 +130,10 @@ public class Linker {
                 for (List<Domain> tree : r.getTree()) {
 
                     final List<Domain> t = tree;
-                    SortedSet<TVariable> tvars = new TreeSet<>();
-                    for (Domain d : tree) {
-                        tvars.addAll(d.getArguments().getTVariables(true));
-                    }
+//                    SortedSet<TVariable> tvars = new TreeSet<>();
+//                    for (Domain d : tree) {
+//                        tvars.addAll(d.getArguments().getTVariables(true));
+//                    }
 
                     rotateVariables(tvars, logging, new Reactor() {
                         @Override
