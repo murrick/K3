@@ -978,13 +978,13 @@ public class Mind {
         if (mind.getValues().size() > 0) {
             mind.getLog().add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (List<TValue> row : mind.getValues().getRoot()) {
+            for (Map<String, Object> map : mind.getValues()) {
                 String s = String.format("\tRow %03d: ", ++i);
-                for (TValue log : row) {
+                for (Map.Entry<String, Object> row : map.entrySet()) {
                     if(!s.endsWith(" ")) {
                         s += " ";
                     }
-                    s += log.toString();
+                    s += row.getKey() + "=" + row.getValue();
                 }
                 mind.getLog().add(LogMode.VALUES, s);
             }

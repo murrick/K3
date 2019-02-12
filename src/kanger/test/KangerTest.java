@@ -1688,8 +1688,8 @@ public class KangerTest {
         if (!exists("y", 12.0)) {
             fail("Expected x: 12");
         }
-        if (mind.getValues().size() != 4) {
-            fail("Expected 4 values");
+        if (mind.getValues().size() != 2) {
+            fail("Expected 2 rows");
         }
         System.out.println("OK");
         System.out.println("====================================================");
@@ -1722,8 +1722,8 @@ public class KangerTest {
         if (!exists("y", 37.0)) {
             fail("Expected x: 37");
         }
-        if (mind.getValues().size() != 2) {
-            fail("Expected 2 values");
+        if (mind.getValues().size() != 1) {
+            fail("Expected 1 row");
         }
         System.out.println("OK");
         System.out.println("====================================================");
@@ -1834,8 +1834,8 @@ public class KangerTest {
         mind.clear();
         mind.query("?$x $y index(qwerty) -> index(x), y : x;");
         showResult(true);
-        if (mind.getValues().size() != 7) {
-            fail("Expected 7 values");
+        if (mind.getValues().size() != 6) {
+            fail("Expected 6 rows");
         }
         System.out.println("OK");
         System.out.println("====================================================");

@@ -10,7 +10,10 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -28,7 +31,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     private boolean stored = false;                         // Правило добавлено в процессе выводс
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<Cause> causes = new HashSet<>();
-    private SortedSet<TValue> solves = new TreeSet<>();
+    private List solves = new ArrayList();
 
     private User user = null;
 
@@ -124,7 +127,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         return causes;
     }
 
-    public Set<TValue> getSolves() {
+    public List<TValue> getSolves() {
         return solves;
     }
 

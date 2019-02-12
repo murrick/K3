@@ -1,8 +1,10 @@
 package kanger.stores;
 
 import kanger.User;
+import kanger.interfaces.Identifiable;
+import kanger.primitives.ArgList;
+import kanger.primitives.Argument;
 import kanger.units.TValue;
-import kanger.units.TVariable;
 import kanger.units.Term;
 
 import java.util.*;
@@ -12,8 +14,8 @@ import java.util.*;
  */
 public class ValuesStore implements Iterable<Map<String, Object>> {
 
-    private List<List<TValue>> root = null;
-    private boolean enableStore = true;
+    private List<ArgList> rootSystem = new ArrayList<>();
+    private List<ArgList> rootData = new ArrayList<>();
 
     private User user = null;
 
@@ -22,15 +24,10 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
     }
 
     public void commit(ValuesStore base) {
-        if (!enableStore) {
-            return;
-        }
         clear();
         if (!base.isEmpty()) {
-            if (root == null) {
-                root = new ArrayList<>();
-            }
-            root.addAll(base.getRoot());
+            rootSystem.addAll(base.rootSystem);
+            rootData.addAll(base.rootData);
         }
     }
 
@@ -51,47 +48,69 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 //        return m;
 //    }
 
-    private boolean contains(TValue v) {
-        if (root != null) {
-            for (List<TValue> row : root) {
-                if (row.contains(v)) {
-                    return true;
-                }
-            }
+//    private boolean contains(TValue v) {
+//        if (root != null) {
+//            for (ArgList row : root) {
+//                if (row.contains(v)) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+
+    public void addSystem(Collection<TValue> raw) {
+
+        ArgList row = new ArgList();
+        for (Identifiable one : raw) {
+            row.add(new Argument(one));
         }
-        return false;
-    }
-
-    private boolean containsTVar(List<TValue> row, TValue t) {
-        for (TValue v : row) {
-            if (v.getTVar().getId() == t.getTVar().getId()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void add(TValue t) {
-        if (enableStore && !contains(t)) {
-            if (root == null) {
-                root = new ArrayList<>();
-            }
-
-            boolean found = false;
-            for (List<TValue> row : root) {
-                if (!containsTVar(row, t)) {
-                    row.add(t);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                List<TValue> row = new ArrayList<>();
-                row.add(t);
-                root.add(row);
-            }
+        if (!rootSystem.contains(row)) {
+            rootSystem.add(row);
         }
     }
+
+    public void addData(Collection<TValue> raw) {
+
+        ArgList row = new ArgList();
+        for (Identifiable one : raw) {
+            row.add(new Argument(one));
+        }
+        if (!rootData.contains(row)) {
+            rootData.add(row);
+        }
+    }
+
+//    private boolean containsTVar(List<TValue> row, TValue t) {
+//        for (TValue v : row) {
+//            if (v.getTVar().getId() == t.getTVar().getId()) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+//
+//    public void add(TValue t) {
+//        if (enableStore && !contains(t)) {
+//            if (root == null) {
+//                root = new ArrayList<>();
+//            }
+//
+//            boolean found = false;
+//            for (List<TValue> row : root) {
+//                if (!containsTVar(row, t)) {
+//                    row.add(t);
+//                    found = true;
+//                    break;
+//                }
+//            }
+//            if (!found) {
+//                List<TValue> row = new ArrayList<>();
+//                row.add(t);
+//                root.add(row);
+//            }
+//        }
+//    }
 
     /*
      *
@@ -113,7 +132,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
      * Плюс сортировка
      */
 
-    public void normalize() {
+//    public void normalize() {
 
 //        List<Map<TVariable, TValue>> cnt = new ArrayList<>();
 //        for (List<TValue> s : root) {
@@ -184,14 +203,14 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 //        for (List<TValue> s : list) {
 //            root.put(++i, s);
 //        }
-    }
+//    }
 
     public void enable(boolean e) {
-        enableStore = e;
+//        enableStore = e;
     }
 
     public boolean isEnabled() {
-        return enableStore;
+        return true;
     }
 
 //    public TValue get(int index) {
@@ -200,12 +219,11 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 
     public List<Term> getValues(String name) {
         List<Term> list = new ArrayList<>();
-        if (root != null) {
-            for (List<TValue> row : root) {
-                for (TValue t : row) {
-                    if (name == null || name.equals(t.getTVar().getName().getValue())) {
-                        list.add(t.getValue());
-                    }
+        List<ArgList> root = rootData.isEmpty() ? rootSystem : rootData;
+        for (ArgList row : root) {
+            for (Argument t : row) {
+                if (name == null || name.equals(t.getV().getTVar().getName().getValue())) {
+                    list.add(t.getV().getValue());
                 }
             }
         }
@@ -216,30 +234,23 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 //        return root.indexOf(s);
 //    }
 
-    public List<List<TValue>> getRoot() {
-        return root;
-    }
+//    public List<ArgList> getRoot() {
+//        return root;
+//    }
 
     public void clear() {
-        if (enableStore) {
-            root = null;
-        }
+//        if (enableStore) {
+        rootSystem.clear();
+        rootData.clear();
+//        }
     }
 
     public int size() {
-        if (root == null) {
-            return 0;
-        } else {
-            int count = 0;
-            for (List<TValue> row : root) {
-                count += row.size();
-            }
-            return count;
-        }
+        return rootData.isEmpty() ? rootSystem.size() : rootData.size();
     }
 
     public boolean isEmpty() {
-        return root == null || root.isEmpty();
+        return rootData.isEmpty() && rootSystem.isEmpty();
     }
 
     @Override
@@ -249,7 +260,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 
     public class ValuesIterator implements Iterator<Map<String, Object>> {
 
-        Iterator<List<TValue>> iterator = root.iterator();
+        Iterator<ArgList> iterator = rootData.isEmpty() ? rootSystem.iterator() : rootData.iterator();
 
         @Override
         public boolean hasNext() {
@@ -259,8 +270,8 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         @Override
         public Map<String, Object> next() {
             SortedMap<String, Object> row = new TreeMap<>();
-            for(TValue v : iterator.next()) {
-                row.put(v.getTVar().getName().toString(), v.getValue().getValue());
+            for (Argument v : iterator.next()) {
+                row.put(v.getV().getTVar().getName().toString(), v.getV().getValue().getValue());
             }
             return row;
         }

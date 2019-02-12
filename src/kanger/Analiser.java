@@ -2,11 +2,9 @@ package kanger;
 
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
-import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.Domain;
 import kanger.units.Right;
-import kanger.units.TValue;
 
 // !@x a(x) -> b(x), @y b(y) -> c(y), @z c(z) -> d(z);
 
@@ -572,10 +570,10 @@ public class Analiser {
 //                    }
 //                }
 //            }
-        } else {
-            if (!user.getMind().getValues().isEmpty()) {
-                user.getMind().getValues().normalize();
-            }
+//        } else {
+//            if (!user.getMind().getValues().isEmpty()) {
+//                user.getMind().getValues().normalize();
+//            }
         }
 
 //        for (Tree t = mind.getTrees().getRoot(); t != null; t = t.getNext()) {
@@ -768,12 +766,12 @@ public class Analiser {
             if (p.getDomain().isCalculated()) {
                 user.getMind().getRights().addSolve(p);
 
-//                if (p.getDomain().isQuery()) {
-                int i = 0;
-                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
-                    user.getMind().getValues().add(v);
-                }
+//                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
+//                    user.getMind().getValues().add(v);
 //                }
+
+                user.getMind().getValues().addSystem(p.getSolves());
+
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Calculated coincidence: ");
                     user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
@@ -819,19 +817,22 @@ public class Analiser {
                         if (p.getDomain().isQuery()) {
                             user.getMind().getRights().addSolve(p, q);
                             user.getMind().getSolutions().add(q);
-                            for (Argument a : p.getDomain().getArguments()) {
-                                if (a.isVSet()) {
-                                    user.getMind().getValues().add(a.getV());
-                                }
-                            }
+                            user.getMind().getValues().addData(p.getSolves());
+//                            for (Argument a : p.getDomain().getArguments()) {
+//                                if (a.isVSet()) {
+//                                    user.getMind().getValues().add(a.getV());
+//                                }
+//                            }
                         } else if (q.getDomain().isQuery()) {
                             user.getMind().getRights().addSolve(q, p);
                             user.getMind().getSolutions().add(p);
-                            for (Argument a : q.getDomain().getArguments()) {
-                                if (a.isVSet()) {
-                                    user.getMind().getValues().add(a.getV());
-                                }
-                            }
+                            user.getMind().getValues().addData(q.getSolves());
+//                            System.out.println("!!!!!!--- " + q.getSolves());
+//                            for (Argument a : q.getDomain().getArguments()) {
+//                                if (a.isVSet()) {
+//                                    user.getMind().getValues().add(a.getV());
+//                                }
+//                            }
                         }
 
 //                        if (p.getDomain().isQuery() && !q.getDomain().isQuery()) {

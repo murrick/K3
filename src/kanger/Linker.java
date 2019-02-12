@@ -26,11 +26,11 @@ public class Linker {
 
     public void link(Right right, boolean logging) throws RuntimeErrorException {
 
-        user.getMind().getProducedDomains().clear();
+//        user.getMind().getProducedDomains().clear();
         user.getMind().getExcludedDomains().clear();
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
-        user.getMind().getDomainCauses().clear();
+//        user.getMind().getDomainCauses().clear();
 
 //        for (Function f : user.getMind().getFunctions()) {
 //            if (!f.isCalculable()) {
@@ -103,6 +103,8 @@ public class Linker {
             for (Right r : user.getMind().getRights()) {
 
                 user.getMind().getProducedDomains().clear();
+                user.getMind().getDomainSolves().clear();
+                user.getMind().getDomainCauses().clear();
 
                 SortedSet<TVariable> tvars = new TreeSet<>();
                 for (List<Domain> tree : r.getTree()) {
@@ -169,9 +171,9 @@ public class Linker {
                     });
                 }
 
-                if(analizeProduces(main, calculated, solves)) {
-                    result = true;
-                }
+//                if(analizeProduces(main, calculated, solves)) {
+//                    result = true;
+//                }
                 updateDatabase(logging);
             }
 
@@ -194,27 +196,27 @@ public class Linker {
                 || saveF != user.getMind().getFValues().getLastId()
         );
 
-        if(result) {
-            System.out.println(user.getMind().getQueryPass() + ": OK");
-            if(!solves.isEmpty()) {
-                for(Right r : solves) {
-                    System.out.println(r);
-                }
-            }
-            if (!main.isEmpty()) {
-                System.out.println("--- main");
-                for (ArgList row : main) {
-                    System.out.println(row);
-                }
-                System.out.println("---");
-            } else if (!calculated.isEmpty()) {
-                System.out.println("--- calculated");
-                for (ArgList row : calculated) {
-                    System.out.println(row);
-                }
-                System.out.println("---");
-            }
-        }
+//        if(result) {
+//            System.out.println(user.getMind().getQueryPass() + ": OK");
+//            if(!solves.isEmpty()) {
+//                for(Right r : solves) {
+//                    System.out.println(r);
+//                }
+//            }
+//            if (!main.isEmpty()) {
+//                System.out.println("--- main");
+//                for (ArgList row : main) {
+//                    System.out.println(row);
+//                }
+//                System.out.println("---");
+//            } else if (!calculated.isEmpty()) {
+//                System.out.println("--- calculated");
+//                for (ArgList row : calculated) {
+//                    System.out.println(row);
+//                }
+//                System.out.println("---");
+//            }
+//        }
 
     }
 
