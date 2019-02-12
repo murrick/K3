@@ -63,6 +63,11 @@ public class Linker {
         long saveF;
 
         int passCounter = 0;
+        List<ArgList> main = new ArrayList<>();
+        List<ArgList> calculated = new ArrayList<>();
+        List<Right> solves = new ArrayList<>();
+        boolean result = false;
+
         do {
 
             if (logging) {
@@ -138,7 +143,7 @@ public class Linker {
 
                                 List<TValue> solve = new ArrayList<>();
                                 for (TVariable t : tvars) {
-                                    if(!t.isEmpty()) {
+                                    if (!t.isEmpty()) {
                                         solve.add(t.getCurrent());
                                     }
                                 }
@@ -151,12 +156,14 @@ public class Linker {
                                 result = false;
                             }
 
-
                             return result;
                         }
                     });
                 }
 
+                if(analizeProduces(main, calculated, solves)) {
+                    result = true;
+                }
                 updateDatabase(logging);
             }
 
@@ -178,6 +185,29 @@ public class Linker {
                 || saveT != user.getMind().getTValues().getLastId()
                 || saveF != user.getMind().getFValues().getLastId()
         );
+
+        if(result) {
+            System.out.println(user.getMind().getQueryPass() + ": OK");
+            if(!solves.isEmpty()) {
+                for(Right r : solves) {
+                    System.out.println(r);
+                }
+            }
+            if (!main.isEmpty()) {
+                System.out.println("--- main");
+                for (ArgList row : main) {
+                    System.out.println(row);
+                }
+                System.out.println("---");
+            } else if (!calculated.isEmpty()) {
+                System.out.println("--- calculated");
+                for (ArgList row : calculated) {
+                    System.out.println(row);
+                }
+                System.out.println("---");
+            }
+        }
+
     }
 
     private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, Reactor runnable) throws RuntimeErrorException {
@@ -348,7 +378,6 @@ public class Linker {
             for (Domain d : tree) {
 
                 for (Domain master : user.getMind().getDomains().getWaiters()) {
-
                     if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
                         for (int i = 0; i < d.getPredicate().getRange(); ++i) {
@@ -359,7 +388,6 @@ public class Linker {
                                 break;
                             }
                         }
-
                         if (success) {
                             assumed.add(d);
                         }
@@ -506,9 +534,76 @@ public class Linker {
 //        }
 //    }
 //
+
+    private boolean analizeProduces(List<ArgList> main, List<ArgList> calculated, List<Right> solves) {
+        boolean result = false;
+
+        if(!user.getMind().getProducedDomains().isEmpty()) {
+            for (Map.Entry<Domain, List<ArgList>> master : user.getMind().getProducedDomains().entrySet()) {
+                Domain dMaster = master.getKey();
+                for (ArgList aMaster : master.getValue()) {
+                    if (dMaster.isCalculated(aMaster)) {
+                        ArgList row = new ArgList();
+                        for (TValue v : dMaster.getSolves(aMaster)) {
+                            row.add(new Argument(v));
+                        }
+                        if (!calculated.contains(row)) {
+                            calculated.add(row);
+                        }
+                        result = true;
+                    } else {
+                        for (Right right : user.getMind().getRights().getDatabase()) {
+                            if (!right.getDomain().isCalculated()
+                                    && dMaster.getPredicate().getId() == right.getDomain().getPredicate().getId()
+                                    && dMaster.isAntc() != right.getDomain().isAntc()
+                                    && aMaster.equalsBase(right.getDomain().getArguments())) {
+                                if (dMaster.isQuery()) {
+                                    ArgList row = new ArgList();
+                                    for (TValue v : dMaster.getSolves(aMaster)) {
+                                        row.add(new Argument(v));
+                                    }
+                                    if (!main.contains(row)) {
+                                        main.add(row);
+                                    }
+                                    if(!solves.contains(right)) {
+                                        solves.add(right);
+                                    }
+                                    result = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            for(Right master : user.getMind().getRights().getDatabase()) {
+                for (Right right : user.getMind().getRights().getDatabase(master.getId())) {
+                    if (!right.getDomain().isCalculated()
+                            && master.getDomain().getPredicate().getId() == right.getDomain().getPredicate().getId()
+                            && master.getDomain().isAntc() != right.getDomain().isAntc()
+                            && master.getDomain().getArguments().equalsBase(right.getDomain().getArguments())) {
+                        if (master.getDomain().isQuery()) {
+                            if(!solves.contains(right)) {
+                                solves.add(right);
+                            }
+                        } else {
+                            if(solves.contains(master)) {
+                                solves.add(master);
+                            }
+                        }
+                        result = true;
+                    }
+                }
+            }
+        }
+
+
+        return result;
+    }
+
     private boolean updateDatabase(boolean logging) throws RuntimeErrorException {
         boolean result = false;
-        for (Map.Entry<Domain, Set<ArgList>> e : user.getMind().getProducedDomains().entrySet()) {
+        for (Map.Entry<Domain, List<ArgList>> e : user.getMind().getProducedDomains().entrySet()) {
             Domain d = e.getKey();
             for (ArgList args : e.getValue()) {
                 result = true;
@@ -524,17 +619,18 @@ public class Linker {
                 }
 
                 Right x;
-                if (d.getArguments().getTVariables(true).isEmpty()) {
-                    x = d.setStored();
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
-                    }
-                } else {
+//                if (d.getArguments().getTVariables(true).isEmpty()) {
+//                    x = d.setStored();
+//                    if (logging) {
+//                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+//                    }
+//                } else {
                     x = d.createStored();
                     if (logging) {
                         user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
                     }
-                }
+//                }
+
                 if (d.isCalculated()) {
                     x.getDomain().setCalculated();
                 }
@@ -546,6 +642,7 @@ public class Linker {
                     x.getSolves().clear();
                     x.getSolves().addAll(d.getSolves());
                 }
+
             }
         }
 
@@ -622,8 +719,6 @@ public class Linker {
                         ts.get(i).setCurrent(list.get(i));
                     }
                 }
-
-
             }
         }
         return !block;

@@ -60,12 +60,13 @@ public class Mind {
 //    private final Set<Long> closedTrees = new HashSet<>();
 
     private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
-    private final Map<Domain, Set<ArgList>> producedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
+    private final Map<Domain, List<ArgList>> producedDomains = new HashMap<>();
+
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
-    private final Map<Domain, Map<ArgList, Set<TValue>>> domainSolves = new HashMap<>();
+    private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
 
 //    private final Map<Domain, Map<ArgList, Set<Long>>> domainTags = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
@@ -549,7 +550,7 @@ public class Mind {
         return excludedDomains;
     }
 
-    public Map<Domain, Set<ArgList>> getProducedDomains() {
+    public Map<Domain, List<ArgList>> getProducedDomains() {
         return producedDomains;
     }
 
@@ -561,7 +562,7 @@ public class Mind {
         return domainCauses;
     }
 
-    public Map<Domain, Map<ArgList, Set<TValue>>> getDomainSolves() {
+    public Map<Domain, Map<ArgList, SortedSet<TValue>>> getDomainSolves() {
         return domainSolves;
     }
 
@@ -938,28 +939,28 @@ public class Mind {
         getLog().add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
 
 
-        if(queryContext != null) {
-            for(Right solve : queryContext.getRights().getSolves()) {
-                Cause cause = null;
-                Iterator<Cause> iterator = solve.getCauses().iterator();
-                if(iterator.hasNext()) {
-                    cause = iterator.next();
-                }
-
-                System.out.println("--- " + solve + (cause == null ? "" : " - " + cause.getDst().getRight()));
-
-            }
-            for(List<TValue> row: queryContext.getRights().getValues()) {
-                String s = "";
-                for(TValue v : row) {
-                    if(!s.isEmpty()) {
-                        s += " ";
-                    }
-                    s += v;
-                }
-                System.out.println("... " + s);
-            }
-        }
+//        if(queryContext != null) {
+//            for(Right solve : queryContext.getRights().getSolves()) {
+//                Cause cause = null;
+//                Iterator<Cause> iterator = solve.getCauses().iterator();
+//                if(iterator.hasNext()) {
+//                    cause = iterator.next();
+//                }
+//
+//                System.out.println("--- " + solve + (cause == null ? "" : " - " + cause.getDst().getRight()));
+//
+//            }
+//            for(List<TValue> row: queryContext.getRights().getValues()) {
+//                String s = "";
+//                for(TValue v : row) {
+//                    if(!s.isEmpty()) {
+//                        s += " ";
+//                    }
+//                    s += v;
+//                }
+//                System.out.println("... " + s);
+//            }
+//        }
 
         return res;
     }

@@ -187,6 +187,13 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
+    public void dropSolves(ArgList arguments) {
+        ArgList args = arguments.convertBase();
+        if (user.getMind().getDomainSolves().containsKey(this) && user.getMind().getDomainSolves().get(this).containsKey(args)) {
+            user.getMind().getDomainSolves().get(this).remove(args);
+        }
+    }
+
 //    public SortedSet<Cause> getCauses(ArgList arguments) {
 //        return causes.get(arguments);
 //    }
@@ -229,7 +236,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                 user.getMind().getDomainSolves().put(this, new HashMap<>());
             }
             if (!user.getMind().getDomainSolves().get(this).containsKey(current)) {
-                user.getMind().getDomainSolves().get(this).put(current, new HashSet<>());
+                user.getMind().getDomainSolves().get(this).put(current, new TreeSet<>());
             } else {
                 user.getMind().getDomainSolves().get(this).get(current).clear();
             }
@@ -619,10 +626,10 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     public void setProduced() {
         if (!user.getMind().getProducedDomains().containsKey(this)) {
-            user.getMind().getProducedDomains().put(this, new HashSet<>());
+            user.getMind().getProducedDomains().put(this, new ArrayList<>());
         }
         if (!isProduced()) {
-            user.getMind().getProducedDomains().get(this).add(arguments.convertBase());
+            user.getMind().getProducedDomains().get(this).add(arguments.convert());
         }
     }
 

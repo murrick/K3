@@ -6,7 +6,10 @@ import kanger.units.Function;
 import kanger.units.TValue;
 import kanger.units.TVariable;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -221,6 +224,19 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
 
         }
         return list;
+    }
+
+    @Override
+    public String toString() {
+        String str = "[";
+        for(Argument a : this) {
+            if(str.length() > 1) {
+                str += ", ";
+            }
+            str += a.isVSet() ? a.getV().toString() : a.toString();
+        }
+        str += "]";
+        return str;
     }
 
 }
