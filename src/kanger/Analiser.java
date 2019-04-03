@@ -82,7 +82,7 @@ public class Analiser {
 //            sequence.addAll(t.getSequence());
 //        }
 //
-//        user.getMind().getClosedDomains().clear();
+//        user.getMind().getClosedDomains().reset();
 //
 //        // Контроль системных предикатов
 //        for (int k = 0; k < sequence.size(); ++k) {
@@ -347,7 +347,7 @@ public class Analiser {
 //            Set<Domain> sd = new HashSet<>();
 ////            SortedSet<HypotesisStore> hypotesis = new TreeSet<>();
 //
-//            user.getMind().getClosedDomains().clear();
+//            user.getMind().getClosedDomains().reset();
 //
 //            for (Tree t : set) {
 //                for (Tree x : set) {
@@ -402,7 +402,7 @@ public class Analiser {
 //                }
 //            }
 //
-////            mind.getCalculated().clear();
+////            mind.getCalculated().reset();
 ////
 ////            for (Function f : fs) {
 ////                if (!f.isCalculable() || f.isComplete()) {
@@ -411,7 +411,7 @@ public class Analiser {
 ////                }
 ////            }
 //
-////            mind.getSubstituted().clear();
+////            mind.getSubstituted().reset();
 //
 ////            boolean occurs = false;
 ////            for (Domain d : sd) {
@@ -459,10 +459,10 @@ public class Analiser {
 
 
     //    public boolean analiseTree(Tree t, boolean logging) throws RuntimeErrorException {
-//        mind.getClosedDimains().clear();
-//        mind.getSubstituted().clear();
-//        mind.getCalculated().clear();
-//        mind.getQueuedDomains().clear();
+//        mind.getClosedDimains().reset();
+//        mind.getSubstituted().reset();
+//        mind.getCalculated().reset();
+//        mind.getQueuedDomains().reset();
 //        List<TVariable> vars = t.getTVariables(true);
 //        return checkTree(t, vars, 0, logging);
 //    }
@@ -505,10 +505,10 @@ public class Analiser {
 //            }
 //        }
 
-//        mind.getClosedDimains().clear();
-//        mind.getQueuedDomains().clear();
-//        user.getMind().getUsedTrees().clear();
-//        user.getMind().getClosedTrees().clear();
+//        mind.getClosedDimains().reset();
+//        mind.getQueuedDomains().reset();
+//        user.getMind().getUsedTrees().reset();
+//        user.getMind().getClosedTrees().reset();
         user.getMind().getSolutions().clear();
         user.getMind().getValues().clear();
 
@@ -555,7 +555,7 @@ public class Analiser {
 //                    List<Domain> pretendents = new ArrayList<>();
 //                    for (Domain d : tree.getSequence()) {
 //                        if (d.isStored()) {
-//                            pretendents.clear();
+//                            pretendents.reset();
 //                            break;
 //                        } else if (d.isComplete() && !d.isExcluded() && !d.isUsed()) {
 //                            pretendents.add(d);

@@ -26,11 +26,11 @@ public class Linker {
 
     public void link(Right right, boolean logging) throws RuntimeErrorException {
 
-//        user.getMind().getProducedDomains().clear();
+//        user.getMind().getProducedDomains().reset();
         user.getMind().getExcludedDomains().clear();
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
-//        user.getMind().getDomainCauses().clear();
+//        user.getMind().getDomainCauses().reset();
 
 //        for (Function f : user.getMind().getFunctions()) {
 //            if (!f.isCalculable()) {
@@ -124,7 +124,7 @@ public class Linker {
 //                    }
 //                }
 
-//            user.getMind().getExcludedDomains().clear();
+//            user.getMind().getExcludedDomains().reset();
                 //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
 
 
@@ -545,71 +545,71 @@ public class Linker {
 //    }
 //
 
-    private boolean analizeProduces(List<ArgList> main, List<ArgList> calculated, List<Right> solves) {
-        boolean result = false;
-
-        if(!user.getMind().getProducedDomains().isEmpty()) {
-            for (Map.Entry<Domain, List<ArgList>> master : user.getMind().getProducedDomains().entrySet()) {
-                Domain dMaster = master.getKey();
-                for (ArgList aMaster : master.getValue()) {
-                    if (dMaster.isCalculated(aMaster)) {
-                        ArgList row = new ArgList();
-                        for (TValue v : dMaster.getSolves(aMaster)) {
-                            row.add(new Argument(v));
-                        }
-                        if (!calculated.contains(row)) {
-                            calculated.add(row);
-                        }
-                        result = true;
-                    } else {
-                        for (Right right : user.getMind().getRights().getDatabase()) {
-                            if (!right.getDomain().isCalculated()
-                                    && dMaster.getPredicate().getId() == right.getDomain().getPredicate().getId()
-                                    && dMaster.isAntc() != right.getDomain().isAntc()
-                                    && aMaster.equalsBase(right.getDomain().getArguments())) {
-                                if (dMaster.isQuery()) {
-                                    ArgList row = new ArgList();
-                                    for (TValue v : dMaster.getSolves(aMaster)) {
-                                        row.add(new Argument(v));
-                                    }
-                                    if (!main.contains(row)) {
-                                        main.add(row);
-                                    }
-                                    if(!solves.contains(right)) {
-                                        solves.add(right);
-                                    }
-                                    result = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            for(Right master : user.getMind().getRights().getDatabase()) {
-                for (Right right : user.getMind().getRights().getDatabase(master.getId())) {
-                    if (!right.getDomain().isCalculated()
-                            && master.getDomain().getPredicate().getId() == right.getDomain().getPredicate().getId()
-                            && master.getDomain().isAntc() != right.getDomain().isAntc()
-                            && master.getDomain().getArguments().equalsBase(right.getDomain().getArguments())) {
-                        if (master.getDomain().isQuery()) {
-                            if(!solves.contains(right)) {
-                                solves.add(right);
-                            }
-                        } else {
-                            if(solves.contains(master)) {
-                                solves.add(master);
-                            }
-                        }
-                        result = true;
-                    }
-                }
-            }
-        }
-
-
-        return result;
-    }
+//    private boolean analizeProduces(List<ArgList> main, List<ArgList> calculated, List<Right> solves) {
+//        boolean result = false;
+//
+//        if(!user.getMind().getProducedDomains().isEmpty()) {
+//            for (Map.Entry<Domain, List<ArgList>> master : user.getMind().getProducedDomains().entrySet()) {
+//                Domain dMaster = master.getKey();
+//                for (ArgList aMaster : master.getValue()) {
+//                    if (dMaster.isCalculated(aMaster)) {
+//                        ArgList row = new ArgList();
+//                        for (TValue v : dMaster.getSolves(aMaster)) {
+//                            row.add(new Argument(v));
+//                        }
+//                        if (!calculated.contains(row)) {
+//                            calculated.add(row);
+//                        }
+//                        result = true;
+//                    } else {
+//                        for (Right right : user.getMind().getRights().getDatabase()) {
+//                            if (!right.getDomain().isCalculated()
+//                                    && dMaster.getPredicate().getId() == right.getDomain().getPredicate().getId()
+//                                    && dMaster.isAntc() != right.getDomain().isAntc()
+//                                    && aMaster.equalsBase(right.getDomain().getArguments())) {
+//                                if (dMaster.isQuery()) {
+//                                    ArgList row = new ArgList();
+//                                    for (TValue v : dMaster.getSolves(aMaster)) {
+//                                        row.add(new Argument(v));
+//                                    }
+//                                    if (!main.contains(row)) {
+//                                        main.add(row);
+//                                    }
+//                                    if(!solves.contains(right)) {
+//                                        solves.add(right);
+//                                    }
+//                                    result = true;
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        } else {
+//            for(Right master : user.getMind().getRights().getDatabase()) {
+//                for (Right right : user.getMind().getRights().getDatabase(master.getId())) {
+//                    if (!right.getDomain().isCalculated()
+//                            && master.getDomain().getPredicate().getId() == right.getDomain().getPredicate().getId()
+//                            && master.getDomain().isAntc() != right.getDomain().isAntc()
+//                            && master.getDomain().getArguments().equalsBase(right.getDomain().getArguments())) {
+//                        if (master.getDomain().isQuery()) {
+//                            if(!solves.contains(right)) {
+//                                solves.add(right);
+//                            }
+//                        } else {
+//                            if(solves.contains(master)) {
+//                                solves.add(master);
+//                            }
+//                        }
+//                        result = true;
+//                    }
+//                }
+//            }
+//        }
+//
+//
+//        return result;
+//    }
 
     private boolean updateDatabase(boolean logging) throws RuntimeErrorException {
         boolean result = false;
