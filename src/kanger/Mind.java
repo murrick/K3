@@ -233,7 +233,7 @@ public class Mind {
             }
         }
 
-//        log.clear();
+//        log.reset();
 
     }
 
@@ -502,7 +502,7 @@ public class Mind {
 //    }
 //
 //    public void removeInsertionRight(Right r) {
-//        clear();
+//        reset();
 //
 //        removeTVarRecords(r);
 //        removeCVarRecords(r);
@@ -591,12 +591,12 @@ public class Mind {
 //    }
 //
 //    public void markAcceptors() {
-//        markAcceptor.clear();
+//        markAcceptor.reset();
 //        markAcceptor.addAll(acceptorDomains);
 //    }
 //
 //    public void releaseAcceptors() {
-//        acceptorDomains.clear();
+//        acceptorDomains.reset();
 //        acceptorDomains.addAll(markAcceptor);
 //    }
 
@@ -718,7 +718,7 @@ public class Mind {
         getLog().add(LogMode.ANALIZER, "============= CHECKING ===================");
 
 //        Mind m = new Mind(this);
-//        excluded.clear();
+//        excluded.reset();
 //        m.link(true);
 //        Boolean ar = m.analise(true);
 //        release();
@@ -994,13 +994,13 @@ public class Mind {
 
 //    private List<Right> killInsertion(Mind mind, Right target, boolean withRelatedRights) {
 //        int flag = 0;
-//        mind.clear();
+//        mind.reset();
 //
-//        mind.getUsedTrees().clear();
-//        mind.getClosedTrees().clear();
+//        mind.getUsedTrees().reset();
+//        mind.getClosedTrees().reset();
 //
-//        mind.getUsedDomains().clear();
-//        mind.getQueryValues().clear();
+//        mind.getUsedDomains().reset();
+//        mind.getQueryValues().reset();
 //
 ////        mind.clearQueryStatus();
 //

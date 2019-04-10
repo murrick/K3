@@ -153,7 +153,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 //            }
 //        }
 //
-//        root.clear();
+//        root.reset();
 //        int i = 0;
 //        for (Map<TVariable, TValue> s : cnt) {
 //            List<TValue> set = new ArrayList<>();
@@ -198,7 +198,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 //                return o1.toArray(new TValue[]{})[0].getValue().compareTo(o2.toArray(new TValue[]{})[0].getValue());
 //            }
 //        });
-//        root.clear();
+//        root.reset();
 //        i = 0;
 //        for (List<TValue> s : list) {
 //            root.put(++i, s);

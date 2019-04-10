@@ -11,7 +11,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private static final int BLOCK_MARK = 0x10;
 
     private static final int BLOCK_SIZE = 512;
-
     private int version = Version.VERSION_CODE;
 
     private NavigableMap<Long, IndexOne> baseIndex = new TreeMap<>();

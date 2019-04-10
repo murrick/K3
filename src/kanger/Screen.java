@@ -18,7 +18,10 @@ import kanger.storage.Storage;
 import kanger.test.KangerTest;
 import kanger.units.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 //import java.awt.*;
@@ -165,7 +168,7 @@ public class Screen {
                             }
                             break;
                         case 'C': {
-                            System.out.printf("Are you sure to clear workspace? [y/N]? ");
+                            System.out.printf("Are you sure to reset workspace? [y/N]? ");
                             String s = new Scanner(System.in).nextLine().toUpperCase();
                             if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                 mind.clear();
@@ -174,11 +177,11 @@ public class Screen {
                         }
                         break;
 //                        case 'E': {
-//                            System.out.printf("Are you sure to clear working memory? [y/N]? ");
+//                            System.out.printf("Are you sure to reset working memory? [y/N]? ");
 //                            String s = new Scanner(System.in).nextLine().toUpperCase();
 //                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
 //                                mind.getText().delete(0, mind.getText().length());
-//                                mind.clear();
+//                                mind.reset();
 //                            }
 //                        }
 //                        break;
@@ -692,7 +695,7 @@ public class Screen {
         } else {
             for (Domain s : set) {
 //                if (!s.isDestFor()) {
-//                    mind.getSubstituted().clear();
+//                    mind.getSubstituted().reset();
                 showPredRecurse(mind, s.getArguments().getTVariables(true), 0, s, showCauses);
 //                }
             }

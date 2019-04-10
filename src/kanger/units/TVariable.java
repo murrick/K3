@@ -140,7 +140,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 ////        }
 //    }
 
-//    public void clear() {
+//    public void reset() {
 //        user.getMind().getTValues().remove(this);
 ////        if (mind.getTValues().createCVar(this).isEmpty()) {
 ////            mind.getTValues().createCVar(this).setRoot(null);
@@ -289,7 +289,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //        }
 //    }
 //
-//    public void clear() {
+//    public void reset() {
 //        if (mind.getTValues().containsKey(this)) {
 //            mind.getTValues().remove(this);
 //        }
