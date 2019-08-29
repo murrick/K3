@@ -106,7 +106,7 @@ public class Linker {
                 user.getMind().getDomainSolves().clear();
                 user.getMind().getDomainCauses().clear();
 
-                SortedSet<TVariable> tvars = new TreeSet<>();
+                final SortedSet<TVariable> tvars = new TreeSet<>();
                 for (List<Domain> tree : r.getTree()) {
                     for (Domain d : tree) {
                         tvars.addAll(d.getArguments().getTVariables(true));
