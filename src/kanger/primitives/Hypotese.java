@@ -153,6 +153,15 @@ public class Hypotese implements Comparable<Hypotese> {
         }
     }
 
+    public List<Term> getCVariables() {
+        List<Term> list = new ArrayList<>();
+        for (Term t : solve) {
+            if (t.isCVariable()) {
+                list.add(t);
+            }
+        }
+        return list;
+    }
 //    @Override
 //    public int hashCode() {
 //        StringBuffer buffer = new StringBuffer();
