@@ -57,7 +57,7 @@ public class Index implements Closeable {
                 ras.seek(startOffset);
                 while (true) {
                     IndexPage page = new IndexPage().readFrom(ras);
-                    if(page.getSize() == 0) {
+                    if (page.getSize() == 0) {
                         emptyPages.put(page.getId(), page);
                     }
                     if (ras.getFilePointer() + blockSize < ras.length()) {
