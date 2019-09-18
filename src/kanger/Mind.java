@@ -761,16 +761,7 @@ public class Mind {
                     } else {
                         m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
                         m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
-
-                        System.out.println("-----------------------------");
-                        Screen.showBase(this, false, null);
-
                         commit(m);
-
-                        System.out.println("-----------------------------");
-                        Screen.showBase(this, false, null);
-                        System.out.println("-----------------------------");
-
                         excluded.commit(m.getHypotesisStore());
                         setChanged(true);
                         res = true;

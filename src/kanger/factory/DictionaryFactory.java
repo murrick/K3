@@ -45,7 +45,7 @@ public class DictionaryFactory {
         load.clear();
         if (base != null) {
             lastId = base.lastId;
-            firstId = base.firstId;
+            firstId = base.lastId;
             varIndex = base.varIndex;
             cache.add(base.cache);
         } else {
