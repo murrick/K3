@@ -694,6 +694,10 @@ public class Mind {
         }
     }
 
+    private String antc(String line) {
+        return String.format("%c%s", Enums.ANT, line);
+    }
+
     private String resign(int sign, String line) {
         return String.format("%c%s", sign, line.substring(1));
     }
@@ -920,28 +924,24 @@ public class Mind {
                                 hypotesis.exclude(excluded);
 
                                 // Удаление конфликтующих гипотез
-                                List<Hypotese> toDelete = new ArrayList<>();
                                 if (!hypotesis.isEmpty()) {
+                                    List<Hypotese> toDelete = new ArrayList<>();
                                     for (Hypotese h : hypotesis.getRoot()) {
                                         Mind x = new Mind(this);
-                                        Boolean rx = x.query("!" + h.toString(), true);
-                                        if (rx != null && rx) {
-//                                        System.out.println("GOOD: " + h);
-                                        } else if (rx != null && !rx) {
+                                        x.setQueryPass(QueryPass.HYPOTESIS);
+
+                                        Right rx = (Right) m.compileLine(antc(h.toString()));
+
+                                        x.link(rx, false);
+                                        Boolean hr = x.analise(false);
+
+                                        if (hr) {
                                             toDelete.add(h);
                                             m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
-
-//                                        System.out.println("BAD: " + h);
-                                        } else if (rx == null) {
-                                            if (h.getCVariables().isEmpty()) {
-//                                            System.out.println("STRANGE: " + h);
-                                            } else {
-                                                toDelete.add(h);
-                                                m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
-//                                            System.out.println("UGLY: " + h);
-                                            }
                                         }
+
                                         drop(x);
+
                                     }
                                     hypotesis.getRoot().removeAll(toDelete);
                                 }

@@ -6,5 +6,6 @@ public enum QueryPass {
     ACCEPT,
     CHECKFALSE,
     CHECKTRUE,
-    CHECK
+    CHECK,
+    HYPOTESIS
 }
