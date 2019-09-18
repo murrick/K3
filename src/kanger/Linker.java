@@ -20,6 +20,10 @@ public class Linker {
 
     private final User user;
 
+    private int solvedPasses = 0;
+    private int dumpedPasses = 0;
+    private int skipedPasses = 0;
+
     public Linker(User user) {
         this.user = user;
     }
@@ -67,6 +71,11 @@ public class Linker {
         List<ArgList> calculated = new ArrayList<>();
         List<Right> solves = new ArrayList<>();
         boolean result = false;
+
+        solvedPasses = 0;
+        dumpedPasses = 0;
+        skipedPasses = 0;
+
 
         do {
 
@@ -196,6 +205,13 @@ public class Linker {
                 || saveF != user.getMind().getFValues().getLastId()
         );
 
+        if (logging) {
+            user.getMind().getLog().add(LogMode.ANALIZER, String.format("* LINKER Solved passes: %03d", solvedPasses));
+            user.getMind().getLog().add(LogMode.ANALIZER, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
+            user.getMind().getLog().add(LogMode.ANALIZER, String.format("* LINKER Skiped passes: %03d", skipedPasses));
+        }
+
+
 //        if(result) {
 //            System.out.println(user.getMind().getQueryPass() + ": OK");
 //            if(!solves.isEmpty()) {
@@ -270,53 +286,81 @@ public class Linker {
                                 boolean success = true;
                                 boolean applied = false;
 
+                                // Отсечение несовпадений по константам
                                 for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
-
-                                    if (master.get(i).isTSet()
-                                            && !slave.get(i).isEmpty()
-                                            && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                        TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
-                                        if (s == null) {
-                                            s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
-                                            result = true;
-                                        }
-                                        substMaster[i] = s;
-                                        applied = true;
+                                    if (!master.get(i).isTSet() && !slave.get(i).isTSet()
+                                            && (master.get(i).isEmpty()
+                                            || slave.get(i).isEmpty()
+                                            || master.get(i).getValue().getId() != slave.get(i).getValue().getId())) {
+                                        success = false;
+                                        break;
                                     }
+                                }
 
-                                    if (slave.get(i).isTSet()
-                                            && !master.get(i).isEmpty()
-                                            && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                        TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
-                                        if (s == null) {
-                                            s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
-                                            result = true;
+                                if (success) {
+                                    for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+
+                                        // Подстановка снизу вверх
+                                        if (master.get(i).isTSet()
+                                                && !slave.get(i).isEmpty()
+                                                && master.getVarOrder(i) >= slave.getVarOrder(i)) {
+                                            TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
+                                            if (s == null) {
+                                                s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
+                                                result = true;
+                                            }
+                                            substMaster[i] = s;
+                                            applied = true;
                                         }
-                                        substSlave[i] = s;
-                                        applied = true;
-                                    }
 
-                                    if (!applied) {
-                                        if (master.get(i).isEmpty()
-                                                || slave.get(i).isEmpty()
-                                                || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
-                                            success = false;
-                                            break;
-                                        } else {
-                                            substMaster[i] = null;
-                                            substSlave[i] = null;
+                                        // Подстановка сверху вниз
+                                        if (slave.get(i).isTSet()
+                                                && !master.get(i).isEmpty()
+                                                && slave.getVarOrder(i) >= master.getVarOrder(i)) {
+                                            TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
+                                            if (s == null) {
+                                                s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
+                                                result = true;
+                                            }
+                                            substSlave[i] = s;
+                                            applied = true;
+                                        }
+
+                                        if (!applied) {
+                                            if (master.get(i).isEmpty()
+                                                    || slave.get(i).isEmpty()
+                                                    || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                                                success = false;
+                                                break;
+                                            } else {
+                                                substMaster[i] = null;
+                                                substSlave[i] = null;
+                                            }
                                         }
                                     }
                                 }
+
                                 if (success) {
-                                    user.getMind().getTValues().commit();
-                                    user.getMind().getFValues().commit();
+                                    if (result) {
+                                        ++solvedPasses;
+                                        user.getMind().getTValues().commit();
+                                        user.getMind().getFValues().commit();
+                                    } else {
+                                        ++dumpedPasses;
+                                    }
                                     markExcluded(substMaster, master, slave, causes, logging);
                                     markExcluded(substSlave, slave, master, causes, logging);
                                 } else {
+                                    ++skipedPasses;
+
+//                                    System.err.println("--- " + master);
+//                                    System.err.println("--- " + slave);
+//                                    System.err.println("--- ");
+
                                     user.getMind().getTValues().release();
                                     user.getMind().getFValues().release();
                                 }
+
                             }
                         }
                     }
@@ -635,10 +679,10 @@ public class Linker {
 //                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
 //                    }
 //                } else {
-                    x = d.createStored();
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
-                    }
+                x = d.createStored();
+                if (logging) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                }
 //                }
 
                 if (d.isCalculated()) {

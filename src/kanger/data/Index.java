@@ -105,8 +105,9 @@ public class Index implements Closeable {
             ras.writeInt(blockSize);
 
             IndexPage page = new IndexPage();
-            page.setId(0);
+            page.setId(0L);
             page.setOffset(startOffset);
+            page.setNext(0L);
             page.writeTo(ras);
 
             ras.seek(startOffset);

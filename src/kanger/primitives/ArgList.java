@@ -52,17 +52,30 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
 
     @Override
     public int hashCode() {
-        StringBuffer buffer = new StringBuffer();
+        int hashCode = 1;
         try {
             for (Argument a : this) {
                 if (!a.isEmpty()) {
-                    buffer.append(a.getValue().getId());
+                    hashCode = 31*hashCode + a.getValue().hashCode();
                 }
             }
         } catch (RuntimeErrorException e) {
             e.printStackTrace(System.err);
         }
-        return buffer.toString().hashCode();
+
+        return hashCode;
+
+//        StringBuffer buffer = new StringBuffer();
+//        try {
+//            for (Argument a : this) {
+//                if (!a.isEmpty()) {
+//                    buffer.append(a.getValue().getId());
+//                }
+//            }
+//        } catch (RuntimeErrorException e) {
+//            e.printStackTrace(System.err);
+//        }
+//        return buffer.toString().hashCode();
     }
 
     @Override

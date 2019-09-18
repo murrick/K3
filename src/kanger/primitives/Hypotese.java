@@ -121,11 +121,11 @@ public class Hypotese implements Comparable<Hypotese> {
                 if (j == ccnt) {
                     cnum[ccnt] = id;
                     id = cptr[ccnt++] = i;
-                    qnt = String.format("%cx%d", Enums.PQN, id + 1);
+                    qnt = String.format("%c%s", Enums.PQN, cVarName(id));
                     line += qnt + " ";
                 } else {
                     id = cptr[j];
-                    qnt = String.format("?x%d", id + 1);
+                    qnt = String.format("?%s", cVarName(id));
                 }
                 tmp += qnt.substring(1);
             } else if (solve.get(i) != null) {
@@ -138,6 +138,19 @@ public class Hypotese implements Comparable<Hypotese> {
         tmp += ");";
         line += tmp;
         return line;
+    }
+
+    private String cVarName(int id) {
+        switch (id) {
+            case 0:
+                return "x";
+            case 1:
+                return "y";
+            case 2:
+                return "z";
+            default:
+                return "z" + (id + 1);
+        }
     }
 
 //    @Override
