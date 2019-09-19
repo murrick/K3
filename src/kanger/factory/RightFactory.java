@@ -96,7 +96,7 @@ public class RightFactory implements Iterable<Right> {
             if (tree.size() == 1) {
                 if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
                     user.getMind().getDomains().getWaiters().add(tree.get(0));
-                } else if(r.getTree().size() == 1){
+                } else if (r.getTree().size() == 1) {
                     tree.get(0).setStored();
                 } else {
                     tree.get(0).createStored();
@@ -118,6 +118,7 @@ public class RightFactory implements Iterable<Right> {
         if (!user.isClosed()) {
             try {
                 t = (Right) user.getStorage(SCHEMA).get(id);
+                t.linkExternal(user);
                 if (t != null) {
                     load.add(t);
                 }

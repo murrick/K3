@@ -784,7 +784,7 @@ public class Screen {
 //
     public static void showBase(Mind mind, boolean showCauses, String param) throws RuntimeErrorException {
         for (Predicate p : mind.getPredicates()) {
-            if (!p.getSolves().isEmpty() && !mind.isSystem(p) && (param == null || param.equals(p.getName()))) {
+            if (/*!p.getSolves().isEmpty() &&*/ !mind.isSystem(p) && (param == null || param.equals(p.getName()))) {
                 showPred(mind, p, showCauses);
                 System.out.printf("\n");
             }
