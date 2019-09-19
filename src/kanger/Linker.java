@@ -109,14 +109,14 @@ public class Linker {
 //                }
 //            }
 
-            List<Right> rightList = new ArrayList<>();
-            if (right != null) {
-                rightList.add(right);
-            } else {
-                for (Right r : user.getMind().getRights()) {
-                    rightList.add(r);
-                }
-            }
+//            List<Right> rightList = new ArrayList<>();
+//            if(right != null) {
+//                rightList.add(right);
+//            } else {
+//                for (Right r : user.getMind().getRights()) {
+//                    rightList.add(r);
+//                }
+//            }
 
 //            final SortedSet<TVariable> tvars = new TreeSet<>();
 //            for (Right rr : user.getMind().getRights()) {
@@ -134,13 +134,13 @@ public class Linker {
                 user.getMind().getDomainCauses().clear();
 
                 final SortedSet<TVariable> tvars = new TreeSet<>();
-                for (Right rr : r.getNatives()) {
-                    for (List<Domain> tree : r.getTree()) {
-                        for (Domain d : tree) {
-                            tvars.addAll(d.getArguments().getTVariables(true));
-                        }
+//                for (Right rr : r.getNatives()) {
+                for (List<Domain> tree : r.getTree()) {
+                    for (Domain d : tree) {
+                        tvars.addAll(d.getArguments().getTVariables(true));
                     }
                 }
+//                }
 
 //                final Set<Domain> waiters = new HashSet<>();
 //                for (Tree tree : r.getTree()) {
