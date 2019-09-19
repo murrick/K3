@@ -109,6 +109,24 @@ public class Linker {
 //                }
 //            }
 
+            List<Right> rightList = new ArrayList<>();
+            if (right != null) {
+                rightList.add(right);
+            } else {
+                for (Right r : user.getMind().getRights()) {
+                    rightList.add(r);
+                }
+            }
+
+//            final SortedSet<TVariable> tvars = new TreeSet<>();
+//            for (Right rr : user.getMind().getRights()) {
+//                for (List<Domain> tree : rr.getTree()) {
+//                    for (Domain d : tree) {
+//                        tvars.addAll(d.getArguments().getTVariables(true));
+//                    }
+//                }
+//            }
+
             for (Right r : user.getMind().getRights()) {
 
                 user.getMind().getProducedDomains().clear();
@@ -116,9 +134,11 @@ public class Linker {
                 user.getMind().getDomainCauses().clear();
 
                 final SortedSet<TVariable> tvars = new TreeSet<>();
-                for (List<Domain> tree : r.getTree()) {
-                    for (Domain d : tree) {
-                        tvars.addAll(d.getArguments().getTVariables(true));
+                for (Right rr : r.getNatives()) {
+                    for (List<Domain> tree : r.getTree()) {
+                        for (Domain d : tree) {
+                            tvars.addAll(d.getArguments().getTVariables(true));
+                        }
                     }
                 }
 
@@ -206,9 +226,9 @@ public class Linker {
         );
 
         if (logging) {
-            user.getMind().getLog().add(LogMode.ANALIZER, String.format("* LINKER Solved passes: %03d", solvedPasses));
-            user.getMind().getLog().add(LogMode.ANALIZER, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
-            user.getMind().getLog().add(LogMode.ANALIZER, String.format("* LINKER Skiped passes: %03d", skipedPasses));
+            user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
+            user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
+            user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Skiped passes: %03d", skipedPasses));
         }
 
 
@@ -477,8 +497,8 @@ public class Linker {
                     d.setCauses(causes.get(d.getRight()));
                     d.setSolves(solve);
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record: " + d);
-                        logCauses(d);
+                        user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record: " + d);
+                        logCauses(LogMode.STORAGE, d);
                     }
                 }
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
@@ -492,8 +512,8 @@ public class Linker {
                         d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (x): " + d);
-                            logCauses(d);
+                            user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record (x): " + d);
+                            logCauses(LogMode.STORAGE, d);
                         }
                     }
                 }
@@ -509,8 +529,8 @@ public class Linker {
                         d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (c): " + d);
-                            logCauses(d);
+                            user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record (c): " + d);
+                            logCauses(LogMode.STORAGE, d);
                         }
                     }
                 }
@@ -538,15 +558,15 @@ public class Linker {
                         d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "DB assumed record (a): " + d);
-                            logCauses(d);
+                            user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record (a): " + d);
+                            logCauses(LogMode.STORAGE, d);
                         }
                     }
                 }
             }
             if (result) {
                 if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                    user.getMind().getLog().add(LogMode.STORAGE, "-------------------------------------------");
                 }
             }
 
@@ -555,15 +575,15 @@ public class Linker {
         return result;
     }
 
-    private void logCauses(Domain d) {
+    private void logCauses(LogMode mode, Domain d) {
         boolean rightShowed = false;
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom right: " + c.getDst().getRight());
+                    user.getMind().getLog().add(mode, "\tFrom right: " + c.getDst().getRight());
                     rightShowed = true;
                 }
-                user.getMind().getLog().add(LogMode.ANALIZER, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
+                user.getMind().getLog().add(mode, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
             }
         }
     }
@@ -681,7 +701,7 @@ public class Linker {
 //                } else {
                 x = d.createStored();
                 if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "DB add record: " + d);
+                    user.getMind().getLog().add(LogMode.STORAGE, "DB add record: " + d);
                 }
 //                }
 

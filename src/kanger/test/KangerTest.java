@@ -1730,6 +1730,65 @@ public class KangerTest {
 
     }
 
+    public void set_06_0A() throws ParseErrorException, RuntimeErrorException {
+
+        mind.clear();
+        mind.compile("!@x $y parent(y,x);" +
+                "!@x ~parent(x,x);" +
+                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                "!@x @y son(x,y) -> male(x), child(x,y);" +
+                "!father(John, Tom);" +
+                "!daughter(Sarah, John);" +
+                "!age(John, 37);" +
+                "!age(Tom, 12);" +
+                "!age(Sarah, 4);"
+        );
+        mind.query("?$x male(x) && age(x,12);");
+        showResult(null);
+        if (!mind.getHypotesisStore().isEmpty()) {
+            Hypotese s = createHypotese(user, true, "male", "Tom");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, false, "daughter", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, false, "female", "Tom");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "son", "Tom", "Sarah");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "son", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "father", "Tom", "Sarah");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            s = createHypotese(user, true, "father", "Tom", "John");
+            if (!mind.getHypotesisStore().contains(s)) {
+                fail("Expected: " + s.toString());
+            }
+            if (mind.getHypotesisStore().getRoot().size() != 7) {
+                fail("Expected 7 hypotesis");
+            }
+            System.out.println("OK");
+            System.out.println("====================================================");
+        } else {
+            fail("Expected 7 hypotesis");
+        }
+    }
+
     public void set_07_01() throws ParseErrorException, RuntimeErrorException {
 
         mind.clear();
