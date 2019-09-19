@@ -2,6 +2,7 @@ package kanger;
 
 import kanger.enums.LogMode;
 import kanger.exception.RuntimeErrorException;
+import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.Domain;
 import kanger.units.Right;
@@ -535,7 +536,13 @@ public class Analiser {
                     break;
                 }
                 Domain d = r.getDomain();
-                if (!d.isQuery()
+                for (Argument a : d.getArguments()) {
+                    if (!a.isEmpty() && a.getValue().isCVariable() && a.getValue().getId() > user.getMind().getTerms().getFirstId()) {
+                        d = null;
+                        break;
+                    }
+                }
+                if (d != null && !d.isQuery()
                         && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
                     Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                     occurs = true;

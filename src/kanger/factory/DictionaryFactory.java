@@ -203,6 +203,10 @@ public class DictionaryFactory {
         return ++varIndex;
     }
 
+    public long getFirstId() {
+        return firstId;
+    }
+
 //    @Override
 //    public Iterator iterator() {
 //        return cache.iterator();

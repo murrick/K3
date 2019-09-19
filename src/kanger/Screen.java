@@ -18,10 +18,8 @@ import kanger.storage.Storage;
 import kanger.test.KangerTest;
 import kanger.units.*;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 //import java.awt.*;
@@ -36,6 +34,7 @@ public class Screen {
     public static boolean LINE_EDITOR_ENABLE
             = System.getProperties().getProperty("kanger.enable.line.editor") != null
             && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
+    private static String lastLogFile = "analizer.log";
 
     public static void session(User user) {
         boolean stop = false;
@@ -133,13 +132,13 @@ public class Screen {
                             showHypo(mind);
                             break;
                         case 'V':
-                            showLog(mind, LogMode.VALUES);
+                            showLog(mind, LogMode.VALUES, false);
                             break;
                         case 'S':
-                            showLog(mind, LogMode.SOLVES);
+                            showLog(mind, LogMode.SOLVES, false);
                             break;
                         case 'X':
-                            showLog(mind, LogMode.ALL);
+                            showLog(mind, LogMode.ALL, line.charAt(0) != 'x');
                             break;
 //                        case 'T':
 //                            showTValues(mind);
@@ -160,8 +159,8 @@ public class Screen {
                                 System.out.println();
                                 Boolean res = mind.query(h, false);
                                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                    showLog(mind, LogMode.SOLVES);
-                                    showLog(mind, LogMode.VALUES);
+                                    showLog(mind, LogMode.SOLVES, false);
+                                    showLog(mind, LogMode.VALUES, false);
                                     System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                 }
 //                            lastQuery = savedQuery;
@@ -330,8 +329,8 @@ public class Screen {
                                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                                     System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                     if (res != null) {
-                                        showLog(mind, LogMode.SOLVES);
-                                        showLog(mind, LogMode.VALUES);
+                                        showLog(mind, LogMode.SOLVES, false);
+                                        showLog(mind, LogMode.VALUES, false);
                                     }
                                     if (res == null) {
                                         showHypo(mind);
@@ -404,15 +403,56 @@ public class Screen {
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
     }
 
-    public static void showLog(Mind mind, LogMode type) {
+    public static void showLog(Mind mind, LogMode type, boolean file) {
+
         if (mind.getLog().size() > 0) {
+
+            BufferedWriter f = null;
+
+            if (file) {
+                System.out.print("Save analizer log to file [" + lastLogFile + "]: ");
+                String s = new Scanner(System.in).nextLine().toUpperCase();
+                if (!s.isEmpty()) {
+                    lastLogFile = s;
+                }
+                try {
+                    f = new BufferedWriter(new FileWriter(new File(lastLogFile)));
+                } catch (IOException ex) {
+                    System.out.printf("ERROR: %s\n", ex);
+                    file = false;
+                }
+            }
+
             for (LogEntry log : mind.getLog().getRoot()) {
                 if (type == LogMode.ALL || log.getType() == type) {
-                    System.out.println(log.getRecord());
+                    if (file) {
+                        try {
+                            String line = String.format("%s [%8s] %s",
+                                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(log.getTime()),
+                                    log.getType(),
+                                    log.getRecord());
+                            f.write(line + "\n");
+                        } catch (IOException ex) {
+                            System.out.printf("ERROR: %s\n", ex);
+                            file = false;
+                            System.out.println(log.getRecord());
+                        }
+                    } else {
+                        System.out.println(log.getRecord());
+                    }
+                }
+            }
+
+            if (file) {
+                try {
+                    f.close();
+                    System.out.println("Log to file " + lastLogFile + " saved.");
+                } catch (IOException e) {
                 }
             }
 //            System.out.println();
         }
+
     }
 
     //    public static void showSolves(Mind context) {

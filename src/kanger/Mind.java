@@ -905,7 +905,6 @@ public class Mind {
 
                     if (res == null) {
 
-                        boolean hipotesys = false;
                         Mind m = new Mind(this);
                         m.setQueryPass(QueryPass.CHECKTRUE);
                         m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
@@ -928,58 +927,61 @@ public class Mind {
                                 hypotesis.exclude(excluded);
 
                                 // Удаление конфликтующих гипотез
-                                if (!hypotesis.isEmpty()) {
-                                    List<Hypotese> toDelete = new ArrayList<>();
-                                    for (Hypotese h : hypotesis.getRoot()) {
-                                        Mind x = new Mind(this);
-                                        x.setQueryPass(QueryPass.HYPOTESIS);
-                                        Right rx = (Right) x.compileLine(antc(h.toString()));
-                                        x.link(rx, false);
-                                        Boolean hr = x.analise(false);
-                                        if (hr) {
-                                            toDelete.add(h);
-                                            m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
-                                        } else {
-                                            Mind y = new Mind(x);
-                                            y.setQueryPass(QueryPass.HYPOTESISTRUE);
-                                            rx = (Right) y.compileLine(line);
-                                            rx.setQuery(true);
-                                            y.link(rx, false);
-                                            hr = y.analise(false);
-                                            x.drop(y);
-
-                                            if (!hr) {
-
-                                                y = new Mind(x);
-                                                y.setQueryPass(QueryPass.HYPOTESISFALSE);
-                                                rx = (Right) y.compileLine(invert(line));
-                                                rx.setQuery(true);
-                                                y.link(rx, false);
-                                                hr = y.analise(false);
-                                                x.drop(y);
-
-                                                if (!hr) {
-                                                    toDelete.add(h);
-                                                    m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
-                                                }
-                                            }
-                                        }
-                                        drop(x);
-//                                        if(!hr) {
-//                                            x = new Mind(this);
-//                                            x.setQueryPass(QueryPass.HYPOTESIS);
-//                                            rx = (Right) m.compileLine(antc(h.toString()));
-//                                            x.link(rx, false);
-//                                            hr = x.analise(false);
-//                                            if (hr) {
-//                                                toDelete.add(h);
-//                                                m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
+//                                if (!hypotesis.isEmpty()) {
+//
+//                                    List<Hypotese> toDelete = new ArrayList<>();
+//                                    for (Hypotese h : hypotesis.getRoot()) {
+//                                        Mind x = new Mind(this);
+//                                        x.setQueryPass(QueryPass.HYPOTESIS);
+//                                        Right rx = (Right) x.compileLine(antc(h.toString()));
+//                                        x.link(rx, false);
+//                                        Boolean hr = x.analise(false);
+//                                        if (hr) {
+//                                            toDelete.add(h);
+//                                            m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
+//                                        } else {
+//
+//                                            // Удаление бесполезных гипотез
+//                                            Mind y = new Mind(x);
+//                                            y.setQueryPass(QueryPass.HYPOTESISTRUE);
+//                                            rx = (Right) y.compileLine(line);
+//                                            rx.setQuery(true);
+//                                            y.link(rx, false);
+//                                            hr = y.analise(false);
+//                                            x.drop(y);
+//
+//                                            if (!hr) {
+//
+//                                                y = new Mind(x);
+//                                                y.setQueryPass(QueryPass.HYPOTESISFALSE);
+//                                                rx = (Right) y.compileLine(invert(line));
+//                                                rx.setQuery(true);
+//                                                y.link(rx, false);
+//                                                hr = y.analise(false);
+//                                                x.drop(y);
+//
+//                                                if (!hr) {
+//                                                    toDelete.add(h);
+//                                                    m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
+//                                                }
 //                                            }
-//                                            drop(x);
 //                                        }
-                                    }
-                                    hypotesis.getRoot().removeAll(toDelete);
-                                }
+//                                        drop(x);
+////                                        if(!hr) {
+////                                            x = new Mind(this);
+////                                            x.setQueryPass(QueryPass.HYPOTESIS);
+////                                            rx = (Right) m.compileLine(antc(h.toString()));
+////                                            x.link(rx, false);
+////                                            hr = x.analise(false);
+////                                            if (hr) {
+////                                                toDelete.add(h);
+////                                                m.getLog().add(LogMode.ANALIZER, "Hypotesis removed: " + h);
+////                                            }
+////                                            drop(x);
+////                                        }
+//                                    }
+//                                    hypotesis.getRoot().removeAll(toDelete);
+//                                }
 
 
                                 if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
