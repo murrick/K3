@@ -114,8 +114,8 @@ public class TValueFactory {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                one.linkExternal(user);
                 if (one.equalsTo(temp)) {
-                    one.linkExternal(user);
                     return (TValue) one;
                 }
             }
@@ -136,6 +136,7 @@ public class TValueFactory {
         if (!user.isClosed()) {
             try {
                 t = (TValue) user.getStorage(SCHEMA).get(id);
+                t.linkExternal(user);
                 if (t != null) {
                     load.add(t);
                 }

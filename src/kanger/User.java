@@ -23,7 +23,7 @@ public class User {
     public User() {
     }
 
-    public void use(String name) throws IOException {
+    public void use(String name) throws IOException, RuntimeErrorException {
         if (!isClosed()) {
             close();
         }
@@ -45,6 +45,8 @@ public class User {
         predicatesLink.open(name + ".link.index");
 
         storageName = name;
+
+        mind.getRights().reindex();
     }
 
     public void close() throws IOException {

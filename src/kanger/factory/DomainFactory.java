@@ -124,8 +124,8 @@ public class DomainFactory implements Iterable<Domain> {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                one.linkExternal(user);
                 if (one.equalsTo(temp)) {
-                    one.linkExternal(user);
                     return (Domain) one;
                 }
             }

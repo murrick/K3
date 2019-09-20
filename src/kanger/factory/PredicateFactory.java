@@ -101,8 +101,8 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
         if (!user.isClosed()) {
             for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
+                one.linkExternal(user);
                 if (one.equalsTo(temp)) {
-                    one.linkExternal(user);
                     return (Predicate) one;
                 }
             }

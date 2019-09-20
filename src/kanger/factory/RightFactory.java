@@ -83,6 +83,15 @@ public class RightFactory implements Iterable<Right> {
         return r;
     }
 
+    public void reindex() throws RuntimeErrorException {
+        if (!user.isClosed()) {
+            for (Identifiable r : user.getStorage(SCHEMA)) {
+                r.linkExternal(user);
+                cache.add(r);
+            }
+        }
+    }
+
     public void addSolve(Right query, Right solve) {
         cache.addSolve(query, solve);
     }
