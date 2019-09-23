@@ -141,6 +141,17 @@ public class Right implements Externalizable, Identifiable<Right> {
         this.stored = true;
     }
 
+    public boolean isUsed() {
+        return user.getMind().getUsedRights().containsKey(0L) && user.getMind().getUsedRights().get(0L).contains(this);
+    }
+
+    public void setUsed() {
+        if (!user.getMind().getUsedRights().containsKey(0L)) {
+            user.getMind().getUsedRights().put(0L, new HashSet<>());
+        }
+        user.getMind().getUsedRights().get(0L).add(this);
+    }
+
     public Set<Right> getNatives() {
         Set<Right> list = new HashSet<>();
         for (List<Domain> t : tree) {

@@ -34,6 +34,7 @@ public class Linker {
         user.getMind().getExcludedDomains().clear();
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
+        user.getMind().getUsedRights().clear();
 //        user.getMind().getDomainCauses().reset();
 
 //        for (Function f : user.getMind().getFunctions()) {
@@ -70,7 +71,9 @@ public class Linker {
         List<ArgList> main = new ArrayList<>();
         List<ArgList> calculated = new ArrayList<>();
         List<Right> solves = new ArrayList<>();
+
         boolean result = false;
+        boolean used = false;
 
         solvedPasses = 0;
         dumpedPasses = 0;
@@ -109,17 +112,25 @@ public class Linker {
 //                }
 //            }
 
-//            List<Right> rightList = new ArrayList<>();
-//            if(right != null) {
-//                rightList.add(right);
-//            } else {
-//                for (Right r : user.getMind().getRights()) {
-//                    rightList.add(r);
-//                }
-//            }
+            used = false;
+            Set<Right> rightList = new HashSet<>();
+            if (right != null) {
+                rightList.addAll(right.getNatives());
+                if (user.getMind().getUsedRights().containsKey(0L)) {
+                    for (Right r : user.getMind().getUsedRights().get(0L)) {
+                        if (r.isUsed()) {
+                            rightList.addAll(r.getNatives());
+                        }
+                    }
+                }
+            } else {
+                for (Right r : user.getMind().getRights()) {
+                    rightList.add(r);
+                }
+            }
 
 //            final SortedSet<TVariable> tvars = new TreeSet<>();
-//            for (Right rr : user.getMind().getRights()) {
+//            for (Right rr : rightList) {
 //                for (List<Domain> tree : rr.getTree()) {
 //                    for (Domain d : tree) {
 //                        tvars.addAll(d.getArguments().getTVariables(true));
@@ -127,7 +138,7 @@ public class Linker {
 //                }
 //            }
 
-            for (Right r : user.getMind().getRights()) {
+            for (Right r : rightList) { //user.getMind().getRights()) {
 
                 user.getMind().getProducedDomains().clear();
                 user.getMind().getDomainSolves().clear();
@@ -158,6 +169,9 @@ public class Linker {
 
 
 //            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
+
+                boolean wasUsed = r.isUsed();
+
                 for (List<Domain> tree : r.getTree()) {
 
                     final List<Domain> t = tree;
@@ -204,6 +218,10 @@ public class Linker {
 //                    result = true;
 //                }
                 updateDatabase(logging);
+
+                if (!wasUsed && r.isUsed()) {
+                    used = true;
+                }
             }
 
 //            if(saveT != user.getMind().getTValues().getLastId()) {
@@ -229,6 +247,15 @@ public class Linker {
             user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
             user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
             user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Skiped passes: %03d", skipedPasses));
+        }
+
+        if (logging) {
+            if (user.getMind().getUsedRights().containsKey(0L) && !user.getMind().getUsedRights().get(0L).isEmpty()) {
+                user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER USED RIGHTS -------------"));
+                for (Right r : user.getMind().getUsedRights().get(0L)) {
+                    user.getMind().getLog().add(LogMode.ANALIZER, r.toString());
+                }
+            }
         }
 
 
@@ -294,9 +321,9 @@ public class Linker {
             for (Domain slave : treeSlave) {
                 for (long id : user.getMind().getRights().getLinks(slave.getPredicate())) {
                     Right right = user.getMind().getRights().get(id);
-                    if (right == null) {
-                        continue;
-                    }
+//                    if (right == null) {
+//                        continue;
+//                    }
                     for (List<Domain> treeMaster : right.getTree()) {
                         for (Domain master : treeMaster) {
                             if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
@@ -360,7 +387,10 @@ public class Linker {
                                                 substMaster[i] = null;
                                                 substSlave[i] = null;
                                             }
+                                        } else {
+                                            master.getRight().setUsed();
                                         }
+
                                     }
                                 }
 

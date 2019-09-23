@@ -37,7 +37,7 @@ public class User {
         }
 
         storageName = name;
-        mind.getRights().reindex();
+//        mind.getRights().reindex();
     }
 
     public void close() throws IOException {

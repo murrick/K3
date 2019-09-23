@@ -46,6 +46,7 @@ public class Mind {
     private HypotesisStore hypotesis = null;                                // Список гипотез
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
+    private final Map<Long, Set<Right>> usedRights = new HashMap<>();
     private LogStore log = null;                                        // Протокол вывода
 
     private Calculator calculator = null;                             // Калькулятор
@@ -70,6 +71,7 @@ public class Mind {
 
     //    private final Map<Domain, Map<ArgList, Set<Long>>> domainTags = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
+    private ResultsStore results = null;
 
     private boolean changed = false;
     private Boolean queryResult = null;
@@ -129,6 +131,7 @@ public class Mind {
         excluded = new HypotesisStore(user);                                // Список исключенных гипотез
         solves = new SolutionsStore(user);                         // Список решений
         values = new ValuesStore(user);                               // Список значений
+        results = new ResultsStore(user);                               // Список значений
 
         log = new LogStore(this);                                        // Протокол вывода
 
@@ -208,6 +211,10 @@ public class Mind {
 
         solves.commit(m.getSolutions());
         values.commit(m.getValues());
+        results.commit(m.getResults());
+
+        // Сброс индексов связи предикаторв
+        rights.release();
 
         queryResult = (Boolean) m.getQueryResult();
 //        querySource = m.getQuerySource();
@@ -225,6 +232,7 @@ public class Mind {
 
         solves.clear();
         values.clear();
+        results.clear();
         hypotesis.clear();
         excluded.clear();
 
@@ -308,6 +316,10 @@ public class Mind {
 
     public RightFactory getRights() {
         return rights;
+    }
+
+    public ResultsStore getResults() {
+        return results;
     }
 
 //    public TreeFactory getTrees() {
@@ -567,6 +579,10 @@ public class Mind {
 
     public Map<Domain, Map<ArgList, SortedSet<TValue>>> getDomainSolves() {
         return domainSolves;
+    }
+
+    public Map<Long, Set<Right>> getUsedRights() {
+        return usedRights;
     }
 
 //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {

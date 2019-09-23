@@ -5,7 +5,6 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.storage.Cache;
-import kanger.storage.RightsCache;
 import kanger.units.*;
 
 import java.util.*;
@@ -20,7 +19,7 @@ public class RightFactory implements Iterable<Right> {
     private long lastId = 0;
     private long firstId = 0;
 
-    private RightsCache cache = new RightsCache();
+    private Cache cache = new Cache();
     private Cache stored = new Cache();
     private Cache links = new Cache();
     private User user = null;
@@ -43,6 +42,19 @@ public class RightFactory implements Iterable<Right> {
         } else {
             lastId = 0;
             firstId = 0;
+        }
+    }
+
+    public void release() {
+        for (Object o : links) {
+            Set<Long> toDelete = new HashSet<>();
+            for (long id : (Set<Long>) o) {
+                if (cache.get(id) == null) {
+                    toDelete.add(id);
+                }
+            }
+            //TODO: Не известно как поведет себя в сохраняемом варианте
+            ((Set<Long>) o).removeAll(toDelete);
         }
     }
 
@@ -86,19 +98,13 @@ public class RightFactory implements Iterable<Right> {
         return r;
     }
 
-    public void reindex() throws RuntimeErrorException {
-        if (!user.isClosed()) {
-            //TODO: Переиндексация после открытия БД
-        }
-    }
+//    public void reindex() throws RuntimeErrorException {
+//        if (!user.isClosed()) {
+//            //TODO: Переиндексация после открытия БД
+//        }
+//    }
+//
 
-    public void addSolve(Right query, Right solve) {
-        cache.addSolve(query, solve);
-    }
-
-    public void addSolve(Right query) {
-        cache.addSolve(query);
-    }
 
     public void expand(Right r) throws RuntimeErrorException {
         for (List<Domain> tree : r.getTree()) {
@@ -184,25 +190,12 @@ public class RightFactory implements Iterable<Right> {
         return cache.iterator();
     }
 
-    public RightsCache.Solves getSolves() {
-        return cache.getSolves();
-    }
-
-    public RightsCache.Values getValues() {
-        return cache.getValues();
-    }
-
     public long getLastId() {
         return lastId;
     }
 
     public long getFirstId() {
         return firstId;
-    }
-
-    public RightsCache use(RightsCache cache) {
-        this.cache = cache;
-        return cache;
     }
 
     // ****************** DATABASE

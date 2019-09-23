@@ -138,8 +138,4 @@ public class DomainFactory implements Iterable<Domain> {
         return cache.iterator();
     }
 
-    public Cache use(Cache cache) {
-        this.cache = cache;
-        return cache;
-    }
 }

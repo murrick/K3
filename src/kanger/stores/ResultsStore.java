@@ -1,47 +1,23 @@
-package kanger.storage;
+package kanger.stores;
 
-import kanger.interfaces.Identifiable;
+import kanger.User;
 import kanger.units.Right;
 import kanger.units.TValue;
 
 import java.util.*;
 
-public class RightsCache extends Cache {
+public class ResultsStore {
 
     private NavigableMap<Long, Long> solves;
     private NavigableMap<Long, SortedSet<TValue>> tagsOrdinal;
     private NavigableMap<Long, SortedSet<TValue>> tagsSystem;
+    private User user = null;
 
-    public RightsCache() {
-        super();
-        solves = new TreeMap<>();
-        tagsOrdinal = new TreeMap<>();
-        tagsSystem = new TreeMap<>();
-    }
-
-    @Override
-    public void add(Identifiable one) {
-        super.add(one);
-    }
-
-    public void add(RightsCache base) {
-        super.add(base);
-    }
-
-    @Override
-    public void remove(long id) {
-        super.remove(id);
-    }
-
-    @Override
-    public void clear() {
-        super.clear();
-    }
-
-    @Override
-    public long release() {
-        long id = super.release();
-        return id;
+    public ResultsStore(User user) {
+        this.user = user;
+        this.solves = new TreeMap<>();
+        this.tagsOrdinal = new TreeMap<>();
+        this.tagsSystem = new TreeMap<>();
     }
 
     public void addSolve(Right query, Right solve) {
@@ -76,6 +52,15 @@ public class RightsCache extends Cache {
 
     public Solves getSolves() {
         return new Solves();
+    }
+
+    public void commit(ResultsStore results) {
+    }
+
+    public void clear() {
+        solves.clear();
+        tagsOrdinal.clear();
+        tagsSystem.clear();
     }
 
     public class Solves implements Iterable<Right> {
@@ -125,9 +110,9 @@ public class RightsCache extends Cache {
                 currentId = solves.higherKey(currentId);
                 long solveId = solves.get(currentId);
                 if (solveId != -1) {
-                    return (Right) get(solveId);
+                    return (Right) user.getMind().getRights().get(solveId);
                 } else {
-                    return (Right) get(currentId);
+                    return (Right) user.getMind().getRights().get(currentId);
                 }
             }
         }
@@ -169,7 +154,7 @@ public class RightsCache extends Cache {
                 } else {
                     Long nextId;
                     while ((nextId = solves.higherKey(currentId)) != null) {
-                        currentRight = (Right) get(nextId);
+                        currentRight = (Right) user.getMind().getRights().get(nextId);
                         if (currentRight.getSolves() != null && !currentRight.getSolves().isEmpty()) {
                             return true;
                         } else {

@@ -773,7 +773,7 @@ public class Analiser {
         for (long id : user.getMind().getRights().getDatabase(-1)) {
             Right p = user.getMind().getRights().get(id);
             if (p.getDomain().isCalculated()) {
-                user.getMind().getRights().addSolve(p);
+                user.getMind().getResults().addSolve(p);
 
 //                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
 //                    user.getMind().getValues().add(v);
@@ -825,7 +825,7 @@ public class Analiser {
 //                    }
 
                         if (p.getDomain().isQuery()) {
-                            user.getMind().getRights().addSolve(p, q);
+                            user.getMind().getResults().addSolve(p, q);
                             user.getMind().getSolutions().add(q);
                             user.getMind().getValues().addData(p.getSolves());
 //                            for (Argument a : p.getDomain().getArguments()) {
@@ -834,7 +834,7 @@ public class Analiser {
 //                                }
 //                            }
                         } else if (q.getDomain().isQuery()) {
-                            user.getMind().getRights().addSolve(q, p);
+                            user.getMind().getResults().addSolve(q, p);
                             user.getMind().getSolutions().add(p);
                             user.getMind().getValues().addData(q.getSolves());
 //                            System.out.println("!!!!!!--- " + q.getSolves());

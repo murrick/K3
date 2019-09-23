@@ -102,8 +102,4 @@ public class FunctionFactory implements Iterable<Function> {
         return cache.iterator();
     }
 
-    public Cache use(Cache cache) {
-        this.cache = cache;
-        return cache;
-    }
 }

@@ -91,8 +91,4 @@ public class TVariableFactory {
         return cache.size();
     }
 
-    public Cache use(Cache cache) {
-        this.cache = cache;
-        return cache;
-    }
 }
