@@ -531,7 +531,7 @@ public class Analiser {
 //            }
 
             boolean occurs = false;
-            for (Right r : user.getMind().getRights().getDatabase()) {
+            for (Right r : user.getMind().getRights().getDatabase(-1)) {
                 if (r.getId() < user.getMind().getRights().getFirstId()) {
                     break;
                 }
@@ -769,7 +769,7 @@ public class Analiser {
     public boolean checkDatabase(boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
-        for (Right p : user.getMind().getRights().getDatabase()) {
+        for (Right p : user.getMind().getRights().getDatabase(-1)) {
             if (p.getDomain().isCalculated()) {
                 user.getMind().getRights().addSolve(p);
 

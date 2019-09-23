@@ -39,6 +39,11 @@ public class DictionaryFactory {
         transaction(null);
     }
 
+    public Cache use(Cache cache) {
+        this.cache = cache;
+        return cache;
+    }
+
     public void transaction(DictionaryFactory base) {
         cache.clear();
 //        load.clear();

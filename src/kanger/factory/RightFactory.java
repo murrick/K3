@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
+import kanger.storage.Cache;
 import kanger.storage.RightsCache;
 import kanger.units.*;
 
@@ -22,6 +23,7 @@ public class RightFactory implements Iterable<Right> {
     private long firstId = 0;
 
     private RightsCache cache = new RightsCache();
+    private Cache stored = new Cache();
     private User user = null;
 
     public RightFactory(User user) {
@@ -31,10 +33,12 @@ public class RightFactory implements Iterable<Right> {
 
     public void transaction(RightFactory base) {
         cache.clear();
+        stored.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             cache.add(base.cache);
+            stored.add(base.stored);
         } else {
             lastId = 0;
             firstId = 0;
@@ -64,6 +68,9 @@ public class RightFactory implements Iterable<Right> {
     public Right add(Right r) {
         r.setId(lastId++);
         cache.add(r);
+        if (r.isStored()) {
+            stored.add(r);
+        }
         return r;
     }
 
@@ -109,7 +116,7 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public int size() {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+        return cache.size();
     }
 
     public Right add(Domain domain) throws RuntimeErrorException {
@@ -141,6 +148,8 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right store(Domain d) {
+        d.getRight().setStored();
+        stored.add(d.getRight());
         cache.setStored(d.getRight());
         return d.getRight();
     }
@@ -158,14 +167,6 @@ public class RightFactory implements Iterable<Right> {
     @Override
     public Iterator iterator() {
         return cache.iterator();
-    }
-
-    public RightsCache.Database getDatabase() {
-        return cache.getDatabase(-1);
-    }
-
-    public RightsCache.Database getDatabase(long fromId) {
-        return cache.getDatabase(fromId);
     }
 
     public RightsCache.Links getLinks(Predicate predicate) {
@@ -187,4 +188,36 @@ public class RightFactory implements Iterable<Right> {
     public long getFirstId() {
         return firstId;
     }
+
+    public RightsCache use(RightsCache cache) {
+        this.cache = cache;
+        return cache;
+    }
+
+    // ****************** DATABASE
+
+    public Database getDatabase(long fromId) {
+//        return cache.getDatabase(fromId);
+        return new Database(fromId);
+    }
+
+    public class Database implements Iterable<Right> {
+
+        private long fromId = -1;
+
+        public Database(long fromId) {
+            this.fromId = fromId;
+        }
+
+        @Override
+        public Iterator iterator() {
+            return stored.iterator(true, fromId);
+        }
+
+        public int size() {
+            return stored.size();
+        }
+
+    }
+
 }

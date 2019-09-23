@@ -88,7 +88,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     public Set<Domain> getSolves() {
         Set<Domain> set = new HashSet<>();
-        for (Right d : user.getMind().getRights().getDatabase()) {
+        for (Right d : user.getMind().getRights().getDatabase(-1)) {
             if (getId() == d.getDomain().getPredicate().getId()) {
                 set.add(d.getDomain());
             }

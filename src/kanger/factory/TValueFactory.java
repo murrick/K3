@@ -147,6 +147,11 @@ public class TValueFactory {
         return new TValueIterator(true, null);
     }
 
+    public Cache use(Cache cache) {
+        this.cache = cache;
+        return cache;
+    }
+
     public class TValueIterator implements Iterator {
 
         private TVariable tVariable;
@@ -155,7 +160,7 @@ public class TValueFactory {
 
         public TValueIterator(boolean backward, TVariable tVariable) {
             this.tVariable = tVariable;
-            iterator = cache.iterator(backward);
+            iterator = cache.iterator(backward, -1);
         }
 
         @Override

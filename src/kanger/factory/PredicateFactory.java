@@ -109,4 +109,8 @@ public class PredicateFactory implements Iterable<Predicate> {
         return cache.iterator();
     }
 
+    public Cache use(Cache cache) {
+        this.cache = cache;
+        return cache;
+    }
 }

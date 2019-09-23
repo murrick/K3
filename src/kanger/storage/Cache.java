@@ -157,11 +157,11 @@ public class Cache implements Iterable {
 
     @Override
     public Iterator<Identifiable> iterator() {
-        return new CacheIterator(true);
+        return new CacheIterator(true, -1);
     }
 
-    public Iterator<Identifiable> iterator(boolean backward) {
-        return new CacheIterator(backward);
+    public Iterator<Identifiable> iterator(boolean backward, long fromId) {
+        return new CacheIterator(backward, fromId);
     }
 
     public class CacheIterator implements Iterator<Identifiable> {
@@ -176,9 +176,18 @@ public class Cache implements Iterable {
             block.putAll(index);
         }
 
-        public CacheIterator(boolean backward) {
+        public CacheIterator(boolean backward, long fromId) {
             this();
+            this.currentId = fromId;
             this.backward = backward;
+//            if(fromId >= 0) {
+//                get(fromId);
+//                if(!backward) {
+//                    currentId = getPrevious(currentId, block);
+//                } else {
+//                    currentId = getNext(currentId, block);
+//                }
+//            }
         }
 
         @Override

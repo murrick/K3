@@ -119,4 +119,8 @@ public class FValueFactory {
         return lastId;
     }
 
+    public Cache use(Cache cache) {
+        this.cache = cache;
+        return cache;
+    }
 }

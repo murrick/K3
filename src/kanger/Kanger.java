@@ -55,6 +55,7 @@ public class Kanger {
 
         User user = new User();
         Mind mind = new Mind(user);
+        user.use("data/memory");
 
 //        try (Storage data = new Storage().open("test")) {
 //            Term t = mind.getTerms().add("Это просто ноль");
