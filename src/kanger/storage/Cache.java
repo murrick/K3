@@ -6,8 +6,8 @@ import java.util.*;
 
 public class Cache implements Iterable {
 
-    protected NavigableMap<Long, Identifiable> index;
-    private Map<Integer, Set<Identifiable>> hash;
+    protected NavigableMap<Long, Object> index;
+    private Map<Integer, Set<Object>> hash;
     private Stack<Long> stack;
 
     public Cache() {
@@ -25,12 +25,21 @@ public class Cache implements Iterable {
         hash.get(h).add(one);
     }
 
+    public void add(long id, Object one) {
+        index.put(id, one);
+        int h = one.hashCode();
+        if (!hash.containsKey(h)) {
+            hash.put(h, new HashSet<>());
+        }
+        hash.get(h).add(one);
+    }
+
     public void add(Cache cache) {
         index.putAll(cache.index);
         hash.putAll(cache.hash);
     }
 
-    public Identifiable get(long id) {
+    public Object get(long id) {
         return index.get(id);
     }
 
@@ -58,8 +67,8 @@ public class Cache implements Iterable {
         }
     }
 
-    public List<Identifiable> find(int h) {
-        List<Identifiable> list = new ArrayList<>();
+    public List<Object> find(int h) {
+        List<Object> list = new ArrayList<>();
         if (hash.containsKey(h)) {
             list.addAll(hash.get(h));
         }
@@ -67,9 +76,9 @@ public class Cache implements Iterable {
     }
 
     public void remove(long id) {
-        Identifiable one = get(id);
+        Object one = get(id);
         if(one != null) {
-            int h = one.getHash();
+            int h = (one instanceof Identifiable) ? ((Identifiable) one).getHash() : one.hashCode();
             if(hash.containsKey(h)) {
                 hash.get(h).remove(one);
                 if(hash.get(h).isEmpty()) {
@@ -128,7 +137,7 @@ public class Cache implements Iterable {
         return index.containsKey(id);
     }
 
-    protected long getNext(long id, NavigableMap<Long, Identifiable> block)  {
+    protected long getNext(long id, NavigableMap<Long, Object> block) {
         if(block.isEmpty()) {
             return -1;
         } else {
@@ -141,7 +150,7 @@ public class Cache implements Iterable {
         }
     }
 
-    protected long getPrevious(long id, NavigableMap<Long, Identifiable> block) {
+    protected long getPrevious(long id, NavigableMap<Long, Object> block) {
         if(block.isEmpty()) {
             return -1;
         } else {
@@ -156,17 +165,17 @@ public class Cache implements Iterable {
 
 
     @Override
-    public Iterator<Identifiable> iterator() {
+    public Iterator<Object> iterator() {
         return new CacheIterator(true, -1);
     }
 
-    public Iterator<Identifiable> iterator(boolean backward, long fromId) {
+    public Iterator<Object> iterator(boolean backward, long fromId) {
         return new CacheIterator(backward, fromId);
     }
 
-    public class CacheIterator implements Iterator<Identifiable> {
+    public class CacheIterator implements Iterator<Object> {
 
-        private NavigableMap<Long, Identifiable> block = new TreeMap<>();
+        private NavigableMap<Long, Object> block = new TreeMap<>();
 
         private long currentId = 0;
         private boolean backward = false;
@@ -205,7 +214,7 @@ public class Cache implements Iterable {
         }
 
         @Override
-        public Identifiable next() {
+        public Object next() {
                 if(backward) {
                     currentId = getPrevious(currentId, block);
                 } else {

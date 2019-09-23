@@ -91,8 +91,8 @@ public class TValueFactory {
 
     public TValue find(TVariable tv, Term v) throws RuntimeErrorException {
         TValue temp = new TValue(tv, v);
-        for (Identifiable one : cache.find(temp.getHash())) {
-            if (one.equalsTo(temp)) {
+        for (Object one : cache.find(temp.getHash())) {
+            if (((Identifiable) one).equalsTo(temp)) {
                 return (TValue) one;
             }
         }

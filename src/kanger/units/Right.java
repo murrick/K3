@@ -145,7 +145,8 @@ public class Right implements Externalizable, Identifiable<Right> {
         Set<Right> list = new HashSet<>();
         for (List<Domain> t : tree) {
             for (Domain d : t) {
-                for (Right r : user.getMind().getRights().getLinks(d.getPredicate())) {
+                for (long id : user.getMind().getRights().getLinks(d.getPredicate())) {
+                    Right r = user.getMind().getRights().get(id);
                     list.add(r);
                 }
             }

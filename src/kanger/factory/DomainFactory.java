@@ -103,8 +103,8 @@ public class DomainFactory implements Iterable<Domain> {
 
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws RuntimeErrorException {
         Domain temp = new Domain(pred, antc, arg, r);
-        for (Identifiable one : cache.find(temp.getHash())) {
-            if (one.equalsTo(temp)) {
+        for (Object one : cache.find(temp.getHash())) {
+            if (((Identifiable) one).equalsTo(temp)) {
                 return (Domain) one;
             }
         }

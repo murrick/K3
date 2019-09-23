@@ -99,8 +99,8 @@ public class DictionaryFactory {
 
     public Term find(Object o) throws RuntimeErrorException {
         Term t = new Term(o, user);
-        for (Identifiable one : cache.find(t.getHash())) {
-            if (one.equalsTo(t)) {
+        for (Object one : cache.find(t.getHash())) {
+            if (((Identifiable) one).equalsTo(t)) {
                 return (Term) one;
             }
         }

@@ -282,7 +282,7 @@ public class Screen {
                                     case 'm':
                                     case 'M':
                                         System.out.println("Memory status:");
-                                        System.out.println("Database: " + mind.getRights().getDatabase(-1).size());
+                                        System.out.println("Database: " + mind.getRights().storedSize());
                                         System.out.println("Dictionary: " + mind.getTerms().size());
                                         System.out.println("Domains: " + mind.getDomains().size());
                                         System.out.println("Functions: " + mind.getFunctions().size());

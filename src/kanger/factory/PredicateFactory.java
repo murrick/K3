@@ -78,8 +78,8 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public Predicate find(Term line, int range) throws RuntimeErrorException {
         Predicate temp = new Predicate(line, range);
-        for (Identifiable one : cache.find(temp.getHash())) {
-            if (one.equalsTo(temp)) {
+        for (Object one : cache.find(temp.getHash())) {
+            if (((Identifiable) one).equalsTo(temp)) {
                 return (Predicate) one;
             }
         }

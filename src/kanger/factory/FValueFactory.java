@@ -75,8 +75,8 @@ public class FValueFactory {
 
     public FValue find(Function f) throws RuntimeErrorException {
         FValue temp = new FValue(f, user);
-        for (Identifiable one : cache.find(temp.getHash())) {
-            if (one.equalsTo(f)) {
+        for (Object one : cache.find(temp.getHash())) {
+            if (((Identifiable) one).equalsTo(f)) {
                 return (FValue) one;
             }
         }

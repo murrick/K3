@@ -8,9 +8,7 @@ import kanger.storage.Cache;
 import kanger.storage.RightsCache;
 import kanger.units.*;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by murray on 25.05.15.
@@ -24,6 +22,7 @@ public class RightFactory implements Iterable<Right> {
 
     private RightsCache cache = new RightsCache();
     private Cache stored = new Cache();
+    private Cache links = new Cache();
     private User user = null;
 
     public RightFactory(User user) {
@@ -34,11 +33,13 @@ public class RightFactory implements Iterable<Right> {
     public void transaction(RightFactory base) {
         cache.clear();
         stored.clear();
+        links.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             cache.add(base.cache);
             stored.add(base.stored);
+            links.add(base.links);
         } else {
             lastId = 0;
             firstId = 0;
@@ -69,7 +70,18 @@ public class RightFactory implements Iterable<Right> {
         r.setId(lastId++);
         cache.add(r);
         if (r.isStored()) {
-            stored.add(r);
+            stored.add(r.getId(), r.getId());
+        }
+        for (List<Domain> list : r.getTree()) {
+            for (Domain d : list) {
+                long predicateId = d.getPredicate().getId();
+                Set<Long> set = (Set<Long>) links.get(predicateId);
+                if (set == null) {
+                    set = new HashSet<>();
+                    links.add(predicateId, set);
+                }
+                set.add(r.getId());
+            }
         }
         return r;
     }
@@ -119,6 +131,10 @@ public class RightFactory implements Iterable<Right> {
         return cache.size();
     }
 
+    public int storedSize() {
+        return stored.size();
+    }
+
     public Right add(Domain domain) throws RuntimeErrorException {
         Right p = find(domain);
         if (p != null) {
@@ -149,13 +165,12 @@ public class RightFactory implements Iterable<Right> {
 
     public Right store(Domain d) {
         d.getRight().setStored();
-        stored.add(d.getRight());
-        cache.setStored(d.getRight());
+        stored.add(d.getRight().getId(), d.getRight().getId());
         return d.getRight();
     }
 
     public Right find(Domain domain) throws RuntimeErrorException {
-        for (Identifiable one : cache.find(domain.getHashBase())) {
+        for (Object one : cache.find(domain.getHashBase())) {
             if (((Right) one).equalsTo(domain)) {
                 return (Right) one;
             }
@@ -167,10 +182,6 @@ public class RightFactory implements Iterable<Right> {
     @Override
     public Iterator iterator() {
         return cache.iterator();
-    }
-
-    public RightsCache.Links getLinks(Predicate predicate) {
-        return cache.getLinks(predicate);
     }
 
     public RightsCache.Solves getSolves() {
@@ -196,28 +207,25 @@ public class RightFactory implements Iterable<Right> {
 
     // ****************** DATABASE
 
-    public Database getDatabase(long fromId) {
-//        return cache.getDatabase(fromId);
-        return new Database(fromId);
+    public Iterable<Long> getDatabase(long fromId) {
+        return new Iterable<Long>() {
+            @Override
+            public Iterator iterator() {
+                return stored.iterator(true, fromId);
+            }
+        };
     }
 
-    public class Database implements Iterable<Right> {
+    // ****************** LINKS
 
-        private long fromId = -1;
-
-        public Database(long fromId) {
-            this.fromId = fromId;
-        }
-
-        @Override
-        public Iterator iterator() {
-            return stored.iterator(true, fromId);
-        }
-
-        public int size() {
-            return stored.size();
-        }
-
+    public Iterable<Long> getLinks(Predicate predicate) {
+        return new Iterable<Long>() {
+            @Override
+            public Iterator<Long> iterator() {
+                return ((Set<Long>) links.get(predicate.getId())).iterator();
+            }
+        };
     }
+
 
 }

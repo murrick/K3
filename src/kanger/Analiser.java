@@ -531,7 +531,8 @@ public class Analiser {
 //            }
 
             boolean occurs = false;
-            for (Right r : user.getMind().getRights().getDatabase(-1)) {
+            for (long id : user.getMind().getRights().getDatabase(-1)) {
+                Right r = user.getMind().getRights().get(id);
                 if (r.getId() < user.getMind().getRights().getFirstId()) {
                     break;
                 }
@@ -769,7 +770,8 @@ public class Analiser {
     public boolean checkDatabase(boolean logging) throws RuntimeErrorException {
 
         boolean result = false;
-        for (Right p : user.getMind().getRights().getDatabase(-1)) {
+        for (long id : user.getMind().getRights().getDatabase(-1)) {
+            Right p = user.getMind().getRights().get(id);
             if (p.getDomain().isCalculated()) {
                 user.getMind().getRights().addSolve(p);
 
@@ -786,7 +788,8 @@ public class Analiser {
                 }
                 result = true;
             } else {
-                for (Right q : user.getMind().getRights().getDatabase(p.getId())) {
+                for (long iq : user.getMind().getRights().getDatabase(p.getId())) {
+                    Right q = user.getMind().getRights().get(iq);
                     if (//q.getId() < p.getId()                            &&
                             p.getDomain().equalsBase(q.getDomain())
                                     && p.getDomain().isAntc() != q.getDomain().isAntc()) {
