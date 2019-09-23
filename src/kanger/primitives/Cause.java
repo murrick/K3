@@ -4,7 +4,10 @@ import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.units.Domain;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 public class Cause implements Externalizable, Comparable<Cause> {
     private Domain src = null;
@@ -43,19 +46,13 @@ public class Cause implements Externalizable, Comparable<Cause> {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        if(src == null && srcId != -1) {
+        if (src == null && srcId != -1) {
             src = user.getMind().getDomains().get(srcId);
-            if(src == null) {
-                src = user.getMind().getDomains().load(srcId);
-                src.linkExternal(user);
-            }
+            src.linkExternal(user);
         }
-        if(dst == null && dstId != -1) {
+        if (dst == null && dstId != -1) {
             dst = user.getMind().getDomains().get(dstId);
-            if(dst == null) {
-                dst = user.getMind().getDomains().load(dstId);
-                dst.linkExternal(user);
-            }
+            dst.linkExternal(user);
         }
         arguments.linkExternal(user);
     }

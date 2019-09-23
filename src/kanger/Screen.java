@@ -14,7 +14,6 @@ import kanger.interfaces.Reactor;
 import kanger.primitives.Cause;
 import kanger.primitives.Hypotese;
 import kanger.primitives.LogEntry;
-import kanger.storage.Storage;
 import kanger.test.KangerTest;
 import kanger.units.*;
 
@@ -224,7 +223,7 @@ public class Screen {
                                     user.reindex(new Reactor() {
                                         @Override
                                         public Object run(Object o) {
-                                            System.out.println("Processing " + ((Storage) o).getName());
+                                            System.out.println("Processing " + o);
                                             return null;
                                         }
                                     });

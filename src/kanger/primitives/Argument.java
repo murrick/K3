@@ -6,7 +6,10 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.units.*;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Created by murray on 26.05.15.
@@ -40,42 +43,27 @@ public class Argument implements Externalizable {
     }
 
     public void linkExternal(User user) throws RuntimeErrorException {
-        if(o == null && type != ArgumentType.EMPTY) {
+        if (o == null && type != ArgumentType.EMPTY) {
             switch (type) {
                 case TERM:
                     o = user.getMind().getTerms().get(id);
-                    if (o == null) {
-                        o = user.getMind().getTerms().load(id);
-                        o.linkExternal(user);
-                    }
+                    o.linkExternal(user);
                     break;
                 case TVRIABLE:
                     o = user.getMind().getTVars().get(id);
-                    if (o == null) {
-                        o = user.getMind().getTVars().load(id);
-                        o.linkExternal(user);
-                    }
+                    o.linkExternal(user);
                     break;
                 case TVALUE:
                     o = user.getMind().getTValues().get(id);
-                    if (o == null) {
-                        o = user.getMind().getTValues().load(id);
-                        o.linkExternal(user);
-                    }
+                    o.linkExternal(user);
                     break;
                 case FUNCTION:
                     o = user.getMind().getFunctions().get(id);
-                    if (o == null) {
-                        o = user.getMind().getFunctions().load(id);
-                        o.linkExternal(user);
-                    }
+                    o.linkExternal(user);
                     break;
                 case FVALUE:
                     o = user.getMind().getFValues().get(id);
-                    if (o == null) {
-                        o = user.getMind().getFValues().load(id);
-                        o.linkExternal(user);
-                    }
+                    o.linkExternal(user);
                     break;
                 default:
                     o = null;
@@ -122,7 +110,7 @@ public class Argument implements Externalizable {
                 o = t;
                 return true;
             case TERM:
-                if(!((Term)o).isCVariable()) {
+                if (!((Term) o).isCVariable()) {
                     o = t;
                     return true;
                 } else {

@@ -3,14 +3,11 @@ package kanger.factory;
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
-import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
-import kanger.storage.Storage;
 import kanger.units.TValue;
 import kanger.units.TVariable;
 import kanger.units.Term;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -27,7 +24,6 @@ public class TValueFactory {
     private Map<TVariable, TValue> current = new HashMap<>();
 
     private Cache cache = new Cache();
-    private Cache load = new Cache();
     private User user = null;
 
     public TValueFactory(User user) {
@@ -37,7 +33,6 @@ public class TValueFactory {
 
     public void transaction(TValueFactory base) {
         cache.clear();
-        load.clear();
         current.clear();
         if (base != null) {
             lastId = base.lastId;
@@ -51,8 +46,8 @@ public class TValueFactory {
 
     public void commit(TValueFactory base) {
         List<TValue> list = new ArrayList();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add(0, (TValue) p);
@@ -65,19 +60,8 @@ public class TValueFactory {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -112,42 +96,13 @@ public class TValueFactory {
                 return (TValue) one;
             }
         }
-        if (!user.isClosed()) {
-            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
-                one.linkExternal(user);
-                if (one.equalsTo(temp)) {
-                    return (TValue) one;
-                }
-            }
-        }
         return null;
     }
 
     public TValue get(long id) {
         TValue t = (TValue) cache.get(id);
-        if (t == null) {
-            t = (TValue) load.get(id);
-        }
         return t;
     }
-
-    public TValue load(long id) throws RuntimeErrorException {
-        TValue t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (TValue) user.getStorage(SCHEMA).get(id);
-                t.linkExternal(user);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
-        return t;
-    }
-
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -185,38 +140,37 @@ public class TValueFactory {
     }
 
     public Iterator<TValue> iterator(TVariable tVariable) {
-        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new TValueIterator(false, tVariable, cache, storage);
+        return new TValueIterator(false, tVariable);
     }
 
     public Iterator<TValue> iterator() {
-        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new TValueIterator(true, null, cache, storage);
+        return new TValueIterator(true, null);
     }
 
-    public class TValueIterator extends DataIterator {
+    public class TValueIterator implements Iterator {
 
         private TVariable tVariable;
         private TValue next = null;
+        private Iterator iterator = null;
 
-        public TValueIterator(boolean backward, TVariable tVariable, Cache cache, Storage storage) {
-            super(backward, cache, storage, user);
+        public TValueIterator(boolean backward, TVariable tVariable) {
             this.tVariable = tVariable;
+            iterator = cache.iterator(backward);
         }
 
         @Override
         public boolean hasNext() {
             if (tVariable != null) {
-                while (super.hasNext()) {
-                    next = (TValue) super.next();
+                while (iterator.hasNext()) {
+                    next = (TValue) iterator.next();
                     if (next.getTVar().getId() == tVariable.getId()) {
                         return true;
                     }
                 }
                 next = null;
             } else {
-                if (super.hasNext()) {
-                    next = (TValue) super.next();
+                if (iterator.hasNext()) {
+                    next = (TValue) iterator.next();
                     return true;
                 }
             }

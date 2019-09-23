@@ -8,7 +8,6 @@ import kanger.units.Right;
 import kanger.units.TVariable;
 import kanger.units.Term;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +23,6 @@ public class TVariableFactory {
     private long firstId = 0;
 
     private Cache cache = new Cache();
-    private Cache load = new Cache();
     private User user = null;
 
     public TVariableFactory(User user) {
@@ -34,7 +32,6 @@ public class TVariableFactory {
 
     public void transaction(TVariableFactory base) {
         cache.clear();
-        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -47,8 +44,8 @@ public class TVariableFactory {
 
     public void commit(TVariableFactory base, Collection vars) {
         List<TVariable> list = new ArrayList();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add(0, (TVariable) p);
@@ -62,19 +59,8 @@ public class TVariableFactory {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -90,28 +76,8 @@ public class TVariableFactory {
 
     public TVariable get(long id) {
         TVariable t = (TVariable) cache.get(id);
-        if (t == null) {
-            t = (TVariable) load.get(id);
-        }
         return t;
     }
-
-    public TVariable load(long id) throws RuntimeErrorException {
-        TVariable t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (TVariable) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
-        return t;
-    }
-
 
     public void clear() {
         if (user.getMind().getNext() != null) {
@@ -122,7 +88,7 @@ public class TVariableFactory {
     }
 
     public int size() {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+        return cache.size();
     }
 
 }

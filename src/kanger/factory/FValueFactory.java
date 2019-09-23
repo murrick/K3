@@ -7,7 +7,6 @@ import kanger.storage.Cache;
 import kanger.units.FValue;
 import kanger.units.Function;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +18,6 @@ public class FValueFactory {
     private long firstId = 0;
 
     private Cache cache = new Cache();
-    private Cache load = new Cache();
     private User user = null;
 
     public FValueFactory(User user) {
@@ -29,7 +27,6 @@ public class FValueFactory {
 
     public void transaction(FValueFactory base) {
         cache.clear();
-        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -42,8 +39,8 @@ public class FValueFactory {
 
     public void commit(FValueFactory base) {
         List<FValue> list = new ArrayList();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add(0, (FValue) p);
@@ -56,19 +53,8 @@ public class FValueFactory {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -94,38 +80,11 @@ public class FValueFactory {
                 return (FValue) one;
             }
         }
-        if (!user.isClosed()) {
-            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
-                one.linkExternal(user);
-                if (one.equalsTo(f)) {
-                    return (FValue) one;
-                }
-            }
-        }
         return null;
     }
 
     public FValue get(long id) {
         FValue t = (FValue) cache.get(id);
-        if (t == null) {
-            t = (FValue) load.get(id);
-        }
-        return t;
-    }
-
-    public FValue load(long id) throws RuntimeErrorException {
-        FValue t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (FValue) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
         return t;
     }
 
@@ -153,7 +112,7 @@ public class FValueFactory {
 
 
     public int size() {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+        return cache.size();
     }
 
     public long getLastId() {

@@ -5,14 +5,11 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
-import kanger.storage.Storage;
 import kanger.units.Domain;
 import kanger.units.Predicate;
 import kanger.units.Right;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -28,7 +25,7 @@ public class DomainFactory implements Iterable<Domain> {
     private Set<Domain> waiters = new HashSet<>();
 
     private Cache cache = new Cache();
-    private Cache load = new Cache();
+    //    private Cache load = new Cache();
     private User user = null;
 
     public DomainFactory(User user) {
@@ -38,7 +35,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void transaction(DomainFactory base) {
         cache.clear();
-        load.clear();
+//        load.clear();
         waiters.clear();
         if (base != null) {
             lastId = base.lastId;
@@ -53,8 +50,8 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void commit(DomainFactory base) {
         List<Domain> list = new ArrayList();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add(0, (Domain) p);
@@ -68,19 +65,8 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -122,49 +108,14 @@ public class DomainFactory implements Iterable<Domain> {
                 return (Domain) one;
             }
         }
-        if (!user.isClosed()) {
-            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
-                one.linkExternal(user);
-                if (one.equalsTo(temp)) {
-                    return (Domain) one;
-                }
-            }
-        }
         return null;
     }
 
     public Domain get(long id) {
         Domain t = (Domain) cache.get(id);
-        if (t == null) {
-            t = (Domain) load.get(id);
-        }
         return t;
     }
 
-    public Domain load(long id) throws RuntimeErrorException {
-        Domain t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (Domain) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
-        return t;
-    }
-
-//    public Domain getRoot() {
-//        return root;
-//    }
-//
-//    public void setRoot(Domain o) {
-//        root = o;
-//    }
-//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getDomains());
@@ -175,7 +126,7 @@ public class DomainFactory implements Iterable<Domain> {
 
 
     public int size() {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+        return cache.size();
     }
 
     public Set<Domain> getWaiters() {
@@ -183,9 +134,8 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     @Override
-    public Iterator<Domain> iterator() {
-        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage, user);
+    public Iterator iterator() {
+        return cache.iterator();
     }
 
 }

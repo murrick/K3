@@ -56,10 +56,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         this.user = user;
         if (name == null && nameId != -1) {
             name = user.getMind().getTerms().get(nameId);
-            if (name == null) {
-                name = user.getMind().getTerms().load(nameId);
-                name.linkExternal(user);
-            }
+            name.linkExternal(user);
         }
     }
 

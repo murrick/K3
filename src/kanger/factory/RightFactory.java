@@ -4,12 +4,9 @@ import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
-import kanger.primitives.DataIterator;
 import kanger.storage.RightsCache;
-import kanger.storage.Storage;
 import kanger.units.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +22,6 @@ public class RightFactory implements Iterable<Right> {
     private long firstId = 0;
 
     private RightsCache cache = new RightsCache();
-    private RightsCache load = new RightsCache();
     private User user = null;
 
     public RightFactory(User user) {
@@ -35,7 +31,6 @@ public class RightFactory implements Iterable<Right> {
 
     public void transaction(RightFactory base) {
         cache.clear();
-        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -48,8 +43,8 @@ public class RightFactory implements Iterable<Right> {
 
     public void commit(RightFactory base) {
         List<Right> list = new ArrayList();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add(0, (Right) p);
@@ -61,19 +56,8 @@ public class RightFactory implements Iterable<Right> {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -85,10 +69,7 @@ public class RightFactory implements Iterable<Right> {
 
     public void reindex() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            for (Identifiable r : user.getStorage(SCHEMA)) {
-                r.linkExternal(user);
-                cache.add(r);
-            }
+            //TODO: Переиндексация после открытия БД
         }
     }
 
@@ -116,26 +97,6 @@ public class RightFactory implements Iterable<Right> {
 
     public Right get(long id) {
         Right t = (Right) cache.get(id);
-        if (t == null) {
-            t = (Right) load.get(id);
-        }
-        return t;
-    }
-
-    public Right load(long id) throws RuntimeErrorException {
-        Right t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (Right) user.getStorage(SCHEMA).get(id);
-                t.linkExternal(user);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
         return t;
     }
 
@@ -190,22 +151,13 @@ public class RightFactory implements Iterable<Right> {
                 return (Right) one;
             }
         }
-        if (!user.isClosed()) {
-            for (Identifiable one : user.getStorage(SCHEMA).find(domain.getHashBase())) {
-                one.linkExternal(user);
-                if (((Right) one).equalsTo(domain)) {
-                    return (Right) one;
-                }
-            }
-        }
         return null;
     }
 
 
     @Override
-    public Iterator<Right> iterator() {
-        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage, user);
+    public Iterator iterator() {
+        return cache.iterator();
     }
 
     public RightsCache.Database getDatabase() {

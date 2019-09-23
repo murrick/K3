@@ -4,7 +4,7 @@ import kanger.interfaces.Identifiable;
 
 import java.util.*;
 
-public class Cache implements Iterable<Identifiable> {
+public class Cache implements Iterable {
 
     protected NavigableMap<Long, Identifiable> index;
     private Map<Integer, Set<Identifiable>> hash;

@@ -8,7 +8,6 @@ import kanger.storage.Cache;
 import kanger.units.Right;
 import kanger.units.Term;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,7 +26,7 @@ public class DictionaryFactory {
 
     //    private Stack<Object[]> stack = new Stack<>();
     private Cache cache = new Cache();
-    private Cache load = new Cache();
+    //    private Cache load = new Cache();
     private User user = null;
 
 //    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
@@ -42,7 +41,7 @@ public class DictionaryFactory {
 
     public void transaction(DictionaryFactory base) {
         cache.clear();
-        load.clear();
+//        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -57,8 +56,8 @@ public class DictionaryFactory {
 
     public void commit(DictionaryFactory base, Collection<Object> vars) {
         List<Term> list = new ArrayList<>();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add((Term) p);
@@ -75,19 +74,8 @@ public class DictionaryFactory {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -111,19 +99,6 @@ public class DictionaryFactory {
                 return (Term) one;
             }
         }
-        if (!user.isClosed()) {
-            for (Identifiable one : user.getStorage(SCHEMA).find(t.getHash())) {
-                one.linkExternal(user);
-                if (one.equalsTo(t)) {
-                    return (Term) one;
-                }
-            }
-        }
-//        for (Term dic = root; dic != null; dic = dic.getNext()) {
-//            if (dic.equalsTo(t)) {
-//                return dic;
-//            }
-//        }
         return null;
     }
 
@@ -139,27 +114,22 @@ public class DictionaryFactory {
 
     public Term get(long id) {
         Term t = (Term) cache.get(id);
-        if (t == null) {
-            t = (Term) load.get(id);
-        }
+//        if (t == null) {
+//            t = (Term) load.get(id);
+//        }
         return t;
     }
 
-    public Term load(long id) throws RuntimeErrorException {
-        Term t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (Term) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
-        return t;
-    }
+//    public Term load(long id) throws RuntimeErrorException {
+//        Term t = null;
+//        if (!user.isClosed()) {
+//            t = (Term) user.getStorage(SCHEMA).get(id);
+//            if (t != null) {
+//                load.add(t);
+//            }
+//        }
+//        return t;
+//    }
 
 //    public Term getRoot() {
 //        return root;
@@ -187,7 +157,7 @@ public class DictionaryFactory {
 //    }
 
     public int size() {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+        return cache.size();
     }
 
 

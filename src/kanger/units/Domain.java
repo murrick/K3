@@ -79,17 +79,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         this.user = user;
         if (predicate == null && predicateId != -1) {
             predicate = user.getMind().getPredicates().get(predicateId);
-            if (predicate == null) {
-                predicate = user.getMind().getPredicates().load(predicateId);
-                predicate.linkExternal(user);
-            }
+            predicate.linkExternal(user);
         }
         if (right == null && rightId != -1) {
             right = user.getMind().getRights().get(rightId);
-            if (right == null) {
-                right = user.getMind().getRights().load(rightId);
-                right.linkExternal(user);
-            }
+            right.linkExternal(user);
         }
         arguments.linkExternal(user);
     }

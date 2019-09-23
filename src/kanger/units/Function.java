@@ -58,12 +58,9 @@ public class Function implements Externalizable, Identifiable<Function> {
 
     public void linkExternal(User user) throws RuntimeErrorException {
         this.user = user;
-        if(name == null && nameId != -1) {
+        if (name == null && nameId != -1) {
             name = user.getMind().getTerms().get(nameId);
-            if (name == null) {
-                name = user.getMind().getTerms().load(nameId);
-                name.linkExternal(user);
-            }
+            name.linkExternal(user);
         }
         arguments.linkExternal(user);
     }

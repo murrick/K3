@@ -6,13 +6,10 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
-import kanger.storage.Storage;
 import kanger.units.Function;
 import kanger.units.Term;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +22,6 @@ public class FunctionFactory implements Iterable<Function> {
     private long firstId = 0;
 
     private Cache cache = new Cache();
-    private Cache load = new Cache();
     private User user = null;
 
     public FunctionFactory(User user) {
@@ -35,7 +31,6 @@ public class FunctionFactory implements Iterable<Function> {
 
     public void transaction(FunctionFactory base) {
         cache.clear();
-        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -48,8 +43,8 @@ public class FunctionFactory implements Iterable<Function> {
 
     public void commit(FunctionFactory base) {
         List<Function> list = new ArrayList();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add(0, (Function) p);
@@ -62,19 +57,8 @@ public class FunctionFactory implements Iterable<Function> {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -97,25 +81,6 @@ public class FunctionFactory implements Iterable<Function> {
 
     public Function get(long id) {
         Function t = (Function) cache.get(id);
-        if (t == null) {
-            t = (Function) load.get(id);
-        }
-        return t;
-    }
-
-    public Function load(long id) throws RuntimeErrorException {
-        Function t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (Function) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
         return t;
     }
 
@@ -129,12 +94,11 @@ public class FunctionFactory implements Iterable<Function> {
 
 
     public int size() {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+        return cache.size();
     }
 
     @Override
-    public Iterator<Function> iterator() {
-        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage, user);
+    public Iterator iterator() {
+        return cache.iterator();
     }
 }

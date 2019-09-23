@@ -2,17 +2,9 @@ package kanger;
 
 import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
-import kanger.interfaces.Identifiable;
-import kanger.storage.Data;
-import kanger.storage.Index;
-import kanger.storage.Storage;
 import kanger.units.Term;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.

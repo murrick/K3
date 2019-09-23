@@ -3,13 +3,10 @@ package kanger.factory;
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
-import kanger.primitives.DataIterator;
 import kanger.storage.Cache;
-import kanger.storage.Storage;
 import kanger.units.Predicate;
 import kanger.units.Term;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +22,6 @@ public class PredicateFactory implements Iterable<Predicate> {
     private long firstId = 0;
 
     private Cache cache = new Cache();
-    private Cache load = new Cache();
     private User user = null;
 
     public PredicateFactory(User user) {
@@ -35,7 +31,6 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public void transaction(PredicateFactory base) {
         cache.clear();
-        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
@@ -48,8 +43,8 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public void commit(PredicateFactory base) {
         List<Predicate> list = new ArrayList();
-        for (Identifiable p : base.cache) {
-            if (p.getId() < base.firstId) {
+        for (Object p : base.cache) {
+            if (((Identifiable) p).getId() < base.firstId) {
                 break;
             }
             list.add(0, (Predicate) p);
@@ -62,19 +57,8 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public void update() throws RuntimeErrorException {
         if (!user.isClosed()) {
-            try {
-                for (Identifiable p : cache) {
-                    if (p.getId() < firstId) {
-                        break;
-                    }
-                    user.getStorage(SCHEMA).add(p);
-                }
-                cache.clear();
-                firstId = lastId;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            //TODO: Коммит в БД
+            firstId = lastId;
         }
     }
 
@@ -99,49 +83,14 @@ public class PredicateFactory implements Iterable<Predicate> {
                 return (Predicate) one;
             }
         }
-        if (!user.isClosed()) {
-            for (Identifiable one : user.getStorage(SCHEMA).find(temp.getHash())) {
-                one.linkExternal(user);
-                if (one.equalsTo(temp)) {
-                    return (Predicate) one;
-                }
-            }
-        }
         return null;
     }
 
     public Predicate get(long id) {
         Predicate t = (Predicate) cache.get(id);
-        if (t == null) {
-            t = (Predicate) load.get(id);
-        }
         return t;
     }
 
-    public Predicate load(long id) throws RuntimeErrorException {
-        Predicate t = null;
-        if (!user.isClosed()) {
-            try {
-                t = (Predicate) user.getStorage(SCHEMA).get(id);
-                if (t != null) {
-                    load.add(t);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
-        }
-        return t;
-    }
-
-    //    public Predicate getRoot() {
-//        return root;
-//    }
-//
-//    public void setRoot(Predicate root) {
-//        this.root = root;
-//    }
-//
     public void clear() {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getPredicates());
@@ -151,14 +100,13 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public int size() {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+        return cache.size();
     }
 
 
     @Override
-    public Iterator<Predicate> iterator() {
-        Storage storage = user.isClosed() ? null : user.getStorage(SCHEMA);
-        return new DataIterator(true, cache, storage, user);
+    public Iterator iterator() {
+        return cache.iterator();
     }
 
 }
