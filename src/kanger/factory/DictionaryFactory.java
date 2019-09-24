@@ -25,7 +25,7 @@ public class DictionaryFactory {
     private int varIndex = 0;           // Счетчик C-переменных
 
     //    private Stack<Object[]> stack = new Stack<>();
-    private Cache cache = new Cache();
+    private Cache cache;
     //    private Cache load = new Cache();
     private User user = null;
 
@@ -40,17 +40,18 @@ public class DictionaryFactory {
     }
 
     public void transaction(DictionaryFactory base) {
-        cache.clear();
+//        cache.clear();
 //        load.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             varIndex = base.varIndex;
-            cache.add(base.cache);
+            cache = new Cache(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
             varIndex = 0;
+            cache = user.getStorage(SCHEMA);
         }
     }
 

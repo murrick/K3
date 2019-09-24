@@ -54,8 +54,8 @@ public class Kanger {
     public static void main(String[] args) throws ParseErrorException, RuntimeErrorException, IOException {
 
         User user = new User();
-        Mind mind = new Mind(user);
         user.use("data/memory");
+        Mind mind = new Mind(user);
 
 //        try (Storage data = new Storage().open("test")) {
 //            Term t = mind.getTerms().add("Это просто ноль");

@@ -24,7 +24,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     private Set<Domain> waiters = new HashSet<>();
 
-    private Cache cache = new Cache();
+    private Cache cache;
     //    private Cache load = new Cache();
     private User user = null;
 
@@ -34,17 +34,18 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void transaction(DomainFactory base) {
-        cache.clear();
+//        cache.clear();
 //        load.clear();
         waiters.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache.add(base.cache);
             waiters.addAll(base.waiters);
+            cache = new Cache(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
+            cache = user.getStorage(SCHEMA);
         }
     }
 

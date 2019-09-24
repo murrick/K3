@@ -22,7 +22,7 @@ public class TVariableFactory {
     private long lastId = 0;
     private long firstId = 0;
 
-    private Cache cache = new Cache();
+    private Cache cache;
     private User user = null;
 
     public TVariableFactory(User user) {
@@ -31,14 +31,15 @@ public class TVariableFactory {
     }
 
     public void transaction(TVariableFactory base) {
-        cache.clear();
+//        cache.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache.add(base.cache);
+            cache = new Cache(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
+            cache = user.getStorage(SCHEMA);
         }
     }
 

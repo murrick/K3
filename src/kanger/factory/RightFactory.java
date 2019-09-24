@@ -20,12 +20,13 @@ import java.util.List;
 public class RightFactory implements Iterable<Right> {
 
     public static final String SCHEMA = "rights";
+    public static final String SCHEMA_STORED = "stored";
 
     private long lastId = 0;
     private long firstId = 0;
 
-    private Cache cache = new Cache();
-    private Cache stored = new Cache();
+    private Cache cache;
+    private Cache stored;
     private User user = null;
 
     public RightFactory(User user) {
@@ -34,16 +35,18 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public void transaction(RightFactory base) {
-        cache.clear();
-        stored.clear();
+//        cache.clear();
+//        stored.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache.add(base.cache);
-            stored.add(base.stored);
+            cache = new Cache(base.cache);
+            stored = new Cache(base.stored);
         } else {
             lastId = 0;
             firstId = 0;
+            cache = user.getStorage(SCHEMA);
+            stored = user.getStorage(SCHEMA_STORED);
         }
     }
 

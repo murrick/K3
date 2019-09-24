@@ -23,7 +23,7 @@ public class TValueFactory {
 
     private Map<TVariable, TValue> current = new HashMap<>();
 
-    private Cache cache = new Cache();
+    private Cache cache;
     private User user = null;
 
     public TValueFactory(User user) {
@@ -32,15 +32,16 @@ public class TValueFactory {
     }
 
     public void transaction(TValueFactory base) {
-        cache.clear();
+//        cache.clear();
         current.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache.add(base.cache);
+            cache = new Cache(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
+            cache = user.getStorage(SCHEMA);
         }
     }
 

@@ -9,11 +9,13 @@ public class Cache implements Iterable {
     protected NavigableMap<Long, Object> index;
     private Map<Integer, Set<Object>> hash;
     private Stack<Long> stack;
+    private Cache parent;
 
-    public Cache() {
-        index = new TreeMap<>();
-        hash = new HashMap<>();
-        stack = new Stack<>();
+    public Cache(Cache parent) {
+        this.index = new TreeMap<>();
+        this.hash = new HashMap<>();
+        this.stack = new Stack<>();
+        this.parent = parent;
     }
 
     public void add(Identifiable one) {
@@ -34,49 +36,56 @@ public class Cache implements Iterable {
         hash.get(h).add(one);
     }
 
-    public void add(Cache cache) {
-        index.putAll(cache.index);
-        hash.putAll(cache.hash);
-    }
+//    public void add(Cache cache) {
+//        index.putAll(cache.index);
+//        hash.putAll(cache.hash);
+//    }
 
     public Object get(long id) {
-        return index.get(id);
+        Object o = index.get(id);
+        if (o == null && parent != null) {
+            o = parent.get(id);
+        }
+        return o;
     }
 
     public int size() {
-        return index.size();
+        return index.size() + (parent == null ? 0 : parent.size());
     }
 
     public boolean isEmpty() {
-        return index.isEmpty();
+        return index.isEmpty() && (parent == null || parent.isEmpty());
     }
 
-    public long firstKey() {
-        if (index.firstKey() != null) {
-            return index.firstKey();
-        } else {
-            return -1;
-        }
-    }
-
-    public long lastKey() {
-        if (index.lastKey() != null) {
-            return index.lastKey();
-        } else {
-            return -1;
-        }
-    }
+//    public long firstKey() {
+//        if (index.firstKey() != null) {
+//            return index.firstKey();
+//        } else {
+//            return -1;
+//        }
+//    }
+//
+//    public long lastKey() {
+//        if (index.lastKey() != null) {
+//            return index.lastKey();
+//        } else {
+//            return -1;
+//        }
+//    }
 
     public List<Object> find(int h) {
         List<Object> list = new ArrayList<>();
         if (hash.containsKey(h)) {
             list.addAll(hash.get(h));
         }
+        if (parent != null) {
+            list.addAll(parent.find(h));
+        }
         return list;
     }
 
     public void remove(long id) {
-        Object one = get(id);
+        Object one = index.get(id);
         if(one != null) {
             int h = (one instanceof Identifiable) ? ((Identifiable) one).getHash() : one.hashCode();
             if(hash.containsKey(h)) {
@@ -86,12 +95,17 @@ public class Cache implements Iterable {
                 }
             }
             index.remove(id);
+        } else if (parent != null) {
+            parent.remove(id);
         }
     }
 
     public void clear() {
         index.clear();
         hash.clear();
+        if (parent != null) {
+            parent.clear();
+        }
     }
 
     public void mark() {
@@ -134,7 +148,15 @@ public class Cache implements Iterable {
     }
 
     public boolean containsKey(long id) {
-        return index.containsKey(id);
+        if (!index.containsKey(id)) {
+            if (parent != null) {
+                return parent.containsKey(id);
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
     }
 
     protected long getNext(long id, NavigableMap<Long, Object> block) {
@@ -179,16 +201,24 @@ public class Cache implements Iterable {
 
         private long currentId = 0;
         private boolean backward = false;
+        private Iterator<Object> parentIterator = null;
 
         public CacheIterator()  {
             currentId = -1;
             block.putAll(index);
+            if (parent != null) {
+                parentIterator = parent.iterator();
+            }
         }
 
         public CacheIterator(boolean backward, long fromId) {
             this();
             this.currentId = fromId;
             this.backward = backward;
+            if (parent != null) {
+                parentIterator = parent.iterator(backward, fromId);
+            }
+
 //            if(fromId >= 0) {
 //                get(fromId);
 //                if(!backward) {
@@ -199,17 +229,29 @@ public class Cache implements Iterable {
 //            }
         }
 
-        @Override
-        public void remove() {
-
-        }
 
         @Override
         public boolean hasNext() {
                 if(backward) {
-                    return getPrevious(currentId, block) != -1;
+                    if (getPrevious(currentId, block) == -1) {
+                        if (parentIterator != null) {
+                            return parentIterator.hasNext();
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return true;
+                    }
                 } else {
-                    return getNext(currentId, block) != -1;
+                    if (getNext(currentId, block) == -1) {
+                        if (parentIterator != null) {
+                            return parentIterator.hasNext();
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return true;
+                    }
                 }
         }
 
@@ -217,7 +259,16 @@ public class Cache implements Iterable {
         public Object next() {
                 if(backward) {
                     currentId = getPrevious(currentId, block);
+                    if (currentId == -1 && parentIterator != null) {
+                        return parentIterator.next();
+                    }
                 } else {
+                    if (parentIterator != null) {
+                        Object o = parentIterator.next();
+                        if (o != null) {
+                            return o;
+                        }
+                    }
                     currentId = getNext(currentId, block);
                 }
                 if (currentId != -1) {

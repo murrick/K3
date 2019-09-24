@@ -132,10 +132,10 @@ public class KangerTest {
         long startTime = System.currentTimeMillis();
         List<String> fails = new ArrayList<>();
         Map<String, Double> list = new TreeMap<>();
+        String dbName = user.getStorageName();
         try {
             //TODO: В дальнейшем отключить бд для тестов
-            user.close();
-//            user.use("data" + File.separatorChar + "test-" + new SimpleDateFormat("yyyy-dd-MM-HH-mm-ss").format(new Date()));
+            user.use("data/test");
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -186,6 +186,11 @@ public class KangerTest {
             e.printStackTrace(System.err);
         } finally {
             user.remove();
+            try {
+                user.use(dbName);
+            } catch (RuntimeErrorException e) {
+                e.printStackTrace(System.err);
+            }
         }
 
         return fails.isEmpty();

@@ -23,14 +23,15 @@ public class User {
             close();
         }
         storage = new HashMap<>();
-        storage.put(DictionaryFactory.SCHEMA, new Cache());
-        storage.put(DomainFactory.SCHEMA, new Cache());
-        storage.put(FunctionFactory.SCHEMA, new Cache());
-        storage.put(FValueFactory.SCHEMA, new Cache());
-        storage.put(PredicateFactory.SCHEMA, new Cache());
-        storage.put(RightFactory.SCHEMA, new Cache());
-        storage.put(TValueFactory.SCHEMA, new Cache());
-        storage.put(TVariableFactory.SCHEMA, new Cache());
+        storage.put(DictionaryFactory.SCHEMA, new Cache(null));
+        storage.put(DomainFactory.SCHEMA, new Cache(null));
+        storage.put(FunctionFactory.SCHEMA, new Cache(null));
+        storage.put(FValueFactory.SCHEMA, new Cache(null));
+        storage.put(PredicateFactory.SCHEMA, new Cache(null));
+        storage.put(RightFactory.SCHEMA, new Cache(null));
+        storage.put(RightFactory.SCHEMA_STORED, new Cache(null));
+        storage.put(TValueFactory.SCHEMA, new Cache(null));
+        storage.put(TVariableFactory.SCHEMA, new Cache(null));
 
         for (Map.Entry<String, Cache> e : storage.entrySet()) {
             //TODO: Открытие БД
