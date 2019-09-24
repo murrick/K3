@@ -26,7 +26,7 @@ import java.util.*;
 //import java.awt.datatransfer.StringSelection;
 
 /**
- * Created by murray on 28.05.15. $Author: murray $
+ * Created by Dmitry G. Qusnetsov on 28.05.15. $Author: murray $
  */
 public class Screen {
 

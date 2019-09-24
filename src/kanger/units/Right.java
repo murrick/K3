@@ -32,6 +32,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<Cause> causes = new HashSet<>();
     private List solves = new ArrayList();
+    private Set<Predicate> predicates = new HashSet<>();
 
     private User user = null;
 
@@ -156,9 +157,10 @@ public class Right implements Externalizable, Identifiable<Right> {
         Set<Right> list = new HashSet<>();
         for (List<Domain> t : tree) {
             for (Domain d : t) {
-                for (long id : user.getMind().getRights().getLinks(d.getPredicate())) {
-                    Right r = user.getMind().getRights().get(id);
-                    list.add(r);
+                for (Right r : user.getMind().getRights()) {
+                    if (r.getPredicates().contains(d.getPredicate())) {
+                        list.add(r);
+                    }
                 }
             }
         }
@@ -276,6 +278,10 @@ public class Right implements Externalizable, Identifiable<Right> {
         } else {
             return false;
         }
+    }
+
+    public Set<Predicate> getPredicates() {
+        return predicates;
     }
 
     @Override

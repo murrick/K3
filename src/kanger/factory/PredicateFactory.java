@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by murray on 25.05.15.
+ * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
 public class PredicateFactory implements Iterable<Predicate> {
 

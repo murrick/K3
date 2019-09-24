@@ -13,7 +13,7 @@ import kanger.units.Right;
 import java.util.*;
 
 /**
- * Created by murray on 25.05.15.
+ * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
 public class DomainFactory implements Iterable<Domain> {
 

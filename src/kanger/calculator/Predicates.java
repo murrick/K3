@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by murray on 18.01.17.
+ * Created by Dmitry G. Qusnetsov on 18.01.17.
  */
 public class Predicates {
 

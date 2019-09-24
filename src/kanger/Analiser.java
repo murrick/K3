@@ -10,7 +10,7 @@ import kanger.units.Right;
 // !@x a(x) -> b(x), @y b(y) -> c(y), @z c(z) -> d(z);
 
 /**
- * Created by murray on 26.05.15.
+ * Created by Dmitry G. Qusnetsov on 26.05.15.
  */
 public class Analiser {
 

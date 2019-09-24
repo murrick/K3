@@ -2,13 +2,17 @@ package kanger.stores;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
-import kanger.primitives.*;
+import kanger.primitives.ArgList;
+import kanger.primitives.Hypotese;
 import kanger.units.Predicate;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
- * Created by murray on 28.05.15.
+ * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
 public class HypotesisStore implements Comparable<HypotesisStore> {
 

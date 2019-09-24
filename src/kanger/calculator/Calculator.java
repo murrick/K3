@@ -12,7 +12,7 @@ import kanger.units.Function;
 import kanger.units.Predicate;
 
 /**
- * Created by murray on 27.05.15.
+ * Created by Dmitry G. Qusnetsov on 27.05.15.
  */
 public class Calculator {
 

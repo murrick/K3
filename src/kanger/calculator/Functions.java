@@ -14,7 +14,7 @@ import kanger.units.Term;
 import java.util.*;
 
 /**
- * Created by murray on 18.01.17.
+ * Created by Dmitry G. Qusnetsov on 18.01.17.
  */
 public class Functions {
 

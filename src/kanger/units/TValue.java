@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by murray on 13.12.16.
+ * Created by Dmitry G. Qusnetsov on 13.12.16.
  */
 public class TValue implements Comparable<TValue>, Externalizable, Identifiable<TValue> {
 

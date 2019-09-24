@@ -12,7 +12,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * Created by murray on 26.05.15.
+ * Created by Dmitry G. Qusnetsov on 26.05.15.
  * <p>
  * Решение для предиката
  */

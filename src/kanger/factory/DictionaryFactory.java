@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by murray on 25.05.15.
+ * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
 public class DictionaryFactory {
 

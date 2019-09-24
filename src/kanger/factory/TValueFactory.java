@@ -11,7 +11,7 @@ import kanger.units.Term;
 import java.util.*;
 
 /**
- * Created by murray on 25.05.15.
+ * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
 public class TValueFactory {
 

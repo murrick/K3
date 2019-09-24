@@ -5,12 +5,17 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.storage.Cache;
-import kanger.units.*;
+import kanger.units.Domain;
+import kanger.units.Right;
+import kanger.units.TValue;
+import kanger.units.Term;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
- * Created by murray on 25.05.15.
+ * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
 public class RightFactory implements Iterable<Right> {
 
@@ -21,7 +26,6 @@ public class RightFactory implements Iterable<Right> {
 
     private Cache cache = new Cache();
     private Cache stored = new Cache();
-    private Cache links = new Cache();
     private User user = null;
 
     public RightFactory(User user) {
@@ -32,13 +36,11 @@ public class RightFactory implements Iterable<Right> {
     public void transaction(RightFactory base) {
         cache.clear();
         stored.clear();
-        links.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             cache.add(base.cache);
             stored.add(base.stored);
-            links.add(base.links);
         } else {
             lastId = 0;
             firstId = 0;
@@ -46,16 +48,6 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public void release() {
-        for (Object o : links) {
-            Set<Long> toDelete = new HashSet<>();
-            for (long id : (Set<Long>) o) {
-                if (cache.get(id) == null) {
-                    toDelete.add(id);
-                }
-            }
-            //TODO: Не известно как поведет себя в сохраняемом варианте
-            ((Set<Long>) o).removeAll(toDelete);
-        }
     }
 
     public void commit(RightFactory base) {
@@ -86,13 +78,7 @@ public class RightFactory implements Iterable<Right> {
         }
         for (List<Domain> list : r.getTree()) {
             for (Domain d : list) {
-                long predicateId = d.getPredicate().getId();
-                Set<Long> set = (Set<Long>) links.get(predicateId);
-                if (set == null) {
-                    set = new HashSet<>();
-                    links.add(predicateId, set);
-                }
-                set.add(r.getId());
+                r.getPredicates().add(d.getPredicate());
             }
         }
         return r;
@@ -205,17 +191,6 @@ public class RightFactory implements Iterable<Right> {
             @Override
             public Iterator iterator() {
                 return stored.iterator(true, fromId);
-            }
-        };
-    }
-
-    // ****************** LINKS
-
-    public Iterable<Long> getLinks(Predicate predicate) {
-        return new Iterable<Long>() {
-            @Override
-            public Iterator<Long> iterator() {
-                return ((Set<Long>) links.get(predicate.getId())).iterator();
             }
         };
     }

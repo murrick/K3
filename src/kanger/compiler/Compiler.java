@@ -7,7 +7,10 @@ import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.units.*;
+import kanger.units.Domain;
+import kanger.units.Function;
+import kanger.units.Predicate;
+import kanger.units.Right;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by murray on 25.05.15.
+ * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
 public class Compiler {
 

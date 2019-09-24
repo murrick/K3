@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by murray on 28.05.15.
+ * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
 public class SolutionsStore {
 

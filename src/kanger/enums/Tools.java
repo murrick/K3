@@ -9,7 +9,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Created by murray on 07.06.15.
+ * Created by Dmitry G. Qusnetsov on 07.06.15.
  */
 public abstract class Tools {
 

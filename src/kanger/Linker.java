@@ -319,11 +319,10 @@ public class Linker {
         boolean result = false;
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
-                for (long id : user.getMind().getRights().getLinks(slave.getPredicate())) {
-                    Right right = user.getMind().getRights().get(id);
-//                    if (right == null) {
-//                        continue;
-//                    }
+                for (Right right : user.getMind().getRights()) {
+                    if (!right.getPredicates().contains(slave.getPredicate())) {
+                        continue;
+                    }
                     for (List<Domain> treeMaster : right.getTree()) {
                         for (Domain master : treeMaster) {
                             if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
