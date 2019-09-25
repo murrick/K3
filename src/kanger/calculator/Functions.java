@@ -5,7 +5,6 @@ import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
 import kanger.enums.Tools;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.units.Function;
@@ -30,7 +29,7 @@ public class Functions {
         /// Арифметика
         {
             put("_inc(1)", new SysOp(LibMode.FUNCTION, "_inc", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -56,7 +55,7 @@ public class Functions {
 
         {
             put("_dec(1)", new SysOp(LibMode.FUNCTION, "_dec", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -81,7 +80,7 @@ public class Functions {
 
         {
             put("_bitnot(1)", new SysOp(LibMode.FUNCTION, "_bitnot", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -106,7 +105,7 @@ public class Functions {
 
         {
             put("_neg(1)", new SysOp(LibMode.FUNCTION, "_neg", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -131,7 +130,7 @@ public class Functions {
 
         {
             put("_val(1)", new SysOp(LibMode.FUNCTION, "_val", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -156,7 +155,7 @@ public class Functions {
 
         {
             put("_add(2)", new SysOp(LibMode.FUNCTION, "_add", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -187,7 +186,7 @@ public class Functions {
 
         {
             put("_sub(2)", new SysOp(LibMode.FUNCTION, "_sub", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -218,7 +217,7 @@ public class Functions {
 
         {
             put("_mul(2)", new SysOp(LibMode.FUNCTION, "_mul", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -248,7 +247,7 @@ public class Functions {
 
         {
             put("_div(2)", new SysOp(LibMode.FUNCTION, "_div", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined() && (double) arg.get(1).getValue().getValue() != 0)
@@ -278,7 +277,7 @@ public class Functions {
 
         {
             put("_rem(2)", new SysOp(LibMode.FUNCTION, "_rem", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined() && (double) arg.get(1).getValue().getValue() != 0)
@@ -300,7 +299,7 @@ public class Functions {
 
         {
             put("_bitleft(2)", new SysOp(LibMode.FUNCTION, "_bitleft", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -326,7 +325,7 @@ public class Functions {
 
         {
             put("_bitright(2)", new SysOp(LibMode.FUNCTION, "_bitright", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -352,7 +351,7 @@ public class Functions {
 
         {
             put("_bitxor(2)", new SysOp(LibMode.FUNCTION, "_bitxor", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -378,7 +377,7 @@ public class Functions {
 
         {
             put("_bitand(2)", new SysOp(LibMode.FUNCTION, "_bitand", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -400,7 +399,7 @@ public class Functions {
 
         {
             put("_bitor(2)", new SysOp(LibMode.FUNCTION, "_bitor", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -430,7 +429,7 @@ public class Functions {
 
         {
             put("log(1)", new SysOp(LibMode.FUNCTION, "log", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -456,7 +455,7 @@ public class Functions {
 
         {
             put("exp(1)", new SysOp(LibMode.FUNCTION, "exp", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -483,7 +482,7 @@ public class Functions {
         {
             put("pi(0)", new SysOp(LibMode.FUNCTION, "pi", 0, new Reactor() {
                 @Override
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     if (!((Function) o).setParameter(0, _pi())) {
                         ret = 0;
@@ -495,7 +494,7 @@ public class Functions {
 
         {
             put("sin(1)", new SysOp(LibMode.FUNCTION, "sin", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -522,7 +521,7 @@ public class Functions {
 
         {
             put("asin(1)", new SysOp(LibMode.FUNCTION, "asin", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -550,7 +549,7 @@ public class Functions {
 
         {
             put("cos(1)", new SysOp(LibMode.FUNCTION, "cos", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -578,7 +577,7 @@ public class Functions {
 
         {
             put("acos(1)", new SysOp(LibMode.FUNCTION, "acos", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -606,7 +605,7 @@ public class Functions {
 
         {
             put("tan(1)", new SysOp(LibMode.FUNCTION, "tan", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -634,7 +633,7 @@ public class Functions {
 
         {
             put("atan(1)", new SysOp(LibMode.FUNCTION, "atan", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -662,7 +661,7 @@ public class Functions {
 
         {
             put("int(1)", new SysOp(LibMode.FUNCTION, "int", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -684,7 +683,7 @@ public class Functions {
 
         {
             put("round(2)", new SysOp(LibMode.FUNCTION, "round", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -706,7 +705,7 @@ public class Functions {
 
         {
             put("round(1)", new SysOp(LibMode.FUNCTION, "round", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -729,7 +728,7 @@ public class Functions {
 
         {
             put("sqrt(1)", new SysOp(LibMode.FUNCTION, "sqrt", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && !arg.get(1).isDefined())
@@ -755,7 +754,7 @@ public class Functions {
 
         {
             put("pow(2)", new SysOp(LibMode.FUNCTION, "pow", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -783,7 +782,7 @@ public class Functions {
 
         {
             put("root(2)", new SysOp(LibMode.FUNCTION, "root", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
@@ -985,7 +984,7 @@ public class Functions {
 
         {
             put("trim(1)", new SysOp(LibMode.FUNCTION, "trim", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
@@ -1010,7 +1009,7 @@ public class Functions {
 
         {
             put("uc(1)", new SysOp(LibMode.FUNCTION, "uc", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
@@ -1035,7 +1034,7 @@ public class Functions {
 
         {
             put("lc(1)", new SysOp(LibMode.FUNCTION, "lc", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
@@ -1094,7 +1093,7 @@ public class Functions {
 
         {
             put("replace(3)", new SysOp(LibMode.FUNCTION, "replace", 3, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
@@ -1125,7 +1124,7 @@ public class Functions {
 
         {
             put("chr(1)", new SysOp(LibMode.FUNCTION, "chr", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     Double src = arg.get(0).isEmpty() ? null : (Double) arg.get(0).getValue().getValue();
@@ -1154,7 +1153,7 @@ public class Functions {
 
         {
             put("asc(1)", new SysOp(LibMode.FUNCTION, "asc", 1, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty() ? null : (String) arg.get(0).getValue().getValue();
@@ -1185,7 +1184,7 @@ public class Functions {
         {
             put("now(0)", new SysOp(LibMode.FUNCTION, "now", 0, new Reactor() {
                 @Override
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     if (!((Function) o).setParameter(0, _now())) {
                         ret = 0;
@@ -1199,7 +1198,7 @@ public class Functions {
         {
             put("type(1)", new SysOp(LibMode.FUNCTION, "type", 1, new Reactor() {
                 @Override
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
 
@@ -1223,7 +1222,7 @@ public class Functions {
         return sysOps;
     }
 
-    protected Term _add(Term a, Term b) throws RuntimeErrorException {
+    protected Term _add(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() + (double) b.getValue();
@@ -1237,7 +1236,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    protected Term _inc(Term a) throws RuntimeErrorException {
+    protected Term _inc(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() + 1;
@@ -1251,7 +1250,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    protected Term _dec(Term a) throws RuntimeErrorException {
+    protected Term _dec(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() - 1;
@@ -1265,7 +1264,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    protected Term _sub(Term a, Term b) throws RuntimeErrorException {
+    protected Term _sub(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() - (double) b.getValue();
@@ -1281,7 +1280,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _mul(Term a, Term b) throws RuntimeErrorException {
+    private Term _mul(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() * (double) b.getValue();
@@ -1291,7 +1290,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _div(Term a, Term b) throws RuntimeErrorException {
+    private Term _div(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() / (double) b.getValue();
@@ -1301,7 +1300,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _rem(Term a, Term b) throws RuntimeErrorException {
+    private Term _rem(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC || b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() % (double) b.getValue();
@@ -1311,7 +1310,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _neg(Term a) throws RuntimeErrorException {
+    private Term _neg(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = -(double) a.getValue();
@@ -1326,7 +1325,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _bitnot(Term a) throws RuntimeErrorException {
+    private Term _bitnot(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue()).doubleValue();
@@ -1336,7 +1335,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _bitleft(Term a, Term b) throws RuntimeErrorException {
+    private Term _bitleft(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() << (long) b.getValue()).doubleValue();
@@ -1346,7 +1345,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _bitright(Term a, Term b) throws RuntimeErrorException {
+    private Term _bitright(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() >> (long) b.getValue()).doubleValue();
@@ -1356,7 +1355,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _bitxor(Term a, Term b) throws RuntimeErrorException {
+    private Term _bitxor(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() ^ (long) b.getValue()).doubleValue();
@@ -1366,7 +1365,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _bitand(Term a, Term b) throws RuntimeErrorException {
+    private Term _bitand(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() & (long) b.getValue()).doubleValue();
@@ -1376,7 +1375,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _bitor(Term a, Term b) throws RuntimeErrorException {
+    private Term _bitor(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() | (long) b.getValue()).doubleValue();
@@ -1386,7 +1385,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _bitandnot(Term a, Term b) throws RuntimeErrorException {
+    private Term _bitandnot(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() & ~(long) b.getValue()).doubleValue();
@@ -1396,7 +1395,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _log(Term a) throws RuntimeErrorException {
+    private Term _log(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.log((double) a.getValue());
@@ -1406,7 +1405,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _exp(Term a) throws RuntimeErrorException {
+    private Term _exp(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.exp((double) a.getValue());
@@ -1416,12 +1415,12 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _pi() throws RuntimeErrorException {
+    private Term _pi() throws Exception {
         Object res = Math.PI;
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _sin(Term a) throws RuntimeErrorException {
+    private Term _sin(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.sin((double) a.getValue());
@@ -1431,7 +1430,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _asin(Term a) throws RuntimeErrorException {
+    private Term _asin(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.asin((double) a.getValue());
@@ -1441,7 +1440,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _cos(Term a) throws RuntimeErrorException {
+    private Term _cos(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.cos((double) a.getValue());
@@ -1451,7 +1450,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _acos(Term a) throws RuntimeErrorException {
+    private Term _acos(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.acos((double) a.getValue());
@@ -1461,7 +1460,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _tan(Term a) throws RuntimeErrorException {
+    private Term _tan(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.tan((double) a.getValue());
@@ -1471,7 +1470,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _atan(Term a) throws RuntimeErrorException {
+    private Term _atan(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.atan((double) a.getValue());
@@ -1481,7 +1480,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _abs(Term a) throws RuntimeErrorException {
+    private Term _abs(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.abs((double) a.getValue());
@@ -1491,7 +1490,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _int(Term a) throws RuntimeErrorException {
+    private Term _int(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = (double) (long) (double) a.getValue();
@@ -1501,7 +1500,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _round(Term a, Term b) throws RuntimeErrorException {
+    private Term _round(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             Double val;
@@ -1519,7 +1518,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _sqrt(Term a) throws RuntimeErrorException {
+    private Term _sqrt(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.sqrt((double) a.getValue());
@@ -1529,7 +1528,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _pow(Term a, Term b) throws RuntimeErrorException {
+    private Term _pow(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Math.pow((double) a.getValue(), (double) b.getValue());
@@ -1539,7 +1538,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _root(Term a, Term b) throws RuntimeErrorException {
+    private Term _root(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Math.pow((double) a.getValue(), 1.0 / (double) b.getValue());
@@ -1549,7 +1548,7 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
-    private Term _now() throws RuntimeErrorException {
+    private Term _now() throws Exception {
         Object res = new Date(System.currentTimeMillis());
         return user.getMind().getTerms().add(res);
     }

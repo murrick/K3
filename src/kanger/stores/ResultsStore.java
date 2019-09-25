@@ -109,10 +109,15 @@ public class ResultsStore {
             public Right next() {
                 currentId = solves.higherKey(currentId);
                 long solveId = solves.get(currentId);
-                if (solveId != -1) {
-                    return (Right) user.getMind().getRights().get(solveId);
-                } else {
-                    return (Right) user.getMind().getRights().get(currentId);
+                try {
+                    if (solveId != -1) {
+                        return (Right) user.getMind().getRights().get(solveId);
+                    } else {
+                        return (Right) user.getMind().getRights().get(currentId);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                    return null;
                 }
             }
         }
@@ -154,11 +159,16 @@ public class ResultsStore {
                 } else {
                     Long nextId;
                     while ((nextId = solves.higherKey(currentId)) != null) {
-                        currentRight = (Right) user.getMind().getRights().get(nextId);
-                        if (currentRight.getSolves() != null && !currentRight.getSolves().isEmpty()) {
-                            return true;
-                        } else {
-                            currentId = nextId;
+                        try {
+                            currentRight = (Right) user.getMind().getRights().get(nextId);
+                            if (currentRight.getSolves() != null && !currentRight.getSolves().isEmpty()) {
+                                return true;
+                            } else {
+                                currentId = nextId;
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace(System.err);
+                            return false;
                         }
                     }
                     return false;

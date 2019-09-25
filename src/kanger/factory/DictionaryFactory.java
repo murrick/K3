@@ -3,6 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.enums.Enums;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.Right;
@@ -25,7 +26,7 @@ public class DictionaryFactory {
     private int varIndex = 0;           // Счетчик C-переменных
 
     //    private Stack<Object[]> stack = new Stack<>();
-    private Cache cache;
+    private ICache cache;
     //    private Cache load = new Cache();
     private User user = null;
 
@@ -51,11 +52,11 @@ public class DictionaryFactory {
             lastId = 0;
             firstId = 0;
             varIndex = 0;
-            cache = user.getStorage(SCHEMA);
+            cache = new Cache(null);
         }
     }
 
-    public void commit(DictionaryFactory base, Collection<Object> vars) {
+    public void commit(DictionaryFactory base, Collection<Object> vars) throws Exception {
         List<Term> list = new ArrayList<>();
         for (Object p : base.cache) {
             if (((Identifiable) p).getId() < base.firstId) {
@@ -80,7 +81,7 @@ public class DictionaryFactory {
         }
     }
 
-    public Term add(Object o) throws RuntimeErrorException {
+    public Term add(Object o) throws Exception {
         Term p = find(o);
         if (p != null) {
             return p;
@@ -93,17 +94,18 @@ public class DictionaryFactory {
     }
 
 
-    public Term find(Object o) throws RuntimeErrorException {
+    public Term find(Object o) throws Exception {
         Term t = new Term(o, user);
-        for (Object one : cache.find(t.getHash())) {
-            if (((Identifiable) one).equalsTo(t)) {
+        for (long id : cache.find(t.getHash())) {
+            Identifiable one = get(id);
+            if (one.equalsTo(t)) {
                 return (Term) one;
             }
         }
         return null;
     }
 
-    public Term createCVar(Right r, String name) throws RuntimeErrorException {
+    public Term createCVar(Right r, String name) throws Exception {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
@@ -113,8 +115,9 @@ public class DictionaryFactory {
         return t;
     }
 
-    public Term get(long id) {
+    public Term get(long id) throws Exception {
         Term t = (Term) cache.get(id);
+//        t.linkExternal(user);
 //        if (t == null) {
 //            t = (Term) load.get(id);
 //        }
@@ -157,7 +160,7 @@ public class DictionaryFactory {
 //        }
 //    }
 
-    public int size() {
+    public int size() throws Exception {
         return cache.size();
     }
 

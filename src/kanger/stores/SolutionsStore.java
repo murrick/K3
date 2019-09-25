@@ -1,7 +1,6 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.units.Domain;
 import kanger.units.Right;
 
@@ -52,7 +51,7 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Domain d) throws RuntimeErrorException {
+    public boolean contains(Domain d) throws Exception {
         if(!isEmpty()) {
             for (Right r : root) {
                 if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {

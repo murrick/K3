@@ -9,7 +9,6 @@ import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.enums.QueryPass;
 import kanger.enums.Tools;
-import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.factory.*;
 import kanger.primitives.ArgList;
@@ -84,7 +83,7 @@ public class Mind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
-    public Mind(User user) throws RuntimeErrorException {
+    public Mind(User user) throws Exception {
         this.user = user;
         user.setMind(this);
         init();
@@ -141,7 +140,7 @@ public class Mind {
         linker = new Linker(user);                                         // Линкер
     }
 
-    public void commit(Mind m) throws RuntimeErrorException {
+    public void commit(Mind m) throws Exception {
         SortedSet vars = new TreeSet<>();
 
         user.setMind(this);
@@ -220,7 +219,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public void clear() throws RuntimeErrorException {
+    public void clear() throws Exception {
         terms.clear();
         predicates.clear();
         domains.clear();
@@ -237,12 +236,7 @@ public class Mind {
         excluded.clear();
 
         if (!user.isClosed()) {
-            try {
                 user.clear();
-            } catch (IOException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
         }
 
 //        log.reset();
@@ -370,15 +364,15 @@ public class Mind {
         changed = b;
     }
 
-    public void link(Right r, boolean logging) throws RuntimeErrorException {
+    public void link(Right r, boolean logging) throws Exception {
         linker.link(r, logging);
     }
 
-    public Boolean analise(boolean logging) throws RuntimeErrorException {
+    public Boolean analise(boolean logging) throws Exception {
         return analiser.analise(logging);
     }
 
-    public boolean compile(String src) throws ParseErrorException, RuntimeErrorException {
+    public boolean compile(String src) throws Exception {
 
         int pos = 0;
         Object[] t = null;
@@ -406,7 +400,7 @@ public class Mind {
         }
     }
 
-    public Object compileLine(String line) throws ParseErrorException, RuntimeErrorException {
+    public Object compileLine(String line) throws Exception {
         String orig = line.trim();
         Object r = null;
         Boolean suc = null;
@@ -545,7 +539,7 @@ public class Mind {
     }
 
 
-    public Boolean query(String line) throws ParseErrorException, RuntimeErrorException {
+    public Boolean query(String line) throws Exception {
         querySource = line;
         queryPass = QueryPass.SILENCE;
         queryContext = null;
@@ -677,11 +671,11 @@ public class Mind {
         return calculator.exists(f);
     }
 
-    public int executeSystem(Domain d) throws RuntimeErrorException {
+    public int executeSystem(Domain d) throws Exception {
         return calculator.execute(d);
     }
 
-    public int executeSystem(Function f) throws RuntimeErrorException {
+    public int executeSystem(Function f) throws Exception {
         return calculator.execute(f);
     }
 
@@ -722,7 +716,7 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
-    public Boolean query(String line, boolean testMode) throws ParseErrorException, RuntimeErrorException {
+    public Boolean query(String line, boolean testMode) throws Exception {
         Boolean res = null;
 
         boolean storeH = getHypotesisStore().isEnabled();

@@ -2,7 +2,6 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.Cause;
 
@@ -74,7 +73,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         }
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         this.user = user;
         if (tVar == null && tVarId != -1) {
             tVar = user.getMind().getTVars().get(tVarId);

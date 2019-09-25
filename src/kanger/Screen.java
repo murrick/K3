@@ -9,7 +9,6 @@ import kanger.enums.LibMode;
 import kanger.enums.LogMode;
 import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Reactor;
 import kanger.primitives.Cause;
 import kanger.primitives.Hypotese;
@@ -366,10 +365,7 @@ public class Screen {
                 System.out.println("^");
                 line = "";
 //                incomplete = "";
-            } catch (RuntimeErrorException e) {
-//                System.out.println(e.toString());
-                e.printStackTrace(System.err);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace(System.err);
             }
 
@@ -670,7 +666,7 @@ public class Screen {
 //        return str;
 //    }
     //
-    public static void showCauses(Mind mind, Domain d, int level) throws RuntimeErrorException {
+    public static void showCauses(Mind mind, Domain d, int level) throws Exception {
         //ПРЕДОХРАНИТЕЛЬ
         if (level > 20) {
             return;
@@ -696,7 +692,7 @@ public class Screen {
     }
 
 
-    private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws RuntimeErrorException {
+    private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws Exception {
 //        if (tIndex >= tvars.size()) {
         if (d.isStored()) {
 //                d.recalculate();
@@ -726,7 +722,7 @@ public class Screen {
 //        }
     }
 
-    public static void showPred(Mind mind, Predicate p, boolean showCauses) throws RuntimeErrorException {
+    public static void showPred(Mind mind, Predicate p, boolean showCauses) throws Exception {
         System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
         Set<Domain> set = p.getSolves();
         if (set.isEmpty()) {
@@ -781,7 +777,7 @@ public class Screen {
 //    }
 //
 //
-    public static void showBase(Mind mind, boolean showCauses, String param) throws RuntimeErrorException {
+    public static void showBase(Mind mind, boolean showCauses, String param) throws Exception {
         for (Predicate p : mind.getPredicates()) {
             if (/*!p.getSolves().isEmpty() &&*/ !mind.isSystem(p) && (param == null || param.equals(p.getName()))) {
                 showPred(mind, p, showCauses);
@@ -1069,7 +1065,7 @@ public class Screen {
 //        }
 //    }
 //
-    public static boolean loadSource(Mind mind) throws ParseErrorException, RuntimeErrorException {
+    public static boolean loadSource(Mind mind) throws Exception {
         Scanner scanner = new Scanner(System.in);
 //        if (checkChg(mind)) {
         List<File> list = new ArrayList<>();
@@ -1123,7 +1119,7 @@ public class Screen {
     }
 
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
-    public static boolean loadSourceFile(Mind mind, File f) throws ParseErrorException, RuntimeErrorException {
+    public static boolean loadSourceFile(Mind mind, File f) throws Exception {
         try {
             if (f.exists()) {
                 final int length = (int) f.length();

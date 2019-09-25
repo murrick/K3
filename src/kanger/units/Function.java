@@ -4,7 +4,6 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -56,7 +55,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         this.user = user;
         if (name == null && nameId != -1) {
             name = user.getMind().getTerms().get(nameId);
@@ -87,7 +86,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         return arguments;
     }
 
-    public Term getValue() throws RuntimeErrorException {
+    public Term getValue() throws Exception {
         FValue c = getCurrent();
         if (c != null) {
             return getCurrent().getValue();
@@ -97,7 +96,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
 
-    public Object setValue(Term r) throws RuntimeErrorException {
+    public Object setValue(Term r) throws Exception {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
@@ -108,13 +107,13 @@ public class Function implements Externalizable, Identifiable<Function> {
     public boolean isEmpty() {
         try {
             return getValue() == null;
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return true;
         }
     }
 
-    public boolean setParameter(int i, Term r) throws RuntimeErrorException {
+    public boolean setParameter(int i, Term r) throws Exception {
 //        if(i == range) {
 //            TSubst s = setResult(r);
 //            s.setSolves(owner, owner);
@@ -144,7 +143,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         this.name = name;
     }
 
-    private String formatParam(Argument t) throws RuntimeErrorException {
+    private String formatParam(Argument t) throws Exception {
         Operation op = Parser.getOp(name.toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
@@ -211,7 +210,7 @@ public class Function implements Externalizable, Identifiable<Function> {
                 //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
                 return s + res;
             }
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }
@@ -251,7 +250,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 //        }
 //    }
 
-    public void clear() throws RuntimeErrorException {
+    public void clear() throws Exception {
         setValue(null);
     }
 
@@ -272,7 +271,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 //        return f != null && f.isActual(this); // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
 //    }
 //
-    public boolean isComplete() throws RuntimeErrorException {
+    public boolean isComplete() throws Exception {
         for (Argument a : arguments) {
             if (a.getValue() == null) {
                 return false;
@@ -299,7 +298,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 //    }
 
 
-    public FValue getCurrent() throws RuntimeErrorException {
+    public FValue getCurrent() throws Exception {
         return user.getMind().getFValues().find(this);
     }
 

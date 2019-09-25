@@ -4,7 +4,6 @@ import kanger.User;
 import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.units.Domain;
@@ -31,7 +30,7 @@ public class Predicates {
             put("_eq(2)", new SysOp(LibMode.PREDICATE, "_eq", 2, new Reactor() {
 
                 @Override
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (arg.get(0).isDefined() && !arg.get(1).isDefined()) {
@@ -59,7 +58,7 @@ public class Predicates {
 
         {
             put("_ne(2)", new SysOp(LibMode.PREDICATE, "_ne", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
@@ -77,7 +76,7 @@ public class Predicates {
 
         {
             put("_gr(2)", new SysOp(LibMode.PREDICATE, "_gr", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
@@ -93,7 +92,7 @@ public class Predicates {
 
         {
             put("_ge(2)", new SysOp(LibMode.PREDICATE, "_ge", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
@@ -109,7 +108,7 @@ public class Predicates {
 
         {
             put("_lr(2)", new SysOp(LibMode.PREDICATE, "_lr", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
@@ -125,7 +124,7 @@ public class Predicates {
 
         {
             put("_le(2)", new SysOp(LibMode.PREDICATE, "_le", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
@@ -141,7 +140,7 @@ public class Predicates {
 
         {
             put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -226,7 +225,7 @@ public class Predicates {
 
         {
             put("_in(3)", new SysOp(LibMode.PREDICATE, "_in", 3, new Reactor() {
-                public Object run(Object o) throws RuntimeErrorException {
+                public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {

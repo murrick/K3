@@ -13,5 +13,5 @@ public interface Identifiable<T> {
 
     boolean equalsTo(T to);
 
-    void linkExternal(User user) throws RuntimeErrorException;
+    void linkExternal(User user) throws RuntimeErrorException, Exception;
 }

@@ -2,7 +2,6 @@ package kanger.test;
 
 import kanger.Mind;
 import kanger.User;
-import kanger.exception.ParseErrorException;
 import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
@@ -11,7 +10,6 @@ import kanger.units.Predicate;
 import kanger.units.Right;
 import kanger.units.Term;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -90,42 +88,7 @@ public class KangerTest {
 //        return false;
 //    }
 
-    public Hypotese createHypotese(User user, boolean antc, Object predicate, Object... params) throws RuntimeErrorException {
-        Hypotese h = new Hypotese(user);
-        h.setAntc(antc);
-        if (predicate instanceof Predicate) {
-            h.setPredicate((Predicate) predicate);
-        } else {
-            h.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
-        }
-
-        if (params[0] instanceof Collection) {
-            h.addParams((Collection) params[0]);
-        } else {
-            h.addParams(Arrays.asList(params));
-        }
-        return h;
-    }
-
-    public Domain createRecord(User user, boolean antc, Object predicate, Object... params) throws RuntimeErrorException {
-        Domain d = new Domain(user);
-        d.setAntc(antc);
-        if (predicate instanceof Predicate) {
-            d.setPredicate((Predicate) predicate);
-        } else {
-            d.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
-        }
-        for (Object p : params) {
-            if (p instanceof Term) {
-                d.add(new Argument((Term) p));
-            } else {
-                d.add(new Argument(user.getMind().getTerms().add(p)));
-            }
-        }
-        return d;
-    }
-
-    public static boolean test(User user, String prefix) throws IOException {
+    public static boolean test(User user, String prefix) throws Exception {
         System.out.println("Init test system...");
         kanger.test.KangerTest cls = new kanger.test.KangerTest(user);
         int successCount = 0;
@@ -136,6 +99,7 @@ public class KangerTest {
         try {
             //TODO: В дальнейшем отключить бд для тестов
             user.use("data/test");
+            user.clear();
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -196,12 +160,46 @@ public class KangerTest {
         return fails.isEmpty();
     }
 
+    public Hypotese createHypotese(User user, boolean antc, Object predicate, Object... params) throws Exception {
+        Hypotese h = new Hypotese(user);
+        h.setAntc(antc);
+        if (predicate instanceof Predicate) {
+            h.setPredicate((Predicate) predicate);
+        } else {
+            h.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
+        }
+
+        if (params[0] instanceof Collection) {
+            h.addParams((Collection) params[0]);
+        } else {
+            h.addParams(Arrays.asList(params));
+        }
+        return h;
+    }
+
+    public Domain createRecord(User user, boolean antc, Object predicate, Object... params) throws Exception {
+        Domain d = new Domain(user);
+        d.setAntc(antc);
+        if (predicate instanceof Predicate) {
+            d.setPredicate((Predicate) predicate);
+        } else {
+            d.setPredicate(user.getMind().getPredicates().add(user.getMind().getTerms().add(predicate.toString()), params.length));
+        }
+        for (Object p : params) {
+            if (p instanceof Term) {
+                d.add(new Argument((Term) p));
+            } else {
+                d.add(new Argument(user.getMind().getTerms().add(p)));
+            }
+        }
+        return d;
+    }
+
     private static void fail(String msg) throws RuntimeErrorException {
         throw new RuntimeErrorException("FAIL: " + msg);
     }
 
-
-    public void set_01_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_01() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -219,7 +217,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_02() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -237,7 +235,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_03() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -282,7 +280,7 @@ public class KangerTest {
         }
     }
 
-    public void set_01_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_04() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -323,7 +321,7 @@ public class KangerTest {
         }
     }
 
-    public void set_01_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_05() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -364,7 +362,7 @@ public class KangerTest {
         }
     }
 
-    public void set_01_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_06() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -405,7 +403,7 @@ public class KangerTest {
         }
     }
 
-    public void set_01_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_07() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -438,7 +436,7 @@ public class KangerTest {
         }
     }
 
-    public void set_01_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_08() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -463,7 +461,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_09() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_09() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -492,7 +490,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_0A() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0A() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -515,7 +513,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_0B() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0B() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -541,7 +539,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_0C() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0C() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -570,7 +568,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_0D() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0D() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -595,7 +593,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_01_0E() throws ParseErrorException, RuntimeErrorException {
+    public void set_01_0E() throws Exception {
 
         mind.clear();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
@@ -624,7 +622,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_02_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_02_01() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
@@ -649,7 +647,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_02_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_02_02() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
@@ -687,7 +685,7 @@ public class KangerTest {
         }
     }
 
-    public void set_02_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_02_03() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
@@ -716,7 +714,7 @@ public class KangerTest {
         }
     }
 
-    public void set_03_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_01() throws Exception {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -726,7 +724,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_03_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_02() throws Exception {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -736,7 +734,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_03_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_03() throws Exception {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -746,7 +744,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_03_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_04() throws Exception {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -756,7 +754,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_03_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_05() throws Exception {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -766,7 +764,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_03_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_06() throws Exception {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -776,7 +774,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_03_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_03_07() throws Exception {
 
         mind.clear();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
@@ -786,7 +784,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_01() throws Exception {
 
         mind.clear();
         mind.query("?2 > 3;");
@@ -795,7 +793,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_02() throws Exception {
 
         mind.clear();
         mind.query("?2 < 3;");
@@ -804,7 +802,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_03() throws Exception {
 
         mind.clear();
         mind.query("?2 = 3;");
@@ -813,7 +811,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_04() throws Exception {
 
         mind.clear();
         mind.query("?2 = 2;");
@@ -822,7 +820,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_05() throws Exception {
 
         mind.clear();
         mind.query("?$x x=5;");
@@ -834,7 +832,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_06() throws Exception {
 
         mind.clear();
         mind.query("?~$x x=5;");
@@ -846,7 +844,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_07() throws Exception {
 
         mind.clear();
         mind.query("?$x x=5 / 2;");
@@ -858,7 +856,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_08() throws Exception {
 
         mind.clear();
         mind.query("?$x ((x+3)*15)=965;");
@@ -870,7 +868,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_09() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_09() throws Exception {
 
         mind.clear();
         mind.query("?$x $y (12+y)*2=256 && x=5*y;");
@@ -885,7 +883,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_0A() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0A() throws Exception {
 
         mind.clear();
         mind.query("?$x $y x + y = 12;");
@@ -894,7 +892,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_0B() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0B() throws Exception {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -938,7 +936,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_0C() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0C() throws Exception {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -964,7 +962,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_0D() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0D() throws Exception {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -990,7 +988,7 @@ public class KangerTest {
     }
 
     //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
-    public void set_04_0E() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0E() throws Exception {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -1039,7 +1037,7 @@ public class KangerTest {
     }
 
 
-    public void set_04_0F() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_0F() throws Exception {
 
         mind.clear();
         mind.compile("!@x x : 0..10 -> num(x);");
@@ -1083,7 +1081,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_10() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_10() throws Exception {
 
         mind.clear();
         mind.compile("!@x x : 0..10 -> num(x);");
@@ -1109,7 +1107,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_11() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_11() throws Exception {
 
         mind.clear();
         mind.compile("!@x x : 0..10 -> num(x);");
@@ -1134,7 +1132,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_04_12() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_12() throws Exception {
 
         mind.clear();
         mind.compile("!@x x : 0..10 -> num(x);");
@@ -1184,7 +1182,7 @@ public class KangerTest {
     }
 
 
-    public void set_04_13() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_13() throws Exception {
 
         mind.clear();
         mind.compile("!@x x : 0..10 -> num(x);");
@@ -1221,7 +1219,7 @@ public class KangerTest {
 
     }
 
-    public void set_04_14() throws ParseErrorException, RuntimeErrorException {
+    public void set_04_14() throws Exception {
 
         mind.clear();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
@@ -1259,7 +1257,7 @@ public class KangerTest {
     }
 
 
-    public void set_05_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_01() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1270,7 +1268,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_05_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_02() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1281,7 +1279,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_05_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_03() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1292,7 +1290,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_05_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_04() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1303,7 +1301,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_05_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_05() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1314,7 +1312,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_05_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_06() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1325,7 +1323,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_05_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_07() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1336,7 +1334,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_05_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_05_08() throws Exception {
 
         mind.clear();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
@@ -1350,7 +1348,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_01() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1387,7 +1385,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_02() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1434,7 +1432,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_03() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1473,7 +1471,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_04() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1507,7 +1505,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_05() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1541,7 +1539,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_06() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1582,7 +1580,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_06_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_07() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1661,7 +1659,7 @@ public class KangerTest {
         }
     }
 
-    public void set_06_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_08() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1701,7 +1699,7 @@ public class KangerTest {
 
     }
 
-    public void set_06_09() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_09() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1735,7 +1733,7 @@ public class KangerTest {
 
     }
 
-    public void set_06_0A() throws ParseErrorException, RuntimeErrorException {
+    public void set_06_0A() throws Exception {
 
         mind.clear();
         mind.compile("!@x $y parent(y,x);" +
@@ -1794,7 +1792,7 @@ public class KangerTest {
         }
     }
 
-    public void set_07_01() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_01() throws Exception {
 
         mind.clear();
         mind.query("?$x x : '2018-03-01'..'2018-04-19', 38 hours 40 minutes, x > '2018-03-07';");
@@ -1806,7 +1804,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_02() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_02() throws Exception {
 
         mind.clear();
         mind.query("?'2018-03-07' : '2018-03-01'..'2018-04-19';");
@@ -1815,7 +1813,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_03() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_03() throws Exception {
 
         mind.clear();
         mind.query("?er : qwerty;");
@@ -1824,7 +1822,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_04() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_04() throws Exception {
 
         mind.clear();
         mind.query("?'(.*)er(.*)' : qwerty;");
@@ -1833,7 +1831,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_05() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_05() throws Exception {
 
         mind.clear();
         mind.query("?$x x : qwerty;");
@@ -1845,7 +1843,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_06() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_06() throws Exception {
 
         mind.clear();
         mind.query("?$x x : qwerty,'(.*)er(.*)';");
@@ -1857,7 +1855,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_07() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_07() throws Exception {
 
         mind.clear();
         mind.query("?$x x : qwerty,'(.*)er(.*)', x=qw;");
@@ -1869,7 +1867,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_08() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_08() throws Exception {
 
         mind.clear();
         mind.query("?$x x : qwerty,'(.*)er(.*)', x=ty;");
@@ -1881,7 +1879,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_09() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_09() throws Exception {
 
         mind.clear();
         mind.query("?$x x : qwerty,'(.*)er(.*)', x != ty;");
@@ -1893,7 +1891,7 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_07_0A() throws ParseErrorException, RuntimeErrorException {
+    public void set_07_0A() throws Exception {
 
         mind.clear();
         mind.query("?$x $y index(qwerty) -> index(x), y : x;");

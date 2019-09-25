@@ -1,7 +1,6 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.primitives.ArgList;
 import kanger.primitives.Hypotese;
 import kanger.units.Predicate;
@@ -38,7 +37,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
     }
 
-    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws RuntimeErrorException {
+    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws Exception {
         if (!enableStore) {
             return null;
         }
@@ -104,7 +103,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) throws RuntimeErrorException {
+    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) throws Exception {
         if (root == null) {
             return null;
         }

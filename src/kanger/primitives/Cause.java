@@ -1,7 +1,6 @@
 package kanger.primitives;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.units.Domain;
 
 import java.io.Externalizable;
@@ -45,7 +44,7 @@ public class Cause implements Externalizable, Comparable<Cause> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         if (src == null && srcId != -1) {
             src = user.getMind().getDomains().get(srcId);
             src.linkExternal(user);
@@ -109,13 +108,13 @@ public class Cause implements Externalizable, Comparable<Cause> {
                     && dst.getId() == ((Cause) o).getDst().getId()
                     && index == ((Cause) o).getIndex()
                     && equalsParams(((Cause) o).getArguments());
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return false;
         }
     }
 
-    public boolean equalsParams(ArgList a) throws RuntimeErrorException {
+    public boolean equalsParams(ArgList a) throws Exception {
         if (arguments == null && a == null) {
             return true;
         } else if (arguments != null && a != null && arguments.size() == a.size()) {

@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.TValue;
@@ -23,7 +24,7 @@ public class TValueFactory {
 
     private Map<TVariable, TValue> current = new HashMap<>();
 
-    private Cache cache;
+    private ICache cache;
     private User user = null;
 
     public TValueFactory(User user) {
@@ -41,11 +42,11 @@ public class TValueFactory {
         } else {
             lastId = 0;
             firstId = 0;
-            cache = user.getStorage(SCHEMA);
+            cache = new Cache(null);
         }
     }
 
-    public void commit(TValueFactory base) {
+    public void commit(TValueFactory base) throws Exception {
         List<TValue> list = new ArrayList();
         for (Object p : base.cache) {
             if (((Identifiable) p).getId() < base.firstId) {
@@ -66,7 +67,7 @@ public class TValueFactory {
         }
     }
 
-    public TValue add(TVariable tv, Term o) throws RuntimeErrorException {
+    public TValue add(TVariable tv, Term o) throws Exception {
         TValue t = find(tv, o);
         if (t == null) {
             t = new TValue(tv, o, user);
@@ -90,18 +91,20 @@ public class TValueFactory {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
-    public TValue find(TVariable tv, Term v) throws RuntimeErrorException {
+    public TValue find(TVariable tv, Term v) throws Exception {
         TValue temp = new TValue(tv, v);
-        for (Object one : cache.find(temp.getHash())) {
-            if (((Identifiable) one).equalsTo(temp)) {
+        for (long id : cache.find(temp.getHash())) {
+            Identifiable one = get(id);
+            if (one.equalsTo(temp)) {
                 return (TValue) one;
             }
         }
         return null;
     }
 
-    public TValue get(long id) {
+    public TValue get(long id) throws Exception {
         TValue t = (TValue) cache.get(id);
+//        t.linkExternal(user);
         return t;
     }
 
@@ -113,16 +116,16 @@ public class TValueFactory {
         }
     }
 
-    public void mark() {
+    public void mark() throws Exception {
         cache.mark();
     }
 
 
-    public void commit() {
+    public void commit() throws Exception {
         cache.commit();
     }
 
-    public void release() {
+    public void release() throws Exception {
         cache.release();
     }
 
@@ -136,7 +139,7 @@ public class TValueFactory {
         return v;
     }
 
-    public int size() {
+    public int size() throws Exception {
         return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 

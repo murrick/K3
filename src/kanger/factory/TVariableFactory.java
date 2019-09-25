@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.Right;
@@ -22,7 +23,7 @@ public class TVariableFactory {
     private long lastId = 0;
     private long firstId = 0;
 
-    private Cache cache;
+    private ICache cache;
     private User user = null;
 
     public TVariableFactory(User user) {
@@ -39,11 +40,11 @@ public class TVariableFactory {
         } else {
             lastId = 0;
             firstId = 0;
-            cache = user.getStorage(SCHEMA);
+            cache = new Cache(null);
         }
     }
 
-    public void commit(TVariableFactory base, Collection vars) {
+    public void commit(TVariableFactory base, Collection vars) throws Exception {
         List<TVariable> list = new ArrayList();
         for (Object p : base.cache) {
             if (((Identifiable) p).getId() < base.firstId) {
@@ -65,7 +66,7 @@ public class TVariableFactory {
         }
     }
 
-    public TVariable createTVar(Term name, Right r) {
+    public TVariable createTVar(Term name, Right r) throws Exception {
         TVariable p = new TVariable(user);
         p.setId(lastId++);
         p.setIndex(user.getMind().getTerms().nextVarIndex());
@@ -75,8 +76,9 @@ public class TVariableFactory {
         return p;
     }
 
-    public TVariable get(long id) {
+    public TVariable get(long id) throws Exception {
         TVariable t = (TVariable) cache.get(id);
+//        t.linkExternal(user);
         return t;
     }
 
@@ -88,7 +90,7 @@ public class TVariableFactory {
         }
     }
 
-    public int size() {
+    public int size() throws Exception {
         return cache.size();
     }
 

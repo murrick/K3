@@ -1,7 +1,6 @@
 package kanger.primitives;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.units.Function;
 import kanger.units.TValue;
 import kanger.units.TVariable;
@@ -44,7 +43,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         for(Argument a : this) {
             a.linkExternal(user);
         }
@@ -59,7 +58,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
                     hashCode = 31*hashCode + a.getValue().hashCode();
                 }
             }
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
 
@@ -103,7 +102,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
                             break;
                         }
                     }
-                } catch (RuntimeErrorException e) {
+                } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }
                 if (i == arg.size()) {
@@ -132,7 +131,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
                             break;
                         }
                     }
-                } catch (RuntimeErrorException e) {
+                } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }
                 if (i == arg.size()) {

@@ -1,7 +1,6 @@
 package kanger.units;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 
 import java.io.Externalizable;
@@ -52,7 +51,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         dos.writeInt(range);
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         this.user = user;
         if (name == null && nameId != -1) {
             name = user.getMind().getTerms().get(nameId);
@@ -86,7 +85,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         this.id = id;
     }
 
-    public Set<Domain> getSolves() {
+    public Set<Domain> getSolves() throws Exception {
         Set<Domain> set = new HashSet<>();
         for (long id : user.getMind().getRights().getDatabase(-1)) {
             Right d = user.getMind().getRights().get(id);

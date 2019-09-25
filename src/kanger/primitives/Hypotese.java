@@ -8,7 +8,6 @@ package kanger.primitives;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.units.Predicate;
 import kanger.units.Right;
 import kanger.units.Term;
@@ -82,7 +81,7 @@ public class Hypotese implements Comparable<Hypotese> {
         this.query = query;
     }
 
-    public void addParams(Collection params) throws RuntimeErrorException {
+    public void addParams(Collection params) throws Exception {
         for (Object p : params) {
             if (p instanceof Argument) {
                 solve.add(((Argument) p).getValue());

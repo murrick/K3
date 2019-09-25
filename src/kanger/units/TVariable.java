@@ -2,7 +2,6 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 
 import java.io.Externalizable;
@@ -52,7 +51,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         dos.writeLong(right.getId());
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         this.user = user;
         if (name == null && nameId != -1) {
             name = user.getMind().getTerms().get(nameId);
@@ -110,7 +109,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         return user.getMind().getTValues().set(this, v);
     }
 
-    public TValue setValue(Term value) throws RuntimeErrorException { //throws TValueOutOfOrderException {
+    public TValue setValue(Term value) throws Exception { //throws TValueOutOfOrderException {
 //        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
@@ -230,7 +229,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //    }
 
     //
-    public TValue find(Term value) throws RuntimeErrorException {
+    public TValue find(Term value) throws Exception {
         return user.getMind().getTValues().find(this, value);
     }
 

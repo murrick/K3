@@ -1,39 +1,42 @@
 package kanger.storage;
 
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 
 import java.util.*;
 
-public class Cache implements Iterable {
+public class Cache implements ICache {
 
     protected NavigableMap<Long, Object> index;
-    private Map<Integer, Set<Object>> hash;
+    private Map<Integer, Set<Long>> hash;
     private Stack<Long> stack;
-    private Cache parent;
+    private ICache parent;
 
-    public Cache(Cache parent) {
+    public Cache(ICache parent) {
         this.index = new TreeMap<>();
         this.hash = new HashMap<>();
         this.stack = new Stack<>();
         this.parent = parent;
     }
 
+    @Override
     public void add(Identifiable one) {
         index.put(one.getId(), one);
         int h = one.getHash();
         if(!hash.containsKey(h)) {
             hash.put(h, new HashSet<>());
         }
-        hash.get(h).add(one);
+        hash.get(h).add(one.getId());
     }
 
+    @Override
     public void add(long id, Object one) {
         index.put(id, one);
         int h = one.hashCode();
         if (!hash.containsKey(h)) {
             hash.put(h, new HashSet<>());
         }
-        hash.get(h).add(one);
+        hash.get(h).add(id);
     }
 
 //    public void add(Cache cache) {
@@ -41,7 +44,8 @@ public class Cache implements Iterable {
 //        hash.putAll(cache.hash);
 //    }
 
-    public Object get(long id) {
+    @Override
+    public Object get(long id) throws Exception {
         Object o = index.get(id);
         if (o == null && parent != null) {
             o = parent.get(id);
@@ -49,11 +53,13 @@ public class Cache implements Iterable {
         return o;
     }
 
-    public int size() {
+    @Override
+    public int size() throws Exception {
         return index.size() + (parent == null ? 0 : parent.size());
     }
 
-    public boolean isEmpty() {
+    @Override
+    public boolean isEmpty() throws Exception {
         return index.isEmpty() && (parent == null || parent.isEmpty());
     }
 
@@ -73,8 +79,9 @@ public class Cache implements Iterable {
 //        }
 //    }
 
-    public List<Object> find(int h) {
-        List<Object> list = new ArrayList<>();
+    @Override
+    public Set<Long> find(int h) throws Exception {
+        Set<Long> list = new HashSet<>();
         if (hash.containsKey(h)) {
             list.addAll(hash.get(h));
         }
@@ -84,7 +91,8 @@ public class Cache implements Iterable {
         return list;
     }
 
-    public void remove(long id) {
+    //    @Override
+    private void remove(long id) {
         Object one = index.get(id);
         if(one != null) {
             int h = (one instanceof Identifiable) ? ((Identifiable) one).getHash() : one.hashCode();
@@ -95,12 +103,11 @@ public class Cache implements Iterable {
                 }
             }
             index.remove(id);
-        } else if (parent != null) {
-            parent.remove(id);
         }
     }
 
-    public void clear() {
+    @Override
+    public void clear() throws Exception {
         index.clear();
         hash.clear();
         if (parent != null) {
@@ -108,6 +115,7 @@ public class Cache implements Iterable {
         }
     }
 
+    @Override
     public void mark() {
         if (index.isEmpty()) {
             stack.push(-1L);
@@ -116,6 +124,7 @@ public class Cache implements Iterable {
         }
     }
 
+    @Override
     public long commit() {
         if (!stack.isEmpty()) {
             return stack.pop();
@@ -124,6 +133,7 @@ public class Cache implements Iterable {
         }
     }
 
+    @Override
     public long release() {
         if (!stack.isEmpty()) {
             long id = stack.pop();
@@ -147,7 +157,8 @@ public class Cache implements Iterable {
         }
     }
 
-    public boolean containsKey(long id) {
+    @Override
+    public boolean containsKey(long id) throws Exception {
         if (!index.containsKey(id)) {
             if (parent != null) {
                 return parent.containsKey(id);
@@ -191,6 +202,7 @@ public class Cache implements Iterable {
         return new CacheIterator(true, -1);
     }
 
+    @Override
     public Iterator<Object> iterator(boolean backward, long fromId) {
         return new CacheIterator(backward, fromId);
     }
@@ -203,16 +215,8 @@ public class Cache implements Iterable {
         private boolean backward = false;
         private Iterator<Object> parentIterator = null;
 
-        public CacheIterator()  {
-            currentId = -1;
-            block.putAll(index);
-            if (parent != null) {
-                parentIterator = parent.iterator();
-            }
-        }
-
         public CacheIterator(boolean backward, long fromId) {
-            this();
+            block.putAll(index);
             this.currentId = fromId;
             this.backward = backward;
             if (parent != null) {

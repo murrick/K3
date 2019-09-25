@@ -2,7 +2,6 @@ package kanger.compiler;
 
 import kanger.Mind;
 import kanger.enums.LibMode;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -31,7 +30,7 @@ public class SysOp {
     public SysOp(final Mind mind) {
         proc = new Reactor() {
             @Override
-            public Object run(Object o) throws RuntimeErrorException  {
+            public Object run(Object o) throws Exception {
 
                 ArgList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
 

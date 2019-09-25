@@ -75,7 +75,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         dos.writeObject(arguments);
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    @Override
+    public void linkExternal(User user) throws Exception {
         this.user = user;
         if (predicate == null && predicateId != -1) {
             predicate = user.getMind().getPredicates().get(predicateId);
@@ -96,7 +97,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         this.predicate = predicate;
     }
 
-    public Right getRight() {
+    public Right getRight() throws Exception {
+//        if (right == null && rightId != -1) {
+//            right = user.getMind().getRights().get(rightId);
+//            right.linkExternal(user);
+//        }
         return right;
     }
 
@@ -204,7 +209,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return false;
     }
 
-    public void setCauses(Collection<Cause> causes) throws RuntimeErrorException {
+    public void setCauses(Collection<Cause> causes) throws Exception {
         if (causes != null) {
             ArgList current = arguments.convertBase();
             if (!user.getMind().getDomainCauses().containsKey(this)) {
@@ -279,7 +284,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 //    s += ");";
 //    return s;
-    private String formatParam(Argument t) throws RuntimeErrorException {
+    private String formatParam(Argument t) throws Exception {
         String s = "";
         if (t.isFSet()) {
             s += t.getF().toString();
@@ -354,19 +359,19 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                             (isCalculated() ? "S" : "") +
                             " "
                             : "";
-                } catch (RuntimeErrorException e) {
+                } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }
             }
             return s + ";" + suffix;
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }
     }
 
 
-    public boolean equalsBase(Domain o) throws RuntimeErrorException {
+    public boolean equalsBase(Domain o) throws Exception {
         if (predicate.getId() != o.getPredicate().getId()) {
             return false;
         }
@@ -419,7 +424,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return success;
 //    }
 
-    public int getOverlaps(ArgList arg) throws RuntimeErrorException {
+    public int getOverlaps(ArgList arg) throws Exception {
         Set<Long> ids = new HashSet<>();
         for (Argument a : arguments) {
             for (Argument b : arg) {
@@ -666,21 +671,21 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
-    public boolean isStored() throws RuntimeErrorException {
+    public boolean isStored() throws Exception {
         return user.getMind().getRights().find(this) != null;
     }
 
-    public boolean isStored(ArgList args) throws RuntimeErrorException {
+    public boolean isStored(ArgList args) throws Exception {
         Domain d = new Domain(predicate, antc, args);
         return user.getMind().getRights().find(d) != null;
     }
 
-    public Right setStored() {
+    public Right setStored() throws Exception {
         Right r = user.getMind().getRights().store(this);
         return r;
     }
 
-    public Right createStored() throws RuntimeErrorException {
+    public Right createStored() throws Exception {
         Right r = user.getMind().getRights().add(this);
         return r;
     }
@@ -689,7 +694,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return Parser.getOp(predicate.getName().toString(), predicate.getRange()) != null;
     }
 
-    public int execSystem() throws RuntimeErrorException {
+    public int execSystem() throws Exception {
         if (isSystem()) {
             return user.getMind().executeSystem(this);
         }
@@ -792,7 +797,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return cnt;
 //    }
 
-    public int getVarOrder(int pos) throws RuntimeErrorException {
+    public int getVarOrder(int pos) throws Exception {
         List<Integer> list = new ArrayList<>();
         SortedMap<Integer, Integer> sort = new TreeMap<>();
         int plains = 0;
@@ -835,27 +840,32 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     @Override
     public boolean equalsTo(Domain to) {
-        if (to.isAntc() == antc
-                && to.getPredicate().getId() == predicate.getId()
-                && to.getRight().getId() == right.getId()) {
-            int i = 0;
-            for (; i < predicate.getRange(); ++i) {
-                try {
-                    if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT().getId() == arguments.get(i).getT().getId())
-                            || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF().getId() == arguments.get(i).getF().getId())
-                            || (!to.get(i).isTSet() && !arguments.get(i).isTSet()
-                            && !to.get(i).isFSet() && !arguments.get(i).isFSet()
-                            && !to.get(i).isEmpty() && !arguments.get(i).isEmpty()
-                            && to.get(i).getValue().getId() == arguments.get(i).getValue().getId())) {
-                    } else {
-                        break;
+        try {
+            if (to.isAntc() == antc
+                    && to.getPredicate().getId() == predicate.getId()
+                    && (right == null || to.getRight().getId() == right.getId())) {
+                int i = 0;
+                for (; i < predicate.getRange(); ++i) {
+                    try {
+                        if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT().getId() == arguments.get(i).getT().getId())
+                                || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF().getId() == arguments.get(i).getF().getId())
+                                || (!to.get(i).isTSet() && !arguments.get(i).isTSet()
+                                && !to.get(i).isFSet() && !arguments.get(i).isFSet()
+                                && !to.get(i).isEmpty() && !arguments.get(i).isEmpty()
+                                && to.get(i).getValue().getId() == arguments.get(i).getValue().getId())) {
+                        } else {
+                            break;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace(System.err);
                     }
-                } catch (RuntimeErrorException e) {
-                    e.printStackTrace(System.err);
                 }
+                return i == predicate.getRange();
+            } else {
+                return false;
             }
-            return i == predicate.getRange();
-        } else {
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
             return false;
         }
     }

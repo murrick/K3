@@ -2,7 +2,6 @@ package kanger.primitives;
 
 import kanger.User;
 import kanger.enums.ArgumentType;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.units.*;
 
@@ -42,7 +41,7 @@ public class Argument implements Externalizable {
         dos.writeInt(getType().ordinal());
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         if (o == null && type != ArgumentType.EMPTY) {
             switch (type) {
                 case TERM:
@@ -87,7 +86,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public Term getValue() throws RuntimeErrorException {
+    public Term getValue() throws Exception {
         switch (getType()) {
             case TERM:
                 return (Term) o;
@@ -104,7 +103,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public boolean setValue(Term t) throws RuntimeErrorException {
+    public boolean setValue(Term t) throws Exception {
         switch (getType()) {
             case EMPTY:
                 o = t;
@@ -146,7 +145,7 @@ public class Argument implements Externalizable {
     public boolean isEmpty() {
         try {
             return getValue() == null;
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return true;
         }
@@ -177,20 +176,20 @@ public class Argument implements Externalizable {
             } else {
                 return "null";
             }
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }
     }
 
 
-    public boolean isDefined() throws RuntimeErrorException {
+    public boolean isDefined() throws Exception {
         Term t = getValue();
         return t != null && !t.isCVariable();
     }
 
 
-    public boolean isCVar() throws RuntimeErrorException {
+    public boolean isCVar() throws Exception {
         return !isEmpty() && getValue().isCVariable();
     }
 

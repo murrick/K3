@@ -4,7 +4,6 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -36,7 +35,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
         this.user = user;
     }
 
-    public FValue(Function f, User user) throws RuntimeErrorException {
+    public FValue(Function f, User user) throws Exception {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue();
         for (Argument a : f.getArguments()) {
@@ -67,7 +66,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
         dos.writeObject(condition);
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         this.user = user;
         if (function == null && functionId != -1) {
             function = user.getMind().getFunctions().get(functionId);
@@ -138,7 +137,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
         return condition;
     }
 
-    private String formatParam(Argument t) throws RuntimeErrorException {
+    private String formatParam(Argument t) throws Exception {
         Operation op = Parser.getOp(function.getName().toString(), function.getRange());
         boolean isOp = op != null && op.getRange() == function.getRange();
         String s = "";
@@ -184,7 +183,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
             } else {
                 return false;
             }
-        } catch (RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return false;
         }
@@ -238,7 +237,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
                 }
                 //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
                 return s + res;
-            } catch (RuntimeErrorException e) {
+            } catch (Exception e) {
                 e.printStackTrace(System.err);
                 return "";
             }

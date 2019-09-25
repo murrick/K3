@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.Predicate;
@@ -21,7 +22,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     private long lastId = 0;
     private long firstId = 0;
 
-    private Cache cache;
+    private ICache cache;
     private User user = null;
 
     public PredicateFactory(User user) {
@@ -38,11 +39,11 @@ public class PredicateFactory implements Iterable<Predicate> {
         } else {
             lastId = 0;
             firstId = 0;
-            cache = user.getStorage(SCHEMA);
+            cache = new Cache(null);
         }
     }
 
-    public void commit(PredicateFactory base) {
+    public void commit(PredicateFactory base) throws Exception {
         List<Predicate> list = new ArrayList();
         for (Object p : base.cache) {
             if (((Identifiable) p).getId() < base.firstId) {
@@ -63,7 +64,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public Predicate add(Term line, int range) throws RuntimeErrorException {
+    public Predicate add(Term line, int range) throws Exception {
         Predicate p = find(line, range);
         if (p != null) {
             return p;
@@ -77,18 +78,20 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public Predicate find(Term line, int range) throws RuntimeErrorException {
+    public Predicate find(Term line, int range) throws Exception {
         Predicate temp = new Predicate(line, range);
-        for (Object one : cache.find(temp.getHash())) {
-            if (((Identifiable) one).equalsTo(temp)) {
+        for (long id : cache.find(temp.getHash())) {
+            Identifiable one = get(id);
+            if (one.equalsTo(temp)) {
                 return (Predicate) one;
             }
         }
         return null;
     }
 
-    public Predicate get(long id) {
+    public Predicate get(long id) throws Exception {
         Predicate t = (Predicate) cache.get(id);
+//        t.linkExternal(user);
         return t;
     }
 
@@ -100,7 +103,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public int size() {
+    public int size() throws Exception {
         return cache.size();
     }
 

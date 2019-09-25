@@ -4,7 +4,6 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Reactor;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -28,7 +27,7 @@ public class Linker {
         this.user = user;
     }
 
-    public void link(Right right, boolean logging) throws RuntimeErrorException {
+    public void link(Right right, boolean logging) throws Exception {
 
 //        user.getMind().getProducedDomains().reset();
         user.getMind().getExcludedDomains().clear();
@@ -204,7 +203,7 @@ public class Linker {
                                 if (linkDatabase(t, causes, solve, logging)) {
                                     result = true;
                                 }
-                            } catch (RuntimeErrorException e) {
+                            } catch (Exception e) {
                                 e.printStackTrace(System.err);
                                 result = false;
                             }
@@ -283,7 +282,7 @@ public class Linker {
 
     }
 
-    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, Reactor runnable) throws RuntimeErrorException {
+    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, Reactor runnable) throws Exception {
         boolean result = false;
 //        if (tvars == null) {
 //            tvars = new TreeSet<>();
@@ -299,7 +298,7 @@ public class Linker {
             if (iterator.hasNext()) {
                 do {
                     TValue v = iterator.next();
-                    v.linkExternal(user);
+//                    v.linkExternal(user);
                     user.getMind().getTValues().set(t, v);
                     if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                         result = true;
@@ -314,7 +313,7 @@ public class Linker {
         return result;
     }
 
-    private boolean linkDomains(List<Domain> treeSlave, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
+    private boolean linkDomains(List<Domain> treeSlave, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
 
         boolean result = false;
         if (treeSlave.size() == 1) {
@@ -466,7 +465,7 @@ public class Linker {
         return r != null;
     }
 
-    private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, List<TValue> solve, boolean logging) throws RuntimeErrorException {
+    private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, List<TValue> solve, boolean logging) throws Exception {
 
         boolean result = false;
         boolean occurs = false;
@@ -608,7 +607,7 @@ public class Linker {
         return result;
     }
 
-    private void logCauses(LogMode mode, Domain d) {
+    private void logCauses(LogMode mode, Domain d) throws Exception {
         boolean rightShowed = false;
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
@@ -708,7 +707,7 @@ public class Linker {
 //        return result;
 //    }
 
-    private boolean updateDatabase(boolean logging) throws RuntimeErrorException {
+    private boolean updateDatabase(boolean logging) throws Exception {
         boolean result = false;
         for (Map.Entry<Domain, List<ArgList>> e : user.getMind().getProducedDomains().entrySet()) {
             Domain d = e.getKey();
@@ -760,7 +759,7 @@ public class Linker {
     }
 
 
-    public boolean calcFunctions(List<Domain> master, Map<Right, Set<Cause>> causes, boolean logging) throws RuntimeErrorException {
+    public boolean calcFunctions(List<Domain> master, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
         boolean result = false;
 
         if (checkSystem(master, logging)) {
@@ -782,7 +781,7 @@ public class Linker {
         return result;
     }
 
-    public boolean checkSystem(List<Domain> tree, boolean logging) throws RuntimeErrorException {
+    public boolean checkSystem(List<Domain> tree, boolean logging) throws Exception {
         boolean block = false;
         for (Domain d : tree) {
             if (d.isSystem()) {

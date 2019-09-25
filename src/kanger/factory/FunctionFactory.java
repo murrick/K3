@@ -3,6 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.calculator.Calculator;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -21,7 +22,7 @@ public class FunctionFactory implements Iterable<Function> {
     private long lastId = 0;
     private long firstId = 0;
 
-    private Cache cache;
+    private ICache cache;
     private User user = null;
 
     public FunctionFactory(User user) {
@@ -38,11 +39,11 @@ public class FunctionFactory implements Iterable<Function> {
         } else {
             lastId = 0;
             firstId = 0;
-            cache = user.getStorage(SCHEMA);
+            cache = new Cache(null);
         }
     }
 
-    public void commit(FunctionFactory base) {
+    public void commit(FunctionFactory base) throws Exception {
         List<Function> list = new ArrayList();
         for (Object p : base.cache) {
             if (((Identifiable) p).getId() < base.firstId) {
@@ -64,7 +65,7 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
 
-    public Function add(Term name, ArgList arguments) throws RuntimeErrorException {
+    public Function add(Term name, ArgList arguments) throws Exception {
         Function f = new Function(user);
         f.setName(name);
         f.setRange(arguments.size());
@@ -80,8 +81,9 @@ public class FunctionFactory implements Iterable<Function> {
         return f;
     }
 
-    public Function get(long id) {
+    public Function get(long id) throws Exception {
         Function t = (Function) cache.get(id);
+//        t.linkExternal(user);
         return t;
     }
 
@@ -94,7 +96,7 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
 
-    public int size() {
+    public int size() throws Exception {
         return cache.size();
     }
 

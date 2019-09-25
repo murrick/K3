@@ -4,7 +4,6 @@ import kanger.User;
 import kanger.enums.Enums;
 import kanger.enums.ParseError;
 import kanger.exception.ParseErrorException;
-import kanger.exception.RuntimeErrorException;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.units.Domain;
@@ -28,7 +27,7 @@ public class Compiler {
         this.user = user;
     }
 
-    public Right compileLine(PTree root, boolean antc, String orig) throws ParseErrorException, RuntimeErrorException {
+    public Right compileLine(PTree root, boolean antc, String orig) throws Exception {
 
         Right r = new Right(user);
         r.setOrig(user.getMind().getTerms().add(orig));
@@ -38,7 +37,7 @@ public class Compiler {
         return r;
     }
 
-    private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones) throws ParseErrorException, RuntimeErrorException {
+    private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
         if(root == null) {
@@ -140,7 +139,7 @@ public class Compiler {
         clones.addAll(list);
     }
 
-    private boolean compileQuantor(Right r, PTree root, boolean antc, Map<String, Argument> replacements) throws ParseErrorException, RuntimeErrorException {
+    private boolean compileQuantor(Right r, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
         String varName = root.getLeft().getName();
 
         if (replacements.containsKey(varName)) {
@@ -157,7 +156,7 @@ public class Compiler {
         return antc;
     }
 
-    private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements) throws RuntimeErrorException {
+    private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
 //        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
 
         Domain d = new Domain(user);
@@ -212,7 +211,7 @@ public class Compiler {
         t.add(d);
     }
 
-    private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) throws RuntimeErrorException {
+    private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements) throws Exception {
 //        int s;
 
         if (root == null) {

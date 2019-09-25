@@ -1,10 +1,6 @@
 package kanger;
 
-import kanger.exception.ParseErrorException;
-import kanger.exception.RuntimeErrorException;
 import kanger.units.Term;
-
-import java.io.IOException;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -51,7 +47,7 @@ public class Kanger {
             "!age(Sarah, 4);\n" +
             "\n";
 
-    public static void main(String[] args) throws ParseErrorException, RuntimeErrorException, IOException {
+    public static void main(String[] args) throws Exception {
 
         User user = new User();
         user.use("data/memory");

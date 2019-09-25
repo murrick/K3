@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -24,7 +25,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     private Set<Domain> waiters = new HashSet<>();
 
-    private Cache cache;
+    private ICache cache;
     //    private Cache load = new Cache();
     private User user = null;
 
@@ -45,11 +46,11 @@ public class DomainFactory implements Iterable<Domain> {
         } else {
             lastId = 0;
             firstId = 0;
-            cache = user.getStorage(SCHEMA);
+            cache = new Cache(null);
         }
     }
 
-    public void commit(DomainFactory base) {
+    public void commit(DomainFactory base) throws Exception {
         List<Domain> list = new ArrayList();
         for (Object p : base.cache) {
             if (((Identifiable) p).getId() < base.firstId) {
@@ -71,9 +72,12 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
+    public Domain add(Domain d) throws Exception {
+        cache.add(d);
+        return d;
+    }
 
-
-    public Domain add(Right r) {
+    public Domain add(Right r) throws Exception {
         Domain p = new Domain(user);
         p.setRight(r);
         p.setId(lastId++);
@@ -82,7 +86,7 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
 
-    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws RuntimeErrorException {
+    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws Exception {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
@@ -102,18 +106,20 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws RuntimeErrorException {
+    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws Exception {
         Domain temp = new Domain(pred, antc, arg, r);
-        for (Object one : cache.find(temp.getHash())) {
-            if (((Identifiable) one).equalsTo(temp)) {
+        for (long id : cache.find(temp.getHash())) {
+            Identifiable one = get(id);
+            if (one.equalsTo(temp)) {
                 return (Domain) one;
             }
         }
         return null;
     }
 
-    public Domain get(long id) {
+    public Domain get(long id) throws Exception {
         Domain t = (Domain) cache.get(id);
+//        t.linkExternal(user);
         return t;
     }
 
@@ -126,7 +132,7 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
 
-    public int size() {
+    public int size() throws Exception {
         return cache.size();
     }
 

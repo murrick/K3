@@ -2,6 +2,7 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.exception.RuntimeErrorException;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Cache;
 import kanger.units.FValue;
@@ -17,7 +18,7 @@ public class FValueFactory {
     private long lastId = 0;
     private long firstId = 0;
 
-    private Cache cache;
+    private ICache cache;
     private User user = null;
 
     public FValueFactory(User user) {
@@ -34,11 +35,11 @@ public class FValueFactory {
         } else {
             lastId = 0;
             firstId = 0;
-            cache = user.getStorage(SCHEMA);
+            cache = new Cache(null);
         }
     }
 
-    public void commit(FValueFactory base) {
+    public void commit(FValueFactory base) throws Exception {
         List<FValue> list = new ArrayList();
         for (Object p : base.cache) {
             if (((Identifiable) p).getId() < base.firstId) {
@@ -59,7 +60,7 @@ public class FValueFactory {
         }
     }
 
-    public FValue add(Function f) throws RuntimeErrorException {
+    public FValue add(Function f) throws Exception {
         FValue t = find(f);
         if (t == null) {
             if (f.isComplete()) {
@@ -74,18 +75,20 @@ public class FValueFactory {
     }
 
 
-    public FValue find(Function f) throws RuntimeErrorException {
+    public FValue find(Function f) throws Exception {
         FValue temp = new FValue(f, user);
-        for (Object one : cache.find(temp.getHash())) {
-            if (((Identifiable) one).equalsTo(f)) {
+        for (long id : cache.find(temp.getHash())) {
+            Identifiable one = get(id);
+            if (one.equalsTo(f)) {
                 return (FValue) one;
             }
         }
         return null;
     }
 
-    public FValue get(long id) {
+    public FValue get(long id) throws Exception {
         FValue t = (FValue) cache.get(id);
+//        t.linkExternal(user);
         return t;
     }
 
@@ -98,21 +101,21 @@ public class FValueFactory {
         }
     }
 
-    public void mark() {
+    public void mark() throws Exception {
         cache.mark();
     }
 
 
-    public void commit() {
+    public void commit() throws Exception {
         cache.commit();
     }
 
-    public void release() {
+    public void release() throws Exception {
         cache.release();
     }
 
 
-    public int size() {
+    public int size() throws Exception {
         return cache.size();
     }
 

@@ -1,9 +1,12 @@
 package kanger;
 
-import kanger.exception.RuntimeErrorException;
 import kanger.factory.*;
+import kanger.interfaces.ICache;
 import kanger.interfaces.Reactor;
-import kanger.storage.Cache;
+import kanger.storage.Base;
+import org.cojen.tupl.Database;
+import org.cojen.tupl.DatabaseConfig;
+import org.cojen.tupl.DurabilityMode;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,28 +15,37 @@ import java.util.Map;
 public class User {
 
     private Mind mind = null;
-    private Map<String, Cache> storage = null;
+    private Map<String, Base> storage = null;
     private String storageName = "";
+    private Database db = null;
 
-    public User() {
+    public User() throws IOException {
     }
 
-    public void use(String name) throws IOException, RuntimeErrorException {
+    public void use(String name) throws Exception {
         if (!isClosed()) {
             close();
         }
-        storage = new HashMap<>();
-        storage.put(DictionaryFactory.SCHEMA, new Cache(null));
-        storage.put(DomainFactory.SCHEMA, new Cache(null));
-        storage.put(FunctionFactory.SCHEMA, new Cache(null));
-        storage.put(FValueFactory.SCHEMA, new Cache(null));
-        storage.put(PredicateFactory.SCHEMA, new Cache(null));
-        storage.put(RightFactory.SCHEMA, new Cache(null));
-        storage.put(RightFactory.SCHEMA_STORED, new Cache(null));
-        storage.put(TValueFactory.SCHEMA, new Cache(null));
-        storage.put(TVariableFactory.SCHEMA, new Cache(null));
 
-        for (Map.Entry<String, Cache> e : storage.entrySet()) {
+        DatabaseConfig config = new DatabaseConfig()
+                .baseFilePath(name)
+                .minCacheSize(100_000_000)
+                .durabilityMode(DurabilityMode.NO_FLUSH);
+
+        db = Database.open(config);
+
+        storage = new HashMap<>();
+        storage.put(DictionaryFactory.SCHEMA, new Base(this, DictionaryFactory.SCHEMA, null));
+        storage.put(DomainFactory.SCHEMA, new Base(this, DomainFactory.SCHEMA, null));
+        storage.put(FunctionFactory.SCHEMA, new Base(this, FunctionFactory.SCHEMA, null));
+        storage.put(FValueFactory.SCHEMA, new Base(this, FValueFactory.SCHEMA, null));
+        storage.put(PredicateFactory.SCHEMA, new Base(this, PredicateFactory.SCHEMA, null));
+        storage.put(RightFactory.SCHEMA, new Base(this, RightFactory.SCHEMA, null));
+        storage.put(RightFactory.SCHEMA_STORED, new Base(this, RightFactory.SCHEMA_STORED, null));
+        storage.put(TValueFactory.SCHEMA, new Base(this, TValueFactory.SCHEMA, null));
+        storage.put(TVariableFactory.SCHEMA, new Base(this, TVariableFactory.SCHEMA, null));
+
+        for (Map.Entry<String, Base> e : storage.entrySet()) {
             //TODO: Открытие БД
         }
 
@@ -43,25 +55,26 @@ public class User {
 
     public void close() throws IOException {
         if (!isClosed()) {
-            for (Map.Entry<String, Cache> e : storage.entrySet()) {
+            for (Map.Entry<String, Base> e : storage.entrySet()) {
                 //TODO: Закрытие БД
             }
+            db.close(null);
         }
         storage = null;
     }
 
     public void remove() throws IOException {
         if (!isClosed()) {
-            for (Map.Entry<String, Cache> e : storage.entrySet()) {
+            for (Map.Entry<String, Base> e : storage.entrySet()) {
                 //TODO: Удаление БД
             }
         }
         storage = null;
     }
 
-    public void reindex(Reactor reactor) throws IOException, RuntimeErrorException {
+    public void reindex(Reactor reactor) throws Exception {
         if (!isClosed()) {
-            for (Map.Entry<String, Cache> e : storage.entrySet()) {
+            for (Map.Entry<String, Base> e : storage.entrySet()) {
                 reactor.run(e.getKey());
                 //TODO: Переиндексация БД
             }
@@ -70,9 +83,9 @@ public class User {
 
     }
 
-    public void clear() throws IOException {
+    public void clear() throws Exception {
         if (!isClosed()) {
-            for (Map.Entry<String, Cache> e : storage.entrySet()) {
+            for (Map.Entry<String, Base> e : storage.entrySet()) {
                 e.getValue().clear();
             }
         }
@@ -80,7 +93,7 @@ public class User {
 
     public void flush() throws IOException {
         if (!isClosed()) {
-            for (Map.Entry<String, Cache> e : storage.entrySet()) {
+            for (Map.Entry<String, Base> e : storage.entrySet()) {
                 //TODO: flush БД
             }
         }
@@ -90,7 +103,7 @@ public class User {
         return storage == null;
     }
 
-    public Cache getStorage(String schema) {
+    public ICache getStorage(String schema) {
         return storage.get(schema);
     }
 
@@ -106,4 +119,7 @@ public class User {
         return mind;
     }
 
+    public Database getDb() {
+        return db;
+    }
 }

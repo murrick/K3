@@ -2,7 +2,6 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.Cause;
 
@@ -92,7 +91,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
-    public void linkExternal(User user) throws RuntimeErrorException {
+    public void linkExternal(User user) throws Exception {
         this.user = user;
         if (orig == null && origId != -1) {
             orig = user.getMind().getTerms().get(origId);
@@ -153,13 +152,17 @@ public class Right implements Externalizable, Identifiable<Right> {
         user.getMind().getUsedRights().get(0L).add(this);
     }
 
-    public Set<Right> getNatives() {
+    public Set<Right> getNatives() throws Exception {
         Set<Right> list = new HashSet<>();
         for (List<Domain> t : tree) {
             for (Domain d : t) {
                 for (Right r : user.getMind().getRights()) {
-                    if (r.getPredicates().contains(d.getPredicate())) {
-                        list.add(r);
+                    if (r != null) {
+                        if (r.getPredicates().contains(d.getPredicate())) {
+                            list.add(r);
+                        }
+                    } else {
+                        break;
                     }
                 }
             }
@@ -271,7 +274,7 @@ public class Right implements Externalizable, Identifiable<Right> {
                         break;
                     }
                 }
-            } catch (RuntimeErrorException e) {
+            } catch (Exception e) {
                 e.printStackTrace(System.err);
             }
             return i == domain.getPredicate().getRange();

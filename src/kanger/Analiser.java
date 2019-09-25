@@ -1,7 +1,6 @@
 package kanger;
 
 import kanger.enums.LogMode;
-import kanger.exception.RuntimeErrorException;
 import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.Domain;
@@ -469,7 +468,7 @@ public class Analiser {
 //    }
 
 
-    public boolean analise(boolean logging) throws RuntimeErrorException {
+    public boolean analise(boolean logging) throws Exception {
         boolean result = false;
         int counter = 0;
 
@@ -767,7 +766,7 @@ public class Analiser {
 
     //TODO: !index(qwerty); ?$x $y index(x), y : x;
 
-    public boolean checkDatabase(boolean logging) throws RuntimeErrorException {
+    public boolean checkDatabase(boolean logging) throws Exception {
 
         boolean result = false;
         for (long id : user.getMind().getRights().getDatabase(-1)) {
