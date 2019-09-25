@@ -6,7 +6,7 @@ import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.storage.Cache;
+import kanger.storage.Escalera;
 import kanger.units.Domain;
 import kanger.units.Predicate;
 import kanger.units.Right;
@@ -42,11 +42,11 @@ public class DomainFactory implements Iterable<Domain> {
             lastId = base.lastId;
             firstId = base.lastId;
             waiters.addAll(base.waiters);
-            cache = new Cache(base.cache);
+            cache = new Escalera(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
-            cache = new Cache(null);
+            cache = new Escalera(null);
         }
     }
 
@@ -131,6 +131,9 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
+    public void unlink() {
+        cache.unlink();
+    }
 
     public int size() throws Exception {
         return cache.size();

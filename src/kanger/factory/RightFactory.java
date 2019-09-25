@@ -5,7 +5,7 @@ import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
-import kanger.storage.Cache;
+import kanger.storage.Escalera;
 import kanger.units.Domain;
 import kanger.units.Right;
 import kanger.units.TValue;
@@ -41,18 +41,16 @@ public class RightFactory implements Iterable<Right> {
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache = new Cache(base.cache);
-            stored = new Cache(base.stored);
+            cache = new Escalera(base.cache);
+            stored = new Escalera(base.stored);
         } else {
             lastId = 0;
             firstId = 0;
-            cache = new Cache(null);
-            stored = new Cache(null);
+            cache = new Escalera(null);
+            stored = new Escalera(null);
         }
     }
 
-    public void release() {
-    }
 
     public void commit(RightFactory base) throws Exception {
         List<Right> list = new ArrayList();
@@ -178,6 +176,10 @@ public class RightFactory implements Iterable<Right> {
         return null;
     }
 
+    public void unlink() {
+        cache.unlink();
+        stored.unlink();
+    }
 
     @Override
     public Iterator iterator() {

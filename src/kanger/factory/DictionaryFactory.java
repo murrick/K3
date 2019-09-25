@@ -5,7 +5,7 @@ import kanger.enums.Enums;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
-import kanger.storage.Cache;
+import kanger.storage.Escalera;
 import kanger.units.Right;
 import kanger.units.Term;
 
@@ -47,12 +47,12 @@ public class DictionaryFactory {
             lastId = base.lastId;
             firstId = base.lastId;
             varIndex = base.varIndex;
-            cache = new Cache(base.cache);
+            cache = new Escalera(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
             varIndex = 0;
-            cache = new Cache(null);
+            cache = new Escalera(null);
         }
     }
 
@@ -72,6 +72,10 @@ public class DictionaryFactory {
             }
         }
 
+    }
+
+    public void unlink() {
+        cache.unlink();
     }
 
     public void update() throws RuntimeErrorException {

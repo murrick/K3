@@ -7,7 +7,7 @@ import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.storage.Cache;
+import kanger.storage.Escalera;
 import kanger.units.Function;
 import kanger.units.Term;
 
@@ -35,11 +35,11 @@ public class FunctionFactory implements Iterable<Function> {
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache = new Cache(base.cache);
+            cache = new Escalera(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
-            cache = new Cache(null);
+            cache = new Escalera(null);
         }
     }
 
@@ -95,6 +95,9 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
+    public void unlink() {
+        cache.unlink();
+    }
 
     public int size() throws Exception {
         return cache.size();

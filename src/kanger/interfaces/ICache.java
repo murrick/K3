@@ -26,6 +26,8 @@ public interface ICache extends Iterable {
 
     boolean containsKey(long id) throws Exception;
 
+    void unlink();
+
     @Override
     Iterator<Object> iterator();
 

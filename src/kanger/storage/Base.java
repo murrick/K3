@@ -267,6 +267,12 @@ public class Base implements ICache {
         }
     }
 
+    @Override
+    public void unlink() {
+
+    }
+
+
 //    protected long getNext(long id, NavigableMap<Long, Object> block) {
 //        if (block.isEmpty()) {
 //            return -1;

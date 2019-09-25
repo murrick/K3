@@ -213,7 +213,14 @@ public class Mind {
         results.commit(m.getResults());
 
         // Сброс индексов связи предикаторв
-        rights.release();
+        terms.unlink();
+        tVars.unlink();
+        tValues.unlink();
+        fValues.unlink();
+        predicates.unlink();
+        domains.unlink();
+        rights.unlink();
+        functions.unlink();
 
         queryResult = (Boolean) m.getQueryResult();
 //        querySource = m.getQuerySource();

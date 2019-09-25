@@ -4,7 +4,7 @@ import kanger.User;
 import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
 import kanger.interfaces.Identifiable;
-import kanger.storage.Cache;
+import kanger.storage.Escalera;
 import kanger.units.FValue;
 import kanger.units.Function;
 
@@ -31,11 +31,11 @@ public class FValueFactory {
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache = new Cache(base.cache);
+            cache = new Escalera(base.cache);
         } else {
             lastId = 0;
             firstId = 0;
-            cache = new Cache(null);
+            cache = new Escalera(null);
         }
     }
 
@@ -114,6 +114,9 @@ public class FValueFactory {
         cache.release();
     }
 
+    public void unlink() {
+        cache.unlink();
+    }
 
     public int size() throws Exception {
         return cache.size();

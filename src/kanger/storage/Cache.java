@@ -16,14 +16,20 @@ public class Cache implements ICache {
         this.index = new TreeMap<>();
         this.hash = new HashMap<>();
         this.stack = new Stack<>();
+
         this.parent = parent;
+
+        if (parent != null) {
+            index.putAll(((Cache) parent).index);
+            hash.putAll(((Cache) parent).hash);
+        }
     }
 
     @Override
     public void add(Identifiable one) {
         index.put(one.getId(), one);
         int h = one.getHash();
-        if(!hash.containsKey(h)) {
+        if (!hash.containsKey(h)) {
             hash.put(h, new HashSet<>());
         }
         hash.get(h).add(one.getId());
@@ -47,20 +53,20 @@ public class Cache implements ICache {
     @Override
     public Object get(long id) throws Exception {
         Object o = index.get(id);
-        if (o == null && parent != null) {
-            o = parent.get(id);
-        }
+//        if (o == null && parent != null) {
+//            o = parent.get(id);
+//        }
         return o;
     }
 
     @Override
     public int size() throws Exception {
-        return index.size() + (parent == null ? 0 : parent.size());
+        return index.size(); // + (parent == null ? 0 : parent.size());
     }
 
     @Override
     public boolean isEmpty() throws Exception {
-        return index.isEmpty() && (parent == null || parent.isEmpty());
+        return index.isEmpty(); // && (parent == null || parent.isEmpty());
     }
 
 //    public long firstKey() {
@@ -85,20 +91,20 @@ public class Cache implements ICache {
         if (hash.containsKey(h)) {
             list.addAll(hash.get(h));
         }
-        if (parent != null) {
-            list.addAll(parent.find(h));
-        }
+//        if (list.isEmpty() && parent != null) {
+//            list.addAll(parent.find(h));
+//        }
         return list;
     }
 
     //    @Override
     private void remove(long id) {
         Object one = index.get(id);
-        if(one != null) {
+        if (one != null) {
             int h = (one instanceof Identifiable) ? ((Identifiable) one).getHash() : one.hashCode();
-            if(hash.containsKey(h)) {
+            if (hash.containsKey(h)) {
                 hash.get(h).remove(one);
-                if(hash.get(h).isEmpty()) {
+                if (hash.get(h).isEmpty()) {
                     hash.remove(h);
                 }
             }
@@ -110,9 +116,9 @@ public class Cache implements ICache {
     public void clear() throws Exception {
         index.clear();
         hash.clear();
-        if (parent != null) {
-            parent.clear();
-        }
+//        if (parent != null) {
+//            parent.clear();
+//        }
     }
 
     @Override
@@ -160,18 +166,24 @@ public class Cache implements ICache {
     @Override
     public boolean containsKey(long id) throws Exception {
         if (!index.containsKey(id)) {
-            if (parent != null) {
-                return parent.containsKey(id);
-            } else {
-                return false;
-            }
+//            if (parent != null) {
+//                return parent.containsKey(id);
+//            } else {
+            return false;
+//            }
         } else {
             return true;
         }
     }
 
+    @Override
+    public void unlink() {
+
+    }
+
+
     protected long getNext(long id, NavigableMap<Long, Object> block) {
-        if(block.isEmpty()) {
+        if (block.isEmpty()) {
             return -1;
         } else {
             Long next = block.higherKey(id);
@@ -184,7 +196,7 @@ public class Cache implements ICache {
     }
 
     protected long getPrevious(long id, NavigableMap<Long, Object> block) {
-        if(block.isEmpty()) {
+        if (block.isEmpty()) {
             return -1;
         } else {
             Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
@@ -213,15 +225,15 @@ public class Cache implements ICache {
 
         private long currentId = 0;
         private boolean backward = false;
-        private Iterator<Object> parentIterator = null;
+//        private Iterator<Object> parentIterator = null;
 
         public CacheIterator(boolean backward, long fromId) {
             block.putAll(index);
             this.currentId = fromId;
             this.backward = backward;
-            if (parent != null) {
-                parentIterator = parent.iterator(backward, fromId);
-            }
+//            if (parent != null) {
+//                parentIterator = parent.iterator(backward, fromId);
+//            }
 
 //            if(fromId >= 0) {
 //                get(fromId);
@@ -236,50 +248,45 @@ public class Cache implements ICache {
 
         @Override
         public boolean hasNext() {
-                if(backward) {
-                    if (getPrevious(currentId, block) == -1) {
-                        if (parentIterator != null) {
-                            return parentIterator.hasNext();
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        return true;
-                    }
+            if (backward) {
+                if (getPrevious(currentId, block) != -1) {
+                    return true;
+//                } else if (parentIterator != null) {
+//                    return parentIterator.hasNext();
                 } else {
-                    if (getNext(currentId, block) == -1) {
-                        if (parentIterator != null) {
-                            return parentIterator.hasNext();
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        return true;
-                    }
+                    return false;
                 }
+            } else {
+//                if (parentIterator != null) {
+//                    if (parentIterator.hasNext()) {
+//                        return true;
+//                    }
+//                }
+                return getNext(currentId, block) != -1;
+            }
         }
 
         @Override
         public Object next() {
-                if(backward) {
-                    currentId = getPrevious(currentId, block);
-                    if (currentId == -1 && parentIterator != null) {
-                        return parentIterator.next();
-                    }
-                } else {
-                    if (parentIterator != null) {
-                        Object o = parentIterator.next();
-                        if (o != null) {
-                            return o;
-                        }
-                    }
-                    currentId = getNext(currentId, block);
-                }
-                if (currentId != -1) {
-                    return block.get(currentId);
-                } else {
-                    return null;
-                }
+            if (backward) {
+                currentId = getPrevious(currentId, block);
+//                if (currentId == -1 && parentIterator != null) {
+//                    return parentIterator.next();
+//                }
+            } else {
+//                if (parentIterator != null) {
+//                    Object o = parentIterator.next();
+//                    if (o != null) {
+//                        return o;
+//                    }
+//                }
+                currentId = getNext(currentId, block);
+            }
+            if (currentId != -1) {
+                return block.get(currentId);
+            } else {
+                return null;
+            }
         }
     }
 
