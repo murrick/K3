@@ -15,7 +15,7 @@ import java.util.Map;
 public class User {
 
     private Mind mind = null;
-    private Map<String, Base> storage = null;
+    private Map<String, Base> storage = new HashMap<>();
     private String storageName = "";
     private Database db = null;
 
@@ -34,7 +34,6 @@ public class User {
 
         db = Database.open(config);
 
-        storage = new HashMap<>();
         storage.put(DictionaryFactory.SCHEMA, new Base(this, DictionaryFactory.SCHEMA, null));
         storage.put(DomainFactory.SCHEMA, new Base(this, DomainFactory.SCHEMA, null));
         storage.put(FunctionFactory.SCHEMA, new Base(this, FunctionFactory.SCHEMA, null));
@@ -54,13 +53,11 @@ public class User {
     }
 
     public void close() throws IOException {
-        if (!isClosed()) {
-            for (Map.Entry<String, Base> e : storage.entrySet()) {
-                //TODO: Закрытие БД
-            }
+        if (db != null) {
+            db.checkpoint();
             db.close(null);
+            db = null;
         }
-        storage = null;
     }
 
     public void remove() throws IOException {
@@ -69,7 +66,6 @@ public class User {
                 //TODO: Удаление БД
             }
         }
-        storage = null;
     }
 
     public void reindex(Reactor reactor) throws Exception {
@@ -100,7 +96,7 @@ public class User {
     }
 
     public boolean isClosed() {
-        return storage == null;
+        return false;
     }
 
     public ICache getStorage(String schema) {

@@ -779,20 +779,26 @@ public class Mind {
                     m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                     m.getLog().add(LogMode.ANALIZER, r);
 //                    m.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-
-                    m.link(r, true);
                     boolean ar = m.analise(true);
                     if (ar) {
                         m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
                         release(m);
                         res = null;
                     } else {
-                        m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
-                        m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
-                        commit(m);
-                        excluded.commit(m.getHypotesisStore());
-                        setChanged(true);
-                        res = true;
+                        m.link(r, true);
+                        ar = m.analise(true);
+                        if (ar) {
+                            m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
+                            release(m);
+                            res = null;
+                        } else {
+                            m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
+                            m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
+                            commit(m);
+                            excluded.commit(m.getHypotesisStore());
+                            setChanged(true);
+                            res = true;
+                        }
                     }
                     queryContext = m;
                 } else {
@@ -906,7 +912,7 @@ public class Mind {
 
                             m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                             m.getLog().add(LogMode.ANALIZER, r);
-                            m.link(r, true);
+
                             boolean ar = m.analise(true);
                             if (ar) {
                                 m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
@@ -914,7 +920,16 @@ public class Mind {
                                 res = false;
                                 queryContext = m;
                             } else {
-                                hypotesis.commit(m.getHypotesisStore());
+                                m.link(r, true);
+                                ar = m.analise(true);
+                                if (ar) {
+                                    m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
+                                    logResult(m);
+                                    res = false;
+                                    queryContext = m;
+                                } else {
+                                    hypotesis.commit(m.getHypotesisStore());
+                                }
                             }
                         }
                         release(m);
@@ -932,18 +947,24 @@ public class Mind {
                             r.setQuery(true);
                             m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                             m.getLog().add(LogMode.ANALIZER, r);
-                            m.link(r, true);
                             boolean ar = m.analise(true);
                             if (ar) {
                                 m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
                                 logResult(m);
                                 res = true;
                             } else {
+                                m.link(r, true);
+                                ar = m.analise(true);
+                                if (ar) {
+                                    m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
+                                    logResult(m);
+                                    res = true;
+                                } else {
 
-                                hypotesis.commit(m.getHypotesisStore());
-                                hypotesis.exclude(excluded);
+                                    hypotesis.commit(m.getHypotesisStore());
+                                    hypotesis.exclude(excluded);
 
-                                // Удаление конфликтующих гипотез
+                                    // Удаление конфликтующих гипотез
 //                                if (!hypotesis.isEmpty()) {
 //
 //                                    List<Hypotese> toDelete = new ArrayList<>();
@@ -1001,10 +1022,11 @@ public class Mind {
 //                                }
 
 
-                                if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
-                                    m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));
-                                } else {
-                                    m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
+                                    if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
+                                        m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));
+                                    } else {
+                                        m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
+                                    }
                                 }
                             }
                             queryContext = m;

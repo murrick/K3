@@ -130,7 +130,8 @@ public class Escalera implements ICache {
 
     @Override
     public void unlink() {
-        if (root != null) {
+        if (root != null && root.getPrev() != null) {
+            root.getPrev().setNext(null);
             root.setPrev(null);
         }
     }
