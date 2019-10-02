@@ -114,7 +114,10 @@ public class Cause implements Externalizable, Comparable<Cause> {
             return true;
         } else if (arguments != null && a != null && arguments.size() == a.size()) {
             for (int i = 0; i < arguments.size(); ++i) {
-                if (arguments.get(i).isEmpty() || a.get(i).isEmpty() || arguments.get(i).getValue().getId() != a.get(i).getValue().getId()) {
+//                if (arguments.get(i).isEmpty() || a.get(i).isEmpty() || arguments.get(i).getValue().getId() != a.get(i).getValue().getId()) {
+                if (arguments.get(i).getId() == -1 || a.get(i).getId() == -1
+                        || arguments.get(i).getId() != a.get(i).getId()
+                        || arguments.get(i).getType() != a.get(i).getType()) {
                     return false;
                 }
             }
@@ -139,6 +142,7 @@ public class Cause implements Externalizable, Comparable<Cause> {
 
     public void setUser(User user) {
         this.user = user;
+        this.arguments.setUser(user);
     }
 
     public long getSrcId() {

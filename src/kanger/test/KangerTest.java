@@ -10,6 +10,7 @@ import kanger.units.Predicate;
 import kanger.units.Right;
 import kanger.units.Term;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -70,7 +71,7 @@ public class KangerTest {
         }
     }
 
-    private boolean exists(String name, Object o) {
+    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException {
         for (Term t : mind.getValues().getValues(name)) {
             if (o.equals(t.getValue())) {
                 return true;

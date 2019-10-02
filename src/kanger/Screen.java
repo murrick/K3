@@ -214,6 +214,11 @@ public class Screen {
                             }
                             break;
 
+                        case 'T':
+                            for (TVariable t : mind.getTVars()) {
+                                System.out.println(t);
+                            }
+                            break;
                         case 'P':
                             if (!user.isClosed()) {
                                 System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
@@ -801,7 +806,7 @@ public class Screen {
 
     //
 //
-    public static List<List<String>> formatTree(Mind mind, Right r) {
+    public static List<List<String>> formatTree(Mind mind, Right r) throws IOException, ClassNotFoundException {
 //        int save = mind.getDebugLevel();
 //        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
         List<List<String>> list = new ArrayList<>();
@@ -841,7 +846,7 @@ public class Screen {
         return list;
     }
 
-    public static void showTree(Mind mind, Right r) {
+    public static void showTree(Mind mind, Right r) throws IOException, ClassNotFoundException {
         List<List<String>> net = formatTree(mind, r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
@@ -856,7 +861,7 @@ public class Screen {
         }
     }
 
-    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) {
+    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException {
         if (tset.isEmpty()) {
             showTree(mind, r);
         } else {
@@ -874,7 +879,7 @@ public class Screen {
         }
     }
 
-    public static void showRights(Mind mind, boolean showTree) {
+    public static void showRights(Mind mind, boolean showTree) throws IOException, ClassNotFoundException {
 //        int i = 0;
         for (Right r : mind.getRights()) {
 

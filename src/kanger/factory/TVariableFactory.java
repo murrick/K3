@@ -11,11 +11,12 @@ import kanger.units.Term;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class TVariableFactory {
+public class TVariableFactory implements Iterable<TVariable> {
 
     public static final String SCHEMA = "tvariables";
 
@@ -107,6 +108,7 @@ public class TVariableFactory {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (TVariable) s.getData();
+                t.setUser(user);
 //                t.linkExternal(user);
             }
         }
@@ -133,4 +135,10 @@ public class TVariableFactory {
     public void unlink() throws Exception {
         cache.unlink();
     }
+
+    @Override
+    public Iterator iterator() {
+        return cache.iterator(true, -1);
+    }
+
 }

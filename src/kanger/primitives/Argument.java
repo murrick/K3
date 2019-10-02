@@ -30,7 +30,7 @@ public class Argument implements Externalizable {
         o = d;
         if (o != null) {
             id = o.getId();
-            type = getType();
+            type = getObjectType();
             user = d.getUser();
         }
     }
@@ -70,7 +70,7 @@ public class Argument implements Externalizable {
     }
 
 
-    private ArgumentType getType() {
+    private ArgumentType getObjectType() {
         if (o instanceof Term) {
             return ArgumentType.TERM;
         } else if (o instanceof TVariable) {
@@ -87,20 +87,17 @@ public class Argument implements Externalizable {
     }
 
     public Term getValue() throws IOException, ClassNotFoundException {
-        if (o == null) {
-            load(user);
-        }
         switch (type) {
             case TERM:
-                return (Term) o;
+                return (Term) getO();
             case TVRIABLE:
-                return ((TVariable) o).getValue();
+                return ((TVariable) getO()).getValue();
             case TVALUE:
-                return ((TValue) o).getValue();
+                return ((TValue) getO()).getValue();
             case FVALUE:
-                return ((FValue) o).getValue();
+                return ((FValue) getO()).getValue();
             case FUNCTION:
-                return ((Function) o).getValue();
+                return ((Function) getO()).getValue();
             default:
                 return null;
         }
@@ -114,7 +111,7 @@ public class Argument implements Externalizable {
                 type = ArgumentType.TERM;
                 return true;
             case TERM:
-                if (!((Term) o).isCVariable()) {
+                if (!((Term) getO()).isCVariable()) {
                     o = t;
                     id = o.getId();
                     return true;
@@ -122,30 +119,37 @@ public class Argument implements Externalizable {
                     return false;
                 }
             case TVRIABLE:
-                ((TVariable) o).setValue(t);
+                ((TVariable) getO()).setValue(t);
                 return true;
             case FUNCTION:
-                ((Function) o).setValue(t);
+                ((Function) getO()).setValue(t);
                 return true;
             default:
                 return false;
         }
     }
 
-    public TVariable getT() {
-        return type == ArgumentType.TVRIABLE ? (TVariable) o : null;
+    private Identifiable getO() throws IOException, ClassNotFoundException {
+        if (o == null && id != -1 && type != ArgumentType.EMPTY) {
+            load(user);
+        }
+        return o;
     }
 
-    public TValue getV() {
-        return type == ArgumentType.TVALUE ? (TValue) o : null;
+    public TVariable getT() throws IOException, ClassNotFoundException {
+        return type == ArgumentType.TVRIABLE ? (TVariable) getO() : null;
     }
 
-    public Function getF() {
-        return type == ArgumentType.FUNCTION ? (Function) o : null;
+    public TValue getV() throws IOException, ClassNotFoundException {
+        return type == ArgumentType.TVALUE ? (TValue) getO() : null;
     }
 
-    public FValue getR() {
-        return type == ArgumentType.FVALUE ? (FValue) o : null;
+    public Function getF() throws IOException, ClassNotFoundException {
+        return type == ArgumentType.FUNCTION ? (Function) getO() : null;
+    }
+
+    public FValue getR() throws IOException, ClassNotFoundException {
+        return type == ArgumentType.FVALUE ? (FValue) getO() : null;
     }
 
     public boolean isEmpty() {
@@ -205,5 +209,13 @@ public class Argument implements Externalizable {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public ArgumentType getType() {
+        return type;
     }
 }

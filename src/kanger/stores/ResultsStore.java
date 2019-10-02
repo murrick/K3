@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.units.Right;
 import kanger.units.TValue;
 
+import java.io.IOException;
 import java.util.*;
 
 public class ResultsStore {
@@ -20,7 +21,7 @@ public class ResultsStore {
         this.tagsSystem = new TreeMap<>();
     }
 
-    public void addSolve(Right query, Right solve) {
+    public void addSolve(Right query, Right solve) throws IOException, ClassNotFoundException {
         solves.put(query.getId(), solve == null ? -1 : solve.getId());
         long tag = -1;
 
@@ -44,7 +45,7 @@ public class ResultsStore {
         }
     }
 
-    public void addSolve(Right query) {
+    public void addSolve(Right query) throws IOException, ClassNotFoundException {
         addSolve(query, null);
     }
 

@@ -1,7 +1,5 @@
 package kanger;
 
-import kanger.units.Term;
-
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
@@ -467,14 +465,14 @@ public class Kanger {
 //        c.compileLine(new StringBuffer("!@(x) a(b);"), 0);
     }
 
-    private static boolean exists(Mind mind, String name, Object o) {
-        for (Term t : mind.getValues().getValues(name)) {
-            if (o.equals(t.getValue())) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    private static boolean exists(Mind mind, String name, Object o) {
+//        for (Term t : mind.getValues().getValues(name)) {
+//            if (o.equals(t.getValue())) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
 //    private static void showResult(Object o, Mind mind, Boolean assertResult) throws RuntimeErrorException {
 //        System.out.println("Query: " + mind.getQuerySource());

@@ -10,6 +10,7 @@ import kanger.primitives.Argument;
 import kanger.primitives.Cause;
 import kanger.units.*;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -319,14 +320,14 @@ public class Linker {
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
                 for (Right right : user.getMind().getRights()) {
-                    if (!right.getPredicates().contains(slave.getPredicate())) {
+                    if (!right.getPredicates().contains(slave.getPredicateId())) {
                         continue;
                     }
                     for (List<Domain> treeMaster : right.getTree()) {
                         for (Domain master : treeMaster) {
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
 
-                                TValue[] substMaster = new TValue[slave.getRange()];
+                                TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
 
                                 user.getMind().getTValues().mark();
@@ -424,7 +425,7 @@ public class Linker {
         return result;
     }
 
-    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) {
+    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) throws IOException, ClassNotFoundException {
         Right r = null;
         boolean occurrs = false;
         for (int i = 0; i < slave.getRange(); ++i) {

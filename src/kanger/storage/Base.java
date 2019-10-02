@@ -2,6 +2,7 @@ package kanger.storage;
 
 import kanger.User;
 import kanger.interfaces.IStep;
+import kanger.interfaces.Identifiable;
 import org.cojen.tupl.Cursor;
 import org.cojen.tupl.Index;
 
@@ -73,7 +74,9 @@ public class Base {
             IStep step = (IStep) toObject(o);
             if (step != null) {
                 cache.put(id, step);
-//                if (step.getData() instanceof Identifiable) {
+                if (step.getData() instanceof Identifiable) {
+                    ((Identifiable) step.getData()).setUser(user);
+                }
 //                    try {
 //                        ((Identifiable) step.getData()).linkExternal(user);
 //                    } catch (Exception e) {

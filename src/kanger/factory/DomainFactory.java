@@ -140,6 +140,7 @@ public class DomainFactory implements Iterable<Domain> {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Domain) s.getData();
+                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

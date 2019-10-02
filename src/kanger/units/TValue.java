@@ -26,10 +26,9 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     private Set<Cause> causes = new HashSet<>();
 
     //    private TValue next = null;          // Следующая переменная
-    private User user = null;
-
     private transient long valueId = -1;
     private transient long tVarId = -1;
+    private transient User user = null;
 
     public TValue() {
     }
@@ -37,6 +36,8 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     public TValue(TVariable var, Term val) {
         tVar = var;
         value = val;
+        tVarId = tVar.getId();
+        valueId = value.getId();
     }
 
     public TValue(User user) {
@@ -47,6 +48,9 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         this.user = user;
         this.tVar = tv;
         this.value = t;
+        tVarId = tVar.getId();
+        valueId = value.getId();
+
     }
 
     @Override
@@ -58,6 +62,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         causes.clear();
         while (count-- > 0) {
             Cause c = (Cause) dis.readObject();
+            c.setUser(user);
             causes.add(c);
         }
     }
@@ -65,31 +70,34 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(value.getId());
-        dos.writeLong(tVar.getId());
+        dos.writeLong(valueId);
+        dos.writeLong(tVarId);
         dos.writeInt(causes.size());
         for (Cause c : causes) {
             dos.writeObject(c);
         }
     }
 
-    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-        this.user = user;
-        tVar = user.getMind().getTVars().load(tVarId);
-        value = user.getMind().getTerms().load(valueId);
-        for (Cause c : causes) {
-//            c.linkExternal(user);
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        this.user = user;
+//        tVar = user.getMind().getTVars().load(tVarId);
+//        value = user.getMind().getTerms().load(valueId);
+//        for (Cause c : causes) {
+////            c.linkExternal(user);
+//        }
+//    }
+
+    public Term getValue() throws IOException, ClassNotFoundException {
+        if (value == null && valueId != -1) {
+            value = user.getMind().getTerms().load(valueId);
         }
-    }
-
-    public Term getValue() {
         return value;
     }
 
-    public Object setValue(Term value) {
-        this.value = value;
-        return value;
-    }
+//    public Object setValue(Term value) {
+//        this.value = value;
+//        return value;
+//    }
 
     public Set<Cause> getCauses() {
         return causes;
@@ -106,12 +114,16 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         this.id = id;
     }
 
-    public TVariable getTVar() {
+    public TVariable getTVar() throws IOException, ClassNotFoundException {
+        if (tVar == null && tVarId != -1) {
+            tVar = user.getMind().getTVars().load(tVarId);
+        }
         return tVar;
     }
 
     public void setTVar(TVariable tVar) {
         this.tVar = tVar;
+        this.tVarId = tVar.getId();
     }
 
     public long getTag() {
@@ -124,14 +136,19 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
 
     @Override
     public String toString() {
-        return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? tVar.getVarName() + "=" : "") + value.toString();
+        try {
+            return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? getTVar().getVarName() + "=" : "") + getValue().toString();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
+            return "";
+        }
     }
 
-    public void setQuery() {
-        if (!user.getMind().getQueryValues().containsKey(tVar)) {
-            user.getMind().getQueryValues().put(tVar, new HashSet<>());
+    public void setQuery() throws IOException, ClassNotFoundException {
+        if (!user.getMind().getQueryValues().containsKey(getTVar())) {
+            user.getMind().getQueryValues().put(getTVar(), new HashSet<>());
         }
-        user.getMind().getQueryValues().get(tVar).add(this);
+        user.getMind().getQueryValues().get(getTVar()).add(this);
     }
 
     //    public void setBlocked() {
@@ -165,14 +182,14 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
 //        buffer.append(id);
-        buffer.append(value.getId());
-        buffer.append(tVar.getId());
+        buffer.append(valueId);
+        buffer.append(tVarId);
         return buffer.toString().hashCode();
     }
 
     @Override
     public boolean equalsTo(TValue to) {
-        return to.getTVar().getId() == getTVar().getId() && getValue().getId() == to.getValue().getId();
+        return to.getTVarId() == tVarId && to.getValueId() == valueId;
     }
 
     @Override
@@ -183,6 +200,9 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     @Override
     public void setUser(User user) {
         this.user = user;
+        for (Cause c : causes) {
+            c.setUser(user);
+        }
     }
 
     @Override
@@ -197,7 +217,14 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
 
     @Override
     public int compareTo(TValue o) {
-        return (int) (tVar.getId() == o.getTVar().getId() ? id - o.getId() : tVar.getId() - o.getTVar().getId());
+        return (int) (tVarId == o.getTVarId() ? id - o.getId() : tVarId - o.getTVarId());
     }
 
+    public long getValueId() {
+        return valueId;
+    }
+
+    public long getTVarId() {
+        return tVarId;
+    }
 }

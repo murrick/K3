@@ -101,7 +101,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
 
                         TValue a = get(i).isTSet() ? get(i).getT().getCurrent() : get(i).getV();
                         TValue b = arg.get(i).isTSet() ? arg.get(i).getT().getCurrent() : arg.get(i).getV();
-                        if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
+                        if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                             break;
                         }
                     }
@@ -175,7 +175,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<Function> getFunctions() {
+    public List<Function> getFunctions() throws IOException, ClassNotFoundException {
         List<Function> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isFSet()) {
@@ -196,9 +196,11 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
     }
 
 
-    public List<TVariable> getTVariables(boolean full) {
+    public List<TVariable> getTVariables(boolean full) throws IOException, ClassNotFoundException {
         List<TVariable> list = new ArrayList<>();
         for (Argument a : this) {
+            //TODO: Костыль
+            a.setUser(user);
             if (a.isTSet() && !list.contains(a.getT())) {
                 list.add(a.getT());
             } else if (full && a.isFSet()) {
@@ -214,7 +216,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<TValue> getTValues(boolean full) {
+    public List<TValue> getTValues(boolean full) throws IOException, ClassNotFoundException {
         List<TValue> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isTSet() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
@@ -248,7 +250,11 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             if(str.length() > 1) {
                 str += ", ";
             }
-            str += a.isVSet() ? a.getV().toString() : a.toString();
+            try {
+                str += a.isVSet() ? a.getV().toString() : a.toString();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+            }
         }
         str += "]";
         return str;

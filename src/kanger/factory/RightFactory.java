@@ -96,7 +96,7 @@ public class RightFactory implements Iterable<Right> {
         }
         for (List<Domain> list : r.getTree()) {
             for (Domain d : list) {
-                r.getPredicates().add(d.getPredicate());
+                r.getPredicates().add(d.getPredicateId());
                 d.setRight(r);
                 user.getMind().getDomains().add(d);
             }
@@ -132,6 +132,7 @@ public class RightFactory implements Iterable<Right> {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Right) s.getData();
+                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

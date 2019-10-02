@@ -123,6 +123,7 @@ public class TValueFactory {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (TValue) s.getData();
+                t.setUser(user);
 //                t.linkExternal(user);
             }
         }
@@ -197,7 +198,7 @@ public class TValueFactory {
             if (tVariable != null) {
                 while (iterator.hasNext()) {
                     next = (TValue) iterator.next();
-                    if (next.getTVar().getId() == tVariable.getId()) {
+                    if (next.getTVarId() == tVariable.getId()) {
                         return true;
                     }
                 }

@@ -153,6 +153,7 @@ public class DictionaryFactory implements Iterable<Term> {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Term) s.getData();
+                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

@@ -30,13 +30,13 @@ public class Right implements Externalizable, Identifiable<Right> {
     private boolean stored = false;                         // Правило добавлено в процессе выводс
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<Cause> causes = new HashSet<>();
-    private List solves = new ArrayList();
-    private Set<Predicate> predicates = new HashSet<>();
 
-    private User user = null;
+    private List<TValue> solves = new ArrayList();
+    private Set<Long> predicates = new HashSet<>();
 
     private transient long origId = -1;
     private transient List<List<Long>> treeIds = new ArrayList<>();
+    private transient User user = null;
 
     public Right() {
     }
@@ -68,6 +68,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         count = dis.readInt();
         while (count-- > 0) {
             Cause c = (Cause) dis.readObject();
+            c.setUser(user);
             causes.add(c);
         }
     }
@@ -75,7 +76,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(orig.getId());
+        dos.writeLong(origId);
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
         dos.writeBoolean(stored);
@@ -91,6 +92,21 @@ public class Right implements Externalizable, Identifiable<Right> {
             dos.writeObject(c);
         }
     }
+
+    private void checkTreeIsLoaded() throws IOException, ClassNotFoundException {
+        if (tree.isEmpty() && !treeIds.isEmpty()) {
+            for (List<Long> ids : treeIds) {
+                List<Domain> branch = new ArrayList<>();
+                for (long id : ids) {
+                    Domain domain = user.getMind().getDomains().load(id);
+                    branch.add(domain);
+                    predicates.add(domain.getPredicateId());
+                }
+                tree.add(branch);
+            }
+        }
+    }
+
 
 //    @Override
 //    public void linkExternal(User user) throws IOException, ClassNotFoundException {
@@ -110,8 +126,8 @@ public class Right implements Externalizable, Identifiable<Right> {
 //        }
 //    }
 
-    public Domain getDomain() {
-        return tree.get(0).get(0);
+    public Domain getDomain() throws IOException, ClassNotFoundException {
+        return getTree().get(0).get(0);
     }
 
     public Set<Cause> getCauses() {
@@ -149,13 +165,13 @@ public class Right implements Externalizable, Identifiable<Right> {
         user.getMind().getUsedRights().get(0L).add(this);
     }
 
-    public Set<Right> getNatives() throws Exception {
+    public Set<Right> getNatives() throws IOException, ClassNotFoundException {
         Set<Right> list = new HashSet<>();
-        for (List<Domain> t : tree) {
+        for (List<Domain> t : getTree()) {
             for (Domain d : t) {
                 for (Right r : user.getMind().getRights()) {
                     if (r != null) {
-                        if (r.getPredicates().contains(d.getPredicate())) {
+                        if (r.getPredicates().contains(d.getPredicateId())) {
                             list.add(r);
                         }
                     } else {
@@ -167,7 +183,8 @@ public class Right implements Externalizable, Identifiable<Right> {
         return list;
     }
 
-    public List<List<Domain>> getTree() {
+    public List<List<Domain>> getTree() throws IOException, ClassNotFoundException {
+        checkTreeIsLoaded();
         return tree;
     }
 
@@ -181,12 +198,16 @@ public class Right implements Externalizable, Identifiable<Right> {
         this.id = id;
     }
 
-    public Term getOrig() {
+    public Term getOrig() throws IOException, ClassNotFoundException {
+        if (orig == null && origId != -1) {
+            orig = user.getMind().getTerms().load(origId);
+        }
         return orig;
     }
 
     public void setOrig(Term orig) {
         this.orig = orig;
+        this.origId = orig.getId();
     }
 
     public boolean isQuery() {
@@ -197,31 +218,36 @@ public class Right implements Externalizable, Identifiable<Right> {
         this.query = current;
     }
 
-    public int size() {
-        return tree.size();
+    public int size() throws IOException, ClassNotFoundException {
+        return getTree().size();
     }
 
-    public List<Domain> cloneTree(List<Domain> branch) {
+    public List<Domain> cloneTree(List<Domain> branch) throws IOException, ClassNotFoundException {
         List<Domain> list = new ArrayList<>();
         list.addAll(branch);
-        tree.add(list);
+        getTree().add(list);
         return list;
     }
 
     @Override
     public String toString() {
-        return orig.toString()
-                + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (isGenerated() || isQuery() || isStored())
-                ? " " +
-                (isGenerated() ? "G" : "") +
-                (isStored() ? "B" : "") +
-                (isQuery() ? "Q" : "")
-                : "")
-                ;
+        try {
+            return getOrig().toString()
+                    + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (isGenerated() || isQuery() || isStored())
+                    ? " " +
+                    (isGenerated() ? "G" : "") +
+                    (isStored() ? "B" : "") +
+                    (isQuery() ? "Q" : "")
+                    : "")
+                    ;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
+            return "";
+        }
     }
 
     @Override
-    public int getHash() {
+    public int getHash() throws IOException, ClassNotFoundException {
 //        StringBuffer buffer = new StringBuffer();
 //        for (List<Domain> list : tree) {
 //            for (Domain d : list) {
@@ -233,19 +259,19 @@ public class Right implements Externalizable, Identifiable<Right> {
     }
 
     @Override
-    public boolean equalsTo(Right to) {
+    public boolean equalsTo(Right to) throws IOException, ClassNotFoundException {
         if (stored) {
             return equalsTo(to.getDomain());
         } else {
-            if (tree.size() != to.tree.size()) {
+            if (getTree().size() != to.getTree().size()) {
                 return false;
             } else {
-                int size = tree.size();
-                for (List<Domain> rowMaster : tree) {
-                    for (List<Domain> rowSlave : to.tree) {
-                        //TODO: Сравнение двух правил для блокировки дублирования - задачка не тривиальная
-                    }
-                }
+//                int size = tree.size();
+//                for (List<Domain> rowMaster : tree) {
+//                    for (List<Domain> rowSlave : to.tree) {
+//                        //TODO: Сравнение двух правил для блокировки дублирования - задачка не тривиальная
+//                    }
+//                }
                 return false;
             }
         }
@@ -257,11 +283,19 @@ public class Right implements Externalizable, Identifiable<Right> {
     }
 
     @Override
-    public void setUser(User user) {
+    public void setUser(User user) throws IOException, ClassNotFoundException {
         this.user = user;
+        for (Cause c : getCauses()) {
+            c.setUser(user);
+        }
+        for (List<Domain> list : getTree()) {
+            for (Domain d : list) {
+                d.setUser(user);
+            }
+        }
     }
 
-    public boolean equalsTo(Domain x) {
+    public boolean equalsTo(Domain x) throws IOException, ClassNotFoundException {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
                 && x.getPredicateId() == domain.getPredicateId()
@@ -269,6 +303,8 @@ public class Right implements Externalizable, Identifiable<Right> {
             try {
                 int i = 0;
                 for (; i < domain.getRange(); ++i) {
+                    //TODO: Костыль!
+                    x.get(i).setUser(user);
                     if (!x.get(i).isEmpty()
                             && !domain.getArguments().get(i).isEmpty()
                             && x.get(i).getValue().getId() != domain.getArguments().get(i).getValue().getId()) {
@@ -277,7 +313,7 @@ public class Right implements Externalizable, Identifiable<Right> {
 
                     TValue a = x.get(i).isTSet() ? x.get(i).getT().getCurrent() : x.get(i).getV();
                     TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT().getCurrent() : domain.getArguments().get(i).getV();
-                    if (a != null && b != null && a.getTVar().getId() != b.getTVar().getId()) {
+                    if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                         break;
                     }
                 }
@@ -291,7 +327,7 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
-    public Set<Predicate> getPredicates() {
+    public Set<Long> getPredicates() {
         return predicates;
     }
 

@@ -7,6 +7,7 @@ import kanger.primitives.Argument;
 import kanger.units.TValue;
 import kanger.units.Term;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -217,7 +218,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 //        return root.toArray(new TValue[]{})[index];
 //    }
 
-    public List<Term> getValues(String name) {
+    public List<Term> getValues(String name) throws IOException, ClassNotFoundException {
         List<Term> list = new ArrayList<>();
         List<ArgList> root = rootData.isEmpty() ? rootSystem : rootData;
         for (ArgList row : root) {
@@ -271,7 +272,11 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         public Map<String, Object> next() {
             SortedMap<String, Object> row = new TreeMap<>();
             for (Argument v : iterator.next()) {
-                row.put(v.getV().getTVar().getName().toString(), v.getV().getValue().getValue());
+                try {
+                    row.put(v.getV().getTVar().getName().toString(), v.getV().getValue().getValue());
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace(System.err);
+                }
             }
             return row;
         }

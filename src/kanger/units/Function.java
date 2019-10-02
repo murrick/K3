@@ -291,7 +291,7 @@ public class Function implements Externalizable, Identifiable<Function> {
 //        return true;
 //    }
 
-    public boolean isCalculable() {
+    public boolean isCalculable() throws IOException, ClassNotFoundException {
         return arguments.getTVariables(true).size() > 0;
     }
 

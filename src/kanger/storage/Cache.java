@@ -4,6 +4,7 @@ import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
 import kanger.interfaces.Identifiable;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Cache implements ICache {
@@ -27,7 +28,7 @@ public class Cache implements ICache {
     }
 
     @Override
-    public void add(Identifiable one) {
+    public void add(Identifiable one) throws IOException, ClassNotFoundException {
         index.put(one.getId(), one);
         int h = one.getHash();
         if (!hash.containsKey(h)) {
@@ -99,7 +100,7 @@ public class Cache implements ICache {
     }
 
     //    @Override
-    private void remove(long id) {
+    private void remove(long id) throws IOException, ClassNotFoundException {
         Object one = index.get(id);
         if (one != null) {
             int h = (one instanceof Identifiable) ? ((Identifiable) one).getHash() : one.hashCode();
@@ -141,7 +142,7 @@ public class Cache implements ICache {
     }
 
     @Override
-    public long release() {
+    public long release() throws IOException, ClassNotFoundException {
         if (!stack.isEmpty()) {
             long id = stack.pop();
             if (id == -1L) {

@@ -7,6 +7,7 @@ import kanger.enums.LogMode;
 import kanger.primitives.LogEntry;
 import kanger.units.Right;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -44,7 +45,7 @@ public class LogStore {
         return root == null || root.isEmpty();
     }
 
-    public LogEntry add(LogMode m, Right r) {
+    public LogEntry add(LogMode m, Right r) throws IOException, ClassNotFoundException {
         if (!enableLogging) {
             return null;
         }

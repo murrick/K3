@@ -23,10 +23,9 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     private int index = 0;                  // Сквозной индекс переменной
     private Right right = null;             // Ссылка на правило
 
-    private User user = null;
-
     private transient long nameId = -1;
     private transient long rightId = -1;
+    private transient User user = null;
 
     public TVariable() {
     }
@@ -46,9 +45,9 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(name.getId());
+        dos.writeLong(nameId);
         dos.writeInt(index);
-        dos.writeLong(right.getId());
+        dos.writeLong(rightId);
     }
 
 //    @Override
@@ -58,12 +57,16 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //        right = user.getMind().getRights().load(rightId);
 //    }
 
-    public Term getName() {
+    public Term getName() throws IOException, ClassNotFoundException {
+        if (name == null) {
+            name = user.getMind().getTerms().load(nameId);
+        }
         return name;
     }
 
     public void setName(Term tName) {
         this.name = tName;
+        this.nameId = tName.getId();
     }
 
     @Override
@@ -84,7 +87,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         this.index = index;
     }
 
-    public Term getValue() {
+    public Term getValue() throws IOException, ClassNotFoundException {
         if (user.getMind().getTValues().get(this) != null) {
             return user.getMind().getTValues().get(this).getValue();
         } else {
@@ -164,35 +167,44 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //        mind.getTValues().createCVar(this).setLevel(owner);
 //
 //    }
-    public Right getRight() {
+    public Right getRight() throws IOException, ClassNotFoundException {
+        if (right == null && rightId != -1) {
+            right = user.getMind().getRights().load(rightId);
+        }
         return right;
     }
 
     public void setRight(Right right) {
         this.right = right;
+        this.rightId = right.getId();
     }
 
-    public String getVarName() {
+    public String getVarName() throws IOException, ClassNotFoundException {
         switch (user.getMind().getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_INFO:
-                return name.toString();
+                return getName().toString();
             case Enums.DEBUG_LEVEL_DEBUG:
-                return String.format("[%s]%c%d", name.toString(), Enums.TVC, index);
+                return String.format("[%s]%c%d", getName().toString(), Enums.TVC, index);
             default:
-                return name.toString();
+                return getName().toString();
         }
     }
 
     @Override
     public String toString() {
-        return getVarName() + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
+        try {
+            return getVarName() + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
+            return "";
+        }
     }
 
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(right.getId());
-        buffer.append(name.getId());
+        buffer.append(rightId);
+        buffer.append(nameId);
         buffer.append(index);
         return buffer.toString().hashCode();
     }
@@ -222,12 +234,12 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         return !(t == null || !(t instanceof TVariable)) && ((TVariable) t).id == id;
     }
 
-    public boolean isInside(Term c) {
-
-        return (c == null || !c.isCVariable()
-                && c.getRight() == getRight()
-                && c.getIndex() < c.getIndex());
-    }
+//    public boolean isInside(Term c) throws IOException, ClassNotFoundException {
+//
+//        return (c == null || !c.isCVariable()
+//                && c.getRight() == getRight()
+//                && c.getIndex() < c.getIndex());
+//    }
 
 //    public boolean contains(Term value) {
 //        return find(value) != null;

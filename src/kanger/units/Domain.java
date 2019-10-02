@@ -61,6 +61,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
         antc = dis.readBoolean();
+        range = dis.readInt();
         predicateId = dis.readLong();
         rightId = dis.readLong();
         arguments = (ArgList) dis.readObject();
@@ -71,6 +72,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
         dos.writeBoolean(antc);
+        dos.writeInt(range);
         dos.writeLong(predicateId);
         dos.writeLong(rightId);
         dos.writeObject(arguments);
@@ -286,6 +288,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    return s;
     private String formatParam(Argument t) throws Exception {
         String s = "";
+        //TODO: Костыль
+        t.setUser(user);
         if (t.isFSet()) {
             s += t.getF().toString();
         } else if (t.isTSet()) {
@@ -442,7 +446,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return ids.size();
     }
 
-    public boolean contains(TVariable t) {
+    public boolean contains(TVariable t) throws IOException, ClassNotFoundException {
         for (TVariable x : arguments.getTVariables(true)) {
             if (x.getId() == t.getId()) {
                 return true;
@@ -613,7 +617,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 //
 
-    public void setTag(long tag) {
+    public void setTag(long tag) throws IOException, ClassNotFoundException {
         for (TVariable t : arguments.getTVariables(true)) {
             t.getCurrent().setTag(tag);
         }
