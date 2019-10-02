@@ -1,6 +1,7 @@
 package kanger.storage;
 
 import kanger.interfaces.ICache;
+import kanger.interfaces.IStep;
 import kanger.interfaces.Identifiable;
 
 import java.util.*;
@@ -51,7 +52,7 @@ public class Cache implements ICache {
 //    }
 
     @Override
-    public Object get(long id) throws Exception {
+    public Object get(long id) {
         Object o = index.get(id);
 //        if (o == null && parent != null) {
 //            o = parent.get(id);
@@ -65,7 +66,7 @@ public class Cache implements ICache {
     }
 
     @Override
-    public boolean isEmpty() throws Exception {
+    public boolean isEmpty() {
         return index.isEmpty(); // && (parent == null || parent.isEmpty());
     }
 
@@ -86,7 +87,7 @@ public class Cache implements ICache {
 //    }
 
     @Override
-    public Set<Long> find(int h) throws Exception {
+    public Set<Long> find(int h) {
         Set<Long> list = new HashSet<>();
         if (hash.containsKey(h)) {
             list.addAll(hash.get(h));
@@ -181,6 +182,23 @@ public class Cache implements ICache {
 
     }
 
+    @Override
+    public IStep getRoot() {
+        return null;
+    }
+
+    @Override
+    public void setRoot(IStep root) {
+    }
+
+    @Override
+    public IStep getTop() {
+        return null;
+    }
+
+    @Override
+    public void setTop(IStep top) {
+    }
 
     protected long getNext(long id, NavigableMap<Long, Object> block) {
         if (block.isEmpty()) {
@@ -218,6 +236,12 @@ public class Cache implements ICache {
     public Iterator<Object> iterator(boolean backward, long fromId) {
         return new CacheIterator(backward, fromId);
     }
+
+    @Override
+    public boolean update() throws Exception {
+        return false;
+    }
+
 
     public class CacheIterator implements Iterator<Object> {
 

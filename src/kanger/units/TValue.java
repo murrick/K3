@@ -73,18 +73,12 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
         }
     }
 
-    public void linkExternal(User user) throws Exception {
+    public void linkExternal(User user) throws IOException, ClassNotFoundException {
         this.user = user;
-        if (tVar == null && tVarId != -1) {
-            tVar = user.getMind().getTVars().get(tVarId);
-            tVar.linkExternal(user);
-        }
-        if (value == null && valueId != -1) {
-            value = user.getMind().getTerms().get(valueId);
-            value.linkExternal(user);
-        }
+        tVar = user.getMind().getTVars().load(tVarId);
+        value = user.getMind().getTerms().load(valueId);
         for (Cause c : causes) {
-            c.linkExternal(user);
+//            c.linkExternal(user);
         }
     }
 
@@ -179,6 +173,16 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     @Override
     public boolean equalsTo(TValue to) {
         return to.getTVar().getId() == getTVar().getId() && getValue().getId() == to.getValue().getId();
+    }
+
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @Override

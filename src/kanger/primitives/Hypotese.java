@@ -12,58 +12,119 @@ import kanger.units.Predicate;
 import kanger.units.Right;
 import kanger.units.Term;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 
 /**
  * @author murray
  */
-public class Hypotese implements Comparable<Hypotese> {
+public class Hypotese implements Externalizable, Comparable<Hypotese> {
 
     private Predicate predicate = null;
+    private boolean antc = true;
+    //    private boolean deleted = false;
+    private boolean query = false;
     private List<Term> solve = new ArrayList<>();
     private Set<Right> rights = new HashSet<>();
-    private boolean antc = true;
-    private boolean deleted = false;
-    private boolean query = false;
 
-    private User user = null;
+    private transient long predicateId = -1;
+    private transient List<Long> solveIds = new ArrayList<>();
+    private transient Set<Long> rightsIds = new HashSet<>();
+    private transient User user = null;
+
+    public Hypotese() {
+    }
 
     public Hypotese(User user) {
         this.user = user;
     }
 
-    public void delete() {
-        deleted = true;
+
+    @Override
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
+        predicateId = dis.readLong();
+        antc = dis.readBoolean();
+        int cnt = dis.readInt();
+        for (int i = 0; i < cnt; ++i) {
+            solveIds.add(dis.readLong());
+        }
+        cnt = dis.readInt();
+        for (int i = 0; i < cnt; ++i) {
+            rightsIds.add(dis.readLong());
+        }
     }
 
-    public boolean isDeleted() {
-        return deleted;
+    @Override
+    public void writeExternal(ObjectOutput dos) throws IOException {
+        dos.writeLong(predicateId);
+        dos.writeBoolean(antc);
+        dos.writeInt(solve.size());
+        for (Term t : solve) {
+            dos.writeLong(t.getId());
+        }
+        dos.writeInt(rights.size());
+        for (Right r : rights) {
+            dos.writeLong(r.getId());
+        }
     }
 
-    public Predicate getPredicate() {
+//    public void linkExternal(User user) throws Exception {
+//        this.user = user;
+//        predicate = user.getMind().getPredicates().load(predicateId);
+//        for (long id : solveIds) {
+//            Term t = user.getMind().getTerms().load(id);
+//            solve.add(t);
+//        }
+//        for (long id : rightsIds) {
+//            Right right = user.getMind().getRights().load(id);
+//            rights.add(right);
+//        }
+//    }
+//
+
+//    public void delete() {
+//        deleted = true;
+//    }
+//
+//    public boolean isDeleted() {
+//        return deleted;
+//    }
+//
+
+    public Predicate getPredicate() throws IOException, ClassNotFoundException {
+        if (predicate == null) {
+            predicate = user.getMind().getPredicates().load(predicateId);
+        }
         return predicate;
     }
 
     public void setPredicate(Predicate predicate) {
         this.predicate = predicate;
+        this.predicateId = predicate.getId();
     }
 
-    public List<Term> getSolve() {
+    public List<Term> getSolve() throws IOException, ClassNotFoundException {
+        if (solve.isEmpty() && !solveIds.isEmpty()) {
+            for (long id : solveIds) {
+                Term t = user.getMind().getTerms().load(id);
+                solve.add(t);
+            }
+        }
         return solve;
     }
 
-    public void setSolve(List<Term> solve) {
-        this.solve = solve;
-    }
-
-    public Set<Right> getRights() {
+    public Set<Right> getRights() throws IOException, ClassNotFoundException {
+        if (rights.isEmpty() && !rightsIds.isEmpty()) {
+            for (long id : rightsIds) {
+                Right right = user.getMind().getRights().load(id);
+                rights.add(right);
+            }
+        }
         return rights;
     }
-
-//    public void setRight(Right right) {
-//        this.right = right;
-//    }
-
 
     public boolean isAntc() {
         return antc;
@@ -96,46 +157,52 @@ public class Hypotese implements Comparable<Hypotese> {
 
     @Override
     public String toString() {
-        int i, j;
-        int cnum[] = new int[predicate.getRange()];
-        int cptr[] = new int[predicate.getRange()];
+        String line = "";
 
-        int ccnt = 0;
+        try {
+            int i, j;
+            int cnum[] = new int[getPredicate().getRange()];
+            int cptr[] = new int[getPredicate().getRange()];
+
+            int ccnt = 0;
 //        String prefix = "";
 //        if (tag != -1 && (user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
 //            prefix = tag + ":\t";
 //        }
 
-        String line = (antc ? "" : String.format("%c", Enums.NOT));
-        String tmp = predicate.getName() + "(";
-        for (i = 0; i < predicate.getRange(); ++i) {
-            if (solve.get(i) != null && solve.get(i).isCVariable()) {
-                String qnt = "";
-                int id = Integer.parseInt(solve.get(i).toString().substring(1));
-                for (j = 0; j < ccnt; ++j) {
-                    if (cnum[j] == id) {
-                        break;
+            line += (antc ? "" : String.format("%c", Enums.NOT));
+            String tmp = getPredicate().getName() + "(";
+            for (i = 0; i < getPredicate().getRange(); ++i) {
+                if (getSolve().get(i) != null && getSolve().get(i).isCVariable()) {
+                    String qnt = "";
+                    int id = Integer.parseInt(getSolve().get(i).toString().substring(1));
+                    for (j = 0; j < ccnt; ++j) {
+                        if (cnum[j] == id) {
+                            break;
+                        }
                     }
+                    if (j == ccnt) {
+                        cnum[ccnt] = id;
+                        id = cptr[ccnt++] = i;
+                        qnt = String.format("%c%s", Enums.PQN, cVarName(id));
+                        line += qnt + " ";
+                    } else {
+                        id = cptr[j];
+                        qnt = String.format("?%s", cVarName(id));
+                    }
+                    tmp += qnt.substring(1);
+                } else if (getSolve().get(i) != null) {
+                    tmp += getSolve().get(i).toString();
                 }
-                if (j == ccnt) {
-                    cnum[ccnt] = id;
-                    id = cptr[ccnt++] = i;
-                    qnt = String.format("%c%s", Enums.PQN, cVarName(id));
-                    line += qnt + " ";
-                } else {
-                    id = cptr[j];
-                    qnt = String.format("?%s", cVarName(id));
+                if (i + 1 < getPredicate().getRange()) {
+                    tmp += ",";
                 }
-                tmp += qnt.substring(1);
-            } else if (solve.get(i) != null) {
-                tmp += solve.get(i).toString();
             }
-            if (i + 1 < predicate.getRange()) {
-                tmp += ",";
-            }
+            tmp += ");";
+            line += tmp;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
         }
-        tmp += ");";
-        line += tmp;
         return line;
     }
 
@@ -152,15 +219,15 @@ public class Hypotese implements Comparable<Hypotese> {
         }
     }
 
-    public List<Term> getCVariables() {
-        List<Term> list = new ArrayList<>();
-        for (Term t : solve) {
-            if (t.isCVariable()) {
-                list.add(t);
-            }
-        }
-        return list;
-    }
+//    public List<Term> getCVariables() {
+//        List<Term> list = new ArrayList<>();
+//        for (Term t : solve) {
+//            if (t.isCVariable()) {
+//                list.add(t);
+//            }
+//        }
+//        return list;
+//    }
 //    @Override
 //    public int hashCode() {
 //        StringBuffer buffer = new StringBuffer();
@@ -192,6 +259,11 @@ public class Hypotese implements Comparable<Hypotese> {
 
     @Override
     public int compareTo(Hypotese o) {
-        return predicate.getName().compareTo(o.getPredicate().getName());
+        try {
+            return getPredicate().getName().compareTo(o.getPredicate().getName());
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
+            return 0;
+        }
     }
 }

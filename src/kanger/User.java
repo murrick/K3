@@ -1,7 +1,6 @@
 package kanger;
 
 import kanger.factory.*;
-import kanger.interfaces.ICache;
 import kanger.interfaces.Reactor;
 import kanger.storage.Base;
 import org.cojen.tupl.Database;
@@ -33,27 +32,45 @@ public class User {
                 .durabilityMode(DurabilityMode.NO_FLUSH);
 
         db = Database.open(config);
+        storageName = name;
 
-        storage.put(DictionaryFactory.SCHEMA, new Base(this, DictionaryFactory.SCHEMA, null));
-        storage.put(DomainFactory.SCHEMA, new Base(this, DomainFactory.SCHEMA, null));
-        storage.put(FunctionFactory.SCHEMA, new Base(this, FunctionFactory.SCHEMA, null));
-        storage.put(FValueFactory.SCHEMA, new Base(this, FValueFactory.SCHEMA, null));
-        storage.put(PredicateFactory.SCHEMA, new Base(this, PredicateFactory.SCHEMA, null));
-        storage.put(RightFactory.SCHEMA, new Base(this, RightFactory.SCHEMA, null));
-        storage.put(RightFactory.SCHEMA_STORED, new Base(this, RightFactory.SCHEMA_STORED, null));
-        storage.put(TValueFactory.SCHEMA, new Base(this, TValueFactory.SCHEMA, null));
-        storage.put(TVariableFactory.SCHEMA, new Base(this, TVariableFactory.SCHEMA, null));
+        storage.put(DictionaryFactory.SCHEMA, new Base(this, DictionaryFactory.SCHEMA));
+        storage.put(DomainFactory.SCHEMA, new Base(this, DomainFactory.SCHEMA));
+        storage.put(FunctionFactory.SCHEMA, new Base(this, FunctionFactory.SCHEMA));
+        storage.put(FValueFactory.SCHEMA, new Base(this, FValueFactory.SCHEMA));
+        storage.put(PredicateFactory.SCHEMA, new Base(this, PredicateFactory.SCHEMA));
+        storage.put(RightFactory.SCHEMA, new Base(this, RightFactory.SCHEMA));
+        storage.put(RightFactory.SCHEMA_STORED, new Base(this, RightFactory.SCHEMA_STORED));
+        storage.put(TValueFactory.SCHEMA, new Base(this, TValueFactory.SCHEMA));
+        storage.put(TVariableFactory.SCHEMA, new Base(this, TVariableFactory.SCHEMA));
 
-        for (Map.Entry<String, Base> e : storage.entrySet()) {
-            //TODO: Открытие БД
+        while (mind.getNext() != null) {
+            mind = mind.getNext();
         }
 
-        storageName = name;
-//        mind.getRights().reindex();
+        mind.getTerms().transaction(null);
+        mind.getDomains().transaction(null);
+        mind.getFunctions().transaction(null);
+        mind.getFValues().transaction(null);
+        mind.getPredicates().transaction(null);
+        mind.getRights().transaction(null);
+        mind.getTValues().transaction(null);
+        mind.getTVars().transaction(null);
+
     }
 
-    public void close() throws IOException {
+    public void close() throws Exception {
         if (db != null) {
+            for (Map.Entry<String, Base> e : storage.entrySet()) {
+                if (e.getValue().getRoot() != null) {
+                    if (e.getValue().getRoot().getPrev() != null) {
+                        e.getValue().getRoot().getPrev().setNext(null);
+                    }
+                    e.getValue().getRoot().setPrev(null);
+                    e.getValue().getRoot().update();
+                }
+            }
+
             db.checkpoint();
             db.close(null);
             db = null;
@@ -89,17 +106,15 @@ public class User {
 
     public void flush() throws IOException {
         if (!isClosed()) {
-            for (Map.Entry<String, Base> e : storage.entrySet()) {
-                //TODO: flush БД
-            }
+            db.checkpoint();
         }
     }
 
     public boolean isClosed() {
-        return false;
+        return db == null;
     }
 
-    public ICache getStorage(String schema) {
+    public Base getStorage(String schema) {
         return storage.get(schema);
     }
 

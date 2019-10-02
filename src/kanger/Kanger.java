@@ -50,7 +50,7 @@ public class Kanger {
     public static void main(String[] args) throws Exception {
 
         User user = new User();
-        user.use("data/memory");
+//        user.use("data/memory");
         Mind mind = new Mind(user);
 
 //        try (Storage data = new Storage().open("test")) {

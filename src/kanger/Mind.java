@@ -9,7 +9,6 @@ import kanger.enums.Enums;
 import kanger.enums.LogMode;
 import kanger.enums.QueryPass;
 import kanger.enums.Tools;
-import kanger.exception.RuntimeErrorException;
 import kanger.factory.*;
 import kanger.primitives.ArgList;
 import kanger.primitives.Cause;
@@ -177,25 +176,19 @@ public class Mind {
 
     }
 
-    public void update() throws RuntimeErrorException {
+    public void update() throws Exception {
 
         if (!user.isClosed()) {
-            try {
-                terms.update();
-                tVars.update();
-                tValues.update();
-                fValues.update();
-                predicates.update();
-                domains.update();
-                rights.update();
-                functions.update();
+            terms.update();
+            tVars.update();
+            tValues.update();
+            fValues.update();
+            predicates.update();
+            domains.update();
+            rights.update();
+            functions.update();
 
-                user.flush();
-
-            } catch (IOException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeErrorException(e.toString());
-            }
+            user.flush();
         }
     }
 
@@ -203,7 +196,7 @@ public class Mind {
         user.setMind(this);
     }
 
-    public void release(Mind m) {
+    public void release(Mind m) throws Exception {
 
         user.setMind(this);
         log.commit(m.getLog());
@@ -670,13 +663,13 @@ public class Mind {
 //        return null;
 //    }
 
-    public boolean isSystem(Predicate p) {
+    public boolean isSystem(Predicate p) throws IOException, ClassNotFoundException {
         return calculator.exists(p);
     }
 
-    public boolean isSystem(Function f) {
-        return calculator.exists(f);
-    }
+//    public boolean isSystem(Function f) {
+//        return calculator.exists(f);
+//    }
 
     public int executeSystem(Domain d) throws Exception {
         return calculator.execute(d);

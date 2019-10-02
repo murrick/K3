@@ -2,21 +2,21 @@ package kanger.factory;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
+import kanger.interfaces.IStep;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Escalera;
 import kanger.units.Right;
 import kanger.units.Term;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
+import java.util.Iterator;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class DictionaryFactory {
+public class DictionaryFactory implements Iterable<Term> {
 
     public static final String SCHEMA = "dictionary";
 
@@ -47,40 +47,68 @@ public class DictionaryFactory {
             lastId = base.lastId;
             firstId = base.lastId;
             varIndex = base.varIndex;
-            cache = new Escalera(base.cache);
+            cache = new Escalera(user, SCHEMA, base.cache);
         } else {
-            lastId = 0;
-            firstId = 0;
-            varIndex = 0;
-            cache = new Escalera(null);
+            cache = new Escalera(user, SCHEMA, null);
+            if (!cache.isEmpty()) {
+                lastId = cache.getRoot().getId() + 1;
+                firstId = lastId;
+                for (Term t : this) {
+                    if (t.isCVariable()) {
+                        varIndex = t.getIndex();
+                        break;
+                    }
+                }
+            } else {
+                lastId = 0;
+                firstId = 0;
+                varIndex = 0;           // Счетчик C-переменных
+            }
         }
     }
 
     public void commit(DictionaryFactory base, Collection<Object> vars) throws Exception {
-        List<Term> list = new ArrayList<>();
-        for (Object p : base.cache) {
-            if (((Identifiable) p).getId() < base.firstId) {
-                break;
+        cache.setRoot(base.cache.getRoot());
+        if (cache.getRoot() != null) {
+            lastId = cache.getRoot().getId() + 1;
+
+            if (cache.getTop() == null) {
+                cache.setTop(base.cache.getTop());
+                firstId = cache.getTop().getId();
             }
-            list.add((Term) p);
-        }
-        for (Term p : list) {
-            p.setId(lastId++);
-            cache.add(p);
-            if (p.isCVariable()) {
-                vars.add(p);
+
+            for (Object p : cache) {
+                if (((Term) p).getId() >= base.firstId && ((Term) p).isCVariable()) {
+                    vars.add(p);
+                } else {
+                    break;
+                }
             }
         }
+
+//        List<Term> list = new ArrayList<>();
+//        for (Object p : base.cache) {
+//            if (((Identifiable) p).getId() < base.firstId) {
+//                break;
+//            }
+//            list.add((Term) p);
+//        }
+//        for (Term p : list) {
+//            p.setId(lastId++);
+//            cache.add(p);
+//            if (p.isCVariable()) {
+//                vars.add(p);
+//            }
+//        }
 
     }
 
-    public void unlink() {
+    public void unlink() throws Exception {
         cache.unlink();
     }
 
-    public void update() throws RuntimeErrorException {
-        if (!user.isClosed()) {
-            //TODO: Коммит в БД
+    public void update() throws Exception {
+        if (cache.update()) {
             firstId = lastId;
         }
     }
@@ -101,7 +129,7 @@ public class DictionaryFactory {
     public Term find(Object o) throws Exception {
         Term t = new Term(o, user);
         for (long id : cache.find(t.getHash())) {
-            Identifiable one = get(id);
+            Identifiable one = load(id);
             if (one.equalsTo(t)) {
                 return (Term) one;
             }
@@ -119,12 +147,20 @@ public class DictionaryFactory {
         return t;
     }
 
-    public Term get(long id) throws Exception {
+    public Term load(long id) throws IOException, ClassNotFoundException {
+        Term t = get(id);
+        if (t == null && !user.isClosed()) {
+            IStep s = user.getStorage(SCHEMA).get(id);
+            if (s != null) {
+                t = (Term) s.getData();
+//                t.linkExternal(user);
+            }
+        }
+        return t;
+    }
+
+    public Term get(long id) throws IOException, ClassNotFoundException {
         Term t = (Term) cache.get(id);
-//        t.linkExternal(user);
-//        if (t == null) {
-//            t = (Term) load.get(id);
-//        }
         return t;
     }
 
@@ -185,9 +221,8 @@ public class DictionaryFactory {
         return firstId;
     }
 
-//    @Override
-//    public Iterator iterator() {
-//        return cache.iterator();
-////        return new UnitIterator(root);
-//    }
+    @Override
+    public Iterator iterator() {
+        return cache.iterator(true, -1);
+    }
 }

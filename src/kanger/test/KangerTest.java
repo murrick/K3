@@ -98,8 +98,8 @@ public class KangerTest {
         String dbName = user.getStorageName();
         try {
             //TODO: В дальнейшем отключить бд для тестов
-            user.use("data/test");
-            user.clear();
+//            user.use("data/test");
+//            user.clear();
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -149,11 +149,14 @@ public class KangerTest {
         } catch (Exception e) {
             e.printStackTrace(System.err);
         } finally {
+            user.close();
             user.remove();
-            try {
-                user.use(dbName);
-            } catch (RuntimeErrorException e) {
-                e.printStackTrace(System.err);
+            if (!dbName.isEmpty()) {
+                try {
+                    user.use(dbName);
+                } catch (RuntimeErrorException e) {
+                    e.printStackTrace(System.err);
+                }
             }
         }
 

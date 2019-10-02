@@ -10,6 +10,8 @@ import kanger.units.Domain;
 import kanger.units.Function;
 import kanger.units.Predicate;
 
+import java.io.IOException;
+
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.15.
  */
@@ -74,7 +76,7 @@ public class Calculator {
      */
     public int execute(Domain d) throws Exception {
         int k = -1;
-        String n = d.getPredicate().getName() + "(" + d.getPredicate().getRange() + ")";
+        String n = d.getPredicate().getName() + "(" + d.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         if (op != null) {
 
@@ -127,13 +129,13 @@ public class Calculator {
         return k;
     }
 
-    public boolean exists(Predicate p) {
+    public boolean exists(Predicate p) throws IOException, ClassNotFoundException {
         String n = p.getName() + "(" + p.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         return op != null && op.getMode() == LibMode.PREDICATE;
     }
 
-    public boolean exists(Function f) {
+    public boolean exists(Function f) throws IOException, ClassNotFoundException {
         String n = f.getName() + "(" + f.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
         return op != null && functions.getSysOps().get(n).getMode() == LibMode.FUNCTION;
@@ -149,7 +151,7 @@ public class Calculator {
             return user.getMind().getLibrary().find(n);
     }
 
-    public SysOp find(Object o) {
+    public SysOp find(Object o) throws IOException, ClassNotFoundException {
         if (o instanceof Predicate) {
             String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
             return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);

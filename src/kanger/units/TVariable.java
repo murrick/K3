@@ -36,7 +36,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     }
 
     @Override
-    public void readExternal(ObjectInput dis) throws IOException {
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
         nameId = dis.readLong();
         index = dis.readInt();
@@ -51,17 +51,12 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         dos.writeLong(right.getId());
     }
 
-    public void linkExternal(User user) throws Exception {
-        this.user = user;
-        if (name == null && nameId != -1) {
-            name = user.getMind().getTerms().get(nameId);
-            name.linkExternal(user);
-        }
-        if (right == null && rightId != -1) {
-            right = user.getMind().getRights().get(rightId);
-            right.linkExternal(user);
-        }
-    }
+//    @Override
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        this.user = user;
+//        name = user.getMind().getTerms().load(nameId);
+//        right = user.getMind().getRights().load(rightId);
+//    }
 
     public Term getName() {
         return name;
@@ -196,8 +191,8 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(right == null ? rightId : right.getId());
-        buffer.append(name == null ? nameId : name.getId());
+        buffer.append(right.getId());
+        buffer.append(name.getId());
         buffer.append(index);
         return buffer.toString().hashCode();
     }
@@ -205,6 +200,16 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     @Override
     public boolean equalsTo(TVariable to) {
         return false;
+    }
+
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @Override

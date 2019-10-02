@@ -45,24 +45,23 @@ public class Function implements Externalizable, Identifiable<Function> {
         nameId = dis.readLong();
         range = dis.readInt();
         arguments = (ArgList) dis.readObject();
+        arguments.setUser(user);
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(name.getId());
+        dos.writeLong(nameId);
         dos.writeInt(range);
         dos.writeObject(arguments);
     }
 
-    public void linkExternal(User user) throws Exception {
-        this.user = user;
-        if (name == null && nameId != -1) {
-            name = user.getMind().getTerms().get(nameId);
-            name.linkExternal(user);
-        }
-        arguments.linkExternal(user);
-    }
+//    @Override
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        this.user = user;
+//        name = user.getMind().getTerms().load(nameId);
+////        arguments.linkExternal(user);
+//    }
 
     @Override
     public void setId(long id) {
@@ -86,7 +85,7 @@ public class Function implements Externalizable, Identifiable<Function> {
         return arguments;
     }
 
-    public Term getValue() throws Exception {
+    public Term getValue() throws IOException, ClassNotFoundException {
         FValue c = getCurrent();
         if (c != null) {
             return getCurrent().getValue();
@@ -94,7 +93,6 @@ public class Function implements Externalizable, Identifiable<Function> {
             return null;
         }
     }
-
 
     public Object setValue(Term r) throws Exception {
         while (range + 1 > arguments.size()) {
@@ -135,16 +133,20 @@ public class Function implements Externalizable, Identifiable<Function> {
 //    }
 
 
-    public Term getName() {
+    public Term getName() throws IOException, ClassNotFoundException {
+        if (name == null) {
+            name = user.getMind().getTerms().load(nameId);
+        }
         return name;
     }
 
     public void setName(Term name) {
         this.name = name;
+        this.nameId = name.getId();
     }
 
     private String formatParam(Argument t) throws Exception {
-        Operation op = Parser.getOp(name.toString(), range);
+        Operation op = Parser.getOp(getName().toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
         if (t.isFSet()) {
@@ -172,10 +174,10 @@ public class Function implements Externalizable, Identifiable<Function> {
             if (!isCalculable() && getValue() != null) {
                 return getValue().toString();
             } else {
-                Operation op = Parser.getOp(name.toString(), range);
+                Operation op = Parser.getOp(getName().toString(), range);
                 String s = "";
                 if (op == null || op.getRange() != range) {
-                    s = String.format("%s(", name.toString());
+                    s = String.format("%s(", getName().toString());
                     for (int i = 0; i < range; ++i) {
                         s += formatParam(arguments.get(i));
                         if (i + 1 < range) {
@@ -298,14 +300,14 @@ public class Function implements Externalizable, Identifiable<Function> {
 //    }
 
 
-    public FValue getCurrent() throws Exception {
+    public FValue getCurrent() throws IOException, ClassNotFoundException {
         return user.getMind().getFValues().find(this);
     }
 
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(name.getId());
+        buffer.append(nameId);
         buffer.append(range);
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
@@ -314,6 +316,16 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public boolean equalsTo(Function to) {
         return false;
+    }
+
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+        arguments.setUser(user);
     }
 
     @Override

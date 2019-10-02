@@ -1,15 +1,14 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
+import kanger.interfaces.IStep;
 import kanger.interfaces.Identifiable;
 import kanger.storage.Escalera;
 import kanger.units.FValue;
 import kanger.units.Function;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
 public class FValueFactory {
 
@@ -31,31 +30,44 @@ public class FValueFactory {
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache = new Escalera(base.cache);
+            cache = new Escalera(user, SCHEMA, base.cache);
         } else {
-            lastId = 0;
-            firstId = 0;
-            cache = new Escalera(null);
+            cache = new Escalera(user, SCHEMA, null);
+            if (!cache.isEmpty()) {
+                lastId = cache.getRoot().getId() + 1;
+                firstId = lastId;
+            } else {
+                lastId = 0;
+                firstId = 0;
+            }
         }
     }
 
     public void commit(FValueFactory base) throws Exception {
-        List<FValue> list = new ArrayList();
-        for (Object p : base.cache) {
-            if (((Identifiable) p).getId() < base.firstId) {
-                break;
+        cache.setRoot(base.cache.getRoot());
+        if (cache.getRoot() != null) {
+            lastId = cache.getRoot().getId() + 1;
+            if (cache.getTop() == null) {
+                cache.setTop(base.cache.getTop());
+                firstId = cache.getTop().getId();
             }
-            list.add(0, (FValue) p);
         }
-        for (FValue p : list) {
-            p.setId(lastId++);
-            cache.add(p);
-        }
+
+//        List<FValue> list = new ArrayList();
+//        for (Object p : base.cache) {
+//            if (((Identifiable) p).getId() < base.firstId) {
+//                break;
+//            }
+//            list.add(0, (FValue) p);
+//        }
+//        for (FValue p : list) {
+//            p.setId(lastId++);
+//            cache.add(p);
+//        }
     }
 
-    public void update() throws RuntimeErrorException {
-        if (!user.isClosed()) {
-            //TODO: Коммит в БД
+    public void update() throws Exception {
+        if (cache.update()) {
             firstId = lastId;
         }
     }
@@ -75,10 +87,10 @@ public class FValueFactory {
     }
 
 
-    public FValue find(Function f) throws Exception {
+    public FValue find(Function f) throws IOException, ClassNotFoundException {
         FValue temp = new FValue(f, user);
         for (long id : cache.find(temp.getHash())) {
-            Identifiable one = get(id);
+            Identifiable one = load(id);
             if (one.equalsTo(f)) {
                 return (FValue) one;
             }
@@ -86,9 +98,20 @@ public class FValueFactory {
         return null;
     }
 
-    public FValue get(long id) throws Exception {
+    public FValue load(long id) throws IOException, ClassNotFoundException {
+        FValue t = get(id);
+        if (t == null && !user.isClosed()) {
+            IStep s = user.getStorage(SCHEMA).get(id);
+            if (s != null) {
+                t = (FValue) s.getData();
+//                t.linkExternal(user);
+            }
+        }
+        return t;
+    }
+
+    public FValue get(long id) throws IOException, ClassNotFoundException {
         FValue t = (FValue) cache.get(id);
-//        t.linkExternal(user);
         return t;
     }
 
@@ -114,7 +137,7 @@ public class FValueFactory {
         cache.release();
     }
 
-    public void unlink() {
+    public void unlink() throws Exception {
         cache.unlink();
     }
 

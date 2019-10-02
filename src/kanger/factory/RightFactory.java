@@ -1,9 +1,8 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IStep;
 import kanger.primitives.ArgList;
 import kanger.storage.Escalera;
 import kanger.units.Domain;
@@ -11,7 +10,7 @@ import kanger.units.Right;
 import kanger.units.TValue;
 import kanger.units.Term;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,33 +40,50 @@ public class RightFactory implements Iterable<Right> {
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
-            cache = new Escalera(base.cache);
-            stored = new Escalera(base.stored);
+            cache = new Escalera(user, SCHEMA, base.cache);
+            stored = new Escalera(user, SCHEMA_STORED, base.stored);
         } else {
-            lastId = 0;
-            firstId = 0;
-            cache = new Escalera(null);
-            stored = new Escalera(null);
+            cache = new Escalera(user, SCHEMA, null);
+            stored = new Escalera(user, SCHEMA_STORED, null);
+            if (!cache.isEmpty()) {
+                lastId = cache.getRoot().getId() + 1;
+                firstId = lastId;
+            } else {
+                lastId = 0;
+                firstId = 0;
+            }
         }
     }
 
 
     public void commit(RightFactory base) throws Exception {
-        List<Right> list = new ArrayList();
-        for (Object p : base.cache) {
-            if (((Identifiable) p).getId() < base.firstId) {
-                break;
+        cache.setRoot(base.cache.getRoot());
+        if (cache.getRoot() != null) {
+            lastId = cache.getRoot().getId() + 1;
+            if (cache.getTop() == null) {
+                cache.setTop(base.cache.getTop());
+                firstId = cache.getTop().getId();
             }
-            list.add(0, (Right) p);
         }
-        for (Right p : list) {
-            add(p);
+        stored.setRoot(base.stored.getRoot());
+        if (stored.getRoot() != null && stored.getTop() == null) {
+            stored.setTop(base.stored.getTop());
         }
+
+//        List<Right> list = new ArrayList();
+//        for (Object p : base.cache) {
+//            if (((Identifiable) p).getId() < base.firstId) {
+//                break;
+//            }
+//            list.add(0, (Right) p);
+//        }
+//        for (Right p : list) {
+//            add(p);
+//        }
     }
 
-    public void update() throws RuntimeErrorException {
-        if (!user.isClosed()) {
-            //TODO: Коммит в БД
+    public void update() throws Exception {
+        if (cache.update() && stored.update()) {
             firstId = lastId;
         }
     }
@@ -110,9 +126,20 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public Right get(long id) throws Exception {
+    public Right load(long id) throws IOException, ClassNotFoundException {
+        Right t = get(id);
+        if (t == null && !user.isClosed()) {
+            IStep s = user.getStorage(SCHEMA).get(id);
+            if (s != null) {
+                t = (Right) s.getData();
+//                t.linkExternal(user);
+            }
+        }
+        return t;
+    }
+
+    public Right get(long id) throws IOException, ClassNotFoundException {
         Right t = (Right) cache.get(id);
-//        t.linkExternal(user);
         return t;
     }
 
@@ -168,7 +195,7 @@ public class RightFactory implements Iterable<Right> {
 
     public Right find(Domain domain) throws Exception {
         for (long id : cache.find(domain.getHashBase())) {
-            Right one = get(id);
+            Right one = load(id);
             if (one.equalsTo(domain)) {
                 return (Right) one;
             }
@@ -176,7 +203,7 @@ public class RightFactory implements Iterable<Right> {
         return null;
     }
 
-    public void unlink() {
+    public void unlink() throws Exception {
         cache.unlink();
         stored.unlink();
     }

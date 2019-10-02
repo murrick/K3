@@ -1,26 +1,36 @@
 package kanger.storage;
 
+import kanger.User;
 import kanger.interfaces.ICache;
+import kanger.interfaces.IStep;
 import kanger.interfaces.Identifiable;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.Stack;
+import java.io.IOException;
+import java.util.*;
 
 public class Escalera implements ICache {
 
-    private Step root = null;
-    private Step top = null;
-    private Escalera parent = null;
-    private Stack<Step> stack = new Stack<>();
+    private IStep root = null;
+    private IStep top = null;
 
-    public Escalera(ICache parent) {
-        this.parent = (Escalera) parent;
+    private ICache parent = null;
+    private Stack<IStep> stack = new Stack<>();
+    private User user = null;
+    private String schema = "";
+
+    public Escalera(User user, String schema, ICache parent) {
+        this.parent = parent;
+        this.user = user;
+        this.schema = schema;
 
         if (this.parent != null) {
-            root = this.parent.root;
-            top = this.parent.top;
+            root = this.parent.getRoot();
+            top = this.parent.getTop();
+        } else {
+            if (!user.isClosed()) {
+                root = user.getStorage(schema).getRoot();
+                top = user.getStorage(schema).getTop();
+            }
         }
     }
 
@@ -35,6 +45,7 @@ public class Escalera implements ICache {
         s.setNext(root);
         if (root != null) {
             root.setPrev(s);
+            root.update();
         }
         root = s;
         if (top == null) {
@@ -52,6 +63,7 @@ public class Escalera implements ICache {
         s.setNext(root);
         if (root != null) {
             root.setPrev(s);
+            root.update();
         }
         root = s;
         if (top == null) {
@@ -60,33 +72,41 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public Object get(long id) throws Exception {
-        for (Step s = root; s != null; s = s.getNext()) {
+    public Object get(long id) throws IOException, ClassNotFoundException {
+        if (root instanceof Sapato) {
+            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
+        }
+        for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getId() == id) {
                 return s.getData();
             }
         }
+        // Прямое обращение к БД имеет значение только в начальной загрузке
+//        return user.isClosed() ? null : user.getStorage(schema).get(id).getData();
         return null;
     }
 
     @Override
     public int size() throws Exception {
         int cnt = 0;
-        for (Step s = root; s != null; s = s.getNext()) {
+        for (IStep s = root; s != null; s = s.getNext()) {
             ++cnt;
         }
         return cnt;
     }
 
     @Override
-    public boolean isEmpty() throws Exception {
+    public boolean isEmpty() {
         return root == null;
     }
 
     @Override
-    public Set<Long> find(int h) throws Exception {
+    public Set<Long> find(int h) throws IOException, ClassNotFoundException {
         Set<Long> set = new HashSet<>();
-        for (Step s = root; s != null; s = s.getNext()) {
+        if (root instanceof Sapato) {
+            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
+        }
+        for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getHash() == h) {
                 set.add(s.getId());
             }
@@ -129,10 +149,11 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void unlink() {
+    public void unlink() throws Exception {
         if (root != null && root.getPrev() != null) {
             root.getPrev().setNext(null);
             root.setPrev(null);
+            root.update();
         }
     }
 
@@ -146,14 +167,73 @@ public class Escalera implements ICache {
         return new WalkIterator(backward, fromId);
     }
 
+    @Override
+    public IStep getRoot() {
+        return root;
+    }
+
+    @Override
+    public void setRoot(IStep root) {
+        this.root = root;
+
+    }
+
+    @Override
+    public IStep getTop() {
+        return top;
+    }
+
+    @Override
+    public void setTop(IStep top) {
+        this.top = top;
+    }
+
+    @Override
+    public boolean update() throws Exception {
+        // Это самый низ
+        if (parent == null && !user.isClosed()) {
+            long lastId = user.getStorage(schema).isEmpty() ? -1 : user.getStorage(schema).getRoot().getId();
+            List<IStep> list = new ArrayList<>();
+            for (IStep s = root; s != null; s = s.getNext()) {
+                if (s.getId() < lastId) {
+                    break;
+                }
+                list.add(s);
+            }
+            for (IStep p : list) {
+                Sapato s = new Sapato(user.getStorage(schema), p);
+                s.append();
+            }
+
+            root = user.getStorage(schema).getRoot();
+            top = user.getStorage(schema).getTop();
+            stack.clear();
+
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     public class WalkIterator implements Iterator {
-        private Step step;
+        private IStep step;
         private boolean backward;
 
         public WalkIterator(boolean backward, long fromId) {
             this.backward = backward;
             step = backward ? root : top;
+
+            try {
+                if (root instanceof Sapato) {
+                    root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
+                }
+                if (top instanceof Sapato) {
+                    top.setData(((Sapato) user.getStorage(schema).get(top.getId())).getData());
+                }
+            } catch (Exception e) {
+                e.printStackTrace(System.err);
+            }
+
             if (fromId >= 0) {
                 for (; step != null; step = backward ? step.getNext() : step.getPrev()) {
                     if (step.getId() == fromId) {
@@ -175,53 +255,5 @@ public class Escalera implements ICache {
             return o;
         }
 
-    }
-
-    public class Step {
-        Object data = null;
-        Step next = null;
-        Step prev = null;
-        long id = -1;
-        int hash = 0;
-
-        public Object getData() {
-            return data;
-        }
-
-        public void setData(Object data) {
-            this.data = data;
-        }
-
-        public Step getNext() {
-            return next;
-        }
-
-        public void setNext(Step next) {
-            this.next = next;
-        }
-
-        public Step getPrev() {
-            return prev;
-        }
-
-        public void setPrev(Step prev) {
-            this.prev = prev;
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public void setId(long id) {
-            this.id = id;
-        }
-
-        public int getHash() {
-            return hash;
-        }
-
-        public void setHash(int hash) {
-            this.hash = hash;
-        }
     }
 }

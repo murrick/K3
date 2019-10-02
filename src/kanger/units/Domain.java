@@ -4,7 +4,6 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -24,20 +23,21 @@ import java.util.*;
 public class Domain implements Externalizable, Identifiable<Domain> {
 
     private static final long serialVersionUID = 196402070001L;
+
     private long id = -1;                                       // id домена
     private boolean antc = true;                                // ! или ?
     private Predicate predicate = null;                         // Ссылка на описатель предиката
     private ArgList arguments = new ArgList();       // Массив подстановочных переменных
     private Right right = null;                                        // Ссылка на правило
+    private int range = 0;
 //    private Domain next = null;                                 // Следующий элемент
 
 //    private Stack<List<TValue>> tStack = new Stack<>();
 //    private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
 
-    private User user = null;
-
     private transient long predicateId = -1;
     private transient long rightId = -1;
+    private transient User user = null;
 
     public Domain() {
     }
@@ -64,49 +64,49 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         predicateId = dis.readLong();
         rightId = dis.readLong();
         arguments = (ArgList) dis.readObject();
+        arguments.setUser(user);
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
         dos.writeBoolean(antc);
-        dos.writeLong(predicate.getId());
-        dos.writeLong(right.getId());
+        dos.writeLong(predicateId);
+        dos.writeLong(rightId);
         dos.writeObject(arguments);
     }
 
-    @Override
-    public void linkExternal(User user) throws Exception {
-        this.user = user;
-        if (predicate == null && predicateId != -1) {
-            predicate = user.getMind().getPredicates().get(predicateId);
-            predicate.linkExternal(user);
-        }
-        if (right == null && rightId != -1) {
-            right = user.getMind().getRights().get(rightId);
-            right.linkExternal(user);
-        }
-        arguments.linkExternal(user);
-    }
+//    @Override
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        this.user = user;
+//        predicate = user.getMind().getPredicates().load(predicateId);
+//        right = user.getMind().getRights().load(rightId);
+////        arguments.linkExternal(user);
+//    }
 
-    public Predicate getPredicate() {
+    public Predicate getPredicate() throws IOException, ClassNotFoundException {
+        if (predicate == null) {
+            predicate = user.getMind().getPredicates().load(predicateId);
+        }
         return predicate;
     }
 
     public void setPredicate(Predicate predicate) {
+        this.predicateId = predicate.getId();
         this.predicate = predicate;
+        this.range = predicate.getRange();
     }
 
-    public Right getRight() throws Exception {
-//        if (right == null && rightId != -1) {
-//            right = user.getMind().getRights().get(rightId);
-//            right.linkExternal(user);
-//        }
+    public Right getRight() throws IOException, ClassNotFoundException {
+        if (right == null) {
+            right = user.getMind().getRights().load(rightId);
+        }
         return right;
     }
 
-    public void setRight(Right right) {
-        this.right = right;
+    public void setRight(Right r) {
+        this.rightId = r.getId();
+        right = r;
     }
 
     @Override
@@ -186,22 +186,22 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
-    public void dropSolves(ArgList arguments) {
-        ArgList args = arguments.convertBase();
-        if (user.getMind().getDomainSolves().containsKey(this) && user.getMind().getDomainSolves().get(this).containsKey(args)) {
-            user.getMind().getDomainSolves().get(this).remove(args);
-        }
-    }
+//    public void dropSolves(ArgList arguments) {
+//        ArgList args = arguments.convertBase();
+//        if (user.getMind().getDomainSolves().containsKey(this) && user.getMind().getDomainSolves().get(this).containsKey(args)) {
+//            user.getMind().getDomainSolves().get(this).remove(args);
+//        }
+//    }
 
 //    public SortedSet<Cause> getCauses(ArgList arguments) {
 //        return causes.get(arguments);
 //    }
 
-    private boolean sourceExists(Cause c) throws RuntimeErrorException {
+    private boolean sourceExists(Cause c) throws IOException, ClassNotFoundException {
         Set<Cause> causes = getCauses();
         if (causes != null) {
             for (Cause x : getCauses()) {
-                if (x.getSrc().getPredicate().getId() == c.getSrc().getPredicate().getId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
+                if (x.getSrc().getPredicateId() == c.getSrc().getPredicateId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
                     return true;
                 }
             }
@@ -308,16 +308,22 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
 
+    //TODO ?$x parent(x,Jack); выводит рещшение Result: TRUE...
+    //Solves (1):
+    //	Solution 001: !parent(y,Jack); GB
+    //Values (1):
+    //	Row 001: x=%2
+
     public String toString(ArgList arguments) {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
-            Operation op = Parser.getOp(predicate.getName().toString(), predicate.getRange());
+            Operation op = Parser.getOp(getPredicate().getName().toString(), getRange());
             if (op == null) {
-                s += predicate.getName() + "(";
+                s += getPredicate().getName() + "(";
                 int i = 0;
                 for (Argument t : arguments) {
                     s += formatParam(t);
-                    if (i + 1 != predicate.getRange()) {
+                    if (i + 1 != getRange()) {
                         s += (char) Enums.COMMA;
                     }
                     ++i;
@@ -372,7 +378,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
 
     public boolean equalsBase(Domain o) throws Exception {
-        if (predicate.getId() != o.getPredicate().getId()) {
+        if (predicateId != o.getPredicateId()) {
             return false;
         }
         if (arguments.size() != o.getArguments().size()) {
@@ -676,7 +682,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
     public boolean isStored(ArgList args) throws Exception {
-        Domain d = new Domain(predicate, antc, args);
+        Domain d = new Domain(getPredicate(), antc, args);
         return user.getMind().getRights().find(d) != null;
     }
 
@@ -690,8 +696,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return r;
     }
 
-    public boolean isSystem() {
-        return Parser.getOp(predicate.getName().toString(), predicate.getRange()) != null;
+    public boolean isSystem() throws IOException, ClassNotFoundException {
+        return Parser.getOp(getPredicate().getName().toString(), getRange()) != null;
     }
 
     public int execSystem() throws Exception {
@@ -723,15 +729,15 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return false;
 //    }
 
-    public boolean isQuery() {
+    public boolean isQuery() throws IOException, ClassNotFoundException {
         return isQuery(arguments);
     }
 
-    public boolean isQuery(ArgList arguments) {
-        if (right == null) {
+    public boolean isQuery(ArgList arguments) throws IOException, ClassNotFoundException {
+        if (rightId == -1) {
             return false;
         }
-        if (right.isQuery()) {
+        if (getRight().isQuery()) {
             return true;
         } else {
             for (TVariable t : arguments.getTVariables(true)) {
@@ -824,8 +830,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(antc);
-        buffer.append(predicate == null ? predicateId : predicate.getId());
-        buffer.append(right == null ? rightId : right.getId());
+        buffer.append(predicateId);
+        buffer.append(rightId);
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
     }
@@ -833,7 +839,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public int getHashBase() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(antc);
-        buffer.append(predicate == null ? predicateId : predicate.getId());
+        buffer.append(predicateId);
         buffer.append(arguments.hashCode());
         return buffer.toString().hashCode();
     }
@@ -842,10 +848,10 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public boolean equalsTo(Domain to) {
         try {
             if (to.isAntc() == antc
-                    && to.getPredicate().getId() == predicate.getId()
-                    && (right == null || to.getRight().getId() == right.getId())) {
+                    && to.getPredicateId() == predicateId
+                    && (rightId == -1 || to.getRightId() == rightId)) {
                 int i = 0;
-                for (; i < predicate.getRange(); ++i) {
+                for (; i < getRange(); ++i) {
                     try {
                         if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT().getId() == arguments.get(i).getT().getId())
                                 || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF().getId() == arguments.get(i).getF().getId())
@@ -860,7 +866,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                         e.printStackTrace(System.err);
                     }
                 }
-                return i == predicate.getRange();
+                return i == getRange();
             } else {
                 return false;
             }
@@ -924,6 +930,27 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return user;
     }
 
+    @Override
+    public void setUser(User user) {
+        this.user = user;
+        arguments.setUser(user);
+    }
+
+    public long getPredicateId() {
+        return predicateId;
+    }
+
+    public long getRightId() {
+        return rightId;
+    }
+
+    public int getRange() {
+        return range;
+    }
+
+    public void setRange(int range) {
+        this.range = range;
+    }
 
 //    public boolean isIntersected(Domain d) {
 //        List<TValue> tValues = arguments.getTValues(true);

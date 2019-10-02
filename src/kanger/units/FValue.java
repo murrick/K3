@@ -31,13 +31,18 @@ public class FValue implements Externalizable, Identifiable<Function> {
     public FValue() {
     }
 
-    public FValue(User user) {
-        this.user = user;
-    }
+//    public FValue(User user) {
+//        this.user = user;
+//    }
 
-    public FValue(Function f, User user) throws Exception {
+    public FValue(Function f, User user) throws IOException, ClassNotFoundException {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue();
+        functionId = function.getId();
+        if (value != null) {
+            valueId = value.getId();
+        }
+        condition.setUser(user);
         for (Argument a : f.getArguments()) {
             if (a.isTSet()) {
                 condition.add(new Argument(a.getT().getCurrent()));
@@ -56,28 +61,24 @@ public class FValue implements Externalizable, Identifiable<Function> {
         functionId = dis.readLong();
         valueId = dis.readLong();
         condition = (ArgList) dis.readObject();
+        condition.setUser(user);
     }
 
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(function.getId());
-        dos.writeLong(value.getId());
+        dos.writeLong(functionId);
+        dos.writeLong(valueId);
         dos.writeObject(condition);
     }
 
-    public void linkExternal(User user) throws Exception {
-        this.user = user;
-        if (function == null && functionId != -1) {
-            function = user.getMind().getFunctions().get(functionId);
-            function.linkExternal(user);
-        }
-        if (value == null && valueId != -1) {
-            value = user.getMind().getTerms().get(valueId);
-            value.linkExternal(user);
-        }
-        condition.linkExternal(user);
-    }
+//    @Override
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        this.user = user;
+//        function = user.getMind().getFunctions().load(functionId);
+//        value = user.getMind().getTerms().load(valueId);
+////        condition.linkExternal(user);
+//    }
 
 
     @Override
@@ -90,13 +91,16 @@ public class FValue implements Externalizable, Identifiable<Function> {
         return id;
     }
 
-    public Term setValue(Term value) {
-        this.value = value;
-        return value;
-    }
+//    public Term setValue(Term value) {
+//        this.value = value;
+//        return value;
+//    }
 
 
-    public Term getValue() {
+    public Term getValue() throws IOException, ClassNotFoundException {
+        if (value == null && valueId != -1) {
+            value = user.getMind().getTerms().load(valueId);
+        }
         return value;
     }
 
@@ -123,23 +127,27 @@ public class FValue implements Externalizable, Identifiable<Function> {
 
     public void setFunction(Function function) {
         this.function = function;
+        this.functionId = function.getId();
     }
 
-    public Function getFunc() {
+    public Function getFunc() throws IOException, ClassNotFoundException {
+        if (function == null) {
+            function = user.getMind().getFunctions().load(functionId);
+        }
         return function;
     }
 
-    public Argument getCondition(int index) {
-        return condition.get(index);
-    }
+//    public Argument getCondition(int index) {
+//        return condition.get(index);
+//    }
 
     public ArgList getCondition() {
         return condition;
     }
 
     private String formatParam(Argument t) throws Exception {
-        Operation op = Parser.getOp(function.getName().toString(), function.getRange());
-        boolean isOp = op != null && op.getRange() == function.getRange();
+        Operation op = Parser.getOp(getFunc().getName().toString(), getFunc().getRange());
+        boolean isOp = op != null && op.getRange() == getFunc().getRange();
         String s = "";
         if (t.isFSet()) {
             s += (isOp ? "(" : "") + t.getF().toString() + (isOp ? ")" : "");
@@ -160,8 +168,8 @@ public class FValue implements Externalizable, Identifiable<Function> {
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(function.getId());
-        buffer.append(value == null ? 0 : value.getId());
+        buffer.append(functionId);
+        buffer.append(valueId);
         buffer.append(condition.hashCode());
         return buffer.toString().hashCode();
     }
@@ -190,57 +198,73 @@ public class FValue implements Externalizable, Identifiable<Function> {
     }
 
     @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public void setUser(User user) {
+        this.user = user;
+        this.condition.setUser(user);
+    }
+
+    @Override
     public int hashCode() {
         return ("" + id).hashCode();
     }
 
     @Override
     public String toString() {
-        if (!function.isCalculable() && getValue() != null) {
-            return getValue().toString();
-        } else {
-            try {
-                Operation op = Parser.getOp(function.getName().toString(), function.getRange());
-                String s = "";
-                if (op == null || op.getRange() != function.getRange()) {
-                    s = String.format("%s(", function.getName().toString());
-                    for (int i = 0; i < function.getRange(); ++i) {
-                        s += formatParam(condition.get(i));
-                        if (i + 1 < function.getRange()) {
-                            s += (char) Enums.COMMA;
+        try {
+            if (!getFunc().isCalculable() && getValue() != null) {
+                return getValue().toString();
+            } else {
+                try {
+                    Operation op = Parser.getOp(getFunc().getName().toString(), getFunc().getRange());
+                    String s = "";
+                    if (op == null || op.getRange() != getFunc().getRange()) {
+                        s = String.format("%s(", getFunc().getName().toString());
+                        for (int i = 0; i < getFunc().getRange(); ++i) {
+                            s += formatParam(condition.get(i));
+                            if (i + 1 < getFunc().getRange()) {
+                                s += (char) Enums.COMMA;
+                            }
                         }
-                    }
-                    s += ")";
-                } else if (op.getRange() == 1) {
-                    if (op.isPost()) {
-                        s = formatParam(condition.get(0)) + op.getName();
+                        s += ")";
+                    } else if (op.getRange() == 1) {
+                        if (op.isPost()) {
+                            s = formatParam(condition.get(0)) + op.getName();
+                        } else {
+                            s = op.getName() + formatParam(condition.get(0));
+                        }
                     } else {
-                        s = op.getName() + formatParam(condition.get(0));
-                    }
-                } else {
-                    for (int i = 0; i < op.getRange(); ++i) {
-                        s += formatParam(condition.get(i));
-                        if (i + 1 < op.getRange()) {
-                            s += " " + op.getName() + " ";
+                        for (int i = 0; i < op.getRange(); ++i) {
+                            s += formatParam(condition.get(i));
+                            if (i + 1 < op.getRange()) {
+                                s += " " + op.getName() + " ";
+                            }
                         }
                     }
-                }
 
-                String res = "";
-                if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
-//                if (getResult() != null) {
-                    if (getValue() != null) {
-                        res = " {= " + getValue() + "}";
-                    } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
-                        res = " [= " + condition.get(function.getRange()).getValue() + "]";
+                    String res = "";
+                    if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+                        //                if (getResult() != null) {
+                        if (getValue() != null) {
+                            res = " {= " + getValue() + "}";
+                        } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
+                            res = " [= " + condition.get(function.getRange()).getValue() + "]";
+                        }
                     }
+                    //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
+                    return s + res;
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                    return "";
                 }
-                //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
-                return s + res;
-            } catch (Exception e) {
-                e.printStackTrace(System.err);
-                return "";
             }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
+            return "";
         }
     }
 

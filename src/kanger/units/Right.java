@@ -60,7 +60,8 @@ public class Right implements Externalizable, Identifiable<Right> {
             List<Long> branch = new ArrayList<>();
             int len = dis.readInt();
             while (len-- > 0) {
-                branch.add(dis.readLong());
+                long id = dis.readLong();
+                branch.add(id);
             }
             treeIds.add(branch);
         }
@@ -91,27 +92,23 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
-    public void linkExternal(User user) throws Exception {
-        this.user = user;
-        if (orig == null && origId != -1) {
-            orig = user.getMind().getTerms().get(origId);
-            orig.linkExternal(user);
-        }
-        if (tree.isEmpty() && !treeIds.isEmpty()) {
-            for (List<Long> ids : treeIds) {
-                List<Domain> branch = new ArrayList<>();
-                for (long id : ids) {
-                    Domain domain = user.getMind().getDomains().get(id);
-                    domain.linkExternal(user);
-                    branch.add(domain);
-                }
-                tree.add(branch);
-            }
-        }
-        for (Cause c : causes) {
-            c.linkExternal(user);
-        }
-    }
+//    @Override
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        this.user = user;
+//        orig = user.getMind().getTerms().load(origId);
+//        for (List<Long> ids : treeIds) {
+//            List<Domain> branch = new ArrayList<>();
+//            for (long id : ids) {
+//                Domain domain = user.getMind().getDomains().load(id);
+//                branch.add(domain);
+//                predicates.add(domain.getPredicate());
+//            }
+//            tree.add(branch);
+//        }
+//        for (Cause c : causes) {
+////            c.linkExternal(user);
+//        }
+//    }
 
     public Domain getDomain() {
         return tree.get(0).get(0);
@@ -254,14 +251,24 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     public boolean equalsTo(Domain x) {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
-                && x.getPredicate().getId() == domain.getPredicate().getId()
-                && x.getPredicate().getRange() == domain.getPredicate().getRange()) {
-            int i = 0;
+                && x.getPredicateId() == domain.getPredicateId()
+                && x.getRange() == domain.getRange()) {
             try {
-                for (; i < domain.getPredicate().getRange(); ++i) {
+                int i = 0;
+                for (; i < domain.getRange(); ++i) {
                     if (!x.get(i).isEmpty()
                             && !domain.getArguments().get(i).isEmpty()
                             && x.get(i).getValue().getId() != domain.getArguments().get(i).getValue().getId()) {
@@ -274,10 +281,11 @@ public class Right implements Externalizable, Identifiable<Right> {
                         break;
                     }
                 }
-            } catch (Exception e) {
+                return i == domain.getRange();
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
+                return false;
             }
-            return i == domain.getPredicate().getRange();
         } else {
             return false;
         }

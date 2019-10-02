@@ -31,6 +31,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     public Predicate(Term name, int range) {
         this.name = name;
         this.range = range;
+        this.nameId = name.getId();
     }
 
     public Predicate(User user) {
@@ -38,7 +39,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     }
 
     @Override
-    public void readExternal(ObjectInput dis) throws IOException {
+    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
         nameId = dis.readLong();
         range = dis.readInt();
@@ -47,24 +48,26 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
-        dos.writeLong(name.getId());
+        dos.writeLong(nameId);
         dos.writeInt(range);
     }
 
-    public void linkExternal(User user) throws Exception {
-        this.user = user;
-        if (name == null && nameId != -1) {
-            name = user.getMind().getTerms().get(nameId);
-            name.linkExternal(user);
-        }
-    }
+//    @Override
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        this.user = user;
+//        name = user.getMind().getTerms().get(nameId);
+//    }
 
-    public Term getName() {
+    public Term getName() throws IOException, ClassNotFoundException {
+        if (name == null) {
+            name = user.getMind().getTerms().load(nameId);
+        }
         return name;
     }
 
     public void setName(Term name) {
         this.name = name;
+        this.nameId = name.getId();
     }
 
     public int getRange() {
@@ -88,9 +91,9 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     public Set<Domain> getSolves() throws Exception {
         Set<Domain> set = new HashSet<>();
         for (long id : user.getMind().getRights().getDatabase(-1)) {
-            Right d = user.getMind().getRights().get(id);
-            if (getId() == d.getDomain().getPredicate().getId()) {
-                set.add(d.getDomain());
+            Right r = user.getMind().getRights().get(id);
+            if (getId() == r.getDomain().getPredicate().getId()) {
+                set.add(r.getDomain());
             }
         }
         return set;
@@ -178,7 +181,12 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     @Override
     public String toString() {
-        return name + "(" + range + ")";
+        try {
+            return getName() + "(" + range + ")";
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
+            return "";
+        }
     }
 
 //    @Override
@@ -203,22 +211,32 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public int getHash() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(name == null ? nameId : name.getId());
+        buffer.append(nameId);
         buffer.append(range);
         return buffer.toString().hashCode();
     }
 
     @Override
     public boolean equalsTo(Predicate to) {
-        if (nameId != -1 && to.getName() != null) {
-            return to.getName().getId() == nameId && to.range == range;
-        } else {
-            return to.getName().getId() == getName().getId() && getRange() == to.getRange();
-        }
+        return to.getNameId() == nameId && to.getRange() == range;
+    }
+
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @Override
     public int hashCode() {
         return ("" + id).hashCode();
+    }
+
+    public long getNameId() {
+        return nameId;
     }
 }

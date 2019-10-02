@@ -372,7 +372,7 @@ public class Screen {
         }
         try {
             user.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
         System.out.println("KANGER III Session closed");

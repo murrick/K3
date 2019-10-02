@@ -1,8 +1,8 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
+import kanger.interfaces.IStep;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -11,7 +11,10 @@ import kanger.units.Domain;
 import kanger.units.Predicate;
 import kanger.units.Right;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
@@ -35,39 +38,53 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void transaction(DomainFactory base) {
-//        cache.clear();
-//        load.clear();
         waiters.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             waiters.addAll(base.waiters);
-            cache = new Escalera(base.cache);
+            cache = new Escalera(user, SCHEMA, base.cache);
         } else {
-            lastId = 0;
-            firstId = 0;
-            cache = new Escalera(null);
+            cache = new Escalera(user, SCHEMA, null);
+            if (!cache.isEmpty()) {
+                lastId = cache.getRoot().getId() + 1;
+                firstId = lastId;
+            } else {
+                lastId = 0;
+                firstId = 0;
+            }
         }
     }
 
     public void commit(DomainFactory base) throws Exception {
-        List<Domain> list = new ArrayList();
-        for (Object p : base.cache) {
-            if (((Identifiable) p).getId() < base.firstId) {
-                break;
+        cache.setRoot(base.cache.getRoot());
+        if (cache.getRoot() != null) {
+            lastId = cache.getRoot().getId() + 1;
+
+            if (cache.getTop() == null) {
+                cache.setTop(base.cache.getTop());
+                firstId = cache.getTop().getId();
             }
-            list.add(0, (Domain) p);
-        }
-        for (Domain p : list) {
-            p.setId(lastId++);
-            cache.add(p);
         }
         waiters.addAll(base.waiters);
+
+
+//        List<Domain> list = new ArrayList();
+//        for (Object p : base.cache) {
+//            if (((Identifiable) p).getId() < base.firstId) {
+//                break;
+//            }
+//            list.add(0, (Domain) p);
+//        }
+//        for (Domain p : list) {
+//            p.setId(lastId++);
+//            cache.add(p);
+//        }
+//        waiters.addAll(base.waiters);
     }
 
-    public void update() throws RuntimeErrorException {
-        if (!user.isClosed()) {
-            //TODO: Коммит в БД
+    public void update() throws Exception {
+        if (cache.update()) {
             firstId = lastId;
         }
     }
@@ -109,7 +126,7 @@ public class DomainFactory implements Iterable<Domain> {
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws Exception {
         Domain temp = new Domain(pred, antc, arg, r);
         for (long id : cache.find(temp.getHash())) {
-            Identifiable one = get(id);
+            Identifiable one = load(id);
             if (one.equalsTo(temp)) {
                 return (Domain) one;
             }
@@ -117,9 +134,20 @@ public class DomainFactory implements Iterable<Domain> {
         return null;
     }
 
-    public Domain get(long id) throws Exception {
+    public Domain load(long id) throws IOException, ClassNotFoundException {
+        Domain t = get(id);
+        if (t == null && !user.isClosed()) {
+            IStep s = user.getStorage(SCHEMA).get(id);
+            if (s != null) {
+                t = (Domain) s.getData();
+//                t.linkExternal(user);
+            }
+        }
+        return t;
+    }
+
+    public Domain get(long id) throws IOException, ClassNotFoundException {
         Domain t = (Domain) cache.get(id);
-//        t.linkExternal(user);
         return t;
     }
 
@@ -131,7 +159,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public void unlink() {
+    public void unlink() throws Exception {
         cache.unlink();
     }
 

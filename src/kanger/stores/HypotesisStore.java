@@ -5,6 +5,7 @@ import kanger.primitives.ArgList;
 import kanger.primitives.Hypotese;
 import kanger.units.Predicate;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +24,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         this.user = user;
     }
 
-    public void commit(HypotesisStore base) {
+    public void commit(HypotesisStore base) throws IOException, ClassNotFoundException {
         if (!enableStore) {
             return;
         }
@@ -64,7 +65,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese add(Hypotese hypotese) {
+    public Hypotese add(Hypotese hypotese) throws IOException, ClassNotFoundException {
         if (!enableStore) {
             return null;
         }
@@ -127,7 +128,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return null;
     }
 
-    public Hypotese find(Hypotese hy) {
+    public Hypotese find(Hypotese hy) throws IOException, ClassNotFoundException {
         if (root == null) {
             return null;
         }
@@ -150,7 +151,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public boolean contains(Hypotese h) {
+    public boolean contains(Hypotese h) throws IOException, ClassNotFoundException {
         return find(h) != null;
     }
 
@@ -178,7 +179,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
     }
 
-    public void exclude(HypotesisStore exclude) {
+    public void exclude(HypotesisStore exclude) throws IOException, ClassNotFoundException {
         if (!isEmpty() && !exclude.isEmpty()) {
             Set<Hypotese> toDelete = new HashSet<>();
             for (Hypotese h : root) {

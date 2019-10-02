@@ -324,10 +324,10 @@ public class Linker {
                     }
                     for (List<Domain> treeMaster : right.getTree()) {
                         for (Domain master : treeMaster) {
-                            if (master.getPredicate().getId() == slave.getPredicate().getId() && master.isAntc() != slave.isAntc()) {
+                            if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
 
-                                TValue[] substMaster = new TValue[slave.getPredicate().getRange()];
-                                TValue[] substSlave = new TValue[slave.getPredicate().getRange()];
+                                TValue[] substMaster = new TValue[slave.getRange()];
+                                TValue[] substSlave = new TValue[slave.getRange()];
 
                                 user.getMind().getTValues().mark();
                                 user.getMind().getFValues().mark();
@@ -336,7 +336,7 @@ public class Linker {
                                 boolean applied = false;
 
                                 // Отсечение несовпадений по константам
-                                for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                                for (int i = 0; i < slave.getRange(); ++i) {
                                     if (!master.get(i).isTSet() && !slave.get(i).isTSet()
                                             && (master.get(i).isEmpty()
                                             || slave.get(i).isEmpty()
@@ -347,7 +347,7 @@ public class Linker {
                                 }
 
                                 if (success) {
-                                    for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+                                    for (int i = 0; i < slave.getRange(); ++i) {
 
                                         // Подстановка снизу вверх
                                         if (master.get(i).isTSet()
@@ -427,7 +427,7 @@ public class Linker {
     private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) {
         Right r = null;
         boolean occurrs = false;
-        for (int i = 0; i < slave.getPredicate().getRange(); ++i) {
+        for (int i = 0; i < slave.getRange(); ++i) {
             if (subst[i] != null) {
                 boolean caused = false;
                 Cause s = new Cause(i, master, slave);
@@ -484,9 +484,9 @@ public class Linker {
             for (Domain d : tree) {
 
                 for (Domain master : user.getMind().getDomains().getWaiters()) {
-                    if (master.getPredicate().getId() == d.getPredicate().getId() && master.isAntc() != d.isAntc() && d.isComplete()) {
+                    if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
-                        for (int i = 0; i < d.getPredicate().getRange(); ++i) {
+                        for (int i = 0; i < d.getRange(); ++i) {
                             if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {
                             } else if (master.get(i).isEmpty()
                                     || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {

@@ -14,6 +14,8 @@ import java.util.List;
 
 public class ArgList extends ArrayList<Argument> implements Externalizable {
 
+    private transient User user = null;
+
     public ArgList() {
         super();
     }
@@ -39,15 +41,16 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         int count = in.readInt();
         while (count-- > 0) {
             Argument a = (Argument) in.readObject();
+            a.setUser(user);
             add(a);
         }
     }
 
-    public void linkExternal(User user) throws Exception {
-        for(Argument a : this) {
-            a.linkExternal(user);
-        }
-    }
+//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
+//        for(Argument a : this) {
+//            a.linkExternal(user);
+//        }
+//    }
 
     @Override
     public int hashCode() {
@@ -251,4 +254,14 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return str;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+        for (Argument a : this) {
+            a.setUser(user);
+        }
+    }
 }

@@ -129,9 +129,10 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         }
     }
 
-    public void linkExternal(User user) {
-        this.user = user;
-    }
+//    @Override
+//    public void linkExternal(User user) {
+//        this.user = user;
+//    }
 
     private void construct(Object o) throws Exception {
         value = null;
