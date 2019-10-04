@@ -1,5 +1,8 @@
 package kanger.interfaces;
 
+
+import java.io.IOException;
+
 public interface IStep {
 
     Object getData();
@@ -22,7 +25,12 @@ public interface IStep {
 
     void setHash(int hash);
 
-    void update() throws Exception;
+    void update() throws IOException;
 
-    void append() throws Exception;
+    void append() throws IOException;
+
+    Object getBase();
+
+    void setBase(Object base);
+
 }

@@ -31,6 +31,7 @@ public class Compiler {
 
         Right r = new Right(user);
         r.setOrig(user.getMind().getTerms().add(orig));
+        user.getMind().getRights().register(r);
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>());
         user.getMind().getRights().add(r);
         user.getMind().getRights().expand(r);
@@ -148,7 +149,7 @@ public class Compiler {
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
-            p = new Argument(user.getMind().getTVars().createTVar(user.getMind().getTerms().add(varName), r));
+            p = new Argument(user.getMind().getTVars().createTVar(r, user.getMind().getTerms().add(varName)));
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(user.getMind().getTerms().createCVar(r, varName));
         }

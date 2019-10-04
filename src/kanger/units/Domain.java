@@ -681,11 +681,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
-    public boolean isStored() throws Exception {
+    public boolean isStored() throws IOException, ClassNotFoundException {
         return user.getMind().getRights().find(this) != null;
     }
 
-    public boolean isStored(ArgList args) throws Exception {
+    public boolean isStored(ArgList args) throws IOException, ClassNotFoundException {
         Domain d = new Domain(getPredicate(), antc, args);
         return user.getMind().getRights().find(d) != null;
     }

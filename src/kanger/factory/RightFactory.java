@@ -5,10 +5,7 @@ import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
 import kanger.primitives.ArgList;
 import kanger.storage.Escalera;
-import kanger.units.Domain;
-import kanger.units.Right;
-import kanger.units.TValue;
-import kanger.units.Term;
+import kanger.units.*;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -88,8 +85,15 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public Right add(Right r) throws Exception {
+    public Right register(Right r) throws Exception {
         r.setId(lastId++);
+        return r;
+    }
+
+    public Right add(Right r) throws Exception {
+        if (r.getId() == -1) {
+            r.setId(lastId++);
+        }
         cache.add(r);
         if (r.isStored()) {
             stored.add(r.getId(), r.getId());
@@ -98,11 +102,15 @@ public class RightFactory implements Iterable<Right> {
             for (Domain d : list) {
                 r.getPredicates().add(d.getPredicateId());
                 d.setRight(r);
+                for (TVariable t : d.getArguments().getTVariables(true)) {
+                    t.setRight(r);
+                }
                 user.getMind().getDomains().add(d);
             }
         }
         return r;
     }
+
 
 //    public void reindex() throws RuntimeErrorException {
 //        if (!user.isClosed()) {
@@ -188,13 +196,13 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public Right store(Domain d) throws Exception {
+    public Right store(Domain d) throws IOException, ClassNotFoundException {
         d.getRight().setStored();
         stored.add(d.getRight().getId(), d.getRight().getId());
         return d.getRight();
     }
 
-    public Right find(Domain domain) throws Exception {
+    public Right find(Domain domain) throws IOException, ClassNotFoundException {
         for (long id : cache.find(domain.getHashBase())) {
             Right one = load(id);
             if (one.equalsTo(domain)) {

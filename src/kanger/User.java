@@ -69,6 +69,7 @@ public class User {
                     e.getValue().getRoot().setPrev(null);
                     e.getValue().getRoot().update();
                 }
+                e.getValue().clearCache();
             }
 
             db.checkpoint();

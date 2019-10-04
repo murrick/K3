@@ -12,6 +12,7 @@ public class Escalera implements ICache {
 
     private IStep root = null;
     private IStep top = null;
+    private IStep child = null;
 
     private ICache parent = null;
     private Stack<IStep> stack = new Stack<>();
@@ -36,7 +37,7 @@ public class Escalera implements ICache {
 
 
     @Override
-    public void add(Identifiable one) throws Exception {
+    public void add(Identifiable one) throws IOException, ClassNotFoundException {
         Step s = new Step();
         s.setData(one);
         s.setId(one.getId());
@@ -46,6 +47,7 @@ public class Escalera implements ICache {
         if (root != null) {
             root.setPrev(s);
             root.update();
+            child = s;
         }
         root = s;
         if (top == null) {
@@ -54,7 +56,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void add(long id, Object one) throws Exception {
+    public void add(long id, Object one) throws IOException {
         Step s = new Step();
         s.setData(one);
         s.setId(id);
@@ -189,7 +191,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean update() throws Exception {
+    public boolean update() throws IOException {
         // Это самый низ
         if (parent == null && !user.isClosed()) {
             long lastId = user.getStorage(schema).isEmpty() ? -1 : user.getStorage(schema).getRoot().getId();
@@ -225,10 +227,10 @@ public class Escalera implements ICache {
 
             try {
                 if (root instanceof Sapato) {
-                    root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
+                    root.setData(user.getStorage(schema).get(root.getId()).getData());
                 }
                 if (top instanceof Sapato) {
-                    top.setData(((Sapato) user.getStorage(schema).get(top.getId())).getData());
+                    top.setData(user.getStorage(schema).get(top.getId()).getData());
                 }
             } catch (Exception e) {
                 e.printStackTrace(System.err);
@@ -251,7 +253,15 @@ public class Escalera implements ICache {
         @Override
         public Object next() {
             Object o = step.getData();
+            boolean front = step.getBase() != null;
             step = backward ? step.getNext() : step.getPrev();
+            if (step == null) {
+                if (!backward && front && child != null) {
+                    step = child;
+//                } else if (backward && parent != null) {
+//                    step = parent.getRoot();
+                }
+            }
             return o;
         }
 

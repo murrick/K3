@@ -62,7 +62,7 @@ public class Sapato implements IStep, Externalizable {
     @Override
     public IStep getNext() {
         try {
-            return (IStep) base.get(next);
+            return base.get(next);
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return null;
@@ -77,7 +77,7 @@ public class Sapato implements IStep, Externalizable {
     @Override
     public IStep getPrev() {
         try {
-            return (IStep) base.get(prev);
+            return base.get(prev);
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return null;
@@ -110,20 +110,23 @@ public class Sapato implements IStep, Externalizable {
     }
 
     @Override
-    public void update() throws Exception {
+    public void update() throws IOException {
         base.update(this);
     }
 
     @Override
-    public void append() throws Exception {
+    public void append() throws IOException {
         base.add(this);
     }
 
+
+    @Override
     public Base getBase() {
         return base;
     }
 
-    public void setBase(Base base) {
-        this.base = base;
+    @Override
+    public void setBase(Object base) {
+        this.base = (Base) base;
     }
 }

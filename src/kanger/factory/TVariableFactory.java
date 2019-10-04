@@ -1,7 +1,6 @@
 package kanger.factory;
 
 import kanger.User;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
 import kanger.storage.Escalera;
@@ -32,14 +31,11 @@ public class TVariableFactory implements Iterable<TVariable> {
     }
 
     public void transaction(TVariableFactory base) {
-//        cache.clear();
         if (base != null) {
             lastId = base.lastId;
             firstId = base.lastId;
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
-            lastId = 0;
-            firstId = 0;
             cache = new Escalera(user, SCHEMA, null);
             if (!cache.isEmpty()) {
                 lastId = cache.getRoot().getId() + 1;
@@ -85,14 +81,13 @@ public class TVariableFactory implements Iterable<TVariable> {
 //        }
     }
 
-    public void update() throws RuntimeErrorException {
-        if (!user.isClosed()) {
-            //TODO: Коммит в БД
+    public void update() throws Exception {
+        if (cache.update()) {
             firstId = lastId;
         }
     }
 
-    public TVariable createTVar(Term name, Right r) throws Exception {
+    public TVariable createTVar(Right r, Term name) throws Exception {
         TVariable p = new TVariable(user);
         p.setId(lastId++);
         p.setIndex(user.getMind().getTerms().nextVarIndex());

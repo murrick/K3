@@ -89,7 +89,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public Domain add(Domain d) throws Exception {
+    public Domain add(Domain d) throws IOException, ClassNotFoundException {
         cache.add(d);
         return d;
     }

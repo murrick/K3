@@ -164,8 +164,8 @@ public class Screen {
 //                            lastQuery = savedQuery;
                             }
                             break;
-                        case 'C': {
-                            System.out.printf("Are you sure to reset workspace? [y/N]? ");
+                        case 'W': {
+                            System.out.printf("Are you sure to wipe workspace? [y/N]? ");
                             String s = new Scanner(System.in).nextLine().toUpperCase();
                             if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                 mind.clear();
@@ -173,15 +173,19 @@ public class Screen {
                             }
                         }
                         break;
-//                        case 'E': {
-//                            System.out.printf("Are you sure to reset working memory? [y/N]? ");
-//                            String s = new Scanner(System.in).nextLine().toUpperCase();
-//                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
-//                                mind.getText().delete(0, mind.getText().length());
-//                                mind.reset();
-//                            }
-//                        }
-//                        break;
+                        case 'C': {
+                            if (!user.isClosed()) {
+                                System.out.printf("Are you sure to close database " + user.getStorageName() + "? [y/N]? ");
+                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    user.close();
+                                    mind.clear();
+                                }
+                            } else {
+                                System.out.println("No database used");
+                            }
+                        }
+                        break;
 //                        case 'P':
 //                            saveSource(mind);
 //                            break;
@@ -579,9 +583,10 @@ public class Screen {
                         + "   S[OLVES]     - Show solves list\n"
                         + "   V[ALUES]     - Show values list\n"
                         + "   U[SE] <name> - Create or open existing database\n"
+                        + "   C[LOSE]      - Close currently opened database\n"
                         + "   D[ROP]       - Drop currently opened database\n"
                         + "   P[ACK]       - Pack and reindex currently opened database\n"
-                        + "   C[LEAR]      - Clear workspace and currently opened database\n"
+                        + "   W[IPE]       - Clear workspace and currently opened database\n"
                         + "   O[PTIONS]    - Set workspace options\n"
                         + "\n"
                         + "   G[ET]     - Load Source file from disk\n"

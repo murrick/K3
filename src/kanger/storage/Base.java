@@ -51,7 +51,7 @@ public class Base {
         }
     }
 
-    public void add(Sapato one) throws Exception {
+    public void add(Sapato one) throws IOException {
         index.store(null, fromObject(one.getId()), fromObject(one));
 //        int h = one.getHash();
 //        Set<Long> set = (Set<Long>) toObject(hash.load(null, fromObject(h)));
@@ -62,7 +62,7 @@ public class Base {
 //        hash.store(null, fromObject(h), fromObject(set));
     }
 
-    public void update(Sapato one) throws Exception {
+    public void update(Sapato one) throws IOException {
         index.store(null, fromObject(one.getId()), fromObject(one));
     }
 
@@ -116,6 +116,7 @@ public class Base {
     public void clear() throws Exception {
         index.evict(null, null, null, null, true);
         stack.clear();
+        cache.clear();
     }
 
     public boolean containsKey(long id) throws Exception {

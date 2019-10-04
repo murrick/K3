@@ -89,6 +89,9 @@ public class TValueFactory {
             t.setTVar(tv);
             t.setId(lastId++);
             cache.add(t);
+
+//            //TODO: ПРИБИДБ
+//            System.out.println("++++++ " + t);
         }
 
         return t;

@@ -236,7 +236,7 @@ public class Mind {
         excluded.clear();
 
         if (!user.isClosed()) {
-                user.clear();
+            user.clear();
         }
 
 //        log.reset();

@@ -68,4 +68,14 @@ public class Step implements IStep {
     public void append() {
 
     }
+
+    @Override
+    public Object getBase() {
+        return null;
+    }
+
+    @Override
+    public void setBase(Object base) {
+
+    }
 }
