@@ -119,10 +119,11 @@ public class PredicateFactory implements Iterable<Predicate> {
         return t;
     }
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getPredicates());
         } else {
+            cache.clear();
             transaction(null);
         }
     }

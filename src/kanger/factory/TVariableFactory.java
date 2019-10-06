@@ -115,10 +115,11 @@ public class TVariableFactory implements Iterable<TVariable> {
         return t;
     }
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getTVars());
         } else {
+            cache.clear();
             transaction(null);
         }
     }

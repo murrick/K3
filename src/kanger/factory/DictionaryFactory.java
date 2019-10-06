@@ -206,10 +206,11 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getTerms());
         } else {
+            cache.clear();
             transaction(null);
         }
     }

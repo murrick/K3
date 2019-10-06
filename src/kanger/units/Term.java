@@ -68,7 +68,8 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
             case INTERVAL:
                 if (din.readBoolean()) {
                     value = new ArrayList<Term>();
-                    for (int i = 0; i < din.readInt(); ++i) {
+                    int cnt = din.readInt();
+                    for (int i = 0; i < cnt; ++i) {
                         Term t = (Term) din.readObject();
                         ((List<Term>) value).add(t);
                     }

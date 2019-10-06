@@ -89,7 +89,7 @@ public class Base {
         }
     }
 
-    public int size() throws Exception {
+    public int size() throws IOException {
         return (int) (index.count(null, null));
     }
 
@@ -106,20 +106,27 @@ public class Base {
         }
     }
 
-    public void remove(long id) throws Exception {
+    public void remove(long id) throws IOException {
         Object one = index.load(null, fromObject(id));
         if (one != null) {
             index.delete(null, fromObject(id));
         }
     }
 
-    public void clear() throws Exception {
-        index.evict(null, null, null, null, true);
+    public void clear() throws IOException, ClassNotFoundException {
+        while (size() > 0) {
+            Cursor c = index.newCursor(null);
+            c.first();
+            byte[] first = c.key();
+            c.last();
+            byte[] last = fromObject(((long) toObject(c.key())) + 1);
+            index.evict(null, first, last, null, true);
+        }
         stack.clear();
         cache.clear();
     }
 
-    public boolean containsKey(long id) throws Exception {
+    public boolean containsKey(long id) throws IOException {
         return index.load(null, fromObject(id)) != null;
     }
 

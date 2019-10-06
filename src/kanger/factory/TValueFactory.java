@@ -138,10 +138,11 @@ public class TValueFactory {
         return t;
     }
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getTValues());
         } else {
+            cache.clear();
             transaction(null);
         }
     }

@@ -109,10 +109,11 @@ public class FunctionFactory implements Iterable<Function> {
         return t;
     }
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFunctions());
         } else {
+            cache.clear();
             transaction(null);
         }
     }

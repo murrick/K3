@@ -235,12 +235,6 @@ public class Mind {
         hypotesis.clear();
         excluded.clear();
 
-        if (!user.isClosed()) {
-            user.clear();
-        }
-
-//        log.reset();
-
     }
 
 

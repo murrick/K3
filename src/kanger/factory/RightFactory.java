@@ -152,10 +152,12 @@ public class RightFactory implements Iterable<Right> {
         return t;
     }
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getRights());
         } else {
+            cache.clear();
+            stored.clear();
             transaction(null);
         }
     }

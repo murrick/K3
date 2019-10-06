@@ -152,10 +152,11 @@ public class DomainFactory implements Iterable<Domain> {
         return t;
     }
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getDomains());
         } else {
+            cache.clear();
             transaction(null);
         }
     }

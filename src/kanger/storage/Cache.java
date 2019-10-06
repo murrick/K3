@@ -62,7 +62,7 @@ public class Cache implements ICache {
     }
 
     @Override
-    public int size() throws Exception {
+    public int size() {
         return index.size(); // + (parent == null ? 0 : parent.size());
     }
 
@@ -115,7 +115,7 @@ public class Cache implements ICache {
     }
 
     @Override
-    public void clear() throws Exception {
+    public void clear() {
         index.clear();
         hash.clear();
 //        if (parent != null) {
@@ -166,7 +166,7 @@ public class Cache implements ICache {
     }
 
     @Override
-    public boolean containsKey(long id) throws Exception {
+    public boolean containsKey(long id) {
         if (!index.containsKey(id)) {
 //            if (parent != null) {
 //                return parent.containsKey(id);
@@ -239,7 +239,7 @@ public class Cache implements ICache {
     }
 
     @Override
-    public boolean update() throws Exception {
+    public boolean update() {
         return false;
     }
 

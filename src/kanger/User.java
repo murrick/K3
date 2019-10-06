@@ -18,6 +18,10 @@ public class User {
     private String storageName = "";
     private Database db = null;
 
+    DatabaseConfig config = new DatabaseConfig()
+            .minCacheSize(100_000_000)
+            .durabilityMode(DurabilityMode.NO_FLUSH);
+
     public User() throws IOException {
     }
 
@@ -26,12 +30,9 @@ public class User {
             close();
         }
 
-        DatabaseConfig config = new DatabaseConfig()
-                .baseFilePath(name)
-                .minCacheSize(100_000_000)
-                .durabilityMode(DurabilityMode.NO_FLUSH);
-
+        config.baseFilePath(name);
         db = Database.open(config);
+
         storageName = name;
 
         storage.put(DictionaryFactory.SCHEMA, new Base(this, DictionaryFactory.SCHEMA));
@@ -72,8 +73,9 @@ public class User {
                 e.getValue().clearCache();
             }
 
-            db.checkpoint();
-            db.close(null);
+//            db.checkpoint();
+//            db.close(null);
+            db.shutdown();
             db = null;
         }
     }
@@ -102,6 +104,13 @@ public class User {
             for (Map.Entry<String, Base> e : storage.entrySet()) {
                 e.getValue().clear();
             }
+            flush();
+
+        }
+
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            m.clear();
+            mind = m;
         }
     }
 

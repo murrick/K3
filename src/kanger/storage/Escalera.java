@@ -12,7 +12,7 @@ public class Escalera implements ICache {
 
     private IStep root = null;
     private IStep top = null;
-    private IStep child = null;
+//    private IStep child = null;
 
     private ICache parent = null;
     private Stack<IStep> stack = new Stack<>();
@@ -47,7 +47,7 @@ public class Escalera implements ICache {
         if (root != null) {
             root.setPrev(s);
             root.update();
-            child = s;
+//            child = s;
         }
         root = s;
         if (top == null) {
@@ -89,7 +89,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public int size() throws Exception {
+    public int size() {
         int cnt = 0;
         for (IStep s = root; s != null; s = s.getNext()) {
             ++cnt;
@@ -117,19 +117,23 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void clear() throws Exception {
+    public void clear() throws IOException, ClassNotFoundException {
         root = null;
+        top = null;
+        if (parent == null && !user.isClosed()) {
+            user.getStorage(schema).clear();
+        }
     }
 
     @Override
-    public void mark() throws Exception {
+    public void mark() {
         if (root != null) {
             stack.push(root);
         }
     }
 
     @Override
-    public long commit() throws Exception {
+    public long commit() {
         if (!stack.isEmpty()) {
             return stack.pop().getId();
         } else {
@@ -138,7 +142,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public long release() throws Exception {
+    public long release() {
         if (!stack.isEmpty()) {
             root = stack.pop();
         }
@@ -146,12 +150,12 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean containsKey(long id) throws Exception {
+    public boolean containsKey(long id) throws IOException, ClassNotFoundException {
         return get(id) != null;
     }
 
     @Override
-    public void unlink() throws Exception {
+    public void unlink() throws IOException {
         if (root != null && root.getPrev() != null) {
             root.getPrev().setNext(null);
             root.setPrev(null);
@@ -253,13 +257,19 @@ public class Escalera implements ICache {
         @Override
         public Object next() {
             Object o = step.getData();
-            boolean front = step.getBase() != null;
-            step = backward ? step.getNext() : step.getPrev();
-            if (step == null) {
-                if (!backward && front && child != null) {
-                    step = child;
-//                } else if (backward && parent != null) {
-//                    step = parent.getRoot();
+            if (backward) {
+                step = step.getNext();
+            } else {
+                if (step.getPrev() == null && step.getBase() != null) {
+                    // Чистая магия
+                    IStep stop = step;
+                    for (step = root; step != null; step = step.getNext()) {
+                        if (step.getNext() != null && step.getNext().getId() == stop.getId()) {
+                            break;
+                        }
+                    }
+                } else {
+                    step = step.getPrev();
                 }
             }
             return o;

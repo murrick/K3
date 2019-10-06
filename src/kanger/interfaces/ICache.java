@@ -12,23 +12,23 @@ public interface ICache extends Iterable {
 
     Object get(long id) throws IOException, ClassNotFoundException;
 
-    int size() throws Exception;
+    int size();
 
     boolean isEmpty();
 
     Set<Long> find(int h) throws IOException, ClassNotFoundException;
 
-    void clear() throws Exception;
+    void clear() throws IOException, ClassNotFoundException;
 
-    void mark() throws Exception;
+    void mark();
 
-    long commit() throws Exception;
+    long commit();
 
-    long release() throws Exception;
+    long release() throws IOException, ClassNotFoundException;
 
-    boolean containsKey(long id) throws Exception;
+    boolean containsKey(long id) throws IOException, ClassNotFoundException;
 
-    void unlink() throws Exception;
+    void unlink() throws IOException;
 
     IStep getRoot();
 
@@ -43,6 +43,6 @@ public interface ICache extends Iterable {
 
     Iterator<Object> iterator(boolean backward, long fromId);
 
-    boolean update() throws Exception;
+    boolean update() throws IOException;
 
 }

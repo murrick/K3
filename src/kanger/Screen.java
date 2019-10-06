@@ -168,7 +168,7 @@ public class Screen {
                             System.out.printf("Are you sure to wipe workspace? [y/N]? ");
                             String s = new Scanner(System.in).nextLine().toUpperCase();
                             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                mind.clear();
+                                user.clear();
 //                                mind.release();
                             }
                         }
@@ -197,10 +197,11 @@ public class Screen {
 //                            break;
                         case 'U':
                             if (line.split(" ").length == 2) {
-                                user.use(line.split("\\ ")[1]);
-                                System.out.println("Used database " + user.getStorageName());
+                                String name = line.split("\\ ")[1].replace(".", File.separatorChar + "");
+                                user.use(name);
+                                System.out.println("Database used: " + user.getStorageName().replace(File.separatorChar + "", "."));
                             } else if (!user.isClosed()) {
-                                System.out.println("Used database " + user.getStorageName());
+                                System.out.println("Used database " + user.getStorageName().replace(File.separatorChar + "", "."));
                             } else {
                                 System.out.println("No database used");
                             }

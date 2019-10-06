@@ -24,6 +24,11 @@ public class Linker {
     private int dumpedPasses = 0;
     private int skipedPasses = 0;
 
+    //TODO: ПРИБИТЬ
+//    int cccc = 0;
+
+
+
     public Linker(User user) {
         this.user = user;
     }
@@ -84,8 +89,6 @@ public class Linker {
 
             if (logging) {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
-//                //TODO: ПРИБИТЬ
-//                System.out.printf("---------- LINKER PASS %03d ---------------\n", passCounter);
             }
 
             saveR = user.getMind().getRights().getLastId();
@@ -300,20 +303,10 @@ public class Linker {
             Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
             if (iterator.hasNext()) {
 
-//                //TODO: ПРИБИТЬ
-//                do {
-//                    TValue v = iterator.next();
-//                    System.out.println("....." + v);
-//                } while (iterator.hasNext());
 
                 iterator = user.getMind().getTValues().iterator(t);
                 do {
                     TValue v = iterator.next();
-
-//                    //TODO: ПРИБИТЬ
-//                    System.out.println("....." + v);
-
-//                    v.linkExternal(user);
                     user.getMind().getTValues().set(t, v);
                     if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                         result = true;
@@ -480,6 +473,7 @@ public class Linker {
         return r != null;
     }
 
+
     private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, List<TValue> solve, boolean logging) throws Exception {
 
         boolean result = false;
@@ -532,14 +526,6 @@ public class Linker {
                     stored.add(d);
                 }
             }
-
-//            //TODO: ПРИБИТЬ
-//            System.out.println("---------------");
-//            System.out.println("--EXCLUDED: " + excluded);
-//            System.out.println("--CALCULATED: " + calculated);
-//            System.out.println("--CANDIDATES: " + candidates);
-//            System.out.println("--ASSUMED: " + assumed);
-//            System.out.println("--STORED: " + stored);
 
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];

@@ -29,66 +29,6 @@ public class KangerTest {
 //        mind = new Mind(user);
     }
 
-    private void showResult(Boolean assertResult) throws RuntimeErrorException {
-        for (Right r : mind.getRights()) {
-            if (!r.isGenerated() && !r.isQuery()) {
-                System.out.println("Right: " + r.toString());
-            }
-        }
-        System.out.println("Query: " + mind.getQuerySource());
-        System.out.println("Result: " + mind.getQueryResult());
-        if (mind.getSolutions().size() > 0) {
-            System.out.println("Solves (" + mind.getSolutions().size() + "):");
-            int i = 0;
-            for (Right log : mind.getSolutions().getRoot()) {
-                System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
-            }
-        }
-        if (mind.getValues().size() > 0) {
-//            mind.getValues().normalize();
-            System.out.println("Values (" + mind.getValues().size() + "):");
-            int i = 0;
-            for (Map<String, Object> row : mind.getValues()) {
-                String s = String.format("\tRow %03d: ", ++i);
-                for (Map.Entry<String, Object> log : row.entrySet()) {
-                    if(!s.endsWith(" ")) {
-                        s += " ";
-                    }
-                    s += log.getKey() + "=" + log.getValue();
-                }
-                System.out.println(s);
-            }
-        }
-        if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {
-            System.out.println("Hypothesis (" + mind.getHypotesisStore().size() + "):");
-            for (int i = 0; i < mind.getHypotesisStore().getRoot().size(); ++i) {
-                System.out.printf("\t%3d:\t%s\n", i + 1, mind.getHypotesisStore().getRoot().toArray(new Hypotese[]{})[i].toString());
-            }
-        }
-        System.out.println("----------------------------------------------------");
-        if (!(mind.getQueryResult() + "").equals(assertResult + "")) {
-            fail("Expected: " + assertResult);
-        }
-    }
-
-    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException {
-        for (Term t : mind.getValues().getValues(name)) {
-            if (o.equals(t.getValue())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-//    private static boolean exists(Mind mind, String name, Object o) {
-//        for (Term t : mind.getValues().getValues(name)) {
-//            if (o.equals(t.getValue())) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
     public static boolean test(User user, String prefix) throws Exception {
         System.out.println("Init test system...");
         kanger.test.KangerTest cls = new kanger.test.KangerTest(user);
@@ -99,8 +39,11 @@ public class KangerTest {
         String dbName = user.getStorageName();
         try {
             //TODO: В дальнейшем отключить бд для тестов
-//            user.use("data/test");
-//            user.clear();
+            if (!user.isClosed()) {
+                user.close();
+                user.use("data/auto-test");
+                user.clear();
+            }
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -135,10 +78,10 @@ public class KangerTest {
             for (Map.Entry<String, Double> e : list.entrySet()) {
                 System.out.println(e.getKey() + "\t" + e.getValue() + " sec");
             }
-            if(!fails.isEmpty()) {
+            if (!fails.isEmpty()) {
                 System.out.println("====================================================");
                 System.out.println("Fails:");
-                for(String s : fails) {
+                for (String s : fails) {
                     System.out.println(s);
                 }
             }
@@ -150,9 +93,9 @@ public class KangerTest {
         } catch (Exception e) {
             e.printStackTrace(System.err);
         } finally {
-            user.close();
-            user.remove();
-            if (!dbName.isEmpty()) {
+            if (!user.isClosed()) {
+                user.close();
+                user.remove();
                 try {
                     user.use(dbName);
                 } catch (RuntimeErrorException e) {
@@ -162,6 +105,66 @@ public class KangerTest {
         }
 
         return fails.isEmpty();
+    }
+
+    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException {
+        for (Term t : mind.getValues().getValues(name)) {
+            if (o.equals(t.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+//    private static boolean exists(Mind mind, String name, Object o) {
+//        for (Term t : mind.getValues().getValues(name)) {
+//            if (o.equals(t.getValue())) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+
+    private void showResult(Boolean assertResult) throws RuntimeErrorException {
+        for (Right r : mind.getRights()) {
+            if (!r.isGenerated() && !r.isQuery()) {
+                System.out.println("Right: " + r.toString());
+            }
+        }
+        System.out.println("Query: " + mind.getQuerySource());
+        System.out.println("Result: " + mind.getQueryResult());
+        if (mind.getSolutions().size() > 0) {
+            System.out.println("Solves (" + mind.getSolutions().size() + "):");
+            int i = 0;
+            for (Right log : mind.getSolutions().getRoot()) {
+                System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
+            }
+        }
+        if (mind.getValues().size() > 0) {
+//            mind.getValues().normalize();
+            System.out.println("Values (" + mind.getValues().size() + "):");
+            int i = 0;
+            for (Map<String, Object> row : mind.getValues()) {
+                String s = String.format("\tRow %03d: ", ++i);
+                for (Map.Entry<String, Object> log : row.entrySet()) {
+                    if (!s.endsWith(" ")) {
+                        s += " ";
+                    }
+                    s += log.getKey() + "=" + log.getValue();
+                }
+                System.out.println(s);
+            }
+        }
+        if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {
+            System.out.println("Hypothesis (" + mind.getHypotesisStore().size() + "):");
+            for (int i = 0; i < mind.getHypotesisStore().getRoot().size(); ++i) {
+                System.out.printf("\t%3d:\t%s\n", i + 1, mind.getHypotesisStore().getRoot().toArray(new Hypotese[]{})[i].toString());
+            }
+        }
+        System.out.println("----------------------------------------------------");
+        if (!(mind.getQueryResult() + "").equals(assertResult + "")) {
+            fail("Expected: " + assertResult);
+        }
     }
 
     public Hypotese createHypotese(User user, boolean antc, Object predicate, Object... params) throws Exception {
@@ -632,7 +635,7 @@ public class KangerTest {
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
         showResult(true);
-        if(!mind.getSolutions().isEmpty()) {
+        if (!mind.getSolutions().isEmpty()) {
             fail("Expected no solves");
         }
 //        Domain s = createRecord(user, false, "a", "z");
@@ -1189,7 +1192,7 @@ public class KangerTest {
     public void set_04_13() throws Exception {
 
         mind.clear();
-        mind.compile("!@x x : 0..10 -> num(x);");
+        mind.compile("!@x x : 0..10,1 -> num(x);");
         mind.query("?$x $y num(x) && num(y) && x * y = 12;");
         showResult(true);
         if (!exists("x", 2.0) || !exists("y", 6.0)) {

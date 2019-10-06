@@ -117,10 +117,11 @@ public class FValueFactory {
     }
 
 
-    public void clear() {
+    public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFValues());
         } else {
+            cache.clear();
             transaction(null);
         }
     }
