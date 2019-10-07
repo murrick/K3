@@ -201,7 +201,10 @@ public class Screen {
                                 user.use(name);
                                 System.out.println("Database used: " + user.getStorageName().replace(File.separatorChar + "", "."));
                             } else if (!user.isClosed()) {
-                                System.out.println("Used database " + user.getStorageName().replace(File.separatorChar + "", "."));
+                                System.out.println("Used database " +
+                                        user.getStorageName()
+                                                .replace("/", ".")
+                                                .replace("\\", "."));
                             } else {
                                 System.out.println("No database used");
                             }

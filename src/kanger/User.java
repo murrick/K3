@@ -7,6 +7,7 @@ import org.cojen.tupl.Database;
 import org.cojen.tupl.DatabaseConfig;
 import org.cojen.tupl.DurabilityMode;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,16 @@ public class User {
             close();
         }
 
-        config.baseFilePath(name);
+        String dbPath = System.getProperty("database.dir");
+        if (dbPath == null || dbPath.isEmpty()) {
+            dbPath = System.getProperty("user.dir");
+        }
+        if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
+            dbPath += File.separatorChar;
+        }
+        dbPath += name;
+
+        config.baseFilePath(dbPath);
         db = Database.open(config);
 
         storageName = name;

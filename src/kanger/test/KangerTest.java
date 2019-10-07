@@ -1192,7 +1192,7 @@ public class KangerTest {
     public void set_04_13() throws Exception {
 
         mind.clear();
-        mind.compile("!@x x : 0..10,1 -> num(x);");
+        mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x $y num(x) && num(y) && x * y = 12;");
         showResult(true);
         if (!exists("x", 2.0) || !exists("y", 6.0)) {

@@ -143,6 +143,7 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
+                    Term step = user.getMind().getTerms().add(1);
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         Term top = null;
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
@@ -204,7 +205,8 @@ public class Predicates {
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
                             i = _in(arg.get(0).getValue(),
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0],
-                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1]) ? 1 : 0;
+                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1],
+                                    step) ? 1 : 0;
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
                                 i = 0;
@@ -228,6 +230,7 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
+                    Term step = user.getMind().getTerms().add(1);
                     if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
                         Term top = null;
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
@@ -237,7 +240,7 @@ public class Predicates {
                             Term min = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0];
                             Term max = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1];
                             Term cur = min;
-                            Term step = arg.get(2).getValue();
+                            step = arg.get(2).getValue();
                             int rc = min.compareTo(max);
                             while (true) {
                                 if (arg.get(0).setValue(cur)) {
@@ -294,7 +297,8 @@ public class Predicates {
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
                             i = _in(arg.get(0).getValue(),
                                     (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0],
-                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1]) ? 1 : 0;
+                                    (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1],
+                                    step) ? 1 : 0;
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
                                 i = 0;
@@ -332,7 +336,7 @@ public class Predicates {
         return sysOps;
     }
 
-    public boolean _in(Term cur, Term min, Term max) {
+    public boolean _in(Term cur, Term min, Term max, Term step) {
         int rcmin = -2;
         int rcmax = -2;
         int i = -1;
@@ -348,7 +352,17 @@ public class Predicates {
             rcmax = cur.compareTo(max);
         }
 //        if (rcmin != -2 && rcmax != -2 && rc != -2) {
-        return (rc < 0 ? (rcmin >= 0 && rcmax <= 0) : (rcmin <= 0 && rcmax >= 0));
+        if (rc < 0 ? (rcmin >= 0 && rcmax <= 0) : (rcmin <= 0 && rcmax >= 0)) {
+            if (step.getType() == DataType.NUMERIC && cur.getType() == DataType.NUMERIC
+                    && Math.abs((double) step.getValue()) > Term.FLT_EPSILON
+                    && Math.abs((double) cur.getValue() % (double) step.getValue()) > Term.FLT_EPSILON) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
 //        } else {
 //            return false;
 //        }
