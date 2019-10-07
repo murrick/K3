@@ -199,14 +199,14 @@ public class Linker {
                                     result = true;
                                 }
 
-                                List<TValue> solve = new ArrayList<>();
-                                for (TVariable t : tvars) {
-                                    if (!t.isEmpty()) {
-                                        solve.add(t.getCurrent());
-                                    }
-                                }
+//                                List<TValue> solve = new ArrayList<>();
+//                                for (TVariable t : tvars) {
+//                                    if (!t.isEmpty()) {
+//                                        solve.add(t.getCurrent());
+//                                    }
+//                                }
 
-                                if (linkDatabase(t, causes, solve, logging)) {
+                                if (linkDatabase(t, causes, tvars, logging)) {
                                     result = true;
                                 }
                             } catch (Exception e) {
@@ -474,7 +474,7 @@ public class Linker {
     }
 
 
-    private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, List<TValue> solve, boolean logging) throws Exception {
+    private boolean linkDatabase(List<Domain> tree, Map<Right, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
 
         boolean result = false;
         boolean occurs = false;
@@ -482,6 +482,13 @@ public class Linker {
         long tag = user.getMind().getTValues().incTag();
 
         if (checkSystem(tree, logging)) {
+
+            List<TValue> solve = new ArrayList<>();
+            for (TVariable t : tvars) {
+                if (!t.isEmpty()) {
+                    solve.add(t.getCurrent());
+                }
+            }
 
 
             Set<Domain> excluded = new HashSet<>();
@@ -563,7 +570,7 @@ public class Linker {
                 occurs = true;
                 for (Domain d : calculated) {
 //                    d.setCauses(causes.get(d.getRight()));
-                    if (!d.isStored()) {
+                    if (!d.isStored() /*|| d.isQuery()*/) {
                         result = true;
                         d.setProduced();
                         d.setTag(tag = user.getMind().getTValues().incTag());
