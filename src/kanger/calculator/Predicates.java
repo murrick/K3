@@ -138,6 +138,7 @@ public class Predicates {
             }));
         }
 
+        //TODO: Кривая последовательность !@x x=7 -> top(x);  ?$x $y top(y) && x : 1..y;
         {
             put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new Reactor() {
                 public Object run(Object o) throws Exception {

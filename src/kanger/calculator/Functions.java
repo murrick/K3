@@ -298,6 +298,41 @@ public class Functions {
         }
 
         {
+            put("_iv(2)", new SysOp(LibMode.FUNCTION, "_iv", 2, new Reactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if ((arg.get(0).isDefined() && arg.get(1).isDefined() && !arg.get(2).isDefined())
+                            || (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()
+                            && user.getMind().getTerms().add(new Term[]{arg.get(0).getValue(), arg.get(1).getValue()}).compareTo(arg.get(2).getValue()) != 0)) {
+                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(new Term[]{arg.get(0).getValue(), arg.get(1).getValue()}))) {
+                            ret = 0;
+                        }
+                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(2).getValue().getType() == DataType.INTERVAL && arg.get(1).getValue().compareTo(((List<Term>) arg.get(2).getValue().getValue()).get(1)) == 0) {
+                        if (!((Function) o).setParameter(0, ((List<Term>) arg.get(2).getValue().getValue()).get(0))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(2).getValue().getType() == DataType.INTERVAL && arg.get(0).getValue().compareTo(((List<Term>) arg.get(2).getValue().getValue()).get(1)) == 0) {
+                        if (!((Function) o).setParameter(1, ((List<Term>) arg.get(2).getValue().getValue()).get(1))) {
+                            ret = 0;
+                        }
+                    } else if (!arg.get(0).isDefined() && !arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(2).getValue().getType() == DataType.INTERVAL) {
+                        if (!((Function) o).setParameter(0, ((List<Term>) arg.get(2).getValue().getValue()).get(0)) && !((Function) o).setParameter(1, ((List<Term>) arg.get(2).getValue().getValue()).get(1))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(2).getValue().getType() == DataType.INTERVAL
+                            && user.getMind().getTerms().add(new Term[]{arg.get(0).getValue(), arg.get(1).getValue()}).compareTo(arg.get(2).getValue()) == 0) {
+                        ret = 2;
+                    } else {
+//                        arg.createCVar(2).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
             put("_bitleft(2)", new SysOp(LibMode.FUNCTION, "_bitleft", 2, new Reactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;

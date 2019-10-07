@@ -38,7 +38,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     private Term name = null;             // Оригинальное имя c-переменной
     private Right right = null;          // Ссылка на правило
 
-//    private Term next = null;      // Следующая запись
+    //    private Term next = null;      // Следующая запись
     private User user = null;
 
     public Term() {
@@ -86,7 +86,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         }
 
         index = din.readInt();
-        if(index > 0) {
+        if (index > 0) {
             name = (Term) din.readObject();
             right = (Right) din.readObject();
         }
@@ -124,7 +124,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
                 break;
         }
         dos.writeInt(index);
-        if(index > 0) {
+        if (index > 0) {
             dos.writeObject(name);
             dos.writeObject(right);
         }
@@ -151,9 +151,15 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
                 type = DataType.INTERVAL;
                 value = list;
             }
+        } else if (o instanceof Term[]) {
+            List<Term> list = new ArrayList<>();
+            list.add(((Term[]) o)[0]);
+            list.add(((Term[]) o)[1]);
+            type = DataType.INTERVAL;
+            value = list;
         } else if (o instanceof ArgList) {
             List<Term> list = new ArrayList<>();
-            for(Argument a : (ArgList) o) {
+            for (Argument a : (ArgList) o) {
                 list.add(a.getValue());
             }
             type = DataType.SET;
@@ -209,8 +215,8 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
 
     private Object conatructInterval(String ch) throws Exception {
         if (ch.contains("..")) {
-            if(ch.startsWith("{") && ch.endsWith("}")) {
-                ch = ch.substring(1, ch.length()-1);
+            if (ch.startsWith("{") && ch.endsWith("}")) {
+                ch = ch.substring(1, ch.length() - 1);
             }
             List<Term> list = new ArrayList<>();
             for (String s : ch.split("\\.\\.")) {
@@ -260,8 +266,8 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
             }
         } else if (type == DataType.SET) {
             String s = "";
-            for(Object a : ((Collection) value)) {
-                if(!s.isEmpty()) {
+            for (Object a : ((Collection) value)) {
+                if (!s.isEmpty()) {
                     s += ",";
                 }
                 s += a.toString();
@@ -296,7 +302,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         StringBuffer buffer = new StringBuffer();
         buffer.append(type.ordinal());
         buffer.append(value.hashCode());
-         return buffer.toString().hashCode();
+        return buffer.toString().hashCode();
     }
 
     @Override
@@ -308,7 +314,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     public int hashCode() {
         return ("" + id).hashCode();
     }
-    
+
     @Override
     public boolean equals(Object t) {
         return t != null && t instanceof Term && ((Term) t).getId() == id;

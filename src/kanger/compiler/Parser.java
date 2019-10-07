@@ -29,6 +29,7 @@ public class Parser {
             new Operation("*", "_mul", 2, 2, 0, false, false),
             new Operation("/", "_div", 2, 2, 0, false, false),
             new Operation("%", "_rem", 2, 2, 0, false, false),
+            new Operation("..", "_iv", 2, 2, 0, false, false),
 
             /*  3 */
             new Operation("+", "_add", 3, 2, 0, false, false),
@@ -60,7 +61,7 @@ public class Parser {
             new Operation("<>", "_ne", 13, 2, 0, false, false),
 
             /* 14 */
-            new Operation("..", "", 11, 2, 0, false, false),
+//            new Operation("..", "", 11, 2, 0, false, false),
             new Operation(",", "", 14, 2, 0, false, false),
             new Operation("&&", "&", 14, 2, 0, false, true),
 
@@ -190,8 +191,17 @@ public class Parser {
                         }
                         --pos;
                     } else if (isNumeric(ch)) {
+                        int p = ch;
                         while (pos < ln.length() && isNumeric(ch = ln.charAt(pos++))) {
-                            line += (char) ch;
+                            //Блок на две точки
+                            if (p == ch && p == '.') {
+                                --pos;
+                                line = line.substring(0, line.length() - 1);
+                                break;
+                            } else {
+                                line += (char) ch;
+                                p = ch;
+                            }
                         }
                         --pos;
                     }
