@@ -186,7 +186,7 @@ public class Parser {
 
                     --pos;
                     if (isAlpha(ch)) {
-                        while (pos < ln.length() && (isAlpha(ch = ln.charAt(pos++)) || isNumeric(ch))) {
+                        while (pos < ln.length() && (isAlpha(ch = ln.charAt(pos++)) || (isNumeric(ch) && ch != '.'))) {
                             line += (char) ch;
                         }
                         --pos;

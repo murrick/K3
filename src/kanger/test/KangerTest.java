@@ -1909,4 +1909,18 @@ public class KangerTest {
         System.out.println("OK");
         System.out.println("====================================================");
     }
+
+    public void set_07_0B() throws Exception {
+
+        mind.clear();
+        mind.compile("!age(Tom,12);");
+        mind.query("?$x $y age(Tom,y) && x : (y-2)..20;");
+        showResult(true);
+        if (mind.getValues().size() != 11) {
+            fail("Expected 11 rows");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
 }

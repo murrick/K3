@@ -566,7 +566,8 @@ public class Linker {
                     }
                 }
                 //TODO: Сомнительно, но вроде работает с ?$x $y index(qwerty) -> index(x), y : x;
-            } else if (!calculated.isEmpty() && candidates.isEmpty() /*&& tree.size() - excluded.size() == calculated.size()*/) {
+            } //else
+            if (!calculated.isEmpty() && candidates.isEmpty() /*&& tree.size() - excluded.size() == calculated.size()*/) {
                 occurs = true;
                 for (Domain d : calculated) {
 //                    d.setCauses(causes.get(d.getRight()));

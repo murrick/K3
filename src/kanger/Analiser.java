@@ -5,6 +5,7 @@ import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
 import kanger.units.Domain;
 import kanger.units.Right;
+import kanger.units.TValue;
 
 // !@x a(x) -> b(x), @y b(y) -> c(y), @z c(z) -> d(z);
 
@@ -772,13 +773,26 @@ public class Analiser {
         for (long id : user.getMind().getRights().getDatabase(-1)) {
             Right p = user.getMind().getRights().get(id);
             if (p.getDomain().isCalculated()) {
-                user.getMind().getResults().addSolve(p);
+
+                boolean valid = p.getDomain().isQuery();
+                if (!valid) {
+                    for (TValue v : p.getSolves()) {
+                        if (v.getTVar().isQuery()) {
+                            valid = true;
+                            break;
+                        }
+                    }
+                }
+                if (valid) {
+                    user.getMind().getResults().addSolve(p);
 
 //                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
 //                    user.getMind().getValues().add(v);
 //                }
 
-                user.getMind().getValues().addSystem(p.getSolves());
+//                user.getMind().getValues().addSystem(p.getSolves());
+                    user.getMind().getValues().addData(p.getSolves());
+                }
 
                 if (logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Calculated coincidence: ");
