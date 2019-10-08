@@ -9,14 +9,11 @@ import org.cojen.tupl.Index;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
 
 public class Base {
 
     protected Index index;
     private Map<Long, IStep> cache = new HashMap<>();
-    private Stack<Long> stack;
-
 
     private String name = "";
     private User user = null;
@@ -26,7 +23,6 @@ public class Base {
         this.name = name;
 
         this.index = user.getDb().openIndex(name + ".index");
-        this.stack = new Stack<>();
     }
 
     private byte[] fromObject(Serializable o) throws IOException {
@@ -122,7 +118,6 @@ public class Base {
             byte[] last = fromObject(((long) toObject(c.key())) + 1);
             index.evict(null, first, last, null, true);
         }
-        stack.clear();
         cache.clear();
     }
 
@@ -168,4 +163,9 @@ public class Base {
         return user;
     }
 
+    public void delete(long id) throws IOException {
+        cache.remove(id);
+        byte[] ident = fromObject(id);
+        index.evict(null, ident, ident, null, true);
+    }
 }

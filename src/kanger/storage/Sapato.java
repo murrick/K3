@@ -129,4 +129,17 @@ public class Sapato implements IStep, Externalizable {
     public void setBase(Object base) {
         this.base = (Base) base;
     }
+
+    @Override
+    public void delete() throws IOException {
+        if (getPrev() != null) {
+            getPrev().setNext(getNext());
+            getPrev().update();
+        }
+        if (getNext() != null) {
+            getNext().setPrev(getPrev());
+            getNext().update();
+        }
+        base.delete(id);
+    }
 }

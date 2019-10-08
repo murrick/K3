@@ -33,4 +33,6 @@ public interface IStep {
 
     void setBase(Object base);
 
+    void delete() throws IOException;
+
 }

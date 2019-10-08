@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class TValueFactory {
+public class TValueFactory implements Iterable<TValue> {
 
     public static final String SCHEMA = "tvalues";
 
@@ -76,7 +76,7 @@ public class TValueFactory {
 //        }
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update()) {
             firstId = lastId;
         }
@@ -138,6 +138,13 @@ public class TValueFactory {
         return t;
     }
 
+    public void delete(long id) throws IOException, ClassNotFoundException {
+        TValue r = get(id);
+        if (r != null) {
+            cache.delete(id);
+        }
+    }
+
     public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getTValues());
@@ -182,6 +189,7 @@ public class TValueFactory {
         return new TValueIterator(false, tVariable);
     }
 
+    @Override
     public Iterator<TValue> iterator() {
         return new TValueIterator(true, null);
     }

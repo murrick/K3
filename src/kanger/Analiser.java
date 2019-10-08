@@ -784,14 +784,14 @@ public class Analiser {
                     }
                 }
                 if (valid) {
-                    user.getMind().getResults().addSolve(p);
+//                    user.getMind().getResults().addSolve(p);
 
 //                for (TValue v : p.getDomain().getArguments().getTValues(true)) {
 //                    user.getMind().getValues().add(v);
 //                }
 
 //                user.getMind().getValues().addSystem(p.getSolves());
-                    user.getMind().getValues().addData(p.getSolves());
+                    user.getMind().getValues().add(p.getSolves());
                 }
 
                 if (logging) {
@@ -838,18 +838,18 @@ public class Analiser {
 //                    }
 
                         if (p.getDomain().isQuery()) {
-                            user.getMind().getResults().addSolve(p, q);
+//                            user.getMind().getResults().addSolve(p, q);
                             user.getMind().getSolutions().add(q);
-                            user.getMind().getValues().addData(p.getSolves());
+                            user.getMind().getValues().add(p.getSolves());
 //                            for (Argument a : p.getDomain().getArguments()) {
 //                                if (a.isVSet()) {
 //                                    user.getMind().getValues().add(a.getV());
 //                                }
 //                            }
                         } else if (q.getDomain().isQuery()) {
-                            user.getMind().getResults().addSolve(q, p);
+//                            user.getMind().getResults().addSolve(q, p);
                             user.getMind().getSolutions().add(p);
-                            user.getMind().getValues().addData(q.getSolves());
+                            user.getMind().getValues().add(q.getSolves());
 //                            System.out.println("!!!!!!--- " + q.getSolves());
 //                            for (Argument a : q.getDomain().getArguments()) {
 //                                if (a.isVSet()) {

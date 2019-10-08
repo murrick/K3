@@ -155,7 +155,7 @@ public class Screen {
                             if (h != null) {
 //                                System.out.println(": " + h);
                                 System.out.println();
-                                Boolean res = mind.query(h, false);
+                                Boolean res = mind.query(h);
                                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                                     showLog(mind, LogMode.SOLVES, false);
                                     showLog(mind, LogMode.VALUES, false);
@@ -336,7 +336,7 @@ public class Screen {
                                 pos = (int) t[1];
                                 String ln = (String) t[0];
 
-                                Boolean res = mind.query(ln, false);
+                                Boolean res = mind.query(ln);
                                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                                     System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                                     if (res != null) {

@@ -89,6 +89,26 @@ public class Escalera implements ICache {
     }
 
     @Override
+    public void delete(long id) throws IOException {
+        if (root != null && root.getId() == id) {
+            IStep s = root;
+            root = root.getNext();
+            s.delete();
+        } else if (top != null && top.getId() == id) {
+            IStep s = top;
+            top = top.getPrev();
+            s.delete();
+        } else {
+            for (IStep s = root; s != null; s = s.getNext()) {
+                if (s.getId() == id) {
+                    s.delete();
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
     public int size() {
         int cnt = 0;
         for (IStep s = root; s != null; s = s.getNext()) {

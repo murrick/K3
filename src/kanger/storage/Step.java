@@ -2,6 +2,8 @@ package kanger.storage;
 
 import kanger.interfaces.IStep;
 
+import java.io.IOException;
+
 public class Step implements IStep {
     private Object data = null;
     private IStep next = null;
@@ -77,5 +79,17 @@ public class Step implements IStep {
     @Override
     public void setBase(Object base) {
 
+    }
+
+    @Override
+    public void delete() throws IOException {
+        if (getPrev() != null) {
+            getPrev().setNext(getNext());
+            getPrev().update();
+        }
+        if (getNext() != null) {
+            getNext().setPrev(getPrev());
+            getNext().update();
+        }
     }
 }

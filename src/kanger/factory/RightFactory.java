@@ -85,12 +85,12 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public Right register(Right r) throws Exception {
+    public Right register(Right r) {
         r.setId(lastId++);
         return r;
     }
 
-    public Right add(Right r) throws Exception {
+    public Right add(Right r) throws IOException, ClassNotFoundException {
         if (r.getId() == -1) {
             r.setId(lastId++);
         }
@@ -162,15 +162,28 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public int size() throws Exception {
+    public void delete(long id) throws IOException, ClassNotFoundException {
+        Right r = get(id);
+        if (r != null) {
+            for (List<Domain> list : r.getTree()) {
+                for (Domain d : list) {
+                    user.getMind().getDomains().delete(d.getId());
+                }
+            }
+            cache.delete(id);
+            stored.delete(id);
+        }
+    }
+
+    public int size() {
         return cache.size();
     }
 
-    public int storedSize() throws Exception {
+    public int storedSize() {
         return stored.size();
     }
 
-    public Right add(Domain domain) throws Exception {
+    public Right add(Domain domain) throws IOException, ClassNotFoundException {
         Right p = find(domain);
         if (p != null) {
             return p;

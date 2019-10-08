@@ -38,12 +38,13 @@ public class KangerTest {
         Map<String, Double> list = new TreeMap<>();
         String dbName = user.getStorageName();
         try {
-            //TODO: В дальнейшем отключить бд для тестов
             if (!user.isClosed()) {
                 user.close();
                 user.use("data/auto-test");
                 user.clear();
             }
+
+            user.getMind().clear();
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -93,6 +94,7 @@ public class KangerTest {
         } catch (Exception e) {
             e.printStackTrace(System.err);
         } finally {
+            user.getMind().clear();
             if (!user.isClosed()) {
                 user.close();
                 user.remove();
@@ -1924,3 +1926,5 @@ public class KangerTest {
     }
 
 }
+
+//TODO: ?$y $x age(x,y); дублируются решения!

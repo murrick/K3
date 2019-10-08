@@ -113,7 +113,7 @@ public class DictionaryFactory implements Iterable<Term> {
         }
     }
 
-    public Term add(Object o) throws Exception {
+    public Term add(Object o) throws IOException, ClassNotFoundException {
         Term p = find(o);
         if (p != null) {
             return p;
@@ -126,7 +126,7 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
 
-    public Term find(Object o) throws Exception {
+    public Term find(Object o) throws IOException, ClassNotFoundException {
         Term t = new Term(o, user);
         for (long id : cache.find(t.getHash())) {
             Identifiable one = load(id);
@@ -137,7 +137,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return null;
     }
 
-    public Term createCVar(Right r, String name) throws Exception {
+    public Term createCVar(Right r, String name) throws IOException, ClassNotFoundException {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);

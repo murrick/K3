@@ -48,7 +48,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         this.user = user;
     }
 
-    public Term(Object str, User user) throws Exception {
+    public Term(Object str, User user) throws IOException, ClassNotFoundException {
         this.user = user;
         construct(str);
     }
@@ -135,7 +135,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
 //        this.user = user;
 //    }
 
-    private void construct(Object o) throws Exception {
+    private void construct(Object o) throws IOException, ClassNotFoundException {
         value = null;
         if (o instanceof Number) {
             type = DataType.NUMERIC;
@@ -213,7 +213,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
         }
     }
 
-    private Object conatructInterval(String ch) throws Exception {
+    private Object conatructInterval(String ch) throws IOException, ClassNotFoundException {
         if (ch.contains("..")) {
             if (ch.startsWith("{") && ch.endsWith("}")) {
                 ch = ch.substring(1, ch.length() - 1);

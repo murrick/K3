@@ -5,6 +5,7 @@ import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
 import kanger.storage.Escalera;
 import kanger.units.Right;
+import kanger.units.TValue;
 import kanger.units.TVariable;
 import kanger.units.Term;
 
@@ -113,6 +114,23 @@ public class TVariableFactory implements Iterable<TVariable> {
     public TVariable get(long id) throws IOException, ClassNotFoundException {
         TVariable t = (TVariable) cache.get(id);
         return t;
+    }
+
+    public void delete(long id) throws IOException, ClassNotFoundException {
+        TVariable t = get(id);
+        if (t != null) {
+            TValue tail = null;
+            for (TValue v : user.getMind().getTValues()) {
+                if (tail != null) {
+                    user.getMind().getTValues().delete(tail.getId());
+                }
+                tail = v;
+            }
+            if (tail != null) {
+                user.getMind().getTValues().delete(tail.getId());
+            }
+            cache.delete(id);
+        }
     }
 
     public void clear() throws IOException, ClassNotFoundException {

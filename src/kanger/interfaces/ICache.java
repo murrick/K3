@@ -12,6 +12,8 @@ public interface ICache extends Iterable {
 
     Object get(long id) throws IOException, ClassNotFoundException;
 
+    void delete(long id) throws IOException, ClassNotFoundException;
+
     int size();
 
     boolean isEmpty();
