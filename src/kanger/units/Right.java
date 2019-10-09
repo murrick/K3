@@ -138,8 +138,8 @@ public class Right implements Externalizable, Identifiable<Right> {
         return solves;
     }
 
-    public void setGenerated() {
-        this.generated = true;
+    public void setGenerated(boolean b) {
+        this.generated = b;
     }
 
     public boolean isGenerated() {

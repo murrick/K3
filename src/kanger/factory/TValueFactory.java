@@ -143,6 +143,7 @@ public class TValueFactory implements Iterable<TValue> {
         if (r != null) {
             cache.delete(id);
         }
+
     }
 
     public void clear() throws IOException, ClassNotFoundException {
@@ -236,5 +237,9 @@ public class TValueFactory implements Iterable<TValue> {
 
     public long incTag() {
         return ++tag;
+    }
+
+    public Map<TVariable, TValue> getCurrent() {
+        return current;
     }
 }

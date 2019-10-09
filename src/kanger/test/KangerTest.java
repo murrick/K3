@@ -1926,5 +1926,3 @@ public class KangerTest {
     }
 
 }
-
-//TODO: ?$y $x age(x,y); дублируются решения!

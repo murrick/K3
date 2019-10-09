@@ -761,6 +761,50 @@ public class Mind {
         int key = line.charAt(0);
         switch (key) {
 
+            case Enums.INS: {
+                if (logging) {
+                    getLog().add(LogMode.ANALIZER, "============= INSERT ======================");
+                }
+
+                Mind m = new Mind(this);
+                m.setQueryPass(QueryPass.ACCEPT);
+
+                line = invert(line);
+                line = invert(line);
+
+                Right r = (Right) m.compileLine(line);
+                if (r != null) {
+                    r.setQuery(true);
+
+                    if (logging) {
+                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+                        m.getLog().add(LogMode.ANALIZER, r);
+                    }
+
+                    m.link(r, logging);
+                    boolean ar = m.analise(logging);
+                    if (ar) {
+                        if (logging) {
+                            m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
+                        }
+                        release(m);
+                        res = null;
+                    } else {
+                        appendResult(m, logging);
+                        m.getRights().delete(r.getId());
+                        commit(m);
+
+//                        excluded.commit(m.getHypotesisStore());
+                        setChanged(true);
+                        res = true;
+                    }
+                    queryContext = m;
+                } else {
+                    release(m);
+                }
+            }
+            break;
+
             case Enums.ANT: {
                 if (logging) {
                     getLog().add(LogMode.ANALIZER, "============= ACCEPTING ===================");
@@ -769,9 +813,9 @@ public class Mind {
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.ACCEPT);
                 Right r = (Right) m.compileLine(line);
-//                    r.setQuery(true);
 
                 if (r != null) {
+//                    r.setQuery(true);
                     if (logging) {
                         m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                         m.getLog().add(LogMode.ANALIZER, r);
@@ -827,7 +871,7 @@ public class Mind {
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.CHECKTRUE);
                 if (logging) {
-                    m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
+                    m.getLog().add(LogMode.ANALIZER, "============= DELETE ======================");
                 }
                 line = invert(line);
                 Right r = (Right) m.compileLine(line);
@@ -1065,6 +1109,45 @@ public class Mind {
 //        }
 
         return res;
+    }
+
+    private void appendResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {
+
+        for (Right rx : mind.getRights()) {
+            if (rx.getId() >= getRights().getLastId()) {
+                if (!rx.isQuery()) {
+                    mind.getSolutions().add(rx);
+                }
+            } else {
+                break;
+            }
+        }
+
+        if (mind.getSolutions().size() > 0) {
+            if (logging) {
+                mind.getLog().add(LogMode.SOLVES, "Solves to append (" + mind.getSolutions().size() + "):");
+            }
+            int i = 0;
+            for (Right r : mind.getSolutions().getRoot()) {
+                if (r.isGenerated()) {
+                    ArgList arg = r.getDomain().getArguments().convertBase();
+                    r.getDomain().getArguments().clear();
+                    r.getDomain().getArguments().addAll(arg);
+                    r.setGenerated(false);
+                    if (logging) {
+                        mind.getLog().add(LogMode.SOLVES, String.format("\tAppended %03d: %s", ++i, r.toString()));
+                    }
+                } else {
+                    if (logging) {
+                        mind.getLog().add(LogMode.SOLVES, String.format("\t Skiped %03d: %s", ++i, r.toString()));
+                    }
+                }
+            }
+        } else {
+            if (logging) {
+                mind.getLog().add(LogMode.ANALIZER, String.format("Result: No candidates to append"));
+            }
+        }
     }
 
     private void removeResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {

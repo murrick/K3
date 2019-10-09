@@ -198,7 +198,7 @@ public class RightFactory implements Iterable<Right> {
             Right r = new Right(user);
             Domain d = user.getMind().getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
             r.getTree().get(0).add(d);
-            r.setGenerated();
+            r.setGenerated(true);
             r.setStored();
 
             int save = user.getMind().getDebugLevel();

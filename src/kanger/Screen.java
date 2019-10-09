@@ -227,6 +227,11 @@ public class Screen {
                                 System.out.println(t);
                             }
                             break;
+                        case 'M':
+                            for (TValue t : mind.getTValues()) {
+                                System.out.println(t);
+                            }
+                            break;
                         case 'P':
                             if (!user.isClosed()) {
                                 System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
@@ -682,7 +687,7 @@ public class Screen {
     //
     public static void showCauses(Mind mind, Domain d, int level) throws Exception {
         //ПРЕДОХРАНИТЕЛЬ
-        if (level > 20) {
+        if (level > 50) {
             return;
         }
 
@@ -737,11 +742,9 @@ public class Screen {
     }
 
     public static void showPred(Mind mind, Predicate p, boolean showCauses) throws Exception {
-        System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
         Set<Domain> set = p.getSolves();
-        if (set.isEmpty()) {
-            System.out.printf("\tHas not solves\n");
-        } else {
+        if (!set.isEmpty()) {
+            System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
             for (Domain s : set) {
 //                if (!s.isDestFor()) {
 //                    mind.getSubstituted().reset();

@@ -212,11 +212,14 @@ public abstract class Tools {
         pos = Parser.skipSpaces(line, pos);
         if (pos < line.length()) {
             int start = pos;
-            if (line.charAt(pos) == 0) {
+            if (line.length() <= pos) {
                 return null;
-            } else if (line.charAt(pos) == Enums.REM) {
+            } else if (line.charAt(pos) == Enums.REM || (line.length() + 1 > pos && line.charAt(pos) == '/' && line.charAt(pos + 1) == '/')) {
                 while (pos < line.length() && line.charAt(pos) != '\n' && line.charAt(pos) != '\r') {
                     ++pos;
+                }
+                if (line.length() <= pos) {
+                    return null;
                 }
             } else {
                 Object[] t;

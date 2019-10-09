@@ -98,6 +98,7 @@ public class Parser {
         if (ln.isEmpty()) {
             return null;
         }
+
         while (true) {
             ch = ln.charAt(pos);
             while (pos < ln.length() && isDelimiter(ch = ln.charAt(pos++))) ;
@@ -112,16 +113,17 @@ public class Parser {
 
             if (ch == '/' && c == '*') {
                 do {
-                    while (pos < ln.length() && ln.charAt(pos++) != '*') ;
+                    while (pos < ln.length() && ln.charAt(pos) != '*') ++pos;
                     if (pos < ln.length()) {
-                        c = ln.charAt(pos++);
+                        c = ln.charAt(++pos);
                     } else {
                         throw new ParseErrorException(pos, ParseError.COMMENT);
                     }
                 } while (c != '/');
+                ++pos;
             } else if (ch == '/' && c == '/') {
                 while (pos < ln.length() && ln.charAt(pos) != '\n' && ln.charAt(pos) != '\r') ++pos;
-                if (pos >= ln.length()) {
+                if (pos > ln.length()) {
                     return null;
                 }
             } else {
