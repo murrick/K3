@@ -10,10 +10,8 @@ import kanger.units.TVariable;
 import kanger.units.Term;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
@@ -121,14 +119,18 @@ public class TVariableFactory implements Iterable<TVariable> {
     public void delete(long id) throws IOException, ClassNotFoundException {
         TVariable t = get(id);
         if (t != null) {
-            List<TValue> list = new ArrayList<>();
-            for (TValue v : user.getMind().getTValues()) {
-                if (v.getTVarId() == t.getId()) {
-                    list.add(v);
+            Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
+            TValue x = null;
+            TValue y = null;
+            while (iterator.hasNext()) {
+                if (y != null) {
+                    user.getMind().getTValues().delete(y.getId());
                 }
+                y = x;
+                x = iterator.next();
             }
-            for (TValue v : list) {
-                user.getMind().getTValues().delete(v.getId());
+            if (y != null) {
+                user.getMind().getTValues().delete(y.getId());
             }
             cache.delete(id);
         }
