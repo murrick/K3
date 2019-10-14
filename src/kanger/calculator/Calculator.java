@@ -2,6 +2,7 @@ package kanger.calculator;
 
 import kanger.User;
 import kanger.compiler.SysOp;
+import kanger.enums.ArgumentType;
 import kanger.enums.Enums;
 import kanger.enums.LibMode;
 import kanger.enums.LogMode;
@@ -113,7 +114,7 @@ public class Calculator {
             }
 
             for (Argument a : fu.getArguments()) {
-                if (!a.isEmpty() && (a.getValue().isCVariable() /*|| "$$".equals(a.getValue())*/)) {
+                if (!a.isEmpty() && a.getType() == ArgumentType.CVARIABLE) {
 //                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;
                 }

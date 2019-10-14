@@ -209,36 +209,28 @@ public abstract class Tools {
 
 
     public static Object[] extractLine(String line, int pos) throws ParseErrorException {
-        pos = Parser.skipSpaces(line, pos);
-        if (pos < line.length()) {
-            int start = -1;
-            if (line.length() <= pos) {
-                return null;
-//            } else if (line.charAt(pos) == Enums.REM || (line.length() + 1 > pos && line.charAt(pos) == '/' && line.charAt(pos + 1) == '/')) {
-//                while (pos < line.length() && line.charAt(pos) != '\n' && line.charAt(pos) != '\r') {
-//                    ++pos;
-//                }
-//                if (line.length() <= pos) {
-//                    return null;
-//                }
-            } else {
-                Object[] t;
-                while ((t = Parser.getToken(line, pos)) != null && ((String) t[0]).charAt(0) != Enums.EOLN) {
-                    pos = (int) t[1];
-                    if (start == -1) {
-                        start = pos - ((String) t[0]).length();
-                    }
-                }
-                if (line.length() < pos || (line.length() != 1 && line.charAt(pos) != Enums.EOLN)) {
-                    throw new ParseErrorException(pos, ParseError.EOLN);
-                }
-                ++pos;
-            }
-            String s = line.substring(start, pos);
-            return new Object[]{s, pos};
-        } else {
+//        pos = Parser.skipSpaces(line, pos);
+        int start = -1;
+        if (line.length() <= pos) {
             return null;
+        } else {
+            Object[] t;
+            while ((t = Parser.getToken(line, pos)) != null && ((String) t[0]).charAt(0) != Enums.EOLN) {
+                pos = (int) t[1];
+                if (start == -1) {
+                    start = pos - ((String) t[0]).length();
+                }
+            }
+            if (t == null && start == -1) {
+                return null;
+            }
+            if (line.length() < pos || (line.length() != 1 && line.charAt(pos) != Enums.EOLN)) {
+                throw new ParseErrorException(pos, ParseError.EOLN);
+            }
+            ++pos;
         }
+        String s = line.substring(start, pos);
+        return new Object[]{s, pos};
     }
 
 //    public static List<TVariable> getTVariables(ArgList arg, boolean full) {

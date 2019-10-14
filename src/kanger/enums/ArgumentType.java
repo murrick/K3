@@ -4,7 +4,8 @@ public enum ArgumentType {
     EMPTY,
     TERM,
     FUNCTION,
-    TVRIABLE,
+    TVARIABLE,
+    CVARIABLE,
     FVALUE,
     TVALUE
 }

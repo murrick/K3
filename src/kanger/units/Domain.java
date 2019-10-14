@@ -990,16 +990,77 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 //    public int getValOrder(int i) {
 //    }
-}
 
-//    public void setQuery() {
-//        if (!right.isQuery()) {
-//            for (TVariable t : getTVariables(true)) {
-//                if (!mind.getQueryValues().containsKey(t.getId())) {
-//                    mind.getQueryValues().put(t.getId(), new HashSet<>());
-//                }
-//                mind.getQueryValues().createCVar(t.getId()).createTVar(t.getValue().getId());
-//            }
-//        }
-//    }
+    public int getHashStruct() throws IOException, ClassNotFoundException {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(antc);
+        buffer.append(predicateId);
+        buffer.append(range);
+        for (int i = 0; i < range; ++i) {
+            buffer.append(arguments.get(i).getType().ordinal());
+            switch (arguments.get(i).getType()) {
+                case CVARIABLE:
+                    buffer.append(arguments.get(i).getValue().getIndex() - getRight().getVarIndex());
+                    break;
+                case TVARIABLE:
+                    buffer.append(arguments.get(i).getT().getIndex() - getRight().getVarIndex());
+                    break;
+                case TERM:
+                    buffer.append(arguments.get(i).getValue().getId());
+                    break;
+                case FUNCTION:
+                    buffer.append(arguments.get(i).getF().getHashStruct(getRight()));
+                    break;
+            }
+        }
+        return buffer.toString().hashCode();
+    }
+
+    public boolean equalsToStruct(Domain to) {
+        try {
+            if (to.isAntc() == antc
+                    && to.getRange() == range
+                    && to.getPredicateId() == predicateId) {
+                int i = 0;
+                for (; i < range; ++i) {
+                    if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
+                        switch (arguments.get(i).getType()) {
+                            case CVARIABLE:
+                                if ((arguments.get(i).getValue().getIndex() - getRight().getVarIndex())
+                                        != (to.getArguments().get(i).getValue().getIndex() - to.getRight().getVarIndex())) {
+                                    return false;
+                                }
+                                break;
+                            case TVARIABLE:
+                                if ((arguments.get(i).getT().getIndex() - getRight().getVarIndex())
+                                        != (to.getArguments().get(i).getT().getIndex() - to.getRight().getVarIndex())) {
+                                    return false;
+                                }
+                                break;
+                            case TERM:
+                                if (arguments.get(i).getValue().getId() != to.getArguments().get(i).getValue().getId()) {
+                                    return false;
+                                }
+                                break;
+                            case FUNCTION:
+                                if (!arguments.get(i).getF().equalsToStruct(to.getArguments().get(i).getF(), getRight(), to.getRight())) {
+                                    return false;
+                                }
+                                break;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
+
+}
 

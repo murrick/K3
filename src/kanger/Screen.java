@@ -360,7 +360,7 @@ public class Screen {
 //                                incomplete = line;
 //                                line = "";
 //                            } else {
-                            SysOp op = (SysOp) mind.compileLine(line);
+                            SysOp op = (SysOp) mind.compileLine(line, false);
                             System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
 //                            }
                             break;

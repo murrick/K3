@@ -108,6 +108,9 @@ public class Parser {
             }
             c = ln.charAt(pos++);
 
+            if (ch == 0) {
+                return null;
+            }
             /*
              * Skip comments
              */

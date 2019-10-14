@@ -219,6 +219,10 @@ public class DictionaryFactory implements Iterable<Term> {
         return ++varIndex;
     }
 
+    public int getVarIndex() {
+        return varIndex;
+    }
+
     public long getFirstId() {
         return firstId;
     }

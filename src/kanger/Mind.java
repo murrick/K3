@@ -379,7 +379,7 @@ public class Mind {
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
-            m.compileLine(line);
+            m.compileLine(line, false);
         }
 
         m.link(null, logging);
@@ -402,7 +402,7 @@ public class Mind {
         }
     }
 
-    public Object compileLine(String line) throws Exception {
+    public Object compileLine(String line, boolean query) throws Exception {
         String orig = line.trim();
         Object r = null;
         Boolean suc = null;
@@ -424,7 +424,7 @@ public class Mind {
         }
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
-            r = new Compiler(user).compileLine(p, suc, orig);
+            r = new Compiler(user).compileLine(p, suc, orig, query);
         }
 
         return r;
@@ -772,9 +772,9 @@ public class Mind {
                 line = invert(line);
                 line = invert(line);
 
-                Right r = (Right) m.compileLine(line);
+                Right r = (Right) m.compileLine(line, true);
                 if (r != null) {
-                    r.setQuery(true);
+//                    r.setQuery(true);
 
                     if (logging) {
                         m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
@@ -812,7 +812,7 @@ public class Mind {
 
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.ACCEPT);
-                Right r = (Right) m.compileLine(line);
+                Right r = (Right) m.compileLine(line, false);
 
                 if (r != null) {
 //                    r.setQuery(true);
@@ -874,9 +874,9 @@ public class Mind {
                     m.getLog().add(LogMode.ANALIZER, "============= DELETE ======================");
                 }
                 line = invert(line);
-                Right r = (Right) m.compileLine(line);
+                Right r = (Right) m.compileLine(line, true);
                 if (r != null) {
-                    r.setQuery(true);
+//                    r.setQuery(true);
                     if (logging) {
                         m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                         m.getLog().add(LogMode.ANALIZER, r);
@@ -990,7 +990,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
                         }
 
-                        Right r = (Right) m.compileLine(invert(line));
+                        Right r = (Right) m.compileLine(invert(line), true);
                         if (r != null) {
                             r.setQuery(true);
 
@@ -1033,7 +1033,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
                         }
 
-                        Right r = (Right) m.compileLine(line);
+                        Right r = (Right) m.compileLine(line, true);
                         if (r != null) {
                             r.setQuery(true);
                             if (logging) {

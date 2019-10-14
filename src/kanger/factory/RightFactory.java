@@ -87,6 +87,7 @@ public class RightFactory implements Iterable<Right> {
 
     public Right register(Right r) {
         r.setId(lastId++);
+        r.setVarIndex(user.getMind().getTerms().getVarIndex());
         return r;
     }
 
@@ -201,6 +202,11 @@ public class RightFactory implements Iterable<Right> {
             r.setGenerated(true);
             r.setStored();
 
+            //TODO: 1
+            if (domain.isQuery()) {
+                r.setQuery(true);
+            }
+
             int save = user.getMind().getDebugLevel();
             user.getMind().setDebugLevel(0);
             Term origin = user.getMind().getTerms().add(d.toString());
@@ -226,6 +232,17 @@ public class RightFactory implements Iterable<Right> {
         }
         return null;
     }
+
+    public Right find(Right right) throws IOException, ClassNotFoundException {
+        for (long id : cache.find(right.getHash())) {
+            Right one = load(id);
+            if (one.equalsTo(right)) {
+                return one;
+            }
+        }
+        return null;
+    }
+
 
     public void unlink() throws Exception {
         cache.unlink();

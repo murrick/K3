@@ -27,13 +27,14 @@ public class Compiler {
         this.user = user;
     }
 
-    public Right compileLine(PTree root, boolean antc, String orig) throws Exception {
+    public Right compileLine(PTree root, boolean antc, String orig, boolean query) throws Exception {
 
         Right r = new Right(user);
         r.setOrig(user.getMind().getTerms().add(orig));
         user.getMind().getRights().register(r);
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>());
         user.getMind().getRights().add(r);
+        r.setQuery(query);
         user.getMind().getRights().expand(r);
         return r;
     }

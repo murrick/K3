@@ -1,5 +1,6 @@
 package kanger;
 
+import kanger.enums.ArgumentType;
 import kanger.enums.LogMode;
 import kanger.primitives.Argument;
 import kanger.primitives.Hypotese;
@@ -521,6 +522,27 @@ public class Analiser {
 //        } else {
 
         result = checkDatabase(logging);
+
+        //TODO: 2
+        // Проверка на то что все ветки запроса закрылись
+        if (result) {
+            for (long id : user.getMind().getRights().getDatabase(-1)) {
+                Right r = user.getMind().getRights().get(id);
+                if (r.getId() < user.getMind().getRights().getFirstId()) {
+                    break;
+                } else {
+                    if (r.getDomain().isQuery()
+                            && !r.getDomain().isCalculated()
+                            && !r.isGenerated()
+                            && !user.getMind().getSolutions().contains(r)) {
+                        result = false;
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Unresolved: \t" + r.toString());
+
+                    }
+                }
+            }
+        }
+
         if (!result) {
 
 //            result = checkTree(new ArrayList<>(tvars), 0, set, logging);
@@ -538,7 +560,7 @@ public class Analiser {
                 }
                 Domain d = r.getDomain();
                 for (Argument a : d.getArguments()) {
-                    if (!a.isEmpty() && a.getValue().isCVariable() && a.getValue().getId() > user.getMind().getTerms().getFirstId()) {
+                    if (!a.isEmpty() && a.getType() == ArgumentType.CVARIABLE && a.getValue().getId() > user.getMind().getTerms().getFirstId()) {
                         d = null;
                         break;
                     }
@@ -770,6 +792,7 @@ public class Analiser {
     public boolean checkDatabase(boolean logging) throws Exception {
 
         boolean result = false;
+
         for (long id : user.getMind().getRights().getDatabase(-1)) {
             Right p = user.getMind().getRights().get(id);
             if (p.getDomain().isCalculated()) {
@@ -878,9 +901,22 @@ public class Analiser {
                     }
                 }
             }
+
+//            if(p.getDomain().isQuery() && !success) {
+//                unResolved.add(p);
+//            }
         }
 
+//        if(result && !unResolved.isEmpty()) {
+//            user.getMind().getLog().add(LogMode.ANALIZER, "Unresolved: ");
+//            for(Right r : unResolved) {
+//                user.getMind().getLog().add(LogMode.ANALIZER, "\t" + r.toString());
+//            }
+//            user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+//            return false;
+//        } else {
         return result;
+//        }
     }
 
 }

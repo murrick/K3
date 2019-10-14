@@ -34,6 +34,8 @@ public class Right implements Externalizable, Identifiable<Right> {
     private List<TValue> solves = new ArrayList();
     private Set<Long> predicates = new HashSet<>();
 
+    private int varIndex = 0;
+
     private transient long origId = -1;
     private transient List<List<Long>> treeIds = new ArrayList<>();
     private transient User user = null;
@@ -51,6 +53,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
         origId = dis.readLong();
+        varIndex = dis.readInt();
         query = dis.readBoolean();
         generated = dis.readBoolean();
         stored = dis.readBoolean();
@@ -77,6 +80,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
         dos.writeLong(origId);
+        dos.writeInt(varIndex);
         dos.writeBoolean(query);
         dos.writeBoolean(generated);
         dos.writeBoolean(stored);
@@ -246,33 +250,60 @@ public class Right implements Externalizable, Identifiable<Right> {
         }
     }
 
+    //TODO: 5  !~b(z); ?b(z) -> c(z);  => TRUE - Не верно
+
     @Override
     public int getHash() throws IOException, ClassNotFoundException {
-//        StringBuffer buffer = new StringBuffer();
-//        for (List<Domain> list : tree) {
-//            for (Domain d : list) {
-//                buffer.append(d.getHashBase());
-//            }
-//        }
-//        return buffer.toString().hashCode();
-        return getDomain().getHashBase();
+        //TODO: 4
+        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
+            return getDomain().getHashBase();
+        } else {
+            long hash = 0;
+            for (List<Domain> list : tree) {
+                long sub = 0;
+                for (Domain d : list) {
+                    sub += d.getHashStruct();
+                }
+                hash += sub;
+            }
+            StringBuffer buffer = new StringBuffer();
+            buffer.append(hash);
+            return buffer.toString().hashCode();
+        }
     }
 
     @Override
     public boolean equalsTo(Right to) throws IOException, ClassNotFoundException {
-        if (stored) {
+        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
             return equalsTo(to.getDomain());
         } else {
             if (getTree().size() != to.getTree().size()) {
                 return false;
             } else {
-//                int size = tree.size();
-//                for (List<Domain> rowMaster : tree) {
-//                    for (List<Domain> rowSlave : to.tree) {
-//                        //TODO: Сравнение двух правил для блокировки дублирования - задачка не тривиальная
-//                    }
-//                }
-                return false;
+                if (getTree().size() != to.getTree().size()) {
+                    return false;
+                } else {
+                    for (List<Domain> listFrom : tree) {
+                        for (List<Domain> listTo : to.getTree()) {
+                            if (listFrom.size() == listTo.size()) {
+                                List<Domain> tmp = new ArrayList<>();
+                                tmp.addAll(listTo);
+                                for (Domain d : listFrom) {
+                                    for (Domain x : tmp) {
+                                        if (d.equalsToStruct(x)) {
+                                            tmp.remove(x);
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!tmp.isEmpty()) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
             }
         }
     }
@@ -341,4 +372,11 @@ public class Right implements Externalizable, Identifiable<Right> {
         return !(t == null || !(t instanceof Right)) && ((Right) t).id == id;
     }
 
+    public int getVarIndex() {
+        return varIndex;
+    }
+
+    public void setVarIndex(int varIndex) {
+        this.varIndex = varIndex;
+    }
 }

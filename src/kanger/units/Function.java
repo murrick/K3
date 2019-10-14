@@ -332,4 +332,67 @@ public class Function implements Externalizable, Identifiable<Function> {
     public int hashCode() {
         return ("" + id).hashCode();
     }
+
+    public int getHashStruct(Right r) throws IOException, ClassNotFoundException {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(nameId);
+        buffer.append(range);
+        for (int i = 0; i < range; ++i) {
+            buffer.append(arguments.get(i).getType().ordinal());
+            switch (arguments.get(i).getType()) {
+                case CVARIABLE:
+                    buffer.append(arguments.get(i).getValue().getIndex() - r.getVarIndex());
+                    break;
+                case TVARIABLE:
+                    buffer.append(arguments.get(i).getT().getIndex() - r.getVarIndex());
+                    break;
+                case TERM:
+                    buffer.append(arguments.get(i).getValue().getId());
+                    break;
+                case FUNCTION:
+                    buffer.append(arguments.get(i).getF().getHashStruct(r));
+                    break;
+            }
+        }
+        return buffer.toString().hashCode();
+    }
+
+    public boolean equalsToStruct(Function f, Right left, Right right) throws IOException, ClassNotFoundException {
+        if (nameId == f.nameId && range == f.getRange()) {
+            for (int i = 0; i < range; ++i) {
+                if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
+                    switch (arguments.get(i).getType()) {
+                        case CVARIABLE:
+                            if ((arguments.get(i).getValue().getIndex() - left.getVarIndex())
+                                    != (f.getArguments().get(i).getValue().getIndex() - right.getVarIndex())) {
+                                return false;
+                            }
+                            break;
+                        case TVARIABLE:
+                            if ((arguments.get(i).getT().getIndex() - left.getVarIndex())
+                                    != (f.getArguments().get(i).getT().getIndex() - right.getVarIndex())) {
+                                return false;
+                            }
+                            break;
+                        case TERM:
+                            if (arguments.get(i).getValue().getId() != f.getArguments().get(i).getValue().getId()) {
+                                return false;
+                            }
+                            break;
+                        case FUNCTION:
+                            if (!arguments.get(i).getF().equalsToStruct(f.getArguments().get(i).getF(), left, right)) {
+                                return false;
+                            }
+                            break;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }

@@ -62,6 +62,16 @@ public class SolutionsStore {
         return false;
     }
 
+    public boolean contains(Right rt) throws Exception {
+        if (!isEmpty()) {
+            for (Right r : root) {
+                if (r.getDomain().equalsBase(rt.getDomain())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     public void enable(boolean e) {
         enableStore = e;

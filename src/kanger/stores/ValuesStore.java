@@ -32,13 +32,14 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 
 
     public void add(Collection<TValue> raw) {
-
-        ArgList row = new ArgList();
-        for (Identifiable one : raw) {
-            row.add(new Argument(one));
-        }
-        if (!root.contains(row)) {
-            root.add(row);
+        if (!raw.isEmpty()) {
+            ArgList row = new ArgList();
+            for (Identifiable one : raw) {
+                row.add(new Argument(one));
+            }
+            if (!root.contains(row)) {
+                root.add(row);
+            }
         }
     }
 
