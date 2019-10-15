@@ -723,6 +723,58 @@ public class KangerTest {
         }
     }
 
+    public void set_02_04() throws Exception {
+
+        mind.clear();
+        mind.compile("!~b(z);");
+        mind.query("? b(z) -> d(z);");
+        showResult(null);
+        if (mind.getSolutions().size() != 1) {
+            fail("Expected 1 solve");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_02_05() throws Exception {
+
+        mind.clear();
+        mind.compile("!d(z);");
+        mind.query("? b(z) -> d(z);");
+        showResult(null);
+        if (mind.getSolutions().size() != 1) {
+            fail("Expected 1 solve");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_02_06() throws Exception {
+
+        mind.clear();
+        mind.compile("!~b(z);");
+        mind.query("?$x b(x) -> d(x);");
+        showResult(null);
+        if (mind.getSolutions().size() != 1) {
+            fail("Expected 1 solve");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_02_07() throws Exception {
+
+        mind.clear();
+        mind.compile("!d(z);");
+        mind.query("?$x b(x) -> d(x);");
+        showResult(null);
+        if (mind.getSolutions().size() != 1) {
+            fail("Expected 1 solve");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
     public void set_03_01() throws Exception {
 
         mind.clear();
