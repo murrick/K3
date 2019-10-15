@@ -28,7 +28,6 @@ public class Linker {
 //    int cccc = 0;
 
 
-
     public Linker(User user) {
         this.user = user;
     }
@@ -367,6 +366,8 @@ public class Linker {
                                                 result = true;
                                             }
                                             substMaster[i] = s;
+                                            slave.setUsed();
+                                            master.setUsed();
                                             applied = true;
                                         }
 
@@ -380,6 +381,8 @@ public class Linker {
                                                 result = true;
                                             }
                                             substSlave[i] = s;
+                                            master.setUsed();
+                                            slave.setUsed();
                                             applied = true;
                                         }
 
@@ -749,8 +752,11 @@ public class Linker {
 //                    }
 //                } else {
                 x = d.createStored();
+                if (d.isUsed()) {
+                    x.getDomain().setUsed();
+                }
                 if (logging) {
-                    user.getMind().getLog().add(LogMode.STORAGE, "DB add record: " + d);
+                    user.getMind().getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
                 }
 //                }
 
@@ -760,6 +766,12 @@ public class Linker {
                 if (d.getCauses() != null) {
                     x.getCauses().clear();
                     x.getCauses().addAll(d.getCauses());
+
+//                    for(Cause c : x.getCauses()) {
+//                        if(!c.getDst().isStored()) {
+//                            c.getDst().createStored();
+//                        }
+//                    }
                 }
                 if (d.getSolves() != null) {
                     x.getSolves().clear();

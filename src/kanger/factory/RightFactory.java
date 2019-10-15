@@ -92,6 +92,11 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right add(Right r) throws IOException, ClassNotFoundException {
+        Right x = find(r);
+//        if(x != null) {
+//            delete(r.getId());
+//            return x;
+//        } else {
         if (r.getId() == -1) {
             r.setId(lastId++);
         }
@@ -110,6 +115,7 @@ public class RightFactory implements Iterable<Right> {
             }
         }
         return r;
+//        }
     }
 
 
@@ -127,9 +133,11 @@ public class RightFactory implements Iterable<Right> {
                 if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
                     user.getMind().getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
-                    tree.get(0).setStored();
+                    Right rx = tree.get(0).setStored();
+//                    rx.setGenerated(false);
                 } else {
-                    tree.get(0).createStored();
+                    Right rx = tree.get(0).createStored();
+//                    rx.setGenerated(false);
                 }
             }
         }

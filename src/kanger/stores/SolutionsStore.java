@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.units.Domain;
 import kanger.units.Right;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,7 +52,7 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Domain d) throws Exception {
+    public boolean contains(Domain d) throws IOException, ClassNotFoundException {
         if(!isEmpty()) {
             for (Right r : root) {
                 if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
@@ -62,16 +63,27 @@ public class SolutionsStore {
         return false;
     }
 
-    public boolean contains(Right rt) throws Exception {
+    public boolean containsPair(Domain d) throws IOException, ClassNotFoundException {
         if (!isEmpty()) {
             for (Right r : root) {
-                if (r.getDomain().equalsBase(rt.getDomain())) {
+                if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() != d.isAntc()) {
                     return true;
                 }
             }
         }
         return false;
     }
+
+//    public boolean contains(Right rt) throws Exception {
+//        if (!isEmpty()) {
+//            for (Right r : root) {
+//                if (r.getDomain().equalsBase(rt.getDomain())) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     public void enable(boolean e) {
         enableStore = e;

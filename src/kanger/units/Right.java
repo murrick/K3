@@ -241,6 +241,7 @@ public class Right implements Externalizable, Identifiable<Right> {
                     ? " " +
                     (isGenerated() ? "G" : "") +
                     (isStored() ? "B" : "") +
+                    (isStored() && getDomain().isUsed() ? "U" : "") +
                     (isQuery() ? "Q" : "")
                     : "")
                     ;

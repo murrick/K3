@@ -358,11 +358,11 @@ public class Domain implements Externalizable, Identifiable<Domain> {
             }
             if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
                 try {
-                    suffix += /*isDest() ||*/ isQuery(arguments) || /*isUsed() ||*/ isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
+                    suffix += /*isDest() ||*/ isQuery(arguments) || isUsed() || isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
                             ? " " +
                             //(isDest() ? "A" : "") +
                             (isQuery() ? "Q" : "") +
-                            //                    (isUsed() ? "U" : "") +
+                            (isUsed() ? "U" : "") +
                             (isExcluded() ? "X" : "") +
                             //(isProduced() ? "P" : "") +
                             (isStored() ? "B" : "") +
@@ -381,7 +381,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     }
 
 
-    public boolean equalsBase(Domain o) throws Exception {
+    public boolean equalsBase(Domain o) throws IOException, ClassNotFoundException {
         if (predicateId != o.getPredicateId()) {
             return false;
         }

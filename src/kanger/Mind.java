@@ -362,8 +362,8 @@ public class Mind {
         linker.link(r, logging);
     }
 
-    public Boolean analise(boolean logging) throws Exception {
-        return analiser.analise(logging);
+    public Boolean analise(Right right, boolean logging) throws Exception {
+        return analiser.analise(right, logging);
     }
 
     public boolean compile(String src) throws Exception {
@@ -383,7 +383,7 @@ public class Mind {
         }
 
         m.link(null, logging);
-        Boolean ar = m.analise(logging);
+        Boolean ar = m.analise(null, logging);
 
         if (ar) {
             if (logging) {
@@ -782,7 +782,7 @@ public class Mind {
                     }
 
                     m.link(r, logging);
-                    boolean ar = m.analise(logging);
+                    boolean ar = m.analise(r, logging);
                     if (ar) {
                         if (logging) {
                             m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
@@ -820,7 +820,7 @@ public class Mind {
                         m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                         m.getLog().add(LogMode.ANALIZER, r);
                     }
-                    boolean ar = m.analise(logging);
+                    boolean ar = m.analise(r, logging);
                     if (ar) {
                         if (logging) {
                             m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
@@ -829,7 +829,7 @@ public class Mind {
                         res = null;
                     } else {
                         m.link(r, logging);
-                        ar = m.analise(logging);
+                        ar = m.analise(r, logging);
                         if (ar) {
                             if (logging) {
                                 m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
@@ -882,7 +882,7 @@ public class Mind {
                         m.getLog().add(LogMode.ANALIZER, r);
                     }
                     m.link(r, logging);
-                    boolean ar = m.analise(logging);
+                    boolean ar = m.analise(r, logging);
                     if (ar) {
                         removeResult(m, logging);
                         res = true;
@@ -906,7 +906,7 @@ public class Mind {
                     m.setQueryPass(QueryPass.CHECK);
 
                     m.link(null, logging);
-                    Boolean ar = m.analise(logging);
+                    Boolean ar = m.analise(null, logging);
 
                     if (ar) {
                         if (logging) {
@@ -999,7 +999,7 @@ public class Mind {
                                 m.getLog().add(LogMode.ANALIZER, r);
                             }
 
-                            boolean ar = m.analise(logging);
+                            boolean ar = m.analise(r, logging);
                             if (ar) {
                                 if (logging) {
                                     m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
@@ -1009,7 +1009,7 @@ public class Mind {
                                 queryContext = m;
                             } else {
                                 m.link(r, logging);
-                                ar = m.analise(logging);
+                                ar = m.analise(r, logging);
                                 if (ar) {
                                     if (logging) {
                                         m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
@@ -1040,7 +1040,7 @@ public class Mind {
                                 m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
                                 m.getLog().add(LogMode.ANALIZER, r);
                             }
-                            boolean ar = m.analise(logging);
+                            boolean ar = m.analise(r, logging);
                             if (ar) {
                                 if (logging) {
                                     m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
@@ -1049,7 +1049,7 @@ public class Mind {
                                 res = true;
                             } else {
                                 m.link(r, logging);
-                                ar = m.analise(logging);
+                                ar = m.analise(r, logging);
                                 if (ar) {
                                     if (logging) {
                                         m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
