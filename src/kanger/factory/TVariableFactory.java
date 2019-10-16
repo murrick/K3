@@ -3,6 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
+import kanger.interfaces.Identifiable;
 import kanger.storage.Escalera;
 import kanger.units.Right;
 import kanger.units.TValue;
@@ -84,7 +85,7 @@ public class TVariableFactory implements Iterable<TVariable> {
 //        }
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update()) {
             firstId = lastId;
         }
@@ -118,21 +119,53 @@ public class TVariableFactory implements Iterable<TVariable> {
         return t;
     }
 
-    public void delete(long id) throws IOException, ClassNotFoundException {
-        TVariable t = get(id);
-        if (t != null) {
-            List<TValue> list = new ArrayList<>();
-            for (TValue v : user.getMind().getTValues()) {
-                if (v.getTVarId() == t.getId()) {
-                    list.add(v);
-                }
+    public void pack() throws IOException, ClassNotFoundException {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((Identifiable) o).isDeleted()) {
+                toDelete.add(o);
             }
-            for (TValue v : list) {
-                user.getMind().getTValues().delete(v.getId());
-            }
-            cache.delete(id);
+        }
+        for (Object o : toDelete) {
+            cache.delete(((Identifiable) o).getId());
+            user.getMind().getTValues().getCurrent().remove(o);
+        }
+        update();
+
+        if (!cache.isEmpty()) {
+            lastId = cache.getRoot().getId() + 1;
+            firstId = lastId;
+        } else {
+            lastId = 0;
+            firstId = 0;
+        }
+
+    }
+
+    public void delete(TVariable t) throws IOException, ClassNotFoundException {
+        t.setDeleted();
+        Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
+        while (iterator.hasNext()) {
+            TValue v = iterator.next();
+            user.getMind().getTValues().delete(v);
         }
     }
+
+//    public void delete(long id) throws IOException, ClassNotFoundException {
+//        TVariable t = get(id);
+//        if (t != null) {
+//            List<TValue> list = new ArrayList<>();
+//            for (TValue v : user.getMind().getTValues()) {
+//                if (v.getTVarId() == t.getId()) {
+//                    list.add(v);
+//                }
+//            }
+//            for (TValue v : list) {
+//                user.getMind().getTValues().delete(v.getId());
+//            }
+//            cache.delete(id);
+//        }
+//    }
 
     public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
@@ -155,5 +188,6 @@ public class TVariableFactory implements Iterable<TVariable> {
     public Iterator iterator() {
         return cache.iterator(true, -1);
     }
+
 
 }

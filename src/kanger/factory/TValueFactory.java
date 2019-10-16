@@ -10,9 +10,7 @@ import kanger.units.TVariable;
 import kanger.units.Term;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
@@ -82,7 +80,7 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public TValue add(TVariable tv, Term o) throws Exception {
+    public TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException {
         TValue t = find(tv, o);
         if (t == null) {
             t = new TValue(tv, o, user);
@@ -109,7 +107,7 @@ public class TValueFactory implements Iterable<TValue> {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
-    public TValue find(TVariable tv, Term v) throws Exception {
+    public TValue find(TVariable tv, Term v) throws IOException, ClassNotFoundException {
         TValue temp = new TValue(tv, v);
         for (long id : cache.find(temp.getHash())) {
             Identifiable one = load(id);
@@ -138,13 +136,41 @@ public class TValueFactory implements Iterable<TValue> {
         return t;
     }
 
-    public void delete(long id) throws IOException, ClassNotFoundException {
-        TValue r = get(id);
-        if (r != null) {
-            cache.delete(id);
+    public void pack() throws IOException, ClassNotFoundException {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((Identifiable) o).isDeleted()) {
+                toDelete.add(o);
+            }
+        }
+        for (Object o : toDelete) {
+            cache.delete(((Identifiable) o).getId());
+            if (current.containsKey(((TValue) o).getTVar()) && current.get(((TValue) o).getTVar()).getId() == ((TValue) o).getId()) {
+                current.remove(((TValue) o).getTVar());
+            }
+        }
+        update();
+
+        if (!cache.isEmpty()) {
+            lastId = cache.getRoot().getId() + 1;
+            firstId = lastId;
+        } else {
+            lastId = 0;
+            firstId = 0;
         }
 
     }
+
+    public void delete(TValue v) throws IOException, ClassNotFoundException {
+        v.setDeleted();
+    }
+
+//    public void delete(long id) throws IOException, ClassNotFoundException {
+//        TValue r = get(id);
+//        if (r != null) {
+//            cache.delete(id);
+//        }
+//    }
 
     public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {
@@ -194,6 +220,7 @@ public class TValueFactory implements Iterable<TValue> {
     public Iterator<TValue> iterator() {
         return new TValueIterator(true, null);
     }
+
 
     public class TValueIterator implements Iterator {
 

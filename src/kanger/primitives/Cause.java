@@ -77,14 +77,11 @@ public class Cause implements Externalizable, Comparable<Cause> {
 
     @Override
     public int hashCode() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(srcId);
-        buffer.append(dstId);
-        buffer.append(index);
-//        for(Argument a: arguments) {
-//            buffer.append(a.getValue().getId());
-//        }
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (srcId ^ (srcId >>> 32));
+        hash = 47 * hash + (int) (dstId ^ (dstId >>> 32));
+        hash = 47 * hash + index;
+        return hash;
     }
 
 //        @Override

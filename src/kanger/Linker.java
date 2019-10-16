@@ -129,7 +129,9 @@ public class Linker {
                 }
             } else {
                 for (Right r : user.getMind().getRights()) {
-                    rightList.add(r);
+                    if (!r.isDeleted()) {
+                        rightList.add(r);
+                    }
                 }
             }
 
@@ -301,14 +303,14 @@ public class Linker {
             TVariable t = tvars.last();
             Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
             if (iterator.hasNext()) {
-
-
                 iterator = user.getMind().getTValues().iterator(t);
                 do {
                     TValue v = iterator.next();
-                    user.getMind().getTValues().set(t, v);
-                    if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-                        result = true;
+                    if (v != null && !v.isDeleted()) {
+                        user.getMind().getTValues().set(t, v);
+                        if (rotateVariables(tvars.headSet(t), logging, runnable)) {
+                            result = true;
+                        }
                     }
                 } while (iterator.hasNext());
             } else {
@@ -326,7 +328,7 @@ public class Linker {
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
                 for (Right right : user.getMind().getRights()) {
-                    if (!right.getPredicates().contains(slave.getPredicateId())) {
+                    if (right.isDeleted() || !right.getPredicates().contains(slave.getPredicateId())) {
                         continue;
                     }
                     for (List<Domain> treeMaster : right.getTree()) {
@@ -727,7 +729,7 @@ public class Linker {
 //        return result;
 //    }
 
-    private boolean updateDatabase(boolean logging) throws Exception {
+    private boolean updateDatabase(boolean logging) throws IOException, ClassNotFoundException {
         boolean result = false;
         for (Map.Entry<Domain, List<ArgList>> e : user.getMind().getProducedDomains().entrySet()) {
             Domain d = e.getKey();

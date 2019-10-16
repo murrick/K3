@@ -129,7 +129,7 @@ public class KangerTest {
 
     private void showResult(Boolean assertResult) throws RuntimeErrorException {
         for (Right r : mind.getRights()) {
-            if (!r.isGenerated() && !r.isQuery()) {
+            if (!r.isDeleted() && !r.isGenerated() && !r.isQuery()) {
                 System.out.println("Right: " + r.toString());
             }
         }

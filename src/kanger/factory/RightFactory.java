@@ -3,11 +3,13 @@ package kanger.factory;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.storage.Escalera;
 import kanger.units.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -79,7 +81,7 @@ public class RightFactory implements Iterable<Right> {
 //        }
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update() && stored.update()) {
             firstId = lastId;
         }
@@ -93,29 +95,29 @@ public class RightFactory implements Iterable<Right> {
 
     public Right add(Right r) throws IOException, ClassNotFoundException {
         Right x = find(r);
-//        if(x != null) {
-//            delete(r.getId());
-//            return x;
-//        } else {
-        if (r.getId() == -1) {
-            r.setId(lastId++);
-        }
-        cache.add(r);
-        if (r.isStored()) {
-            stored.add(r.getId(), r.getId());
-        }
-        for (List<Domain> list : r.getTree()) {
-            for (Domain d : list) {
-                r.getPredicates().add(d.getPredicateId());
-                d.setRight(r);
-                for (TVariable t : d.getArguments().getTVariables(true)) {
-                    t.setRight(r);
-                }
-                user.getMind().getDomains().add(d);
+        if (x != null) {
+            delete(r);
+            return x;
+        } else {
+            if (r.getId() == -1) {
+                r.setId(lastId++);
             }
+            cache.add(r);
+            if (r.isStored()) {
+                stored.add(r.getId(), r.getId());
+            }
+            for (List<Domain> list : r.getTree()) {
+                for (Domain d : list) {
+                    r.getPredicates().add(d.getPredicateId());
+                    d.setRight(r);
+                    for (TVariable t : d.getArguments().getTVariables(true)) {
+                        t.setRight(r);
+                    }
+//                    user.getMind().getDomains().add(d);
+                }
+            }
+            return r;
         }
-        return r;
-//        }
     }
 
 
@@ -171,18 +173,29 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public void delete(long id) throws IOException, ClassNotFoundException {
-        Right r = get(id);
-        if (r != null) {
+    public void delete(Right r) throws IOException, ClassNotFoundException {
+        r.setDeleted();
             for (List<Domain> list : r.getTree()) {
                 for (Domain d : list) {
-                    user.getMind().getDomains().delete(d.getId());
+                    user.getMind().getDomains().delete(d);
                 }
             }
-            cache.delete(id);
-            stored.delete(id);
-        }
+//            cache.delete(id);
+//            stored.delete(id);
     }
+
+//    public void delete(long id) throws IOException, ClassNotFoundException {
+//        Right r = get(id);
+//        if (r != null) {
+//            for (List<Domain> list : r.getTree()) {
+//                for (Domain d : list) {
+//                    user.getMind().getDomains().delete(d.getId());
+//                }
+//            }
+//            cache.delete(id);
+//            stored.delete(id);
+//        }
+//    }
 
     public int size() {
         return cache.size();
@@ -282,4 +295,26 @@ public class RightFactory implements Iterable<Right> {
     }
 
 
+    public void pack() throws IOException, ClassNotFoundException {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((Identifiable) o).isDeleted()) {
+                toDelete.add(o);
+            }
+        }
+        for (Object o : toDelete) {
+            cache.delete(((Identifiable) o).getId());
+            stored.delete(((Identifiable) o).getId());
+        }
+        update();
+
+        if (!cache.isEmpty()) {
+            lastId = cache.getRoot().getId() + 1;
+            firstId = lastId;
+        } else {
+            lastId = 0;
+            firstId = 0;
+        }
+
+    }
 }

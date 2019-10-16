@@ -4,14 +4,18 @@ import kanger.User;
 import kanger.calculator.Calculator;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
+import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.storage.Escalera;
+import kanger.units.FValue;
 import kanger.units.Function;
 import kanger.units.Term;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class FunctionFactory implements Iterable<Function> {
 
@@ -68,7 +72,7 @@ public class FunctionFactory implements Iterable<Function> {
 //        }
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update()) {
             firstId = lastId;
         }
@@ -131,4 +135,33 @@ public class FunctionFactory implements Iterable<Function> {
         return cache.iterator();
     }
 
+    public void pack() throws IOException, ClassNotFoundException {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((Identifiable) o).isDeleted()) {
+                toDelete.add(o);
+            }
+        }
+        for (Object o : toDelete) {
+            cache.delete(((Identifiable) o).getId());
+        }
+        update();
+
+        if (!cache.isEmpty()) {
+            lastId = cache.getRoot().getId() + 1;
+            firstId = lastId;
+        } else {
+            lastId = 0;
+            firstId = 0;
+        }
+
+    }
+
+    public void delete(Function f) throws IOException, ClassNotFoundException {
+        f.setDeleted();
+        FValue v = user.getMind().getFValues().find(f);
+        if (v != null) {
+            user.getMind().getFValues().delete(v);
+        }
+    }
 }

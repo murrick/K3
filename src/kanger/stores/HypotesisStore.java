@@ -38,7 +38,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
     }
 
-    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws Exception {
+    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws IOException, ClassNotFoundException {
         if (!enableStore) {
             return null;
         }
@@ -104,7 +104,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) throws Exception {
+    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) throws IOException, ClassNotFoundException {
         if (root == null) {
             return null;
         }

@@ -39,6 +39,8 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     private transient long rightId = -1;
     private transient User user = null;
 
+    private transient boolean deleted = false;
+
     public Domain() {
     }
 
@@ -60,6 +62,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        deleted = dis.readBoolean();
         antc = dis.readBoolean();
         range = dis.readInt();
         predicateId = dis.readLong();
@@ -71,6 +74,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeBoolean(antc);
         dos.writeInt(range);
         dos.writeLong(predicateId);
@@ -321,6 +325,17 @@ public class Domain implements Externalizable, Identifiable<Domain> {
     public String toString(ArgList arguments) {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
+
+            List<Term> cVars = new ArrayList<>();
+            for (Term t : arguments.getCVariables(true)) {
+                if (!cVars.contains(t)) {
+                    cVars.add(t);
+                }
+            }
+            for (Term t : cVars) {
+                s += "$" + t.getName() + " ";
+            }
+
             Operation op = Parser.getOp(getPredicate().getName().toString(), getRange());
             if (op == null) {
                 s += getPredicate().getName() + "(";
@@ -695,7 +710,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         return r;
     }
 
-    public Right createStored() throws Exception {
+    public Right createStored() throws IOException, ClassNotFoundException {
         Right r = user.getMind().getRights().add(this);
         return r;
     }
@@ -807,7 +822,7 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //        return cnt;
 //    }
 
-    public int getVarOrder(int pos) throws Exception {
+    public int getVarOrder(int pos) throws IOException, ClassNotFoundException {
         List<Integer> list = new ArrayList<>();
         SortedMap<Integer, Integer> sort = new TreeMap<>();
         int plains = 0;
@@ -832,20 +847,15 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(antc);
-        buffer.append(predicateId);
-        buffer.append(rightId);
-        buffer.append(arguments.hashCode());
-        return buffer.toString().hashCode();
+        return 47 * getHashBase() + (int) (rightId ^ (rightId >>> 32));
     }
 
     public int getHashBase() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(antc);
-        buffer.append(predicateId);
-        buffer.append(arguments.hashCode());
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + (antc ? 1 : 0);
+        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
+        hash = 47 * hash + arguments.hashCode();
+        return hash;
     }
 
     @Override
@@ -992,28 +1002,27 @@ public class Domain implements Externalizable, Identifiable<Domain> {
 //    }
 
     public int getHashStruct() throws IOException, ClassNotFoundException {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(antc);
-        buffer.append(predicateId);
-        buffer.append(range);
+        int hash = 3;
+        hash = 47 * hash + (antc ? 1 : 0);
+        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
+        hash = 47 * hash + range;
         for (int i = 0; i < range; ++i) {
-            buffer.append(arguments.get(i).getType().ordinal());
+            hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case CVARIABLE:
-                    buffer.append(arguments.get(i).getValue().getIndex() - getRight().getVarIndex());
-                    break;
                 case TVARIABLE:
-                    buffer.append(arguments.get(i).getT().getIndex() - getRight().getVarIndex());
+                    hash = 47 * hash + (i + 1) * getVarOrder(i);
                     break;
                 case TERM:
-                    buffer.append(arguments.get(i).getValue().getId());
+                    long id = arguments.get(i).getValue().getId();
+                    hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    buffer.append(arguments.get(i).getF().getHashStruct(getRight()));
+                    hash = 47 * hash + (i + 1) * arguments.get(i).getF().getHashStruct(getRight());
                     break;
             }
         }
-        return buffer.toString().hashCode();
+        return hash;
     }
 
     public boolean equalsToStruct(Domain to) {
@@ -1025,15 +1034,9 @@ public class Domain implements Externalizable, Identifiable<Domain> {
                 for (; i < range; ++i) {
                     if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
                         switch (arguments.get(i).getType()) {
-                            case CVARIABLE:
-                                if ((arguments.get(i).getValue().getIndex() - getRight().getVarIndex())
-                                        != (to.getArguments().get(i).getValue().getIndex() - to.getRight().getVarIndex())) {
-                                    return false;
-                                }
-                                break;
                             case TVARIABLE:
-                                if ((arguments.get(i).getT().getIndex() - getRight().getVarIndex())
-                                        != (to.getArguments().get(i).getT().getIndex() - to.getRight().getVarIndex())) {
+                            case CVARIABLE:
+                                if (getVarOrder(i) != to.getVarOrder(i)) {
                                     return false;
                                 }
                                 break;
@@ -1062,5 +1065,12 @@ public class Domain implements Externalizable, Identifiable<Domain> {
         }
     }
 
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted() {
+        this.deleted = true;
+    }
 }
 

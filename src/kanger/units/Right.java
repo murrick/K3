@@ -40,6 +40,8 @@ public class Right implements Externalizable, Identifiable<Right> {
     private transient List<List<Long>> treeIds = new ArrayList<>();
     private transient User user = null;
 
+    private transient boolean deleted = false;
+
     public Right() {
     }
 
@@ -52,6 +54,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        deleted = dis.readBoolean();
         origId = dis.readLong();
         varIndex = dis.readInt();
         query = dis.readBoolean();
@@ -79,6 +82,7 @@ public class Right implements Externalizable, Identifiable<Right> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeLong(origId);
         dos.writeInt(varIndex);
         dos.writeBoolean(query);
@@ -175,7 +179,7 @@ public class Right implements Externalizable, Identifiable<Right> {
             for (Domain d : t) {
                 for (Right r : user.getMind().getRights()) {
                     if (r != null) {
-                        if (r.getPredicates().contains(d.getPredicateId())) {
+                        if (!r.isDeleted() && r.getPredicates().contains(d.getPredicateId())) {
                             list.add(r);
                         }
                     } else {
@@ -259,53 +263,51 @@ public class Right implements Externalizable, Identifiable<Right> {
         if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
             return getDomain().getHashBase();
         } else {
-            long hash = 0;
+            int hash = 0;
             for (List<Domain> list : tree) {
-                long sub = 0;
+                int sub = 0;
                 for (Domain d : list) {
                     sub += d.getHashStruct();
                 }
                 hash += sub;
             }
-            StringBuffer buffer = new StringBuffer();
-            buffer.append(hash);
-            return buffer.toString().hashCode();
+            return hash;
         }
+    }
+
+    private boolean branchEquals(List<Domain> a, List<Domain> b) {
+        List<Domain> tmp = new ArrayList<>();
+        tmp.addAll(b);
+        for (Domain d : a) {
+            for (Domain x : tmp) {
+                if (d.equalsToStruct(x)) {
+                    tmp.remove(x);
+                    break;
+                }
+            }
+        }
+        return tmp.isEmpty();
     }
 
     @Override
     public boolean equalsTo(Right to) throws IOException, ClassNotFoundException {
-        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
-            return equalsTo(to.getDomain());
-        } else {
-            if (getTree().size() != to.getTree().size()) {
-                return false;
-            } else {
-                if (getTree().size() != to.getTree().size()) {
-                    return false;
-                } else {
-                    for (List<Domain> listFrom : tree) {
-                        for (List<Domain> listTo : to.getTree()) {
-                            if (listFrom.size() == listTo.size()) {
-                                List<Domain> tmp = new ArrayList<>();
-                                tmp.addAll(listTo);
-                                for (Domain d : listFrom) {
-                                    for (Domain x : tmp) {
-                                        if (d.equalsToStruct(x)) {
-                                            tmp.remove(x);
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (!tmp.isEmpty()) {
-                                    return false;
-                                }
-                            }
-                        }
+//        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
+//            return equalsTo(to.getDomain());
+//        } else
+        if (getTree().size() == to.getTree().size()) {
+            List<List<Domain>> tmp = new ArrayList<>();
+            tmp.addAll(to.getTree());
+            for (List<Domain> a : tree) {
+                for (List<Domain> b : tmp) {
+                    if (branchEquals(a, b)) {
+                        tmp.remove(b);
+                        break;
                     }
-                    return true;
                 }
             }
+            return tmp.isEmpty();
+        } else {
+            return false;
         }
     }
 
@@ -379,5 +381,13 @@ public class Right implements Externalizable, Identifiable<Right> {
 
     public void setVarIndex(int varIndex) {
         this.varIndex = varIndex;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted() {
+        this.deleted = true;
     }
 }

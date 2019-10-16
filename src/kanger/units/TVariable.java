@@ -27,6 +27,8 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     private transient long rightId = -1;
     private transient User user = null;
 
+    private transient boolean deleted = false;
+
     public TVariable() {
     }
 
@@ -37,6 +39,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        deleted = dis.readBoolean();
         nameId = dis.readLong();
         index = dis.readInt();
         rightId = dis.readLong();
@@ -45,6 +48,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeLong(nameId);
         dos.writeInt(index);
         dos.writeLong(rightId);
@@ -107,7 +111,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
         return user.getMind().getTValues().set(this, v);
     }
 
-    public TValue setValue(Term value) throws Exception { //throws TValueOutOfOrderException {
+    public TValue setValue(Term value) throws IOException, ClassNotFoundException { //throws TValueOutOfOrderException {
 //        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
@@ -202,11 +206,11 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(rightId);
-        buffer.append(nameId);
-        buffer.append(index);
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (rightId ^ (rightId >>> 32));
+        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
+        hash = 47 * hash + index;
+        return hash;
     }
 
     @Override
@@ -246,7 +250,7 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
 //    }
 
     //
-    public TValue find(Term value) throws Exception {
+    public TValue find(Term value) throws IOException, ClassNotFoundException {
         return user.getMind().getTValues().find(this, value);
     }
 
@@ -329,4 +333,11 @@ public class TVariable implements Comparable<Object>, Externalizable, Identifiab
                 : Integer.valueOf(index).compareTo(((Term) o).getIndex());
     }
 
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted() {
+        this.deleted = true;
+    }
 }

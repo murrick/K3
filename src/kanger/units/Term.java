@@ -41,6 +41,8 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     //    private Term next = null;      // Следующая запись
     private User user = null;
 
+    private transient boolean deleted = false;
+
     public Term() {
     }
 
@@ -56,6 +58,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     @Override
     public void readExternal(ObjectInput din) throws IOException, ClassNotFoundException {
         id = din.readLong();
+        deleted = din.readBoolean();
         type = DataType.values()[din.readInt()];
         switch (type) {
             case DATE:
@@ -95,6 +98,7 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeInt(type.ordinal());
         switch (type) {
             case DATE:
@@ -299,10 +303,10 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
 
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(type.ordinal());
-        buffer.append(value.hashCode());
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + type.ordinal();
+        hash = 47 * hash + value.hashCode();
+        return hash;
     }
 
     @Override
@@ -402,6 +406,16 @@ public class Term implements Comparable<Object>, Externalizable, Identifiable<Te
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    @Override
+    public void setDeleted() {
+        deleted = true;
     }
 }
 

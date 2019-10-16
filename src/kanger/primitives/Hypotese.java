@@ -142,7 +142,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
         this.query = query;
     }
 
-    public void addParams(Collection params) throws Exception {
+    public void addParams(Collection params) throws IOException, ClassNotFoundException {
         for (Object p : params) {
             if (p instanceof Argument) {
                 solve.add(((Argument) p).getValue());
@@ -165,11 +165,6 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
             int cptr[] = new int[getPredicate().getRange()];
 
             int ccnt = 0;
-//        String prefix = "";
-//        if (tag != -1 && (user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
-//            prefix = tag + ":\t";
-//        }
-
             line += (antc ? "" : String.format("%c", Enums.NOT));
             String tmp = getPredicate().getName() + "(";
             for (i = 0; i < getPredicate().getRange(); ++i) {

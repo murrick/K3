@@ -30,6 +30,8 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     private transient long tVarId = -1;
     private transient User user = null;
 
+    private transient boolean deleted = false;
+
     public TValue() {
     }
 
@@ -56,6 +58,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        deleted = dis.readBoolean();
         valueId = dis.readLong();
         tVarId = dis.readLong();
         int count = dis.readInt();
@@ -70,6 +73,7 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeLong(valueId);
         dos.writeLong(tVarId);
         dos.writeInt(causes.size());
@@ -180,11 +184,10 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
 
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();
-//        buffer.append(id);
-        buffer.append(valueId);
-        buffer.append(tVarId);
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (valueId ^ (valueId >>> 32));
+        hash = 47 * hash + (int) (tVarId ^ (tVarId >>> 32));
+        return hash;
     }
 
     @Override
@@ -226,5 +229,13 @@ public class TValue implements Comparable<TValue>, Externalizable, Identifiable<
 
     public long getTVarId() {
         return tVarId;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted() {
+        deleted = true;
     }
 }

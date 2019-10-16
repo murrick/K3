@@ -164,12 +164,36 @@ public class Screen {
 //                            lastQuery = savedQuery;
                             }
                             break;
-                        case 'W': {
-                            System.out.printf("Are you sure to wipe workspace? [y/N]? ");
-                            String s = new Scanner(System.in).nextLine().toUpperCase();
-                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                user.clear();
+                        case 'E': {
+                            if (line.split(" ").length == 2) {
+                                try {
+                                    long id = Long.parseLong(line.split(" ")[1]);
+                                    Right r = mind.getRights().get(id);
+                                    if (r != null) {
+                                        if (r.isGenerated()) {
+                                            System.out.printf("Right %03d: %s is production and can't be erased.\n", id, r);
+                                        } else {
+                                            System.out.printf("Are you sure to erase right %03d: %s ? [y/N]? ", id, r);
+                                            String s = new Scanner(System.in).nextLine().toUpperCase();
+                                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
+
+                                                mind.delete(r);
+
+                                            }
+                                        }
+                                    } else {
+                                        System.out.printf("Right %03d not found\n", id);
+                                    }
+                                } catch (Exception ex) {
+                                    System.out.printf("ERROR: Right id expected\n");
+                                }
+                            } else {
+                                System.out.printf("Are you sure to erase workspace? [y/N]? ");
+                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    user.clear();
 //                                mind.release();
+                                }
                             }
                         }
                         break;
@@ -229,7 +253,7 @@ public class Screen {
                             break;
                         case 'M':
                             for (TValue t : mind.getTValues()) {
-                                System.out.println(t);
+                                System.out.println(t + "\t" + t.getCauses().size());
                             }
                             break;
                         case 'P':
@@ -898,11 +922,12 @@ public class Screen {
             System.out.printf("%sRight %03d%s: %s\n",
                     showTree ? "\n --- " : "",
                     r.getId(),
-                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored())
+                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
                             ? " " +
                             (r.isGenerated() ? "G" : "") +
                             (r.isStored() ? "B" : "") +
-                            (r.isQuery() ? "Q" : "")
+                            (r.isQuery() ? "Q" : "") +
+                            (r.isDeleted() ? "D" : "")
                             : "",
                     r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {

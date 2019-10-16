@@ -203,7 +203,7 @@ public class Argument implements Externalizable {
     }
 
 
-    public boolean isCVar() throws Exception {
+    public boolean isCVar() {
         return type == ArgumentType.CVARIABLE; //!isEmpty() && getValue().isCVariable();
     }
 

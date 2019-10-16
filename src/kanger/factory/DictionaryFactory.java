@@ -107,7 +107,7 @@ public class DictionaryFactory implements Iterable<Term> {
         cache.unlink();
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update()) {
             firstId = lastId;
         }
@@ -230,5 +230,9 @@ public class DictionaryFactory implements Iterable<Term> {
     @Override
     public Iterator iterator() {
         return cache.iterator(true, -1);
+    }
+
+    public void pack() throws IOException {
+        update();
     }
 }

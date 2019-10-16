@@ -55,18 +55,7 @@ public class SolutionsStore {
     public boolean contains(Domain d) throws IOException, ClassNotFoundException {
         if(!isEmpty()) {
             for (Right r : root) {
-                if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean containsPair(Domain d) throws IOException, ClassNotFoundException {
-        if (!isEmpty()) {
-            for (Right r : root) {
-                if (r.getDomain().equalsBase(d) && r.getDomain().isAntc() != d.isAntc()) {
+                if (!r.isDeleted() && r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
                     return true;
                 }
             }

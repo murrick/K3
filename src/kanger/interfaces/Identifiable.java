@@ -18,5 +18,7 @@ public interface Identifiable<T> {
 
     void setUser(User user) throws IOException, ClassNotFoundException;
 
-//    void linkExternal(User user) throws RuntimeErrorException, Exception;
+    boolean isDeleted();
+
+    void setDeleted();
 }

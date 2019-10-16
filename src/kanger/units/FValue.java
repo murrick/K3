@@ -28,6 +28,8 @@ public class FValue implements Externalizable, Identifiable<Function> {
     private transient long functionId = -1;
     private transient long valueId = -1;
 
+    private transient boolean deleted = false;
+
     public FValue() {
     }
 
@@ -58,6 +60,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        deleted = dis.readBoolean();
         functionId = dis.readLong();
         valueId = dis.readLong();
         condition = (ArgList) dis.readObject();
@@ -67,6 +70,7 @@ public class FValue implements Externalizable, Identifiable<Function> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeLong(functionId);
         dos.writeLong(valueId);
         dos.writeObject(condition);
@@ -167,11 +171,11 @@ public class FValue implements Externalizable, Identifiable<Function> {
 
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(functionId);
-        buffer.append(valueId);
-        buffer.append(condition.hashCode());
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (functionId ^ (functionId >>> 32));
+        hash = 47 * hash + (int) (valueId ^ (valueId >>> 32));
+        hash = 47 * hash + condition.hashCode();
+        return hash;
     }
 
     @Override
@@ -206,6 +210,16 @@ public class FValue implements Externalizable, Identifiable<Function> {
     public void setUser(User user) {
         this.user = user;
         this.condition.setUser(user);
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    @Override
+    public void setDeleted() {
+        deleted = true;
     }
 
     @Override

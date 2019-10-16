@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.units.Function;
 import kanger.units.TValue;
 import kanger.units.TVariable;
+import kanger.units.Term;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -201,7 +202,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         for (Argument a : this) {
             //TODO: Костыль
             a.setUser(user);
-            if (a.isTSet() && !list.contains(a.getT())) {
+            if (a.isTSet() && !a.getT().isDeleted() && !a.getT().isDeleted() && !list.contains(a.getT())) {
                 list.add(a.getT());
             } else if (full && a.isFSet()) {
                 List<TVariable> temp = a.getF().getArguments().getTVariables(full);
@@ -216,12 +217,32 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
+    public List<Term> getCVariables(boolean full) throws IOException, ClassNotFoundException {
+        List<Term> list = new ArrayList<>();
+        for (Argument a : this) {
+            //TODO: Костыль
+            a.setUser(user);
+            if (a.isCVar() && !a.getValue().isDeleted() && !list.contains(a.getValue())) {
+                list.add(a.getValue());
+            } else if (full && a.isFSet()) {
+                List<Term> temp = a.getF().getArguments().getCVariables(full);
+                for (Term t : temp) {
+                    if (!list.contains(t)) {
+                        list.add(t);
+                    }
+                }
+            }
+
+        }
+        return list;
+    }
+
     public List<TValue> getTValues(boolean full) throws IOException, ClassNotFoundException {
         List<TValue> list = new ArrayList<>();
         for (Argument a : this) {
-            if (a.isTSet() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
+            if (a.isTSet() && !a.getT().isDeleted() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
                 list.add(a.getT().getCurrent());
-            } else if (a.isVSet() && !list.contains(a.getV())) {
+            } else if (a.isVSet() && !a.getV().isDeleted() && !list.contains(a.getV())) {
                 list.add(a.getV());
             } else if (full && a.isFSet()) {
                 List<TValue> temp = a.getF().getArguments().getTValues(full);

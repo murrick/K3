@@ -9,6 +9,8 @@ import kanger.units.FValue;
 import kanger.units.Function;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FValueFactory {
 
@@ -66,7 +68,7 @@ public class FValueFactory {
 //        }
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update()) {
             firstId = lastId;
         }
@@ -151,4 +153,30 @@ public class FValueFactory {
         return lastId;
     }
 
+    public void pack() throws IOException, ClassNotFoundException {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((Identifiable) o).isDeleted()) {
+                toDelete.add(o);
+            }
+        }
+        for (Object o : toDelete) {
+            cache.delete(((Identifiable) o).getId());
+        }
+
+        update();
+
+        if (!cache.isEmpty()) {
+            lastId = cache.getRoot().getId() + 1;
+            firstId = lastId;
+        } else {
+            lastId = 0;
+            firstId = 0;
+        }
+
+    }
+
+    public void delete(FValue v) {
+        v.setDeleted();
+    }
 }

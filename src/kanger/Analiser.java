@@ -474,7 +474,7 @@ public class Analiser {
 //    }
 
 
-    public boolean analise(Right right, boolean logging) throws Exception {
+    public boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException {
         boolean result = false;
         int counter = 0;
 
@@ -599,22 +599,24 @@ public class Analiser {
             boolean occurs = false;
             for (long id : user.getMind().getRights().getDatabase(-1)) {
                 Right r = user.getMind().getRights().get(id);
-                if (r.getId() < user.getMind().getRights().getFirstId()) {
-                    break;
-                }
-                Domain d = r.getDomain();
-                for (Argument a : d.getArguments()) {
-                    if (!a.isEmpty() && a.getType() == ArgumentType.CVARIABLE && a.getValue().getId() > user.getMind().getTerms().getFirstId()) {
-                        d = null;
+                if (!r.isDeleted()) {
+                    if (r.getId() < user.getMind().getRights().getFirstId()) {
                         break;
                     }
-                }
-                if (d != null && !d.isQuery()
-                        && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                    Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
-                    occurs = true;
-                    if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                    Domain d = r.getDomain();
+                    for (Argument a : d.getArguments()) {
+                        if (!a.isEmpty() && a.getType() == ArgumentType.CVARIABLE && a.getValue().getId() > user.getMind().getTerms().getFirstId()) {
+                            d = null;
+                            break;
+                        }
+                    }
+                    if (d != null && !d.isQuery()
+                            && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                        Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                        occurs = true;
+                        if (logging) {
+                            user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                        }
                     }
                 }
             }
@@ -867,7 +869,8 @@ public class Analiser {
             for (long iq : user.getMind().getRights().getDatabase(p.getId())) {
                 Right q = user.getMind().getRights().get(iq);
                 if (//q.getId() < p.getId()                            &&
-                        p.getDomain().equalsBase(q.getDomain())
+                        !q.isDeleted()
+                                && p.getDomain().equalsBase(q.getDomain())
                                 && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
 //                    Set<Domain> sequence = new HashSet<>();
@@ -900,7 +903,7 @@ public class Analiser {
 ////                        }
 //                    }
 
-                    if (p.getDomain().isQuery()) {
+                    if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(true).isEmpty()) {
 //                            user.getMind().getResults().addSolve(p, q);
                         user.getMind().getSolutions().add(q);
                         user.getMind().getValues().add(p.getSolves());
@@ -909,7 +912,7 @@ public class Analiser {
 //                                    user.getMind().getValues().add(a.getV());
 //                                }
 //                            }
-                    } else if (q.getDomain().isQuery()) {
+                    } else if (q.getDomain().isQuery() && q.getDomain().getArguments().getCVariables(true).isEmpty()) {
 //                            user.getMind().getResults().addSolve(q, p);
                         user.getMind().getSolutions().add(p);
                         user.getMind().getValues().add(q.getSolves());
@@ -948,7 +951,7 @@ public class Analiser {
         return result;
     }
 
-    public boolean checkDatabase(Right right, boolean logging) throws Exception {
+    public boolean checkDatabase(Right right, boolean logging) throws IOException, ClassNotFoundException {
 
         boolean result = false;
         Set<Right> orfans = new HashSet<>();
@@ -958,7 +961,7 @@ public class Analiser {
 //        } else {
         for (long id : user.getMind().getRights().getDatabase(-1)) {
             Right p = user.getMind().getRights().get(id);
-            if (checkRight(p, orfans, logging)) {
+            if (!p.isDeleted() && checkRight(p, orfans, logging)) {
                 result = true;
             }
         }

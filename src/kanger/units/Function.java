@@ -31,6 +31,8 @@ public class Function implements Externalizable, Identifiable<Function> {
 
     private transient long nameId = -1;
 
+    private transient boolean deleted = false;
+
     public Function() {
 
     }
@@ -42,6 +44,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        deleted = dis.readBoolean();
         nameId = dis.readLong();
         range = dis.readInt();
         arguments = (ArgList) dis.readObject();
@@ -51,6 +54,7 @@ public class Function implements Externalizable, Identifiable<Function> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeLong(nameId);
         dos.writeInt(range);
         dos.writeObject(arguments);
@@ -306,11 +310,11 @@ public class Function implements Externalizable, Identifiable<Function> {
 
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(nameId);
-        buffer.append(range);
-        buffer.append(arguments.hashCode());
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
+        hash = 47 * hash + range;
+        hash = 47 * hash + arguments.hashCode();
+        return hash;
     }
 
     @Override
@@ -334,27 +338,28 @@ public class Function implements Externalizable, Identifiable<Function> {
     }
 
     public int getHashStruct(Right r) throws IOException, ClassNotFoundException {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(nameId);
-        buffer.append(range);
+        int hash = 3;
+        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
+        hash = 47 * hash + range;
         for (int i = 0; i < range; ++i) {
-            buffer.append(arguments.get(i).getType().ordinal());
+            hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case CVARIABLE:
-                    buffer.append(arguments.get(i).getValue().getIndex() - r.getVarIndex());
+                    hash = 47 * hash + (i + 1) * (arguments.get(i).getValue().getIndex() - r.getVarIndex());
                     break;
                 case TVARIABLE:
-                    buffer.append(arguments.get(i).getT().getIndex() - r.getVarIndex());
+                    hash = 47 * hash + (i + 1) * (arguments.get(i).getT().getIndex() - r.getVarIndex());
                     break;
                 case TERM:
-                    buffer.append(arguments.get(i).getValue().getId());
+                    long id = arguments.get(i).getValue().getId();
+                    hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    buffer.append(arguments.get(i).getF().getHashStruct(r));
+                    hash = 47 * hash + (i + 1) * arguments.get(i).getF().getHashStruct(r);
                     break;
             }
         }
-        return buffer.toString().hashCode();
+        return hash;
     }
 
     public boolean equalsToStruct(Function f, Right left, Right right) throws IOException, ClassNotFoundException {
@@ -395,4 +400,16 @@ public class Function implements Externalizable, Identifiable<Function> {
         }
     }
 
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    @Override
+    public void setDeleted() {
+        deleted = true;
+    }
 }

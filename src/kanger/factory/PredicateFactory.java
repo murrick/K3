@@ -70,7 +70,7 @@ public class PredicateFactory implements Iterable<Predicate> {
 //        lastId = cache.getRoot().getId() + 1;
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update()) {
             firstId = lastId;
         }
@@ -141,4 +141,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         return cache.iterator();
     }
 
+    public void pack() throws IOException {
+        update();
+    }
 }

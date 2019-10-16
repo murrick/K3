@@ -33,9 +33,13 @@ public class Compiler {
         r.setOrig(user.getMind().getTerms().add(orig));
         user.getMind().getRights().register(r);
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>());
-        user.getMind().getRights().add(r);
-        r.setQuery(query);
-        user.getMind().getRights().expand(r);
+        Right x = user.getMind().getRights().add(r);
+        if (x.getId() == r.getId()) {
+            r.setQuery(query);
+            user.getMind().getRights().expand(r);
+        } else {
+            r = x;
+        }
         return r;
     }
 

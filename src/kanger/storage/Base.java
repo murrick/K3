@@ -102,7 +102,7 @@ public class Base {
         }
     }
 
-    public void remove(long id) throws IOException {
+    public void delete(long id) throws IOException {
         Object one = index.load(null, fromObject(id));
         if (one != null) {
             index.delete(null, fromObject(id));
@@ -163,9 +163,9 @@ public class Base {
         return user;
     }
 
-    public void delete(long id) throws IOException {
-        cache.remove(id);
-        byte[] ident = fromObject(id);
-        index.evict(null, ident, ident, null, true);
-    }
+//    public void delete(long id) throws IOException {
+//        cache.remove(id);
+//        byte[] ident = fromObject(id);
+//        index.evict(null, ident, ident, null, true);
+//    }
 }

@@ -6,14 +6,11 @@ import kanger.interfaces.IStep;
 import kanger.interfaces.Identifiable;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
-import kanger.primitives.Cause;
 import kanger.storage.Escalera;
 import kanger.units.*;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
@@ -82,24 +79,24 @@ public class DomainFactory implements Iterable<Domain> {
 //        waiters.addAll(base.waiters);
     }
 
-    public void update() throws Exception {
+    public void update() throws IOException {
         if (cache.update()) {
             firstId = lastId;
         }
     }
 
-    public Domain add(Domain d) throws IOException, ClassNotFoundException {
-        cache.add(d);
-        return d;
-    }
+//    public Domain add(Domain d) throws IOException, ClassNotFoundException {
+//        cache.add(d);
+//        return d;
+//    }
 
-    public Domain add(Right r) throws Exception {
-        Domain p = new Domain(user);
-        p.setRight(r);
-        p.setId(lastId++);
-        cache.add(p);
-        return p;
-    }
+//    public Domain add(Right r) throws Exception {
+//        Domain p = new Domain(user);
+//        p.setRight(r);
+//        p.setId(lastId++);
+//        cache.add(p);
+//        return p;
+//    }
 
 
     public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException {
@@ -151,28 +148,79 @@ public class DomainFactory implements Iterable<Domain> {
         return t;
     }
 
-    public void delete(long id) throws IOException, ClassNotFoundException {
-        Domain d = get(id);
-        if (d != null) {
-            for (TVariable t : d.getArguments().getTVariables(true)) {
-                user.getMind().getTVars().delete(t.getId());
+    public void pack() throws IOException, ClassNotFoundException {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((Identifiable) o).isDeleted()) {
+                toDelete.add(o);
             }
-            for (TValue v : user.getMind().getTValues()) {
-                Set<Cause> toDelete = new HashSet<>();
-                for (Cause c : v.getCauses()) {
-                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
-                        toDelete.add(c);
-                    }
-                }
-                if (!toDelete.isEmpty()) {
-                    v.getCauses().removeAll(toDelete);
-                }
-            }
-            user.getMind().getTValues().update();
-            waiters.remove(d);
-            cache.delete(id);
         }
+        for (Object o : toDelete) {
+            waiters.remove(o);
+            cache.delete(((Identifiable) o).getId());
+        }
+        update();
+
+        if (!cache.isEmpty()) {
+            lastId = cache.getRoot().getId() + 1;
+            firstId = lastId;
+        } else {
+            lastId = 0;
+            firstId = 0;
+        }
+
     }
+
+    public void delete(Domain d) throws IOException, ClassNotFoundException {
+        d.setDeleted();
+        for (TVariable t : d.getArguments().getTVariables(true)) {
+            user.getMind().getTVars().delete(t);
+        }
+        for (TValue v : d.getArguments().getTValues(true)) {
+            user.getMind().getTValues().delete(v);
+        }
+        for (Function f : d.getArguments().getFunctions()) {
+            user.getMind().getFunctions().delete(f);
+        }
+
+//            for (TValue v : user.getMind().getTValues()) {
+//                Set<Cause> toDelete = new HashSet<>();
+//                for (Cause c : v.getCauses()) {
+//                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
+//                        toDelete.add(c);
+//                    }
+//                }
+//                if (!toDelete.isEmpty()) {
+//                    v.getCauses().removeAll(toDelete);
+//                }
+//            }
+//            user.getMind().getTValues().update();
+//            waiters.remove(d);
+//            cache.delete(id);
+    }
+
+//    public void delete(long id) throws IOException, ClassNotFoundException {
+//        Domain d = get(id);
+//        if (d != null) {
+//            for (TVariable t : d.getArguments().getTVariables(true)) {
+//                user.getMind().getTVars().delete(t.getId());
+//            }
+//            for (TValue v : user.getMind().getTValues()) {
+//                Set<Cause> toDelete = new HashSet<>();
+//                for (Cause c : v.getCauses()) {
+//                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
+//                        toDelete.add(c);
+//                    }
+//                }
+//                if (!toDelete.isEmpty()) {
+//                    v.getCauses().removeAll(toDelete);
+//                }
+//            }
+//            user.getMind().getTValues().update();
+//            waiters.remove(d);
+//            cache.delete(id);
+//        }
+//    }
 
     public void clear() throws IOException, ClassNotFoundException {
         if (user.getMind().getNext() != null) {

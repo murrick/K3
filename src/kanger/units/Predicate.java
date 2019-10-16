@@ -25,6 +25,8 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     private transient long nameId = -1;
 
+    private transient boolean deleted = false;
+
     public Predicate() {
     }
 
@@ -41,6 +43,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
         id = dis.readLong();
+        deleted = dis.readBoolean();
         nameId = dis.readLong();
         range = dis.readInt();
     }
@@ -48,6 +51,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public void writeExternal(ObjectOutput dos) throws IOException {
         dos.writeLong(id);
+        dos.writeBoolean(deleted);
         dos.writeLong(nameId);
         dos.writeInt(range);
     }
@@ -92,7 +96,7 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
         Set<Domain> set = new HashSet<>();
         for (long id : user.getMind().getRights().getDatabase(-1)) {
             Right r = user.getMind().getRights().get(id);
-            if (getId() == r.getDomain().getPredicateId()) {
+            if (!r.isDeleted() && getId() == r.getDomain().getPredicateId()) {
                 set.add(r.getDomain());
             }
         }
@@ -210,10 +214,10 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
 
     @Override
     public int getHash() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(nameId);
-        buffer.append(range);
-        return buffer.toString().hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
+        hash = 47 * hash + range;
+        return hash;
     }
 
     @Override
@@ -229,6 +233,16 @@ public class Predicate implements Externalizable, Identifiable<Predicate> {
     @Override
     public void setUser(User user) {
         this.user = user;
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    @Override
+    public void setDeleted() {
+        deleted = true;
     }
 
     @Override

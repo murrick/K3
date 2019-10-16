@@ -142,6 +142,8 @@ public class Mind {
     public void commit(Mind m) throws Exception {
         SortedSet vars = new TreeSet<>();
 
+        m.pack();
+
         user.setMind(this);
 
         terms.commit(m.getTerms(), vars);
@@ -229,12 +231,59 @@ public class Mind {
         functions.clear();
         fValues.clear();
 
+        update();
+
         solves.clear();
         values.clear();
 //        results.clear();
         hypotesis.clear();
         excluded.clear();
 
+    }
+
+    public void pack() throws IOException, ClassNotFoundException {
+
+        for (TValue v : user.getMind().getTValues()) {
+            Set<Cause> toDeleteC = new HashSet<>();
+            for (Cause c : v.getCauses()) {
+                if (c.getSrc().isDeleted() || c.getDst().isDeleted()) {
+                    toDeleteC.add(c);
+                }
+            }
+            if (!toDeleteC.isEmpty()) {
+                v.getCauses().removeAll(toDeleteC);
+            }
+        }
+
+        terms.pack();
+        predicates.pack();
+//        tValues.pack();
+        tVars.pack();
+        domains.pack();
+        rights.pack();
+        fValues.pack();
+        functions.pack();
+
+        for (TValue v : user.getMind().getTValues()) {
+            Set<Cause> toDeleteC = new HashSet<>();
+            for (Cause c : v.getCauses()) {
+                if (c.getSrc() == null || c.getDst() == null) {
+                    toDeleteC.add(c);
+                }
+            }
+            if (!toDeleteC.isEmpty()) {
+                v.getCauses().removeAll(toDeleteC);
+            }
+            if (v.getCauses().isEmpty()) {
+                tValues.delete(v);
+            }
+        }
+
+        tValues.pack();
+//        tValues.update();
+
+//        update();
+//        user.getMind().getTValues().update();
     }
 
 
@@ -362,7 +411,7 @@ public class Mind {
         linker.link(r, logging);
     }
 
-    public Boolean analise(Right right, boolean logging) throws Exception {
+    public Boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException {
         return analiser.analise(right, logging);
     }
 
@@ -380,6 +429,14 @@ public class Mind {
             pos = (int) t[1];
             String line = (String) t[0];
             m.compileLine(line, false);
+
+//            Mind x = new Mind(m);
+//            Object r = x.compileLine(line, false);
+//            if (r instanceof Right && ((Right) r).isDeleted()) {
+//                m.release(x);
+//            } else {
+//                m.commit(x);
+//            }
         }
 
         m.link(null, logging);
@@ -426,10 +483,29 @@ public class Mind {
             PTree p = Parser.parser(line.substring(1));
             r = new Compiler(user).compileLine(p, suc, orig, query);
         }
-
         return r;
     }
 
+    public Boolean delete(Right r) throws Exception {
+        rights.delete(r);
+        for (Right rx : rights) {
+            if (rx.isGenerated() && rx.getId() > r.getId()) {
+                rights.delete(rx);
+            }
+        }
+        pack();
+        tValues.clear();
+
+        link(null, true);
+        Boolean ar = analise(null, true);
+
+        if (ar) {
+            log.add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+        } else {
+            log.add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+        }
+        return ar;
+    }
 
     /**
      * Удаление правила из дерева вывода
@@ -791,7 +867,7 @@ public class Mind {
                         res = null;
                     } else {
                         appendResult(m, logging);
-                        m.getRights().delete(r.getId());
+                        m.getRights().delete(r);
                         commit(m);
 
 //                        excluded.commit(m.getHypotesisStore());
@@ -812,8 +888,17 @@ public class Mind {
 
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.ACCEPT);
-                Right r = (Right) m.compileLine(line, false);
 
+//                Mind x = new Mind(m);
+//                Right r = (Right) x.compileLine(line, false);
+//                if (r.isDeleted()) {
+//                    m.release(x);
+//                    r = null;
+//                } else {
+//                    m.commit(x);
+//                }
+
+                Right r = (Right) m.compileLine(line, false);
                 if (r != null) {
 //                    r.setQuery(true);
                     if (logging) {
@@ -1114,9 +1199,11 @@ public class Mind {
     private void appendResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {
 
         for (Right rx : mind.getRights()) {
-            if (rx.getId() >= getRights().getLastId()) {
-                if (!rx.isQuery()) {
+            if (rx.getId() > getRights().getLastId()) {
+                if (!rx.isDeleted() /*&& !rx.isQuery()*/ && rx.getDomain().getArguments().getCVariables(true).isEmpty()) {
                     mind.getSolutions().add(rx);
+                } else {
+                    getRights().delete(rx);
                 }
             } else {
                 break;
@@ -1129,15 +1216,16 @@ public class Mind {
             }
             int i = 0;
             for (Right r : mind.getSolutions().getRoot()) {
-                if (r.isGenerated()) {
+                if (r.isGenerated() && !r.isDeleted()) {
                     ArgList arg = r.getDomain().getArguments().convertBase();
                     r.getDomain().getArguments().clear();
                     r.getDomain().getArguments().addAll(arg);
                     r.setGenerated(false);
+                    r.setQuery(false);
                     if (logging) {
                         mind.getLog().add(LogMode.SOLVES, String.format("\tAppended %03d: %s", ++i, r.toString()));
                     }
-                } else {
+                } else if (!r.isDeleted()) {
                     if (logging) {
                         mind.getLog().add(LogMode.SOLVES, String.format("\t Skiped %03d: %s", ++i, r.toString()));
                     }
@@ -1148,6 +1236,7 @@ public class Mind {
                 mind.getLog().add(LogMode.ANALIZER, String.format("Result: No candidates to append"));
             }
         }
+        pack();
     }
 
     private void removeResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {
@@ -1157,18 +1246,19 @@ public class Mind {
             }
             int i = 0;
             for (Right r : mind.getSolutions().getRoot()) {
-                if (!r.isGenerated()) {
-                    getRights().delete(r.getId());
+                if (!r.isGenerated() && !r.isDeleted()) {
+                    getRights().delete(r);
                     if (logging) {
                         mind.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", ++i, r.toString()));
                     }
-                } else {
+                } else if (!r.isDeleted()) {
                     if (logging) {
                         mind.getLog().add(LogMode.SOLVES, String.format("\t Skiped %03d: %s", ++i, r.toString()));
                     }
                 }
             }
         }
+        pack();
     }
 
     private void logResult(Mind mind) {
@@ -1251,4 +1341,5 @@ public class Mind {
 
 
 //TODO: При use: 1) Путает имена переменных, 2) Добавляет в результат %%, 3) Выводит море кривых гипотез
-
+//TODO: +@x @y ($z parent(z,x), parent(z,y), x != y) -> native(x,y);
+//TODO: -$x $y native(x,y);
