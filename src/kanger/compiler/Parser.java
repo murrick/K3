@@ -101,10 +101,18 @@ public class Parser {
         }
 
         while (true) {
+            if (pos >= ln.length()) {
+                return null;
+            }
             ch = ln.charAt(pos);
             while (pos < ln.length() && isDelimiter(ch = ln.charAt(pos++))) ;
             if (pos >= ln.length()) {
-                return null;
+                if (ch == '?') {
+                    line += (char) ch;
+                    return new Object[]{line, pos};
+                } else {
+                    return null;
+                }
             }
             c = ln.charAt(pos++);
 

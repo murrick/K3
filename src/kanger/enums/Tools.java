@@ -226,8 +226,9 @@ public abstract class Tools {
             }
             if (line.length() < pos || (line.length() != 1 && line.charAt(pos) != Enums.EOLN)) {
                 throw new ParseErrorException(pos, ParseError.EOLN);
+            } else if (line.length() > 1) {
+                ++pos;
             }
-            ++pos;
         }
         String s = line.substring(start, pos);
         return new Object[]{s, pos};

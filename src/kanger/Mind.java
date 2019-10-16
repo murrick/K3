@@ -486,6 +486,7 @@ public class Mind {
         return r;
     }
 
+
     public Boolean delete(Right r) throws Exception {
         rights.delete(r);
         for (Right rx : rights) {
@@ -990,6 +991,24 @@ public class Mind {
                     Mind m = new Mind(this);
                     m.setQueryPass(QueryPass.CHECK);
 
+                    boolean found = false;
+                    for (Right rx : rights) {
+                        if (rx.isGenerated()) {
+                            if (logging) {
+                                m.getLog().add(LogMode.STORAGE, "Delete produced right: " + String.format("%03d: %s", rx.getId(), rx));
+                            }
+                            rights.delete(rx);
+                            found = true;
+                        }
+                    }
+                    if (found) {
+                        pack();
+                        tValues.clear();
+                        if (logging) {
+                            m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
+                        }
+                    }
+
                     m.link(null, logging);
                     Boolean ar = m.analise(null, logging);
 
@@ -1003,7 +1022,7 @@ public class Mind {
                         if (logging) {
                             m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
                         }
-                        release(m);
+                        commit(m);
 //                        commit(m);
 //                        excluded.clear();
 //                        excluded.commit(m.getHypotesisStore());
