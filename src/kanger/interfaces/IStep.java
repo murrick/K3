@@ -29,9 +29,9 @@ public interface IStep {
 
     void append() throws IOException;
 
-    Object getBase();
+    IBase getBase();
 
-    void setBase(Object base);
+    void setBase(IBase base);
 
     void delete() throws IOException;
 

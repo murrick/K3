@@ -2,7 +2,7 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.Cause;
 
 import java.io.Externalizable;
@@ -19,7 +19,7 @@ import java.util.Set;
  * <p>
  * Список правил
  */
-public class Right implements Externalizable, Identifiable<Right> {
+public class Right implements Externalizable, IUnit<Right> {
 
     private static final long serialVersionUID = 196402070007L;
 

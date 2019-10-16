@@ -2,7 +2,7 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.Cause;
 
 import java.io.Externalizable;
@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 13.12.16.
  */
-public class TValue implements Comparable<TValue>, Externalizable, Identifiable<TValue> {
+public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue> {
 
     private static final long serialVersionUID = 196402070009L;
 

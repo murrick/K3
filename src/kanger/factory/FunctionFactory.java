@@ -4,7 +4,7 @@ import kanger.User;
 import kanger.calculator.Calculator;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.storage.Escalera;
@@ -138,12 +138,12 @@ public class FunctionFactory implements Iterable<Function> {
     public void pack() throws IOException, ClassNotFoundException {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((Identifiable) o).isDeleted()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }
         for (Object o : toDelete) {
-            cache.delete(((Identifiable) o).getId());
+            cache.delete(((IUnit) o).getId());
         }
         update();
 

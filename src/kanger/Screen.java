@@ -9,7 +9,7 @@ import kanger.enums.LibMode;
 import kanger.enums.LogMode;
 import kanger.enums.Tools;
 import kanger.exception.ParseErrorException;
-import kanger.interfaces.Reactor;
+import kanger.interfaces.IReactor;
 import kanger.primitives.Cause;
 import kanger.primitives.Hypotese;
 import kanger.primitives.LogEntry;
@@ -261,7 +261,7 @@ public class Screen {
                                 System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
                                 String s = new Scanner(System.in).nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                    user.reindex(new Reactor() {
+                                    user.reindex(new IReactor() {
                                         @Override
                                         public Object run(Object o) {
                                             System.out.println("Processing " + o);

@@ -3,7 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.storage.Escalera;
 import kanger.units.TValue;
 import kanger.units.TVariable;
@@ -110,7 +110,7 @@ public class TValueFactory implements Iterable<TValue> {
     public TValue find(TVariable tv, Term v) throws IOException, ClassNotFoundException {
         TValue temp = new TValue(tv, v);
         for (long id : cache.find(temp.getHash())) {
-            Identifiable one = load(id);
+            IUnit one = load(id);
             if (one.equalsTo(temp)) {
                 return (TValue) one;
             }
@@ -139,12 +139,12 @@ public class TValueFactory implements Iterable<TValue> {
     public void pack() throws IOException, ClassNotFoundException {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((Identifiable) o).isDeleted()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }
         for (Object o : toDelete) {
-            cache.delete(((Identifiable) o).getId());
+            cache.delete(((IUnit) o).getId());
             if (current.containsKey(((TValue) o).getTVar()) && current.get(((TValue) o).getTVar()).getId() == ((TValue) o).getId()) {
                 current.remove(((TValue) o).getTVar());
             }
@@ -253,7 +253,7 @@ public class TValueFactory implements Iterable<TValue> {
         }
 
         @Override
-        public Identifiable next() {
+        public IUnit next() {
             return next;
         }
     }

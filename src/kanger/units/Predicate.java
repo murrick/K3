@@ -1,7 +1,7 @@
 package kanger.units;
 
 import kanger.User;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
-public class Predicate implements Externalizable, Identifiable<Predicate> {
+public class Predicate implements Externalizable, IUnit<Predicate> {
 
     private static final long serialVersionUID = 196402070004L;
 

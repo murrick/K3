@@ -6,7 +6,7 @@ import java.util.Set;
 
 public interface ICache extends Iterable {
 
-    void add(Identifiable one) throws IOException, ClassNotFoundException;
+    void add(IUnit one) throws IOException, ClassNotFoundException;
 
     void add(long id, Object one) throws IOException;
 

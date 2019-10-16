@@ -2,7 +2,7 @@ package kanger.units;
 
 import kanger.User;
 import kanger.enums.Enums;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.io.ObjectOutput;
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable implements Comparable<Object>, Externalizable, Identifiable<TVariable> {
+public class TVariable implements Comparable<Object>, Externalizable, IUnit<TVariable> {
 
     private static final long serialVersionUID = 196402070010L;
 

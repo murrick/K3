@@ -3,7 +3,7 @@ package kanger.storage;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 
 import java.io.IOException;
 import java.util.*;
@@ -37,7 +37,7 @@ public class Escalera implements ICache {
 
 
     @Override
-    public void add(Identifiable one) throws IOException, ClassNotFoundException {
+    public void add(IUnit one) throws IOException, ClassNotFoundException {
         Step s = new Step();
         s.setData(one);
         s.setId(one.getId());

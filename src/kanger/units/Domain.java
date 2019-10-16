@@ -4,7 +4,7 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.Cause;
@@ -20,7 +20,7 @@ import java.util.*;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Domain implements Externalizable, Identifiable<Domain> {
+public class Domain implements Externalizable, IUnit<Domain> {
 
     private static final long serialVersionUID = 196402070001L;
 

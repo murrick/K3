@@ -3,7 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.storage.Escalera;
@@ -122,7 +122,7 @@ public class DomainFactory implements Iterable<Domain> {
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException {
         Domain temp = new Domain(pred, antc, arg, r);
         for (long id : cache.find(temp.getHash())) {
-            Identifiable one = load(id);
+            IUnit one = load(id);
             if (one.equalsTo(temp)) {
                 return (Domain) one;
             }
@@ -151,13 +151,13 @@ public class DomainFactory implements Iterable<Domain> {
     public void pack() throws IOException, ClassNotFoundException {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((Identifiable) o).isDeleted()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }
         for (Object o : toDelete) {
             waiters.remove(o);
-            cache.delete(((Identifiable) o).getId());
+            cache.delete(((IUnit) o).getId());
         }
         update();
 

@@ -1,7 +1,7 @@
 package kanger.stores;
 
 import kanger.User;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.units.TValue;
@@ -34,7 +34,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
     public void add(Collection<TValue> raw) {
         if (!raw.isEmpty()) {
             ArgList row = new ArgList();
-            for (Identifiable one : raw) {
+            for (IUnit one : raw) {
                 row.add(new Argument(one));
             }
             if (!root.contains(row)) {

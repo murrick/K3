@@ -3,7 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
 import kanger.storage.Escalera;
 import kanger.units.*;
@@ -298,13 +298,13 @@ public class RightFactory implements Iterable<Right> {
     public void pack() throws IOException, ClassNotFoundException {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((Identifiable) o).isDeleted()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }
         for (Object o : toDelete) {
-            cache.delete(((Identifiable) o).getId());
-            stored.delete(((Identifiable) o).getId());
+            cache.delete(((IUnit) o).getId());
+            stored.delete(((IUnit) o).getId());
         }
         update();
 

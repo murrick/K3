@@ -2,7 +2,7 @@ package kanger.primitives;
 
 import kanger.User;
 import kanger.enums.ArgumentType;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.units.*;
 
 import java.io.Externalizable;
@@ -17,7 +17,7 @@ import java.io.ObjectOutput;
  */
 public class Argument implements Externalizable {
 
-    private Identifiable o = null;
+    private IUnit o = null;
 
     private transient long id = -1;
     private transient ArgumentType type = ArgumentType.EMPTY;
@@ -26,7 +26,7 @@ public class Argument implements Externalizable {
     public Argument() {
     }
 
-    public Argument(Identifiable d) {
+    public Argument(IUnit d) {
         o = d;
         if (o != null) {
             id = o.getId();
@@ -133,7 +133,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    private Identifiable getO() throws IOException, ClassNotFoundException {
+    private IUnit getO() throws IOException, ClassNotFoundException {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
             load(user);
         }

@@ -3,7 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.storage.Escalera;
 import kanger.units.Predicate;
 import kanger.units.Term;
@@ -93,7 +93,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     public Predicate find(Term line, int range) throws Exception {
         Predicate temp = new Predicate(line, range);
         for (long id : cache.find(temp.getHash())) {
-            Identifiable one = load(id);
+            IUnit one = load(id);
             if (one.equalsTo(temp)) {
                 return (Predicate) one;
             }

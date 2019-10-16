@@ -5,7 +5,7 @@ import kanger.compiler.PTree;
 import kanger.enums.DataType;
 import kanger.enums.Enums;
 import kanger.enums.Tools;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 
@@ -24,7 +24,7 @@ import java.util.List;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Object>, Externalizable, Identifiable<Term> {
+public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
 
     public static final double FLT_EPSILON = 0.00000000001;
 

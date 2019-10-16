@@ -4,7 +4,7 @@ import kanger.User;
 import kanger.enums.Enums;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.storage.Escalera;
 import kanger.units.Right;
 import kanger.units.Term;
@@ -129,7 +129,7 @@ public class DictionaryFactory implements Iterable<Term> {
     public Term find(Object o) throws IOException, ClassNotFoundException {
         Term t = new Term(o, user);
         for (long id : cache.find(t.getHash())) {
-            Identifiable one = load(id);
+            IUnit one = load(id);
             if (one.equalsTo(t)) {
                 return (Term) one;
             }

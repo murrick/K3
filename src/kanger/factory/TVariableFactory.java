@@ -3,7 +3,7 @@ package kanger.factory;
 import kanger.User;
 import kanger.interfaces.ICache;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import kanger.storage.Escalera;
 import kanger.units.Right;
 import kanger.units.TValue;
@@ -122,12 +122,12 @@ public class TVariableFactory implements Iterable<TVariable> {
     public void pack() throws IOException, ClassNotFoundException {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((Identifiable) o).isDeleted()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }
         for (Object o : toDelete) {
-            cache.delete(((Identifiable) o).getId());
+            cache.delete(((IUnit) o).getId());
             user.getMind().getTValues().getCurrent().remove(o);
         }
         update();

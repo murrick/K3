@@ -2,7 +2,7 @@ package kanger.storage;
 
 import kanger.User;
 import kanger.interfaces.IStep;
-import kanger.interfaces.Identifiable;
+import kanger.interfaces.IUnit;
 import org.cojen.tupl.Cursor;
 import org.cojen.tupl.Index;
 
@@ -10,7 +10,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Base {
+public class Base implements kanger.interfaces.IBase {
 
     protected Index index;
     private Map<Long, IStep> cache = new HashMap<>();
@@ -47,6 +47,7 @@ public class Base {
         }
     }
 
+    @Override
     public void add(Sapato one) throws IOException {
         index.store(null, fromObject(one.getId()), fromObject(one));
 //        int h = one.getHash();
@@ -58,10 +59,12 @@ public class Base {
 //        hash.store(null, fromObject(h), fromObject(set));
     }
 
+    @Override
     public void update(Sapato one) throws IOException {
         index.store(null, fromObject(one.getId()), fromObject(one));
     }
 
+    @Override
     public IStep get(long id) throws IOException, ClassNotFoundException {
         if (cache.containsKey(id)) {
             return cache.get(id);
@@ -70,8 +73,8 @@ public class Base {
             IStep step = (IStep) toObject(o);
             if (step != null) {
                 cache.put(id, step);
-                if (step.getData() instanceof Identifiable) {
-                    ((Identifiable) step.getData()).setUser(user);
+                if (step.getData() instanceof IUnit) {
+                    ((IUnit) step.getData()).setUser(user);
                 }
 //                    try {
 //                        ((Identifiable) step.getData()).linkExternal(user);
@@ -85,14 +88,17 @@ public class Base {
         }
     }
 
+    @Override
     public int size() throws IOException {
         return (int) (index.count(null, null));
     }
 
+    @Override
     public void clearCache() {
         cache.clear();
     }
 
+    @Override
     public boolean isEmpty() {
         try {
             return size() == 0;
@@ -102,6 +108,7 @@ public class Base {
         }
     }
 
+    @Override
     public void delete(long id) throws IOException {
         Object one = index.load(null, fromObject(id));
         if (one != null) {
@@ -109,6 +116,7 @@ public class Base {
         }
     }
 
+    @Override
     public void clear() throws IOException, ClassNotFoundException {
         while (size() > 0) {
             Cursor c = index.newCursor(null);
@@ -121,10 +129,12 @@ public class Base {
         cache.clear();
     }
 
+    @Override
     public boolean containsKey(long id) throws IOException {
         return index.load(null, fromObject(id)) != null;
     }
 
+    @Override
     public IStep getRoot() {
         try {
             if (isEmpty()) {
@@ -142,6 +152,7 @@ public class Base {
         }
     }
 
+    @Override
     public IStep getTop() {
         try {
             if (isEmpty()) {

@@ -1,5 +1,6 @@
 package kanger.storage;
 
+import kanger.interfaces.IBase;
 import kanger.interfaces.IStep;
 
 import java.io.Externalizable;
@@ -17,12 +18,12 @@ public class Sapato implements IStep, Externalizable {
     private long id = -1;
     private int hash = 0;
 
-    private Base base = null;
+    private IBase base = null;
 
     public Sapato() {
     }
 
-    public Sapato(Base base, IStep c) {
+    public Sapato(IBase base, IStep c) {
         this.base = base;
         this.data = c.getData();
         this.next = c.getNext() == null ? -1 : c.getNext().getId();
@@ -121,13 +122,13 @@ public class Sapato implements IStep, Externalizable {
 
 
     @Override
-    public Base getBase() {
+    public IBase getBase() {
         return base;
     }
 
     @Override
-    public void setBase(Object base) {
-        this.base = (Base) base;
+    public void setBase(IBase base) {
+        this.base = base;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package kanger.storage;
 
+import kanger.interfaces.IBase;
 import kanger.interfaces.IStep;
 
 import java.io.IOException;
@@ -72,12 +73,12 @@ public class Step implements IStep {
     }
 
     @Override
-    public Object getBase() {
+    public IBase getBase() {
         return null;
     }
 
     @Override
-    public void setBase(Object base) {
+    public void setBase(IBase base) {
 
     }
 

@@ -1,7 +1,8 @@
 package kanger;
 
 import kanger.factory.*;
-import kanger.interfaces.Reactor;
+import kanger.interfaces.IBase;
+import kanger.interfaces.IReactor;
 import kanger.storage.Base;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.DatabaseConfig;
@@ -15,7 +16,7 @@ import java.util.Map;
 public class User {
 
     private Mind mind = null;
-    private Map<String, Base> storage = new HashMap<>();
+    private Map<String, IBase> storage = new HashMap<>();
     private String storageName = "";
     private Database db = null;
 
@@ -23,7 +24,7 @@ public class User {
             .minCacheSize(100_000_000)
             .durabilityMode(DurabilityMode.NO_FLUSH);
 
-    public User() throws IOException {
+    public User() {
     }
 
     public void use(String name) throws Exception {
@@ -72,7 +73,7 @@ public class User {
 
     public void close() throws Exception {
         if (db != null) {
-            for (Map.Entry<String, Base> e : storage.entrySet()) {
+            for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 if (e.getValue().getRoot() != null) {
                     if (e.getValue().getRoot().getPrev() != null) {
                         e.getValue().getRoot().getPrev().setNext(null);
@@ -92,16 +93,16 @@ public class User {
 
     public void remove() throws IOException {
         if (!isClosed()) {
-            for (Map.Entry<String, Base> e : storage.entrySet()) {
+            for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 //TODO: Удаление БД
             }
         }
     }
 
-    public void reindex(Reactor reactor) throws Exception {
+    public void reindex(IReactor IReactor) throws Exception {
         if (!isClosed()) {
-            for (Map.Entry<String, Base> e : storage.entrySet()) {
-                reactor.run(e.getKey());
+            for (Map.Entry<String, IBase> e : storage.entrySet()) {
+                IReactor.run(e.getKey());
                 //TODO: Переиндексация БД
             }
             use(storageName);
@@ -111,7 +112,7 @@ public class User {
 
     public void clear() throws Exception {
         if (!isClosed()) {
-            for (Map.Entry<String, Base> e : storage.entrySet()) {
+            for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
             }
             flush();
@@ -134,7 +135,7 @@ public class User {
         return db == null;
     }
 
-    public Base getStorage(String schema) {
+    public IBase getStorage(String schema) {
         return storage.get(schema);
     }
 

@@ -5,7 +5,7 @@ import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
 import kanger.enums.Tools;
-import kanger.interfaces.Reactor;
+import kanger.interfaces.IReactor;
 import kanger.primitives.ArgList;
 import kanger.units.Function;
 import kanger.units.Term;
@@ -28,7 +28,7 @@ public class Functions {
 
         /// Арифметика
         {
-            put("_inc(1)", new SysOp(LibMode.FUNCTION, "_inc", 1, new Reactor() {
+            put("_inc(1)", new SysOp(LibMode.FUNCTION, "_inc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -54,7 +54,7 @@ public class Functions {
         }
 
         {
-            put("_dec(1)", new SysOp(LibMode.FUNCTION, "_dec", 1, new Reactor() {
+            put("_dec(1)", new SysOp(LibMode.FUNCTION, "_dec", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -79,7 +79,7 @@ public class Functions {
         }
 
         {
-            put("_bitnot(1)", new SysOp(LibMode.FUNCTION, "_bitnot", 1, new Reactor() {
+            put("_bitnot(1)", new SysOp(LibMode.FUNCTION, "_bitnot", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -104,7 +104,7 @@ public class Functions {
         }
 
         {
-            put("_neg(1)", new SysOp(LibMode.FUNCTION, "_neg", 1, new Reactor() {
+            put("_neg(1)", new SysOp(LibMode.FUNCTION, "_neg", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -129,7 +129,7 @@ public class Functions {
         }
 
         {
-            put("_val(1)", new SysOp(LibMode.FUNCTION, "_val", 1, new Reactor() {
+            put("_val(1)", new SysOp(LibMode.FUNCTION, "_val", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -154,7 +154,7 @@ public class Functions {
         }
 
         {
-            put("_add(2)", new SysOp(LibMode.FUNCTION, "_add", 2, new Reactor() {
+            put("_add(2)", new SysOp(LibMode.FUNCTION, "_add", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -185,7 +185,7 @@ public class Functions {
         }
 
         {
-            put("_sub(2)", new SysOp(LibMode.FUNCTION, "_sub", 2, new Reactor() {
+            put("_sub(2)", new SysOp(LibMode.FUNCTION, "_sub", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -216,7 +216,7 @@ public class Functions {
         }
 
         {
-            put("_mul(2)", new SysOp(LibMode.FUNCTION, "_mul", 2, new Reactor() {
+            put("_mul(2)", new SysOp(LibMode.FUNCTION, "_mul", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -246,7 +246,7 @@ public class Functions {
         }
 
         {
-            put("_div(2)", new SysOp(LibMode.FUNCTION, "_div", 2, new Reactor() {
+            put("_div(2)", new SysOp(LibMode.FUNCTION, "_div", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -276,7 +276,7 @@ public class Functions {
         }
 
         {
-            put("_rem(2)", new SysOp(LibMode.FUNCTION, "_rem", 2, new Reactor() {
+            put("_rem(2)", new SysOp(LibMode.FUNCTION, "_rem", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -298,7 +298,7 @@ public class Functions {
         }
 
         {
-            put("_iv(2)", new SysOp(LibMode.FUNCTION, "_iv", 2, new Reactor() {
+            put("_iv(2)", new SysOp(LibMode.FUNCTION, "_iv", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -333,7 +333,7 @@ public class Functions {
         }
 
         {
-            put("_bitleft(2)", new SysOp(LibMode.FUNCTION, "_bitleft", 2, new Reactor() {
+            put("_bitleft(2)", new SysOp(LibMode.FUNCTION, "_bitleft", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -359,7 +359,7 @@ public class Functions {
         }
 
         {
-            put("_bitright(2)", new SysOp(LibMode.FUNCTION, "_bitright", 2, new Reactor() {
+            put("_bitright(2)", new SysOp(LibMode.FUNCTION, "_bitright", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -385,7 +385,7 @@ public class Functions {
         }
 
         {
-            put("_bitxor(2)", new SysOp(LibMode.FUNCTION, "_bitxor", 2, new Reactor() {
+            put("_bitxor(2)", new SysOp(LibMode.FUNCTION, "_bitxor", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -411,7 +411,7 @@ public class Functions {
         }
 
         {
-            put("_bitand(2)", new SysOp(LibMode.FUNCTION, "_bitand", 2, new Reactor() {
+            put("_bitand(2)", new SysOp(LibMode.FUNCTION, "_bitand", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -433,7 +433,7 @@ public class Functions {
         }
 
         {
-            put("_bitor(2)", new SysOp(LibMode.FUNCTION, "_bitor", 2, new Reactor() {
+            put("_bitor(2)", new SysOp(LibMode.FUNCTION, "_bitor", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -463,7 +463,7 @@ public class Functions {
         }
 
         {
-            put("log(1)", new SysOp(LibMode.FUNCTION, "log", 1, new Reactor() {
+            put("log(1)", new SysOp(LibMode.FUNCTION, "log", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -489,7 +489,7 @@ public class Functions {
         }
 
         {
-            put("exp(1)", new SysOp(LibMode.FUNCTION, "exp", 1, new Reactor() {
+            put("exp(1)", new SysOp(LibMode.FUNCTION, "exp", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -515,7 +515,7 @@ public class Functions {
         }
 
         {
-            put("pi(0)", new SysOp(LibMode.FUNCTION, "pi", 0, new Reactor() {
+            put("pi(0)", new SysOp(LibMode.FUNCTION, "pi", 0, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;
@@ -528,7 +528,7 @@ public class Functions {
         }
 
         {
-            put("sin(1)", new SysOp(LibMode.FUNCTION, "sin", 1, new Reactor() {
+            put("sin(1)", new SysOp(LibMode.FUNCTION, "sin", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -555,7 +555,7 @@ public class Functions {
         }
 
         {
-            put("asin(1)", new SysOp(LibMode.FUNCTION, "asin", 1, new Reactor() {
+            put("asin(1)", new SysOp(LibMode.FUNCTION, "asin", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -583,7 +583,7 @@ public class Functions {
         }
 
         {
-            put("cos(1)", new SysOp(LibMode.FUNCTION, "cos", 1, new Reactor() {
+            put("cos(1)", new SysOp(LibMode.FUNCTION, "cos", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -611,7 +611,7 @@ public class Functions {
         }
 
         {
-            put("acos(1)", new SysOp(LibMode.FUNCTION, "acos", 1, new Reactor() {
+            put("acos(1)", new SysOp(LibMode.FUNCTION, "acos", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -639,7 +639,7 @@ public class Functions {
         }
 
         {
-            put("tan(1)", new SysOp(LibMode.FUNCTION, "tan", 1, new Reactor() {
+            put("tan(1)", new SysOp(LibMode.FUNCTION, "tan", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -667,7 +667,7 @@ public class Functions {
         }
 
         {
-            put("atan(1)", new SysOp(LibMode.FUNCTION, "atan", 1, new Reactor() {
+            put("atan(1)", new SysOp(LibMode.FUNCTION, "atan", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -695,7 +695,7 @@ public class Functions {
         }
 
         {
-            put("int(1)", new SysOp(LibMode.FUNCTION, "int", 1, new Reactor() {
+            put("int(1)", new SysOp(LibMode.FUNCTION, "int", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -717,7 +717,7 @@ public class Functions {
         }
 
         {
-            put("round(2)", new SysOp(LibMode.FUNCTION, "round", 2, new Reactor() {
+            put("round(2)", new SysOp(LibMode.FUNCTION, "round", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -739,7 +739,7 @@ public class Functions {
         }
 
         {
-            put("round(1)", new SysOp(LibMode.FUNCTION, "round", 1, new Reactor() {
+            put("round(1)", new SysOp(LibMode.FUNCTION, "round", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -762,7 +762,7 @@ public class Functions {
         }
 
         {
-            put("sqrt(1)", new SysOp(LibMode.FUNCTION, "sqrt", 1, new Reactor() {
+            put("sqrt(1)", new SysOp(LibMode.FUNCTION, "sqrt", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -788,7 +788,7 @@ public class Functions {
         }
 
         {
-            put("pow(2)", new SysOp(LibMode.FUNCTION, "pow", 2, new Reactor() {
+            put("pow(2)", new SysOp(LibMode.FUNCTION, "pow", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -816,7 +816,7 @@ public class Functions {
         }
 
         {
-            put("root(2)", new SysOp(LibMode.FUNCTION, "root", 2, new Reactor() {
+            put("root(2)", new SysOp(LibMode.FUNCTION, "root", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -846,7 +846,7 @@ public class Functions {
         // String functions
         /// Строковые функции
         {
-            put("strlen(1)", new SysOp(LibMode.FUNCTION, "strlen", 1, new Reactor() {
+            put("strlen(1)", new SysOp(LibMode.FUNCTION, "strlen", 1, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
@@ -872,7 +872,7 @@ public class Functions {
         }
 
         {
-            put("mid(2)", new SysOp(LibMode.FUNCTION, "mid", 2, new Reactor() {
+            put("mid(2)", new SysOp(LibMode.FUNCTION, "mid", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
@@ -906,7 +906,7 @@ public class Functions {
         }
 
         {
-            put("mid(3)", new SysOp(LibMode.FUNCTION, "mid", 3, new Reactor() {
+            put("mid(3)", new SysOp(LibMode.FUNCTION, "mid", 3, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
@@ -950,7 +950,7 @@ public class Functions {
         }
 
         {
-            put("left(2)", new SysOp(LibMode.FUNCTION, "left", 2, new Reactor() {
+            put("left(2)", new SysOp(LibMode.FUNCTION, "left", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
@@ -984,7 +984,7 @@ public class Functions {
         }
 
         {
-            put("right(2)", new SysOp(LibMode.FUNCTION, "right", 2, new Reactor() {
+            put("right(2)", new SysOp(LibMode.FUNCTION, "right", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
@@ -1018,7 +1018,7 @@ public class Functions {
         }
 
         {
-            put("trim(1)", new SysOp(LibMode.FUNCTION, "trim", 1, new Reactor() {
+            put("trim(1)", new SysOp(LibMode.FUNCTION, "trim", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -1043,7 +1043,7 @@ public class Functions {
         }
 
         {
-            put("uc(1)", new SysOp(LibMode.FUNCTION, "uc", 1, new Reactor() {
+            put("uc(1)", new SysOp(LibMode.FUNCTION, "uc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -1068,7 +1068,7 @@ public class Functions {
         }
 
         {
-            put("lc(1)", new SysOp(LibMode.FUNCTION, "lc", 1, new Reactor() {
+            put("lc(1)", new SysOp(LibMode.FUNCTION, "lc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -1093,7 +1093,7 @@ public class Functions {
         }
 
         {
-            put("at(2)", new SysOp(LibMode.FUNCTION, "at", 2, new Reactor() {
+            put("at(2)", new SysOp(LibMode.FUNCTION, "at", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
@@ -1127,7 +1127,7 @@ public class Functions {
         }
 
         {
-            put("replace(3)", new SysOp(LibMode.FUNCTION, "replace", 3, new Reactor() {
+            put("replace(3)", new SysOp(LibMode.FUNCTION, "replace", 3, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -1158,7 +1158,7 @@ public class Functions {
         }
 
         {
-            put("chr(1)", new SysOp(LibMode.FUNCTION, "chr", 1, new Reactor() {
+            put("chr(1)", new SysOp(LibMode.FUNCTION, "chr", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -1187,7 +1187,7 @@ public class Functions {
         }
 
         {
-            put("asc(1)", new SysOp(LibMode.FUNCTION, "asc", 1, new Reactor() {
+            put("asc(1)", new SysOp(LibMode.FUNCTION, "asc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
@@ -1217,7 +1217,7 @@ public class Functions {
 
         ////////// дата и время
         {
-            put("now(0)", new SysOp(LibMode.FUNCTION, "now", 0, new Reactor() {
+            put("now(0)", new SysOp(LibMode.FUNCTION, "now", 0, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;
@@ -1231,7 +1231,7 @@ public class Functions {
 
         ////////// разное
         {
-            put("type(1)", new SysOp(LibMode.FUNCTION, "type", 1, new Reactor() {
+            put("type(1)", new SysOp(LibMode.FUNCTION, "type", 1, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;

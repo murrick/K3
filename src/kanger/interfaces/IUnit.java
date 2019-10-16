@@ -4,7 +4,7 @@ import kanger.User;
 
 import java.io.IOException;
 
-public interface Identifiable<T> {
+public interface IUnit<T> {
 
     long getId();
 

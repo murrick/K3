@@ -4,7 +4,7 @@ package kanger;
 import kanger.calculator.Calculator;
 import kanger.enums.Enums;
 import kanger.enums.LogMode;
-import kanger.interfaces.Reactor;
+import kanger.interfaces.IReactor;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
 import kanger.primitives.Cause;
@@ -186,7 +186,7 @@ public class Linker {
 //                        tvars.addAll(d.getArguments().getTVariables(true));
 //                    }
 
-                    rotateVariables(tvars, logging, new Reactor() {
+                    rotateVariables(tvars, logging, new IReactor() {
                         @Override
                         public Object run(Object o) {
                             boolean result = false;
@@ -289,7 +289,7 @@ public class Linker {
 
     }
 
-    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, Reactor runnable) throws Exception {
+    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, IReactor runnable) throws Exception {
         boolean result = false;
 //        if (tvars == null) {
 //            tvars = new TreeSet<>();
