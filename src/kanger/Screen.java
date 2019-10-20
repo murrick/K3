@@ -653,12 +653,12 @@ public class Screen {
 
     public static void showFunctions(Mind mind, boolean showSys) {
 
-        if (mind.getLibrary().getRoot() != null) {
-            System.out.printf("Defined functions:\n");
+        if (!mind.getLibrary().isEmpty()) {
+            System.out.printf("Defined functions (%d):\n", mind.getLibrary().size());
             int i = 0;
-            for (SysOp op : mind.getLibrary().getRoot().values()) {
+            for (SysOp op : mind.getLibrary()) {
                 if (op.getMode() == LibMode.FUNCTION) {
-                    System.out.printf("Function %03d: %s;\n", ++i, op.toString());
+                    System.out.printf("Function %03d: %s;\n", op.getId(), op.toString());
                     if (showSys && !op.getScripts().isEmpty()) {
                         for (String s : op.asString().split("\n")) {
                             System.out.printf("\t%s\n", s);

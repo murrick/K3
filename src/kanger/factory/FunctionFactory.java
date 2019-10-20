@@ -49,7 +49,7 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
-    public void commit(FunctionFactory base) throws Exception {
+    public void commit(FunctionFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             lastId = cache.getRoot().getId() + 1;
@@ -58,18 +58,6 @@ public class FunctionFactory implements Iterable<Function> {
                 firstId = cache.getTop().getId();
             }
         }
-//
-//        List<Function> list = new ArrayList();
-//        for (Object p : base.cache) {
-//            if (((Identifiable) p).getId() < base.firstId) {
-//                break;
-//            }
-//            list.add(0, (Function) p);
-//        }
-//        for (Function p : list) {
-//            p.setId(lastId++);
-//            cache.add(p);
-//        }
     }
 
     public void update() throws IOException {

@@ -793,13 +793,22 @@ public class Linker {
     public boolean calcFunctions(List<Domain> master, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
         boolean result = false;
 
+        for (Domain d : master) {
+            for (Function f : d.getArguments().getFunctions()) {
+                if (f.isCalculable() && f.isEmpty()) {
+                    if (new Calculator(user).calculate(f, logging)) {
+//                        result = true;
+                    }
+                }
+            }
+        }
+
         if (checkSystem(master, logging)) {
             for (Domain d : master) {
                 for (Function f : d.getArguments().getFunctions()) {
                     if (f.isCalculable() && f.isEmpty()) {
                         if (new Calculator(user).calculate(f, logging)) {
                             result = true;
-
                         }
                     }
                 }

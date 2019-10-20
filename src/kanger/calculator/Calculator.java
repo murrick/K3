@@ -78,7 +78,9 @@ public class Calculator {
     public int execute(Domain d) throws Exception {
         int k = -1;
         String n = d.getPredicate().getName() + "(" + d.getRange() + ")";
-        SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
+        SysOp op = predicates.getSysOps().get(n) != null
+                ? predicates.getSysOps().get(n)
+                : user.getMind().getLibrary().find(n);
         if (op != null) {
 
 //            for (Argument a : d.getArguments()) {
@@ -106,7 +108,9 @@ public class Calculator {
     public int execute(Function fu) throws Exception {
         int k = -1;
         String n = fu.getName() + "(" + fu.getRange() + ")";
-        SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
+        SysOp op = functions.getSysOps().get(n) != null
+                ? functions.getSysOps().get(n)
+                : user.getMind().getLibrary().find(n);
         if (op != null) {
 
             if (op.getRange() + 1 > fu.getArguments().size()) {
@@ -132,18 +136,22 @@ public class Calculator {
 
     public boolean exists(Predicate p) throws IOException, ClassNotFoundException {
         String n = p.getName() + "(" + p.getRange() + ")";
-        SysOp op = predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
+        SysOp op = predicates.getSysOps().get(n) != null
+                ? predicates.getSysOps().get(n)
+                : user.getMind().getLibrary().find(n);
         return op != null && op.getMode() == LibMode.PREDICATE;
     }
 
     public boolean exists(Function f) throws IOException, ClassNotFoundException {
         String n = f.getName() + "(" + f.getRange() + ")";
-        SysOp op = functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
+        SysOp op = functions.getSysOps().get(n) != null
+                ? functions.getSysOps().get(n)
+                : user.getMind().getLibrary().find(n);
         return op != null && functions.getSysOps().get(n).getMode() == LibMode.FUNCTION;
     }
 
 
-    private SysOp findOp(String n) {
+    private SysOp findOp(String n) throws IOException, ClassNotFoundException {
         if (predicates.getSysOps().containsKey(n))
             return predicates.getSysOps().get(n);
         else if (functions.getSysOps().containsKey(n))
@@ -193,9 +201,9 @@ public class Calculator {
 //        mind.getLibrary().add(op);
 //    }
 
-    public boolean unregister(String key) {
-        return user.getMind().getLibrary().remove(key);
-    }
+//    public boolean unregister(String key) {
+//        return user.getMind().getLibrary().remove(key);
+//    }
 
     public Functions getFunctions() {
         return functions;

@@ -34,11 +34,12 @@ public class Compiler {
         user.getMind().getRights().register(r);
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>());
         Right x = user.getMind().getRights().add(r);
-        if (x.getId() == r.getId()) {
+
+        if (!r.isDeleted()) {
             r.setQuery(query);
             user.getMind().getRights().expand(r);
         } else {
-            r = x;
+//            r = x;
         }
         return r;
     }

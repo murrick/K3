@@ -55,6 +55,7 @@ public class User {
         storage.put(RightFactory.SCHEMA_STORED, new Base(this, RightFactory.SCHEMA_STORED));
         storage.put(TValueFactory.SCHEMA, new Base(this, TValueFactory.SCHEMA));
         storage.put(TVariableFactory.SCHEMA, new Base(this, TVariableFactory.SCHEMA));
+        storage.put(LibraryFactory.SCHEMA, new Base(this, LibraryFactory.SCHEMA));
 
         while (mind.getNext() != null) {
             mind = mind.getNext();
@@ -68,6 +69,7 @@ public class User {
         mind.getRights().transaction(null);
         mind.getTValues().transaction(null);
         mind.getTVars().transaction(null);
+        mind.getLibrary().transaction(null);
 
     }
 

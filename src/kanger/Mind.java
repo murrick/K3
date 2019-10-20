@@ -13,7 +13,10 @@ import kanger.factory.*;
 import kanger.primitives.ArgList;
 import kanger.primitives.Cause;
 import kanger.primitives.Hypotese;
-import kanger.stores.*;
+import kanger.stores.HypotesisStore;
+import kanger.stores.LogStore;
+import kanger.stores.SolutionsStore;
+import kanger.stores.ValuesStore;
 import kanger.units.*;
 
 import java.io.IOException;
@@ -26,6 +29,7 @@ import java.util.*;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Mind {
+
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
 
     private int id = 0;
@@ -52,7 +56,7 @@ public class Mind {
     private Compiler compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
 
-    private LibraryStore library = null;                            // Системная библиотека функций и предикатов
+    private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
     private HypotesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private final Set<Long> usedTrees = new HashSet<>();
@@ -104,6 +108,7 @@ public class Mind {
         tValues.transaction(root.getTValues());
         functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
+        library.transaction(root.getLibrary());
 
         debugLevel = root.getDebugLevel();
 
@@ -123,7 +128,7 @@ public class Mind {
         functions = new FunctionFactory(user);                    // Функции
         fValues = new FValueFactory(user);                          // Решения функций
 
-        library = new LibraryStore(user);                            // Системная библиотека функций и предикатов
+        library = new LibraryFactory(user);                            // Пользовательсткая библиотека функций и предикатов
 
         hypotesis = new HypotesisStore(user);                                // Список гипотез
         excluded = new HypotesisStore(user);                                // Список исключенных гипотез
@@ -154,6 +159,7 @@ public class Mind {
         domains.commit(m.getDomains());
         rights.commit(m.getRights());
         functions.commit(m.getFunctions());
+        library.commit(m.getLibrary());
 
 //        log.commit(m.getLog());
 //        solves.commit(m.getSolutions());
@@ -189,6 +195,7 @@ public class Mind {
             domains.update();
             rights.update();
             functions.update();
+            library.update();
 
             user.flush();
         }
@@ -216,6 +223,7 @@ public class Mind {
         domains.unlink();
         rights.unlink();
         functions.unlink();
+        library.unlink();
 
         queryResult = (Boolean) m.getQueryResult();
 //        querySource = m.getQuerySource();
@@ -230,6 +238,7 @@ public class Mind {
         rights.clear();
         functions.clear();
         fValues.clear();
+        library.clear();
 
         update();
 
@@ -263,6 +272,7 @@ public class Mind {
         rights.pack();
         fValues.pack();
         functions.pack();
+        library.pack();
 
         for (TValue v : user.getMind().getTValues()) {
             Set<Cause> toDeleteC = new HashSet<>();
@@ -371,7 +381,7 @@ public class Mind {
         return functions;
     }
 
-    public LibraryStore getLibrary() {
+    public LibraryFactory getLibrary() {
         return library;
     }
 
@@ -428,15 +438,16 @@ public class Mind {
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
-            m.compileLine(line, false);
 
-//            Mind x = new Mind(m);
-//            Object r = x.compileLine(line, false);
-//            if (r instanceof Right && ((Right) r).isDeleted()) {
-//                m.release(x);
-//            } else {
-//                m.commit(x);
-//            }
+//            m.compileLine(line, false);
+
+            Mind x = new Mind(m);
+            Object r = x.compileLine(line, false);
+            if (r instanceof Right && ((Right) r).isDeleted()) {
+                m.release(x);
+            } else {
+                m.commit(x);
+            }
         }
 
         m.link(null, logging);
@@ -850,7 +861,7 @@ public class Mind {
                 line = invert(line);
 
                 Right r = (Right) m.compileLine(line, true);
-                if (r != null) {
+                if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
 
                     if (logging) {
@@ -877,6 +888,9 @@ public class Mind {
                     }
                     queryContext = m;
                 } else {
+                    if (logging && r != null && r.isDeleted()) {
+                        m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
+                    }
                     release(m);
                 }
             }
@@ -890,17 +904,8 @@ public class Mind {
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.ACCEPT);
 
-//                Mind x = new Mind(m);
-//                Right r = (Right) x.compileLine(line, false);
-//                if (r.isDeleted()) {
-//                    m.release(x);
-//                    r = null;
-//                } else {
-//                    m.commit(x);
-//                }
-
                 Right r = (Right) m.compileLine(line, false);
-                if (r != null) {
+                if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
                     if (logging) {
                         m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
@@ -935,6 +940,9 @@ public class Mind {
                     }
                     queryContext = m;
                 } else {
+                    if (logging && r != null && r.isDeleted()) {
+                        m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
+                    }
                     release(m);
                 }
             }
@@ -961,7 +969,7 @@ public class Mind {
                 }
                 line = invert(line);
                 Right r = (Right) m.compileLine(line, true);
-                if (r != null) {
+                if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
                     if (logging) {
                         m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
@@ -978,6 +986,8 @@ public class Mind {
                         }
                     }
                     queryContext = m;
+                } else if (logging && r != null && r.isDeleted()) {
+                    m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                 }
                 release(m);
             }
@@ -1095,7 +1105,7 @@ public class Mind {
                         }
 
                         Right r = (Right) m.compileLine(invert(line), true);
-                        if (r != null) {
+                        if (r != null && !r.isDeleted()) {
                             r.setQuery(true);
 
                             if (logging) {
@@ -1125,6 +1135,8 @@ public class Mind {
                                     hypotesis.commit(m.getHypotesisStore());
                                 }
                             }
+                        } else if (logging && r != null && r.isDeleted()) {
+                            m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                         }
                         release(m);
                     }
@@ -1138,7 +1150,7 @@ public class Mind {
                         }
 
                         Right r = (Right) m.compileLine(line, true);
-                        if (r != null) {
+                        if (r != null && !r.isDeleted()) {
                             r.setQuery(true);
                             if (logging) {
                                 m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
@@ -1173,6 +1185,8 @@ public class Mind {
                                 }
                             }
                             queryContext = m;
+                        } else if (logging && r != null && r.isDeleted()) {
+                            m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                         }
                         release(m);
 
@@ -1217,12 +1231,14 @@ public class Mind {
 
     private void appendResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {
 
+        boolean needPack = false;
         for (Right rx : mind.getRights()) {
             if (rx.getId() > getRights().getLastId()) {
                 if (!rx.isDeleted() /*&& !rx.isQuery()*/ && rx.getDomain().getArguments().getCVariables(true).isEmpty()) {
                     mind.getSolutions().add(rx);
                 } else {
                     getRights().delete(rx);
+                    needPack = true;
                 }
             } else {
                 break;
@@ -1255,10 +1271,13 @@ public class Mind {
                 mind.getLog().add(LogMode.ANALIZER, String.format("Result: No candidates to append"));
             }
         }
-        pack();
+        if (needPack) {
+            pack();
+        }
     }
 
     private void removeResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {
+        boolean needPack = false;
         if (mind.getSolutions().size() > 0) {
             if (logging) {
                 mind.getLog().add(LogMode.SOLVES, "Solves to delete (" + mind.getSolutions().size() + "):");
@@ -1267,6 +1286,7 @@ public class Mind {
             for (Right r : mind.getSolutions().getRoot()) {
                 if (!r.isGenerated() && !r.isDeleted()) {
                     getRights().delete(r);
+                    needPack = true;
                     if (logging) {
                         mind.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", ++i, r.toString()));
                     }
@@ -1277,7 +1297,9 @@ public class Mind {
                 }
             }
         }
-        pack();
+        if (needPack) {
+            pack();
+        }
     }
 
     private void logResult(Mind mind) {

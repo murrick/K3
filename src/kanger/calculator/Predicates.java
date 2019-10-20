@@ -138,6 +138,7 @@ public class Predicates {
             }));
         }
 
+        //TODO: ?$x $y x : 1..9, y = x + 7; запятая после .. воспринимается как наличие 3-го параметра
         //TODO: Кривая последовательность !@x x=7 -> top(x);  ?$x $y top(y) && x : 1..y;
         {
             put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new IReactor() {
@@ -369,3 +370,6 @@ public class Predicates {
 //        }
     }
 }
+
+
+//TODO: ?$x $y 18=x + y, y : 1..3;

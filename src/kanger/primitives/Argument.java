@@ -17,6 +17,8 @@ import java.io.ObjectOutput;
  */
 public class Argument implements Externalizable {
 
+    private static final long serialVersionUID = -7113328096110690461L; //196402070011L;
+
     private IUnit o = null;
 
     private transient long id = -1;
