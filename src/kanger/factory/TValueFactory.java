@@ -181,17 +181,17 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public void mark() throws Exception {
-        cache.mark();
+    public long mark() throws Exception {
+        return cache.mark();
     }
 
 
-    public void commit() throws Exception {
-        cache.commit();
+    public long commit() throws Exception {
+        return cache.commit();
     }
 
-    public void release() throws Exception {
-        cache.release();
+    public long release() throws Exception {
+        return cache.release();
     }
 
 

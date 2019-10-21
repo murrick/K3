@@ -146,19 +146,20 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void mark() {
+    public long mark() {
         if (root != null) {
-            stack.push(root);
+            return stack.push(root).getId();
+        } else {
+            return -1;
         }
     }
 
     @Override
     public long commit() {
         if (!stack.isEmpty()) {
-            return stack.pop().getId();
-        } else {
-            return -1;
+            stack.pop();
         }
+        return root == null ? -1 : root.getId();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.calculator.Calculator;
 import kanger.enums.ArgumentType;
 import kanger.interfaces.IUnit;
 import kanger.units.*;
@@ -125,10 +126,24 @@ public class Argument implements Externalizable {
                 id = o.getId();
                 return true;
             case TVARIABLE:
-                ((TVariable) getO()).setValue(t);
+                TVariable tv = (TVariable) getO();
+                user = tv.getUser();
+                tv.setValue(t);
+                TValue s = user.getMind().getTValues().find(tv, t);
+                if (s == null) {
+                    s = user.getMind().getTValues().add(tv, t);
+                }
+                if (tv.getCurrent() == null) {
+                    tv.setCurrent(s);
+                }
                 return true;
             case FUNCTION:
-                ((Function) getO()).setValue(t);
+                Function f = (Function) getO();
+                user = f.getUser();
+                if (f.isCalculable()) {
+                    f.setResult(t);
+                    new Calculator(user).calculate(f, user.getMind().isLogging());
+                }
                 return true;
             default:
                 return false;
@@ -156,6 +171,12 @@ public class Argument implements Externalizable {
 
     public FValue getR() throws IOException, ClassNotFoundException {
         return type == ArgumentType.FVALUE ? (FValue) getO() : null;
+    }
+
+    public void clear() {
+        o = null;
+        type = ArgumentType.EMPTY;
+        id = -1;
     }
 
     public boolean isEmpty() {

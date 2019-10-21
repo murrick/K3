@@ -373,3 +373,4 @@ public class Predicates {
 
 
 //TODO: ?$x $y 18=x + y, y : 1..3;
+//TODO: ?$x $y x=18 + y, y : 1..3;

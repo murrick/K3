@@ -82,6 +82,7 @@ public class Mind {
     private QueryPass queryPass = QueryPass.SILENCE;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
+    private boolean logging = true;
 
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
@@ -430,6 +431,7 @@ public class Mind {
     }
 
     public boolean compile(String src, boolean logging) throws Exception {
+        this.logging = logging;
 
         int pos = 0;
         Object[] t = null;
@@ -498,7 +500,9 @@ public class Mind {
     }
 
 
-    public Boolean delete(Right r) throws Exception {
+    public Boolean delete(Right r, boolean logging) throws Exception {
+        this.logging = logging;
+
         rights.delete(r);
         for (Right rx : rights) {
             if (rx.isGenerated() && rx.getId() > r.getId()) {
@@ -508,13 +512,15 @@ public class Mind {
         pack();
         tValues.clear();
 
-        link(null, true);
-        Boolean ar = analise(null, true);
+        link(null, logging);
+        Boolean ar = analise(null, logging);
 
-        if (ar) {
-            log.add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-        } else {
-            log.add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+        if (logging) {
+            if (ar) {
+                log.add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+            } else {
+                log.add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+            }
         }
         return ar;
     }
@@ -762,12 +768,19 @@ public class Mind {
 //    }
 
     public int executeSystem(Domain d) throws Exception {
+        for (int i = 0; i < d.getRange(); ++i) {
+            if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF().isEmpty()) {
+//                d.getArguments().get(i).getF().clear();
+                calculator.calculate(d.getArguments().get(i).getF(), logging);
+            }
+        }
+
         return calculator.execute(d);
     }
 
-    public int executeSystem(Function f) throws Exception {
-        return calculator.execute(f);
-    }
+//    public int executeSystem(Function f) throws Exception {
+//        return calculator.execute(f);
+//    }
 
 //    public Queue<Tree> getActualTrees() {
 //        Queue<Tree> set = new LinkedList<>();
@@ -810,6 +823,7 @@ public class Mind {
 //        querySource = line;
 //        queryPass = QueryPass.SILENCE;
 //        queryContext = null;
+        this.logging = logging;
 
         Boolean res = null;
 
@@ -1325,6 +1339,10 @@ public class Mind {
                 mind.getLog().add(LogMode.VALUES, s);
             }
         }
+    }
+
+    public boolean isLogging() {
+        return logging;
     }
 
 

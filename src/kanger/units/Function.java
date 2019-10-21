@@ -98,7 +98,14 @@ public class Function implements Externalizable, IUnit<Function> {
         }
     }
 
-    public Object setValue(Term r) throws Exception {
+    public void clear() {
+        while (range + 1 > arguments.size()) {
+            arguments.add(new Argument());
+        }
+        arguments.get(range).clear();
+    }
+
+    public Argument setResult(Term r) throws Exception {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
@@ -256,9 +263,9 @@ public class Function implements Externalizable, IUnit<Function> {
 //        }
 //    }
 
-    public void clear() throws Exception {
-        setValue(null);
-    }
+//    public void clear() throws Exception {
+//        setResult(null);
+//    }
 
 //    public List<TVariable> getTVariables() {
 //        return Tools.getTVariables(arguments, true);

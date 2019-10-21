@@ -39,30 +39,35 @@ public class Calculator {
 
         boolean result = false;
 
+//        if(fu.isEmpty()) {
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF().isEmpty()) {
+                fu.getArguments().get(i).getF().clear();
                 calculate(fu.getArguments().get(i).getF(), logging);
             }
         }
+//        }
 
-        int k = execute(fu);
-        if (k == 1 || k == 2) {
-            if (fu.isEmpty()) {
-                user.getMind().getFValues().add(fu);
-                result = true;
-                if (logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
-                    user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()));
+        if (fu.isEmpty()) {
+            int k = execute(fu);
+            if (k == 1 || k == 2) {
+                if (fu.isEmpty()) {
+                    user.getMind().getFValues().add(fu);
+                    result = true;
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
+                        user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()));
 //                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                    }
                 }
             }
         }
 
-        for (int i = 0; i < fu.getRange(); ++i) {
-            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF().isEmpty()) {
-                calculate(fu.getArguments().get(i).getF(), logging);
-            }
-        }
+//        for (int i = 0; i < fu.getRange(); ++i) {
+//            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF().isEmpty()) {
+//                calculate(fu.getArguments().get(i).getF(), logging);
+//            }
+//        }
         return result;
     }
 

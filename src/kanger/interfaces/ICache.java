@@ -22,7 +22,7 @@ public interface ICache extends Iterable {
 
     void clear() throws IOException, ClassNotFoundException;
 
-    void mark();
+    long mark();
 
     long commit();
 

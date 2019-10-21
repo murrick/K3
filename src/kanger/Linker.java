@@ -196,9 +196,9 @@ public class Linker {
                                 if (linkDomains(t, causes, logging)) {
                                     result = true;
                                 }
-                                if (calcFunctions(t, causes, logging)) {
-                                    result = true;
-                                }
+//                                if (calcFunctions(t, causes, logging)) {
+//                                    result = true;
+//                                }
 
 //                                List<TValue> solve = new ArrayList<>();
 //                                for (TVariable t : tvars) {
@@ -303,6 +303,8 @@ public class Linker {
             TVariable t = tvars.last();
             Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
             if (iterator.hasNext()) {
+//                long id = user.getMind().getTValues().mark();
+//                do {
                 iterator = user.getMind().getTValues().iterator(t);
                 do {
                     TValue v = iterator.next();
@@ -313,6 +315,7 @@ public class Linker {
                         }
                     }
                 } while (iterator.hasNext());
+//                } while(id != user.getMind().getTValues().commit());
             } else {
                 if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                     result = true;
@@ -335,8 +338,11 @@ public class Linker {
                         for (Domain master : treeMaster) {
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
 
-                                TValue[] substMaster = new TValue[master.getRange()];
-                                TValue[] substSlave = new TValue[slave.getRange()];
+                                Object[] substMaster = new TValue[master.getRange()];
+                                Object[] substSlave = new TValue[slave.getRange()];
+
+                                master.recalculate(true);
+                                slave.recalculate(true);
 
                                 user.getMind().getTValues().mark();
                                 user.getMind().getFValues().mark();
@@ -347,6 +353,8 @@ public class Linker {
                                 // Отсечение несовпадений по константам
                                 for (int i = 0; i < slave.getRange(); ++i) {
                                     if (!master.get(i).isTSet() && !slave.get(i).isTSet()
+                                            && (!master.get(i).isFSet() || !master.get(i).getF().isEmpty())
+                                            && (!slave.get(i).isFSet() || !slave.get(i).getF().isEmpty())
                                             && (master.get(i).isEmpty()
                                             || slave.get(i).isEmpty()
                                             || master.get(i).getValue().getId() != slave.get(i).getValue().getId())) {
@@ -388,9 +396,58 @@ public class Linker {
                                             applied = true;
                                         }
 
+                                        if (master.get(i).isFSet()
+                                                && master.get(i).getF().isCalculable()
+                                                && master.get(i).getF().isEmpty()
+                                                && !slave.get(i).isEmpty()) {
+
+                                            long id = user.getMind().getFValues().getLastId();
+                                            master.get(i).getF().setResult(slave.get(i).getValue());
+                                            if (new Calculator(user).calculate(master.get(i).getF(), logging)
+                                                    && id < user.getMind().getFValues().getLastId()) {
+                                                result = true;
+                                                List<TValue> list = new ArrayList<>();
+                                                for (TValue v : user.getMind().getTValues()) {
+                                                    if (v.getId() <= id) {
+                                                        break;
+                                                    } else {
+                                                        list.add(v);
+                                                    }
+                                                }
+                                                substMaster[i] = list;
+                                                slave.setUsed();
+                                                master.setUsed();
+                                                applied = true;
+                                            }
+                                        }
+
+                                        if (slave.get(i).isFSet()
+                                                && slave.get(i).getF().isCalculable()
+                                                && slave.get(i).getF().isEmpty()
+                                                && !master.get(i).isEmpty()) {
+
+                                            long id = user.getMind().getFValues().getLastId();
+                                            slave.get(i).getF().setResult(master.get(i).getValue());
+                                            if (new Calculator(user).calculate(slave.get(i).getF(), logging)
+                                                    && id < user.getMind().getFValues().getLastId()) {
+                                                result = true;
+                                                List<TValue> list = new ArrayList<>();
+                                                for (TValue v : user.getMind().getTValues()) {
+                                                    if (v.getId() <= id) {
+                                                        break;
+                                                    } else {
+                                                        list.add(v);
+                                                    }
+                                                }
+                                                substSlave[i] = list;
+                                                slave.setUsed();
+                                                master.setUsed();
+                                                applied = true;
+                                            }
+                                        }
+
                                         if (!applied) {
-                                            if (master.get(i).isEmpty()
-                                                    || slave.get(i).isEmpty()
+                                            if (master.get(i).isEmpty() || slave.get(i).isEmpty()
                                                     || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
                                                 success = false;
                                                 break;
@@ -437,28 +494,36 @@ public class Linker {
         return result;
     }
 
-    private boolean markExcluded(TValue[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) throws IOException, ClassNotFoundException {
+    private boolean markExcluded(Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) throws IOException, ClassNotFoundException {
         Right r = null;
         boolean occurrs = false;
         for (int i = 0; i < slave.getRange(); ++i) {
             if (subst[i] != null) {
-                boolean caused = false;
-                Cause s = new Cause(i, master, slave);
-                if (!subst[i].getCauses().contains(s)) {
-                    subst[i].getCauses().add(s);
-                    caused = true;
+                List<TValue> list = new ArrayList<>();
+                if (subst[i] instanceof Collection) {
+                    list.addAll((Collection<TValue>) subst[i]);
+                } else {
+                    list.add((TValue) subst[i]);
                 }
-                if (caused || !master.isExcluded(slave.getArguments())) {
-                    r = subst[i].getTVar().getRight();
-                    if (caused) {
-                        if (!causes.containsKey(r)) {
-                            causes.put(r, new HashSet<>());
+                for (TValue v : list) {
+                    boolean caused = false;
+                    Cause s = new Cause(i, master, slave);
+                    if (!v.getCauses().contains(s)) {
+                        v.getCauses().add(s);
+                        caused = true;
+                    }
+                    if (caused || !master.isExcluded(slave.getArguments())) {
+                        r = v.getTVar().getRight();
+                        if (caused) {
+                            if (!causes.containsKey(r)) {
+                                causes.put(r, new HashSet<>());
+                            }
+                            causes.get(r).add(s);
+                            if (logging) {
+                                user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + v);
+                            }
+                            occurrs = true;
                         }
-                        causes.get(r).add(s);
-                        if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + subst[i]);
-                        }
-                        occurrs = true;
                     }
                 }
             }
@@ -504,6 +569,8 @@ public class Linker {
 
             for (Domain d : tree) {
 
+                d.recalculate(true);
+
                 for (Domain master : user.getMind().getDomains().getWaiters()) {
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
@@ -520,6 +587,8 @@ public class Linker {
                         }
                     }
                 }
+
+
             }
 
             for (Domain d : tree) {
@@ -763,7 +832,7 @@ public class Linker {
 //                }
 
                 if (d.isCalculated()) {
-                    x.getDomain().setCalculated();
+                    x.getDomain().setCalculated(true);
                 }
                 if (d.getCauses() != null) {
                     x.getCauses().clear();
@@ -823,15 +892,16 @@ public class Linker {
 
     public boolean checkSystem(List<Domain> tree, boolean logging) throws Exception {
         boolean block = false;
+        boolean success = false;
         for (Domain d : tree) {
             if (d.isSystem()) {
 
 //                d.pushValues();
 
-                List<TValue> list = new ArrayList<>();
-                for (TVariable t : d.getArguments().getTVariables(true)) {
-                    list.add(t.getCurrent());
-                }
+//                List<TValue> list = new ArrayList<>();
+//                for (TVariable t : d.getArguments().getTVariables(true)) {
+//                    list.add(t.getCurrent());
+//                }
 
                 int res = d.execSystem();
                 for (Argument a : d.getArguments()) {
@@ -843,13 +913,15 @@ public class Linker {
 
                 if (res == 0) {
                     if (d.isAntc()) {
-                        d.setCalculated();
+                        d.setCalculated(true);
+                        success = true;
                     } else {
                         block = true;
                     }
                 } else if (res == 1) {
                     if (!d.isAntc()) {
-                        d.setCalculated();
+                        d.setCalculated(true);
+                        success = true;
                     } else {
                         block = true;
                     }
@@ -859,14 +931,22 @@ public class Linker {
                 }
 //                d.popValues();
 
-                List<TVariable> ts = d.getArguments().getTVariables(true);
-                for (int i = 0; i < ts.size(); ++i) {
-                    if (list.get(i) != null) {
-                        ts.get(i).setCurrent(list.get(i));
-                    }
-                }
+//                List<TVariable> ts = d.getArguments().getTVariables(true);
+//                for (int i = 0; i < ts.size(); ++i) {
+//                    if (list.get(i) != null) {
+//                        ts.get(i).setCurrent(list.get(i));
+//                    }
+//                }
             }
         }
+
+//        if (success && !block) {
+//            for (Domain d : tree) {
+//                if (d.isSystem()) {
+//                    d.setCalculated(true);
+//                }
+//            }
+//        }
         return !block;
     }
 

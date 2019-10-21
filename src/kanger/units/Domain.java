@@ -1,6 +1,7 @@
 package kanger.units;
 
 import kanger.User;
+import kanger.calculator.Calculator;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
@@ -687,12 +688,14 @@ public class Domain implements Externalizable, IUnit<Domain> {
 
     }
 
-    public void setCalculated() {
+    public void setCalculated(boolean on) {
         if (!user.getMind().getCalculatedDomains().containsKey(this)) {
             user.getMind().getCalculatedDomains().put(this, new HashSet<>());
         }
-        if (!isCalculated()) {
+        if (!isCalculated() && on) {
             user.getMind().getCalculatedDomains().get(this).add(arguments.convertBase());
+        } else if (isCalculated() && !on) {
+            user.getMind().getCalculatedDomains().get(this).remove(arguments.convertBase());
         }
     }
 
@@ -724,6 +727,21 @@ public class Domain implements Externalizable, IUnit<Domain> {
             return user.getMind().executeSystem(this);
         }
         return -1;
+    }
+
+    public boolean recalculate(boolean clear) throws Exception {
+        boolean occurrs = false;
+        for (Function f : getArguments().getFunctions()) {
+            if (f.isCalculable() && f.isEmpty()) {
+                if (clear) {
+                    f.clear();
+                }
+                if (new Calculator(user).calculate(f, user.getMind().isLogging())) {
+                    occurrs = true;
+                }
+            }
+        }
+        return occurrs;
     }
 
 //    public boolean recalculate() throws RuntimeErrorException {

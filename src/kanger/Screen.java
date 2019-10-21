@@ -177,7 +177,7 @@ public class Screen {
                                             String s = new Scanner(System.in).nextLine().toUpperCase();
                                             if (!s.isEmpty() && s.charAt(0) == 'Y') {
 
-                                                mind.delete(r);
+                                                mind.delete(r, true);
 
                                             }
                                         }
