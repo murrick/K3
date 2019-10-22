@@ -113,6 +113,13 @@ public class Function implements Externalizable, IUnit<Function> {
         return arguments.get(range);
     }
 
+    public Argument getResult() {
+        while (range + 1 > arguments.size()) {
+            arguments.add(new Argument());
+        }
+        return arguments.get(range);
+    }
+
     public boolean isEmpty() {
         try {
             return getValue() == null;
@@ -313,6 +320,22 @@ public class Function implements Externalizable, IUnit<Function> {
 
     public FValue getCurrent() throws IOException, ClassNotFoundException {
         return user.getMind().getFValues().find(this);
+    }
+
+    public int getHashBase() throws IOException, ClassNotFoundException {
+        long valueId = getResult().isEmpty() ? 0 : getResult().getValue().getId();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        hash = 47 * hash + (int) (valueId ^ (valueId >>> 32));
+        for (TVariable t : arguments.getTVariables(true)) {
+            if (t.isEmpty()) {
+                hash = 47 * hash + 0;
+            } else {
+                long id = t.getValue().getId();
+                hash = 47 * hash + (int) (id ^ (id >>> 32));
+            }
+        }
+        return hash;
     }
 
     @Override

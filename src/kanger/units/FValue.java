@@ -12,6 +12,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FValue implements Externalizable, IUnit<Function> {
 
@@ -21,6 +23,7 @@ public class FValue implements Externalizable, IUnit<Function> {
     private Function function = null;
     private Term value = null;
     private ArgList condition = new ArgList();
+    private List<Long> stamp = new ArrayList<>();
 
     //    private FValue next = null;
     private User user = null;
@@ -54,6 +57,13 @@ public class FValue implements Externalizable, IUnit<Function> {
                 condition.add(new Argument(a.getValue()));
             }
         }
+        for (TVariable t : f.getArguments().getTVariables(true)) {
+            if (t.isEmpty()) {
+                stamp.add(0L);
+            } else {
+                stamp.add(t.getCurrent().getValue().getId());
+            }
+        }
         this.user = user;
     }
 
@@ -63,6 +73,10 @@ public class FValue implements Externalizable, IUnit<Function> {
         deleted = dis.readBoolean();
         functionId = dis.readLong();
         valueId = dis.readLong();
+        int cnt = dis.readInt();
+        for (int i = 0; i < cnt; ++i) {
+            stamp.add(dis.readLong());
+        }
         condition = (ArgList) dis.readObject();
         condition.setUser(user);
     }
@@ -73,6 +87,10 @@ public class FValue implements Externalizable, IUnit<Function> {
         dos.writeBoolean(deleted);
         dos.writeLong(functionId);
         dos.writeLong(valueId);
+        dos.writeInt(stamp.size());
+        for (long id : stamp) {
+            dos.writeLong(id);
+        }
         dos.writeObject(condition);
     }
 
@@ -134,7 +152,7 @@ public class FValue implements Externalizable, IUnit<Function> {
         this.functionId = function.getId();
     }
 
-    public Function getFunc() throws IOException, ClassNotFoundException {
+    public Function getFunction() throws IOException, ClassNotFoundException {
         if (function == null) {
             function = user.getMind().getFunctions().load(functionId);
         }
@@ -150,8 +168,8 @@ public class FValue implements Externalizable, IUnit<Function> {
     }
 
     private String formatParam(Argument t) throws Exception {
-        Operation op = Parser.getOp(getFunc().getName().toString(), getFunc().getRange());
-        boolean isOp = op != null && op.getRange() == getFunc().getRange();
+        Operation op = Parser.getOp(getFunction().getName().toString(), getFunction().getRange());
+        boolean isOp = op != null && op.getRange() == getFunction().getRange();
         String s = "";
         if (t.isFSet()) {
             s += (isOp ? "(" : "") + t.getF().toString() + (isOp ? ")" : "");
@@ -174,19 +192,22 @@ public class FValue implements Externalizable, IUnit<Function> {
         int hash = 3;
         hash = 47 * hash + (int) (functionId ^ (functionId >>> 32));
         hash = 47 * hash + (int) (valueId ^ (valueId >>> 32));
-        hash = 47 * hash + condition.hashCode();
+        for (long id : stamp) {
+            hash = 47 * hash + (int) (id ^ (id >>> 32));
+        }
         return hash;
     }
 
     @Override
     public boolean equalsTo(Function f) {
         try {
-            if (f.getId() == getFunc().getId()
-                    && (f.getArguments().get(f.getRange()).isEmpty()
-                    || getValue().getId() == f.getArguments().get(f.getRange()).getValue().getId())) {
+            if (f.getId() == getFunction().getId()
+                    && !f.getResult().isEmpty()
+                    && valueId == f.getResult().getValue().getId()) {
                 boolean complete = true;
-                for (int i = 0; i < f.getRange(); ++i) {
-                    if (!f.getArguments().get(i).isEmpty() && f.getArguments().get(i).getValue().getId() != getCondition().get(i).getValue().getId()) {
+                List<TVariable> list = f.getArguments().getTVariables(true);
+                for (int i = 0; i < list.size(); ++i) {
+                    if (list.get(i).isEmpty() || list.get(i).getValue().getId() != stamp.get(i)) {
                         complete = false;
                         break;
                     }
@@ -230,17 +251,17 @@ public class FValue implements Externalizable, IUnit<Function> {
     @Override
     public String toString() {
         try {
-            if (!getFunc().isCalculable() && getValue() != null) {
+            if (!getFunction().isCalculable() && getValue() != null) {
                 return getValue().toString();
             } else {
                 try {
-                    Operation op = Parser.getOp(getFunc().getName().toString(), getFunc().getRange());
+                    Operation op = Parser.getOp(getFunction().getName().toString(), getFunction().getRange());
                     String s = "";
-                    if (op == null || op.getRange() != getFunc().getRange()) {
-                        s = String.format("%s(", getFunc().getName().toString());
-                        for (int i = 0; i < getFunc().getRange(); ++i) {
+                    if (op == null || op.getRange() != getFunction().getRange()) {
+                        s = String.format("%s(", getFunction().getName().toString());
+                        for (int i = 0; i < getFunction().getRange(); ++i) {
                             s += formatParam(condition.get(i));
-                            if (i + 1 < getFunc().getRange()) {
+                            if (i + 1 < getFunction().getRange()) {
                                 s += (char) Enums.COMMA;
                             }
                         }

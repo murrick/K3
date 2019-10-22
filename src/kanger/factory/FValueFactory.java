@@ -90,8 +90,7 @@ public class FValueFactory {
 
 
     public FValue find(Function f) throws IOException, ClassNotFoundException {
-        FValue temp = new FValue(f, user);
-        for (long id : cache.find(temp.getHash())) {
+        for (long id : cache.find(f.getHashBase())) {
             IUnit one = load(id);
             if (one.equalsTo(f)) {
                 return (FValue) one;
