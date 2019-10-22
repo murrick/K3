@@ -187,8 +187,8 @@ public class Functions {
                             if (arg.get(1).isTSet()) {
                                 ((Function) o).setParameter(1, _sub(arg.get(2).getValue(), arg.get(0).getValue()));
                             }
+                            ret = 0;
                         }
-                        ret = 0;
                     } else {
                         ret = 0;
                     }
@@ -261,8 +261,8 @@ public class Functions {
                             if (arg.get(1).isTSet() && (double) arg.get(0).getValue().getValue() != 0) {
                                 ((Function) o).setParameter(1, _div(arg.get(2).getValue(), arg.get(0).getValue()));
                             }
+                            ret = 0;
                         }
-                        ret = 0;
                     } else {
                         ret = 0;
                     }
@@ -298,8 +298,8 @@ public class Functions {
                             if (arg.get(1).isTSet() && (double) arg.get(2).getValue().getValue() != 0) {
                                 ((Function) o).setParameter(1, _div(arg.get(0).getValue(), arg.get(2).getValue()));
                             }
+                            ret = 0;
                         }
-                        ret = 0;
                     } else {
                         ret = 0;
                     }

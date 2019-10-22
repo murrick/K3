@@ -112,6 +112,24 @@ public class Argument implements Externalizable {
         }
     }
 
+    public boolean addValue(Term t) throws IOException, ClassNotFoundException {
+        switch (type) {
+            case TVARIABLE:
+                TVariable tv = (TVariable) getO();
+                user = tv.getUser();
+                TValue s = user.getMind().getTValues().find(tv, t);
+                if (s == null) {
+                    s = user.getMind().getTValues().add(tv, t);
+                }
+//                if (tv.getCurrent() == null) {
+//                    tv.setCurrent(s);
+//                }
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public boolean setValue(Term t) throws Exception {
         switch (type) {
             case EMPTY:
@@ -129,13 +147,13 @@ public class Argument implements Externalizable {
                 TVariable tv = (TVariable) getO();
                 user = tv.getUser();
                 tv.setValue(t);
-                TValue s = user.getMind().getTValues().find(tv, t);
-                if (s == null) {
-                    s = user.getMind().getTValues().add(tv, t);
-                }
-                if (tv.getCurrent() == null) {
-                    tv.setCurrent(s);
-                }
+//                TValue s = user.getMind().getTValues().find(tv, t);
+//                if (s == null) {
+//                    s = user.getMind().getTValues().add(tv, t);
+//                }
+//                if (tv.getCurrent() == null) {
+//                    tv.setCurrent(s);
+//                }
                 return true;
             case FUNCTION:
                 Function f = (Function) getO();
