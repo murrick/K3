@@ -9,9 +9,7 @@ import kanger.primitives.ArgList;
 import kanger.units.Domain;
 import kanger.units.Term;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,6 +43,15 @@ public class Predicates {
                         if (arg.get(0).getValue().compareTo(arg.get(1).getValue()) == 0) {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue().isCVariable() && arg.createCVar(1).getValue().isCVariable()) || (!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())) {
+
+                            if (arg.get(0).isTSet()) {
+                                arg.get(0).addValue(arg.get(1).getValue());
+                            }
+                            if (arg.get(1).isTSet()) {
+                                arg.get(1).addValue(arg.get(0).getValue());
+                            }
+
+
                             i = 0;
                         }
 //                        else //if(!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())
@@ -151,41 +158,16 @@ public class Predicates {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
-
-                            Term min = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0];
-                            Term max = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1];
-                            Term cur = min;
-                            int rc = min.compareTo(max);
-                            while (true) {
-                                if (arg.get(0).setValue(cur)) {
-                                    if(top == null) top = cur;
+                            for (Term cur : expand(arg.get(1).getValue(), null)) {
+                                if (top == null) top = cur;
+                                if (arg.get(0).addValue(cur)) {
                                     i = 1;
-                                    if (rc == 0) {
-                                        break;
-                                    }
-                                    Term next = rc < 0
-                                            ? new Calculator(user).getFunctions()._inc(cur)
-                                            : new Calculator(user).getFunctions()._dec(cur);
-                                    if (next.getId() == cur.getId()) {
-                                        if (arg.get(0).setValue(max)) {
-                                            i = 1;
-                                        }
-                                        break;
-                                    } else if (rc < 0 && next.compareTo(max) > 0) {
-                                        break;
-                                    } else if (rc > 0 && next.compareTo(max) < 0) {
-                                        break;
-                                    } else {
-                                        cur = next;
-                                    }
-                                } else {
-                                    break;
                                 }
                             }
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
                                 if (arg.get(0).setValue(a)) {
-                                    if(top == null) top = a;
+                                    if (top == null) top = a;
                                     i = 1;
                                 }
                             }
@@ -193,12 +175,12 @@ public class Predicates {
                             for (int k = 0; k < arg.get(1).getValue().toString().length(); ++k) {
                                 Term t = user.getMind().getTerms().add(arg.get(1).getValue().toString().charAt(k) + "");
                                 if (arg.get(0).setValue(t)) {
-                                    if(top == null) top = t;
+                                    if (top == null) top = t;
                                     i = 1;
                                 }
                             }
                         }
-                        if(top != null) {
+                        if (top != null) {
                             arg.get(0).setValue(top);
                         }
                     } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
@@ -238,42 +220,16 @@ public class Predicates {
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
-
-                            Term min = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[0];
-                            Term max = (Term) ((Collection) arg.get(1).getValue().getValue()).toArray()[1];
-                            Term cur = min;
-                            step = arg.get(2).getValue();
-                            int rc = min.compareTo(max);
-                            while (true) {
-                                if (arg.get(0).setValue(cur)) {
-                                    if(top == null) top = cur;
+                            for (Term cur : expand(arg.get(1).getValue(), arg.get(2).getValue())) {
+                                if (top == null) top = cur;
+                                if (arg.get(0).addValue(cur)) {
                                     i = 1;
-                                    if (rc == 0) {
-                                        break;
-                                    }
-                                    Term next = rc < 0
-                                            ? new Calculator(user).getFunctions()._add(cur, step)
-                                            : new Calculator(user).getFunctions()._sub(cur, step);
-                                    if (next.getId() == cur.getId()) {
-                                        if (arg.get(0).setValue(max)) {
-                                            i = 1;
-                                        }
-                                        break;
-                                    } else if (rc < 0 && next.compareTo(max) > 0) {
-                                        break;
-                                    } else if (rc > 0 && next.compareTo(max) < 0) {
-                                        break;
-                                    } else {
-                                        cur = next;
-                                    }
-                                } else {
-                                    break;
                                 }
                             }
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
                                 if (arg.get(0).setValue(a)) {
-                                    if(top == null) top = a;
+                                    if (top == null) top = a;
                                     i = 1;
                                 }
                             }
@@ -284,13 +240,13 @@ public class Predicates {
                                 for (int k = 0; k < mt.groupCount(); ++k) {
                                     Term t = user.getMind().getTerms().add(mt.group(k + 1) + "");
                                     if (arg.get(0).setValue(t)) {
-                                        if(top == null) top = t;
+                                        if (top == null) top = t;
                                         i = 1;
                                     }
                                 }
                             }
                         }
-                        if(top != null) {
+                        if (top != null) {
                             arg.get(0).setValue(top);
                         }
                     } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
@@ -336,6 +292,49 @@ public class Predicates {
 
     public Map<String, SysOp> getSysOps() {
         return sysOps;
+    }
+
+
+    public List<Term> expand(Term interval, Term step) throws Exception {
+        List<Term> list = new ArrayList<>();
+        Term top = null;
+        if (interval.getType() == DataType.INTERVAL
+                && interval.getValue() instanceof Collection
+                && ((Collection) interval.getValue()).size() == 2) {
+
+            Term min = (Term) ((Collection) interval.getValue()).toArray()[0];
+            Term max = (Term) ((Collection) interval.getValue()).toArray()[1];
+            Term cur = min;
+            int rc = min.compareTo(max);
+            while (true) {
+                list.add(cur);
+                if (top == null) top = cur;
+                if (rc == 0) {
+                    break;
+                }
+                Term next;
+                if (step != null) {
+                    next = rc < 0
+                            ? new Calculator(user).getFunctions()._add(cur, step)
+                            : new Calculator(user).getFunctions()._sub(cur, step);
+                } else {
+                    next = rc < 0
+                            ? new Calculator(user).getFunctions()._inc(cur)
+                            : new Calculator(user).getFunctions()._dec(cur);
+                }
+                if (next.getId() == cur.getId()) {
+                    list.add(max);
+                    break;
+                } else if (rc < 0 && next.compareTo(max) > 0) {
+                    break;
+                } else if (rc > 0 && next.compareTo(max) < 0) {
+                    break;
+                } else {
+                    cur = next;
+                }
+            }
+        }
+        return list;
     }
 
     public boolean _in(Term cur, Term min, Term max, Term step) {
