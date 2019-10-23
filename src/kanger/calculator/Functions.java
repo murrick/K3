@@ -4,10 +4,12 @@ import kanger.User;
 import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
+import kanger.enums.LogMode;
 import kanger.enums.Tools;
 import kanger.interfaces.IReactor;
 import kanger.primitives.ArgList;
 import kanger.units.Function;
+import kanger.units.TValue;
 import kanger.units.Term;
 
 import java.util.*;
@@ -182,10 +184,20 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                ((Function) o).setParameter(0, _sub(arg.get(2).getValue(), arg.get(1).getValue()));
+                                TValue v = arg.get(0).addValue(_sub(arg.get(2).getValue(), arg.get(1).getValue()));
+                                if (user.getMind().isLogging() && v != null) {
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                }
                             }
                             if (arg.get(1).isTSet()) {
-                                ((Function) o).setParameter(1, _sub(arg.get(2).getValue(), arg.get(0).getValue()));
+                                TValue v = arg.get(1).addValue(_sub(arg.get(2).getValue(), arg.get(0).getValue()));
+                                if (user.getMind().isLogging() && v != null) {
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                }
                             }
                             ret = 0;
                         }
@@ -256,10 +268,20 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet() && (double) arg.get(1).getValue().getValue() != 0) {
-                                ((Function) o).setParameter(0, _div(arg.get(2).getValue(), arg.get(1).getValue()));
+                                TValue v = arg.get(0).addValue(_div(arg.get(2).getValue(), arg.get(1).getValue()));
+                                if (user.getMind().isLogging() && v != null) {
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                }
                             }
                             if (arg.get(1).isTSet() && (double) arg.get(0).getValue().getValue() != 0) {
-                                ((Function) o).setParameter(1, _div(arg.get(2).getValue(), arg.get(0).getValue()));
+                                TValue v = arg.get(1).addValue(_div(arg.get(2).getValue(), arg.get(0).getValue()));
+                                if (user.getMind().isLogging() && v != null) {
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                }
                             }
                             ret = 0;
                         }

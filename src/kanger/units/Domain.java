@@ -597,10 +597,10 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //        }
     }
 
-    public boolean isProduced() {
+    public boolean isProduced() throws IOException, ClassNotFoundException {
         if (user.getMind().getProducedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getProducedDomains().get(this)) {
-                if (arguments.equalsBase(list)) {
+            for (List<Term> list : user.getMind().getProducedDomains().get(this)) {
+                if (arguments.equalsStamp(list)) {
                     return true;
                 }
             }
@@ -649,12 +649,12 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //        }
 //    }
 
-    public void setProduced() {
+    public void setProduced() throws IOException, ClassNotFoundException {
         if (!user.getMind().getProducedDomains().containsKey(this)) {
             user.getMind().getProducedDomains().put(this, new ArrayList<>());
         }
         if (!isProduced()) {
-            user.getMind().getProducedDomains().get(this).add(arguments.convert());
+            user.getMind().getProducedDomains().get(this).add(arguments.getStamp());
         }
     }
 
@@ -732,7 +732,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
     public boolean recalculate(boolean clear) throws Exception {
         boolean occurrs = false;
         for (Function f : getArguments().getFunctions()) {
-            if (f.isCalculable() && f.isEmpty()) {
+            if (f.isCalculable() && (f.isEmpty() || !clear)) {
                 if (clear) {
                     f.clear();
                 }

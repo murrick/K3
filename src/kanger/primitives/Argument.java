@@ -112,7 +112,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public boolean addValue(Term t) throws IOException, ClassNotFoundException {
+    public TValue addValue(Term t) throws IOException, ClassNotFoundException {
         switch (type) {
             case TVARIABLE:
                 TVariable tv = (TVariable) getO();
@@ -120,13 +120,12 @@ public class Argument implements Externalizable {
                 TValue s = user.getMind().getTValues().find(tv, t);
                 if (s == null) {
                     s = user.getMind().getTValues().add(tv, t);
+                } else {
+                    s = null;
                 }
-//                if (tv.getCurrent() == null) {
-//                    tv.setCurrent(s);
-//                }
-                return true;
+                return s;
             default:
-                return false;
+                return null;
         }
     }
 
@@ -263,4 +262,5 @@ public class Argument implements Externalizable {
     public ArgumentType getType() {
         return type;
     }
+
 }

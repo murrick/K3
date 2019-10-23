@@ -32,7 +32,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(size());
-        for(Argument a : this) {
+        for (Argument a : this) {
             out.writeObject(a);
         }
     }
@@ -59,7 +59,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         try {
             for (Argument a : this) {
                 if (!a.isEmpty()) {
-                    hashCode = 31*hashCode + a.getValue().hashCode();
+                    hashCode = 31 * hashCode + a.getValue().hashCode();
                 }
             }
         } catch (Exception e) {
@@ -267,8 +267,8 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
     @Override
     public String toString() {
         String str = "[";
-        for(Argument a : this) {
-            if(str.length() > 1) {
+        for (Argument a : this) {
+            if (str.length() > 1) {
                 str += ", ";
             }
             try {
@@ -291,4 +291,36 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             a.setUser(user);
         }
     }
+
+    public List<Term> getStamp() throws IOException, ClassNotFoundException {
+        List<Term> list = new ArrayList<>();
+        for (TVariable t : getTVariables(true)) {
+            list.add(t.getValue());
+        }
+        return list;
+    }
+
+    public boolean equalsStamp(List<Term> list) throws IOException, ClassNotFoundException {
+        List<TVariable> curr = getTVariables(true);
+        if (curr.size() == list.size()) {
+            for (int i = 0; i < curr.size(); ++i) {
+                if (curr.get(i).isEmpty() || curr.get(i).getValue().getId() != list.get(i).getId()) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void applyStamp(List<Term> list) throws IOException, ClassNotFoundException {
+        List<TVariable> curr = getTVariables(true);
+        for (int i = 0; i < curr.size(); ++i) {
+            if (curr.get(i).find(list.get(i)) != null) {
+                curr.get(i).setValue(list.get(i));
+            }
+        }
+    }
+
 }

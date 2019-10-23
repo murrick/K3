@@ -4,9 +4,11 @@ import kanger.User;
 import kanger.compiler.SysOp;
 import kanger.enums.DataType;
 import kanger.enums.LibMode;
+import kanger.enums.LogMode;
 import kanger.interfaces.IReactor;
 import kanger.primitives.ArgList;
 import kanger.units.Domain;
+import kanger.units.TValue;
 import kanger.units.Term;
 
 import java.util.*;
@@ -31,6 +33,15 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
+
+//                    if (arg.get(0).isFSet() /*&& arg.get(0).getF().isCalculable() && !arg.get(0).getF().getResult().isEmpty() && arg.get(0).getF().isEmpty()*/) {
+//                        new Calculator(user).calculate(arg.get(0).getF(), user.getMind().isLogging());
+//                    }
+//
+//                    if (arg.get(1).isFSet() /*&& arg.get(1).getF().isCalculable() && !arg.get(1).getF().getResult().isEmpty() && arg.get(1).getF().isEmpty()*/) {
+//                        new Calculator(user).calculate(arg.get(1).getF(), user.getMind().isLogging());
+//                    }
+
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
                         if (arg.get(1).setValue(arg.get(0).getValue())) {
                             i = 1;
@@ -45,10 +56,20 @@ public class Predicates {
                         } else { //if ((arg.createCVar(0).getValue().isCVariable() && arg.createCVar(1).getValue().isCVariable()) || (!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())) {
 
                             if (arg.get(0).isTSet()) {
-                                arg.get(0).addValue(arg.get(1).getValue());
+                                TValue v = arg.get(0).addValue(arg.get(1).getValue());
+                                if (user.getMind().isLogging() && v != null) {
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                }
                             }
                             if (arg.get(1).isTSet()) {
-                                arg.get(1).addValue(arg.get(0).getValue());
+                                TValue v = arg.get(1).addValue(arg.get(0).getValue());
+                                if (user.getMind().isLogging() && v != null) {
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                }
                             }
 
 
@@ -160,9 +181,9 @@ public class Predicates {
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
                             for (Term cur : expand(arg.get(1).getValue(), null)) {
                                 if (top == null) top = cur;
-                                if (arg.get(0).addValue(cur)) {
-                                    i = 1;
-                                }
+                                arg.get(0).addValue(cur);
+                                i = 1;
+
                             }
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
@@ -222,9 +243,8 @@ public class Predicates {
                                 && ((Collection) arg.get(1).getValue().getValue()).size() == 2) {
                             for (Term cur : expand(arg.get(1).getValue(), arg.get(2).getValue())) {
                                 if (top == null) top = cur;
-                                if (arg.get(0).addValue(cur)) {
-                                    i = 1;
-                                }
+                                arg.get(0).addValue(cur);
+                                i = 1;
                             }
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {

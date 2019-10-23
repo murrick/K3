@@ -48,7 +48,7 @@ public class Calculator {
         }
 //        }
 
-        if (fu.isEmpty()) {
+        if (fu.isEmpty() || !fu.getResult().getValue().equalsTo(fu.getValue())) {
             int k = execute(fu);
             if (k == 1 || k == 2) {
                 if (fu.isEmpty()) {
@@ -219,4 +219,3 @@ public class Calculator {
     }
 }
 
-//TODO: ?$x $y x=y, (y=4 || y = 5); почему-то FALSE

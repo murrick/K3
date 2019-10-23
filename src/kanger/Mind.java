@@ -66,7 +66,7 @@ public class Mind {
     private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
-    private final Map<Domain, List<ArgList>> producedDomains = new HashMap<>();
+    private final Map<Domain, List<List<Term>>> producedDomains = new HashMap<>();
 
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
     private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
@@ -655,7 +655,7 @@ public class Mind {
         return excludedDomains;
     }
 
-    public Map<Domain, List<ArgList>> getProducedDomains() {
+    public Map<Domain, List<List<Term>>> getProducedDomains() {
         return producedDomains;
     }
 
