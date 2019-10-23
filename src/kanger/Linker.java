@@ -221,9 +221,9 @@ public class Linker {
                                 if (linkDomains(t, causes, logging)) {
                                     result = true;
                                 }
-//                                if (calcFunctions(t, causes, logging)) {
-//                                    result = true;
-//                                }
+                                if (calcFunctions(t, causes, logging)) {
+                                    result = true;
+                                }
 
 //                                List<TValue> solve = new ArrayList<>();
 //                                for (TVariable t : tvars) {
@@ -341,6 +341,12 @@ public class Linker {
             result = (boolean) runnable.run(logging);
         } else {
             TVariable t = tvars.last();
+
+//            user.getMind().getTValues().set(t, null);
+//            if (rotateVariables(tvars.headSet(t), logging, runnable)) {
+//                result = true;
+//            }
+
             Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
             if (iterator.hasNext()) {
 //                long id = user.getMind().getTValues().mark();
@@ -592,14 +598,14 @@ public class Linker {
 
         long tag = user.getMind().getTValues().incTag();
 
-        for (Domain d : tree) {
-            d.recalculate(true);
-        }
+//        for (Domain d : tree) {
+//            d.recalculate(true);
+//        }
 
         if (checkSystem(tree, logging)) {
 
 //            for (Domain d : tree) {
-//                d.recalculate(false);
+//                d.recalculate(true);
 //            }
 
 
@@ -919,23 +925,23 @@ public class Linker {
                 if (f.isCalculable() && f.isEmpty()) {
                     f.clear();
                     if (new Calculator(user).calculate(f, logging)) {
-//                        result = true;
+                        result = true;
                     }
                 }
             }
         }
 
-        if (checkSystem(master, logging)) {
-            for (Domain d : master) {
-                for (Function f : d.getArguments().getFunctions()) {
-                    if (f.isCalculable() && f.isEmpty()) {
-                        if (new Calculator(user).calculate(f, logging)) {
-                            result = true;
-                        }
-                    }
-                }
-            }
-        }
+//        if (checkSystem(master, logging)) {
+//            for (Domain d : master) {
+//                for (Function f : d.getArguments().getFunctions()) {
+//                    if (f.isCalculable() && f.isEmpty()) {
+//                        if (new Calculator(user).calculate(f, logging)) {
+//                            result = true;
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         if (result && logging) {
             user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");

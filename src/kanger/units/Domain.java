@@ -732,7 +732,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
     public boolean recalculate(boolean clear) throws Exception {
         boolean occurrs = false;
         for (Function f : getArguments().getFunctions()) {
-            if (f.isCalculable() && (f.isEmpty() || !clear)) {
+            if (f.isCalculable() && f.isEmpty()) {
                 if (clear) {
                     f.clear();
                 }
