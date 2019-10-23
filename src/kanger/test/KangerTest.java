@@ -762,6 +762,35 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
+    public void set_02_08() throws Exception {
+
+        mind.clear();
+        mind.query("?$x $y x = y, (y = 4 || y = 5);");
+        showResult(true);
+        if (!exists("x", 5.0)) {
+            fail("Expected: x=0.0");
+        }
+        if (!exists("y", 5.0)) {
+            fail("Expected: x=1.0");
+        }
+        if (!exists("x", 4.0)) {
+            fail("Expected: x=2.0");
+        }
+        if (!exists("y", 4.0)) {
+            fail("Expected: x=3.0");
+        }
+        if (mind.getValues().getValues("x").size() != 2) {
+            //TODO: Потом разберусь
+            fail("Expected 2 solves for x");
+        }
+        if (mind.getValues().getValues("y").size() != 2) {
+            //TODO: Потом разберусь
+            fail("Expected 2 solves for y");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
     public void set_02_07() throws Exception {
 
         mind.clear();

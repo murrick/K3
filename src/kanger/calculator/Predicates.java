@@ -31,15 +31,15 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isDefined() && !arg.get(1).isDefined()) {
+                    if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
                         if (arg.get(1).setValue(arg.get(0).getValue())) {
                             i = 1;
                         }
-                    } else if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
+                    } else if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
                         if (arg.get(0).setValue(arg.get(1).getValue())) {
                             i = 1;
                         }
-                    } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
                         if (arg.get(0).getValue().compareTo(arg.get(1).getValue()) == 0) {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue().isCVariable() && arg.createCVar(1).getValue().isCVariable()) || (!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())) {
@@ -153,7 +153,7 @@ public class Predicates {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     Term step = user.getMind().getTerms().add(1);
-                    if (!arg.get(0).isDefined() && arg.get(1).isDefined()) {
+                    if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
                         Term top = null;
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
@@ -215,7 +215,7 @@ public class Predicates {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
                     Term step = user.getMind().getTerms().add(1);
-                    if (!arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
+                    if (arg.get(0).isEmpty() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
                         Term top = null;
                         if (arg.get(1).getValue().getType() == DataType.INTERVAL
                                 && arg.get(1).getValue().getValue() instanceof Collection
