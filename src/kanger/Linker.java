@@ -305,10 +305,10 @@ public class Linker {
             if (iterator.hasNext()) {
 //                long id = user.getMind().getTValues().mark();
 //                do {
-                iterator = user.getMind().getTValues().iterator(t);
+//                iterator = user.getMind().getTValues().iterator(t);
                 do {
                     TValue v = iterator.next();
-                    if (v != null && !v.isDeleted()) {
+                    if (/*v != null &&*/ !v.isDeleted()) {
                         user.getMind().getTValues().set(t, v);
                         if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                             result = true;
