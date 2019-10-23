@@ -890,7 +890,7 @@ public class Linker {
 //                }
 
                 if (d.isCalculated()) {
-                    x.getDomain().setCalculated(true);
+                    x.getDomain().setCalculated();
                 }
                 if (d.getCauses() != null) {
                     x.getCauses().clear();
@@ -972,19 +972,20 @@ public class Linker {
 
                 if (res == 0) {
                     if (d.isAntc()) {
-                        d.setCalculated(true);
+                        d.setCalculated();
                         success = true;
                     } else {
                         block = true;
                     }
                 } else if (res == 1) {
                     if (!d.isAntc()) {
-                        d.setCalculated(true);
+                        d.setCalculated();
                         success = true;
                     } else {
                         block = true;
                     }
                 }
+
                 if (block && logging) {
                     user.getMind().getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
                 }

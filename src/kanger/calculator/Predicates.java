@@ -55,19 +55,11 @@ public class Predicates {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue().isCVariable() && arg.createCVar(1).getValue().isCVariable()) || (!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())) {
 
-//                            Term v0 = arg.get(0).getValue();
-//                            Term v1 = arg.get(1).getValue();
-//
-//                            if (arg.get(0).isFSet()) {
-//                                arg.get(0).getF().setResult(v1);
-//                                new Calculator(user).calculate(arg.get(0).getF(), user.getMind().isLogging());
-//                            }
-//                            if (arg.get(1).isFSet()) {
-//                                arg.get(1).getF().setResult(v0);
-//                                new Calculator(user).calculate(arg.get(1).getF(), user.getMind().isLogging());
-//                            }
+                            Term v0 = arg.get(0).getValue();
+                            Term v1 = arg.get(1).getValue();
 
-                            if (arg.get(0).isTSet()) {
+
+                            if (arg.get(0).isTSet() && !arg.get(1).isEmpty()) {
                                 TValue v = arg.get(0).addValue(arg.get(1).getValue());
                                 if (user.getMind().isLogging() && v != null) {
                                     user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
@@ -75,7 +67,7 @@ public class Predicates {
                                     user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                                 }
                             }
-                            if (arg.get(1).isTSet()) {
+                            if (arg.get(1).isTSet() && !arg.get(0).isEmpty()) {
                                 TValue v = arg.get(1).addValue(arg.get(0).getValue());
                                 if (user.getMind().isLogging() && v != null) {
                                     user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
@@ -84,6 +76,14 @@ public class Predicates {
                                 }
                             }
 
+                            if (arg.get(0).isFSet()) {
+                                arg.get(0).getF().setResult(v1);
+                                new Calculator(user).calculate(arg.get(0).getF(), user.getMind().isLogging());
+                            }
+                            if (arg.get(1).isFSet()) {
+                                arg.get(1).getF().setResult(v0);
+                                new Calculator(user).calculate(arg.get(1).getF(), user.getMind().isLogging());
+                            }
 
                             i = 0;
                         }

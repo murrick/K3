@@ -834,6 +834,105 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
+    public void set_02_0A() throws Exception {
+
+        mind.clear();
+        mind.query("?$x $y 5=x + y, (y = 4 || y = 5);");
+        showResult(true);
+        if (!exists("x", 1.0)) {
+            fail("Expected: x=1.0");
+        }
+        if (!exists("y", 4.0)) {
+            fail("Expected: y=4.0");
+        }
+        if (!exists("x", 0.0)) {
+            fail("Expected: x=0.0");
+        }
+        if (!exists("y", 5.0)) {
+            fail("Expected: y=5.0");
+        }
+        if (mind.getValues().getValues("x").size() != 2) {
+            //TODO: Потом разберусь
+            fail("Expected 2 solves for x");
+        }
+        if (mind.getValues().getValues("y").size() != 2) {
+            //TODO: Потом разберусь
+            fail("Expected 2 solves for y");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_02_0B() throws Exception {
+
+        mind.clear();
+        mind.query("?$x $y 18=x + y, y : 1..3;");
+        showResult(true);
+        if (!exists("x", 16.0)) {
+            fail("Expected: x=16.0");
+        }
+        if (!exists("y", 2.0)) {
+            fail("Expected: y=2.0");
+        }
+        if (!exists("x", 15.0)) {
+            fail("Expected: x=15.0");
+        }
+        if (!exists("y", 3.0)) {
+            fail("Expected: y=3.0");
+        }
+        if (!exists("x", 17.0)) {
+            fail("Expected: x=17.0");
+        }
+        if (!exists("y", 1.0)) {
+            fail("Expected: y=1.0");
+        }
+        if (mind.getValues().getValues("x").size() != 3) {
+            //TODO: Потом разберусь
+            fail("Expected 3 solves for x");
+        }
+        if (mind.getValues().getValues("y").size() != 3) {
+            //TODO: Потом разберусь
+            fail("Expected 3 solves for y");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_02_0C() throws Exception {
+
+        mind.clear();
+        mind.query("?$x $y x=18 + y, y : 1..3;");
+        showResult(true);
+        if (!exists("x", 20.0)) {
+            fail("Expected: x=20.0");
+        }
+        if (!exists("y", 2.0)) {
+            fail("Expected: y=2.0");
+        }
+        if (!exists("x", 21.0)) {
+            fail("Expected: x=21.0");
+        }
+        if (!exists("y", 3.0)) {
+            fail("Expected: y=3.0");
+        }
+        if (!exists("x", 19.0)) {
+            fail("Expected: x=19.0");
+        }
+        if (!exists("y", 1.0)) {
+            fail("Expected: y=1.0");
+        }
+        if (mind.getValues().getValues("x").size() != 3) {
+            //TODO: Потом разберусь
+            fail("Expected 3 solves for x");
+        }
+        if (mind.getValues().getValues("y").size() != 3) {
+            //TODO: Потом разберусь
+            fail("Expected 3 solves for y");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
 
 
     public void set_03_01() throws Exception {

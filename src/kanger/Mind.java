@@ -63,9 +63,9 @@ public class Mind {
 //    private final Set<Long> closedTrees = new HashSet<>();
 
     private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
-    private final Map<Domain, Set<ArgList>> calculatedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
 
+    private final Map<Domain, List<List<Term>>> calculatedDomains = new HashMap<>();
     private final Map<Domain, List<List<Term>>> producedDomains = new HashMap<>();
 
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
@@ -659,7 +659,7 @@ public class Mind {
         return producedDomains;
     }
 
-    public Map<Domain, Set<ArgList>> getCalculatedDomains() {
+    public Map<Domain, List<List<Term>>> getCalculatedDomains() {
         return calculatedDomains;
     }
 

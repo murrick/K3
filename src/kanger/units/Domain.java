@@ -1,7 +1,6 @@
 package kanger.units;
 
 import kanger.User;
-import kanger.calculator.Calculator;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
@@ -658,14 +657,14 @@ public class Domain implements Externalizable, IUnit<Domain> {
         }
     }
 
-    public boolean isCalculated() {
+    public boolean isCalculated() throws IOException, ClassNotFoundException {
         return isCalculated(arguments);
     }
 
-    public boolean isCalculated(ArgList arguments) {
+    public boolean isCalculated(ArgList arguments) throws IOException, ClassNotFoundException {
         if (user.getMind().getCalculatedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getCalculatedDomains().get(this)) {
-                if (arguments.equalsBase(list)) {
+            for (List<Term> list : user.getMind().getCalculatedDomains().get(this)) {
+                if (arguments.equalsStamp(list)) {
                     return true;
                 }
             }
@@ -688,14 +687,12 @@ public class Domain implements Externalizable, IUnit<Domain> {
 
     }
 
-    public void setCalculated(boolean on) {
+    public void setCalculated() throws IOException, ClassNotFoundException {
         if (!user.getMind().getCalculatedDomains().containsKey(this)) {
-            user.getMind().getCalculatedDomains().put(this, new HashSet<>());
+            user.getMind().getCalculatedDomains().put(this, new ArrayList<>());
         }
-        if (!isCalculated() && on) {
-            user.getMind().getCalculatedDomains().get(this).add(arguments.convertBase());
-        } else if (isCalculated() && !on) {
-            user.getMind().getCalculatedDomains().get(this).remove(arguments.convertBase());
+        if (!isCalculated()) {
+            user.getMind().getCalculatedDomains().get(this).add(arguments.getStamp());
         }
     }
 
@@ -729,20 +726,20 @@ public class Domain implements Externalizable, IUnit<Domain> {
         return -1;
     }
 
-    public boolean recalculate(boolean clear) throws Exception {
-        boolean occurrs = false;
-        for (Function f : getArguments().getFunctions()) {
-            if (f.isCalculable() && f.isEmpty()) {
-                if (clear) {
-                    f.clear();
-                }
-                if (new Calculator(user).calculate(f, user.getMind().isLogging())) {
-                    occurrs = true;
-                }
-            }
-        }
-        return occurrs;
-    }
+//    public boolean recalculate(boolean clear) throws Exception {
+//        boolean occurrs = false;
+//        for (Function f : getArguments().getFunctions()) {
+//            if (f.isCalculable() && f.isEmpty()) {
+//                if (clear) {
+//                    f.clear();
+//                }
+//                if (new Calculator(user).calculate(f, user.getMind().isLogging())) {
+//                    occurrs = true;
+//                }
+//            }
+//        }
+//        return occurrs;
+//    }
 
 //    public boolean recalculate() throws RuntimeErrorException {
 //        boolean occurrs = false;
