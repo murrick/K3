@@ -1019,13 +1019,21 @@ public class Linker {
             }
         }
 
-//        if (success && !block) {
-//            for (Domain d : tree) {
-//                if (d.isSystem()) {
-//                    d.setCalculated(true);
-//                }
-//            }
-//        }
+        if (success && !block) {
+            for (Domain d : tree) {
+                if (d.isSystem() && !d.isCalculated()) {
+                    block = true;
+                }
+            }
+            if (block) {
+                for (Domain d : tree) {
+                    if (d.isCalculated()) {
+                        d.unCalculated();
+                    }
+                }
+            }
+        }
+
         return !block;
     }
 

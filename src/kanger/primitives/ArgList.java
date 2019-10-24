@@ -1,6 +1,7 @@
 package kanger.primitives;
 
 import kanger.User;
+import kanger.exception.ParametersIncompleteException;
 import kanger.units.Function;
 import kanger.units.TValue;
 import kanger.units.TVariable;
@@ -292,24 +293,31 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
-    public List<Term> getStamp() throws IOException, ClassNotFoundException {
+    public List<Term> getStamp() throws IOException, ClassNotFoundException, ParametersIncompleteException {
         List<Term> list = new ArrayList<>();
         for (TVariable t : getTVariables(true)) {
+            if (t.isEmpty()) {
+                throw new ParametersIncompleteException(t.toString());
+            }
             list.add(t.getValue());
         }
         return list;
     }
 
     public boolean equalsStamp(List<Term> list) throws IOException, ClassNotFoundException {
-        List<Term> curr = getStamp();
-        if (curr.size() == list.size()) {
-            for (int i = 0; i < curr.size(); ++i) {
-                if (curr.get(i).getId() != list.get(i).getId()) {
-                    return false;
+        try {
+            List<Term> curr = getStamp();
+            if (curr.size() == list.size()) {
+                for (int i = 0; i < curr.size(); ++i) {
+                    if (curr.get(i).isEmpty() || curr.get(i).getId() != list.get(i).getId()) {
+                        return false;
+                    }
                 }
+                return true;
+            } else {
+                return false;
             }
-            return true;
-        } else {
+        } catch (ParametersIncompleteException e) {
             return false;
         }
     }

@@ -47,7 +47,7 @@ public class Compiler {
     private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
-        if(root == null) {
+        if (root == null) {
             throw new ParseErrorException(0, ParseError.EMPTY);
         }
         switch (root.getName().charAt(0)) {
@@ -71,7 +71,7 @@ public class Compiler {
 //            break;
 
             case Enums.COMMA:
-                if ("_in".equals(root.getLeft().getName())) {
+                if ("_in".equals(root.getLeft().getName()) && root.getRight() != null && root.getRight().getRight() == null && root.getRight().getLeft() == null) {
                     PTree left = root.getLeft();
                     root.setLeft(left.getRight());
                     left.setRight(root);
@@ -175,7 +175,7 @@ public class Compiler {
             // системный предикат
             // ПРОВЕРКА НЛ LB НЕ НУЖНА! Т.К. ОНА ОБРАБАТЫВАЕТСЯ
             if ("_in".equals(root.getName())) {
-                if(root.getLeft() != null && root.getLeft().getName().charAt(0) == Enums.NOT) {
+                if (root.getLeft() != null && root.getLeft().getName().charAt(0) == Enums.NOT) {
                     root.setLeft(root.getLeft().getLeft());
                     antc = !antc;
                 }
@@ -248,7 +248,7 @@ public class Compiler {
         } else if (root.getName().equals("..")) {
             Argument t = new Argument(user.getMind().getTerms().add(root));
             arg.add(t);
-        } else if (root.getName().charAt(0)== '{' && root.getName().charAt(root.getName().length()-1)=='}') {
+        } else if (root.getName().charAt(0) == '{' && root.getName().charAt(root.getName().length() - 1) == '}') {
             String str = root.getName().substring(1, root.getName().length() - 1);
             Argument t;
             if (root.getName().contains("..")) {

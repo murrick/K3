@@ -76,11 +76,11 @@ public class Predicates {
                                 }
                             }
 
-                            if (arg.get(0).isFSet()) {
+                            if (arg.get(0).isFSet() && arg.get(0).getF().isCalculable()) {
                                 arg.get(0).getF().setResult(v1);
                                 new Calculator(user).calculate(arg.get(0).getF(), user.getMind().isLogging());
                             }
-                            if (arg.get(1).isFSet()) {
+                            if (arg.get(1).isFSet() && arg.get(1).getF().isCalculable()) {
                                 arg.get(1).getF().setResult(v0);
                                 new Calculator(user).calculate(arg.get(1).getF(), user.getMind().isLogging());
                             }
@@ -178,8 +178,6 @@ public class Predicates {
             }));
         }
 
-        //TODO: ?$x $y x : 1..9, y = x + 7; запятая после .. воспринимается как наличие 3-го параметра
-        //TODO: Кривая последовательность !@x x=7 -> top(x);  ?$x $y top(y) && x : 1..y;
         {
             put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new IReactor() {
                 public Object run(Object o) throws Exception {

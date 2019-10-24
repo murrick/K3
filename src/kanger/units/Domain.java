@@ -4,6 +4,7 @@ import kanger.User;
 import kanger.compiler.Operation;
 import kanger.compiler.Parser;
 import kanger.enums.Enums;
+import kanger.exception.ParametersIncompleteException;
 import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
 import kanger.primitives.Argument;
@@ -653,7 +654,10 @@ public class Domain implements Externalizable, IUnit<Domain> {
             user.getMind().getProducedDomains().put(this, new ArrayList<>());
         }
         if (!isProduced()) {
-            user.getMind().getProducedDomains().get(this).add(arguments.getStamp());
+            try {
+                user.getMind().getProducedDomains().get(this).add(arguments.getStamp());
+            } catch (ParametersIncompleteException e) {
+            }
         }
     }
 
@@ -687,12 +691,26 @@ public class Domain implements Externalizable, IUnit<Domain> {
 
     }
 
+    public void unCalculated() throws IOException, ClassNotFoundException {
+        if (isCalculated()) {
+            for (List<Term> list : user.getMind().getCalculatedDomains().get(this)) {
+                if (arguments.equalsStamp(list)) {
+                    user.getMind().getCalculatedDomains().remove(list);
+                    break;
+                }
+            }
+        }
+    }
+
     public void setCalculated() throws IOException, ClassNotFoundException {
         if (!user.getMind().getCalculatedDomains().containsKey(this)) {
             user.getMind().getCalculatedDomains().put(this, new ArrayList<>());
         }
         if (!isCalculated()) {
-            user.getMind().getCalculatedDomains().get(this).add(arguments.getStamp());
+            try {
+                user.getMind().getCalculatedDomains().get(this).add(arguments.getStamp());
+            } catch (ParametersIncompleteException e) {
+            }
         }
     }
 

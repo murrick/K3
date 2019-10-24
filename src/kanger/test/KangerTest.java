@@ -933,7 +933,29 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
+    public void set_02_0D() throws Exception {
 
+        mind.clear();
+        mind.query("?$x x=18 + 2, x=18 + 3;");
+        showResult(null);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_02_0E() throws Exception {
+
+        mind.clear();
+        mind.query("?$x $y 18=x + 4, 19=x+5;");
+        showResult(true);
+        if (!exists("x", 14.0)) {
+            fail("Expected: x=14.0");
+        }
+        if (mind.getValues().getValues("x").size() != 1) {
+            fail("Expected 1 solve for x");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
 
     public void set_03_01() throws Exception {
 

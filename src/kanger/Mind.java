@@ -769,7 +769,7 @@ public class Mind {
 
     public int executeSystem(Domain d) throws Exception {
         for (int i = 0; i < d.getRange(); ++i) {
-            if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF().isEmpty()) {
+            if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF().isCalculable() && d.getArguments().get(i).getF().isEmpty()) {
 //                d.getArguments().get(i).getF().clear();
                 calculator.calculate(d.getArguments().get(i).getF(), logging);
             }
