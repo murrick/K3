@@ -44,101 +44,10 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
     private transient boolean deleted = false;
 
 
-    //TODO: И еще более странные ?$x $y x=y+4, y: 1..8;  ?$x $y y: 1..8, x=y+4;
     public SysOp(final User user) {
 
         this.user = user;
-
-        proc = new IReactor() {
-            @Override
-            public Object run(Object o) throws Exception {
-
-                ArgList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
-                ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
-
-                int ret = 1;
-                String script = "";
-                int undefined = 0;
-                int index = -1;
-                for (int i = 0; i < arg.size(); ++i) {
-                    String var = params.get(i);
-                    if (arg.get(i).isDefined()) {
-                        scryptEngine.put(var, arg.get(i).getValue().getValue());
-                    } else if (arg.get(i).isEmpty()) {
-                        index = i;
-                        ++undefined;
-                    } else {
-                        undefined = 3;
-                    }
-                }
-                if (undefined > 1) {
-                    ret = 0;
-                } else {
-                    Term fres = null;
-                    if (index == -1) {
-                        script = scripts.get(0);
-                        fres = arg.get(arg.size() - 1).getValue();
-                    } else if (index + 1 == arg.size() && !scripts.isEmpty()) {
-                        script = scripts.get(0);
-                    } else if (index + 1 < scripts.size()) {
-                        script = scripts.get(index + 1);
-                    } else {
-                        script = "";
-                    }
-                    try {
-                        scryptEngine.put("kanger", user.getMind());
-                        scryptEngine.eval(script);
-
-                        if (index != -1) {
-                            Object val = scryptEngine.get(params.get(index));
-                            if (val == null) {
-                                ret = 0;
-                                arg.get(index).setValue(null);
-                            } else {
-                                if (!arg.get(index).setValue(user.getMind().getTerms().add(val))) {
-                                    ret = 0;
-                                }
-                            }
-                        } else if (fres != null) {
-                            Object val = scryptEngine.get(params.get(params.size() - 1));
-                            Term cres = user.getMind().getTerms().add(val);
-                            if (cres.getId() == fres.getId()) {
-                                ret = 2;
-                            } else {
-                                scryptEngine.put(params.get(params.size() - 1), fres.getValue());
-                                for (int i = 0; i < arg.size() - 1; ++i) {
-                                    if (arg.get(i).isTSet()) {
-                                        String var = params.get(i);
-                                        script = scripts.get(i + 1);
-                                        Object tmp = scryptEngine.get(var);
-                                        scryptEngine.eval(script);
-                                        Object calc = scryptEngine.get(var);
-                                        scryptEngine.put(var, tmp);
-                                        TValue v = arg.get(i).addValue(user.getMind().getTerms().add(calc));
-                                        showLog((IUnit) o, v);
-                                    }
-                                }
-                                ret = 0;
-                            }
-                        }
-
-//                        for (int i = 0; i < params.size(); ++i) {
-//                            Object val = scryptEngine.get(params.get(i));
-//                            if (val == null) {
-//                                result = 0;
-//                                arg.get(i++).setValue(null);
-//                            } else {
-//                                arg.get(i++).setValue(mind.getTerms().add(val));
-//                            }
-//                        }
-
-                    } catch (ScriptException ex) {
-                        throw new RuntimeErrorException(SysOp.this, ex.getMessage());
-                    }
-                }
-                return ret;
-            }
-        };
+        getProc();
     }
 
 //    public SysOp(DataInputStream dis, Mind mind) throws IOException {
@@ -184,6 +93,98 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
     }
 
     public IReactor getProc() {
+        if (proc == null) {
+            proc = new IReactor() {
+                @Override
+                public Object run(Object o) throws Exception {
+
+                    ArgList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
+                    ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
+
+                    int ret = 1;
+                    String script = "";
+                    int undefined = 0;
+                    int index = -1;
+                    for (int i = 0; i < arg.size(); ++i) {
+                        String var = params.get(i);
+                        if (arg.get(i).isDefined()) {
+                            scryptEngine.put(var, arg.get(i).getValue().getValue());
+                        } else if (arg.get(i).isEmpty()) {
+                            index = i;
+                            ++undefined;
+                        } else {
+                            undefined = 3;
+                        }
+                    }
+                    if (undefined > 1) {
+                        ret = 0;
+                    } else {
+                        Term fres = null;
+                        if (index == -1) {
+                            script = scripts.get(0);
+                            fres = arg.get(arg.size() - 1).getValue();
+                        } else if (index + 1 == arg.size() && !scripts.isEmpty()) {
+                            script = scripts.get(0);
+                        } else if (index + 1 < scripts.size()) {
+                            script = scripts.get(index + 1);
+                        } else {
+                            script = "";
+                        }
+                        try {
+                            scryptEngine.put("kanger", user.getMind());
+                            scryptEngine.eval(script);
+
+                            if (index != -1) {
+                                Object val = scryptEngine.get(params.get(index));
+                                if (val == null) {
+                                    ret = 0;
+                                    arg.get(index).setValue(null);
+                                } else {
+                                    if (!arg.get(index).setValue(user.getMind().getTerms().add(val))) {
+                                        ret = 0;
+                                    }
+                                }
+                            } else if (fres != null) {
+                                Object val = scryptEngine.get(params.get(params.size() - 1));
+                                Term cres = user.getMind().getTerms().add(val);
+                                if (cres.getId() == fres.getId()) {
+                                    ret = 2;
+                                } else {
+                                    scryptEngine.put(params.get(params.size() - 1), fres.getValue());
+                                    for (int i = 0; i < arg.size() - 1; ++i) {
+                                        if (arg.get(i).isTSet()) {
+                                            String var = params.get(i);
+                                            script = scripts.get(i + 1);
+                                            Object tmp = scryptEngine.get(var);
+                                            scryptEngine.eval(script);
+                                            Object calc = scryptEngine.get(var);
+                                            scryptEngine.put(var, tmp);
+                                            TValue v = arg.get(i).addValue(user.getMind().getTerms().add(calc));
+                                            showLog((IUnit) o, v);
+                                        }
+                                    }
+                                    ret = 0;
+                                }
+                            }
+
+//                        for (int i = 0; i < params.size(); ++i) {
+//                            Object val = scryptEngine.get(params.get(i));
+//                            if (val == null) {
+//                                result = 0;
+//                                arg.get(i++).setValue(null);
+//                            } else {
+//                                arg.get(i++).setValue(mind.getTerms().add(val));
+//                            }
+//                        }
+
+                        } catch (ScriptException ex) {
+                            throw new RuntimeErrorException(SysOp.this, ex.getMessage());
+                        }
+                    }
+                    return ret;
+                }
+            };
+        }
         return proc;
     }
 
@@ -253,7 +254,6 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
         return str;
     }
 
-    //TODO: name ---->>>>> Term !!!!!!!!!!
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeLong(id);
@@ -283,6 +283,7 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
             String param = in.readUTF();
             params.add(param);
         }
+        params.add(name);
     }
 
     @Override

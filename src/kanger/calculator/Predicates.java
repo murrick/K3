@@ -405,7 +405,3 @@ public class Predicates {
     }
 }
 
-
-//TODO: DONE! ?$x $y 18=x + y, y : 1..3;
-//TODO: DONE! ?$x $y x=18 + y, y : 1..3;
-//TODO: Очень странные результаты ?$x $y x=plus(y,4), y: 1..3;

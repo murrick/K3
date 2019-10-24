@@ -76,6 +76,8 @@ public class LibraryFactory implements Iterable<SysOp> {
             x.setProc(s.getProc());
             x.getScripts().clear();
             x.getScripts().addAll(s.getScripts());
+            x.getParams().clear();
+            x.getParams().addAll(s.getParams());
 //            update();
         } else {
             s.setId(lastId++);
