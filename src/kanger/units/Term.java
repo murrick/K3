@@ -14,10 +14,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -305,7 +302,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     public int getHash() {
         int hash = 3;
         hash = 47 * hash + type.ordinal();
-        hash = 47 * hash + value.hashCode();
+        hash = 47 * hash + Objects.hashCode(value);
         return hash;
     }
 

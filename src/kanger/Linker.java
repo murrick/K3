@@ -624,8 +624,14 @@ public class Linker {
             Set<Domain> stored = new HashSet<>();
 
             for (Domain d : tree) {
+//                if(!d.isComplete()) {
+//                    continue;
+//                }
 
-//                d.recalculate(true);
+//                for(Function f : d.getArguments().getFunctions()) {
+//                    f.clear();
+//                    new Calculator(user).calculate(f, logging);
+//                }
 
                 for (Domain master : user.getMind().getDomains().getWaiters()) {
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
@@ -648,6 +654,10 @@ public class Linker {
             }
 
             for (Domain d : tree) {
+//                if(!d.isComplete()) {
+//                    continue;
+//                }
+
                 if (d.isCalculated()) {
                     calculated.add(d);
                 } else if (d.isSystem() || !d.isComplete()) {
@@ -861,6 +871,14 @@ public class Linker {
             for (List<Term> args : e.getValue()) {
                 result = true;
                 d.getArguments().applyStamp(args);
+                if (d.isComplete()) {
+
+//                for(Function f : d.getArguments().getFunctions()) {
+//                    f.clear();
+//                    new Calculator(user).calculate(f, logging);
+//                }
+
+
 //                d.recalculate(true);
 
 //                for (int i = 0; i < args.size(); /*d.getPredicate().getRange();*/ ++i) {
@@ -873,38 +891,39 @@ public class Linker {
 //                    }
 //                }
 
-                Right x;
+                    Right x;
 //                if (d.getArguments().getTVariables(true).isEmpty()) {
 //                    x = d.setStored();
 //                    if (logging) {
 //                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
 //                    }
 //                } else {
-                x = d.createStored();
-                if (d.isUsed()) {
-                    x.getDomain().setUsed();
-                }
-                if (logging) {
-                    user.getMind().getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
-                }
+                    x = d.createStored();
+                    if (d.isUsed()) {
+                        x.getDomain().setUsed();
+                    }
+                    if (logging) {
+                        user.getMind().getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
+                    }
 //                }
 
-                if (d.isCalculated()) {
-                    x.getDomain().setCalculated();
-                }
-                if (d.getCauses() != null) {
-                    x.getCauses().clear();
-                    x.getCauses().addAll(d.getCauses());
+                    if (d.isCalculated()) {
+                        x.getDomain().setCalculated();
+                    }
+                    if (d.getCauses() != null) {
+                        x.getCauses().clear();
+                        x.getCauses().addAll(d.getCauses());
 
 //                    for(Cause c : x.getCauses()) {
 //                        if(!c.getDst().isStored()) {
 //                            c.getDst().createStored();
 //                        }
 //                    }
-                }
-                if (d.getSolves() != null) {
-                    x.getSolves().clear();
-                    x.getSolves().addAll(d.getSolves());
+                    }
+                    if (d.getSolves() != null) {
+                        x.getSolves().clear();
+                        x.getSolves().addAll(d.getSolves());
+                    }
                 }
 
             }

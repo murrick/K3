@@ -1,6 +1,6 @@
 package kanger.compiler;
 
-import kanger.Mind;
+import kanger.User;
 import kanger.enums.Enums;
 import kanger.enums.LibMode;
 import kanger.enums.ParseError;
@@ -499,12 +499,12 @@ public class Parser {
         return root;
     }
 
-    public static SysOp implement(String ln, Mind mind) throws ParseErrorException {
+    public static SysOp implement(String ln, User user) throws ParseErrorException {
         String line = "";
         boolean waitParams = false;
         boolean waitScript = false;
         int pos = 1;
-        SysOp f = new SysOp(mind);
+        SysOp f = new SysOp(user);
         do {
             Object[] t = getToken(ln, pos);
             if (t == null) {

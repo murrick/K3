@@ -479,7 +479,7 @@ public class Mind {
 
         switch (line.charAt(0)) {
             case Enums.FOO:
-                r = Parser.implement(line, this);
+                r = Parser.implement(line, user);
                 library.add((SysOp) r);
                 break;
             case Enums.INS:

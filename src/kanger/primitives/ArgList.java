@@ -301,10 +301,10 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
     }
 
     public boolean equalsStamp(List<Term> list) throws IOException, ClassNotFoundException {
-        List<TVariable> curr = getTVariables(true);
+        List<Term> curr = getStamp();
         if (curr.size() == list.size()) {
             for (int i = 0; i < curr.size(); ++i) {
-                if (curr.get(i).isEmpty() || curr.get(i).getValue().getId() != list.get(i).getId()) {
+                if (curr.get(i).getId() != list.get(i).getId()) {
                     return false;
                 }
             }

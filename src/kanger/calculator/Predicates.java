@@ -195,7 +195,9 @@ public class Predicates {
                                 if (top == null) top = cur;
                                 arg.get(0).addValue(cur);
                                 i = 1;
-
+                            }
+                            if (top != null) {
+                                arg.get(0).addValue(top);
                             }
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
@@ -257,6 +259,9 @@ public class Predicates {
                                 if (top == null) top = cur;
                                 arg.get(0).addValue(cur);
                                 i = 1;
+                            }
+                            if (top != null) {
+                                arg.get(0).addValue(top);
                             }
                         } else if (arg.get(1).getValue().getType() == DataType.SET && arg.get(1).getValue().getValue() instanceof Collection) {
                             for (Term a : (Collection<Term>) arg.get(1).getValue().getValue()) {
@@ -403,5 +408,6 @@ public class Predicates {
 }
 
 
-//TODO: ?$x $y 18=x + y, y : 1..3;
-//TODO: ?$x $y x=18 + y, y : 1..3;
+//TODO: DONE! ?$x $y 18=x + y, y : 1..3;
+//TODO: DONE! ?$x $y x=18 + y, y : 1..3;
+//TODO: Очень странные результаты ?$x $y x=plus(y,4), y: 1..3;
