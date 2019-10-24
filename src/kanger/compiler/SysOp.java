@@ -3,7 +3,6 @@ package kanger.compiler;
 import kanger.User;
 import kanger.enums.LibMode;
 import kanger.enums.LogMode;
-import kanger.exception.RuntimeErrorException;
 import kanger.interfaces.IReactor;
 import kanger.interfaces.IUnit;
 import kanger.primitives.ArgList;
@@ -11,10 +10,8 @@ import kanger.units.Domain;
 import kanger.units.Function;
 import kanger.units.TValue;
 import kanger.units.Term;
+import org.mozilla.javascript.Scriptable;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,7 +19,6 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-//import javax.script.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.15.
@@ -99,7 +95,8 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
                 public Object run(Object o) throws Exception {
 
                     ArgList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
-                    ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
+//                    ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
+                    Scriptable scope = user.getScriptContext().initStandardObjects();
 
                     int ret = 1;
                     String script = "";
@@ -108,7 +105,7 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
                     for (int i = 0; i < arg.size(); ++i) {
                         String var = params.get(i);
                         if (arg.get(i).isDefined()) {
-                            scryptEngine.put(var, arg.get(i).getValue().getValue());
+                            scope.put(var, scope, arg.get(i).getValue().getValue());
                         } else if (arg.get(i).isEmpty()) {
                             index = i;
                             ++undefined;
@@ -130,42 +127,41 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
                         } else {
                             script = "";
                         }
-                        try {
-                            scryptEngine.put("kanger", user.getMind());
-                            scryptEngine.eval(script);
+//                            scryptEngine.put("kanger", user.getMind());
+                        user.getScriptContext().evaluateString(scope, script, "script", 1, null);
 
-                            if (index != -1) {
-                                Object val = scryptEngine.get(params.get(index));
-                                if (val == null) {
-                                    ret = 0;
-                                    arg.get(index).setValue(null);
-                                } else {
-                                    if (!arg.get(index).setValue(user.getMind().getTerms().add(val))) {
-                                        ret = 0;
-                                    }
-                                }
-                            } else if (fres != null) {
-                                Object val = scryptEngine.get(params.get(params.size() - 1));
-                                Term cres = user.getMind().getTerms().add(val);
-                                if (cres.getId() == fres.getId()) {
-                                    ret = 2;
-                                } else {
-                                    scryptEngine.put(params.get(params.size() - 1), fres.getValue());
-                                    for (int i = 0; i < arg.size() - 1; ++i) {
-                                        if (arg.get(i).isTSet()) {
-                                            String var = params.get(i);
-                                            script = scripts.get(i + 1);
-                                            Object tmp = scryptEngine.get(var);
-                                            scryptEngine.eval(script);
-                                            Object calc = scryptEngine.get(var);
-                                            scryptEngine.put(var, tmp);
-                                            TValue v = arg.get(i).addValue(user.getMind().getTerms().add(calc));
-                                            showLog((IUnit) o, v);
-                                        }
-                                    }
+                        if (index != -1) {
+                            Object val = scope.get(params.get(index), scope);
+                            if (val == null) {
+                                ret = 0;
+                                arg.get(index).setValue(null);
+                            } else {
+                                if (!arg.get(index).setValue(user.getMind().getTerms().add(val))) {
                                     ret = 0;
                                 }
                             }
+                        } else if (fres != null) {
+                            Object val = scope.get(params.get(params.size() - 1), scope);
+                            Term cres = user.getMind().getTerms().add(val);
+                            if (cres.getId() == fres.getId()) {
+                                ret = 2;
+                            } else {
+                                scope.put(params.get(params.size() - 1), scope, fres.getValue());
+                                for (int i = 0; i < arg.size() - 1; ++i) {
+                                    if (arg.get(i).isTSet()) {
+                                        String var = params.get(i);
+                                        script = scripts.get(i + 1);
+                                        Object tmp = scope.get(var, scope);
+                                        user.getScriptContext().evaluateString(scope, script, "script", 1, null);
+                                        Object calc = scope.get(var, scope);
+                                        scope.put(var, scope, tmp);
+                                        TValue v = arg.get(i).addValue(user.getMind().getTerms().add(calc));
+                                        showLog((IUnit) o, v);
+                                    }
+                                }
+                                ret = 0;
+                            }
+                        }
 
 //                        for (int i = 0; i < params.size(); ++i) {
 //                            Object val = scryptEngine.get(params.get(i));
@@ -177,9 +173,6 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
 //                            }
 //                        }
 
-                        } catch (ScriptException ex) {
-                            throw new RuntimeErrorException(SysOp.this, ex.getMessage());
-                        }
                     }
                     return ret;
                 }

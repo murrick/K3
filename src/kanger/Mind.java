@@ -18,12 +18,10 @@ import kanger.stores.LogStore;
 import kanger.stores.SolutionsStore;
 import kanger.stores.ValuesStore;
 import kanger.units.*;
+import org.mozilla.javascript.Scriptable;
 
 import java.io.IOException;
 import java.util.*;
-
-//import javax.script.ScriptEngine;
-//import javax.script.ScriptEngineManager;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -87,6 +85,9 @@ public class Mind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
+    private Scriptable scriptScope = null;
+
+
     public Mind(User user) throws Exception {
         this.user = user;
         user.setMind(this);
@@ -143,6 +144,8 @@ public class Mind {
         analiser = new Analiser(user);                                   // Анализатор
         compiler = new Compiler(user);                                   // Компилятор
         linker = new Linker(user);                                         // Линкер
+
+        scriptScope = user.getScriptContext().initStandardObjects();
     }
 
     public void commit(Mind m) throws Exception {
@@ -297,6 +300,9 @@ public class Mind {
 //        user.getMind().getTValues().update();
     }
 
+    public Scriptable getScriptScope() {
+        return scriptScope;
+    }
 
     public QueryPass getQueryPass() {
         return queryPass;

@@ -7,6 +7,7 @@ import kanger.storage.Base;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.DatabaseConfig;
 import org.cojen.tupl.DurabilityMode;
+import org.mozilla.javascript.Context;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,12 +20,15 @@ public class User {
     private Map<String, IBase> storage = new HashMap<>();
     private String storageName = "";
     private Database db = null;
+    private Context scriptContext = null;
 
     DatabaseConfig config = new DatabaseConfig()
             .minCacheSize(100_000_000)
             .durabilityMode(DurabilityMode.NO_FLUSH);
 
     public User() {
+        scriptContext = Context.enter();
+        scriptContext.setLanguageVersion(Context.VERSION_1_7);
     }
 
     public void use(String name) throws Exception {
@@ -155,5 +159,9 @@ public class User {
 
     public Database getDb() {
         return db;
+    }
+
+    public Context getScriptContext() {
+        return scriptContext;
     }
 }
