@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/K3.iml" filepath="$PROJECT_DIR$/K3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rhino/rhino.iml" filepath="$PROJECT_DIR$/rhino/rhino.iml" />
     </modules>
   </component>
 </project>

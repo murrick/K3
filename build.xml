@@ -13,12 +13,12 @@
         <!--echo file="myAntOut.txt">My first ant ${src} ${line.separator}</echo-->
 
         <buildnumber/>
-        <replaceregexp file="${src}/kanger/Version.java"
+        <replaceregexp file="${src}/org/kanger/Version.java"
                        match="public\s+static\s+final\s+String\s+REVISION\s+=\s+&quot;.*&quot;;"
                        replace="public static final String REVISION = &quot;${build.number}&quot;;"
                        byline="true"
         />
-        <replaceregexp file="${src}/kanger/Version.java"
+        <replaceregexp file="${src}/org/kanger/Version.java"
                        match="public\s+static\s+final\s+String\s+DATE\s+=\s+&quot;.*&quot;;"
                        replace="public static final String DATE = &quot;${build.time}&quot;;"
                        byline="true"

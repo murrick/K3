@@ -1,0 +1,24 @@
+package org.kanger.interfaces;
+
+import org.kanger.User;
+
+import java.io.IOException;
+
+public interface IUnit<T> {
+
+    long getId();
+
+    void setId(long id);
+
+    int getHash() throws IOException, ClassNotFoundException;
+
+    boolean equalsTo(T to) throws IOException, ClassNotFoundException;
+
+    User getUser();
+
+    void setUser(User user) throws IOException, ClassNotFoundException;
+
+    boolean isDeleted();
+
+    void setDeleted();
+}
