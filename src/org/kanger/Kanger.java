@@ -47,7 +47,7 @@ public class Kanger {
 
     public static void main(String[] args) throws Exception {
 
-        User user = new User();
+        User user = new User(null);
 //        user.use("data/memory");
         Mind mind = new Mind(user);
 

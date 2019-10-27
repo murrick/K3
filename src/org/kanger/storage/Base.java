@@ -1,6 +1,7 @@
 package org.kanger.storage;
 
 import org.cojen.tupl.Cursor;
+import org.cojen.tupl.Database;
 import org.cojen.tupl.Index;
 import org.kanger.User;
 import org.kanger.interfaces.IBase;
@@ -19,11 +20,11 @@ public class Base implements IBase {
     private String name = "";
     private User user = null;
 
-    public Base(User user, String name) throws IOException {
+    public Base(Database db, User user, String name) throws IOException {
         this.user = user;
         this.name = name;
 
-        this.index = user.getDb().openIndex(name + ".index");
+        this.index = db.openIndex(name + ".index");
     }
 
     private byte[] fromObject(Serializable o) throws IOException {

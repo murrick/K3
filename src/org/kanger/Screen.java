@@ -2,6 +2,10 @@ package org.kanger;
 
 //import jline.ConsoleReader;
 
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import org.kanger.compiler.Parser;
 import org.kanger.compiler.SysOp;
 import org.kanger.enums.Enums;
@@ -29,9 +33,9 @@ import java.util.*;
  */
 public class Screen {
 
-    public static boolean LINE_EDITOR_ENABLE
-            = System.getProperties().getProperty("kanger.enable.line.editor") != null
-            && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
+    public static boolean LINE_EDITOR_ENABLE =
+            System.getProperties().containsKey("kanger.enable.line.editor")
+                    && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
     private static String lastLogFile = "analizer.log";
 
     public static void session(User user) {
@@ -40,45 +44,39 @@ public class Screen {
         Mind mind = user.getMind();
         String lastQuery = "";
 
-//        ConsoleReader reader = null;
-//        if (LINE_EDITOR_ENABLE) {
-//            try {
-//                reader = new ConsoleReader();
-//            } catch (IOException e) {
-//                LINE_EDITOR_ENABLE = false;
-//            }
-//        }
+        LineReader reader = null;
+        if (LINE_EDITOR_ENABLE) {
+            try {
+                Terminal terminal = TerminalBuilder
+                        .builder()
+                        .build();
+                terminal.echo(false);
+                reader = LineReaderBuilder
+                        .builder()
+                        .terminal(terminal)
+                        .build();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
-//        String ss = "!@x (a(x) || b(x)) -> c(x);";
-//        for(int i=0; i<ss.length(); ++i){
-//            try {
-//                Runtime.getRuntime().exec("input keyevent " + ss.charAt(i));
-//            } catch (IOException e) {} 
-//        }
         showCopyrigt(mind);
 
         while (!stop) {
             String line = "";
             try {
-//                if (LINE_EDITOR_ENABLE && reader != null) {
-//                    try {
-//                        Character c = 0;
-//                        System.out.printf("\n: ");
-//                        line = reader.readLine(c);
-//                    } catch (IOException e) {
-//                        LINE_EDITOR_ENABLE = false;
-//                    }
-//                }
-//                if (!LINE_EDITOR_ENABLE || reader == null) {
-                System.out.printf("\n: ");
-                if (again) {
-                    line = lastQuery;
-                    System.out.printf("%s\n", line);
-                    again = false;
+                if (LINE_EDITOR_ENABLE && reader != null) {
+                    line = reader.readLine("\n: ");
                 } else {
-                    line = new Scanner(System.in).nextLine();
+                    System.out.printf("\n: ");
+                    if (again) {
+                        line = lastQuery;
+                        System.out.printf("%s\n", line);
+                        again = false;
+                    } else {
+                        line = new Scanner(System.in).nextLine();
+                    }
                 }
-//                }
                 if (line == null) {
                     line = "";
                 }
@@ -223,7 +221,11 @@ public class Screen {
                             if (line.split(" ").length == 2) {
                                 String name = line.split("\\ ")[1].replace(".", File.separatorChar + "");
                                 user.use(name);
-                                System.out.println("Database used: " + user.getStorageName().replace(File.separatorChar + "", "."));
+                                if (!user.isClosed()) {
+                                    System.out.println("Database used: " + user.getStorageName().replace(File.separatorChar + "", "."));
+                                } else {
+                                    System.out.println("No database used");
+                                }
                             } else if (!user.isClosed()) {
                                 System.out.println("Used database " +
                                         user.getStorageName()
