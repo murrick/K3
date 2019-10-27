@@ -52,6 +52,15 @@ public abstract class Tools {
 //        }
 //        return a;
 //    }
+
+    public static boolean isBlob(String ch) {
+        if (ch.charAt(0) == '#') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public static boolean isNum(String ch) {
         return ch.length() > 0 && (Character.isDigit(ch.charAt(0))
                 || (ch.length() > 1 && ch.charAt(0) == '-' && Character.isDigit(ch.charAt(1)))

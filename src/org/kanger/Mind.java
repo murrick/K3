@@ -493,7 +493,7 @@ public class Mind {
                 suc = true;
                 break;
             case Enums.DEL:
-            case Enums.WIPE:
+//            case Enums.WIPE:
             case Enums.SUC:
                 suc = false;
                 break;
@@ -1340,10 +1340,22 @@ public class Mind {
                     if (!s.endsWith(" ")) {
                         s += " ";
                     }
-                    s += row.getKey() + "=" + row.getValue();
+                    s += row.getKey() + "=" + formatValue(row.getValue());
                 }
                 mind.getLog().add(LogMode.VALUES, s);
             }
+        }
+    }
+
+    private String formatValue(Object o) {
+        if (o instanceof byte[]) {
+            String s = "#";
+            for (byte x : ((byte[]) o)) {
+                s += String.format("%02X", x & 0xFF);
+            }
+            return s;
+        } else {
+            return o.toString();
         }
     }
 

@@ -80,6 +80,11 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
             case STRING:
                 value = din.readUTF();
                 break;
+            case BLOB:
+                int sz = din.readInt();
+                value = new byte[sz];
+                din.read((byte[]) value);
+                break;
             case TERM:
                 value = din.readObject();
                 break;
@@ -120,6 +125,10 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
             case STRING:
                 dos.writeUTF((String) value);
                 break;
+            case BLOB:
+                dos.writeInt(((byte[]) value).length);
+                dos.write((byte[]) value);
+                break;
             case TERM:
                 dos.writeObject(value);
                 break;
@@ -143,6 +152,9 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
             value = ((Number) o).doubleValue();
         } else if (o instanceof Date) {
             type = DataType.DATE;
+            value = o;
+        } else if (o instanceof byte[]) {
+            type = DataType.BLOB;
             value = o;
         } else if (o instanceof PTree) {
             if ("..".equals(((PTree) o).getName())) {
@@ -187,6 +199,9 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
                             type = DataType.STRING;
                             value = token;
                         }
+                    } else if (Tools.isBlob(token)) {
+                        type = DataType.BLOB;
+                        value = conatructBlob(token);
                     } else if (Tools.isInterval(token)) {
                         type = DataType.INTERVAL;
                         value = conatructInterval(token);
@@ -212,6 +227,31 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
                 value = o;
             }
         }
+    }
+
+    private byte[] conatructBlob(String str) {
+        byte[] buffer = new byte[]{};
+        if (str.charAt(0) == '#') {
+            str = str.substring(1);
+            str = str.replace("-", "");
+            str = str.replace("\n", "");
+            str = str.replace("\\n", "");
+            str = str.replace("\r", "");
+            str = str.replace(" ", "");
+            if (!str.isEmpty()) {
+                buffer = new byte[str.length() / 2 + (str.length() % 2 == 0 ? 0 : 1)];
+                for (int i = 0; i < buffer.length; ++i) {
+                    String sub = str.substring(i * 2);
+                    if (sub.length() == 1) {
+                        sub = "0" + sub;
+                    } else if (sub.length() > 2) {
+                        sub = sub.substring(0, 2);
+                    }
+                    buffer[i] = (byte) (Integer.parseInt(sub, 16) & 0xFF);
+                }
+            }
+        }
+        return buffer;
     }
 
     private Object conatructInterval(String ch) throws IOException, ClassNotFoundException {
@@ -261,7 +301,10 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {
-                return "{" + ((Collection) value).toArray()[0].toString() + ".." + ((Collection) value).toArray()[1].toString() + "}";
+                return "("
+                        + ((Collection) value).toArray()[0].toString()
+                        + ".."
+                        + ((Collection) value).toArray()[1].toString() + ")";
             } else {
                 return value.toString();
             }
@@ -273,7 +316,13 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
                 }
                 s += a.toString();
             }
-            return "{" + s + "}";
+            return "[" + s + "]";
+        } else if (type == DataType.BLOB) {
+            String s = "#";
+            for (byte x : ((byte[]) value)) {
+                s += String.format("%02X", x & 0xFF);
+            }
+            return s;
         } else {
             return value.toString();
         }
@@ -381,6 +430,8 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
                 } else {
                     return ((Comparable) value).compareTo(o.getValue());
                 }
+            } else if (type == DataType.BLOB) {
+                return Arrays.compare((byte[]) value, (byte[]) o.getValue());
             } else {
                 return ((Comparable) value).compareTo(o.getValue());
             }

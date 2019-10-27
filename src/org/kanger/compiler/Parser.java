@@ -93,6 +93,10 @@ public class Parser {
         return (ch >= '0' && ch <= '9') /*|| ch == '-' || ch == '+'*/ || ch == '.';
     }
 
+    public static boolean isHex(int ch) {
+        return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+
     public static Object[] getToken(String ln, int pos) throws ParseErrorException {
         int ch, c, i;
         String line = "";
@@ -177,6 +181,14 @@ public class Parser {
             if (counter != 0) {
                 throw new ParseErrorException(pos, ParseError.RBRACES);
             }
+        } else if (ch == '#') {
+            line += (char) ch;
+            line += (char) c;
+            while (pos < ln.length() && isHex(ch = ln.charAt(pos++))) {
+                line += (char) ch;
+            }
+//            c = ln.charAt(pos++);
+            --pos;
         } else {
             line += (char) ch;
 
@@ -693,3 +705,5 @@ public class Parser {
     }
 
 }
+
+//TODO: : ?a=4; //Result: FALSE

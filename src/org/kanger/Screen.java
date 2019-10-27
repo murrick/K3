@@ -347,7 +347,7 @@ public class Screen {
                         case Enums.ANT:
                         case Enums.INS:
                         case Enums.DEL:
-                        case Enums.WIPE:
+//                        case Enums.WIPE:
 //                            if (!Tools.isComplete(line, 0)) {
 //                                incomplete = line;
 //                                line = "";

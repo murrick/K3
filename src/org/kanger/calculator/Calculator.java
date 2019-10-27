@@ -187,7 +187,7 @@ public class Calculator {
                 return op;
             } else {
                 key = key.trim();
-                if (!key.isEmpty() && key.charAt(0) == Enums.ANT || key.charAt(0) == Enums.SUC || key.charAt(0) == Enums.DEL || key.charAt(0) == Enums.INS || key.charAt(0) == Enums.WIPE) {
+                if (!key.isEmpty() && key.charAt(0) == Enums.ANT || key.charAt(0) == Enums.SUC || key.charAt(0) == Enums.DEL || key.charAt(0) == Enums.INS /*|| key.charAt(0) == Enums.WIPE*/) {
                     key = key.substring(1);
                 }
                 if (!key.isEmpty() && key.charAt(key.length() - 1) == Enums.EOLN) {
