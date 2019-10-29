@@ -3,7 +3,7 @@
         simple example increment build variable
     </description>
     <!-- set global properties for this build -->
-    <property name="src" location="./src"/>
+    <property name="src" location="./kanger/src"/>
 
     <tstamp>
         <format property="build.time" pattern="yyyy-MM-dd_HH:mm:ss"/>

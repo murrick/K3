@@ -14,9 +14,11 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypotese;
 import org.kanger.primitives.LogEntry;
+import org.kanger.stores.LogStore;
 import org.kanger.test.KangerTest;
 import org.kanger.units.*;
 
@@ -34,11 +36,12 @@ import java.util.*;
 public class Screen {
 
     public static boolean LINE_EDITOR_ENABLE =
-            System.getProperties().containsKey("kanger.enable.line.editor")
-                    && System.getProperties().getProperty("kanger.enable.line.editor").equals("true");
+            System.getProperties().containsKey("line.editor")
+                    && System.getProperties().getProperty("line.editor").equals("true");
+
     private static String lastLogFile = "analizer.log";
 
-    public static void session(User user) {
+    public static void session(IUser user) {
         boolean stop = false;
         boolean again = false;
         Mind mind = user.getMind();
@@ -60,7 +63,7 @@ public class Screen {
             }
         }
 
-        showCopyrigt(mind);
+        showCopyrigt(user);
 
         while (!stop) {
             String line = "";
@@ -325,6 +328,12 @@ public class Screen {
                                     case 'm':
                                     case 'M':
                                         System.out.println("Memory status:");
+                                        System.out.println();
+                                        if (!user.isClosed()) {
+                                            System.out.println("Cache size: " + user.getMaxCacheSize());
+                                            System.out.println("Cache used: " + user.getUsedCacheSize());
+                                            System.out.println();
+                                        }
                                         System.out.println("Database: " + mind.getRights().storedSize());
                                         System.out.println("Dictionary: " + mind.getTerms().size());
                                         System.out.println("Domains: " + mind.getDomains().size());
@@ -395,7 +404,7 @@ public class Screen {
                     }
 
                 } else if (line.isEmpty()) {
-                    showCopyrigt(mind);
+                    showCopyrigt(user);
                 }
             } catch (ParseErrorException ex) {
                 String x = ex.toString();
@@ -516,7 +525,7 @@ public class Screen {
 //            System.out.println();
 //        }
 //    }
-    public static void showCopyrigt(Mind mind) {
+    public static void showCopyrigt(IUser user) {
         System.out.printf("KANGER III, Version %s\n"
                 + "Copyright (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
                 + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
@@ -844,48 +853,8 @@ public class Screen {
 
     //
 //
-    public static List<List<String>> formatTree(Mind mind, Right r) throws IOException, ClassNotFoundException {
-//        int save = mind.getDebugLevel();
-//        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
-        List<List<String>> list = new ArrayList<>();
-        int depth = 0;
-        for (List<Domain> t : r.getTree()) {
-            List<String> v = new ArrayList<>();
-//            v.add((t.getRight().isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
-            list.add(v);
-            int len = 0;
-            for (Domain d : t) {
-                String s = d.toString(); // + (d.isUsed() ? " *" : "");
-                len = Math.max(len, s.length());
-                v.add(s);
-            }
-            depth = Math.max(depth, v.size());
-            for (int i = 0; i < v.size(); ++i) {
-                String s = v.get(i);
-                while (s.length() < len) {
-                    s += " ";
-                }
-                v.set(i, s);
-            }
-        }
-        for (List<String> v : list) {
-//            if(!v.isEmpty()) {
-            int len = v.get(0).length();
-            String s = " ";
-            while (s.length() < len) {
-                s += " ";
-            }
-            while (v.size() < depth) {
-                v.add(s);
-            }
-//            }
-        }
-//        mind.setDebugLevel(save);
-        return list;
-    }
-
     public static void showTree(Mind mind, Right r) throws IOException, ClassNotFoundException {
-        List<List<String>> net = formatTree(mind, r);
+        List<List<String>> net = LogStore.formatTree(mind, r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
                 for (int k = 0; k < net.size(); ++k) {

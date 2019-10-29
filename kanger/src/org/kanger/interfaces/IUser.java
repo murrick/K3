@@ -1,0 +1,37 @@
+package org.kanger.interfaces;
+
+import org.kanger.Mind;
+import org.kanger.exception.RuntimeErrorException;
+
+import java.io.IOException;
+
+public interface IUser {
+
+    Mind getMind();
+
+    void setMind(Mind mind);
+
+    boolean isClosed();
+
+    IBase getStorage(String schema);
+
+    void clear() throws IOException, ClassNotFoundException;
+
+    String getStorageName();
+
+    void close() throws IOException;
+
+    void use(String name) throws RuntimeErrorException, IOException;
+
+    void remove() throws IOException;
+
+    void reindex(IReactor iReactor) throws IOException;
+
+    long getUsedCacheSize();
+
+    long getMaxCacheSize();
+
+    void clearCache();
+
+    Class getUdf();
+}

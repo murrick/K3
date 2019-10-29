@@ -1,0 +1,777 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="K3:jar" />
+    </artifacts-to-build>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="4c215415-8748-4aba-ab66-d22e4b46c2b2" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/build.number" beforeDir="false" afterPath="$PROJECT_DIR$/build.number" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/kanger/Version.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/kanger/Version.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/kanger/calculator/Calculator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/kanger/calculator/Calculator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/kanger/calculator/Functions.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/kanger/calculator/Functions.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/kanger/compiler/Parser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/kanger/compiler/Parser.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/kanger/compiler/SysOp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/kanger/compiler/SysOp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/kanger/units/Domain.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/kanger/units/Domain.java" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CoverageDataManager">
+    <SUITE FILE_PATH="coverage/K3$kanger.ic" NAME="kanger Coverage Results" MODIFIED="1533110631591" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+  </component>
+  <component name="DefaultGradleProjectSettings">
+    <option name="isMigrated" value="true" />
+  </component>
+  <component name="FavoritesManager">
+    <favorites_list name="$project_name$" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Enum" />
+        <option value="Class" />
+        <option value="Interface" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="Дмитрий Г. Кузнецов &lt;muray@letit.ru&gt;" />
+        <option value="Dmitry G. Qusnetsov" />
+      </list>
+    </option>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="nobase-001" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="HARD" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="IgnoredFileRootStore">
+    <option name="generatedRoots">
+      <set>
+        <option value="C:\Users\murra\Projects\KANGER\K3\.idea" />
+      </set>
+    </option>
+  </component>
+  <component name="ProjectId" id="1Q5iZkCAbWHZhQm1iWxRWnWjwrl" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectReloadState">
+    <option name="STATE" value="1" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="Downloaded.Files.Path.Enabled" value="true" />
+    <property name="GenerateAntBuildDialog.backupFiles" value="true" />
+    <property name="GenerateAntBuildDialog.enableUiFormCompile" value="true" />
+    <property name="GenerateAntBuildDialog.forceTargetJdk" value="true" />
+    <property name="GenerateAntBuildDialog.outputFileNameProperty" value="$project_name$" />
+    <property name="Git.Branch.Popup.ShowAllRemotes" value="true" />
+    <property name="Repository.Attach.JavaDocs" value="false" />
+    <property name="Repository.Attach.Sources" value="false" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="SearchEverywhereHistoryKey" value="R&#9;null&#9;null" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1550556005062" />
+    <property name="jdk.selected.JAVA_MODULE" value="12" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/.classpath" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+  </component>
+  <component name="RecentsManager">
+    <key name="ExtractSuperBase.RECENT_KEYS">
+      <recent name="kanger.interfaces" />
+    </key>
+    <key name="MoveInnerDialog.RECENTS_KEY">
+      <recent name="kanger.storage" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="kanger.storage" />
+      <recent name="kanger.exception" />
+      <recent name="kanger.factory" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Application.kanger">
+    <configuration name="kanger" type="Application" factoryName="Application">
+      <option name="ALTERNATIVE_JRE_PATH" value="C:/Program Files/Java/jdk-12.0.2" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <option name="MAIN_CLASS_NAME" value="kanger.Kanger" />
+      <module name="$project_name$" />
+      <option name="VM_PARAMETERS" value="-Ddatabase.dir=C:\Users\murra\KANGER.DB" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="KangerTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="$project_name$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="kanger.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="$project_name$" />
+      <option name="MAIN_CLASS_NAME" value="kanger.KangerTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="KangerTest.set04_08" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="$project_name$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="kanger.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="$project_name$" />
+      <option name="MAIN_CLASS_NAME" value="kanger.KangerTest" />
+      <option name="METHOD_NAME" value="set04_08" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="KangerTest.set04_13" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="$project_name$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="kanger.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="$project_name$" />
+      <option name="MAIN_CLASS_NAME" value="kanger.KangerTest" />
+      <option name="METHOD_NAME" value="set04_13" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="KangerTest.set06_02" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="$project_name$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="kanger.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="$project_name$" />
+      <option name="MAIN_CLASS_NAME" value="kanger.KangerTest" />
+      <option name="METHOD_NAME" value="set06_02" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="KangerTest.set06_03" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="$project_name$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="kanger.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="$project_name$" />
+      <option name="MAIN_CLASS_NAME" value="kanger.KangerTest" />
+      <option name="METHOD_NAME" value="set06_03" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.kanger" />
+      <item itemvalue="JUnit.KangerTest" />
+      <item itemvalue="JUnit.KangerTest.set04_08" />
+      <item itemvalue="JUnit.KangerTest.set04_13" />
+      <item itemvalue="JUnit.KangerTest.set06_02" />
+      <item itemvalue="JUnit.KangerTest.set06_03" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.KangerTest" />
+        <item itemvalue="JUnit.KangerTest.set04_13" />
+        <item itemvalue="JUnit.KangerTest.set06_03" />
+        <item itemvalue="JUnit.KangerTest.set06_02" />
+        <item itemvalue="JUnit.KangerTest.set04_08" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="StructureViewFactory">
+    <option name="ACTIVE_ACTIONS" value=",VISIBILITY_SORTER,ALPHA_COMPARATOR" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4c215415-8748-4aba-ab66-d22e4b46c2b2" name="Default Changelist" comment="" />
+      <created>1533110349491</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1533110349491</updated>
+    </task>
+    <task id="LOCAL-00110" summary="Удаление конфликтующих гипотез, Коррекция">
+      <created>1568836325284</created>
+      <option name="number" value="00110" />
+      <option name="presentableId" value="LOCAL-00110" />
+      <option name="project" value="LOCAL" />
+      <updated>1568836325284</updated>
+    </task>
+    <task id="LOCAL-00111" summary="Удаление конфликтующих гипотез, Фильтр бесполезных гипотез">
+      <created>1568839839535</created>
+      <option name="number" value="00111" />
+      <option name="presentableId" value="LOCAL-00111" />
+      <option name="project" value="LOCAL" />
+      <updated>1568839839535</updated>
+    </task>
+    <task id="LOCAL-00112" summary="+ Запись лога в файл&#10;- Убрал проверку списка гипотез&#10;* Фильтр гипотез в процессе вывода - удаляются не только с isQuery но еще и с c-переменными появившимися в результате запроса">
+      <created>1568887024144</created>
+      <option name="number" value="00112" />
+      <option name="presentableId" value="LOCAL-00112" />
+      <option name="project" value="LOCAL" />
+      <updated>1568887024145</updated>
+    </task>
+    <task id="LOCAL-00113" summary="Оптимизация линкера. Добавил тест">
+      <created>1568890491943</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1568890491943</updated>
+    </task>
+    <task id="LOCAL-00114" summary="Оптимизация линкера еще. Тесты проходят">
+      <created>1568893005651</created>
+      <option name="number" value="00114" />
+      <option name="presentableId" value="LOCAL-00114" />
+      <option name="project" value="LOCAL" />
+      <updated>1568893005651</updated>
+    </task>
+    <task id="LOCAL-00115" summary="Попытки завести базу данных">
+      <created>1568902438884</created>
+      <option name="number" value="00115" />
+      <option name="presentableId" value="LOCAL-00115" />
+      <option name="project" value="LOCAL" />
+      <updated>1568902438884</updated>
+    </task>
+    <task id="LOCAL-00116" summary="ВЫВОД РАБОТАЕТ С БД! Ер ооочень медленно">
+      <created>1568982129829</created>
+      <option name="number" value="00116" />
+      <option name="presentableId" value="LOCAL-00116" />
+      <option name="project" value="LOCAL" />
+      <updated>1568982129830</updated>
+    </task>
+    <task id="LOCAL-00117" summary="Хочу переделать БД">
+      <created>1569223972850</created>
+      <option name="number" value="00117" />
+      <option name="presentableId" value="LOCAL-00117" />
+      <option name="project" value="LOCAL" />
+      <updated>1569223972851</updated>
+    </task>
+    <task id="LOCAL-00118" summary="Первое упрощение">
+      <created>1569231519995</created>
+      <option name="number" value="00118" />
+      <option name="presentableId" value="LOCAL-00118" />
+      <option name="project" value="LOCAL" />
+      <updated>1569231519995</updated>
+    </task>
+    <task id="LOCAL-00119" summary="Второе упрощение: Вытащих storage из RightsCache">
+      <created>1569235445476</created>
+      <option name="number" value="00119" />
+      <option name="presentableId" value="LOCAL-00119" />
+      <option name="project" value="LOCAL" />
+      <updated>1569235445476</updated>
+    </task>
+    <task id="LOCAL-00120" summary="Третье упрощение: Вытащил predicate index из RightsCache">
+      <created>1569238186147</created>
+      <option name="number" value="00120" />
+      <option name="presentableId" value="LOCAL-00120" />
+      <option name="project" value="LOCAL" />
+      <updated>1569238186147</updated>
+    </task>
+    <task id="LOCAL-00121" summary="Некотороая оптимизация линкера">
+      <created>1569244565637</created>
+      <option name="number" value="00121" />
+      <option name="presentableId" value="LOCAL-00121" />
+      <option name="project" value="LOCAL" />
+      <updated>1569244565637</updated>
+    </task>
+    <task id="LOCAL-00122" summary="Убрал links в правилах">
+      <created>1569303539848</created>
+      <option name="number" value="00122" />
+      <option name="presentableId" value="LOCAL-00122" />
+      <option name="project" value="LOCAL" />
+      <updated>1569303539856</updated>
+    </task>
+    <task id="LOCAL-00123" summary="Разделил кэши по транзакциям. По-моему стало медленнее раза в 3 ((">
+      <created>1569309770777</created>
+      <option name="number" value="00123" />
+      <option name="presentableId" value="LOCAL-00123" />
+      <option name="project" value="LOCAL" />
+      <updated>1569309770777</updated>
+    </task>
+    <task id="LOCAL-00124" summary="Стек Cache БЕЗ БД">
+      <created>1569406445668</created>
+      <option name="number" value="00124" />
+      <option name="presentableId" value="LOCAL-00124" />
+      <option name="project" value="LOCAL" />
+      <updated>1569406445669</updated>
+    </task>
+    <task id="LOCAL-00125" summary="Совершенно тупой кэш с двунаправленным списком">
+      <created>1569414028538</created>
+      <option name="number" value="00125" />
+      <option name="presentableId" value="LOCAL-00125" />
+      <option name="project" value="LOCAL" />
+      <updated>1569414028538</updated>
+    </task>
+    <task id="LOCAL-00126" summary="Оптимизация вывода - analize перед link">
+      <created>1569441791333</created>
+      <option name="number" value="00126" />
+      <option name="presentableId" value="LOCAL-00126" />
+      <option name="project" value="LOCAL" />
+      <updated>1569441791334</updated>
+    </task>
+    <task id="LOCAL-00127" summary="Оптимизация commit">
+      <created>1570013839343</created>
+      <option name="number" value="00127" />
+      <option name="presentableId" value="LOCAL-00127" />
+      <option name="project" value="LOCAL" />
+      <updated>1570013839344</updated>
+    </task>
+    <task id="LOCAL-00128" summary="Что-то не так с t-переменными при работе с БД">
+      <created>1570020701609</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1570020701609</updated>
+    </task>
+    <task id="LOCAL-00129" summary="Не работает запрос с $ в БД">
+      <created>1570186625658</created>
+      <option name="number" value="00129" />
+      <option name="presentableId" value="LOCAL-00129" />
+      <option name="project" value="LOCAL" />
+      <updated>1570186625659</updated>
+    </task>
+    <task id="LOCAL-00130" summary="ВСЕ ТЕСТЫ С БАЗОЙ ПРОХОДЯТ! Лишние не-целые значения в set_04_13()">
+      <created>1570382555651</created>
+      <option name="number" value="00130" />
+      <option name="presentableId" value="LOCAL-00130" />
+      <option name="project" value="LOCAL" />
+      <updated>1570382555652</updated>
+    </task>
+    <task id="LOCAL-00131" summary="РЕЛИЗ! ВСЕ ТЕСТЫ С БАЗОЙ ПРОХОДЯТ!&#10;Плюс задание пути к базе данных через опцию database.dir">
+      <created>1570438343274</created>
+      <option name="number" value="00131" />
+      <option name="presentableId" value="LOCAL-00131" />
+      <option name="project" value="LOCAL" />
+      <updated>1570438343274</updated>
+    </task>
+    <task id="LOCAL-00132" summary="Переменные в интерваоах. Кривая последовательность !@x x=7 -&gt; top(x);  ?$x $y top(y) &amp;&amp; x : 1..y;">
+      <created>1570451271004</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1570451271004</updated>
+    </task>
+    <task id="LOCAL-00133" summary="Работает ?$x $y y=10 &amp;&amp; x : 1..y; и ?$x $y y=10 &amp;&amp; x : 1..(5+y);&#10;НЕ работает ?$x $y y=10 &amp;&amp; x : y..20;">
+      <created>1570457565164</created>
+      <option name="number" value="00133" />
+      <option name="presentableId" value="LOCAL-00133" />
+      <option name="project" value="LOCAL" />
+      <updated>1570457565164</updated>
+    </task>
+    <task id="LOCAL-00134" summary="ИНТЕРВАЛЫ С ПЕРЕМЕННЫМИ РАБОТАЮТ. Множества надо сделать">
+      <created>1570487334550</created>
+      <option name="number" value="00134" />
+      <option name="presentableId" value="LOCAL-00134" />
+      <option name="project" value="LOCAL" />
+      <updated>1570487334550</updated>
+    </task>
+    <task id="LOCAL-00135" summary="ЗАПРОС УДАЛЕНИЯ НЕпродуцированных правил, типа -$x $y age(x,y) &amp;&amp; y &gt; 12;">
+      <created>1570534034099</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1570534034099</updated>
+    </task>
+    <task id="LOCAL-00136" summary="Удаление и Добавление работает. Ковыряю док и обработку комментариев">
+      <created>1570632699710</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1570632699710</updated>
+    </task>
+    <task id="LOCAL-00137" summary="Коментарии остаются только сишные! /**/ и //">
+      <created>1570659986026</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1570659986027</updated>
+    </task>
+    <task id="LOCAL-00138" summary="Коментарии остаются только сишные! /**/ и //">
+      <created>1570719719980</created>
+      <option name="number" value="00138" />
+      <option name="presentableId" value="LOCAL-00138" />
+      <option name="project" value="LOCAL" />
+      <updated>1570719719980</updated>
+    </task>
+    <task id="LOCAL-00139" summary="Уточнение алгоритмов, коррекция парсера загрузки. Все работает">
+      <created>1571081484848</created>
+      <option name="number" value="00139" />
+      <option name="presentableId" value="LOCAL-00139" />
+      <option name="project" value="LOCAL" />
+      <updated>1571081484848</updated>
+    </task>
+    <task id="LOCAL-00140" summary="Контроль закрытия всех веток запроса">
+      <created>1571141082036</created>
+      <option name="number" value="00140" />
+      <option name="presentableId" value="LOCAL-00140" />
+      <option name="project" value="LOCAL" />
+      <updated>1571141082036</updated>
+    </task>
+    <task id="LOCAL-00141" summary="Контроль закрытия всех веток запроса. Добавил тесты 02_..04. Получается одно решение и результат null">
+      <created>1571142363119</created>
+      <option name="number" value="00141" />
+      <option name="presentableId" value="LOCAL-00141" />
+      <option name="project" value="LOCAL" />
+      <updated>1571142363119</updated>
+    </task>
+    <task id="LOCAL-00142" summary="Удаление, Добавление, Очистка, Контроль дублирования правил">
+      <created>1571237851214</created>
+      <option name="number" value="00142" />
+      <option name="presentableId" value="LOCAL-00142" />
+      <option name="project" value="LOCAL" />
+      <updated>1571237851214</updated>
+    </task>
+    <task id="LOCAL-00143" summary="Исправления, резет при '?'">
+      <created>1571253064494</created>
+      <option name="number" value="00143" />
+      <option name="presentableId" value="LOCAL-00143" />
+      <option name="project" value="LOCAL" />
+      <updated>1571253064494</updated>
+    </task>
+    <task id="LOCAL-00144" summary="Рефакторинг">
+      <created>1571254537447</created>
+      <option name="number" value="00144" />
+      <option name="presentableId" value="LOCAL-00144" />
+      <option name="project" value="LOCAL" />
+      <updated>1571254537462</updated>
+    </task>
+    <task id="LOCAL-00145" summary="Функции JS">
+      <created>1571581506324</created>
+      <option name="number" value="00145" />
+      <option name="presentableId" value="LOCAL-00145" />
+      <option name="project" value="LOCAL" />
+      <updated>1571581506325</updated>
+    </task>
+    <task id="LOCAL-00146" summary="Новая обработка функций. Тесты проходят. Работает: ?$x $y 18=x + y, y : 1..3;, не работает: ?$x $y x=18 + y, y : 1..3;">
+      <created>1571660336409</created>
+      <option name="number" value="00146" />
+      <option name="presentableId" value="LOCAL-00146" />
+      <option name="project" value="LOCAL" />
+      <updated>1571660336409</updated>
+    </task>
+    <task id="LOCAL-00147" summary="TValue индексируется по списку T-Переменных. ?$x $y x=18 + y, y : 1..3; так и не пашет">
+      <created>1571749818024</created>
+      <option name="number" value="00147" />
+      <option name="presentableId" value="LOCAL-00147" />
+      <option name="project" value="LOCAL" />
+      <updated>1571749818025</updated>
+    </task>
+    <task id="LOCAL-00148" summary="Поправил мелочи в функциях">
+      <created>1571751334172</created>
+      <option name="number" value="00148" />
+      <option name="presentableId" value="LOCAL-00148" />
+      <option name="project" value="LOCAL" />
+      <updated>1571751334172</updated>
+    </task>
+    <task id="LOCAL-00149" summary="Оптимизация _in(2) и _in(3)">
+      <created>1571756256879</created>
+      <option name="number" value="00149" />
+      <option name="presentableId" value="LOCAL-00149" />
+      <option name="project" value="LOCAL" />
+      <updated>1571756256879</updated>
+    </task>
+    <task id="LOCAL-00150" summary="Мелочи">
+      <created>1571801748834</created>
+      <option name="number" value="00150" />
+      <option name="presentableId" value="LOCAL-00150" />
+      <option name="project" value="LOCAL" />
+      <updated>1571801748835</updated>
+    </task>
+    <task id="LOCAL-00151" summary="Исправил ошибку &quot;?$x $y x=y, (y=4 || y = 5); почему-то FALSE&quot;, Заменил !isDefined() на isEmpty() т.к. это неравнозначно из-за С-переменных">
+      <created>1571817474890</created>
+      <option name="number" value="00151" />
+      <option name="presentableId" value="LOCAL-00151" />
+      <option name="project" value="LOCAL" />
+      <updated>1571817474890</updated>
+    </task>
+    <task id="LOCAL-00152" summary="Прибрал лишнее. Ошибка в ?$x $y 18=x + y, y : 1..3;">
+      <created>1571831041963</created>
+      <option name="number" value="00152" />
+      <option name="presentableId" value="LOCAL-00152" />
+      <option name="project" value="LOCAL" />
+      <updated>1571831041963</updated>
+    </task>
+    <task id="LOCAL-00153" summary="Отладка: ?$x $y 5=x + y, (y = 4 || y = 5);">
+      <created>1571833072371</created>
+      <option name="number" value="00153" />
+      <option name="presentableId" value="LOCAL-00153" />
+      <option name="project" value="LOCAL" />
+      <updated>1571833072371</updated>
+    </task>
+    <task id="LOCAL-00154" summary="ЗАРАБОТАЛО! ++ еще три теста. Надо перелопачивать функции">
+      <created>1571837293186</created>
+      <option name="number" value="00154" />
+      <option name="presentableId" value="LOCAL-00154" />
+      <option name="project" value="LOCAL" />
+      <updated>1571837293186</updated>
+    </task>
+    <task id="LOCAL-00155" summary="Исправил ошибку в переключении контекста в юзерских функциях">
+      <created>1571913918841</created>
+      <option name="number" value="00155" />
+      <option name="presentableId" value="LOCAL-00155" />
+      <option name="project" value="LOCAL" />
+      <updated>1571913918841</updated>
+    </task>
+    <task id="LOCAL-00156" summary="Убираю TODO">
+      <created>1571919077234</created>
+      <option name="number" value="00156" />
+      <option name="presentableId" value="LOCAL-00156" />
+      <option name="project" value="LOCAL" />
+      <updated>1571919077234</updated>
+    </task>
+    <task id="LOCAL-00157" summary="Отлажено сохранение юзерских функций в БД">
+      <created>1571922882706</created>
+      <option name="number" value="00157" />
+      <option name="presentableId" value="LOCAL-00157" />
+      <option name="project" value="LOCAL" />
+      <updated>1571922882706</updated>
+    </task>
+    <task id="LOCAL-00158" summary="Rhino 2.0 в качестве скрипт-енджина">
+      <created>1571925078643</created>
+      <option name="number" value="00158" />
+      <option name="presentableId" value="LOCAL-00158" />
+      <option name="project" value="LOCAL" />
+      <updated>1571925078643</updated>
+    </task>
+    <option name="localTasksCounter" value="159" />
+    <servers />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.k" />
+  </component>
+  <component name="UpdateCopyrightCheckinHandler">
+    <option name="UPDATE_COPYRIGHT" value="true" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="SHOW_OTHER_BRANCHES" value="true" />
+    <option name="COLUMN_ORDER">
+      <list>
+        <option value="0" />
+        <option value="2" />
+        <option value="3" />
+        <option value="1" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="1">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="OPEN_TABS">
+      <set>
+        <option value="1" />
+      </set>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list />
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN" value="true" />
+    <MESSAGE value="Работает ?$x $y y=10 &amp;&amp; x : 1..y; и ?$x $y y=10 &amp;&amp; x : 1..(5+y);&#10;НЕ работает ?$x $y y=10 &amp;&amp; x : y..20;" />
+    <MESSAGE value="ИНТЕРВАЛЫ С ПЕРЕМЕННЫМИ РАБОТАЮТ. Множества надо сделать" />
+    <MESSAGE value="ЗАПРОС УДАЛЕНИЯ НЕпродуцированных правил, типа -$x $y age(x,y) &amp;&amp; y &gt; 12;" />
+    <MESSAGE value="Удаление и Добавление работает. Ковыряю док и обработку комментариев" />
+    <MESSAGE value="Коментарии остаются только сишные! /**/ и //" />
+    <MESSAGE value="Уточнение алгоритмов, коррекция парсера загрузки. Все работает" />
+    <MESSAGE value="Контроль закрытия всех веток запроса" />
+    <MESSAGE value="Контроль закрытия всех веток запроса. Добавил тесты 02_..04. Получается одно решение и результат null" />
+    <MESSAGE value="Удаление, Добавление, Очистка, Контроль дублирования правил" />
+    <MESSAGE value="Исправления, резет при '?'" />
+    <MESSAGE value="Рефакторинг" />
+    <MESSAGE value="Функции JS" />
+    <MESSAGE value="Новая обработка функций. Тесты проходят. Работает: ?$x $y 18=x + y, y : 1..3;, не работает: ?$x $y x=18 + y, y : 1..3;" />
+    <MESSAGE value="TValue индексируется по списку T-Переменных. ?$x $y x=18 + y, y : 1..3; так и не пашет" />
+    <MESSAGE value="Поправил мелочи в функциях" />
+    <MESSAGE value="Оптимизация _in(2) и _in(3)" />
+    <MESSAGE value="Мелочи" />
+    <MESSAGE value="Исправил ошибку &quot;?$x $y x=y, (y=4 || y = 5); почему-то FALSE&quot;, Заменил !isDefined() на isEmpty() т.к. это неравнозначно из-за С-переменных" />
+    <MESSAGE value="Прибрал лишнее. Ошибка в ?$x $y 18=x + y, y : 1..3;" />
+    <MESSAGE value="Отладка: ?$x $y 5=x + y, (y = 4 || y = 5);" />
+    <MESSAGE value="ЗАРАБОТАЛО! ++ еще три теста. Надо перелопачивать функции" />
+    <MESSAGE value="Исправил ошибку в переключении контекста в юзерских функциях" />
+    <MESSAGE value="Убираю TODO" />
+    <MESSAGE value="Отлажено сохранение юзерских функций в БД" />
+    <MESSAGE value="Rhino 2.0 в качестве скрипт-енджина" />
+    <option name="LAST_COMMIT_MESSAGE" value="Rhino 2.0 в качестве скрипт-енджина" />
+    <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state width="1136" height="713" key="Git.Branch.Popup" />
+    <state width="268" height="632" key="Git.Branch.Popup/1366.768" />
+    <state width="264" height="628" key="Git.Branch.Popup/1920.1080" />
+    <state width="1136" height="713" key="Git.Branch.Popup/1920.1080/3840.2160" />
+    <state width="1116" height="692" key="Git.Branch.Popup/3840.2160" />
+    <state width="1128" height="704" key="Git.Branch.Popup/3840.2160/1920.1080" />
+    <state width="268" height="632" key="Git.Branch.Popup@1366.768" />
+    <state width="1136" height="713" key="Git.Branch.Popup@1920.1080" />
+    <state width="264" height="628" key="Git.Branch.Popup@1920.1080@144dpi" />
+    <state width="1134" height="711" key="Git.Branch.Popup@3840.2160@144dpi" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/units/TVariable.java</url>
+          <line>110</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/compiler/Parser.java</url>
+          <line>547</line>
+          <option name="timeStamp" value="92" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/compiler/Compiler.java</url>
+          <line>31</line>
+          <option name="timeStamp" value="95" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/compiler/Compiler.java</url>
+          <line>190</line>
+          <option name="timeStamp" value="96" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/compiler/Compiler.java</url>
+          <line>209</line>
+          <option name="timeStamp" value="97" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/calculator/Functions.java</url>
+          <line>409</line>
+          <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/units/Domain.java</url>
+          <line>339</line>
+          <option name="timeStamp" value="99" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/units/Domain.java</url>
+          <line>327</line>
+          <option name="timeStamp" value="100" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/kanger/calculator/Calculator.java</url>
+          <line>39</line>
+          <option name="timeStamp" value="101" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="JUnit">
+        <watch expression="user.getMind().getDatabase()" language="JAVA" />
+        <watch expression="user.getMind().getTValues().getCommitID()" language="JAVA" />
+      </configuration>
+      <configuration name="Application">
+        <watch expression="ras.getFilePointer()" language="JAVA" />
+        <watch expression="q.getDomain().isDestFor(0, p.getDomain())" language="JAVA" />
+        <watch expression="getTValues(true)" language="JAVA" />
+        <watch expression="t.getSolves()" language="JAVA" />
+        <watch expression="ops[22]" language="JAVA" />
+        <watch expression="user.getMind().getRights().getDatabase(-1)" />
+        <watch expression="user.getStorage(schema).getRoot().getNext()" language="JAVA" />
+        <watch expression="master.getRight()" />
+        <watch expression="wasq" />
+        <watch expression="ln.substring(pos)" language="JAVA" />
+        <watch expression="ln.substring(pos)" language="JAVA" />
+        <watch expression="line.substring(pos)" language="JAVA" />
+        <watch expression="t.getCurrent()" language="JAVA" />
+        <watch expression="tv.getCurrent()" language="JAVA" />
+        <watch expression="tv.getValue()" language="JAVA" />
+        <watch expression="user.getMind().getProducedDomains().get(this)" language="JAVA" />
+        <watch expression="list" language="JAVA" />
+        <watch expression="arguments.getStamp()" language="JAVA" />
+      </configuration>
+    </watches-manager>
+  </component>
+</project>
