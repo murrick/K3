@@ -52,7 +52,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public void commit(DomainFactory base) throws Exception {
+    public void commit(DomainFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             lastId = cache.getRoot().getId() + 1;

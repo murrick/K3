@@ -10,7 +10,6 @@ import org.kanger.units.Right;
 import org.kanger.units.Term;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -67,23 +66,26 @@ public class DictionaryFactory implements Iterable<Term> {
         }
     }
 
-    public void commit(DictionaryFactory base, Collection<Object> vars) throws Exception {
+    public void commit(DictionaryFactory base/*, Map<Integer, Object> vars*/) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             lastId = cache.getRoot().getId() + 1;
+            varIndex = base.varIndex;
 
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
                 firstId = cache.getTop().getId();
             }
 
-            for (Object p : cache) {
-                if (((Term) p).getId() >= base.firstId && ((Term) p).isCVariable()) {
-                    vars.add(p);
-                } else {
-                    break;
-                }
-            }
+//            for (Object p : cache) {
+//                if (((Term) p).getId() >= base.firstId) {
+//                    if (((Term) p).isCVariable()) {
+//                        vars.put(((Term) p).getIndex(), p);
+//                    }
+//                } else {
+//                    break;
+//                }
+//            }
         }
 
 //        List<Term> list = new ArrayList<>();

@@ -45,7 +45,7 @@ public class FValueFactory {
         }
     }
 
-    public void commit(FValueFactory base) throws Exception {
+    public void commit(FValueFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             lastId = cache.getRoot().getId() + 1;

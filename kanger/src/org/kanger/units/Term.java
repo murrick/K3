@@ -201,7 +201,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
                         }
                     } else if (Tools.isBlob(token)) {
                         type = DataType.BLOB;
-                        value = conatructBlob(token);
+                        value = constructBlob(token);
                     } else if (Tools.isInterval(token)) {
                         type = DataType.INTERVAL;
                         value = conatructInterval(token);
@@ -229,7 +229,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         }
     }
 
-    private byte[] conatructBlob(String str) {
+    private byte[] constructBlob(String str) {
         byte[] buffer = new byte[]{};
         if (str.charAt(0) == '#') {
             str = str.substring(1);

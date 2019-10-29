@@ -51,7 +51,7 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public void commit(TValueFactory base) throws Exception {
+    public void commit(TValueFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             lastId = cache.getRoot().getId() + 1;

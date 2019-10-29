@@ -12,7 +12,6 @@ import org.kanger.units.Term;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -51,7 +50,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
     }
 
-    public void commit(TVariableFactory base, Collection vars) throws Exception {
+    public void commit(TVariableFactory base /*, Map<Integer, Object> vars*/) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             lastId = cache.getRoot().getId() + 1;
@@ -60,13 +59,13 @@ public class TVariableFactory implements Iterable<TVariable> {
                 firstId = cache.getTop().getId();
             }
 
-            for (Object p : cache) {
-                if (((TVariable) p).getId() >= base.firstId) {
-                    vars.add(p);
-                } else {
-                    break;
-                }
-            }
+//            for (Object p : cache) {
+//                if (((TVariable) p).getId() >= base.firstId) {
+//                    vars.put(((TVariable) p).getIndex(), p);
+//                } else {
+//                    break;
+//                }
+//            }
 
         }
 

@@ -133,15 +133,15 @@ public class Mind {
 
     }
 
-    public void commit(Mind m) throws Exception {
-        SortedSet vars = new TreeSet<>();
+    public void commit(Mind m) throws IOException, ClassNotFoundException {
+//        SortedMap <Integer, Object> vars = new TreeMap<>();
 
         m.pack();
 
         user.setMind(this);
 
-        terms.commit(m.getTerms(), vars);
-        tVars.commit(m.getTVars(), vars);
+        terms.commit(m.getTerms());
+        tVars.commit(m.getTVars());
         tValues.commit(m.getTValues());
         fValues.commit(m.getFValues());
         predicates.commit(m.getPredicates());
@@ -154,16 +154,16 @@ public class Mind {
 //        solves.commit(m.getSolutions());
 //        values.commit(m.getValues());
 
-        for (Object o : vars) {
-            int i = terms.nextVarIndex();
-            if (o instanceof Term) {
-                String temp = String.format("%c%d", Enums.CVC, i);
-                ((Term) o).setIndex(i);
-                ((Term) o).setValue(temp);
-            } else {
-                ((TVariable) o).setIndex(i);
-            }
-        }
+//        for (Object o : vars.values()) {
+//            int i = terms.nextVarIndex();
+//            if (o instanceof Term) {
+//                String temp = String.format("%c%d", Enums.CVC, i);
+//                ((Term) o).setIndex(i);
+//                ((Term) o).setValue(temp);
+//            } else {
+//                ((TVariable) o).setIndex(i);
+//            }
+//        }
 
         update();
 
