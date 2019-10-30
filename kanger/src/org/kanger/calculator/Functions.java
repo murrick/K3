@@ -1509,6 +1509,31 @@ public class Functions {
             }));
         }
 
+        {
+            put("md5(1)", new SysOp(LibMode.FUNCTION, "md5", 1, new IReactor() {
+                @Override
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+
+                    if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
+                        if (!((Function) o).setParameter(1, _md5(arg.get(0).getValue()))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
+                        if (arg.get(1).getValue().equals(_md5(arg.get(0).getValue()))) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
     };
 
     public Functions(IUser user) {
@@ -1924,5 +1949,20 @@ public class Functions {
         return user.getMind().getTerms().add(res);
     }
 
+    private Term _md5(Term a) throws Exception {
+        Term res = null;
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] array = md.digest(a.toString().getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < array.length; ++i) {
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
+            }
+            res = user.getMind().getTerms().add(sb.toString());
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            ex.printStackTrace(System.err);
+        }
+        return res;
+    }
 
 }
