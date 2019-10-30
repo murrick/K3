@@ -432,7 +432,7 @@ public class Mind {
 //            m.compileLine(line, false);
 
             Mind x = new Mind(m);
-            Object r = x.compileLine(line, false);
+            Object r = x.compileLine(line, false, null);
             if (r instanceof Right && ((Right) r).isDeleted()) {
                 m.release(x);
             } else {
@@ -460,7 +460,7 @@ public class Mind {
         }
     }
 
-    public Object compileLine(String line, boolean query) throws Exception {
+    public Object compileLine(String line, boolean query, List<Object> ext) throws Exception {
         String orig = line.trim();
         Object r = null;
         Boolean suc = null;
@@ -484,7 +484,7 @@ public class Mind {
         }
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
-            r = new Compiler(user).compileLine(p, suc, orig, query);
+            r = new Compiler(user).compileLine(p, suc, orig, query, ext);
         }
         return r;
     }
@@ -624,12 +624,15 @@ public class Mind {
         this.compiledFileName = compiledFileName;
     }
 
-
     public Boolean query(String line) throws Exception {
+        return query(line, null);
+    }
+
+    public Boolean query(String line, List<Object> ext) throws Exception {
         querySource = line;
         queryPass = QueryPass.SILENCE;
         queryContext = null;
-        queryResult = query(line, true);
+        queryResult = query(line, ext, true);
         return queryResult;
     }
 
@@ -809,7 +812,7 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
-    public Boolean query(String line, boolean logging) throws Exception {
+    public Boolean query(String line, List<Object> ext, boolean logging) throws Exception {
 //        querySource = line;
 //        queryPass = QueryPass.SILENCE;
 //        queryContext = null;
@@ -864,7 +867,7 @@ public class Mind {
                 line = invert(line);
                 line = invert(line);
 
-                Right r = (Right) m.compileLine(line, true);
+                Right r = (Right) m.compileLine(line, true, ext);
                 if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
 
@@ -908,7 +911,7 @@ public class Mind {
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.ACCEPT);
 
-                Right r = (Right) m.compileLine(line, false);
+                Right r = (Right) m.compileLine(line, false, ext);
                 if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
                     if (logging) {
@@ -972,7 +975,7 @@ public class Mind {
                     m.getLog().add(LogMode.ANALIZER, "============= DELETE ======================");
                 }
                 line = invert(line);
-                Right r = (Right) m.compileLine(line, true);
+                Right r = (Right) m.compileLine(line, true, ext);
                 if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
                     if (logging) {
@@ -1108,7 +1111,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
                         }
 
-                        Right r = (Right) m.compileLine(invert(line), true);
+                        Right r = (Right) m.compileLine(invert(line), true, ext);
                         if (r != null && !r.isDeleted()) {
                             r.setQuery(true);
 
@@ -1153,7 +1156,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
                         }
 
-                        Right r = (Right) m.compileLine(line, true);
+                        Right r = (Right) m.compileLine(line, true, ext);
                         if (r != null && !r.isDeleted()) {
                             r.setQuery(true);
                             if (logging) {

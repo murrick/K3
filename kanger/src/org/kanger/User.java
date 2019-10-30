@@ -1,6 +1,7 @@
 package org.kanger;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
@@ -171,12 +172,14 @@ public class User implements IUser {
     @Override
     public SysOp getUdf() {
         try {
-            return (SysOp) udf.getConstructors()[0].newInstance(this);
-        } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            if (udf != null) {
+                return (SysOp) udf.getConstructors()[0].newInstance(this);
+            } else {
+                throw new RuntimeErrorException("UDF module doens't loaded");
+            }
+        } catch (InstantiationException | InvocationTargetException | IllegalAccessException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return null;
         }
     }
-
-
 }

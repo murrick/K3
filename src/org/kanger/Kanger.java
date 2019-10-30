@@ -17,6 +17,20 @@ public class Kanger {
         IData db = new DB();
         IUser user = new User(db, UDF.class);
 
+//        List<Object> params = new ArrayList<>();
+//        params.add(1);
+//        params.add(18);
+//        Boolean res = user.getMind().query("?$x x + ? = ?;", params);
+//        if(res) {
+//            for(Map<String,Object> m : user.getMind().getValues()) {
+//                for(Map.Entry<String,Object> e : m.entrySet()) {
+//                    System.out.print(e.getKey() + "=" + e.getValue() + "\t");
+//                }
+//                System.out.println();
+//            }
+//        }
+
+
         Screen.session(user);
     }
 }

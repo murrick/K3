@@ -395,7 +395,7 @@ public class Screen {
 //                                incomplete = line;
 //                                line = "";
 //                            } else {
-                            SysOp op = (SysOp) mind.compileLine(line, false);
+                            SysOp op = (SysOp) mind.compileLine(line, false, null);
                             System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
 //                            }
                             break;

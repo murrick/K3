@@ -87,6 +87,9 @@ public class ParseErrorException extends Exception {
             case COMMENT:
                 exceptionMessage += "Unclosed comments";
                 break;
+            case EPARAM:
+                exceptionMessage += "External parameter expected";
+                break;
             default:
                 exceptionMessage += "Unknown error";
         }
