@@ -7,7 +7,10 @@ package org.kanger.primitives;
 
 
 import org.kanger.enums.Enums;
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUser;
+import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
 import org.kanger.units.Right;
 import org.kanger.units.Term;
@@ -40,6 +43,35 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
 
     public Hypotese(IUser user) {
         this.user = user;
+    }
+
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(predicateId)
+                .putByte(antc ? 1 : 0)
+                .putInt(solve.size());
+        for (Term t : solve) {
+            packet.putLong(t.getId());
+        }
+        packet.putInt(rights.size());
+        for (Right r : rights) {
+            packet.putLong(r.getId());
+        }
+        return packet.createMarked();
+    }
+
+    public Hypotese apply(ByteBuffer packet) throws OutOfBufferException {
+        predicateId = packet.getLong();
+        antc = packet.getByte() != 0;
+        int cnt = packet.getInt();
+        for (int i = 0; i < cnt; ++i) {
+            solveIds.add(packet.getLong());
+        }
+        cnt = packet.getInt();
+        for (int i = 0; i < cnt; ++i) {
+            rightsIds.add(packet.getLong());
+        }
+        return this;
     }
 
 
@@ -94,7 +126,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
 //    }
 //
 
-    public Predicate getPredicate() throws IOException, ClassNotFoundException {
+    public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (predicate == null) {
             predicate = user.getMind().getPredicates().load(predicateId);
         }
@@ -106,7 +138,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
         this.predicateId = predicate.getId();
     }
 
-    public List<Term> getSolve() throws IOException, ClassNotFoundException {
+    public List<Term> getSolve() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (solve.isEmpty() && !solveIds.isEmpty()) {
             for (long id : solveIds) {
                 Term t = user.getMind().getTerms().load(id);
@@ -116,7 +148,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
         return solve;
     }
 
-    public Set<Right> getRights() throws IOException, ClassNotFoundException {
+    public Set<Right> getRights() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (rights.isEmpty() && !rightsIds.isEmpty()) {
             for (long id : rightsIds) {
                 Right right = user.getMind().getRights().load(id);
@@ -142,7 +174,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
         this.query = query;
     }
 
-    public void addParams(Collection params) throws IOException, ClassNotFoundException {
+    public void addParams(Collection params) throws IOException, ClassNotFoundException, OutOfBufferException {
         for (Object p : params) {
             if (p instanceof Argument) {
                 solve.add(((Argument) p).getValue());
@@ -195,7 +227,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
             }
             tmp += ");";
             line += tmp;
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
             e.printStackTrace(System.err);
         }
         return line;
@@ -256,9 +288,14 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
     public int compareTo(Hypotese o) {
         try {
             return getPredicate().getName().compareTo(o.getPredicate().getName());
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
             e.printStackTrace(System.err);
             return 0;
         }
     }
+
+    public UnitType getUnitType() {
+        return UnitType.HYPOTESE;
+    }
+
 }

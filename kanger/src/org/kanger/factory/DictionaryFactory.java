@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.enums.Enums;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -115,7 +116,7 @@ public class DictionaryFactory implements Iterable<Term> {
         }
     }
 
-    public Term add(Object o) throws IOException, ClassNotFoundException {
+    public Term add(Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
         Term p = find(o);
         if (p != null) {
             return p;
@@ -128,7 +129,7 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
 
-    public Term find(Object o) throws IOException, ClassNotFoundException {
+    public Term find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
         Term t = new Term(o, user);
         for (long id : cache.find(t.getHash())) {
             IUnit one = load(id);
@@ -139,7 +140,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return null;
     }
 
-    public Term createCVar(Right r, String name) throws IOException, ClassNotFoundException {
+    public Term createCVar(Right r, String name) throws IOException, ClassNotFoundException, OutOfBufferException {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
@@ -149,7 +150,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    public Term load(long id) throws IOException, ClassNotFoundException {
+    public Term load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         Term t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -162,7 +163,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    public Term get(long id) throws IOException, ClassNotFoundException {
+    public Term get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         Term t = (Term) cache.get(id);
         return t;
     }
@@ -208,7 +209,7 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
 
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getTerms());
         } else {

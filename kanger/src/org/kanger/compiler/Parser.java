@@ -6,6 +6,7 @@ import org.kanger.enums.ParseError;
 import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.interfaces.IUser;
+import org.kanger.units.SysOp;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -547,7 +548,7 @@ public class Parser {
             boolean waitParams = false;
             boolean waitScript = false;
             int pos = 1;
-            SysOp f = (SysOp) user.getUdf().getConstructors()[0].newInstance();
+            SysOp f = user.getUdf();
             f.setUser(user);
             do {
                 Object[] t = getToken(ln, pos);

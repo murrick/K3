@@ -1,13 +1,14 @@
 package org.kanger.calculator;
 
-import org.kanger.compiler.SysOp;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.units.Domain;
+import org.kanger.units.SysOp;
 import org.kanger.units.TValue;
 import org.kanger.units.Term;
 
@@ -253,7 +254,7 @@ public class Predicates {
         return sysOps;
     }
 
-    private boolean cmp(int rc, int rcmin, int rcmax, Term cur, Term step) throws IOException, ClassNotFoundException {
+    private boolean cmp(int rc, int rcmin, int rcmax, Term cur, Term step) throws IOException, ClassNotFoundException, OutOfBufferException {
         boolean res = false;
         if (rc < 0 ? (rcmin >= 0 && rcmax <= 0) : (rcmin <= 0 && rcmax >= 0)) {
             if (cur.getType() == DataType.NUMERIC && step == null) {

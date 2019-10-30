@@ -1,9 +1,12 @@
 package org.kanger.units;
 
 import org.kanger.enums.Enums;
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
+import org.kanger.storage.ByteBuffer;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -55,32 +58,52 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
 
     }
 
-    @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        id = dis.readLong();
-        deleted = dis.readBoolean();
-        valueId = dis.readLong();
-        tVarId = dis.readLong();
-        int count = dis.readInt();
-        causes.clear();
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(id)
+                .putByte(deleted ? 1 : 0)
+                .putLong(valueId)
+                .putLong(tVarId)
+                .putInt(causes.size());
+        for (Cause c : causes) {
+            packet.append(c.pack());
+        }
+        return packet.createMarked();
+    }
+
+    public TValue apply(ByteBuffer packet) throws OutOfBufferException {
+        id = packet.getLong();
+        deleted = packet.getByte() != 0;
+        valueId = packet.getLong();
+        tVarId = packet.getLong();
+        int count = packet.getInt();
         while (count-- > 0) {
-            Cause c = (Cause) dis.readObject();
-            c.setUser(user);
-            causes.add(c);
+            try {
+                packet.mark();
+                Cause c = new Cause().apply(packet);
+                c.setUser(user);
+                causes.add(c);
+            } finally {
+                packet.release();
+            }
+        }
+        return this;
+    }
+
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
         }
     }
 
     @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeBoolean(deleted);
-        dos.writeLong(valueId);
-        dos.writeLong(tVarId);
-        dos.writeInt(causes.size());
-        for (Cause c : causes) {
-            dos.writeObject(c);
-        }
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.write(pack().getBuffer());
     }
+
 
 //    public void linkExternal(User user) throws IOException, ClassNotFoundException {
 //        this.user = user;
@@ -91,7 +114,7 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
 //        }
 //    }
 
-    public Term getValue() throws IOException, ClassNotFoundException {
+    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (value == null && valueId != -1) {
             value = user.getMind().getTerms().load(valueId);
         }
@@ -118,7 +141,7 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
         this.id = id;
     }
 
-    public TVariable getTVar() throws IOException, ClassNotFoundException {
+    public TVariable getTVar() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (tVar == null && tVarId != -1) {
             tVar = user.getMind().getTVars().load(tVarId);
         }
@@ -142,13 +165,13 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
     public String toString() {
         try {
             return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? getTVar().getVarName() + "=" : "") + getValue().toString();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
             e.printStackTrace(System.err);
             return "";
         }
     }
 
-    public void setQuery() throws IOException, ClassNotFoundException {
+    public void setQuery() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (!user.getMind().getQueryValues().containsKey(getTVar())) {
             user.getMind().getQueryValues().put(getTVar(), new HashSet<>());
         }
@@ -201,11 +224,12 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
     }
 
     @Override
-    public void setUser(IUser user) {
+    public TValue setUser(IUser user) {
         this.user = user;
         for (Cause c : causes) {
             c.setUser(user);
         }
+        return this;
     }
 
     @Override
@@ -238,4 +262,10 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
     public void setDeleted() {
         deleted = true;
     }
+
+    @Override
+    public UnitType getUnitType() {
+        return UnitType.TVALUE;
+    }
+
 }

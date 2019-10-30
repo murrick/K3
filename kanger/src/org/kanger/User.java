@@ -1,12 +1,15 @@
 package org.kanger;
 
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
+import org.kanger.units.SysOp;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +21,7 @@ public class User implements IUser {
     private IData data = null;
     private Class udf = null;
 
-    public User(IData data, Class udf) throws IOException, ClassNotFoundException {
+    public User(IData data, Class udf) throws IOException, ClassNotFoundException, OutOfBufferException {
         this.data = data;
         if (data != null) {
             data.init();
@@ -72,7 +75,7 @@ public class User implements IUser {
         return storage.get(schema);
     }
 
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
@@ -166,7 +169,14 @@ public class User implements IUser {
     }
 
     @Override
-    public Class getUdf() {
-        return udf;
+    public SysOp getUdf() {
+        try {
+            return (SysOp) udf.getConstructors()[0].newInstance(this);
+        } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace(System.err);
+            return null;
+        }
     }
+
+
 }

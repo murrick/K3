@@ -1,6 +1,6 @@
 package org.kanger.exception;
 
-import org.kanger.compiler.SysOp;
+import org.kanger.units.SysOp;
 
 /**
  * Created by Dmitry Kuznetsov on 30.12.2015.

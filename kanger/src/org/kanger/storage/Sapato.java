@@ -1,14 +1,19 @@
 package org.kanger.storage;
 
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
+import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.IUser;
+import org.kanger.units.*;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class Sapato implements IStep, Externalizable {
+public class Sapato implements IStep {
 
     private static final long serialVersionUID = 196402071117L;
 
@@ -33,23 +38,62 @@ public class Sapato implements IStep, Externalizable {
         this.hash = c.getHash();
     }
 
-    @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        id = dis.readLong();
-        hash = dis.readInt();
-        prev = dis.readLong();
-        next = dis.readLong();
-        data = dis.readObject();
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(id)
+                .putInt(hash)
+                .putLong(prev)
+                .putLong(next);
+        if (data instanceof IUnit) {
+            packet.putInt(((IUnit) data).getUnitType().ordinal())
+                    .append(((IUnit) data).pack());
+        } else if (data instanceof Long) {
+            packet.putInt(UnitType.LONG.ordinal())
+                    .putLong((Long) data);
+        } else if (data instanceof Collection) {
+            packet.putInt(UnitType.LONGS.ordinal())
+                    .putInt(((Collection<Long>) data).size());
+            for (long id : (Collection<Long>) data) {
+                packet.putLong(id);
+            }
+        } else {
+            System.out.println("!!!");
+        }
+        return packet.createMarked();
     }
 
-    @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeInt(hash);
-        dos.writeLong(prev);
-        dos.writeLong(next);
-        dos.writeObject(data);
+    public Sapato apply(IUser user, ByteBuffer packet) throws OutOfBufferException {
+        id = packet.getLong();
+        hash = packet.getInt();
+        prev = packet.getLong();
+        next = packet.getLong();
+        UnitType type = UnitType.values()[packet.getInt()];
+        switch (type) {
+
+            case LONG:
+                data = packet.getLong();
+                break;
+
+            case LONGS:
+                int cnt = packet.getInt();
+                data = new ArrayList<Long>();
+                while (cnt-- > 0) {
+                    ((List<Long>) data).add(packet.getLong());
+                }
+                break;
+
+            default:
+                try {
+                    packet.mark();
+                    data = newInstance(user, type).apply(packet);
+                    assert (data != null);
+                } finally {
+                    packet.release();
+                }
+        }
+        return null;
     }
+
 
     @Override
     public Object getData() {
@@ -154,4 +198,37 @@ public class Sapato implements IStep, Externalizable {
     public void setSize(long sz) {
         size = sz;
     }
+
+    private IUnit newInstance(IUser user, UnitType type) {
+        switch (type) {
+            case TERM:
+                return new Term(user);
+            case RIGHT:
+                return new Right(user);
+            case DOMAIN:
+                return new Domain(user);
+            case FVALUE:
+                return new FValue(user);
+            case TVALUE:
+                return new TValue(user);
+            case FUNCTION:
+                return new Function(user);
+            case PREFICATE:
+                return new Predicate(user);
+            case TVARIABLE:
+                return new TVariable(user);
+            case SYSOP:
+                return user.getUdf();
+
+            case HYPOTESE:
+            case ARGUMENT:
+            case ARGLIST:
+            case CAUSE:
+                return null;
+
+            default:
+                return null;
+        }
+    }
+
 }

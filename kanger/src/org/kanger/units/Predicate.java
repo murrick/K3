@@ -1,7 +1,10 @@
 package org.kanger.units;
 
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
+import org.kanger.storage.ByteBuffer;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -41,20 +44,38 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     }
 
     @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        id = dis.readLong();
-        deleted = dis.readBoolean();
-        nameId = dis.readLong();
-        range = dis.readInt();
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(id)
+                .putByte(deleted ? 1 : 0)
+                .putLong(nameId)
+                .putInt(range);
+        return packet.createMarked();
     }
 
     @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeBoolean(deleted);
-        dos.writeLong(nameId);
-        dos.writeInt(range);
+    public Predicate apply(ByteBuffer packet) throws OutOfBufferException {
+        id = packet.getLong();
+        deleted = packet.getByte() != 0;
+        nameId = packet.getLong();
+        range = packet.getInt();
+        return this;
     }
+
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
+        }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.write(pack().getBuffer());
+    }
+
 
 //    @Override
 //    public void linkExternal(User user) throws IOException, ClassNotFoundException {
@@ -62,7 +83,7 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
 //        name = user.getMind().getTerms().get(nameId);
 //    }
 
-    public Term getName() throws IOException, ClassNotFoundException {
+    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (name == null) {
             name = user.getMind().getTerms().load(nameId);
         }
@@ -187,7 +208,7 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     public String toString() {
         try {
             return getName() + "(" + range + ")";
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
             e.printStackTrace(System.err);
             return "";
         }
@@ -231,8 +252,9 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     }
 
     @Override
-    public void setUser(IUser user) {
+    public Predicate setUser(IUser user) {
         this.user = user;
+        return this;
     }
 
     @Override
@@ -253,4 +275,10 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     public long getNameId() {
         return nameId;
     }
+
+    @Override
+    public UnitType getUnitType() {
+        return UnitType.PREFICATE;
+    }
+
 }

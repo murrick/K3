@@ -7,11 +7,11 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.kanger.compiler.Parser;
-import org.kanger.compiler.SysOp;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -853,7 +853,7 @@ public class Screen {
 
     //
 //
-    public static void showTree(Mind mind, Right r) throws IOException, ClassNotFoundException {
+    public static void showTree(Mind mind, Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
         List<List<String>> net = LogStore.formatTree(mind, r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
@@ -868,7 +868,7 @@ public class Screen {
         }
     }
 
-    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException {
+    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (tset.isEmpty()) {
             showTree(mind, r);
         } else {
@@ -886,7 +886,7 @@ public class Screen {
         }
     }
 
-    public static void showRights(Mind mind, boolean showTree) throws IOException, ClassNotFoundException {
+    public static void showRights(Mind mind, boolean showTree) throws IOException, ClassNotFoundException, OutOfBufferException {
 //        int i = 0;
         for (Right r : mind.getRights()) {
 

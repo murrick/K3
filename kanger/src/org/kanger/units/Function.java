@@ -3,10 +3,13 @@ package org.kanger.units;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.storage.ByteBuffer;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -41,24 +44,45 @@ public class Function implements Externalizable, IUnit<Function> {
         this.user = user;
     }
 
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(id)
+                .putByte(deleted ? 1 : 0)
+                .putLong(nameId)
+                .putInt(range)
+                .append(arguments.pack());
+        return packet.createMarked();
+    }
+
+    public Function apply(ByteBuffer packet) throws OutOfBufferException {
+        id = packet.getLong();
+        deleted = packet.getByte() != 0;
+        nameId = packet.getLong();
+        range = packet.getInt();
+        try {
+            packet.mark();
+            arguments = new ArgList().apply(packet);
+            arguments.setUser(user);
+        } finally {
+            packet.release();
+        }
+        return this;
+    }
+
+
     @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        id = dis.readLong();
-        deleted = dis.readBoolean();
-        nameId = dis.readLong();
-        range = dis.readInt();
-        arguments = (ArgList) dis.readObject();
-        arguments.setUser(user);
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
+        }
     }
 
     @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeBoolean(deleted);
-        dos.writeLong(nameId);
-        dos.writeInt(range);
-        dos.writeObject(arguments);
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.write(pack().getBuffer());
     }
+
 
 //    @Override
 //    public void linkExternal(User user) throws IOException, ClassNotFoundException {
@@ -89,7 +113,7 @@ public class Function implements Externalizable, IUnit<Function> {
         return arguments;
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException {
+    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException {
         FValue c = getCurrent();
         if (c != null) {
             return getCurrent().getValue();
@@ -151,7 +175,7 @@ public class Function implements Externalizable, IUnit<Function> {
 //    }
 
 
-    public Term getName() throws IOException, ClassNotFoundException {
+    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (name == null) {
             name = user.getMind().getTerms().load(nameId);
         }
@@ -309,7 +333,7 @@ public class Function implements Externalizable, IUnit<Function> {
 //        return true;
 //    }
 
-    public boolean isCalculable() throws IOException, ClassNotFoundException {
+    public boolean isCalculable() throws IOException, ClassNotFoundException, OutOfBufferException {
         return arguments.getTVariables(true).size() > 0;
     }
 
@@ -318,11 +342,11 @@ public class Function implements Externalizable, IUnit<Function> {
 //    }
 
 
-    public FValue getCurrent() throws IOException, ClassNotFoundException {
+    public FValue getCurrent() throws IOException, ClassNotFoundException, OutOfBufferException {
         return user.getMind().getFValues().find(this);
     }
 
-    public int getHashBase() throws IOException, ClassNotFoundException {
+    public int getHashBase() throws IOException, ClassNotFoundException, OutOfBufferException {
         long valueId = getResult().isEmpty() ? 0 : getResult().getValue().getId();
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
@@ -358,9 +382,10 @@ public class Function implements Externalizable, IUnit<Function> {
     }
 
     @Override
-    public void setUser(IUser user) {
+    public Function setUser(IUser user) {
         this.user = user;
         arguments.setUser(user);
+        return this;
     }
 
     @Override
@@ -368,7 +393,7 @@ public class Function implements Externalizable, IUnit<Function> {
         return ("" + id).hashCode();
     }
 
-    public int getHashStruct(Right r) throws IOException, ClassNotFoundException {
+    public int getHashStruct(Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
@@ -393,7 +418,7 @@ public class Function implements Externalizable, IUnit<Function> {
         return hash;
     }
 
-    public boolean equalsToStruct(Function f, Right left, Right right) throws IOException, ClassNotFoundException {
+    public boolean equalsToStruct(Function f, Right left, Right right) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (nameId == f.nameId && range == f.getRange()) {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
@@ -442,6 +467,11 @@ public class Function implements Externalizable, IUnit<Function> {
     @Override
     public void setDeleted() {
         deleted = true;
+    }
+
+    @Override
+    public UnitType getUnitType() {
+        return UnitType.FUNCTION;
     }
 
 }

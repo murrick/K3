@@ -1,15 +1,16 @@
 package org.kanger.calculator;
 
-import org.kanger.compiler.SysOp;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Argument;
 import org.kanger.units.Domain;
 import org.kanger.units.Function;
 import org.kanger.units.Predicate;
+import org.kanger.units.SysOp;
 
 import java.io.IOException;
 
@@ -147,7 +148,7 @@ public class Calculator {
         return k;
     }
 
-    public boolean exists(Predicate p) throws IOException, ClassNotFoundException {
+    public boolean exists(Predicate p) throws IOException, ClassNotFoundException, OutOfBufferException {
         String n = p.getName() + "(" + p.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
@@ -155,7 +156,7 @@ public class Calculator {
         return op != null && op.getMode() == LibMode.PREDICATE;
     }
 
-    public boolean exists(Function f) throws IOException, ClassNotFoundException {
+    public boolean exists(Function f) throws IOException, ClassNotFoundException, OutOfBufferException {
         String n = f.getName() + "(" + f.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
@@ -164,7 +165,7 @@ public class Calculator {
     }
 
 
-    private SysOp findOp(String n) throws IOException, ClassNotFoundException {
+    private SysOp findOp(String n) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (predicates.getSysOps().containsKey(n))
             return predicates.getSysOps().get(n);
         else if (functions.getSysOps().containsKey(n))
@@ -173,7 +174,7 @@ public class Calculator {
             return user.getMind().getLibrary().find(n);
     }
 
-    public SysOp find(Object o) throws IOException, ClassNotFoundException {
+    public SysOp find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (o instanceof Predicate) {
             String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
             return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);

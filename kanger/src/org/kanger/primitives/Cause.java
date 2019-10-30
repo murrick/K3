@@ -1,6 +1,9 @@
 package org.kanger.primitives;
 
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUser;
+import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 
 import java.io.Externalizable;
@@ -31,32 +34,52 @@ public class Cause implements Externalizable, Comparable<Cause> {
         this.arguments = src.getArguments().convertBase();
     }
 
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putInt(index)
+                .putLong(srcId)
+                .putLong(dstId)
+                .append(arguments.pack());
+        return packet.createMarked();
+    }
+
+    public Cause apply(ByteBuffer packet) throws OutOfBufferException {
+        index = packet.getInt();
+        srcId = packet.getLong();
+        dstId = packet.getLong();
+        try {
+            packet.mark();
+            arguments = new ArgList().apply(packet);
+            arguments.setUser(user);
+        } finally {
+            packet.release();
+        }
+        return this;
+    }
+
+
     @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        index = dis.readInt();
-        srcId = dis.readLong();
-        dstId = dis.readLong();
-        arguments = (ArgList) dis.readObject();
-        arguments.setUser(user);
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
+        }
     }
 
     @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeInt(index);
-        dos.writeLong(srcId);
-        dos.writeLong(dstId);
-        dos.writeObject(arguments);
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.write(pack().getBuffer());
     }
 
 
-    public Domain getSrc() throws IOException, ClassNotFoundException {
+    public Domain getSrc() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (src == null) {
             src = user.getMind().getDomains().load(srcId);
         }
         return src;
     }
 
-    public Domain getDst() throws IOException, ClassNotFoundException {
+    public Domain getDst() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (dst == null) {
             dst = user.getMind().getDomains().load(dstId);
         }
@@ -149,4 +172,9 @@ public class Cause implements Externalizable, Comparable<Cause> {
     public long getDstId() {
         return dstId;
     }
+
+    public UnitType getUnitType() {
+        return UnitType.CAUSE;
+    }
+
 }

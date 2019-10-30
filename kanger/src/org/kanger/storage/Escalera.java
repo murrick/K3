@@ -1,5 +1,6 @@
 package org.kanger.storage;
 
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -37,7 +38,7 @@ public class Escalera implements ICache {
 
 
     @Override
-    public void add(IUnit one) throws IOException, ClassNotFoundException {
+    public void add(IUnit one) throws IOException, ClassNotFoundException, OutOfBufferException {
         Step s = new Step();
         s.setData(one);
         s.setId(one.getId());
@@ -74,7 +75,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public Object get(long id) throws IOException, ClassNotFoundException {
+    public Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (root instanceof Sapato) {
             root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
         }
@@ -123,7 +124,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public Set<Long> find(int h) throws IOException, ClassNotFoundException {
+    public Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException {
         Set<Long> set = new HashSet<>();
         if (root instanceof Sapato) {
             root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
@@ -137,7 +138,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         root = null;
         top = null;
         if (parent == null && !user.isClosed()) {
@@ -171,7 +172,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean containsKey(long id) throws IOException, ClassNotFoundException {
+    public boolean containsKey(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         return get(id) != null;
     }
 

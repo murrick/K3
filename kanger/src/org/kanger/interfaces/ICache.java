@@ -1,16 +1,18 @@
 package org.kanger.interfaces;
 
+import org.kanger.exception.OutOfBufferException;
+
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 
 public interface ICache extends Iterable {
 
-    void add(IUnit one) throws IOException, ClassNotFoundException;
+    void add(IUnit one) throws IOException, ClassNotFoundException, OutOfBufferException;
 
     void add(long id, Object one) throws IOException;
 
-    Object get(long id) throws IOException, ClassNotFoundException;
+    Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException;
 
     void delete(long id) throws IOException, ClassNotFoundException;
 
@@ -18,9 +20,9 @@ public interface ICache extends Iterable {
 
     boolean isEmpty();
 
-    Set<Long> find(int h) throws IOException, ClassNotFoundException;
+    Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException;
 
-    void clear() throws IOException, ClassNotFoundException;
+    void clear() throws IOException, ClassNotFoundException, OutOfBufferException;
 
     long mark();
 
@@ -28,7 +30,7 @@ public interface ICache extends Iterable {
 
     long release() throws IOException, ClassNotFoundException;
 
-    boolean containsKey(long id) throws IOException, ClassNotFoundException;
+    boolean containsKey(long id) throws IOException, ClassNotFoundException, OutOfBufferException;
 
     void unlink() throws IOException;
 

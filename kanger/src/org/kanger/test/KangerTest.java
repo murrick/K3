@@ -1,6 +1,7 @@
 package org.kanger.test;
 
 import org.kanger.Mind;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Argument;
@@ -122,7 +123,7 @@ public class KangerTest {
 //        return false;
 //    }
 
-    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException {
+    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
         for (Term t : mind.getValues().getValues(name)) {
             if (o.equals(t.getValue())) {
                 return true;

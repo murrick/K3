@@ -3,6 +3,7 @@ package org.kanger;
 
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -540,7 +541,7 @@ public class Linker {
         return result;
     }
 
-    private boolean markExcluded(Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) throws IOException, ClassNotFoundException {
+    private boolean markExcluded(Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException {
         Right r = null;
         boolean occurrs = false;
         for (int i = 0; i < slave.getRange(); ++i) {

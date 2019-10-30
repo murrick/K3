@@ -1,11 +1,13 @@
-package org.kanger.compiler;
+package org.kanger.units;
 
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
-import org.kanger.units.TValue;
+import org.kanger.storage.ByteBuffer;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -125,36 +127,58 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
         return str;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeLong(id);
-        out.writeInt(mode.ordinal());
-        out.writeUTF(name);
-        out.writeInt(scripts.size());
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(id)
+                .putByte(deleted ? 1 : 0)
+                .putInt(mode.ordinal())
+                .putString(name)
+                .putInt(scripts.size());
         for (String s : scripts) {
-            out.writeUTF(s);
+            packet.putString(s);
         }
-        out.writeInt(range);
+        packet.putInt(range);
         for (int i = 0; i < range; ++i) {
-            out.writeUTF(params.get(i));
+            packet.putString(params.get(i));
+        }
+        return packet.createMarked();
+    }
+
+    public SysOp apply(ByteBuffer packet) throws OutOfBufferException {
+        id = packet.getLong();
+        deleted = packet.getByte() != 0;
+        mode = LibMode.values()[packet.getInt()];
+        name = packet.getString();
+        int cnt = packet.getInt();
+        while (cnt-- > 0) {
+            scripts.add(packet.getString());
+        }
+        range = packet.getInt();
+        for (int i = 0; i < range; ++i) {
+            String param = packet.getString();
+            params.add(param);
+        }
+        params.add(name);
+        return this;
+    }
+
+    @Override
+    public UnitType getUnitType() {
+        return UnitType.SYSOP;
+    }
+
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
         }
     }
 
     @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readLong();
-        mode = LibMode.values()[in.readInt()];
-        name = in.readUTF();
-        int cnt = in.readInt();
-        while (cnt-- > 0) {
-            scripts.add(in.readUTF());
-        }
-        range = in.readInt();
-        for (int i = 0; i < range; ++i) {
-            String param = in.readUTF();
-            params.add(param);
-        }
-        params.add(name);
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.write(pack().getBuffer());
     }
 
     @Override
@@ -183,8 +207,9 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
     }
 
     @Override
-    public void setUser(IUser user) {
+    public SysOp setUser(IUser user) {
         this.user = user;
+        return this;
     }
 
     @Override

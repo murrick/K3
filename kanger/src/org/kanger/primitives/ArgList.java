@@ -1,7 +1,10 @@
 package org.kanger.primitives;
 
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
 import org.kanger.interfaces.IUser;
+import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Function;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -30,21 +33,40 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         super(lis);
     }
 
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putInt(size());
+        for (Argument a : this) {
+            packet.append(a.pack());
+        }
+        return packet.createMarked();
+    }
+
+    public ArgList apply(ByteBuffer packet) throws OutOfBufferException {
+        int count = packet.getInt();
+        while (count-- > 0) {
+            try {
+                packet.mark();
+                Argument a = new Argument().apply(packet);
+                a.setUser(user);
+                add(a);
+            } finally {
+                packet.release();
+            }
+        }
+        return this;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(size());
-        for (Argument a : this) {
-            out.writeObject(a);
-        }
+        out.write(pack().getBuffer());
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        int count = in.readInt();
-        while (count-- > 0) {
-            Argument a = (Argument) in.readObject();
-            a.setUser(user);
-            add(a);
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
         }
     }
 
@@ -177,7 +199,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<Function> getFunctions() throws IOException, ClassNotFoundException {
+    public List<Function> getFunctions() throws IOException, ClassNotFoundException, OutOfBufferException {
         List<Function> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isFSet()) {
@@ -198,7 +220,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
     }
 
 
-    public List<TVariable> getTVariables(boolean full) throws IOException, ClassNotFoundException {
+    public List<TVariable> getTVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException {
         List<TVariable> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
@@ -218,7 +240,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<Term> getCVariables(boolean full) throws IOException, ClassNotFoundException {
+    public List<Term> getCVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException {
         List<Term> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
@@ -238,7 +260,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<TValue> getTValues(boolean full) throws IOException, ClassNotFoundException {
+    public List<TValue> getTValues(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException {
         List<TValue> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isTSet() && !a.getT().isDeleted() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
@@ -274,7 +296,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             }
             try {
                 str += a.isVSet() ? a.getV().toString() : a.toString();
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
                 e.printStackTrace(System.err);
             }
         }
@@ -293,7 +315,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
-    public List<Term> getStamp() throws IOException, ClassNotFoundException, ParametersIncompleteException {
+    public List<Term> getStamp() throws IOException, ClassNotFoundException, ParametersIncompleteException, OutOfBufferException {
         List<Term> list = new ArrayList<>();
         for (TVariable t : getTVariables(true)) {
             if (t.isEmpty()) {
@@ -317,12 +339,12 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             } else {
                 return false;
             }
-        } catch (ParametersIncompleteException e) {
+        } catch (ParametersIncompleteException | OutOfBufferException e) {
             return false;
         }
     }
 
-    public void applyStamp(List<Term> list) throws IOException, ClassNotFoundException {
+    public void applyStamp(List<Term> list) throws IOException, ClassNotFoundException, OutOfBufferException {
         List<TVariable> curr = getTVariables(true);
         for (int i = 0; i < curr.size(); ++i) {
             if (curr.get(i).find(list.get(i)) != null) {
@@ -331,7 +353,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
-    public boolean contains(Term t) throws IOException, ClassNotFoundException {
+    public boolean contains(Term t) throws IOException, ClassNotFoundException, OutOfBufferException {
         for (Argument a : this) {
             if (a.getValue().getId() == t.getId()) {
                 return true;
@@ -340,7 +362,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return false;
     }
 
-    public Argument remove(Term t) throws IOException, ClassNotFoundException {
+    public Argument remove(Term t) throws IOException, ClassNotFoundException, OutOfBufferException {
         for (Argument a : this) {
             if (a.getValue().getId() == t.getId()) {
                 this.remove(a);
@@ -349,4 +371,9 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
         return null;
     }
+
+    public UnitType getUnitType() {
+        return UnitType.ARGLIST;
+    }
+
 }

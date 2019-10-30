@@ -3,12 +3,13 @@ package org.kanger.storage;
 import org.cojen.tupl.Cursor;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.Index;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -36,25 +37,46 @@ public class Base implements IBase {
         this.index = db.openIndex(name + ".index");
     }
 
-    private byte[] fromObject(Serializable o) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        ObjectOutput out = new ObjectOutputStream(buffer);
-        out.writeObject(o);
-        out.close();
-        return buffer.toByteArray();
+    private byte[] fromObject(Object o) {
+        if (o instanceof Long) {
+            return new ByteBuffer().putByte(0).putLong((Long) o).getBuffer();
+        } else { //if(o instanceof Sapato) {
+            return new ByteBuffer().putByte(1).append(((Sapato) o).pack()).getBuffer();
+        }
+//        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+//        ObjectOutput out = new ObjectOutputStream(buffer);
+//        out.writeObject(o);
+//        out.close();
+//        return buffer.toByteArray();
     }
 
-    private Object toObject(byte[] bytes) throws IOException, ClassNotFoundException {
+    private Object toObject(byte[] bytes) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (bytes == null) {
             return null;
         } else {
-            ObjectInput in = new ObjectInputStream(new ByteArrayInputStream(bytes));
-            Object o = in.readObject();
-            in.close();
-            if (o instanceof IStep) {
-                ((IStep) o).setBase(this);
+            ByteBuffer packet = new ByteBuffer(bytes);
+            int mode = packet.getByte();
+            switch (mode) {
+                case 0:
+                    return packet.getLong();
+                default:
+                    try {
+                        packet.mark();
+                        Sapato s = new Sapato();
+                        s.setBase(this);
+                        s.apply(user, packet);
+                        return s;
+                    } finally {
+                        packet.release();
+                    }
             }
-            return o;
+//            ObjectInput in = new ObjectInputStream(new ByteArrayInputStream(bytes));
+//            Object o = in.readObject();
+//            in.close();
+//            if (o instanceof IStep) {
+//                ((IStep) o).setBase(this);
+//            }
+//            return o;
         }
     }
 
@@ -76,7 +98,7 @@ public class Base implements IBase {
     }
 
     @Override
-    public IStep get(long id) throws IOException, ClassNotFoundException {
+    public IStep get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (cache.containsKey(id)) {
             timing.remove(id);
             timing.add(id);
@@ -143,7 +165,7 @@ public class Base implements IBase {
     }
 
     @Override
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         while (size() > 0) {
             Cursor c = index.newCursor(null);
             c.first();

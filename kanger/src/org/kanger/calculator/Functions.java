@@ -1,6 +1,5 @@
 package org.kanger.calculator;
 
-import org.kanger.compiler.SysOp;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.Tools;
@@ -10,6 +9,7 @@ import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.units.Function;
+import org.kanger.units.SysOp;
 import org.kanger.units.TValue;
 import org.kanger.units.Term;
 

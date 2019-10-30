@@ -1,11 +1,12 @@
 package org.kanger.factory;
 
-import org.kanger.compiler.SysOp;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.Escalera;
+import org.kanger.units.SysOp;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         }
     }
 
-    public SysOp add(SysOp s) throws IOException, ClassNotFoundException {
+    public SysOp add(SysOp s) throws IOException, ClassNotFoundException, OutOfBufferException {
         SysOp x = find(s.toString());
         if (x != null) {
             x.setMode(s.getMode());
@@ -87,7 +88,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         return x;
     }
 
-    public SysOp find(String title) throws IOException, ClassNotFoundException {
+    public SysOp find(String title) throws IOException, ClassNotFoundException, OutOfBufferException {
         for (long id : cache.find((title).hashCode())) {
             IUnit one = load(id);
             if (one.toString().equals(title)) {
@@ -97,7 +98,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         return null;
     }
 
-    public SysOp load(long id) throws IOException, ClassNotFoundException {
+    public SysOp load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         SysOp t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -109,7 +110,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         return t;
     }
 
-    public SysOp get(long id) throws IOException, ClassNotFoundException {
+    public SysOp get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         SysOp t = (SysOp) cache.get(id);
         return t;
     }
@@ -161,7 +162,7 @@ public class LibraryFactory implements Iterable<SysOp> {
 //        index.clear();
 //    }
 
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getLibrary());
         } else {

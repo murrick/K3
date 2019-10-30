@@ -4,10 +4,13 @@ import org.kanger.compiler.PTree;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.Tools;
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.storage.ByteBuffer;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -39,6 +42,8 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     private IUser user = null;
 
     private transient boolean deleted = false;
+    private transient long nameId = -1;
+    private transient long rightId = -1;
 
     public Term() {
     }
@@ -47,105 +52,129 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         this.user = user;
     }
 
-    public Term(Object str, IUser user) throws IOException, ClassNotFoundException {
+    public Term(Object str, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException {
         this.user = user;
         construct(str);
     }
 
-    @Override
-    public void readExternal(ObjectInput din) throws IOException, ClassNotFoundException {
-        id = din.readLong();
-        deleted = din.readBoolean();
-        type = DataType.values()[din.readInt()];
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(id)
+                .putByte(deleted ? 1 : 0)
+                .putInt(type.ordinal());
         switch (type) {
             case DATE:
-                value = new Date(din.readLong());
+                packet.putLong(((Date) value).getTime());
                 break;
             case NUMERIC:
-                value = din.readDouble();
-                break;
-            case SET:
-            case INTERVAL:
-                if (din.readBoolean()) {
-                    value = new ArrayList<Term>();
-                    int cnt = din.readInt();
-                    for (int i = 0; i < cnt; ++i) {
-                        Term t = (Term) din.readObject();
-                        ((List<Term>) value).add(t);
-                    }
-                } else {
-                    value = din.readUTF();
-                }
-                break;
-            case STRING:
-                value = din.readUTF();
-                break;
-            case BLOB:
-                int sz = din.readInt();
-                value = new byte[sz];
-                din.read((byte[]) value);
-                break;
-            case TERM:
-                value = din.readObject();
-                break;
-        }
-
-        index = din.readInt();
-        if (index > 0) {
-            name = (Term) din.readObject();
-            right = (Right) din.readObject();
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeBoolean(deleted);
-        dos.writeInt(type.ordinal());
-        switch (type) {
-            case DATE:
-                dos.writeLong(((Date) value).getTime());
-                break;
-            case NUMERIC:
-                dos.writeDouble((double) value);
+                packet.putDouble((double) value);
                 break;
             case INTERVAL:
             case SET:
                 if (value instanceof Collection) {
-                    dos.writeBoolean(true);
-                    dos.writeInt(((Collection) value).size());
+                    packet.putByte(1)
+                            .putInt(((Collection) value).size());
                     for (Term t : (Collection<Term>) value) {
-                        dos.writeObject(t);
+                        packet.append(t.pack());
                     }
                 } else {
-                    dos.writeBoolean(false);
-                    dos.writeUTF((String) value);
+                    packet.putByte(0)
+                            .putString((String) value);
                 }
                 break;
             case STRING:
-                dos.writeUTF((String) value);
+                packet.putString((String) value);
                 break;
             case BLOB:
-                dos.writeInt(((byte[]) value).length);
-                dos.write((byte[]) value);
+                packet.putBytes((byte[]) value);
                 break;
             case TERM:
-                dos.writeObject(value);
+                packet.append(((Term) value).pack());
                 break;
         }
-        dos.writeInt(index);
+        packet.putInt(index);
         if (index > 0) {
-            dos.writeObject(name);
-            dos.writeObject(right);
+            packet.putLong(nameId);
+            packet.putLong(rightId);
+        }
+        return packet.createMarked();
+    }
+
+    public Term apply(ByteBuffer packet) throws OutOfBufferException {
+        id = packet.getLong();
+        deleted = packet.getByte() != 0;
+        type = DataType.values()[packet.getInt()];
+        switch (type) {
+            case DATE:
+                value = new Date(packet.getLong());
+                break;
+            case NUMERIC:
+                value = packet.getDouble();
+                break;
+            case SET:
+            case INTERVAL:
+                if (packet.getByte() != 0) {
+                    value = new ArrayList<Term>();
+                    int cnt = packet.getInt();
+                    for (int i = 0; i < cnt; ++i) {
+                        try {
+                            packet.mark();
+                            Term t = new Term().apply(packet);
+                            ((List<Term>) value).add(t);
+                        } finally {
+                            packet.release();
+                        }
+                    }
+                } else {
+                    value = packet.getString();
+                }
+                break;
+            case STRING:
+                value = packet.getString();
+                break;
+            case BLOB:
+                value = packet.getBytes();
+                break;
+            case TERM:
+                try {
+                    packet.mark();
+                    value = new Term().apply(packet);
+                } finally {
+                    packet.release();
+                }
+                break;
+        }
+
+        index = packet.getInt();
+        if (index > 0) {
+            nameId = packet.getLong();
+            rightId = packet.getLong();
+        }
+        return this;
+    }
+
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
         }
     }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.write(pack().getBuffer());
+    }
+
+
 
 //    @Override
 //    public void linkExternal(User user) {
 //        this.user = user;
 //    }
 
-    private void construct(Object o) throws IOException, ClassNotFoundException {
+    private void construct(Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
         value = null;
         if (o instanceof Number) {
             type = DataType.NUMERIC;
@@ -254,7 +283,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         return buffer;
     }
 
-    private Object conatructInterval(String ch) throws IOException, ClassNotFoundException {
+    private Object conatructInterval(String ch) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (ch.contains("..")) {
             if (ch.startsWith("{") && ch.endsWith("}")) {
                 ch = ch.substring(1, ch.length() - 1);
@@ -286,12 +315,16 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         this.id = id;
     }
 
-    public Right getRight() {
+    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException {
+        if (right == null) {
+            right = user.getMind().getRights().load(rightId);
+        }
         return right;
     }
 
     public void setRight(Right r) {
         this.right = r;
+        this.rightId = r.getId();
     }
 
     public boolean isCVariable() {
@@ -335,7 +368,12 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
                     case Enums.DEBUG_LEVEL_DEBUG:
                         return formatValue();
                     default:
-                        return name.toString();
+                        try {
+                            return getName().toString();
+                        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+                            e.printStackTrace(System.err);
+                            return "";
+                        }
                 }
             } else if (type == DataType.DATE) {
                 return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format((Date) value);
@@ -378,12 +416,16 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         this.value = value;
     }
 
-    public Term getName() {
+    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException {
+        if (name == null) {
+            name = user.getMind().getTerms().load(nameId);
+        }
         return name;
     }
 
     public void setName(Term name) {
         this.name = name;
+        this.nameId = name.getId();
     }
 
     public int getIndex() {
@@ -454,8 +496,9 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     }
 
     @Override
-    public void setUser(IUser user) {
+    public Term setUser(IUser user) {
         this.user = user;
+        return this;
     }
 
     @Override
@@ -467,6 +510,11 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     public void setDeleted() {
         deleted = true;
     }
+
+    @Override
+    public UnitType getUnitType() {
+        return UnitType.TERM;
+    }
+
 }
 
-//TODO ТИП данных blob

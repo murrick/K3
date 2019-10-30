@@ -4,11 +4,11 @@ import org.kanger.calculator.Calculator;
 import org.kanger.compiler.Compiler;
 import org.kanger.compiler.PTree;
 import org.kanger.compiler.Parser;
-import org.kanger.compiler.SysOp;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.QueryPass;
 import org.kanger.enums.Tools;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.factory.*;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
@@ -74,7 +74,7 @@ public class Mind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
-    public Mind(User user) throws IOException, ClassNotFoundException {
+    public Mind(User user) throws IOException, ClassNotFoundException, OutOfBufferException {
         this.user = user;
         user.setMind(this);
         init();
@@ -133,7 +133,7 @@ public class Mind {
 
     }
 
-    public void commit(Mind m) throws IOException, ClassNotFoundException {
+    public void commit(Mind m) throws IOException, ClassNotFoundException, OutOfBufferException {
 //        SortedMap <Integer, Object> vars = new TreeMap<>();
 
         m.pack();
@@ -218,7 +218,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         terms.clear();
         predicates.clear();
         domains.clear();
@@ -239,7 +239,7 @@ public class Mind {
 
     }
 
-    public void pack() throws IOException, ClassNotFoundException {
+    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException {
 
         for (TValue v : user.getMind().getTValues()) {
             Set<Cause> toDeleteC = new HashSet<>();
@@ -410,7 +410,7 @@ public class Mind {
         linker.link(r, logging);
     }
 
-    public Boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException {
+    public Boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException {
         return analiser.analise(right, logging);
     }
 
@@ -749,7 +749,7 @@ public class Mind {
 //        return null;
 //    }
 
-    public boolean isSystem(Predicate p) throws IOException, ClassNotFoundException {
+    public boolean isSystem(Predicate p) throws IOException, ClassNotFoundException, OutOfBufferException {
         return calculator.exists(p);
     }
 
@@ -1233,7 +1233,7 @@ public class Mind {
         return res;
     }
 
-    private void appendResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {
+    private void appendResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException {
 
         boolean needPack = false;
         for (Right rx : mind.getRights()) {
@@ -1280,7 +1280,7 @@ public class Mind {
         }
     }
 
-    private void removeResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException {
+    private void removeResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException {
         boolean needPack = false;
         if (mind.getSolutions().size() > 0) {
             if (logging) {

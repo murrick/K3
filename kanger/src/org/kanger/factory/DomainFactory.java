@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -99,7 +100,7 @@ public class DomainFactory implements Iterable<Domain> {
 //    }
 
 
-    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException {
+    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
@@ -119,7 +120,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException {
+    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
         Domain temp = new Domain(pred, antc, arg, r);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = load(id);
@@ -130,7 +131,7 @@ public class DomainFactory implements Iterable<Domain> {
         return null;
     }
 
-    public Domain load(long id) throws IOException, ClassNotFoundException {
+    public Domain load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         Domain t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -143,7 +144,7 @@ public class DomainFactory implements Iterable<Domain> {
         return t;
     }
 
-    public Domain get(long id) throws IOException, ClassNotFoundException {
+    public Domain get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         Domain t = (Domain) cache.get(id);
         return t;
     }
@@ -171,7 +172,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     }
 
-    public void delete(Domain d) throws IOException, ClassNotFoundException {
+    public void delete(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException {
         d.setDeleted();
         for (TVariable t : d.getArguments().getTVariables(true)) {
             user.getMind().getTVars().delete(t);
@@ -222,7 +223,7 @@ public class DomainFactory implements Iterable<Domain> {
 //        }
 //    }
 
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getDomains());
         } else {

@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -89,17 +90,17 @@ public class FValueFactory {
     }
 
 
-    public FValue find(Function f) throws IOException, ClassNotFoundException {
+    public FValue find(Function f) throws IOException, ClassNotFoundException, OutOfBufferException {
         for (long id : cache.find(f.getHashBase())) {
-            IUnit one = load(id);
+            FValue one = load(id);
             if (one.equalsTo(f)) {
-                return (FValue) one;
+                return one;
             }
         }
         return null;
     }
 
-    public FValue load(long id) throws IOException, ClassNotFoundException {
+    public FValue load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         FValue t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -112,13 +113,13 @@ public class FValueFactory {
         return t;
     }
 
-    public FValue get(long id) throws IOException, ClassNotFoundException {
+    public FValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
         FValue t = (FValue) cache.get(id);
         return t;
     }
 
 
-    public void clear() throws IOException, ClassNotFoundException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFValues());
         } else {

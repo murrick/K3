@@ -1,5 +1,9 @@
 package org.kanger.interfaces;
 
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
+import org.kanger.storage.ByteBuffer;
+
 import java.io.IOException;
 
 public interface IUnit<T> {
@@ -8,15 +12,21 @@ public interface IUnit<T> {
 
     void setId(long id);
 
-    int getHash() throws IOException, ClassNotFoundException;
+    int getHash() throws IOException, ClassNotFoundException, OutOfBufferException;
 
-    boolean equalsTo(T to) throws IOException, ClassNotFoundException;
+    boolean equalsTo(T to) throws IOException, ClassNotFoundException, OutOfBufferException;
 
     IUser getUser();
 
-    void setUser(IUser user) throws IOException, ClassNotFoundException;
+    T setUser(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException;
 
     boolean isDeleted();
 
     void setDeleted();
+
+    ByteBuffer pack();
+
+    T apply(ByteBuffer packet) throws OutOfBufferException;
+
+    UnitType getUnitType();
 }

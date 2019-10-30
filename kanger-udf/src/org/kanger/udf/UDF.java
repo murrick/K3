@@ -1,13 +1,10 @@
 package org.kanger.udf;
 
-import org.kanger.compiler.SysOp;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
-import org.kanger.units.Domain;
-import org.kanger.units.Function;
-import org.kanger.units.TValue;
-import org.kanger.units.Term;
+import org.kanger.units.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
@@ -16,12 +13,13 @@ public class UDF extends SysOp implements IReactor {
 
     private static Context scriptContext = null;
 
-    public UDF() {
+    public UDF(IUser user) {
         if (scriptContext == null) {
             scriptContext = Context.enter();
             scriptContext.setLanguageVersion(Context.VERSION_1_7);
         }
-        proc = this;
+        this.proc = this;
+        this.user = user;
     }
 
     @Override

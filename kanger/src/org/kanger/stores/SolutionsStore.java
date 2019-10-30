@@ -1,5 +1,6 @@
 package org.kanger.stores;
 
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUser;
 import org.kanger.units.Domain;
 import org.kanger.units.Right;
@@ -52,7 +53,7 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Domain d) throws IOException, ClassNotFoundException {
+    public boolean contains(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException {
         if (!isEmpty()) {
             for (Right r : root) {
                 if (!r.isDeleted() && r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {

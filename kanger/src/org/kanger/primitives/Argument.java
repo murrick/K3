@@ -1,8 +1,11 @@
 package org.kanger.primitives;
 
 import org.kanger.enums.ArgumentType;
+import org.kanger.enums.UnitType;
+import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
+import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
 import java.io.Externalizable;
@@ -37,19 +40,33 @@ public class Argument implements Externalizable {
         }
     }
 
-    @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        id = dis.readLong();
-        type = ArgumentType.values()[dis.readInt()];
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(id)
+                .putInt(type.ordinal());
+        return packet.createMarked();
+    }
+
+    public Argument apply(ByteBuffer packet) throws OutOfBufferException {
+        id = packet.getLong();
+        type = ArgumentType.values()[packet.getInt()];
+        return this;
     }
 
     @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeLong(id);
-        dos.writeInt(type.ordinal());
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        try {
+            apply(new ByteBuffer(in));
+        } catch (OutOfBufferException e) {
+        }
     }
 
-    private void load(IUser user) throws IOException, ClassNotFoundException {
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.write(pack().getBuffer());
+    }
+
+    private void load(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException {
         switch (type) {
             case CVARIABLE:
             case TERM:
@@ -93,7 +110,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException {
+    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException {
         switch (type) {
             case CVARIABLE:
             case TERM:
@@ -111,7 +128,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public TValue addValue(Term t) throws IOException, ClassNotFoundException {
+    public TValue addValue(Term t) throws IOException, ClassNotFoundException, OutOfBufferException {
         switch (type) {
             case TVARIABLE:
                 TVariable tv = (TVariable) getO();
@@ -166,26 +183,26 @@ public class Argument implements Externalizable {
         }
     }
 
-    private IUnit getO() throws IOException, ClassNotFoundException {
+    private IUnit getO() throws IOException, ClassNotFoundException, OutOfBufferException {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
             load(user);
         }
         return o;
     }
 
-    public TVariable getT() throws IOException, ClassNotFoundException {
+    public TVariable getT() throws IOException, ClassNotFoundException, OutOfBufferException {
         return type == ArgumentType.TVARIABLE ? (TVariable) getO() : null;
     }
 
-    public TValue getV() throws IOException, ClassNotFoundException {
+    public TValue getV() throws IOException, ClassNotFoundException, OutOfBufferException {
         return type == ArgumentType.TVALUE ? (TValue) getO() : null;
     }
 
-    public Function getF() throws IOException, ClassNotFoundException {
+    public Function getF() throws IOException, ClassNotFoundException, OutOfBufferException {
         return type == ArgumentType.FUNCTION ? (Function) getO() : null;
     }
 
-    public FValue getR() throws IOException, ClassNotFoundException {
+    public FValue getR() throws IOException, ClassNotFoundException, OutOfBufferException {
         return type == ArgumentType.FVALUE ? (FValue) getO() : null;
     }
 
@@ -260,6 +277,10 @@ public class Argument implements Externalizable {
 
     public ArgumentType getType() {
         return type;
+    }
+
+    public UnitType getUnitType() {
+        return UnitType.ARGUMENT;
     }
 
 }
