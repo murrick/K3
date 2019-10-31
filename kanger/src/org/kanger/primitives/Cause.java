@@ -2,6 +2,7 @@ package org.kanger.primitives;
 
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
@@ -72,14 +73,14 @@ public class Cause implements Externalizable, Comparable<Cause> {
     }
 
 
-    public Domain getSrc() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Domain getSrc() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (src == null) {
             src = user.getMind().getDomains().load(srcId);
         }
         return src;
     }
 
-    public Domain getDst() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Domain getDst() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (dst == null) {
             dst = user.getMind().getDomains().load(dstId);
         }

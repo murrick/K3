@@ -5,6 +5,7 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Argument;
 import org.kanger.units.Domain;
@@ -148,7 +149,7 @@ public class Calculator {
         return k;
     }
 
-    public boolean exists(Predicate p) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean exists(Predicate p) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         String n = p.getName() + "(" + p.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
@@ -156,7 +157,7 @@ public class Calculator {
         return op != null && op.getMode() == LibMode.PREDICATE;
     }
 
-    public boolean exists(Function f) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean exists(Function f) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         String n = f.getName() + "(" + f.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
@@ -165,7 +166,7 @@ public class Calculator {
     }
 
 
-    private SysOp findOp(String n) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private SysOp findOp(String n) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (predicates.getSysOps().containsKey(n))
             return predicates.getSysOps().get(n);
         else if (functions.getSysOps().containsKey(n))
@@ -174,7 +175,7 @@ public class Calculator {
             return user.getMind().getLibrary().find(n);
     }
 
-    public SysOp find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public SysOp find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (o instanceof Predicate) {
             String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
             return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);

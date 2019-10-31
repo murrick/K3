@@ -3,6 +3,7 @@ package org.kanger.primitives;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
@@ -66,7 +67,7 @@ public class Argument implements Externalizable {
         out.write(pack().getBuffer());
     }
 
-    private void load(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private void load(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         switch (type) {
             case CVARIABLE:
             case TERM:
@@ -110,7 +111,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         switch (type) {
             case CVARIABLE:
             case TERM:
@@ -128,7 +129,7 @@ public class Argument implements Externalizable {
         }
     }
 
-    public TValue addValue(Term t) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TValue addValue(Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         switch (type) {
             case TVARIABLE:
                 TVariable tv = (TVariable) getO();
@@ -183,26 +184,26 @@ public class Argument implements Externalizable {
         }
     }
 
-    private IUnit getO() throws IOException, ClassNotFoundException, OutOfBufferException {
+    private IUnit getO() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
             load(user);
         }
         return o;
     }
 
-    public TVariable getT() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TVariable getT() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return type == ArgumentType.TVARIABLE ? (TVariable) getO() : null;
     }
 
-    public TValue getV() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TValue getV() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return type == ArgumentType.TVALUE ? (TValue) getO() : null;
     }
 
-    public Function getF() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Function getF() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return type == ArgumentType.FUNCTION ? (Function) getO() : null;
     }
 
-    public FValue getR() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public FValue getR() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return type == ArgumentType.FVALUE ? (FValue) getO() : null;
     }
 

@@ -1,16 +1,12 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="K3:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/K3_jar</output-path>
-    <root id="archive" name="K3.jar">
-      <element id="module-output" name="$project_name$" />
-      <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+  <artifact name="K3:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/dist</output-path>
+    <root id="root">
+      <element id="archive" name="K3.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+        </element>
       </element>
-      <element id="module-output" name="kanger" />
-      <element id="module-output" name="kanger-data-tupl" />
-      <element id="module-output" name="kanger-udf" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jline-3.13.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/tupl-1.3.12.3.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

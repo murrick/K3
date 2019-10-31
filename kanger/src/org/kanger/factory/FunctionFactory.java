@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -85,7 +86,7 @@ public class FunctionFactory implements Iterable<Function> {
         return f;
     }
 
-    public Function load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Function load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Function t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -98,12 +99,12 @@ public class FunctionFactory implements Iterable<Function> {
         return t;
     }
 
-    public Function get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Function get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Function t = (Function) cache.get(id);
         return t;
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getFunctions());
         } else {
@@ -147,7 +148,7 @@ public class FunctionFactory implements Iterable<Function> {
 
     }
 
-    public void delete(Function f) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void delete(Function f) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         f.setDeleted();
         FValue v = user.getMind().getFValues().find(f);
         if (v != null) {

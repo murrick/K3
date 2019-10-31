@@ -2,6 +2,7 @@ package org.kanger.storage;
 
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -56,13 +57,11 @@ public class Sapato implements IStep {
             for (long id : (Collection<Long>) data) {
                 packet.putLong(id);
             }
-        } else {
-            System.out.println("!!!");
         }
         return packet.createMarked();
     }
 
-    public Sapato apply(IUser user, ByteBuffer packet) throws OutOfBufferException {
+    public Sapato apply(IUser user, ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException {
         id = packet.getLong();
         hash = packet.getInt();
         prev = packet.getLong();
@@ -199,7 +198,7 @@ public class Sapato implements IStep {
         size = sz;
     }
 
-    private IUnit newInstance(IUser user, UnitType type) {
+    private IUnit newInstance(IUser user, UnitType type) throws RuntimeErrorException {
         switch (type) {
             case TERM:
                 return new Term(user);

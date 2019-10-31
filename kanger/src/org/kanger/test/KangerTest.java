@@ -123,7 +123,7 @@ public class KangerTest {
 //        return false;
 //    }
 
-    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Term t : mind.getValues().getValues(name)) {
             if (o.equals(t.getValue())) {
                 return true;

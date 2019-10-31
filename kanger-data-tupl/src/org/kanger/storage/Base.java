@@ -4,6 +4,7 @@ import org.cojen.tupl.Cursor;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.Index;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -50,7 +51,7 @@ public class Base implements IBase {
 //        return buffer.toByteArray();
     }
 
-    private Object toObject(byte[] bytes) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private Object toObject(byte[] bytes) throws OutOfBufferException, RuntimeErrorException {
         if (bytes == null) {
             return null;
         } else {
@@ -98,7 +99,7 @@ public class Base implements IBase {
     }
 
     @Override
-    public IStep get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public IStep get(long id) throws OutOfBufferException, IOException, RuntimeErrorException, ClassNotFoundException {
         if (cache.containsKey(id)) {
             timing.remove(id);
             timing.add(id);
@@ -165,7 +166,7 @@ public class Base implements IBase {
     }
 
     @Override
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, OutOfBufferException, RuntimeErrorException {
         while (size() > 0) {
             Cursor c = index.newCursor(null);
             c.first();

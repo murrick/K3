@@ -1,6 +1,7 @@
 package org.kanger.storage;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -38,7 +39,7 @@ public class Escalera implements ICache {
 
 
     @Override
-    public void add(IUnit one) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void add(IUnit one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Step s = new Step();
         s.setData(one);
         s.setId(one.getId());
@@ -75,7 +76,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (root instanceof Sapato) {
             root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
         }
@@ -124,7 +125,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Set<Long> set = new HashSet<>();
         if (root instanceof Sapato) {
             root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
@@ -138,7 +139,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         root = null;
         top = null;
         if (parent == null && !user.isClosed()) {
@@ -172,7 +173,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean containsKey(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean containsKey(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return get(id) != null;
     }
 

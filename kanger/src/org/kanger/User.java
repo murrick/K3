@@ -22,7 +22,7 @@ public class User implements IUser {
     private IData data = null;
     private Class udf = null;
 
-    public User(IData data, Class udf) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public User(IData data, Class udf) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         this.data = data;
         if (data != null) {
             data.init();
@@ -34,6 +34,7 @@ public class User implements IUser {
     public void use(String name) throws IOException {
 
         if (data != null) {
+
             data.use(name);
 
             storage.put(DictionaryFactory.SCHEMA, data.counstructBase(this, DictionaryFactory.SCHEMA));
@@ -60,8 +61,8 @@ public class User implements IUser {
             mind.getTValues().transaction(null);
             mind.getTVars().transaction(null);
             mind.getLibrary().transaction(null);
-        }
 
+        }
     }
 
     public Mind getMind() {
@@ -76,7 +77,7 @@ public class User implements IUser {
         return storage.get(schema);
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
@@ -90,7 +91,7 @@ public class User implements IUser {
         }
     }
 
-    public void remove() throws IOException {
+    public void remove() {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 //TODO: Удаление БД
@@ -109,7 +110,6 @@ public class User implements IUser {
             }
             use(data.getStorageName());
         }
-
     }
 
     @Override
@@ -170,16 +170,24 @@ public class User implements IUser {
     }
 
     @Override
-    public SysOp getUdf() {
-        try {
-            if (udf != null) {
+    public SysOp getUdf() throws RuntimeErrorException {
+        if (udf != null) {
+            try {
                 return (SysOp) udf.getConstructors()[0].newInstance(this);
-            } else {
-                throw new RuntimeErrorException("UDF module doens't loaded");
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeErrorException(e.toString());
             }
-        } catch (InstantiationException | InvocationTargetException | IllegalAccessException | RuntimeErrorException e) {
-            e.printStackTrace(System.err);
-            return null;
+        } else {
+            throw new RuntimeErrorException("UDF module doens't loaded");
+        }
+    }
+
+    @Override
+    public IData getData() throws RuntimeErrorException {
+        if (data != null) {
+            return data;
+        } else {
+            throw new RuntimeErrorException("DB module doens't loaded");
         }
     }
 }

@@ -1,6 +1,7 @@
 package org.kanger.stores;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.units.Right;
 import org.kanger.units.TValue;
@@ -22,7 +23,7 @@ public class ResultsStore {
         this.tagsSystem = new TreeMap<>();
     }
 
-    public void addSolve(Right query, Right solve) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void addSolve(Right query, Right solve) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         solves.put(query.getId(), solve == null ? -1 : solve.getId());
         long tag = -1;
 
@@ -46,7 +47,7 @@ public class ResultsStore {
         }
     }
 
-    public void addSolve(Right query) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void addSolve(Right query) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         addSolve(query, null);
     }
 

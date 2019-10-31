@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -70,7 +71,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         }
     }
 
-    public SysOp add(SysOp s) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public SysOp add(SysOp s) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         SysOp x = find(s.toString());
         if (x != null) {
             x.setMode(s.getMode());
@@ -88,7 +89,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         return x;
     }
 
-    public SysOp find(String title) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public SysOp find(String title) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (long id : cache.find((title).hashCode())) {
             IUnit one = load(id);
             if (one.toString().equals(title)) {
@@ -98,7 +99,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         return null;
     }
 
-    public SysOp load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public SysOp load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         SysOp t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -110,7 +111,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         return t;
     }
 
-    public SysOp get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public SysOp get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         SysOp t = (SysOp) cache.get(id);
         return t;
     }
@@ -162,7 +163,7 @@ public class LibraryFactory implements Iterable<SysOp> {
 //        index.clear();
 //    }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getLibrary());
         } else {

@@ -6,6 +6,7 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -120,7 +121,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
 ////        arguments.linkExternal(user);
 //    }
 
-    public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (predicate == null) {
             predicate = user.getMind().getPredicates().load(predicateId);
         }
@@ -133,7 +134,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
         this.range = predicate.getRange();
     }
 
-    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (right == null) {
             right = user.getMind().getRights().load(rightId);
         }
@@ -267,7 +268,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
         }
     }
 
-    private boolean sourceExists(Cause c) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private boolean sourceExists(Cause c) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Set<Cause> causes = getCauses();
         if (causes != null) {
             for (Cause x : getCauses()) {
@@ -431,7 +432,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
     }
 
 
-    public boolean equalsBase(Domain o) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean equalsBase(Domain o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (predicateId != o.getPredicateId()) {
             return false;
         }
@@ -496,7 +497,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
         return ids.size();
     }
 
-    public boolean contains(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean contains(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (TVariable x : arguments.getTVariables(true)) {
             if (x.getId() == t.getId()) {
                 return true;
@@ -631,7 +632,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //        }
     }
 
-    public boolean isProduced() throws IOException, ClassNotFoundException {
+    public boolean isProduced() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getProducedDomains().containsKey(this)) {
             for (List<Term> list : user.getMind().getProducedDomains().get(this)) {
                 if (arguments.equalsStamp(list)) {
@@ -667,7 +668,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //    }
 //
 
-    public void setTag(long tag) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void setTag(long tag) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (TVariable t : arguments.getTVariables(true)) {
             t.getCurrent().setTag(tag);
         }
@@ -683,7 +684,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //        }
 //    }
 
-    public void setProduced() throws IOException, ClassNotFoundException {
+    public void setProduced() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (!user.getMind().getProducedDomains().containsKey(this)) {
             user.getMind().getProducedDomains().put(this, new ArrayList<>());
         }
@@ -695,11 +696,11 @@ public class Domain implements Externalizable, IUnit<Domain> {
         }
     }
 
-    public boolean isCalculated() throws IOException, ClassNotFoundException {
+    public boolean isCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return isCalculated(arguments);
     }
 
-    public boolean isCalculated(ArgList arguments) throws IOException, ClassNotFoundException {
+    public boolean isCalculated(ArgList arguments) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getCalculatedDomains().containsKey(this)) {
             for (List<Term> list : user.getMind().getCalculatedDomains().get(this)) {
                 if (arguments.equalsStamp(list)) {
@@ -725,7 +726,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
 
     }
 
-    public void unCalculated() throws IOException, ClassNotFoundException {
+    public void unCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (isCalculated()) {
             for (List<Term> list : user.getMind().getCalculatedDomains().get(this)) {
                 if (arguments.equalsStamp(list)) {
@@ -736,7 +737,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
         }
     }
 
-    public void setCalculated() throws IOException, ClassNotFoundException {
+    public void setCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (!user.getMind().getCalculatedDomains().containsKey(this)) {
             user.getMind().getCalculatedDomains().put(this, new ArrayList<>());
         }
@@ -748,11 +749,11 @@ public class Domain implements Externalizable, IUnit<Domain> {
         }
     }
 
-    public boolean isStored() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean isStored() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return user.getMind().getRights().find(this) != null;
     }
 
-    public boolean isStored(ArgList args) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean isStored(ArgList args) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain d = new Domain(getPredicate(), antc, args);
         return user.getMind().getRights().find(d) != null;
     }
@@ -762,12 +763,12 @@ public class Domain implements Externalizable, IUnit<Domain> {
         return r;
     }
 
-    public Right createStored() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right createStored() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right r = user.getMind().getRights().add(this);
         return r;
     }
 
-    public boolean isSystem() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean isSystem() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return Parser.getOp(getPredicate().getName().toString(), getRange()) != null;
     }
 
@@ -815,11 +816,11 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //        return false;
 //    }
 
-    public boolean isQuery() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean isQuery() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return isQuery(arguments);
     }
 
-    public boolean isQuery(ArgList arguments) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean isQuery(ArgList arguments) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (rightId == -1) {
             return false;
         }
@@ -889,7 +890,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //        return cnt;
 //    }
 
-    public int getVarOrder(int pos) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public int getVarOrder(int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Integer> list = new ArrayList<>();
         SortedMap<Integer, Integer> sort = new TreeMap<>();
         int plains = 0;
@@ -1069,7 +1070,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //    public int getValOrder(int i) {
 //    }
 
-    public int getHashStruct() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public int getHashStruct() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
@@ -1093,8 +1094,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
         return hash;
     }
 
-    public boolean equalsToStruct(Domain to) {
-        try {
+    public boolean equalsToStruct(Domain to) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
             if (to.isAntc() == antc
                     && to.getRange() == range
                     && to.getPredicateId() == predicateId) {
@@ -1127,10 +1127,6 @@ public class Domain implements Externalizable, IUnit<Domain> {
             } else {
                 return false;
             }
-        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
-            e.printStackTrace(System.err);
-            return false;
-        }
     }
 
     public boolean isDeleted() {

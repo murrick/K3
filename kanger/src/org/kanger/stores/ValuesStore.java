@@ -1,6 +1,7 @@
 package org.kanger.stores;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -44,7 +45,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         }
     }
 
-    public List<Term> getValues(String name) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<Term> getValues(String name) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Term> list = new ArrayList<>();
         for (ArgList row : root) {
             for (Argument t : row) {
@@ -89,7 +90,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
             for (Argument v : iterator.next()) {
                 try {
                     row.put(v.getV().getTVar().getName().toString(), v.getV().getValue().getValue());
-                } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+                } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
                     e.printStackTrace(System.err);
                 }
             }

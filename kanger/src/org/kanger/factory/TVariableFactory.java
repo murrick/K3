@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -101,7 +102,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         return p;
     }
 
-    public TVariable load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TVariable load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TVariable t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -114,7 +115,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         return t;
     }
 
-    public TVariable get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TVariable get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TVariable t = (TVariable) cache.get(id);
         return t;
     }
@@ -167,7 +168,7 @@ public class TVariableFactory implements Iterable<TVariable> {
 //        }
 //    }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getTVars());
         } else {

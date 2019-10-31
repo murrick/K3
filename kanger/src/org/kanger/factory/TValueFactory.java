@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -81,7 +82,7 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = find(tv, o);
         if (t == null) {
             t = new TValue(tv, o, user);
@@ -108,7 +109,7 @@ public class TValueFactory implements Iterable<TValue> {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
-    public TValue find(TVariable tv, Term v) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TValue find(TVariable tv, Term v) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue temp = new TValue(tv, v);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = load(id);
@@ -119,7 +120,7 @@ public class TValueFactory implements Iterable<TValue> {
         return null;
     }
 
-    public TValue load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TValue load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -132,12 +133,12 @@ public class TValueFactory implements Iterable<TValue> {
         return t;
     }
 
-    public TValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = (TValue) cache.get(id);
         return t;
     }
 
-    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted()) {
@@ -173,7 +174,7 @@ public class TValueFactory implements Iterable<TValue> {
 //        }
 //    }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getTValues());
         } else {

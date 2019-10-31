@@ -3,6 +3,7 @@ package org.kanger.units;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
@@ -114,7 +115,7 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
 //        }
 //    }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (value == null && valueId != -1) {
             value = user.getMind().getTerms().load(valueId);
         }
@@ -141,7 +142,7 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
         this.id = id;
     }
 
-    public TVariable getTVar() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public TVariable getTVar() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (tVar == null && tVarId != -1) {
             tVar = user.getMind().getTVars().load(tVarId);
         }
@@ -165,13 +166,13 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
     public String toString() {
         try {
             return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? getTVar().getVarName() + "=" : "") + getValue().toString();
-        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return "";
         }
     }
 
-    public void setQuery() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void setQuery() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (!user.getMind().getQueryValues().containsKey(getTVar())) {
             user.getMind().getQueryValues().put(getTVar(), new HashSet<>());
         }

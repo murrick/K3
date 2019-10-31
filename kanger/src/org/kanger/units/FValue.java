@@ -5,6 +5,7 @@ import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -43,7 +44,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
         this.user = user;
     }
 
-    public FValue(Function f, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public FValue(Function f, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue();
         functionId = function.getId();
@@ -142,7 +143,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
 //        return value;
 //    }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (value == null && valueId != -1) {
             value = user.getMind().getTerms().load(valueId);
         }
@@ -170,7 +171,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
 //        return condition;
 //    }
 
-    public Function getFunction() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Function getFunction() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (function == null) {
             function = user.getMind().getFunctions().load(functionId);
         }
@@ -222,7 +223,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
     }
 
     @Override
-    public boolean equalsTo(FValue f) throws OutOfBufferException, IOException, ClassNotFoundException {
+    public boolean equalsTo(FValue f) throws OutOfBufferException, IOException, ClassNotFoundException, RuntimeErrorException {
         return equalsTo(f.getFunction());
     }
 
@@ -325,7 +326,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
                     return "";
                 }
             }
-        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return "";
         }

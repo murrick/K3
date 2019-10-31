@@ -9,6 +9,7 @@ package org.kanger.primitives;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
@@ -126,7 +127,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
 //    }
 //
 
-    public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (predicate == null) {
             predicate = user.getMind().getPredicates().load(predicateId);
         }
@@ -138,7 +139,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
         this.predicateId = predicate.getId();
     }
 
-    public List<Term> getSolve() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<Term> getSolve() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (solve.isEmpty() && !solveIds.isEmpty()) {
             for (long id : solveIds) {
                 Term t = user.getMind().getTerms().load(id);
@@ -148,7 +149,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
         return solve;
     }
 
-    public Set<Right> getRights() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Set<Right> getRights() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (rights.isEmpty() && !rightsIds.isEmpty()) {
             for (long id : rightsIds) {
                 Right right = user.getMind().getRights().load(id);
@@ -174,7 +175,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
         this.query = query;
     }
 
-    public void addParams(Collection params) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void addParams(Collection params) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Object p : params) {
             if (p instanceof Argument) {
                 solve.add(((Argument) p).getValue());
@@ -227,7 +228,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
             }
             tmp += ");";
             line += tmp;
-        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
         }
         return line;
@@ -288,7 +289,7 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
     public int compareTo(Hypotese o) {
         try {
             return getPredicate().getName().compareTo(o.getPredicate().getName());
-        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return 0;
         }

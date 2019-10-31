@@ -3,6 +3,7 @@ package org.kanger;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypotese;
@@ -29,7 +30,7 @@ public class Analiser {
     }
 
 
-    public boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         boolean result = false;
         int counter = 0;
 
@@ -83,7 +84,7 @@ public class Analiser {
     }
 
 
-    private boolean checkRight(Right p, Set<Right> orfans, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private boolean checkRight(Right p, Set<Right> orfans, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         boolean result = false;
         if (p.getDomain().isCalculated()) {
 
@@ -138,7 +139,7 @@ public class Analiser {
         return result;
     }
 
-    public boolean checkDatabase(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean checkDatabase(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 
         boolean result = false;
         Set<Right> orfans = new HashSet<>();

@@ -1,6 +1,7 @@
 package org.kanger.stores;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Hypotese;
@@ -25,7 +26,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         this.user = user;
     }
 
-    public void commit(HypotesisStore base) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void commit(HypotesisStore base) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (!enableStore) {
             return;
         }
@@ -39,7 +40,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         }
     }
 
-    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (!enableStore) {
             return null;
         }
@@ -66,7 +67,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese add(Hypotese hypotese) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Hypotese add(Hypotese hypotese) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (!enableStore) {
             return null;
         }
@@ -105,7 +106,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (root == null) {
             return null;
         }
@@ -129,7 +130,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return null;
     }
 
-    public Hypotese find(Hypotese hy) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Hypotese find(Hypotese hy) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (root == null) {
             return null;
         }
@@ -152,7 +153,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public boolean contains(Hypotese h) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean contains(Hypotese h) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return find(h) != null;
     }
 
@@ -180,7 +181,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
     }
 
-    public void exclude(HypotesisStore exclude) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void exclude(HypotesisStore exclude) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (!isEmpty() && !exclude.isEmpty()) {
             Set<Hypotese> toDelete = new HashSet<>();
             for (Hypotese h : root) {

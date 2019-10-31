@@ -3,6 +3,7 @@ package org.kanger.primitives;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Function;
@@ -199,7 +200,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<Function> getFunctions() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<Function> getFunctions() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Function> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isFSet()) {
@@ -220,7 +221,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
     }
 
 
-    public List<TVariable> getTVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<TVariable> getTVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<TVariable> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
@@ -240,7 +241,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<Term> getCVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<Term> getCVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Term> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
@@ -260,7 +261,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public List<TValue> getTValues(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<TValue> getTValues(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<TValue> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isTSet() && !a.getT().isDeleted() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
@@ -296,7 +297,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             }
             try {
                 str += a.isVSet() ? a.getV().toString() : a.toString();
-            } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+            } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
                 e.printStackTrace(System.err);
             }
         }
@@ -315,7 +316,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
-    public List<Term> getStamp() throws IOException, ClassNotFoundException, ParametersIncompleteException, OutOfBufferException {
+    public List<Term> getStamp() throws IOException, ClassNotFoundException, ParametersIncompleteException, OutOfBufferException, RuntimeErrorException {
         List<Term> list = new ArrayList<>();
         for (TVariable t : getTVariables(true)) {
             if (t.isEmpty()) {
@@ -326,7 +327,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return list;
     }
 
-    public boolean equalsStamp(List<Term> list) throws IOException, ClassNotFoundException {
+    public boolean equalsStamp(List<Term> list) throws IOException, ClassNotFoundException, RuntimeErrorException, OutOfBufferException {
         try {
             List<Term> curr = getStamp();
             if (curr.size() == list.size()) {
@@ -339,12 +340,12 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
             } else {
                 return false;
             }
-        } catch (ParametersIncompleteException | OutOfBufferException e) {
+        } catch (ParametersIncompleteException e) {
             return false;
         }
     }
 
-    public void applyStamp(List<Term> list) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void applyStamp(List<Term> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<TVariable> curr = getTVariables(true);
         for (int i = 0; i < curr.size(); ++i) {
             if (curr.get(i).find(list.get(i)) != null) {
@@ -353,7 +354,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
-    public boolean contains(Term t) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean contains(Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Argument a : this) {
             if (a.getValue().getId() == t.getId()) {
                 return true;
@@ -362,7 +363,7 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         return false;
     }
 
-    public Argument remove(Term t) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Argument remove(Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Argument a : this) {
             if (a.getValue().getId() == t.getId()) {
                 this.remove(a);

@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/K3.iml" filepath="$PROJECT_DIR$/K3.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger/kanger.iml" filepath="$PROJECT_DIR$/kanger/kanger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kanger-console/kanger-console.iml" filepath="$PROJECT_DIR$/kanger-console/kanger-console.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger-data-tupl/kanger-data-tupl.iml" filepath="$PROJECT_DIR$/kanger-data-tupl/kanger-data-tupl.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger-udf/kanger-udf.iml" filepath="$PROJECT_DIR$/kanger-udf/kanger-udf.iml" />
     </modules>

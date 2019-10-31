@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -94,7 +95,7 @@ public class RightFactory implements Iterable<Right> {
         return r;
     }
 
-    public Right add(Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right add(Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right x = find(r);
         if (x != null) {
             delete(r);
@@ -146,7 +147,7 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public Right load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -159,12 +160,12 @@ public class RightFactory implements Iterable<Right> {
         return t;
     }
 
-    public Right get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right t = (Right) cache.get(id);
         return t;
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getRights());
         } else {
@@ -174,7 +175,7 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public void delete(Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void delete(Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         r.setDeleted();
         for (List<Domain> list : r.getTree()) {
             for (Domain d : list) {
@@ -206,7 +207,7 @@ public class RightFactory implements Iterable<Right> {
         return stored.size();
     }
 
-    public Right add(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right add(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right p = find(domain);
         if (p != null) {
             return p;
@@ -239,13 +240,13 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public Right store(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right store(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         d.getRight().setStored();
         stored.add(d.getRight().getId(), d.getRight().getId());
         return d.getRight();
     }
 
-    public Right find(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right find(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (long id : cache.find(domain.getHashBase())) {
             Right one = load(id);
             if (one.equalsTo(domain)) {
@@ -255,7 +256,7 @@ public class RightFactory implements Iterable<Right> {
         return null;
     }
 
-    public Right find(Right right) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right find(Right right) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (long id : cache.find(right.getHash())) {
             Right one = load(id);
             if (one.equalsTo(right)) {

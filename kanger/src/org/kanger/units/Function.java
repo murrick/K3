@@ -5,6 +5,7 @@ import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -113,7 +114,7 @@ public class Function implements Externalizable, IUnit<Function> {
         return arguments;
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         FValue c = getCurrent();
         if (c != null) {
             return getCurrent().getValue();
@@ -175,7 +176,7 @@ public class Function implements Externalizable, IUnit<Function> {
 //    }
 
 
-    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {
             name = user.getMind().getTerms().load(nameId);
         }
@@ -333,7 +334,7 @@ public class Function implements Externalizable, IUnit<Function> {
 //        return true;
 //    }
 
-    public boolean isCalculable() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean isCalculable() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return arguments.getTVariables(true).size() > 0;
     }
 
@@ -342,11 +343,11 @@ public class Function implements Externalizable, IUnit<Function> {
 //    }
 
 
-    public FValue getCurrent() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public FValue getCurrent() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return user.getMind().getFValues().find(this);
     }
 
-    public int getHashBase() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public int getHashBase() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         long valueId = getResult().isEmpty() ? 0 : getResult().getValue().getId();
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
@@ -393,7 +394,7 @@ public class Function implements Externalizable, IUnit<Function> {
         return ("" + id).hashCode();
     }
 
-    public int getHashStruct(Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public int getHashStruct(Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
@@ -418,7 +419,7 @@ public class Function implements Externalizable, IUnit<Function> {
         return hash;
     }
 
-    public boolean equalsToStruct(Function f, Right left, Right right) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean equalsToStruct(Function f, Right left, Right right) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (nameId == f.nameId && range == f.getRange()) {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {

@@ -13,6 +13,7 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParseErrorException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
@@ -59,11 +60,31 @@ public class Screen {
                         .terminal(terminal)
                         .build();
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
 
         showCopyrigt(user);
+
+        if (reader != null) {
+            System.out.println("Line editor loaded");
+        } else {
+            System.err.println("Line editor doesn't loaded");
+        }
+
+        try {
+            user.getUdf();
+            System.out.println("UDF module loaded");
+        } catch (RuntimeErrorException e) {
+            System.err.println(e.toString());
+        }
+
+        try {
+            user.getData();
+            System.out.println("DB module loaded");
+        } catch (RuntimeErrorException e) {
+            System.err.println(e.toString());
+        }
 
         while (!stop) {
             String line = "";
@@ -418,6 +439,8 @@ public class Screen {
                 System.out.println("^");
                 line = "";
 //                incomplete = "";
+            } catch (RuntimeErrorException ex) {
+                System.err.println(ex.toString());
             } catch (Exception e) {
                 e.printStackTrace(System.err);
             }
@@ -853,7 +876,7 @@ public class Screen {
 
     //
 //
-    public static void showTree(Mind mind, Right r) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public static void showTree(Mind mind, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<List<String>> net = LogStore.formatTree(mind, r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
@@ -868,7 +891,7 @@ public class Screen {
         }
     }
 
-    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (tset.isEmpty()) {
             showTree(mind, r);
         } else {
@@ -886,7 +909,7 @@ public class Screen {
         }
     }
 
-    public static void showRights(Mind mind, boolean showTree) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public static void showRights(Mind mind, boolean showTree) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 //        int i = 0;
         for (Right r : mind.getRights()) {
 

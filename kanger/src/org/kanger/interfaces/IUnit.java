@@ -2,6 +2,7 @@ package org.kanger.interfaces;
 
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
@@ -12,13 +13,13 @@ public interface IUnit<T> {
 
     void setId(long id);
 
-    int getHash() throws IOException, ClassNotFoundException, OutOfBufferException;
+    int getHash() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    boolean equalsTo(T to) throws IOException, ClassNotFoundException, OutOfBufferException;
+    boolean equalsTo(T to) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     IUser getUser();
 
-    T setUser(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException;
+    T setUser(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     boolean isDeleted();
 

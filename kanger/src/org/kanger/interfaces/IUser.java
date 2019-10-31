@@ -17,7 +17,7 @@ public interface IUser {
 
     IBase getStorage(String schema);
 
-    void clear() throws IOException, ClassNotFoundException, OutOfBufferException;
+    void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     String getStorageName();
 
@@ -25,9 +25,9 @@ public interface IUser {
 
     void use(String name) throws RuntimeErrorException, IOException;
 
-    void remove() throws IOException;
+    void remove() throws IOException, RuntimeErrorException;
 
-    void reindex(IReactor iReactor) throws IOException;
+    void reindex(IReactor iReactor) throws IOException, RuntimeErrorException;
 
     long getUsedCacheSize();
 
@@ -35,5 +35,7 @@ public interface IUser {
 
     void clearCache();
 
-    SysOp getUdf();
+    SysOp getUdf() throws RuntimeErrorException;
+
+    IData getData() throws RuntimeErrorException;
 }

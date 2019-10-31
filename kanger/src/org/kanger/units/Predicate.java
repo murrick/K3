@@ -2,6 +2,7 @@ package org.kanger.units;
 
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
@@ -83,7 +84,7 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
 //        name = user.getMind().getTerms().get(nameId);
 //    }
 
-    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {
             name = user.getMind().getTerms().load(nameId);
         }
@@ -208,7 +209,7 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     public String toString() {
         try {
             return getName() + "(" + range + ")";
-        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return "";
         }

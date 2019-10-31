@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -102,7 +103,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         return null;
     }
 
-    public Predicate load(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Predicate load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Predicate t = get(id);
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
@@ -115,12 +116,12 @@ public class PredicateFactory implements Iterable<Predicate> {
         return t;
     }
 
-    public Predicate get(long id) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Predicate get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Predicate t = (Predicate) cache.get(id);
         return t;
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (user.getMind().getNext() != null) {
             transaction(user.getMind().getNext().getPredicates());
         } else {

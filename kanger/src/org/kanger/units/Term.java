@@ -6,6 +6,7 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.Tools;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -52,7 +53,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         this.user = user;
     }
 
-    public Term(Object str, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term(Object str, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         this.user = user;
         construct(str);
     }
@@ -174,7 +175,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
 //        this.user = user;
 //    }
 
-    private void construct(Object o) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private void construct(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         value = null;
         if (o instanceof Number) {
             type = DataType.NUMERIC;
@@ -283,7 +284,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         return buffer;
     }
 
-    private Object conatructInterval(String ch) throws IOException, ClassNotFoundException, OutOfBufferException {
+    private Object conatructInterval(String ch) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (ch.contains("..")) {
             if (ch.startsWith("{") && ch.endsWith("}")) {
                 ch = ch.substring(1, ch.length() - 1);
@@ -315,7 +316,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         this.id = id;
     }
 
-    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (right == null) {
             right = user.getMind().getRights().load(rightId);
         }
@@ -370,7 +371,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
                     default:
                         try {
                             return getName().toString();
-                        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+                        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
                             e.printStackTrace(System.err);
                             return "";
                         }
@@ -416,7 +417,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         this.value = value;
     }
 
-    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {
             name = user.getMind().getTerms().load(nameId);
         }

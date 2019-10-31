@@ -3,6 +3,7 @@ package org.kanger.units;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
@@ -126,7 +127,7 @@ public class Right implements Externalizable, IUnit<Right> {
     }
 
 
-    private void checkTreeIsLoaded() throws IOException, ClassNotFoundException, OutOfBufferException {
+    private void checkTreeIsLoaded() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (tree.isEmpty() && !treeIds.isEmpty()) {
             for (List<Long> ids : treeIds) {
                 List<Domain> branch = new ArrayList<>();
@@ -159,7 +160,7 @@ public class Right implements Externalizable, IUnit<Right> {
 //        }
 //    }
 
-    public Domain getDomain() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Domain getDomain() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return getTree().get(0).get(0);
     }
 
@@ -198,7 +199,7 @@ public class Right implements Externalizable, IUnit<Right> {
         user.getMind().getUsedRights().get(0L).add(this);
     }
 
-    public Set<Right> getNatives() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Set<Right> getNatives() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Set<Right> list = new HashSet<>();
         for (List<Domain> t : getTree()) {
             for (Domain d : t) {
@@ -216,7 +217,7 @@ public class Right implements Externalizable, IUnit<Right> {
         return list;
     }
 
-    public List<List<Domain>> getTree() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<List<Domain>> getTree() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         checkTreeIsLoaded();
         return tree;
     }
@@ -231,7 +232,7 @@ public class Right implements Externalizable, IUnit<Right> {
         this.id = id;
     }
 
-    public Term getOrig() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Term getOrig() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (orig == null && origId != -1) {
             orig = user.getMind().getTerms().load(origId);
         }
@@ -251,11 +252,11 @@ public class Right implements Externalizable, IUnit<Right> {
         this.query = current;
     }
 
-    public int size() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public int size() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         return getTree().size();
     }
 
-    public List<Domain> cloneTree(List<Domain> branch) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public List<Domain> cloneTree(List<Domain> branch) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Domain> list = new ArrayList<>();
         list.addAll(branch);
         getTree().add(list);
@@ -274,7 +275,7 @@ public class Right implements Externalizable, IUnit<Right> {
                     (isQuery() ? "Q" : "")
                     : "")
                     ;
-        } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return "";
         }
@@ -283,7 +284,7 @@ public class Right implements Externalizable, IUnit<Right> {
     //TODO: 5  !~b(z); ?b(z) -> c(z);  => TRUE - Не верно
 
     @Override
-    public int getHash() throws IOException, ClassNotFoundException, OutOfBufferException {
+    public int getHash() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         //TODO: 4
         if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
             return getDomain().getHashBase();
@@ -300,7 +301,7 @@ public class Right implements Externalizable, IUnit<Right> {
         }
     }
 
-    private boolean branchEquals(List<Domain> a, List<Domain> b) {
+    private boolean branchEquals(List<Domain> a, List<Domain> b) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         List<Domain> tmp = new ArrayList<>();
         tmp.addAll(b);
         for (Domain d : a) {
@@ -315,7 +316,7 @@ public class Right implements Externalizable, IUnit<Right> {
     }
 
     @Override
-    public boolean equalsTo(Right to) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean equalsTo(Right to) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 //        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
 //            return equalsTo(to.getDomain());
 //        } else
@@ -342,7 +343,7 @@ public class Right implements Externalizable, IUnit<Right> {
     }
 
     @Override
-    public Right setUser(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public Right setUser(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         this.user = user;
         for (Cause c : getCauses()) {
             c.setUser(user);
@@ -355,12 +356,11 @@ public class Right implements Externalizable, IUnit<Right> {
         return this;
     }
 
-    public boolean equalsTo(Domain x) throws IOException, ClassNotFoundException, OutOfBufferException {
+    public boolean equalsTo(Domain x) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
                 && x.getPredicateId() == domain.getPredicateId()
                 && x.getRange() == domain.getRange()) {
-            try {
                 int i = 0;
                 for (; i < domain.getRange(); ++i) {
                     //TODO: Костыль!
@@ -378,10 +378,6 @@ public class Right implements Externalizable, IUnit<Right> {
                     }
                 }
                 return i == domain.getRange();
-            } catch (IOException | ClassNotFoundException | OutOfBufferException e) {
-                e.printStackTrace(System.err);
-                return false;
-            }
         } else {
             return false;
         }
