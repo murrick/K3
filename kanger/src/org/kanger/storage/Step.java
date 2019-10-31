@@ -1,7 +1,11 @@
 package org.kanger.storage;
 
+import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
+import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
 
@@ -13,6 +17,24 @@ public class Step implements IStep {
     private int hash = 0;
 
     private long size = 0;
+
+    @Override
+    public ByteBuffer pack() {
+        return null;
+    }
+
+    @Override
+    public IStep apply(ByteBuffer packet) {
+        return null;
+    }
+
+    @Override
+    public Object getData(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (data != null && data instanceof IUnit) {
+            ((IUnit) data).setUser(user);
+        }
+        return data;
+    }
 
     @Override
     public Object getData() {

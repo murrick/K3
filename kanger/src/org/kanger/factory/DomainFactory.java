@@ -137,8 +137,8 @@ public class DomainFactory implements Iterable<Domain> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Domain) s.getData();
-                t.setUser(user);
+                t = (Domain) s.getData(user);
+//                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

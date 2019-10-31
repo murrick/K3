@@ -3,7 +3,6 @@ package org.kanger.interfaces;
 import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.units.SysOp;
 
 import java.io.IOException;
 
@@ -35,7 +34,4 @@ public interface IUser {
 
     void clearCache();
 
-    SysOp getUdf() throws RuntimeErrorException;
-
-    IData getData() throws RuntimeErrorException;
 }

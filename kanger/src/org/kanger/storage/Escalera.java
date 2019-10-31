@@ -78,11 +78,14 @@ public class Escalera implements ICache {
     @Override
     public Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (root instanceof Sapato) {
-            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
+            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData(user));
         }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getId() == id) {
-                return s.getData();
+//                if(s.getData() != null && s.getData() instanceof IUnit && ((IUnit) s.getData()).getUser() == null) {
+//                    ((IUnit) s.getData()).setUser(user);
+//                }
+                return s.getData(user);
             }
         }
         // Прямое обращение к БД имеет значение только в начальной загрузке
@@ -128,7 +131,7 @@ public class Escalera implements ICache {
     public Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Set<Long> set = new HashSet<>();
         if (root instanceof Sapato) {
-            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData());
+            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData(user));
         }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getHash() == h) {
@@ -254,10 +257,10 @@ public class Escalera implements ICache {
 
             try {
                 if (root instanceof Sapato) {
-                    root.setData(user.getStorage(schema).get(root.getId()).getData());
+                    root.setData(user.getStorage(schema).get(root.getId()).getData(user));
                 }
                 if (top instanceof Sapato) {
-                    top.setData(user.getStorage(schema).get(top.getId()).getData());
+                    top.setData(user.getStorage(schema).get(top.getId()).getData(user));
                 }
             } catch (Exception e) {
                 e.printStackTrace(System.err);
@@ -279,21 +282,28 @@ public class Escalera implements ICache {
 
         @Override
         public Object next() {
-            Object o = step.getData();
-            if (backward) {
-                step = step.getNext();
-            } else {
-                if (step.getPrev() == null && !user.isClosed()) {
-                    // Чистая магия
-                    IStep stop = step;
-                    for (step = root; step != null; step = step.getNext()) {
-                        if (step.getNext() != null && step.getNext().getId() == stop.getId()) {
-                            break;
-                        }
-                    }
+            Object o = null;
+
+
+            try {
+                o = step.getData(user);
+                if (backward) {
+                    step = step.getNext();
                 } else {
-                    step = step.getPrev();
+                    if (step.getPrev() == null && !user.isClosed()) {
+                        // Чистая магия
+                        IStep stop = step;
+                        for (step = root; step != null; step = step.getNext()) {
+                            if (step.getNext() != null && step.getNext().getId() == stop.getId()) {
+                                break;
+                            }
+                        }
+                    } else {
+                        step = step.getPrev();
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace(System.err);
             }
             return o;
         }

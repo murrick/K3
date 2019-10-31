@@ -7,10 +7,8 @@ import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
-import org.kanger.units.SysOp;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,34 +17,33 @@ public class User implements IUser {
     private Mind mind = null;
     private Map<String, IBase> storage = new HashMap<>();
 
-    private IData data = null;
-    private Class udf = null;
+    private static IData data = null;
 
-    public User(IData data, Class udf) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        this.data = data;
-        if (data != null) {
-            data.init();
+    public User(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        if (mind == null) {
+            this.mind = new Mind(this);
+        } else {
+            this.mind = mind;
         }
-        this.udf = udf;
-        mind = new Mind(this);
+        data = Global.getData();
     }
 
-    public void use(String name) throws IOException {
+    public void use(String name) throws IOException, RuntimeErrorException {
 
         if (data != null) {
 
             data.use(name);
 
-            storage.put(DictionaryFactory.SCHEMA, data.counstructBase(this, DictionaryFactory.SCHEMA));
-            storage.put(DomainFactory.SCHEMA, data.counstructBase(this, DomainFactory.SCHEMA));
-            storage.put(FunctionFactory.SCHEMA, data.counstructBase(this, FunctionFactory.SCHEMA));
-            storage.put(FValueFactory.SCHEMA, data.counstructBase(this, FValueFactory.SCHEMA));
-            storage.put(PredicateFactory.SCHEMA, data.counstructBase(this, PredicateFactory.SCHEMA));
-            storage.put(RightFactory.SCHEMA, data.counstructBase(this, RightFactory.SCHEMA));
-            storage.put(RightFactory.SCHEMA_STORED, data.counstructBase(this, RightFactory.SCHEMA_STORED));
-            storage.put(TValueFactory.SCHEMA, data.counstructBase(this, TValueFactory.SCHEMA));
-            storage.put(TVariableFactory.SCHEMA, data.counstructBase(this, TVariableFactory.SCHEMA));
-            storage.put(LibraryFactory.SCHEMA, data.counstructBase(this, LibraryFactory.SCHEMA));
+            storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
+            storage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
+            storage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
+            storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
+            storage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
+            storage.put(RightFactory.SCHEMA, data.getBase(RightFactory.SCHEMA));
+            storage.put(RightFactory.SCHEMA_STORED, data.getBase(RightFactory.SCHEMA_STORED));
+            storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
+            storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
+            storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
 
             while (mind.getNext() != null) {
                 mind = mind.getNext();
@@ -99,7 +96,7 @@ public class User implements IUser {
         }
     }
 
-    public void reindex(IReactor IReactor) throws IOException {
+    public void reindex(IReactor IReactor) throws IOException, RuntimeErrorException {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 try {
@@ -169,25 +166,4 @@ public class User implements IUser {
         }
     }
 
-    @Override
-    public SysOp getUdf() throws RuntimeErrorException {
-        if (udf != null) {
-            try {
-                return (SysOp) udf.getConstructors()[0].newInstance(this);
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeErrorException(e.toString());
-            }
-        } else {
-            throw new RuntimeErrorException("UDF module doens't loaded");
-        }
-    }
-
-    @Override
-    public IData getData() throws RuntimeErrorException {
-        if (data != null) {
-            return data;
-        } else {
-            throw new RuntimeErrorException("DB module doens't loaded");
-        }
-    }
 }

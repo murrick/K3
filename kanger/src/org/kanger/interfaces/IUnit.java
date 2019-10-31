@@ -19,7 +19,7 @@ public interface IUnit<T> {
 
     IUser getUser();
 
-    T setUser(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    T setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
 
     boolean isDeleted();
 

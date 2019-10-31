@@ -1,5 +1,6 @@
 package org.kanger.storage;
 
+import org.kanger.Global;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
@@ -39,6 +40,7 @@ public class Sapato implements IStep {
         this.hash = c.getHash();
     }
 
+    @Override
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
@@ -61,7 +63,8 @@ public class Sapato implements IStep {
         return packet.createMarked();
     }
 
-    public Sapato apply(IUser user, ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException {
+    @Override
+    public IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException {
         id = packet.getLong();
         hash = packet.getInt();
         prev = packet.getLong();
@@ -84,7 +87,7 @@ public class Sapato implements IStep {
             default:
                 try {
                     packet.mark();
-                    data = newInstance(user, type).apply(packet);
+                    data = newInstance(type).apply(packet);
                     assert (data != null);
                 } finally {
                     packet.release();
@@ -93,6 +96,14 @@ public class Sapato implements IStep {
         return null;
     }
 
+
+    @Override
+    public Object getData(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (data != null && data instanceof IUnit) {
+            ((IUnit) data).setUser(user);
+        }
+        return data;
+    }
 
     @Override
     public Object getData() {
@@ -198,26 +209,26 @@ public class Sapato implements IStep {
         size = sz;
     }
 
-    private IUnit newInstance(IUser user, UnitType type) throws RuntimeErrorException {
+    private IUnit newInstance(UnitType type) throws RuntimeErrorException {
         switch (type) {
             case TERM:
-                return new Term(user);
+                return new Term();
             case RIGHT:
-                return new Right(user);
+                return new Right();
             case DOMAIN:
-                return new Domain(user);
+                return new Domain();
             case FVALUE:
-                return new FValue(user);
+                return new FValue();
             case TVALUE:
-                return new TValue(user);
+                return new TValue();
             case FUNCTION:
-                return new Function(user);
+                return new Function();
             case PREFICATE:
-                return new Predicate(user);
+                return new Predicate();
             case TVARIABLE:
-                return new TVariable(user);
+                return new TVariable();
             case SYSOP:
-                return user.getUdf();
+                return Global.getUdf();
 
             case HYPOTESE:
             case ARGUMENT:

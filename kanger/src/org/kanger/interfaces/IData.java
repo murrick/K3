@@ -1,5 +1,7 @@
 package org.kanger.interfaces;
 
+import org.kanger.exception.RuntimeErrorException;
+
 import java.io.IOException;
 
 public interface IData {
@@ -15,5 +17,5 @@ public interface IData {
 
     String getStorageName();
 
-    IBase counstructBase(IUser user, String context) throws IOException;
+    IBase getBase(String context) throws IOException, RuntimeErrorException;
 }

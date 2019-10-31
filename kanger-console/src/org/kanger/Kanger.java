@@ -36,6 +36,7 @@ public class Kanger {
 
         try {
             db = new DB();
+            db.init();
         } catch (NoClassDefFoundError ex) {
         }
 
@@ -44,7 +45,10 @@ public class Kanger {
         } catch (NoClassDefFoundError ex) {
         }
 
-        IUser user = new User(db, udf);
+        Global.setData(db);
+        Global.setUdf(udf);
+
+        IUser user = new User(null);
 
 //        List<Object> params = new ArrayList<>();
 //        params.add(1);

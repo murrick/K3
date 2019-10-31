@@ -51,6 +51,7 @@ public class Screen {
         LineReader reader = null;
         if (LINE_EDITOR_ENABLE) {
             try {
+                //new DumbTerminal;
                 Terminal terminal = TerminalBuilder
                         .builder()
                         .build();
@@ -73,14 +74,14 @@ public class Screen {
         }
 
         try {
-            user.getUdf();
+            Global.getUdf();
             System.out.println("UDF module loaded");
         } catch (RuntimeErrorException e) {
             System.err.println(e.toString());
         }
 
         try {
-            user.getData();
+            Global.getData();
             System.out.println("DB module loaded");
         } catch (RuntimeErrorException e) {
             System.err.println(e.toString());

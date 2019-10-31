@@ -106,8 +106,8 @@ public class FValueFactory {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (FValue) s.getData();
-                t.setUser(user);
+                t = (FValue) s.getData(user);
+//                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

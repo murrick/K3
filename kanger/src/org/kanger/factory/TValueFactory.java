@@ -125,8 +125,8 @@ public class TValueFactory implements Iterable<TValue> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (TValue) s.getData();
-                t.setUser(user);
+                t = (TValue) s.getData(user);
+//                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

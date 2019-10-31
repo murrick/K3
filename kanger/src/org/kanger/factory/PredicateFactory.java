@@ -108,8 +108,8 @@ public class PredicateFactory implements Iterable<Predicate> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Predicate) s.getData();
-                t.setUser(user);
+                t = (Predicate) s.getData(user);
+//                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

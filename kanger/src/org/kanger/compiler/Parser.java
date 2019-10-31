@@ -1,5 +1,6 @@
 package org.kanger.compiler;
 
+import org.kanger.Global;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.ParseError;
@@ -541,57 +542,52 @@ public class Parser {
     }
 
     public static SysOp implement(String ln, IUser user) throws RuntimeErrorException, ParseErrorException {
-        if (user.getUdf() == null) {
-            //throw new RuntimeException("UDF module doesn't linked");
-            return null;
-        } else {
-            String line = "";
-            boolean waitParams = false;
-            boolean waitScript = false;
-            int pos = 1;
-            SysOp f = user.getUdf();
-            f.setUser(user);
-            do {
-                Object[] t = getToken(ln, pos);
-                if (t == null) {
-                    break;
+        String line = "";
+        boolean waitParams = false;
+        boolean waitScript = false;
+        int pos = 1;
+        SysOp f = Global.getUdf();
+        f.setUser(user);
+        do {
+            Object[] t = getToken(ln, pos);
+            if (t == null) {
+                break;
+            }
+
+            pos = (Integer) t[1];
+            line = (String) t[0];
+
+            if (line.isEmpty()) {
+                continue;
+            }
+
+            if (line.charAt(0) == Enums.EOLN) {
+                break;
+            }
+
+            if (line.charAt(0) == Enums.LB) {
+                waitParams = true;
+            } else if (line.charAt(0) == Enums.RB) {
+                waitParams = false;
+                waitScript = true;
+            } else if (line.charAt(0) == Enums.COMMA) {
+                //
+            } else if (waitParams) {
+                f.getParams().add(line);
+            } else if (waitScript) {
+                if (line.charAt(0) != '{') {
+                    throw new ParseErrorException(pos, ParseError.RBRACES);
                 }
+                f.getScripts().add(line.substring(0, line.length() - 1).substring(1));
+            } else {
+                f.setName(line);
+            }
 
-                pos = (Integer) t[1];
-                line = (String) t[0];
-
-                if (line.isEmpty()) {
-                    continue;
-                }
-
-                if (line.charAt(0) == Enums.EOLN) {
-                    break;
-                }
-
-                if (line.charAt(0) == Enums.LB) {
-                    waitParams = true;
-                } else if (line.charAt(0) == Enums.RB) {
-                    waitParams = false;
-                    waitScript = true;
-                } else if (line.charAt(0) == Enums.COMMA) {
-                    //
-                } else if (waitParams) {
-                    f.getParams().add(line);
-                } else if (waitScript) {
-                    if (line.charAt(0) != '{') {
-                        throw new ParseErrorException(pos, ParseError.RBRACES);
-                    }
-                    f.getScripts().add(line.substring(0, line.length() - 1).substring(1));
-                } else {
-                    f.setName(line);
-                }
-
-            } while (pos < ln.length());
-            f.setMode(LibMode.FUNCTION);
-            f.setRange(f.getParams().size());
-            f.getParams().add(f.getName());
-            return f;
-        }
+        } while (pos < ln.length());
+        f.setMode(LibMode.FUNCTION);
+        f.setRange(f.getParams().size());
+        f.getParams().add(f.getName());
+        return f;
     }
 
     private static PTree squeze(PTree t) {

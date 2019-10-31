@@ -343,7 +343,7 @@ public class Right implements Externalizable, IUnit<Right> {
     }
 
     @Override
-    public Right setUser(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Right setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         this.user = user;
         for (Cause c : getCauses()) {
             c.setUser(user);

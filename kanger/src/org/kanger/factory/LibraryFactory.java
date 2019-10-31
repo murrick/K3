@@ -104,8 +104,8 @@ public class LibraryFactory implements Iterable<SysOp> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (SysOp) s.getData();
-                t.setUser(user);
+                t = (SysOp) s.getData(user);
+//                t.setUser(user);
             }
         }
         return t;

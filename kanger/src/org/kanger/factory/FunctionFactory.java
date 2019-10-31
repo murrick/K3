@@ -91,8 +91,8 @@ public class FunctionFactory implements Iterable<Function> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Function) s.getData();
-                t.setUser(user);
+                t = (Function) s.getData(user);
+//                t.setUser(user);
 //                t.linkExternal(user);
             }
         }

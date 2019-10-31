@@ -7,8 +7,6 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,10 +24,10 @@ public class Base implements IBase {
     private volatile long cacheSize = 0L;
 
     private String name = "";
-    private IUser user = null;
+//    private IUser user = null;
 
-    public Base(Database db, IUser user, String name) throws IOException {
-        this.user = user;
+    public Base(Database db, String name) throws IOException {
+//        this.user = user;
         this.name = name;
         if (System.getProperties().containsKey("cache.size")) {
             MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
@@ -38,52 +36,52 @@ public class Base implements IBase {
         this.index = db.openIndex(name + ".index");
     }
 
-    private byte[] fromObject(Object o) {
-        if (o instanceof Long) {
-            return new ByteBuffer().putByte(0).putLong((Long) o).getBuffer();
-        } else { //if(o instanceof Sapato) {
-            return new ByteBuffer().putByte(1).append(((Sapato) o).pack()).getBuffer();
-        }
-//        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-//        ObjectOutput out = new ObjectOutputStream(buffer);
-//        out.writeObject(o);
-//        out.close();
-//        return buffer.toByteArray();
-    }
+//    private byte[] fromObject(Object o) {
+//        if (o instanceof Long) {
+//            return new ByteBuffer().putByte(0).putLong((Long) o).getBuffer();
+//        } else { //if(o instanceof Sapato) {
+//            return new ByteBuffer().putByte(1).append(((Sapato) o).pack()).getBuffer();
+//        }
+////        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+////        ObjectOutput out = new ObjectOutputStream(buffer);
+////        out.writeObject(o);
+////        out.close();
+////        return buffer.toByteArray();
+//    }
 
-    private Object toObject(byte[] bytes) throws OutOfBufferException, RuntimeErrorException {
-        if (bytes == null) {
-            return null;
-        } else {
-            ByteBuffer packet = new ByteBuffer(bytes);
-            int mode = packet.getByte();
-            switch (mode) {
-                case 0:
-                    return packet.getLong();
-                default:
-                    try {
-                        packet.mark();
-                        Sapato s = new Sapato();
-                        s.setBase(this);
-                        s.apply(user, packet);
-                        return s;
-                    } finally {
-                        packet.release();
-                    }
-            }
-//            ObjectInput in = new ObjectInputStream(new ByteArrayInputStream(bytes));
-//            Object o = in.readObject();
-//            in.close();
-//            if (o instanceof IStep) {
-//                ((IStep) o).setBase(this);
+//    private Object toObject(byte[] bytes) throws OutOfBufferException, RuntimeErrorException {
+//        if (bytes == null) {
+//            return null;
+//        } else {
+//            ByteBuffer packet = new ByteBuffer(bytes);
+//            int mode = packet.getByte();
+//            switch (mode) {
+//                case 0:
+//                    return packet.getLong();
+//                default:
+//                    try {
+//                        packet.mark();
+//                        Sapato s = new Sapato();
+//                        s.setBase(this);
+//                        s.apply(user, packet);
+//                        return s;
+//                    } finally {
+//                        packet.release();
+//                    }
 //            }
-//            return o;
-        }
-    }
+////            ObjectInput in = new ObjectInputStream(new ByteArrayInputStream(bytes));
+////            Object o = in.readObject();
+////            in.close();
+////            if (o instanceof IStep) {
+////                ((IStep) o).setBase(this);
+////            }
+////            return o;
+//        }
+//    }
 
     @Override
     public void add(Sapato one) throws IOException {
-        index.store(null, fromObject(one.getId()), fromObject(one));
+        index.store(null, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
 //        int h = one.getHash();
 //        Set<Long> set = (Set<Long>) toObject(hash.load(null, fromObject(h)));
 //        if (set == null) {
@@ -95,7 +93,7 @@ public class Base implements IBase {
 
     @Override
     public void update(Sapato one) throws IOException {
-        index.store(null, fromObject(one.getId()), fromObject(one));
+        index.store(null, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
     }
 
     @Override
@@ -105,13 +103,23 @@ public class Base implements IBase {
             timing.add(id);
             return cache.get(id);
         } else {
-            byte[] o = index.load(null, fromObject(id));
-            IStep step = (IStep) toObject(o);
-            if (step != null) {
-                cache.put(id, step);
-                if (step.getData() instanceof IUnit) {
-                    ((IUnit) step.getData()).setUser(user);
+            IStep step = null;
+            byte[] o = index.load(null, new ByteBuffer().putLong(id).getBuffer());
+            if (o != null) {
+
+                ByteBuffer packet = new ByteBuffer(o);
+                try {
+                    packet.mark();
+                    step = new Sapato();
+                    step.setBase(this);
+                    ((Sapato) step).apply(packet);
+                } finally {
+                    packet.release();
                 }
+                cache.put(id, step);
+//                if (step.getData() instanceof IUnit) {
+//                    ((IUnit) step.getData()).setUser(user);
+//                }
 
                 timing.add(id);
                 step.setSize(o.length);
@@ -159,9 +167,9 @@ public class Base implements IBase {
 
     @Override
     public void delete(long id) throws IOException {
-        Object one = index.load(null, fromObject(id));
+        Object one = index.load(null, new ByteBuffer().putLong(id).getBuffer());
         if (one != null) {
-            index.delete(null, fromObject(id));
+            index.delete(null, new ByteBuffer().putLong(id).getBuffer());
         }
     }
 
@@ -172,7 +180,7 @@ public class Base implements IBase {
             c.first();
             byte[] first = c.key();
             c.last();
-            byte[] last = fromObject(((long) toObject(c.key())) + 1);
+            byte[] last = new ByteBuffer().putLong(new ByteBuffer(c.key()).getLong() + 1).getBuffer();
             index.evict(null, first, last, null, true);
         }
         clearCache();
@@ -180,7 +188,7 @@ public class Base implements IBase {
 
     @Override
     public boolean containsKey(long id) throws IOException {
-        return index.load(null, fromObject(id)) != null;
+        return index.load(null, new ByteBuffer().putLong(id).getBuffer()) != null;
     }
 
     @Override
@@ -191,7 +199,7 @@ public class Base implements IBase {
             } else {
                 Cursor c = index.newCursor(null);
                 c.last();
-                long id = (long) toObject(c.key());
+                long id = new ByteBuffer(c.key()).getLong();
                 IStep step = get(id);
                 return step;
             }
@@ -209,7 +217,7 @@ public class Base implements IBase {
             } else {
                 Cursor c = index.newCursor(null);
                 c.first();
-                long id = (long) toObject(c.key());
+                long id = new ByteBuffer(c.key()).getLong();
                 IStep step = get(id);
                 return step;
             }
@@ -219,9 +227,9 @@ public class Base implements IBase {
         }
     }
 
-    public IUser getUser() {
-        return user;
-    }
+//    public IUser getUser() {
+//        return user;
+//    }
 
     @Override
     public String getName() {

@@ -3,18 +3,21 @@ package org.kanger.storage;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.DatabaseConfig;
 import org.cojen.tupl.DurabilityMode;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
-import org.kanger.interfaces.IUser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DB implements IData {
 
     DatabaseConfig config = null;
     private String storageName = "";
     private Database db = null;
+    private Map<String, IBase> bases = new HashMap<>();
 
     @Override
     public void init() {
@@ -49,6 +52,8 @@ public class DB implements IData {
         if (db != null) {
             db.shutdown();
             db = null;
+            bases.clear();
+            storageName = "";
         }
     }
 
@@ -71,8 +76,16 @@ public class DB implements IData {
     }
 
     @Override
-    public IBase counstructBase(IUser user, String context) throws IOException {
-        return new Base(db, user, context);
+    public IBase getBase(String context) throws IOException, RuntimeErrorException {
+        if (db != null) {
+            if (!bases.containsKey(context)) {
+                IBase base = new Base(db, context);
+                bases.put(context, base);
+            }
+            return bases.get(context);
+        } else {
+            throw new RuntimeErrorException("Database doesn't opened");
+        }
     }
 
 }
