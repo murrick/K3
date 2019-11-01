@@ -167,6 +167,8 @@ public class Base implements IBase {
 
     @Override
     public void delete(long id) throws IOException {
+        cache.remove(id);
+        timing.remove(id);
         Object one = index.load(null, new ByteBuffer().putLong(id).getBuffer());
         if (one != null) {
             index.delete(null, new ByteBuffer().putLong(id).getBuffer());
