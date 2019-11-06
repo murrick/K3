@@ -303,6 +303,9 @@ public class Escalera implements ICache {
                         step = step.getPrev();
                     }
                 }
+//                if (step != null) {
+//                    ((IUnit) step.getData()).setUser(user);
+//                }
             } catch (Exception e) {
                 e.printStackTrace(System.err);
             }

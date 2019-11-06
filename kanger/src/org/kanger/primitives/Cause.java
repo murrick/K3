@@ -113,6 +113,19 @@ public class Cause implements Externalizable, Comparable<Cause> {
 //            return toString().hashCode();
 //        }
 
+    private boolean equalsId(ArgList args) {
+        if (args.size() == arguments.size()) {
+            for (int i = 0; i < args.size(); ++i) {
+                if (args.get(i).getId() != arguments.get(i).getId()) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         try {
@@ -123,7 +136,7 @@ public class Cause implements Externalizable, Comparable<Cause> {
                     && srcId == ((Cause) o).getSrcId()
                     && dstId == ((Cause) o).getDstId()
 //                    && index == ((Cause) o).getIndex()
-                    && arguments.equalsBase(((Cause) o).getArguments());
+                    && equalsId(((Cause) o).getArguments());
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return false;

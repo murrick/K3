@@ -71,7 +71,11 @@ public class Argument implements Externalizable {
         switch (type) {
             case CVARIABLE:
             case TERM:
-                o = user.getMind().getTerms().load(id);
+                try {
+                    o = user.getMind().getTerms().load(id);
+                } catch (NullPointerException e) {
+                    e.printStackTrace(System.err);
+                }
                 break;
             case TVARIABLE:
                 o = user.getMind().getTVars().load(id);
