@@ -35,4 +35,8 @@ public interface IBase {
     long getUsedCacheSize();
 
     long getMaxCacheSize();
+
+    long lastId();
+
+    long nextId();
 }

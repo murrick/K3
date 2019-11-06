@@ -16,6 +16,7 @@ public class User implements IUser {
 
     private Mind mind = null;
     private Map<String, IBase> storage = new HashMap<>();
+    private Map<String, Long> counters = new HashMap<>();
 
     private static IData data = null;
 
@@ -131,6 +132,36 @@ public class User implements IUser {
     public void clearCache() {
         for (Map.Entry<String, IBase> e : storage.entrySet()) {
             e.getValue().clearCache();
+        }
+    }
+
+    @Override
+    public long lastId(String context) {
+        if (isClosed()) {
+            synchronized (this) {
+                if (!counters.containsKey(context)) {
+                    counters.put(context, 0L);
+                }
+                return counters.get(context);
+            }
+        } else {
+            return storage.get(context).lastId();
+        }
+    }
+
+    @Override
+    public long nextId(String context) {
+        if (isClosed()) {
+            synchronized (this) {
+                if (!counters.containsKey(context)) {
+                    counters.put(context, 0L);
+                }
+                long id = counters.get(context);
+                counters.put(context, id + 1);
+                return id;
+            }
+        } else {
+            return storage.get(context).nextId();
         }
     }
 

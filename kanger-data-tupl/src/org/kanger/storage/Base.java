@@ -22,6 +22,7 @@ public class Base implements IBase {
     private Map<Long, IStep> cache = new HashMap<>();
     private Queue<Long> timing = new LinkedList<>();
     private volatile long cacheSize = 0L;
+    private long lastId = -1;
 
     private String name = "";
 //    private IUser user = null;
@@ -34,6 +35,12 @@ public class Base implements IBase {
         }
 
         this.index = db.openIndex(name + ".index");
+        IStep root = getRoot();
+        if (root != null) {
+            lastId = root.getId() + 1;
+        } else {
+            lastId = 0;
+        }
     }
 
 //    private byte[] fromObject(Object o) {
@@ -186,6 +193,7 @@ public class Base implements IBase {
             index.evict(null, first, last, null, true);
         }
         clearCache();
+        lastId = 0;
     }
 
     @Override
@@ -249,9 +257,13 @@ public class Base implements IBase {
     }
 
 
-//    public void delete(long id) throws IOException {
-//        cache.remove(id);
-//        byte[] ident = fromObject(id);
-//        index.evict(null, ident, ident, null, true);
-//    }
+    @Override
+    public synchronized long lastId() {
+        return lastId;
+    }
+
+    @Override
+    public synchronized long nextId() {
+        return lastId++;
+    }
 }

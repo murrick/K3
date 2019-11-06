@@ -22,7 +22,7 @@ public class DictionaryFactory implements Iterable<Term> {
     public static final String SCHEMA = "dictionary";
 
     //    private Term root = null;
-    private long lastId = 0;
+//    private long lastId = 0;
     private long firstId = 0;
     private int varIndex = 0;           // Счетчик C-переменных
 
@@ -45,15 +45,15 @@ public class DictionaryFactory implements Iterable<Term> {
 //        cache.clear();
 //        load.clear();
         if (base != null) {
-            lastId = base.lastId;
-            firstId = base.lastId;
+//            lastId = base.lastId;
+//            firstId = base.lastId;
             varIndex = base.varIndex;
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
             cache = new Escalera(user, SCHEMA, null);
             if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
-                firstId = lastId;
+//                lastId = cache.getRoot().getId() + 1;
+//                firstId = lastId;
                 for (Term t : this) {
                     if (t.isCVariable()) {
                         varIndex = t.getIndex();
@@ -61,22 +61,23 @@ public class DictionaryFactory implements Iterable<Term> {
                     }
                 }
             } else {
-                lastId = 0;
-                firstId = 0;
+//                lastId = 0;
+//                firstId = 0;
                 varIndex = 0;           // Счетчик C-переменных
             }
         }
+        firstId = user.lastId(SCHEMA);
     }
 
     public void commit(DictionaryFactory base/*, Map<Integer, Object> vars*/) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
             varIndex = base.varIndex;
 
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
-                firstId = cache.getTop().getId();
+//                firstId = cache.getTop().getId();
             }
 
 //            for (Object p : cache) {
@@ -113,7 +114,7 @@ public class DictionaryFactory implements Iterable<Term> {
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = lastId;
+//            firstId = lastId;
         }
     }
 
@@ -123,7 +124,7 @@ public class DictionaryFactory implements Iterable<Term> {
             return p;
         } else {
             p = new Term(o, user);
-            p.setId(lastId++);
+            p.setId(user.nextId(SCHEMA));
             cache.add(p);
             return p;
         }

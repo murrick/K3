@@ -34,4 +34,7 @@ public interface IUser {
 
     void clearCache();
 
+    long lastId(String context);
+
+    long nextId(String context);
 }
