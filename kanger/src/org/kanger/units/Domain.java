@@ -201,7 +201,19 @@ public class Domain implements Externalizable, IUnit<Domain> {
 //    }
 
 
-    public Set<Cause> getCauses() {
+    public Set<Cause> getCauses() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        Set<Cause> set =  new HashSet<>();
+//        for(TVariable t : arguments.getTVariables(true)) {
+//            if(!t.isEmpty()) {
+//                for(Cause c : t.getCurrent().getCauses()) {
+//                    if(c.getSrc().getRight().isStored() && c.getDst().getRightId() == getRightId()) {
+//                        set.add(c);
+//                    }
+//                }
+//            }
+//        }
+//        return set;
+
         ArgList args = arguments.convertBase();
         if (user.getMind().getDomainCauses().containsKey(this) && user.getMind().getDomainCauses().get(this).containsKey(args)) {
             return user.getMind().getDomainCauses().get(this).get(args);
@@ -222,7 +234,11 @@ public class Domain implements Externalizable, IUnit<Domain> {
                 user.getMind().getDomainCauses().get(this).get(current).clear();
             }
             for (Cause c : causes) {
-                if (c.getArguments().equalsBase(c.getSrc().getArguments()) && !sourceExists(c) && getOverlaps(c.getArguments()) > 0) {
+
+                if (c.getArguments().equalsBase(c.getSrc().getArguments())
+                        && sourceExists(c) == null
+                        && getOverlaps(c.getArguments()) > 0
+                ) {
                     user.getMind().getDomainCauses().get(this).get(current).add(c);
                 }
             }
@@ -268,16 +284,19 @@ public class Domain implements Externalizable, IUnit<Domain> {
         }
     }
 
-    private boolean sourceExists(Cause c) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Cause sourceExists(Cause c) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Set<Cause> causes = getCauses();
         if (causes != null) {
-            for (Cause x : getCauses()) {
+            for (Cause x : causes) {
                 if (x.getSrc().getPredicateId() == c.getSrc().getPredicateId() && x.getSrc().getArguments().equalsBase(c.getSrc().getArguments())) {
-                    return true;
+                    return x;
                 }
+//                if(x.getSrc().sourceExists(c)) {
+//                    return true;
+//                }
             }
         }
-        return false;
+        return null;
     }
 
     public ArgList getArguments() {
@@ -1095,38 +1114,38 @@ public class Domain implements Externalizable, IUnit<Domain> {
     }
 
     public boolean equalsToStruct(Domain to) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-            if (to.isAntc() == antc
-                    && to.getRange() == range
-                    && to.getPredicateId() == predicateId) {
-                int i = 0;
-                for (; i < range; ++i) {
-                    if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
-                        switch (arguments.get(i).getType()) {
-                            case TVARIABLE:
-                            case CVARIABLE:
-                                if (getVarOrder(i) != to.getVarOrder(i)) {
-                                    return false;
-                                }
-                                break;
-                            case TERM:
-                                if (arguments.get(i).getValue().getId() != to.getArguments().get(i).getValue().getId()) {
-                                    return false;
-                                }
-                                break;
-                            case FUNCTION:
-                                if (!arguments.get(i).getF().equalsToStruct(to.getArguments().get(i).getF(), getRight(), to.getRight())) {
-                                    return false;
-                                }
-                                break;
-                        }
-                    } else {
-                        return false;
+        if (to.isAntc() == antc
+                && to.getRange() == range
+                && to.getPredicateId() == predicateId) {
+            int i = 0;
+            for (; i < range; ++i) {
+                if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
+                    switch (arguments.get(i).getType()) {
+                        case TVARIABLE:
+                        case CVARIABLE:
+                            if (getVarOrder(i) != to.getVarOrder(i)) {
+                                return false;
+                            }
+                            break;
+                        case TERM:
+                            if (arguments.get(i).getValue().getId() != to.getArguments().get(i).getValue().getId()) {
+                                return false;
+                            }
+                            break;
+                        case FUNCTION:
+                            if (!arguments.get(i).getF().equalsToStruct(to.getArguments().get(i).getF(), getRight(), to.getRight())) {
+                                return false;
+                            }
+                            break;
                     }
+                } else {
+                    return false;
                 }
-                return true;
-            } else {
-                return false;
             }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public boolean isDeleted() {

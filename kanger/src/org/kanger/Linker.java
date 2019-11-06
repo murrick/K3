@@ -85,6 +85,7 @@ public class Linker {
         dumpedPasses = 0;
         skipedPasses = 0;
 
+        final Map<Right, Set<Cause>> causes = new HashMap<>();
 
         do {
 
@@ -97,7 +98,7 @@ public class Linker {
             saveF = user.getMind().getFValues().getLastId();
 
 
-            final Map<Right, Set<Cause>> causes = new HashMap<>();
+//            final Map<Right, Set<Cause>> causes = new HashMap<>();
 
 //            SortedSet<Tree> treeSet = new TreeSet<>();
 ////            if (right == null) {
@@ -196,18 +197,18 @@ public class Linker {
 
                             try {
 
-                                if (logging && !tvars.isEmpty()) {
-                                    String s = "";
-                                    for (TVariable t : tvars) {
-                                        if (!s.isEmpty()) {
-                                            s += ", ";
-                                        }
-                                        s += t;
-                                    }
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "START Variables: " + s);
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-
-                                }
+//                                if (logging && !tvars.isEmpty()) {
+//                                    String s = "";
+//                                    for (TVariable t : tvars) {
+//                                        if (!s.isEmpty()) {
+//                                            s += ", ";
+//                                        }
+//                                        s += t;
+//                                    }
+//                                    user.getMind().getLog().add(LogMode.ANALIZER, "START Variables: " + s);
+//                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+//
+//                                }
 
 //                                for (Domain d : t) {
 //                                    for (Function f : d.getArguments().getFunctions()) {
@@ -238,19 +239,19 @@ public class Linker {
                                     result = true;
                                 }
 
-                                if (logging) {
-                                    if (logging && !tvars.isEmpty()) {
-                                        String s = "";
-                                        for (TVariable t : tvars) {
-                                            if (!s.isEmpty()) {
-                                                s += ", ";
-                                            }
-                                            s += t;
-                                        }
-//                                        user.getMind().getLog().add(LogMode.ANALIZER, "STOP Variables: " + s);
-                                        user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
-                                    }
-                                }
+//                                if (logging) {
+//                                    if (logging && !tvars.isEmpty()) {
+//                                        String s = "";
+//                                        for (TVariable t : tvars) {
+//                                            if (!s.isEmpty()) {
+//                                                s += ", ";
+//                                            }
+//                                            s += t;
+//                                        }
+////                                        user.getMind().getLog().add(LogMode.ANALIZER, "STOP Variables: " + s);
+//                                        user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+//                                    }
+//                                }
 
                             } catch (Exception e) {
                                 e.printStackTrace(System.err);
@@ -515,6 +516,7 @@ public class Linker {
                                         ++solvedPasses;
                                         user.getMind().getTValues().commit();
                                         user.getMind().getFValues().commit();
+
                                     } else {
                                         ++dumpedPasses;
                                     }

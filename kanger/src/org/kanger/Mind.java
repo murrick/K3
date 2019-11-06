@@ -461,7 +461,7 @@ public class Mind {
         }
     }
 
-    public Object compileLine(String line, boolean query, List<Object> ext) throws Exception {
+    public Object compileLine(String line, boolean query, Object[] ext) throws Exception {
         String orig = line.trim();
         Object r = null;
         Boolean suc = null;
@@ -490,31 +490,6 @@ public class Mind {
         return r;
     }
 
-
-    public Boolean delete(Right r, boolean logging) throws Exception {
-        this.logging = logging;
-
-        rights.delete(r);
-        for (Right rx : rights) {
-            if (rx.isGenerated() && rx.getId() > r.getId()) {
-                rights.delete(rx);
-            }
-        }
-        pack();
-        tValues.clear();
-
-        link(null, logging);
-        Boolean ar = analise(null, logging);
-
-        if (logging) {
-            if (ar) {
-                log.add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-            } else {
-                log.add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
-            }
-        }
-        return ar;
-    }
 
     /**
      * Удаление правила из дерева вывода
@@ -629,7 +604,7 @@ public class Mind {
         return query(line, null);
     }
 
-    public Boolean query(String line, List<Object> ext) throws Exception {
+    public Boolean query(String line, Object[] ext) throws Exception {
         querySource = line;
         queryPass = QueryPass.SILENCE;
         queryContext = null;
@@ -813,7 +788,7 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
-    public Boolean query(String line, List<Object> ext, boolean logging) throws Exception {
+    public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
 //        querySource = line;
 //        queryPass = QueryPass.SILENCE;
 //        queryContext = null;
@@ -927,8 +902,11 @@ public class Mind {
                         release(m);
                         res = null;
                     } else {
+                        //TODO: При повторном добавлении не генерируются все продукции
                         m.link(r, logging);
                         ar = m.analise(r, logging);
+//                        m.link(null, logging);
+//                        ar = m.analise(null, logging);
                         if (ar) {
                             if (logging) {
                                 m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
@@ -998,6 +976,19 @@ public class Mind {
                     m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                 }
                 release(m);
+//                if (res) {
+//                    pack();
+//                    tValues.clear();
+//                    link(null, logging);
+//                    boolean ar = analise(null, logging);
+//                    if (logging) {
+//                        if (ar) {
+//                            log.add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+//                        } else {
+//                            log.add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+//                        }
+//                    }
+//                }
             }
             break;
 
@@ -1006,47 +997,46 @@ public class Mind {
                 hypotesis.clear();
 
                 if (line.length() == 1) {
-                    Mind m = new Mind(this);
-                    m.setQueryPass(QueryPass.CHECK);
+
+//                    Mind m = new Mind(this);
+                    setQueryPass(QueryPass.CHECK);
 
                     boolean found = false;
-                    for (Right rx : rights) {
+                    for (Right rx : getRights()) {
                         if (rx.isGenerated()) {
                             if (logging) {
-                                m.getLog().add(LogMode.STORAGE, "Delete produced right: " + String.format("%03d: %s", rx.getId(), rx));
+                                getLog().add(LogMode.STORAGE, "Delete produced right: " + String.format("%03d: %s", rx.getId(), rx));
                             }
-                            rights.delete(rx);
+                            getRights().delete(rx);
                             found = true;
                         }
                     }
                     if (found) {
                         pack();
-                        tValues.clear();
+                        getTValues().clear();
                         if (logging) {
-                            m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
+                            getLog().add(LogMode.STORAGE, "-------------------------------------------");
                         }
                     }
 
-                    m.link(null, logging);
-                    Boolean ar = m.analise(null, logging);
+                    link(null, logging);
+                    Boolean ar = analise(null, logging);
 
                     if (ar) {
                         if (logging) {
-                            m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+                            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
                         }
-                        release(m);
                         res = false;
                     } else {
                         if (logging) {
-                            m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+                            getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
                         }
-                        commit(m);
 //                        commit(m);
 //                        excluded.clear();
 //                        excluded.commit(m.getHypotesisStore());
                         res = true;
                     }
-                    queryContext = m;
+                    queryContext = this;
 
                 } else {
 
@@ -1284,29 +1274,113 @@ public class Mind {
         }
     }
 
-    private void removeResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        boolean needPack = false;
-        if (mind.getSolutions().size() > 0) {
-            if (logging) {
-                mind.getLog().add(LogMode.SOLVES, "Solves to delete (" + mind.getSolutions().size() + "):");
-            }
-            int i = 0;
-            for (Right r : mind.getSolutions().getRoot()) {
-                if (!r.isGenerated() && !r.isDeleted()) {
-                    getRights().delete(r);
-                    needPack = true;
-                    if (logging) {
-                        mind.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", ++i, r.toString()));
-                    }
-                } else if (!r.isDeleted()) {
-                    if (logging) {
-                        mind.getLog().add(LogMode.SOLVES, String.format("\t Skiped %03d: %s", ++i, r.toString()));
-                    }
+//    private int resurseCount(Right r) throws Exception {
+//        int i = 1;
+//        for (Right rx : rights) {
+//            if (rx.isGenerated()) {
+//                for (Cause c : rx.getCauses()) {
+//                    if (c.getSrc().getRightId() == r.getId() || c.getDst().getRightId() == r.getId()) {
+//                        i += resurseCount(rx);
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//        return i;
+//    }
+
+    private boolean isInherited(Right rx, Right r) throws Exception {
+        for (Cause c : rx.getCauses()) {
+            if ((r.isStored() && c.getSrc().getId() == r.getDomain().getId())
+                    || c.getDst().getRightId() == r.getId()) {
+                return true;
+            } else {
+                c.getSrc().getArguments().applyArguments(c.getArguments());
+                Right x = rights.find(c.getSrc());
+                if (x != null && isInherited(x, r)) {
+                    return true;
                 }
             }
         }
-        if (needPack) {
-            pack();
+        return false;
+    }
+
+    private Set<Right> getDeleteCandidates(Right r) throws Exception {
+        Set<Right> set = new HashSet<>();
+        set.add(r);
+        for (Right rx : rights) {
+            if (rx.getId() != r.getId() && rx.isGenerated() && isInherited(rx, r)) {
+                set.add(rx);
+            }
+        }
+        return set;
+    }
+
+    public Boolean delete(Right r, boolean logging) throws Exception {
+        this.logging = logging;
+
+        solves.clear();
+        values.clear();
+        getLog().clear();
+
+        Set<Right> set = getDeleteCandidates(r);
+        if (logging) {
+            getLog().add(LogMode.SOLVES, "Rights to delete (" + set.size() + "):");
+        }
+
+        for (Right rx : set) {
+            rights.delete(rx);
+            if (logging) {
+                getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
+            }
+        }
+
+        pack();
+        tValues.clear();
+        link(null, logging);
+        Boolean ar = analise(null, logging);
+
+        if (logging) {
+            if (ar) {
+                getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+            } else {
+                getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+            }
+        }
+        return ar;
+    }
+
+
+    private void removeResult(Mind mind, boolean logging) throws Exception {
+        if (mind.getSolutions().size() > 0) {
+            Set<Right> set = new HashSet<>();
+            for (Right r : mind.getSolutions().getRoot()) {
+                set.addAll(getDeleteCandidates(r));
+            }
+            if (!set.isEmpty()) {
+                if (logging) {
+                    mind.getLog().add(LogMode.SOLVES, "Rights to delete (" + set.size() + "):");
+                }
+                for (Right r : set) {
+                    rights.delete(r);
+                    if (logging) {
+                        mind.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
+                    }
+                }
+
+                pack();
+                tValues.clear();
+                link(null, logging);
+                Boolean ar = analise(null, logging);
+
+                if (logging) {
+                    if (ar) {
+                        mind.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+                    } else {
+                        mind.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+                    }
+                }
+            }
         }
     }
 

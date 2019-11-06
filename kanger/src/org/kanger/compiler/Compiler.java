@@ -21,7 +21,7 @@ public class Compiler {
         this.user = user;
     }
 
-    public Right compileLine(PTree root, boolean antc, String orig, boolean query, List<Object> ext) throws Exception {
+    public Right compileLine(PTree root, boolean antc, String orig, boolean query, Object[] ext) throws Exception {
 
         Queue<Term> externals = new LinkedList<>();
         if (ext != null) {

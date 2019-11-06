@@ -200,7 +200,17 @@ public class Screen {
                                             String s = new Scanner(System.in).nextLine().toUpperCase();
                                             if (!s.isEmpty() && s.charAt(0) == 'Y') {
 
-                                                mind.delete(r, true);
+                                                Boolean res = mind.delete(r, true);
+                                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                                                    if (res != null) {
+                                                        showLog(mind, LogMode.SOLVES, false);
+                                                        showLog(mind, LogMode.VALUES, false);
+                                                    }
+                                                    if (res == null) {
+                                                        showHypo(mind);
+                                                    }
+                                                }
 
                                             }
                                         }
@@ -760,10 +770,11 @@ public class Screen {
 
             boolean rightShowed = false;
             for (Cause c : dest.getCauses()) {
+                c.getSrc().getArguments().applyArguments(c.getArguments());
                 if (!rightShowed) {
                     System.out.printf("\t\t%sRight: %s\n", indent, c.getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
                 }
-                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString(c.getArguments()));
+                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString()); //c.getArguments()));
                 showCauses(mind, c.getSrc(), level + 1);
             }
         }

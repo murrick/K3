@@ -104,7 +104,7 @@ public class Cause implements Externalizable, Comparable<Cause> {
         int hash = 3;
         hash = 47 * hash + (int) (srcId ^ (srcId >>> 32));
         hash = 47 * hash + (int) (dstId ^ (dstId >>> 32));
-        hash = 47 * hash + index;
+//        hash = 47 * hash + index;
         return hash;
     }
 
@@ -122,31 +122,31 @@ public class Cause implements Externalizable, Comparable<Cause> {
                     && ((Cause) o).getSrcId() != -1 && ((Cause) o).getDstId() != -1
                     && srcId == ((Cause) o).getSrcId()
                     && dstId == ((Cause) o).getDstId()
-                    && index == ((Cause) o).getIndex()
-                    && equalsParams(((Cause) o).getArguments());
+//                    && index == ((Cause) o).getIndex()
+                    && arguments.equalsBase(((Cause) o).getArguments());
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return false;
         }
     }
 
-    public boolean equalsParams(ArgList a) throws Exception {
-        if (arguments == null && a == null) {
-            return true;
-        } else if (arguments != null && a != null && arguments.size() == a.size()) {
-            for (int i = 0; i < arguments.size(); ++i) {
-//                if (arguments.get(i).isEmpty() || a.get(i).isEmpty() || arguments.get(i).getValue().getId() != a.get(i).getValue().getId()) {
-                if (arguments.get(i).getId() == -1 || a.get(i).getId() == -1
-                        || arguments.get(i).getId() != a.get(i).getId()
-                        || arguments.get(i).getType() != a.get(i).getType()) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
+//    public boolean equalsParams(ArgList a) throws Exception {
+//        if (arguments == null && a == null) {
+//            return true;
+//        } else if (arguments != null && a != null && arguments.size() == a.size()) {
+//            for (int i = 0; i < arguments.size(); ++i) {
+////                if (arguments.get(i).isEmpty() || a.get(i).isEmpty() || arguments.get(i).getValue().getId() != a.get(i).getValue().getId()) {
+//                if (arguments.get(i).getId() == -1 || a.get(i).getId() == -1
+//                        || arguments.get(i).getId() != a.get(i).getId()
+//                        || arguments.get(i).getType() != a.get(i).getType()) {
+//                    return false;
+//                }
+//            }
+//            return true;
+//        } else {
+//            return false;
+//        }
+//    }
 
     @Override
     public int compareTo(Cause o) {
@@ -178,4 +178,23 @@ public class Cause implements Externalizable, Comparable<Cause> {
         return UnitType.CAUSE;
     }
 
+    public void setSrc(Domain domain) {
+        src = domain;
+        srcId = domain.getId();
+    }
+
+//    public boolean isStored() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        if (src.getRight().isStored()) {
+//            return true;
+//        } else if (src.getCauses() != null) {
+//            for (Cause c : src.getCauses()) {
+//                if (c.isStored()) {
+//                    return true;
+//                }
+//            }
+//            return false;
+//        } else {
+//            return false;
+//        }
+//    }
 }

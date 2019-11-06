@@ -78,7 +78,8 @@ public class Escalera implements ICache {
     @Override
     public Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (root instanceof Sapato) {
-            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData(user));
+            IStep e = user.getStorage(schema).get(root.getId());
+            root.setData(e.getData(user));
         }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getId() == id) {

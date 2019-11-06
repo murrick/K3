@@ -345,6 +345,12 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
     }
 
+    public void applyArguments(ArgList arguments) throws Exception {
+        for (int i = 0; i < this.size(); ++i) {
+            this.get(i).setValue(arguments.get(i).getValue());
+        }
+    }
+
     public void applyStamp(List<Term> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<TVariable> curr = getTVariables(true);
         for (int i = 0; i < curr.size(); ++i) {
