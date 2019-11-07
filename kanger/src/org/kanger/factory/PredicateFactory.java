@@ -85,6 +85,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         } else {
             p = new Predicate(user);
             p.setId(user.nextId(SCHEMA));
+            p.setMindId(user.getMind().getId());
             p.setRange(range);
             p.setName(line);
             cache.add(p);

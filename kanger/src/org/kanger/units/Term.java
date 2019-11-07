@@ -32,6 +32,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     private static final long serialVersionUID = 196402070008L;
 
     private long id = -1;                // Идентификатор
+    private long mindId = -1;                                   // id транзакции
     private DataType type = DataType.VOID;
     private Object value = null;
 
@@ -61,6 +62,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putInt(type.ordinal());
         switch (type) {
@@ -103,6 +105,7 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
 
     public Term apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         type = DataType.values()[packet.getInt()];
         switch (type) {
@@ -515,6 +518,16 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
     @Override
     public UnitType getUnitType() {
         return UnitType.TERM;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

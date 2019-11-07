@@ -88,6 +88,7 @@ public class TValueFactory implements Iterable<TValue> {
             t = new TValue(tv, o, user);
             t.setTVar(tv);
             t.setId(user.nextId(SCHEMA));
+            t.setMindId(user.getMind().getId());
             cache.add(t);
 
 //            //TODO: ПРИБИДБ

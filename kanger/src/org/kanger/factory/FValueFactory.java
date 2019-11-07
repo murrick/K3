@@ -83,6 +83,7 @@ public class FValueFactory {
             if (f.isComplete()) {
                 t = new FValue(f, user);
                 t.setId(user.nextId(SCHEMA));
+                f.setMindId(user.getMind().getId());
                 cache.add(t);
             } else {
                 return null;

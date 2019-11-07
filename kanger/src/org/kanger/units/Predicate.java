@@ -22,6 +22,7 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     private static final long serialVersionUID = 196402070004L;
 
     private long id = -1;                   // Идентификатор
+    private long mindId = -1;                                   // id транзакции
     private Term name = null;               // Имя предиката
     private int range = 0;                  // К-во параметров
 
@@ -48,6 +49,7 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(nameId)
                 .putInt(range);
@@ -57,6 +59,7 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     @Override
     public Predicate apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         nameId = packet.getLong();
         range = packet.getInt();
@@ -280,6 +283,16 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
     @Override
     public UnitType getUnitType() {
         return UnitType.PREFICATE;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

@@ -28,6 +28,7 @@ public class Right implements Externalizable, IUnit<Right> {
     private static final long serialVersionUID = 196402070007L;
 
     private long id = -1;                                   // ID Правила
+    private long mindId = -1;                                   // id транзакции
     private Term orig = null;                               // Оригинальная строка
     private boolean query = false;                          // Вновь введенное правило
     private boolean generated = false;                      // Правило добавлено в процессе выводс
@@ -58,6 +59,7 @@ public class Right implements Externalizable, IUnit<Right> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(origId)
                 .putInt(varIndex)
@@ -80,6 +82,7 @@ public class Right implements Externalizable, IUnit<Right> {
 
     public Right apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         origId = packet.getLong();
         varIndex = packet.getInt();
@@ -416,6 +419,16 @@ public class Right implements Externalizable, IUnit<Right> {
     @Override
     public UnitType getUnitType() {
         return UnitType.RIGHT;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

@@ -30,6 +30,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
     private static final long serialVersionUID = 196402070001L;
 
     private long id = -1;                                       // id домена
+    private long mindId = -1;                                   // id транзакции
     private boolean antc = true;                                // ! или ?
     private Predicate predicate = null;                         // Ссылка на описатель предиката
     private ArgList arguments = new ArgList();       // Массив подстановочных переменных
@@ -67,6 +68,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putByte(antc ? 1 : 0)
                 .putInt(range)
@@ -80,6 +82,7 @@ public class Domain implements Externalizable, IUnit<Domain> {
         arguments.setUser(user);
 
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         antc = packet.getByte() != 0;
         range = packet.getInt();
@@ -1148,12 +1151,24 @@ public class Domain implements Externalizable, IUnit<Domain> {
         }
     }
 
+    @Override
     public boolean isDeleted() {
         return deleted;
     }
 
+    @Override
     public void setDeleted() {
         this.deleted = true;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 }
 

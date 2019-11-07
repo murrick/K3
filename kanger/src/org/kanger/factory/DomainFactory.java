@@ -111,6 +111,7 @@ public class DomainFactory implements Iterable<Domain> {
             p.setAntc(antc);
             p.setRight(r);
             p.setId(user.nextId(SCHEMA));
+            p.setMindId(user.getMind().getId());
             if (arg != null) {
                 for (Argument t : arg) {
                     p.add(t);

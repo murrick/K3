@@ -77,6 +77,7 @@ public class FunctionFactory implements Iterable<Function> {
 //        f.setArguments(arguments);
         f.getArguments().add(new Argument());
         f.setId(user.nextId(SCHEMA));
+        f.setMindId(user.getMind().getId());
         cache.add(f);
 
         if (!f.isCalculable()) {

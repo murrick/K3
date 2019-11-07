@@ -27,6 +27,7 @@ public class Function implements Externalizable, IUnit<Function> {
     private static final long serialVersionUID = 196402070002L;
 
     private long id = -1;
+    private long mindId = -1;                                   // id транзакции
     private Term name = null;
     private int range = 0;
     private ArgList arguments = new ArgList();     // Параметры
@@ -48,6 +49,7 @@ public class Function implements Externalizable, IUnit<Function> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(nameId)
                 .putInt(range)
@@ -57,6 +59,7 @@ public class Function implements Externalizable, IUnit<Function> {
 
     public Function apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         nameId = packet.getLong();
         range = packet.getInt();
@@ -473,6 +476,16 @@ public class Function implements Externalizable, IUnit<Function> {
     @Override
     public UnitType getUnitType() {
         return UnitType.FUNCTION;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

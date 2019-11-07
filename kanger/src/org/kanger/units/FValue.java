@@ -24,6 +24,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
     private static final long serialVersionUID = 196402070003L;
 
     private long id = -1;
+    private long mindId = -1;                                   // id транзакции
     private Function function = null;
     private Term value = null;
     private ArgList condition = new ArgList();
@@ -74,6 +75,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(functionId)
                 .putLong(valueId);
@@ -88,6 +90,7 @@ public class FValue implements Externalizable, IUnit<FValue> {
 
     public FValue apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         functionId = packet.getLong();
         valueId = packet.getLong();
@@ -335,6 +338,16 @@ public class FValue implements Externalizable, IUnit<FValue> {
     @Override
     public UnitType getUnitType() {
         return UnitType.FVALUE;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

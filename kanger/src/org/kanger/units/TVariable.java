@@ -23,6 +23,7 @@ public class TVariable implements Comparable<Object>, Externalizable, IUnit<TVar
     private static final long serialVersionUID = 196402070010L;
 
     private long id = -1;                   // Идентификатор переменной
+    private long mindId = -1;                                   // id транзакции
     private Term name = null;               // Оригинальное подкванторное имя
     private int index = 0;                  // Сквозной индекс переменной
     private Right right = null;             // Ссылка на правило
@@ -43,6 +44,7 @@ public class TVariable implements Comparable<Object>, Externalizable, IUnit<TVar
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(nameId)
                 .putInt(index)
@@ -52,6 +54,7 @@ public class TVariable implements Comparable<Object>, Externalizable, IUnit<TVar
 
     public TVariable apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         nameId = packet.getLong();
         index = packet.getInt();
@@ -363,6 +366,16 @@ public class TVariable implements Comparable<Object>, Externalizable, IUnit<TVar
     @Override
     public UnitType getUnitType() {
         return UnitType.TVARIABLE;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

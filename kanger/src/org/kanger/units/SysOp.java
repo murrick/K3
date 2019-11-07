@@ -22,9 +22,8 @@ import java.util.List;
  */
 public class SysOp implements Externalizable, IUnit<SysOp> {
 
-    protected final List<String> scripts = new ArrayList<>();
     protected final List<String> params = new ArrayList<>();
-    protected long id = -1;                                       // id домена
+    protected final List<String> scripts = new ArrayList<>();
     protected LibMode mode = LibMode.UNKNOWN;
     protected String name = "";                   /* predefined name */
     protected IReactor proc = null;              /* called procedure */
@@ -32,6 +31,8 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
     protected SysOp next = null;
     protected transient IUser user = null;
     protected transient boolean deleted = false;
+    protected long id = -1;                                       // id домена
+    private long mindId = -1;                                   // id транзакции
 
 
     public SysOp(final IUser user) {
@@ -130,6 +131,7 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putInt(mode.ordinal())
                 .putString(name)
@@ -146,6 +148,7 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
 
     public SysOp apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         mode = LibMode.values()[packet.getInt()];
         name = packet.getString();
@@ -228,6 +231,16 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
 
     public List<String> getParams() {
         return params;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

@@ -24,6 +24,7 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
     private static final long serialVersionUID = 196402070009L;
 
     private long id = -1;                   // Идентификатор значения переменной
+    private long mindId = -1;                                   // id транзакции
     private Term value = null;
     private TVariable tVar = null;
     private long tag = 0;
@@ -62,6 +63,7 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
+                .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(valueId)
                 .putLong(tVarId)
@@ -74,6 +76,7 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
 
     public TValue apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
+        mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         valueId = packet.getLong();
         tVarId = packet.getLong();
@@ -267,6 +270,16 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
     @Override
     public UnitType getUnitType() {
         return UnitType.TVALUE;
+    }
+
+    @Override
+    public long getMindId() {
+        return mindId;
+    }
+
+    @Override
+    public void setMindId(long mindId) {
+        this.mindId = mindId;
     }
 
 }

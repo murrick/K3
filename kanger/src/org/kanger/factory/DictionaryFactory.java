@@ -23,7 +23,7 @@ public class DictionaryFactory implements Iterable<Term> {
 
     //    private Term root = null;
 //    private long lastId = 0;
-    private long firstId = 0;
+//    private long firstId = 0;
     private int varIndex = 0;           // Счетчик C-переменных
 
     //    private Stack<Object[]> stack = new Stack<>();
@@ -66,7 +66,7 @@ public class DictionaryFactory implements Iterable<Term> {
                 varIndex = 0;           // Счетчик C-переменных
             }
         }
-        firstId = user.lastId(SCHEMA);
+//        firstId = user.lastId(SCHEMA);
     }
 
     public void commit(DictionaryFactory base/*, Map<Integer, Object> vars*/) {
@@ -114,7 +114,7 @@ public class DictionaryFactory implements Iterable<Term> {
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = user.lastId(SCHEMA);
+//            firstId = user.lastId(SCHEMA);
         }
     }
 
@@ -125,6 +125,7 @@ public class DictionaryFactory implements Iterable<Term> {
         } else {
             p = new Term(o, user);
             p.setId(user.nextId(SCHEMA));
+            p.setMindId(user.getMind().getId());
             cache.add(p);
             return p;
         }
@@ -228,9 +229,9 @@ public class DictionaryFactory implements Iterable<Term> {
         return varIndex;
     }
 
-    public long getFirstId() {
-        return firstId;
-    }
+//    public long getFirstId() {
+//        return firstId;
+//    }
 
     @Override
     public Iterator iterator() {

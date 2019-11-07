@@ -51,12 +51,12 @@ public class Analiser {
             for (long id : user.getMind().getRights().getDatabase(-1)) {
                 Right r = user.getMind().getRights().get(id);
                 if (!r.isDeleted()) {
-                    if (r.getId() < user.getMind().getRights().getFirstId()) {
+                    if (r.getMindId() < user.getMind().getId()) {
                         break;
                     }
                     Domain d = r.getDomain();
                     for (Argument a : d.getArguments()) {
-                        if (a.isEmpty() || (a.getType() == ArgumentType.CVARIABLE && a.getValue().getId() > user.getMind().getTerms().getFirstId())) {
+                        if (a.isEmpty() || (a.getType() == ArgumentType.CVARIABLE && a.getValue().getMindId() == user.getMind().getId())) {
                             d = null;
                             break;
                         }

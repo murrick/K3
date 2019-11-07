@@ -95,6 +95,7 @@ public class TVariableFactory implements Iterable<TVariable> {
     public TVariable createTVar(Right r, Term name) throws Exception {
         TVariable p = new TVariable(user);
         p.setId(user.nextId(SCHEMA));
+        r.setMindId(user.getMind().getId());
         p.setIndex(user.getMind().getTerms().nextVarIndex());
         p.setRight(r);
         p.setName(name);

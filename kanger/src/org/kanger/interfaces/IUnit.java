@@ -13,6 +13,11 @@ public interface IUnit<T> {
 
     void setId(long id);
 
+    long getMindId();
+
+    void setMindId(long id);
+
+
     int getHash() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     boolean equalsTo(T to) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;

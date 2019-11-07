@@ -83,6 +83,7 @@ public class LibraryFactory implements Iterable<SysOp> {
 //            update();
         } else {
             s.setId(user.nextId(SCHEMA));
+            s.setMindId(user.getMind().getId());
             cache.add(s);
             x = s;
         }
