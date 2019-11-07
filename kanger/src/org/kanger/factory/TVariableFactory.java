@@ -24,8 +24,8 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     public static final String SCHEMA = "tvariables";
 
-    private long lastId = 0;
-    private long firstId = 0;
+//    private long lastId = 0;
+//    private long firstId = 0;
 
     private ICache cache;
     private IUser user = null;
@@ -37,28 +37,28 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     public void transaction(TVariableFactory base) {
         if (base != null) {
-            lastId = base.lastId;
-            firstId = base.lastId;
+//            lastId = base.lastId;
+//            firstId = base.lastId;
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
             cache = new Escalera(user, SCHEMA, null);
-            if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
-                firstId = lastId;
-            } else {
-                lastId = 0;
-                firstId = 0;
-            }
+//            if (!cache.isEmpty()) {
+//                lastId = cache.getRoot().getId() + 1;
+//                firstId = lastId;
+//            } else {
+//                lastId = 0;
+//                firstId = 0;
+//            }
         }
     }
 
     public void commit(TVariableFactory base /*, Map<Integer, Object> vars*/) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
-                firstId = cache.getTop().getId();
+//                firstId = cache.getTop().getId();
             }
 
 //            for (Object p : cache) {
@@ -88,13 +88,13 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = lastId;
+//            firstId = lastId;
         }
     }
 
     public TVariable createTVar(Right r, Term name) throws Exception {
         TVariable p = new TVariable(user);
-        p.setId(lastId++);
+        p.setId(user.nextId(SCHEMA));
         p.setIndex(user.getMind().getTerms().nextVarIndex());
         p.setRight(r);
         p.setName(name);
@@ -133,13 +133,13 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
         update();
 
-        if (!cache.isEmpty()) {
-            lastId = cache.getRoot().getId() + 1;
-            firstId = lastId;
-        } else {
-            lastId = 0;
-            firstId = 0;
-        }
+//        if (!cache.isEmpty()) {
+//            lastId = cache.getRoot().getId() + 1;
+//            firstId = lastId;
+//        } else {
+//            lastId = 0;
+//            firstId = 0;
+//        }
 
     }
 

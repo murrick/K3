@@ -22,8 +22,8 @@ public class FunctionFactory implements Iterable<Function> {
 
     public static final String SCHEMA = "functions";
 
-    private long lastId = 0;
-    private long firstId = 0;
+//    private long lastId = 0;
+//    private long firstId = 0;
 
     private ICache cache;
     private IUser user = null;
@@ -35,35 +35,35 @@ public class FunctionFactory implements Iterable<Function> {
 
     public void transaction(FunctionFactory base) {
         if (base != null) {
-            lastId = base.lastId;
-            firstId = base.lastId;
+//            lastId = base.lastId;
+//            firstId = base.lastId;
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
             cache = new Escalera(user, SCHEMA, null);
-            if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
-                firstId = lastId;
-            } else {
-                lastId = 0;
-                firstId = 0;
-            }
+//            if (!cache.isEmpty()) {
+//                lastId = cache.getRoot().getId() + 1;
+//                firstId = lastId;
+//            } else {
+//                lastId = 0;
+//                firstId = 0;
+//            }
         }
     }
 
     public void commit(FunctionFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
-                firstId = cache.getTop().getId();
+//                firstId = cache.getTop().getId();
             }
         }
     }
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = lastId;
+//            firstId = lastId;
         }
     }
 
@@ -76,7 +76,7 @@ public class FunctionFactory implements Iterable<Function> {
         f.getArguments().addAll(arguments);
 //        f.setArguments(arguments);
         f.getArguments().add(new Argument());
-        f.setId(lastId++);
+        f.setId(user.nextId(SCHEMA));
         cache.add(f);
 
         if (!f.isCalculable()) {
@@ -138,13 +138,13 @@ public class FunctionFactory implements Iterable<Function> {
         }
         update();
 
-        if (!cache.isEmpty()) {
-            lastId = cache.getRoot().getId() + 1;
-            firstId = lastId;
-        } else {
-            lastId = 0;
-            firstId = 0;
-        }
+//        if (!cache.isEmpty()) {
+//            lastId = cache.getRoot().getId() + 1;
+//            firstId = lastId;
+//        } else {
+//            lastId = 0;
+//            firstId = 0;
+//        }
 
     }
 

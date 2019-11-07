@@ -114,7 +114,7 @@ public class DictionaryFactory implements Iterable<Term> {
 
     public void update() throws IOException {
         if (cache.update()) {
-//            firstId = lastId;
+            firstId = user.lastId(SCHEMA);
         }
     }
 

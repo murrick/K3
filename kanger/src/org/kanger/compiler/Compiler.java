@@ -32,8 +32,8 @@ public class Compiler {
         }
 
         Right r = new Right(user);
-        r.setOrig(user.getMind().getTerms().add(orig));
         user.getMind().getRights().register(r);
+        r.setOrig(user.getMind().getTerms().add(orig));
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
         Right x = user.getMind().getRights().add(r);
 

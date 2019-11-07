@@ -21,8 +21,8 @@ public class DomainFactory implements Iterable<Domain> {
 
     public static final String SCHEMA = "domains";
 
-    private long lastId = 0;
-    private long firstId = 0;
+//    private long lastId = 0;
+//    private long firstId = 0;
 
     private Set<Domain> waiters = new HashSet<>();
 
@@ -38,30 +38,30 @@ public class DomainFactory implements Iterable<Domain> {
     public void transaction(DomainFactory base) {
         waiters.clear();
         if (base != null) {
-            lastId = base.lastId;
-            firstId = base.lastId;
+//            lastId = base.lastId;
+//            firstId = base.lastId;
             waiters.addAll(base.waiters);
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
             cache = new Escalera(user, SCHEMA, null);
-            if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
-                firstId = lastId;
-            } else {
-                lastId = 0;
-                firstId = 0;
-            }
+//            if (!cache.isEmpty()) {
+//                lastId = cache.getRoot().getId() + 1;
+//                firstId = lastId;
+//            } else {
+//                lastId = 0;
+//                firstId = 0;
+//            }
         }
     }
 
     public void commit(DomainFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
 
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
-                firstId = cache.getTop().getId();
+//                firstId = cache.getTop().getId();
             }
         }
         waiters.addAll(base.waiters);
@@ -83,7 +83,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = lastId;
+//            firstId = lastId;
         }
     }
 
@@ -110,7 +110,7 @@ public class DomainFactory implements Iterable<Domain> {
             p.setPredicate(pred);
             p.setAntc(antc);
             p.setRight(r);
-            p.setId(lastId++);
+            p.setId(user.nextId(SCHEMA));
             if (arg != null) {
                 for (Argument t : arg) {
                     p.add(t);
@@ -163,13 +163,13 @@ public class DomainFactory implements Iterable<Domain> {
         }
         update();
 
-        if (!cache.isEmpty()) {
-            lastId = cache.getRoot().getId() + 1;
-            firstId = lastId;
-        } else {
-            lastId = 0;
-            firstId = 0;
-        }
+//        if (!cache.isEmpty()) {
+//            lastId = cache.getRoot().getId() + 1;
+//            firstId = lastId;
+//        } else {
+//            lastId = 0;
+//            firstId = 0;
+//        }
 
     }
 

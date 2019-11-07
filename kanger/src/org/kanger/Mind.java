@@ -38,7 +38,7 @@ public class Mind {
     private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     //    private final Map<Domain, Map<ArgList, Set<Long>>> domainTags = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
-    private int id = 0;
+    private long id = 0;
     private Mind next = null;
     private User user = null;
     private DictionaryFactory terms = null;                    // Словарь констант
@@ -83,10 +83,10 @@ public class Mind {
     }
 
     public Mind(Mind root) {
-        id = root.getId() + 1;
         next = root;
         user = root.getUser();
         user.setMind(this);
+        id = user.nextId(); //root.getId() + 1;
         init();
 
         terms.transaction(root.getTerms());
@@ -311,7 +311,7 @@ public class Mind {
         this.user = user;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

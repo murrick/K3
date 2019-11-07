@@ -18,8 +18,8 @@ public class FValueFactory {
 
     public static final String SCHEMA = "fvalues";
 
-    private long lastId = 0;
-    private long firstId = 0;
+//    private long lastId = 0;
+//    private long firstId = 0;
 
     private ICache cache;
     private IUser user = null;
@@ -32,28 +32,29 @@ public class FValueFactory {
     public void transaction(FValueFactory base) {
 //        cache.clear();
         if (base != null) {
-            lastId = base.lastId;
-            firstId = base.lastId;
+//            lastId = base.lastId;
+//            firstId = base.lastId;
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
             cache = new Escalera(user, SCHEMA, null);
-            if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
-                firstId = lastId;
-            } else {
-                lastId = 0;
-                firstId = 0;
-            }
+//            if (!cache.isEmpty()) {
+//                lastId = cache.getRoot().getId() + 1;
+//                firstId = lastId;
+//            } else {
+//                lastId = 0;
+//                firstId = 0;
+//            }
         }
+//        lastId = user.lastId(SCHEMA);
     }
 
     public void commit(FValueFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
-                firstId = cache.getTop().getId();
+//                firstId = cache.getTop().getId();
             }
         }
 
@@ -72,7 +73,7 @@ public class FValueFactory {
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = lastId;
+//            firstId = lastId;
         }
     }
 
@@ -81,7 +82,7 @@ public class FValueFactory {
         if (t == null) {
             if (f.isComplete()) {
                 t = new FValue(f, user);
-                t.setId(lastId++);
+                t.setId(user.nextId(SCHEMA));
                 cache.add(t);
             } else {
                 return null;
@@ -151,7 +152,7 @@ public class FValueFactory {
     }
 
     public long getLastId() {
-        return lastId;
+        return cache.isEmpty() ? -1 : cache.getRoot().getId();
     }
 
     public void pack() throws IOException, ClassNotFoundException {
@@ -167,13 +168,13 @@ public class FValueFactory {
 
         update();
 
-        if (!cache.isEmpty()) {
-            lastId = cache.getRoot().getId() + 1;
-            firstId = lastId;
-        } else {
-            lastId = 0;
-            firstId = 0;
-        }
+//        if (!cache.isEmpty()) {
+//            lastId = cache.getRoot().getId() + 1;
+//            firstId = lastId;
+//        } else {
+//            lastId = 0;
+//            firstId = 0;
+//        }
 
     }
 

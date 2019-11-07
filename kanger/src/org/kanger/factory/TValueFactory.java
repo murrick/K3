@@ -21,8 +21,8 @@ public class TValueFactory implements Iterable<TValue> {
 
     public static final String SCHEMA = "tvalues";
 
-    private long lastId = 0;
-    private long firstId = 0;
+    //    private long lastId = 0;
+//    private long firstId = 0;
     private long tag = 0;
 
     private Map<TVariable, TValue> current = new HashMap<>();
@@ -38,28 +38,28 @@ public class TValueFactory implements Iterable<TValue> {
     public void transaction(TValueFactory base) {
         current.clear();
         if (base != null) {
-            lastId = base.lastId;
-            firstId = base.lastId;
+//            lastId = base.lastId;
+//            firstId = base.lastId;
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
             cache = new Escalera(user, SCHEMA, null);
-            if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
-                firstId = lastId;
-            } else {
-                lastId = 0;
-                firstId = 0;
-            }
+//            if (!cache.isEmpty()) {
+//                lastId = cache.getRoot().getId() + 1;
+//                firstId = lastId;
+//            } else {
+//                lastId = 0;
+//                firstId = 0;
+//            }
         }
     }
 
     public void commit(TValueFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
-                firstId = cache.getTop().getId();
+//                firstId = cache.getTop().getId();
             }
         }
 
@@ -78,7 +78,7 @@ public class TValueFactory implements Iterable<TValue> {
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = lastId;
+//            firstId = lastId;
         }
     }
 
@@ -87,7 +87,7 @@ public class TValueFactory implements Iterable<TValue> {
         if (t == null) {
             t = new TValue(tv, o, user);
             t.setTVar(tv);
-            t.setId(lastId++);
+            t.setId(user.nextId(SCHEMA));
             cache.add(t);
 
 //            //TODO: ПРИБИДБ
@@ -153,13 +153,13 @@ public class TValueFactory implements Iterable<TValue> {
         }
         update();
 
-        if (!cache.isEmpty()) {
-            lastId = cache.getRoot().getId() + 1;
-            firstId = lastId;
-        } else {
-            lastId = 0;
-            firstId = 0;
-        }
+//        if (!cache.isEmpty()) {
+//            lastId = cache.getRoot().getId() + 1;
+//            firstId = lastId;
+//        } else {
+//            lastId = 0;
+//            firstId = 0;
+//        }
 
     }
 
@@ -224,7 +224,7 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
     public long getLastId() {
-        return lastId;
+        return cache.isEmpty() ? -1 : cache.getRoot().getId();
     }
 
     public long incTag() {

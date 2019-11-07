@@ -37,4 +37,11 @@ public interface IUser {
     long lastId(String context);
 
     long nextId(String context);
+
+    void clearCounters(String schema);
+
+    long lastId();
+
+    long nextId();
+
 }

@@ -142,12 +142,17 @@ public class Escalera implements ICache {
         return set;
     }
 
+
     @Override
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         root = null;
         top = null;
-        if (parent == null && !user.isClosed()) {
-            user.getStorage(schema).clear();
+        if (parent == null) {
+            if (!user.isClosed()) {
+                user.getStorage(schema).clear();
+            } else {
+                user.clearCounters(schema);
+            }
         }
     }
 

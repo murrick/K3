@@ -20,8 +20,8 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public static final String SCHEMA = "predicates";
 
-    private long lastId = 0;
-    private long firstId = 0;
+//    private long lastId = 0;
+//    private long firstId = 0;
 
     private ICache cache;
     private IUser user = null;
@@ -33,28 +33,28 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public void transaction(PredicateFactory base) {
         if (base != null) {
-            lastId = base.lastId;
-            firstId = base.lastId;
+//            lastId = base.lastId;
+//            firstId = base.lastId;
             cache = new Escalera(user, SCHEMA, base.cache);
         } else {
             cache = new Escalera(user, SCHEMA, null);
-            if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
-                firstId = lastId;
-            } else {
-                lastId = 0;
-                firstId = 0;
-            }
+//            if (!cache.isEmpty()) {
+//                lastId = cache.getRoot().getId() + 1;
+//                firstId = lastId;
+//            } else {
+//                lastId = 0;
+//                firstId = 0;
+//            }
         }
     }
 
     public void commit(PredicateFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
-                firstId = cache.getTop().getId();
+//                firstId = cache.getTop().getId();
             }
         }
 
@@ -74,7 +74,7 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public void update() throws IOException {
         if (cache.update()) {
-            firstId = lastId;
+//            firstId = lastId;
         }
     }
 
@@ -84,7 +84,7 @@ public class PredicateFactory implements Iterable<Predicate> {
             return p;
         } else {
             p = new Predicate(user);
-            p.setId(lastId++);
+            p.setId(user.nextId(SCHEMA));
             p.setRange(range);
             p.setName(line);
             cache.add(p);

@@ -17,6 +17,7 @@ public class User implements IUser {
     private Mind mind = null;
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
+    private long lastId = 0L;
 
     private static IData data = null;
 
@@ -136,33 +137,48 @@ public class User implements IUser {
     }
 
     @Override
-    public long lastId(String context) {
+    public long lastId(String schema) {
         if (isClosed()) {
             synchronized (this) {
-                if (!counters.containsKey(context)) {
-                    counters.put(context, 0L);
+                if (!counters.containsKey(schema)) {
+                    counters.put(schema, 0L);
                 }
-                return counters.get(context);
+                return counters.get(schema);
             }
         } else {
-            return storage.get(context).lastId();
+            return storage.get(schema).lastId();
         }
     }
 
     @Override
-    public long nextId(String context) {
+    public long nextId(String schema) {
         if (isClosed()) {
             synchronized (this) {
-                if (!counters.containsKey(context)) {
-                    counters.put(context, 0L);
+                if (!counters.containsKey(schema)) {
+                    counters.put(schema, 0L);
                 }
-                long id = counters.get(context);
-                counters.put(context, id + 1);
+                long id = counters.get(schema);
+                counters.put(schema, id + 1);
                 return id;
             }
         } else {
-            return storage.get(context).nextId();
+            return storage.get(schema).nextId();
         }
+    }
+
+    @Override
+    public void clearCounters(String schema) {
+        counters.put(schema, 0L);
+    }
+
+    @Override
+    public long lastId() {
+        return lastId;
+    }
+
+    @Override
+    public long nextId() {
+        return lastId++;
     }
 
     @Override

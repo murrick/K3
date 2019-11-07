@@ -89,6 +89,7 @@ public class Base implements IBase {
     @Override
     public void add(Sapato one) throws IOException {
         index.store(null, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
+
 //        int h = one.getHash();
 //        Set<Long> set = (Set<Long>) toObject(hash.load(null, fromObject(h)));
 //        if (set == null) {
@@ -119,7 +120,7 @@ public class Base implements IBase {
                     packet.mark();
                     step = new Sapato();
                     step.setBase(this);
-                    ((Sapato) step).apply(packet);
+                    step.apply(packet);
                 } finally {
                     packet.release();
                 }
