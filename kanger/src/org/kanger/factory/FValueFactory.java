@@ -24,6 +24,8 @@ public class FValueFactory {
     private ICache cache;
     private IUser user = null;
 
+    private transient boolean action = false;
+
     public FValueFactory(IUser user) {
         this.user = user;
         transaction(null);
@@ -85,6 +87,7 @@ public class FValueFactory {
                 t.setId(user.nextId(SCHEMA));
                 f.setMindId(user.getMind().getId());
                 cache.add(t);
+                action = true;
             } else {
                 return null;
             }
@@ -148,7 +151,7 @@ public class FValueFactory {
         cache.unlink();
     }
 
-    public int size() throws Exception {
+    public int size() {
         return cache.size();
     }
 
@@ -182,4 +185,13 @@ public class FValueFactory {
     public void delete(FValue v) {
         v.setDeleted();
     }
+
+    public boolean isAction() {
+        return action;
+    }
+
+    public void dropAction() {
+        action = false;
+    }
+
 }

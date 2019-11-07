@@ -1231,7 +1231,7 @@ public class Mind {
 
         boolean needPack = false;
         for (Right rx : mind.getRights()) {
-            if (rx.getId() > getRights().getLastId()) {
+            if (rx.getMindId() == mind.getId()) {
                 if (!rx.isDeleted() /*&& !rx.isQuery()*/ && rx.getDomain().getArguments().getCVariables(true).isEmpty()) {
                     mind.getSolutions().add(rx);
                 } else {

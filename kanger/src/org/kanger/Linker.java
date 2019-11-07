@@ -69,9 +69,9 @@ public class Linker {
 //            }
 //        }
 
-        long saveR;
-        long saveT;
-        long saveF;
+//        long saveR;
+//        long saveT;
+//        long saveF;
 
         int passCounter = 0;
         List<ArgList> main = new ArrayList<>();
@@ -93,9 +93,14 @@ public class Linker {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
 
-            saveR = user.getMind().getRights().getLastId();
-            saveT = user.getMind().getTValues().getLastId();
-            saveF = user.getMind().getFValues().getLastId();
+//            saveR = user.getMind().getRights().size(); //.getLastId();
+//            saveT = user.getMind().getTValues().size(); //.getLastId();
+//            saveF = user.getMind().getFValues().size(); //.getLastId();
+
+            user.getMind().getRights().dropAction();
+            user.getMind().getTValues().dropAction();
+            user.getMind().getFValues().dropAction();
+
 
 
 //            final Map<Right, Set<Cause>> causes = new HashMap<>();
@@ -287,9 +292,9 @@ public class Linker {
 //            }
 
 
-        } while (saveR != user.getMind().getRights().getLastId()
-                || saveT != user.getMind().getTValues().getLastId()
-                || saveF != user.getMind().getFValues().getLastId()
+        } while (user.getMind().getRights().isAction()
+                || user.getMind().getTValues().isAction()
+                || user.getMind().getFValues().isAction()
         );
 
         if (logging) {

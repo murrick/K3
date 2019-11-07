@@ -30,6 +30,8 @@ public class RightFactory implements Iterable<Right> {
     private ICache stored;
     private IUser user = null;
 
+    private transient boolean action = false;
+
     public RightFactory(IUser user) {
         this.user = user;
         transaction(null);
@@ -119,6 +121,7 @@ public class RightFactory implements Iterable<Right> {
 //                    user.getMind().getDomains().add(d);
                 }
             }
+            action = true;
             return r;
         }
     }
@@ -275,14 +278,22 @@ public class RightFactory implements Iterable<Right> {
         stored.unlink();
     }
 
+    public boolean isAction() {
+        return action;
+    }
+
+    public void dropAction() {
+        action = false;
+    }
+
     @Override
     public Iterator iterator() {
         return cache.iterator();
     }
 
-    public long getLastId() {
-        return lastId;
-    }
+//    public long getLastId() {
+//        return lastId;
+//    }
 
 //    public long getFirstId() {
 //        return firstId;

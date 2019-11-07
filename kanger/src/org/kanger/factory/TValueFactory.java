@@ -30,6 +30,9 @@ public class TValueFactory implements Iterable<TValue> {
     private ICache cache;
     private IUser user = null;
 
+    private transient boolean action = false;
+
+
     public TValueFactory(IUser user) {
         this.user = user;
         transaction(null);
@@ -90,6 +93,7 @@ public class TValueFactory implements Iterable<TValue> {
             t.setId(user.nextId(SCHEMA));
             t.setMindId(user.getMind().getId());
             cache.add(t);
+            action = true;
 
 //            //TODO: ПРИБИДБ
 //            System.out.println("++++++ " + t);
@@ -215,6 +219,15 @@ public class TValueFactory implements Iterable<TValue> {
         cache.unlink();
     }
 
+    public boolean isAction() {
+        return action;
+    }
+
+    public void dropAction() {
+        action = false;
+    }
+
+
     public Iterator<TValue> iterator(TVariable tVariable) {
         return new TValueIterator(false, tVariable);
     }
@@ -271,4 +284,6 @@ public class TValueFactory implements Iterable<TValue> {
             return next;
         }
     }
+
+
 }
