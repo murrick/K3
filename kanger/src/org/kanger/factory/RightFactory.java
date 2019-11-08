@@ -23,7 +23,7 @@ public class RightFactory implements Iterable<Right> {
     public static final String SCHEMA = "rights";
     public static final String SCHEMA_STORED = "stored";
 
-    private long lastId = 0;
+//    private long lastId = 0;
 //    private long firstId = 0;
 
     private ICache cache;
@@ -40,21 +40,26 @@ public class RightFactory implements Iterable<Right> {
     public void transaction(RightFactory base) {
 //        cache.clear();
 //        stored.clear();
+//        user.nextId(SCHEMA);
         if (base != null) {
-            lastId = base.lastId;
+//            System.err.println(" --------------------------------------------------- ");
+//            lastId = base.lastId;
+
+//            lastId = user.nextId(SCHEMA);
 //            firstId = base.lastId;
             cache = new Escalera(user, SCHEMA, base.cache);
             stored = new Escalera(user, SCHEMA_STORED, base.stored);
         } else {
+//            System.err.println(" =================================================== ");
             cache = new Escalera(user, SCHEMA, null);
             stored = new Escalera(user, SCHEMA_STORED, null);
-            if (!cache.isEmpty()) {
-                lastId = cache.getRoot().getId() + 1;
+//            if (!cache.isEmpty()) {
+//                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
-            } else {
-                lastId = 0;
+//            } else {
+//                lastId = 0;
 //                firstId = 0;
-            }
+//            }
         }
     }
 
@@ -62,7 +67,7 @@ public class RightFactory implements Iterable<Right> {
     public void commit(RightFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-            lastId = cache.getRoot().getId() + 1;
+//            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
 //                firstId = cache.getTop().getId();
@@ -92,7 +97,7 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right register(Right r) {
-        r.setId(lastId++);
+        r.setId(user.nextId(SCHEMA));
         r.setMindId(user.getMind().getId());
         r.setVarIndex(user.getMind().getTerms().getVarIndex());
         return r;
@@ -324,13 +329,13 @@ public class RightFactory implements Iterable<Right> {
         }
         update();
 
-        if (!cache.isEmpty()) {
-            lastId = cache.getRoot().getId() + 1;
-//            firstId = lastId;
-        } else {
-            lastId = 0;
-//            firstId = 0;
-        }
+//        if (!cache.isEmpty()) {
+//            lastId = cache.getRoot().getId() + 1;
+////            firstId = lastId;
+//        } else {
+//            lastId = 0;
+////            firstId = 0;
+//        }
 
     }
 }

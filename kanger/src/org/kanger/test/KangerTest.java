@@ -1679,7 +1679,8 @@ public class KangerTest {
     public void set_06_03() throws Exception {
 
         mind.clear();
-        mind.compile("!@x $y parent(y,x);" +
+        mind.compile(
+                "!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
                 "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +

@@ -9,10 +9,7 @@ import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +20,7 @@ import java.util.Set;
  * <p>
  * Список правил
  */
-public class Right implements Externalizable, IUnit<Right> {
+public class Right implements IUnit<Right> {
 
     private static final long serialVersionUID = 196402070007L;
 
@@ -113,22 +110,6 @@ public class Right implements Externalizable, IUnit<Right> {
         }
         return this;
     }
-
-
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
 
     private void checkTreeIsLoaded() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (tree.isEmpty() && !treeIds.isEmpty()) {

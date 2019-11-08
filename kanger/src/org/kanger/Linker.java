@@ -92,6 +92,9 @@ public class Linker {
             if (logging) {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
+//            System.err.printf("---------- LINKER PASS %03d ---------------\n", passCounter);
+
+//            System.err.println(passCounter);
 
 //            saveR = user.getMind().getRights().size(); //.getLastId();
 //            saveT = user.getMind().getTValues().size(); //.getLastId();
@@ -125,23 +128,43 @@ public class Linker {
 //            }
 
             used = false;
-            Set<Right> rightList = new HashSet<>();
+            Set<Right> rightSet = new HashSet<>();
             if (right != null) {
-                rightList.addAll(right.getNatives());
+                rightSet.addAll(right.getNatives());
                 if (user.getMind().getUsedRights().containsKey(0L)) {
                     for (Right r : user.getMind().getUsedRights().get(0L)) {
                         if (r.isUsed()) {
-                            rightList.addAll(r.getNatives());
+                            rightSet.addAll(r.getNatives());
                         }
                     }
                 }
             } else {
                 for (Right r : user.getMind().getRights()) {
                     if (!r.isDeleted()) {
-                        rightList.add(r);
+                        rightSet.add(r);
                     }
                 }
             }
+
+            List<Right> tmp = new ArrayList<>();
+            List<Right> rightList = new ArrayList<>();
+
+            tmp.addAll(rightSet);
+            Collections.sort(tmp, new Comparator<Right>() {
+                @Override
+                public int compare(Right o1, Right o2) {
+                    return (int) (o2.getId() - o1.getId());
+                }
+            });
+            rightList.addAll(tmp);
+            Collections.sort(tmp, new Comparator<Right>() {
+                @Override
+                public int compare(Right o1, Right o2) {
+                    return (int) (o1.getId() - o2.getId());
+                }
+            });
+            rightList.addAll(tmp);
+
 
 //            final SortedSet<TVariable> tvars = new TreeSet<>();
 //            for (Right rr : rightList) {
@@ -152,7 +175,11 @@ public class Linker {
 //                }
 //            }
 
+//            System.err.println("------------------------");
+
             for (Right r : rightList) { //user.getMind().getRights()) {
+
+//                System.err.println(r.getId() + ": " + r);
 
                 user.getMind().getProducedDomains().clear();
                 user.getMind().getDomainSolves().clear();
@@ -388,6 +415,9 @@ public class Linker {
                     if (right.isDeleted() || !right.getPredicates().contains(slave.getPredicateId())) {
                         continue;
                     }
+
+//                    System.err.println("\t" + right.getId() + ": " + right);
+
                     for (List<Domain> treeMaster : right.getTree()) {
                         for (Domain master : treeMaster) {
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
