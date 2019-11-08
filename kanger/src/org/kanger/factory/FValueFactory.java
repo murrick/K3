@@ -71,6 +71,7 @@ public class FValueFactory {
 //            p.setId(lastId++);
 //            cache.add(p);
 //        }
+        action = base.isAction();
     }
 
     public void update() throws IOException {

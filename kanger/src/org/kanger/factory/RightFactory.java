@@ -88,6 +88,9 @@ public class RightFactory implements Iterable<Right> {
 //        for (Right p : list) {
 //            add(p);
 //        }
+
+        action = base.isAction();
+
     }
 
     public void update() throws IOException {

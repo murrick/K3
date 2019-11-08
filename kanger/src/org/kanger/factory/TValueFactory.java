@@ -77,6 +77,8 @@ public class TValueFactory implements Iterable<TValue> {
 //            p.setId(lastId++);
 //            cache.add(p);
 //        }
+
+        action = base.isAction();
     }
 
     public void update() throws IOException {

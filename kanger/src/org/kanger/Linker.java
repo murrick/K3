@@ -7,7 +7,6 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
 import org.kanger.units.*;
@@ -36,50 +35,12 @@ public class Linker {
 
     public void link(Right right, boolean logging) throws Exception {
 
-//        user.getMind().getProducedDomains().reset();
         user.getMind().getExcludedDomains().clear();
         user.getMind().getUsedDomains().clear();
         user.getMind().getCalculatedDomains().clear();
         user.getMind().getUsedRights().clear();
-//        user.getMind().getDomainCauses().reset();
-
-//        for (Function f : user.getMind().getFunctions()) {
-//            if (!f.isCalculable()) {
-//                user.getMind().getCalculator().calculate(f, logging);
-//            }
-//        }
-//
-//        final Set<Domain> waiters = new HashSet<>();
-//        final Map<Long, Set<Long>> links = new HashMap<>();
-//        for (Right r : user.getMind().getRights()) {
-//            for (List<Domain> tree : r.getTree()) {
-//                if (tree.size() == 1) {
-//                    if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
-//                        waiters.add(tree.get(0));
-//                    } else {
-//                        tree.get(0).setStored();
-//                    }
-//                }
-//                for (Domain d : tree) {
-//                    if (!links.containsKey(d.getPredicate().getId())) {
-//                        links.put(d.getPredicate().getId(), new HashSet<>());
-//                    }
-//                    links.get(d.getPredicate().getId()).add(r.getId());
-//                }
-//            }
-//        }
-
-//        long saveR;
-//        long saveT;
-//        long saveF;
 
         int passCounter = 0;
-        List<ArgList> main = new ArrayList<>();
-        List<ArgList> calculated = new ArrayList<>();
-        List<Right> solves = new ArrayList<>();
-
-        boolean result = false;
-        boolean used = false;
 
         solvedPasses = 0;
         dumpedPasses = 0;
@@ -92,42 +53,11 @@ public class Linker {
             if (logging) {
                 user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
-//            System.err.printf("---------- LINKER PASS %03d ---------------\n", passCounter);
-
-//            System.err.println(passCounter);
-
-//            saveR = user.getMind().getRights().size(); //.getLastId();
-//            saveT = user.getMind().getTValues().size(); //.getLastId();
-//            saveF = user.getMind().getFValues().size(); //.getLastId();
 
             user.getMind().getRights().dropAction();
             user.getMind().getTValues().dropAction();
             user.getMind().getFValues().dropAction();
 
-
-
-//            final Map<Right, Set<Cause>> causes = new HashMap<>();
-
-//            SortedSet<Tree> treeSet = new TreeSet<>();
-////            if (right == null) {
-//            for (Tree tree : user.getMind().getTrees()) {
-//                treeSet.add(tree);
-//            }
-//            } else {
-//                Set<Right> rights = new HashSet<>();
-//                for (Tree tree : right.getTree()) {
-//                    for(Domain d : tree.getSequence()) {
-//                        for(Tree t : d.getPredicate().getLinkedTrees()) {
-//                            rights.add(t.getSequence().get(0).getRight());
-//                        }
-//                    }
-//                }
-//                for(Right r : rights) {
-//                    treeSet.addAll(r.getTree());
-//                }
-//            }
-
-            used = false;
             Set<Right> rightSet = new HashSet<>();
             if (right != null) {
                 rightSet.addAll(right.getNatives());
@@ -146,177 +76,26 @@ public class Linker {
                 }
             }
 
-            List<Right> tmp = new ArrayList<>();
+            List<Right> leftList = new ArrayList<>();
             List<Right> rightList = new ArrayList<>();
 
-            tmp.addAll(rightSet);
-            Collections.sort(tmp, new Comparator<Right>() {
+            leftList.addAll(rightSet);
+            Collections.sort(leftList, new Comparator<Right>() {
                 @Override
                 public int compare(Right o1, Right o2) {
                     return (int) (o2.getId() - o1.getId());
                 }
             });
-            rightList.addAll(tmp);
-            Collections.sort(tmp, new Comparator<Right>() {
+            rightList.addAll(rightSet);
+            Collections.sort(rightList, new Comparator<Right>() {
                 @Override
                 public int compare(Right o1, Right o2) {
                     return (int) (o1.getId() - o2.getId());
                 }
             });
-            rightList.addAll(tmp);
 
-
-//            final SortedSet<TVariable> tvars = new TreeSet<>();
-//            for (Right rr : rightList) {
-//                for (List<Domain> tree : rr.getTree()) {
-//                    for (Domain d : tree) {
-//                        tvars.addAll(d.getArguments().getTVariables(true));
-//                    }
-//                }
-//            }
-
-//            System.err.println("------------------------");
-
-            for (Right r : rightList) { //user.getMind().getRights()) {
-
-//                System.err.println(r.getId() + ": " + r);
-
-                user.getMind().getProducedDomains().clear();
-                user.getMind().getDomainSolves().clear();
-                user.getMind().getDomainCauses().clear();
-
-                final SortedSet<TVariable> tvars = new TreeSet<>();
-//                for (Right rr : r.getNatives()) {
-                for (List<Domain> tree : r.getTree()) {
-                    for (Domain d : tree) {
-                        tvars.addAll(d.getArguments().getTVariables(true));
-                    }
-                }
-//                }
-
-//                final Set<Domain> waiters = new HashSet<>();
-//                for (Tree tree : r.getTree()) {
-//                    if (tree.getSequence().size() == 1) {
-//                        if (!tree.getSequence().get(0).getArguments().getTVariables(true).isEmpty()) {
-//                            waiters.add(tree.getSequence().get(0));
-//                        } else {
-//                            tree.getSequence().get(0).setStored();
-//                        }
-//                    }
-//                }
-
-//            user.getMind().getExcludedDomains().reset();
-                //TODO: !! Надо думать надо полным обходом всех вариантов. Или это только сбор гипотез?
-
-
-//            for (Tree tree = user.getMind().getTrees().getRoot(); tree != null; tree = tree.getNext()) {
-
-                boolean wasUsed = r.isUsed();
-
-                for (List<Domain> tree : r.getTree()) {
-
-                    final List<Domain> t = tree;
-//                    SortedSet<TVariable> tvars = new TreeSet<>();
-//                    for (Domain d : tree) {
-//                        tvars.addAll(d.getArguments().getTVariables(true));
-//                    }
-
-                    rotateVariables(tvars, logging, new IReactor() {
-                        @Override
-                        public Object run(Object o) {
-                            boolean result = false;
-                            boolean logging = (boolean) o;
-
-                            try {
-
-//                                if (logging && !tvars.isEmpty()) {
-//                                    String s = "";
-//                                    for (TVariable t : tvars) {
-//                                        if (!s.isEmpty()) {
-//                                            s += ", ";
-//                                        }
-//                                        s += t;
-//                                    }
-//                                    user.getMind().getLog().add(LogMode.ANALIZER, "START Variables: " + s);
-//                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
-//
-//                                }
-
-//                                for (Domain d : t) {
-//                                    for (Function f : d.getArguments().getFunctions()) {
-//                                        if (f.isCalculable()) {
-//                                            user.getMind().getCalculator().calculate(f, user.getMind().isLogging());
-//                                        }
-//                                    }
-//                                }
-//                                if (calcFunctions(t, causes, logging)) {
-//                                    result = true;
-//                                }
-
-                                if (linkDomains(t, causes, logging)) {
-                                    result = true;
-                                }
-                                if (calcFunctions(t, causes, logging)) {
-                                    result = true;
-                                }
-
-//                                List<TValue> solve = new ArrayList<>();
-//                                for (TVariable t : tvars) {
-//                                    if (!t.isEmpty()) {
-//                                        solve.add(t.getCurrent());
-//                                    }
-//                                }
-
-                                if (linkDatabase(t, causes, tvars, logging)) {
-                                    result = true;
-                                }
-
-//                                if (logging) {
-//                                    if (logging && !tvars.isEmpty()) {
-//                                        String s = "";
-//                                        for (TVariable t : tvars) {
-//                                            if (!s.isEmpty()) {
-//                                                s += ", ";
-//                                            }
-//                                            s += t;
-//                                        }
-////                                        user.getMind().getLog().add(LogMode.ANALIZER, "STOP Variables: " + s);
-//                                        user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
-//                                    }
-//                                }
-
-                            } catch (Exception e) {
-                                e.printStackTrace(System.err);
-                                result = false;
-                            }
-
-                            return result;
-                        }
-                    });
-                }
-
-//                if(analizeProduces(main, calculated, solves)) {
-//                    result = true;
-//                }
-                updateDatabase(logging);
-
-                if (!wasUsed && r.isUsed()) {
-                    used = true;
-                }
-            }
-
-//            if(saveT != user.getMind().getTValues().getLastId()) {
-//                long tag = user.getMind().getTValues().incTag();
-//                Iterator<TValue> iterator = user.getMind().getTValues().iterator();
-//                while (iterator.hasNext()) {
-//                    TValue v = iterator.next();
-//                    if (v.getId() >= saveT) {
-//                        v.setTag(saveT);
-//                    } else {
-//                        break;
-//                    }
-//                }
-//            }
+            rotator(leftList, causes, logging);
+            rotator(rightList, causes, logging);
 
 
         } while (user.getMind().getRights().isAction()
@@ -338,30 +117,69 @@ public class Linker {
                 }
             }
         }
+    }
+
+    private boolean rotator(Collection<Right> rightList, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
+
+        boolean used = false;
+
+        for (Right r : rightList) {
+
+            user.getMind().getProducedDomains().clear();
+            user.getMind().getDomainSolves().clear();
+            user.getMind().getDomainCauses().clear();
+
+            final SortedSet<TVariable> tvars = new TreeSet<>();
+            for (List<Domain> tree : r.getTree()) {
+                for (Domain d : tree) {
+                    tvars.addAll(d.getArguments().getTVariables(true));
+                }
+            }
+
+            boolean wasUsed = r.isUsed();
+
+            for (List<Domain> tree : r.getTree()) {
+
+                final List<Domain> t = tree;
+
+                rotateVariables(tvars, logging, new IReactor() {
+                    @Override
+                    public Object run(Object o) {
+                        boolean result = false;
+                        boolean logging = (boolean) o;
+
+                        try {
+
+                            if (linkDomains(t, causes, logging)) {
+                                result = true;
+                            }
+                            if (calcFunctions(t, causes, logging)) {
+                                result = true;
+                            }
+
+                            if (linkDatabase(t, causes, tvars, logging)) {
+                                result = true;
+                            }
 
 
-//        if(result) {
-//            System.out.println(user.getMind().getQueryPass() + ": OK");
-//            if(!solves.isEmpty()) {
-//                for(Right r : solves) {
-//                    System.out.println(r);
-//                }
-//            }
-//            if (!main.isEmpty()) {
-//                System.out.println("--- main");
-//                for (ArgList row : main) {
-//                    System.out.println(row);
-//                }
-//                System.out.println("---");
-//            } else if (!calculated.isEmpty()) {
-//                System.out.println("--- calculated");
-//                for (ArgList row : calculated) {
-//                    System.out.println(row);
-//                }
-//                System.out.println("---");
-//            }
-//        }
+                        } catch (Exception e) {
+                            e.printStackTrace(System.err);
+                            result = false;
+                        }
 
+                        return result;
+                    }
+                });
+            }
+
+            updateDatabase(logging);
+
+            if (!wasUsed && r.isUsed()) {
+                used = true;
+            }
+        }
+
+        return used;
     }
 
     private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, IReactor runnable) throws Exception {
