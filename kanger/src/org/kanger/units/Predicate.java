@@ -7,17 +7,14 @@ import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
-public class Predicate implements Externalizable, IUnit<Predicate> {
+public class Predicate implements IUnit<Predicate> {
 
     private static final long serialVersionUID = 196402070004L;
 
@@ -65,27 +62,6 @@ public class Predicate implements Externalizable, IUnit<Predicate> {
         range = packet.getInt();
         return this;
     }
-
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
-
-//    @Override
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        this.user = user;
-//        name = user.getMind().getTerms().get(nameId);
-//    }
 
     public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {

@@ -14,10 +14,7 @@ import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.*;
 
 /**
@@ -25,7 +22,7 @@ import java.util.*;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Domain implements Externalizable, IUnit<Domain> {
+public class Domain implements IUnit<Domain> {
 
     private static final long serialVersionUID = 196402070001L;
 
@@ -102,27 +99,6 @@ public class Domain implements Externalizable, IUnit<Domain> {
     public UnitType getUnitType() {
         return UnitType.DOMAIN;
     }
-
-    @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(dis));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.write(pack().getBuffer());
-    }
-
-//    @Override
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        this.user = user;
-//        predicate = user.getMind().getPredicates().load(predicateId);
-//        right = user.getMind().getRights().load(rightId);
-////        arguments.linkExternal(user);
-//    }
 
     public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (predicate == null) {

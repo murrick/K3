@@ -12,14 +12,11 @@ import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FValue implements Externalizable, IUnit<FValue> {
+public class FValue implements IUnit<FValue> {
 
     private static final long serialVersionUID = 196402070003L;
 
@@ -107,29 +104,6 @@ public class FValue implements Externalizable, IUnit<FValue> {
         }
         return this;
     }
-
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
-
-//    @Override
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        this.user = user;
-//        function = user.getMind().getFunctions().load(functionId);
-//        value = user.getMind().getTerms().load(valueId);
-////        condition.linkExternal(user);
-//    }
 
     @Override
     public long getId() {

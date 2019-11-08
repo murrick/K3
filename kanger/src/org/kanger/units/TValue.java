@@ -9,17 +9,14 @@ import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 13.12.16.
  */
-public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue> {
+public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     private static final long serialVersionUID = 196402070009L;
 
@@ -93,30 +90,6 @@ public class TValue implements Comparable<TValue>, Externalizable, IUnit<TValue>
         }
         return this;
     }
-
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
-
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        this.user = user;
-//        tVar = user.getMind().getTVars().load(tVarId);
-//        value = user.getMind().getTerms().load(valueId);
-//        for (Cause c : causes) {
-////            c.linkExternal(user);
-//        }
-//    }
 
     public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (value == null && valueId != -1) {

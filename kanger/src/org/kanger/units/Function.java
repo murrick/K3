@@ -12,17 +12,14 @@ import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
  * <p>
  * Домен для функции. Может быть рекурсивным на уровне структуры TList.
  */
-public class Function implements Externalizable, IUnit<Function> {
+public class Function implements IUnit<Function> {
 
     private static final long serialVersionUID = 196402070002L;
 
@@ -72,28 +69,6 @@ public class Function implements Externalizable, IUnit<Function> {
         }
         return this;
     }
-
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
-
-//    @Override
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        this.user = user;
-//        name = user.getMind().getTerms().load(nameId);
-////        arguments.linkExternal(user);
-//    }
 
     @Override
     public long getId() {

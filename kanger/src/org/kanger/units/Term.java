@@ -13,10 +13,7 @@ import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -25,7 +22,7 @@ import java.util.*;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
+public class Term implements Comparable<Object>, IUnit<Term> {
 
     public static final double FLT_EPSILON = 0.00000000001;
 
@@ -156,27 +153,6 @@ public class Term implements Comparable<Object>, Externalizable, IUnit<Term> {
         }
         return this;
     }
-
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
-
-
-//    @Override
-//    public void linkExternal(User user) {
-//        this.user = user;
-//    }
 
     private void construct(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         value = null;

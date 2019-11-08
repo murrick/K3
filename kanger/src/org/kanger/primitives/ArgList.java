@@ -11,14 +11,11 @@ import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 import org.kanger.units.Term;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArgList extends ArrayList<Argument> implements Externalizable {
+public class ArgList extends ArrayList<Argument> {
 
     private transient IUser user = null;
 
@@ -57,25 +54,6 @@ public class ArgList extends ArrayList<Argument> implements Externalizable {
         }
         return this;
     }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        for(Argument a : this) {
-//            a.linkExternal(user);
-//        }
-//    }
 
     @Override
     public int hashCode() {

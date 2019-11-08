@@ -9,10 +9,6 @@ import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +16,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.15.
  */
-public class SysOp implements Externalizable, IUnit<SysOp> {
+public class SysOp implements IUnit<SysOp> {
 
     protected final List<String> params = new ArrayList<>();
     protected final List<String> scripts = new ArrayList<>();
@@ -170,19 +166,6 @@ public class SysOp implements Externalizable, IUnit<SysOp> {
         return UnitType.SYSOP;
     }
 
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
 
     @Override
     public long getId() {

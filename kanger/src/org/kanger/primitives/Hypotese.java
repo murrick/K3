@@ -16,16 +16,13 @@ import org.kanger.units.Predicate;
 import org.kanger.units.Right;
 import org.kanger.units.Term;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.*;
 
 /**
  * @author murray
  */
-public class Hypotese implements Externalizable, Comparable<Hypotese> {
+public class Hypotese implements Comparable<Hypotese> {
 
     private Predicate predicate = null;
     private boolean antc = true;
@@ -73,35 +70,6 @@ public class Hypotese implements Externalizable, Comparable<Hypotese> {
             rightsIds.add(packet.getLong());
         }
         return this;
-    }
-
-
-    @Override
-    public void readExternal(ObjectInput dis) throws IOException, ClassNotFoundException {
-        predicateId = dis.readLong();
-        antc = dis.readBoolean();
-        int cnt = dis.readInt();
-        for (int i = 0; i < cnt; ++i) {
-            solveIds.add(dis.readLong());
-        }
-        cnt = dis.readInt();
-        for (int i = 0; i < cnt; ++i) {
-            rightsIds.add(dis.readLong());
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput dos) throws IOException {
-        dos.writeLong(predicateId);
-        dos.writeBoolean(antc);
-        dos.writeInt(solve.size());
-        for (Term t : solve) {
-            dos.writeLong(t.getId());
-        }
-        dos.writeInt(rights.size());
-        for (Right r : rights) {
-            dos.writeLong(r.getId());
-        }
     }
 
 //    public void linkExternal(User user) throws Exception {

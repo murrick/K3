@@ -8,17 +8,14 @@ import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  * <p>
  * Элемент подстановочной переменной
  */
-public class TVariable implements Comparable<Object>, Externalizable, IUnit<TVariable> {
+public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     private static final long serialVersionUID = 196402070010L;
 
@@ -61,26 +58,6 @@ public class TVariable implements Comparable<Object>, Externalizable, IUnit<TVar
         rightId = packet.getLong();
         return this;
     }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
-//    @Override
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        this.user = user;
-//        name = user.getMind().getTerms().load(nameId);
-//        right = user.getMind().getRights().load(rightId);
-//    }
 
     public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {

@@ -9,17 +9,14 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
  * <p>
  * Решение для предиката
  */
-public class Argument implements Externalizable {
+public class Argument {
 
     private static final long serialVersionUID = -7113328096110690461L; //196402070011L;
 
@@ -52,19 +49,6 @@ public class Argument implements Externalizable {
         id = packet.getLong();
         type = ArgumentType.values()[packet.getInt()];
         return this;
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
     }
 
     private void load(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {

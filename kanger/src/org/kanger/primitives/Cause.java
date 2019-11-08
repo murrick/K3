@@ -7,12 +7,9 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
-public class Cause implements Externalizable, Comparable<Cause> {
+public class Cause implements Comparable<Cause> {
     private Domain src = null;
     private Domain dst = null;
     private ArgList arguments = null;
@@ -57,21 +54,6 @@ public class Cause implements Externalizable, Comparable<Cause> {
         }
         return this;
     }
-
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        try {
-            apply(new ByteBuffer(in));
-        } catch (OutOfBufferException e) {
-        }
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.write(pack().getBuffer());
-    }
-
 
     public Domain getSrc() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (src == null) {
