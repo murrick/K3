@@ -68,15 +68,15 @@ public class RightFactory implements Iterable<Right> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 //            lastId = cache.getRoot().getId() + 1;
-            if (cache.getTop() == null) {
-                cache.setTop(base.cache.getTop());
-//                firstId = cache.getTop().getId();
-            }
+//            if (cache.getTop() == null) {
+//                cache.setTop(base.cache.getTop());
+////                firstId = cache.getTop().getId();
+//            }
         }
         stored.setRoot(base.stored.getRoot());
-        if (stored.getRoot() != null && stored.getTop() == null) {
-            stored.setTop(base.stored.getTop());
-        }
+//        if (stored.getRoot() != null && stored.getTop() == null) {
+//            stored.setTop(base.stored.getTop());
+//        }
 
 //        List<Right> list = new ArrayList();
 //        for (Object p : base.cache) {
@@ -281,11 +281,11 @@ public class RightFactory implements Iterable<Right> {
     }
 
 
-    public void unlink() throws Exception {
-        cache.unlink();
-        stored.unlink();
-    }
-
+    //    public void unlink() throws Exception {
+//        cache.unlink();
+//        stored.unlink();
+//    }
+//
     public boolean isAction() {
         return action;
     }
@@ -313,7 +313,7 @@ public class RightFactory implements Iterable<Right> {
         return new Iterable<Long>() {
             @Override
             public Iterator iterator() {
-                return stored.iterator(true, fromId);
+                return stored.iterator(fromId);
             }
         };
     }

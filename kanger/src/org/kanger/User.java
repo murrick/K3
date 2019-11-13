@@ -185,13 +185,6 @@ public class User implements IUser {
     public void close() throws IOException {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
-                if (e.getValue().getRoot() != null) {
-                    if (e.getValue().getRoot().getPrev() != null) {
-                        e.getValue().getRoot().getPrev().setNext(null);
-                    }
-                    e.getValue().getRoot().setPrev(null);
-                    e.getValue().getRoot().update();
-                }
                 e.getValue().clearCache();
             }
             data.close();

@@ -54,10 +54,10 @@ public class FunctionFactory implements Iterable<Function> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 //            lastId = cache.getRoot().getId() + 1;
-            if (cache.getTop() == null) {
-                cache.setTop(base.cache.getTop());
-//                firstId = cache.getTop().getId();
-            }
+//            if (cache.getTop() == null) {
+//                cache.setTop(base.cache.getTop());
+////                firstId = cache.getTop().getId();
+//            }
         }
     }
 
@@ -114,9 +114,9 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
-    public void unlink() throws Exception {
-        cache.unlink();
-    }
+//    public void unlink() throws Exception {
+//        cache.unlink();
+//    }
 
     public int size() throws Exception {
         return cache.size();

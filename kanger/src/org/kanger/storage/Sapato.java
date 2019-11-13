@@ -21,7 +21,6 @@ public class Sapato implements IStep {
 
     private Object data = null;
     private long next = -1;
-    private long prev = -1;
     private long id = -1;
     private int hash = 0;
 
@@ -35,7 +34,6 @@ public class Sapato implements IStep {
         this.base = base;
         this.data = c.getData();
         this.next = c.getNext() == null ? -1 : c.getNext().getId();
-        this.prev = c.getPrev() == null ? -1 : c.getPrev().getId();
         this.id = c.getId();
         this.hash = c.getHash();
     }
@@ -45,7 +43,6 @@ public class Sapato implements IStep {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putInt(hash)
-                .putLong(prev)
                 .putLong(next);
         if (data instanceof IUnit) {
             packet.putInt(((IUnit) data).getUnitType().ordinal())
@@ -67,7 +64,6 @@ public class Sapato implements IStep {
     public IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException {
         id = packet.getLong();
         hash = packet.getInt();
-        prev = packet.getLong();
         next = packet.getLong();
         UnitType type = UnitType.values()[packet.getInt()];
         switch (type) {
@@ -130,20 +126,20 @@ public class Sapato implements IStep {
         this.next = next == null ? -1 : next.getId();
     }
 
-    @Override
-    public IStep getPrev() {
-        try {
-            return base.get(prev);
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            return null;
-        }
-    }
-
-    @Override
-    public void setPrev(IStep prev) {
-        this.prev = prev == null ? -1 : prev.getId();
-    }
+//    @Override
+//    public IStep getPrev() {
+//        try {
+//            return base.get(prev);
+//        } catch (Exception e) {
+//            e.printStackTrace(System.err);
+//            return null;
+//        }
+//    }
+//
+//    @Override
+//    public void setPrev(IStep prev) {
+//        this.prev = prev == null ? -1 : prev.getId();
+//    }
 
     @Override
     public long getId() {
@@ -186,18 +182,18 @@ public class Sapato implements IStep {
         this.base = base;
     }
 
-    @Override
-    public void delete() throws IOException {
-        if (getPrev() != null) {
-            getPrev().setNext(getNext());
-            getPrev().update();
-        }
-        if (getNext() != null) {
-            getNext().setPrev(getPrev());
-            getNext().update();
-        }
-        base.delete(id);
-    }
+//    @Override
+//    public void delete() throws IOException {
+//        if (getPrev() != null) {
+//            getPrev().setNext(getNext());
+//            getPrev().update();
+//        }
+//        if (getNext() != null) {
+//            getNext().setPrev(getPrev());
+//            getNext().update();
+//        }
+//        base.delete(id);
+//    }
 
     @Override
     public long getSize() {

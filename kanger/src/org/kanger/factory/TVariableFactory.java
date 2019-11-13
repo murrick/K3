@@ -56,10 +56,10 @@ public class TVariableFactory implements Iterable<TVariable> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 //            lastId = cache.getRoot().getId() + 1;
-            if (cache.getTop() == null) {
-                cache.setTop(base.cache.getTop());
-//                firstId = cache.getTop().getId();
-            }
+//            if (cache.getTop() == null) {
+//                cache.setTop(base.cache.getTop());
+////                firstId = cache.getTop().getId();
+//            }
 
 //            for (Object p : cache) {
 //                if (((TVariable) p).getId() >= base.firstId) {
@@ -182,13 +182,13 @@ public class TVariableFactory implements Iterable<TVariable> {
         return cache.size();
     }
 
-    public void unlink() throws Exception {
-        cache.unlink();
-    }
+//    public void unlink() throws Exception {
+//        cache.unlink();
+//    }
 
     @Override
     public Iterator iterator() {
-        return cache.iterator(true, -1);
+        return cache.iterator(-1);
     }
 
 

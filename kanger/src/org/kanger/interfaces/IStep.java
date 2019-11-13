@@ -23,10 +23,6 @@ public interface IStep {
 
     void setNext(IStep next);
 
-    IStep getPrev();
-
-    void setPrev(IStep prev);
-
     long getId();
 
     void setId(long id);
@@ -43,7 +39,7 @@ public interface IStep {
 
     void setBase(IBase base);
 
-    void delete() throws IOException;
+//    void delete() throws IOException;
 
     long getSize();
 

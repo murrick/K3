@@ -57,10 +57,10 @@ public class TValueFactory implements Iterable<TValue> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 //            lastId = cache.getRoot().getId() + 1;
-            if (cache.getTop() == null) {
-                cache.setTop(base.cache.getTop());
-//                firstId = cache.getTop().getId();
-            }
+//            if (cache.getTop() == null) {
+//                cache.setTop(base.cache.getTop());
+////                firstId = cache.getTop().getId();
+//            }
         }
 
 //        List<TValue> list = new ArrayList();
@@ -214,9 +214,9 @@ public class TValueFactory implements Iterable<TValue> {
         return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
     }
 
-    public void unlink() throws Exception {
-        cache.unlink();
-    }
+//    public void unlink() throws Exception {
+//        cache.unlink();
+//    }
 
     public boolean isAction() {
         return action;

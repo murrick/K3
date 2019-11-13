@@ -33,21 +33,17 @@ public interface ICache extends Iterable {
 
     boolean containsKey(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    void unlink() throws IOException;
+    Iterator<Object> iterator(long fromId);
 
     IStep getRoot();
 
     void setRoot(IStep root);
 
-    IStep getTop();
-
-    void setTop(IStep top);
-
     @Override
     Iterator<Object> iterator();
 
-    Iterator<Object> iterator(boolean backward, long fromId);
-
     boolean update() throws IOException;
+
+    void delete(IStep s);
 
 }

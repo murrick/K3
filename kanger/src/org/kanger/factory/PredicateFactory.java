@@ -52,10 +52,10 @@ public class PredicateFactory implements Iterable<Predicate> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 //            lastId = cache.getRoot().getId() + 1;
-            if (cache.getTop() == null) {
-                cache.setTop(base.cache.getTop());
-//                firstId = cache.getTop().getId();
-            }
+//            if (cache.getTop() == null) {
+//                cache.setTop(base.cache.getTop());
+////                firstId = cache.getTop().getId();
+//            }
         }
 
 //        List<Predicate> list = new ArrayList();
@@ -135,9 +135,9 @@ public class PredicateFactory implements Iterable<Predicate> {
         return cache.size();
     }
 
-    public void unlink() throws Exception {
-        cache.unlink();
-    }
+//    public void unlink() throws Exception {
+//        cache.unlink();
+//    }
 
     @Override
     public Iterator iterator() {

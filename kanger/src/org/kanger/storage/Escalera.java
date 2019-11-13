@@ -13,8 +13,6 @@ import java.util.*;
 public class Escalera implements ICache {
 
     private IStep root = null;
-    private IStep top = null;
-//    private IStep child = null;
 
     private ICache parent = null;
     private Stack<IStep> stack = new Stack<>();
@@ -28,11 +26,9 @@ public class Escalera implements ICache {
 
         if (this.parent != null) {
             root = this.parent.getRoot();
-            top = this.parent.getTop();
         } else {
             if (!user.isClosed()) {
                 root = user.getStorage(schema).getRoot();
-                top = user.getStorage(schema).getTop();
             }
         }
     }
@@ -44,17 +40,8 @@ public class Escalera implements ICache {
         s.setData(one);
         s.setId(one.getId());
         s.setHash(one.getHash());
-
         s.setNext(root);
-        if (root != null) {
-            root.setPrev(s);
-            root.update();
-//            child = s;
-        }
         root = s;
-        if (top == null) {
-            top = s;
-        }
     }
 
     @Override
@@ -63,16 +50,8 @@ public class Escalera implements ICache {
         s.setData(one);
         s.setId(id);
         s.setHash(one.hashCode());
-
         s.setNext(root);
-        if (root != null) {
-            root.setPrev(s);
-            root.update();
-        }
         root = s;
-        if (top == null) {
-            top = s;
-        }
     }
 
     @Override
@@ -97,20 +76,17 @@ public class Escalera implements ICache {
     @Override
     public void delete(long id) throws IOException {
         if (root != null && root.getId() == id) {
-            IStep s = root;
             root = root.getNext();
-            s.delete();
-        } else if (top != null && top.getId() == id) {
-            IStep s = top;
-            top = top.getPrev();
-            s.delete();
         } else {
-            for (IStep s = root; s != null; s = s.getNext()) {
-                if (s.getId() == id) {
-                    s.delete();
+            for (IStep s = root; s != null && s.getNext() != null; s = s.getNext()) {
+                if (s.getNext().getId() == id) {
+                    s.setNext(s.getNext().getNext());
                     break;
                 }
             }
+        }
+        if (!user.isClosed()) {
+            user.getStorage(schema).delete(id);
         }
     }
 
@@ -146,7 +122,6 @@ public class Escalera implements ICache {
     @Override
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         root = null;
-        top = null;
         if (parent == null) {
             if (!user.isClosed()) {
                 user.getStorage(schema).clear();
@@ -187,22 +162,13 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void unlink() throws IOException {
-        if (root != null && root.getPrev() != null) {
-            root.getPrev().setNext(null);
-            root.setPrev(null);
-            root.update();
-        }
-    }
-
-    @Override
     public Iterator<Object> iterator() {
-        return new WalkIterator(true, -1);
+        return new WalkIterator(-1);
     }
 
     @Override
-    public Iterator<Object> iterator(boolean backward, long fromId) {
-        return new WalkIterator(backward, fromId);
+    public Iterator<Object> iterator(long fromId) {
+        return new WalkIterator(fromId);
     }
 
     @Override
@@ -214,16 +180,6 @@ public class Escalera implements ICache {
     public void setRoot(IStep root) {
         this.root = root;
 
-    }
-
-    @Override
-    public IStep getTop() {
-        return top;
-    }
-
-    @Override
-    public void setTop(IStep top) {
-        this.top = top;
     }
 
     @Override
@@ -244,7 +200,6 @@ public class Escalera implements ICache {
             }
 
             root = user.getStorage(schema).getRoot();
-            top = user.getStorage(schema).getTop();
             stack.clear();
 
             return true;
@@ -253,27 +208,27 @@ public class Escalera implements ICache {
         }
     }
 
+    @Override
+    public void delete(IStep s) {
+
+    }
+
     public class WalkIterator implements Iterator {
         private IStep step;
-        private boolean backward;
 
-        public WalkIterator(boolean backward, long fromId) {
-            this.backward = backward;
-            step = backward ? root : top;
+        public WalkIterator(long fromId) {
+            step = root;
 
             try {
                 if (root instanceof Sapato) {
                     root.setData(user.getStorage(schema).get(root.getId()).getData(user));
-                }
-                if (top instanceof Sapato) {
-                    top.setData(user.getStorage(schema).get(top.getId()).getData(user));
                 }
             } catch (Exception e) {
                 e.printStackTrace(System.err);
             }
 
             if (fromId >= 0) {
-                for (; step != null; step = backward ? step.getNext() : step.getPrev()) {
+                for (; step != null; step = step.getNext()) {
                     if (step.getId() == fromId) {
                         break;
                     }
@@ -293,24 +248,7 @@ public class Escalera implements ICache {
 
             try {
                 o = step.getData(user);
-                if (backward) {
-                    step = step.getNext();
-                } else {
-                    if (step.getPrev() == null && !user.isClosed()) {
-                        // Чистая магия
-                        IStep stop = step;
-                        for (step = root; step != null; step = step.getNext()) {
-                            if (step.getNext() != null && step.getNext().getId() == stop.getId()) {
-                                break;
-                            }
-                        }
-                    } else {
-                        step = step.getPrev();
-                    }
-                }
-//                if (step != null) {
-//                    ((IUnit) step.getData()).setUser(user);
-//                }
+                step = step.getNext();
             } catch (Exception e) {
                 e.printStackTrace(System.err);
             }

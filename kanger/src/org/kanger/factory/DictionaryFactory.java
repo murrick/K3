@@ -75,10 +75,10 @@ public class DictionaryFactory implements Iterable<Term> {
 //            lastId = cache.getRoot().getId() + 1;
             varIndex = base.varIndex;
 
-            if (cache.getTop() == null) {
-                cache.setTop(base.cache.getTop());
-//                firstId = cache.getTop().getId();
-            }
+//            if (cache.getTop() == null) {
+//                cache.setTop(base.cache.getTop());
+////                firstId = cache.getTop().getId();
+//            }
 
 //            for (Object p : cache) {
 //                if (((Term) p).getId() >= base.firstId) {
@@ -108,9 +108,9 @@ public class DictionaryFactory implements Iterable<Term> {
 
     }
 
-    public void unlink() throws Exception {
-        cache.unlink();
-    }
+//    public void unlink() throws Exception {
+//        cache.unlink();
+//    }
 
     public void update() throws IOException {
         if (cache.update()) {
@@ -235,7 +235,7 @@ public class DictionaryFactory implements Iterable<Term> {
 
     @Override
     public Iterator iterator() {
-        return cache.iterator(true, -1);
+        return cache.iterator(-1);
     }
 
     public void pack() throws IOException {

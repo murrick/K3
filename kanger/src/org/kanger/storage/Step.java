@@ -12,7 +12,6 @@ import java.io.IOException;
 public class Step implements IStep {
     private Object data = null;
     private IStep next = null;
-    private IStep prev = null;
     private long id = -1;
     private int hash = 0;
 
@@ -57,16 +56,6 @@ public class Step implements IStep {
     }
 
     @Override
-    public IStep getPrev() {
-        return prev;
-    }
-
-    @Override
-    public void setPrev(IStep prev) {
-        this.prev = prev;
-    }
-
-    @Override
     public long getId() {
         return id;
     }
@@ -106,17 +95,17 @@ public class Step implements IStep {
 
     }
 
-    @Override
-    public void delete() throws IOException {
-        if (getPrev() != null) {
-            getPrev().setNext(getNext());
-            getPrev().update();
-        }
-        if (getNext() != null) {
-            getNext().setPrev(getPrev());
-            getNext().update();
-        }
-    }
+//    @Override
+//    public void delete() throws IOException {
+//        if (getPrev() != null) {
+//            getPrev().setNext(getNext());
+//            getPrev().update();
+//        }
+//        if (getNext() != null) {
+//            getNext().setPrev(getPrev());
+//            getNext().update();
+//        }
+//    }
 
     @Override
     public long getSize() {
