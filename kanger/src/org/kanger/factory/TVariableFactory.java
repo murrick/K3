@@ -144,12 +144,12 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     }
 
-    public void delete(TVariable t) throws IOException, ClassNotFoundException {
+    public void delete(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         t.setDeleted();
-        Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
-        while (iterator.hasNext()) {
-            TValue v = iterator.next();
-            user.getMind().getTValues().delete(v);
+        for (TValue v : user.getMind().getTValues()) {
+            if (v.getTVar().getId() == t.getId()) {
+                user.getMind().getTValues().delete(v);
+            }
         }
     }
 

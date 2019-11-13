@@ -25,7 +25,10 @@ import org.kanger.units.*;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
 
 //import java.awt.*;
 //import java.awt.datatransfer.Clipboard;
@@ -903,23 +906,23 @@ public class Screen {
         }
     }
 
-    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (tset.isEmpty()) {
-            showTree(mind, r);
-        } else {
-            TVariable t = tset.last(); //.get(tIndex);
-            Iterator<TValue> iterator = mind.getTValues().iterator(t);
-            if (iterator.hasNext()) {
-                do {
-                    TValue v = iterator.next();
-                    mind.getTValues().set(t, v);
-                    showTreeWithValues(mind, r, tset.headSet(t));
-                } while (iterator.hasNext());
-            } else {
-                showTreeWithValues(mind, r, tset.headSet(t));
-            }
-        }
-    }
+//    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//        if (tset.isEmpty()) {
+//            showTree(mind, r);
+//        } else {
+//            TVariable t = tset.last(); //.get(tIndex);
+//            Iterator<TValue> iterator = mind.getTValues().iterator(t);
+//            if (iterator.hasNext()) {
+//                do {
+//                    TValue v = iterator.next();
+//                    mind.getTValues().set(t, v);
+//                    showTreeWithValues(mind, r, tset.headSet(t));
+//                } while (iterator.hasNext());
+//            } else {
+//                showTreeWithValues(mind, r, tset.headSet(t));
+//            }
+//        }
+//    }
 
     public static void showRights(Mind mind, boolean showTree) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 //        int i = 0;

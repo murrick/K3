@@ -230,17 +230,18 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
 
-    public Iterator<TValue> iterator(TVariable tVariable) {
-        return new TValueIterator(false, tVariable);
-    }
-
     @Override
-    public Iterator<TValue> iterator() {
-        return new TValueIterator(true, null);
+    public Iterator iterator() {
+        return cache.iterator();
     }
 
-    public long getLastId() {
-        return cache.isEmpty() ? -1 : cache.getRoot().getId();
+    public TValue getRoot(TVariable t) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        for (TValue v : this) {
+            if (!v.isDeleted() && v.getTVar().getId() == t.getId()) {
+                return v;
+            }
+        }
+        return null;
     }
 
     public long incTag() {
@@ -251,41 +252,46 @@ public class TValueFactory implements Iterable<TValue> {
         return current;
     }
 
-    public class TValueIterator implements Iterator {
-
-        private TVariable tVariable;
-        private TValue next = null;
-        private Iterator iterator = null;
-
-        public TValueIterator(boolean backward, TVariable tVariable) {
-            this.tVariable = tVariable;
-            iterator = cache.iterator(backward, -1);
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (tVariable != null) {
-                while (iterator.hasNext()) {
-                    next = (TValue) iterator.next();
-                    if (next.getTVarId() == tVariable.getId()) {
-                        return true;
-                    }
-                }
-                next = null;
-            } else {
-                if (iterator.hasNext()) {
-                    next = (TValue) iterator.next();
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public IUnit next() {
-            return next;
-        }
-    }
-
+//    public Iterator<TValue> iterator(TVariable tVariable) {
+//        return new TValueIterator(true, tVariable);
+//    }
+//
+//
+//    public class TValueIterator implements Iterator {
+//
+//        private TVariable tVariable;
+//        private TValue next = null;
+//        private Iterator iterator = null;
+//
+//        public TValueIterator(boolean backward, TVariable tVariable) {
+//            this.tVariable = tVariable;
+//            iterator = cache.iterator(backward, -1);
+//        }
+//
+//        @Override
+//        public boolean hasNext() {
+//            if (tVariable != null) {
+//                while (iterator.hasNext()) {
+//                    next = (TValue) iterator.next();
+//                    if (next.getTVarId() == tVariable.getId()) {
+//                        return true;
+//                    }
+//                }
+//                next = null;
+//            } else {
+//                if (iterator.hasNext()) {
+//                    next = (TValue) iterator.next();
+//                    return true;
+//                }
+//            }
+//            return false;
+//        }
+//
+//        @Override
+//        public IUnit next() {
+//            return next;
+//        }
+//    }
+//
 
 }

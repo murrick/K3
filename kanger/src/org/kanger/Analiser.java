@@ -97,6 +97,7 @@ public class Analiser {
                     }
                 }
             }
+
             if (valid) {
                 user.getMind().getValues().add(p.getSolves());
             }
@@ -142,17 +143,22 @@ public class Analiser {
     public boolean checkDatabase(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 
         boolean result = false;
+        boolean calculated = false;
+
         Set<Right> orfans = new HashSet<>();
 
         for (long id : user.getMind().getRights().getDatabase(-1)) {
             Right p = user.getMind().getRights().get(id);
             if (!p.isDeleted() && checkRight(p, orfans, logging)) {
+                if (p.getDomain().isCalculated()) {
+                    calculated = true;
+                }
                 result = true;
             }
         }
 
         // Контроль закрытия всех веток запроса
-        if (!orfans.isEmpty()) {
+        if (!orfans.isEmpty() && !calculated) {
             result = false;
             if (logging) {
                 for (Right r : orfans) {

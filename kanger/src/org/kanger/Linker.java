@@ -184,42 +184,46 @@ public class Linker {
 
     private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, IReactor runnable) throws Exception {
         boolean result = false;
-//        if (tvars == null) {
-//            tvars = new TreeSet<>();
-//            for (TVariable t : user.getMind().getTVars()) {
-//                tvars.add(t);
-//            }
-//        }
         if (tvars.isEmpty()) {
             result = (boolean) runnable.run(logging);
         } else {
             TVariable t = tvars.last();
-
-//            user.getMind().getTValues().set(t, null);
-//            if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-//                result = true;
-//            }
-
-            Iterator<TValue> iterator = user.getMind().getTValues().iterator(t);
-            if (iterator.hasNext()) {
-//                long id = user.getMind().getTValues().mark();
-//                do {
-//                iterator = user.getMind().getTValues().iterator(t);
-                do {
-                    TValue v = iterator.next();
-                    if (/*v != null &&*/ !v.isDeleted()) {
-                        user.getMind().getTValues().set(t, v);
-                        if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-                            result = true;
+            long rootId = -1;
+            TValue root = user.getMind().getTValues().getRoot(t);
+            long newsId = root == null ? -1 : root.getId();
+            do {
+                List<TValue> list = new ArrayList<>();
+                if (newsId != -1) {
+                    for (TValue v : user.getMind().getTValues()) {
+                        if (v.getId() > rootId) {
+                            if (!v.isDeleted() && v.getTVar().getId() == t.getId()) {
+                                list.add(0, v);
+//                                user.getMind().getTValues().set(t, v);
+//                                if (rotateVariables(tvars.headSet(t), logging, runnable)) {
+//                                    result = true;
+//                                }
+                            }
+                        } else {
+                            break;
                         }
                     }
-                } while (iterator.hasNext());
-//                } while(id != user.getMind().getTValues().commit());
-            } else {
-                if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-                    result = true;
+                } else {
+                    if (rotateVariables(tvars.headSet(t), logging, runnable)) {
+                        result = true;
+                    }
                 }
-            }
+
+                for (TValue v : list) {
+                    user.getMind().getTValues().set(t, v);
+                    if (rotateVariables(tvars.headSet(t), logging, runnable)) {
+                        result = true;
+                    }
+                }
+
+                rootId = newsId;
+                root = user.getMind().getTValues().getRoot(t);
+                newsId = root == null ? -1 : root.getId();
+            } while (newsId > rootId);
         }
         return result;
     }
