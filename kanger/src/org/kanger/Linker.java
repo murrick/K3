@@ -183,49 +183,30 @@ public class Linker {
     }
 
     private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, IReactor runnable) throws Exception {
-        boolean result = false;
+        final boolean[] result = new boolean[]{false, false};
         if (tvars.isEmpty()) {
-            result = (boolean) runnable.run(logging);
+            result[0] = (boolean) runnable.run(logging);
         } else {
-            TVariable t = tvars.last();
-            long rootId = -1;
-            TValue root = user.getMind().getTValues().getRoot(t);
-            long newsId = root == null ? -1 : root.getId();
-            do {
-                List<TValue> list = new ArrayList<>();
-                if (newsId != -1) {
-                    for (TValue v : user.getMind().getTValues()) {
-                        if (v.getId() > rootId) {
-                            if (!v.isDeleted() && v.getTVar().getId() == t.getId()) {
-                                list.add(0, v);
-//                                user.getMind().getTValues().set(t, v);
-//                                if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-//                                    result = true;
-//                                }
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-                } else {
+            final TVariable t = tvars.last();
+            result[1] = false;
+            user.getMind().getTValues().forEach(t, new IReactor() {
+                @Override
+                public Object run(Object o) throws Exception {
+                    result[1] = true;
+                    user.getMind().getTValues().set(t, (TValue) o);
                     if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-                        result = true;
+                        result[0] = true;
                     }
+                    return true;
                 }
-
-                for (TValue v : list) {
-                    user.getMind().getTValues().set(t, v);
-                    if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-                        result = true;
-                    }
+            });
+            if (!result[1]) {
+                if (rotateVariables(tvars.headSet(t), logging, runnable)) {
+                    result[0] = true;
                 }
-
-                rootId = newsId;
-                root = user.getMind().getTValues().getRoot(t);
-                newsId = root == null ? -1 : root.getId();
-            } while (newsId > rootId);
+            }
         }
-        return result;
+        return result[0];
     }
 
     private boolean linkDomains(List<Domain> treeSlave, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {

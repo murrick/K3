@@ -2,10 +2,7 @@ package org.kanger.factory;
 
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.*;
 import org.kanger.storage.Escalera;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -250,6 +247,33 @@ public class TValueFactory implements Iterable<TValue> {
 
     public Map<TVariable, TValue> getCurrent() {
         return current;
+    }
+
+    private void forward(IStep root, TVariable t, long stopId, IReactor reactor) throws Exception {
+        if (root.getId() <= stopId) {
+            return;
+        } else if (root.getNext() != null) {
+            forward(root.getNext(), t, stopId, reactor);
+            if (((TValue) root.getData()).getTVarId() == t.getId()) {
+                reactor.run(root.getData(user));
+            }
+        } else {
+            if (((TValue) root.getData()).getTVarId() == t.getId()) {
+                reactor.run(root.getData(user));
+            }
+        }
+    }
+
+    public void forEach(TVariable t, IReactor reactor) throws Exception {
+        if (cache.size() > 0) {
+            long rootId;
+            long newsId = -1;
+            do {
+                rootId = newsId;
+                forward(cache.getRoot(), t, rootId, reactor);
+                newsId = cache.getRoot().getId();
+            } while (newsId > rootId);
+        }
     }
 
 //    public Iterator<TValue> iterator(TVariable tVariable) {
