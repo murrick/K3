@@ -48,9 +48,9 @@ public class DictionaryFactory implements Iterable<Term> {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             varIndex = base.varIndex;
-            cache = new Escalera(user, SCHEMA, base.cache);
+            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user, SCHEMA, null);
+            cache = new Escalera(user.getMind(), SCHEMA, null);
             if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -158,7 +158,7 @@ public class DictionaryFactory implements Iterable<Term> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Term) s.getData(user);
+                t = (Term) s.getData(user.getMind());
 //                t.setUser(user);
 //                t.linkExternal(user);
             }

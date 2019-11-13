@@ -39,9 +39,9 @@ public class TVariableFactory implements Iterable<TVariable> {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user, SCHEMA, base.cache);
+            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user, SCHEMA, null);
+            cache = new Escalera(user.getMind(), SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -108,7 +108,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (TVariable) s.getData(user);
+                t = (TVariable) s.getData(user.getMind());
 //                t.setUser(user);
 //                t.linkExternal(user);
             }

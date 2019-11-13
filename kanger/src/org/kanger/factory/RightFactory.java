@@ -47,12 +47,12 @@ public class RightFactory implements Iterable<Right> {
 
 //            lastId = user.nextId(SCHEMA);
 //            firstId = base.lastId;
-            cache = new Escalera(user, SCHEMA, base.cache);
-            stored = new Escalera(user, SCHEMA_STORED, base.stored);
+            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
+            stored = new Escalera(user.getMind(), SCHEMA_STORED, base.stored);
         } else {
 //            System.err.println(" =================================================== ");
-            cache = new Escalera(user, SCHEMA, null);
-            stored = new Escalera(user, SCHEMA_STORED, null);
+            cache = new Escalera(user.getMind(), SCHEMA, null);
+            stored = new Escalera(user.getMind(), SCHEMA_STORED, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -164,7 +164,7 @@ public class RightFactory implements Iterable<Right> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Right) s.getData(user);
+                t = (Right) s.getData(user.getMind());
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
