@@ -192,7 +192,7 @@ public class KangerTest {
     }
 
     public Domain createRecord(IUser user, boolean antc, Object predicate, Object... params) throws Exception {
-        Domain d = new Domain(user);
+        Domain d = new Domain(user.getMind());
         d.setAntc(antc);
         if (predicate instanceof Predicate) {
             d.setPredicate((Predicate) predicate);

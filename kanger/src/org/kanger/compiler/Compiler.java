@@ -1,9 +1,9 @@
 package org.kanger.compiler;
 
+import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.ParseError;
 import org.kanger.exception.ParseErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.units.*;
@@ -15,10 +15,10 @@ import java.util.*;
  */
 public class Compiler {
 
-    private IUser user;
+    private Mind mind;
 
-    public Compiler(IUser user) {
-        this.user = user;
+    public Compiler(Mind mind) {
+        this.mind = mind;
     }
 
     public Right compileLine(PTree root, boolean antc, String orig, boolean query, Object[] ext) throws Exception {
@@ -26,20 +26,20 @@ public class Compiler {
         Queue<Term> externals = new LinkedList<>();
         if (ext != null) {
             for (Object o : ext) {
-                Term t = user.getMind().getTerms().add(o);
+                Term t = mind.getTerms().add(o);
                 externals.add(t);
             }
         }
 
-        Right r = new Right(user);
-        user.getMind().getRights().register(r);
-        r.setOrig(user.getMind().getTerms().add(orig));
+        Right r = new Right(mind);
+        mind.getRights().register(r);
+        r.setOrig(mind.getTerms().add(orig));
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
-        Right x = user.getMind().getRights().add(r);
+        Right x = mind.getRights().add(r);
 
         if (!r.isDeleted()) {
             r.setQuery(query);
-            user.getMind().getRights().expand(r);
+            mind.getRights().expand(r);
         } else {
 //            r = x;
         }
@@ -157,18 +157,18 @@ public class Compiler {
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
-            p = new Argument(user.getMind().getTVars().createTVar(r, user.getMind().getTerms().add(varName)));
+            p = new Argument(mind.getTVars().createTVar(r, mind.getTerms().add(varName)));
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
-            p = new Argument(user.getMind().getTerms().createCVar(r, varName));
+            p = new Argument(mind.getTerms().createCVar(r, varName));
         }
         replacements.put(varName, p);
         return antc;
     }
 
     private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<Term> externals) throws Exception {
-//        Domain d = user.getMind().getDomains().add(user.getMind().getRights().getRoot());
+//        Domain d = mind.getDomains().add(mind.getRights().getRoot());
 
-        Domain d = new Domain(user);
+        Domain d = new Domain(mind);
         d.setRight(r);
 
         ArgList arg = new ArgList();
@@ -198,25 +198,25 @@ public class Compiler {
 //                if(tmp.get(tmp.size()-1).isTSet()) {
 //                    arg.add(tmp.get(tmp.size()-1));
 //                    tmp.remove(tmp.size()-1);
-//                    arg.add(0, new Argument(user.getMind().getTerms().add(tmp)));
+//                    arg.add(0, new Argument(mind.getTerms().add(tmp)));
 //                } else {
 //                    arg.add(tmp.get(0));
 //                    tmp.remove(0);
-//                    arg.add(new Argument(user.getMind().getTerms().add(tmp)));
+//                    arg.add(new Argument(mind.getTerms().add(tmp)));
 //                }
 //            }
-            pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), arg.size());
+            pred = mind.getPredicates().add(mind.getTerms().add(root.getName()), arg.size());
         } else if (root.getLeft() == null) {
-            pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getName()), 0);
+            pred = mind.getPredicates().add(mind.getTerms().add(root.getName()), 0);
         } else {
             parseArgs(d, arg, root.getRight(), 1, replacements, externals);
-            pred = user.getMind().getPredicates().add(user.getMind().getTerms().add(root.getLeft().getName()), arg.size());
+            pred = mind.getPredicates().add(mind.getTerms().add(root.getLeft().getName()), arg.size());
         }
         d.setPredicate(pred);
         d.setAntc(antc);
         d.getArguments().addAll(arg);
 
-        d = user.getMind().getDomains().add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRight());
+        d = mind.getDomains().add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRight());
         t.add(d);
     }
 
@@ -233,7 +233,7 @@ public class Compiler {
                 ArgList arguments = new ArgList();
                 parseArgs(d, arguments, root.getLeft(), level + 1, replacements, externals);
                 parseArgs(d, arguments, root.getRight(), level + 1, replacements, externals);
-                Function f = user.getMind().getFunctions().add(user.getMind().getTerms().add(root.getName()), arguments);
+                Function f = mind.getFunctions().add(mind.getTerms().add(root.getName()), arguments);
                 Argument t = new Argument(f);
                 arg.add(t);
             }
@@ -244,25 +244,25 @@ public class Compiler {
             // вложенная функция
             ArgList arguments = new ArgList();
             parseArgs(d, arguments, root.getRight(), level + 1, replacements, externals);
-            Function f = user.getMind().getFunctions().add(user.getMind().getTerms().add(root.getLeft().getName()), arguments);
+            Function f = mind.getFunctions().add(mind.getTerms().add(root.getLeft().getName()), arguments);
             Argument t = new Argument(f);
             arg.add(t);
         } else if (root.getName().equals("..")) {
-            Argument t = new Argument(user.getMind().getTerms().add(root));
+            Argument t = new Argument(mind.getTerms().add(root));
             arg.add(t);
         } else if (root.getName().charAt(0) == '{' && root.getName().charAt(root.getName().length() - 1) == '}') {
             String str = root.getName().substring(1, root.getName().length() - 1);
             Argument t;
             if (root.getName().contains("..")) {
-                t = new Argument(user.getMind().getTerms().add(str));
+                t = new Argument(mind.getTerms().add(str));
             } else {
                 ArgList list = new ArgList();
                 for (String s : str.split(",")) {
                     if (!s.trim().isEmpty()) {
-                        list.add(new Argument(user.getMind().getTerms().add(s)));
+                        list.add(new Argument(mind.getTerms().add(s)));
                     }
                 }
-                t = new Argument(user.getMind().getTerms().add(list));
+                t = new Argument(mind.getTerms().add(list));
             }
             arg.add(t);
         } else if (root.getName().charAt(0) == '?') {
@@ -274,7 +274,7 @@ public class Compiler {
         } else {
             Argument t;
             if ((t = replacements.get(root.getName())) == null) {
-                t = new Argument(user.getMind().getTerms().add(root.getName()));
+                t = new Argument(mind.getTerms().add(root.getName()));
             }
             arg.add(t);
         }

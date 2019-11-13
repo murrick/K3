@@ -1,11 +1,11 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Predicate;
 import org.kanger.units.Term;
@@ -24,10 +24,10 @@ public class PredicateFactory implements Iterable<Predicate> {
 //    private long firstId = 0;
 
     private ICache cache;
-    private IUser user = null;
+    private final Mind mind;
 
-    public PredicateFactory(IUser user) {
-        this.user = user;
+    public PredicateFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -35,9 +35,9 @@ public class PredicateFactory implements Iterable<Predicate> {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user, SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user, SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -48,9 +48,10 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public void commit(PredicateFactory base) {
+    public void commit(PredicateFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+            cache.setMind(mind);
 //            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
@@ -83,9 +84,9 @@ public class PredicateFactory implements Iterable<Predicate> {
         if (p != null) {
             return p;
         } else {
-            p = new Predicate(user);
-            p.setId(user.nextId(SCHEMA));
-            p.setMindId(user.getMind().getId());
+            p = new Predicate(mind);
+            p.setId(mind.getUser().nextId(SCHEMA));
+            p.setMindId(mind.getId());
             p.setRange(range);
             p.setName(line);
             cache.add(p);
@@ -106,10 +107,10 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public Predicate load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Predicate t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Predicate) s.getData(user);
+                t = (Predicate) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -123,8 +124,8 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getPredicates());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getPredicates());
         } else {
             cache.clear();
             transaction(null);

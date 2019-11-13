@@ -1,5 +1,6 @@
 package org.kanger.interfaces;
 
+import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
@@ -22,9 +23,9 @@ public interface IUnit<T> {
 
     boolean equalsTo(T to) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    IUser getUser();
+    Mind getMind();
 
-    T setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
+    T setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
 
     boolean isDeleted();
 
@@ -32,7 +33,7 @@ public interface IUnit<T> {
 
     ByteBuffer pack();
 
-    T apply(ByteBuffer packet) throws OutOfBufferException;
+    T apply(ByteBuffer packet) throws OutOfBufferException, IOException, RuntimeErrorException, ClassNotFoundException;
 
     UnitType getUnitType();
 }

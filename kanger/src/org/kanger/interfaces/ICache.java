@@ -1,5 +1,6 @@
 package org.kanger.interfaces;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 
@@ -49,5 +50,7 @@ public interface ICache extends Iterable {
     Iterator<Object> iterator(boolean backward, long fromId);
 
     boolean update() throws IOException;
+
+    void setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
 
 }

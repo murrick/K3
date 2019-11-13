@@ -1,11 +1,11 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.Escalera;
@@ -26,10 +26,10 @@ public class FunctionFactory implements Iterable<Function> {
 //    private long firstId = 0;
 
     private ICache cache;
-    private IUser user = null;
+    private final Mind mind;
 
-    public FunctionFactory(IUser user) {
-        this.user = user;
+    public FunctionFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -37,9 +37,9 @@ public class FunctionFactory implements Iterable<Function> {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user, SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user, SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -50,9 +50,10 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
-    public void commit(FunctionFactory base) {
+    public void commit(FunctionFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+            cache.setMind(mind);
 //            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
@@ -69,19 +70,19 @@ public class FunctionFactory implements Iterable<Function> {
 
 
     public Function add(Term name, ArgList arguments) throws Exception {
-        Function f = new Function(user);
+        Function f = new Function(mind);
         f.setName(name);
         f.setRange(arguments.size());
         f.getArguments().clear();
         f.getArguments().addAll(arguments);
 //        f.setArguments(arguments);
         f.getArguments().add(new Argument());
-        f.setId(user.nextId(SCHEMA));
-        f.setMindId(user.getMind().getId());
+        f.setId(mind.getUser().nextId(SCHEMA));
+        f.setMindId(mind.getId());
         cache.add(f);
 
         if (!f.isCalculable()) {
-            user.getMind().getCalculator().calculate(f, false);
+            mind.getCalculator().calculate(f, false);
         }
 
         return f;
@@ -89,10 +90,10 @@ public class FunctionFactory implements Iterable<Function> {
 
     public Function load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Function t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Function) s.getData(user);
+                t = (Function) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -106,8 +107,8 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getFunctions());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getFunctions());
         } else {
             cache.clear();
             transaction(null);
@@ -151,9 +152,9 @@ public class FunctionFactory implements Iterable<Function> {
 
     public void delete(Function f) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         f.setDeleted();
-        FValue v = user.getMind().getFValues().find(f);
+        FValue v = mind.getFValues().find(f);
         if (v != null) {
-            user.getMind().getFValues().delete(v);
+            mind.getFValues().delete(v);
         }
     }
 }

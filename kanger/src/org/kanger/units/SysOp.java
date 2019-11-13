@@ -1,12 +1,12 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
@@ -25,15 +25,15 @@ public class SysOp implements IUnit<SysOp> {
     protected IReactor proc = null;              /* called procedure */
     protected int range = 0;
     protected SysOp next = null;
-    protected transient IUser user = null;
+    protected transient Mind mind = null;
     protected transient boolean deleted = false;
     protected long id = -1;                                       // id домена
     private long mindId = -1;                                   // id транзакции
 
 
-    public SysOp(final IUser user) {
+    public SysOp(Mind mind) {
 
-        this.user = user;
+        this.mind = mind;
     }
 
 
@@ -48,10 +48,10 @@ public class SysOp implements IUnit<SysOp> {
     }
 
     public static void showLog(IUnit o, TValue v) {
-        if (o.getUser().getMind().isLogging() && v != null) {
-            o.getUser().getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
-            o.getUser().getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
-            o.getUser().getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+        if (o.getMind().isLogging() && v != null) {
+            o.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
+            o.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+            o.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
     }
 
@@ -188,13 +188,13 @@ public class SysOp implements IUnit<SysOp> {
     }
 
     @Override
-    public IUser getUser() {
-        return user;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public SysOp setUser(IUser user) {
-        this.user = user;
+    public SysOp setMind(Mind mind) {
+        this.mind = mind;
         return this;
     }
 

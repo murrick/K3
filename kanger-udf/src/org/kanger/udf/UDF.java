@@ -1,5 +1,6 @@
 package org.kanger.udf;
 
+import org.kanger.Mind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
@@ -11,13 +12,15 @@ import org.mozilla.javascript.Scriptable;
 public class UDF extends SysOp implements IReactor {
 
     private static Context scriptContext = null;
+    private Mind mind = null;
 
-    public UDF() {
+    public UDF(Mind mind) {
         if (scriptContext == null) {
             scriptContext = Context.enter();
             scriptContext.setLanguageVersion(Context.VERSION_1_7);
         }
         this.proc = this;
+        this.mind = mind;
     }
 
     @Override
@@ -56,7 +59,7 @@ public class UDF extends SysOp implements IReactor {
                 script = "";
             }
 
-            scope.put("org/kanger", scope, user.getMind());
+            scope.put("org/kanger", scope, mind);
 
             scriptContext.evaluateString(scope, script, "script", 1, null);
 
@@ -66,13 +69,13 @@ public class UDF extends SysOp implements IReactor {
                     ret = 0;
                     arg.get(index).setValue(null);
                 } else {
-                    if (!arg.get(index).setValue(user.getMind().getTerms().add(val))) {
+                    if (!arg.get(index).setValue(mind.getTerms().add(val))) {
                         ret = 0;
                     }
                 }
             } else if (fres != null) {
                 Object val = scope.get(params.get(params.size() - 1), scope);
-                Term cres = user.getMind().getTerms().add(val);
+                Term cres = mind.getTerms().add(val);
                 if (cres.getId() == fres.getId()) {
                     ret = 2;
                 } else {
@@ -85,7 +88,7 @@ public class UDF extends SysOp implements IReactor {
                             scriptContext.evaluateString(scope, script, "script", 1, null);
                             Object calc = scope.get(var, scope);
                             scope.put(var, scope, tmp);
-                            TValue v = arg.get(i).addValue(user.getMind().getTerms().add(calc));
+                            TValue v = arg.get(i).addValue(mind.getTerms().add(calc));
                             showLog((IUnit) o, v);
                         }
                     }

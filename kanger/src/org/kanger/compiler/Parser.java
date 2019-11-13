@@ -1,13 +1,13 @@
 package org.kanger.compiler;
 
 import org.kanger.Global;
+import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.ParseError;
 import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.units.SysOp;
 
 /**
@@ -541,13 +541,13 @@ public class Parser {
         return root;
     }
 
-    public static SysOp implement(String ln, IUser user) throws RuntimeErrorException, ParseErrorException {
+    public static SysOp implement(String ln, Mind mind) throws RuntimeErrorException, ParseErrorException {
         String line = "";
         boolean waitParams = false;
         boolean waitScript = false;
         int pos = 1;
-        SysOp f = Global.getUdf();
-        f.setUser(user);
+        SysOp f = Global.getUdf(mind);
+        f.setMind(mind);
         do {
             Object[] t = getToken(ln, pos);
             if (t == null) {

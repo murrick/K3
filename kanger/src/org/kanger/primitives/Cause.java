@@ -1,9 +1,9 @@
 package org.kanger.primitives;
 
+import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 
@@ -17,7 +17,7 @@ public class Cause implements Comparable<Cause> {
 
     private transient long srcId = -1;
     private transient long dstId = -1;
-    private transient IUser user = null;
+    private transient Mind mind = null;
 
 
     public Cause() {
@@ -41,14 +41,14 @@ public class Cause implements Comparable<Cause> {
         return packet.createMarked();
     }
 
-    public Cause apply(ByteBuffer packet) throws OutOfBufferException {
+    public Cause apply(ByteBuffer packet) throws OutOfBufferException, ClassNotFoundException, IOException, RuntimeErrorException {
         index = packet.getInt();
         srcId = packet.getLong();
         dstId = packet.getLong();
         try {
             packet.mark();
             arguments = new ArgList().apply(packet);
-            arguments.setUser(user);
+            arguments.setMind(mind);
         } finally {
             packet.release();
         }
@@ -57,14 +57,14 @@ public class Cause implements Comparable<Cause> {
 
     public Domain getSrc() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (src == null) {
-            src = user.getMind().getDomains().load(srcId);
+            src = mind.getDomains().load(srcId);
         }
         return src;
     }
 
     public Domain getDst() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (dst == null) {
-            dst = user.getMind().getDomains().load(dstId);
+            dst = mind.getDomains().load(dstId);
         }
         return dst;
     }
@@ -152,13 +152,13 @@ public class Cause implements Comparable<Cause> {
         }
     }
 
-    public IUser getUser() {
-        return user;
+    public Mind getMind() {
+        return mind;
     }
 
-    public void setUser(IUser user) {
-        this.user = user;
-        this.arguments.setUser(user);
+    public void setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        this.mind = mind;
+        this.arguments.setMind(mind);
     }
 
     public long getSrcId() {

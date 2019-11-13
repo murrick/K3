@@ -1,12 +1,12 @@
 package org.kanger.calculator;
 
+import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Argument;
 import org.kanger.units.Domain;
 import org.kanger.units.Function;
@@ -20,14 +20,14 @@ import java.io.IOException;
  */
 public class Calculator {
 
-    private IUser user = null;
+    private Mind mind = null;
     private Functions functions;
     private Predicates predicates;
 
-    public Calculator(IUser user) {
-        this.user = user;
-        predicates = new Predicates(user);
-        functions = new Functions(user);
+    public Calculator(Mind mind) {
+        this.mind = mind;
+        predicates = new Predicates(mind);
+        functions = new Functions(mind);
     }
 
 
@@ -54,12 +54,12 @@ public class Calculator {
             int k = execute(fu);
             if (k == 1 || k == 2) {
                 if (fu.isEmpty()) {
-                    user.getMind().getFValues().add(fu);
+                    mind.getFValues().add(fu);
                     result = true;
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Calculated function:");
-                        user.getMind().getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()));
-//                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                        mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
+                        mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()));
+//                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                     }
                 }
             }
@@ -87,7 +87,7 @@ public class Calculator {
         String n = d.getPredicate().getName() + "(" + d.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
-                : user.getMind().getLibrary().find(n);
+                : mind.getLibrary().find(n);
         if (op != null) {
 
 //            for (Argument a : d.getArguments()) {
@@ -117,13 +117,13 @@ public class Calculator {
         String n = fu.getName() + "(" + fu.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
-                : user.getMind().getLibrary().find(n);
+                : mind.getLibrary().find(n);
 
         if (op == null) {
             n = fu.getName() + "(0)";
             op = functions.getSysOps().get(n) != null
                     ? functions.getSysOps().get(n)
-                    : user.getMind().getLibrary().find(n);
+                    : mind.getLibrary().find(n);
         }
 
         if (op != null) {
@@ -153,7 +153,7 @@ public class Calculator {
         String n = p.getName() + "(" + p.getRange() + ")";
         SysOp op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
-                : user.getMind().getLibrary().find(n);
+                : mind.getLibrary().find(n);
         return op != null && op.getMode() == LibMode.PREDICATE;
     }
 
@@ -161,7 +161,7 @@ public class Calculator {
         String n = f.getName() + "(" + f.getRange() + ")";
         SysOp op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
-                : user.getMind().getLibrary().find(n);
+                : mind.getLibrary().find(n);
         return op != null && functions.getSysOps().get(n).getMode() == LibMode.FUNCTION;
     }
 
@@ -172,16 +172,16 @@ public class Calculator {
         else if (functions.getSysOps().containsKey(n))
             return functions.getSysOps().get(n);
         else
-            return user.getMind().getLibrary().find(n);
+            return mind.getLibrary().find(n);
     }
 
     public SysOp find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (o instanceof Predicate) {
             String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
-            return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : user.getMind().getLibrary().find(n);
+            return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
         } else if (o instanceof Function) {
             String n = ((Function) o).getName() + "(" + ((Function) o).getRange() + ")";
-            return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : user.getMind().getLibrary().find(n);
+            return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
         } else {
             String key = o.toString();
             SysOp op = findOp(key);
@@ -217,7 +217,7 @@ public class Calculator {
 //    }
 
 //    public boolean unregister(String key) {
-//        return user.getMind().getLibrary().remove(key);
+//        return mind.getLibrary().remove(key);
 //    }
 
     public Functions getFunctions() {

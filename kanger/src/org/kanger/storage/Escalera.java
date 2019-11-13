@@ -1,11 +1,11 @@
 package org.kanger.storage;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
 import java.util.*;
@@ -18,21 +18,21 @@ public class Escalera implements ICache {
 
     private ICache parent = null;
     private Stack<IStep> stack = new Stack<>();
-    private IUser user = null;
+    private Mind mind = null;
     private String schema = "";
 
-    public Escalera(IUser user, String schema, ICache parent) {
+    public Escalera(Mind mind, String schema, ICache parent) {
         this.parent = parent;
-        this.user = user;
+        this.mind = mind;
         this.schema = schema;
 
         if (this.parent != null) {
             root = this.parent.getRoot();
             top = this.parent.getTop();
         } else {
-            if (!user.isClosed()) {
-                root = user.getStorage(schema).getRoot();
-                top = user.getStorage(schema).getTop();
+            if (!mind.getUser().isClosed()) {
+                root = mind.getUser().getStorage(schema).getRoot();
+                top = mind.getUser().getStorage(schema).getTop();
             }
         }
     }
@@ -78,15 +78,15 @@ public class Escalera implements ICache {
     @Override
     public Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (root instanceof Sapato) {
-            IStep e = user.getStorage(schema).get(root.getId());
-            root.setData(e.getData(user));
+            IStep e = mind.getUser().getStorage(schema).get(root.getId());
+            root.setData(e.getData(mind));
         }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getId() == id) {
 //                if(s.getData() != null && s.getData() instanceof IUnit && ((IUnit) s.getData()).getUser() == null) {
 //                    ((IUnit) s.getData()).setUser(user);
 //                }
-                return s.getData(user);
+                return s.getData(mind);
             }
         }
         // Прямое обращение к БД имеет значение только в начальной загрузке
@@ -132,7 +132,7 @@ public class Escalera implements ICache {
     public Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Set<Long> set = new HashSet<>();
         if (root instanceof Sapato) {
-            root.setData(((Sapato) user.getStorage(schema).get(root.getId())).getData(user));
+            root.setData(((Sapato) mind.getUser().getStorage(schema).get(root.getId())).getData(mind));
         }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getHash() == h) {
@@ -148,10 +148,10 @@ public class Escalera implements ICache {
         root = null;
         top = null;
         if (parent == null) {
-            if (!user.isClosed()) {
-                user.getStorage(schema).clear();
+            if (!mind.getUser().isClosed()) {
+                mind.getUser().getStorage(schema).clear();
             } else {
-                user.clearCounters(schema);
+                mind.getUser().clearCounters(schema);
             }
         }
     }
@@ -229,8 +229,8 @@ public class Escalera implements ICache {
     @Override
     public boolean update() throws IOException {
         // Это самый низ
-        if (parent == null && !user.isClosed()) {
-            long lastId = user.getStorage(schema).isEmpty() ? -1 : user.getStorage(schema).getRoot().getId();
+        if (parent == null && !mind.getUser().isClosed()) {
+            long lastId = mind.getUser().getStorage(schema).isEmpty() ? -1 : mind.getUser().getStorage(schema).getRoot().getId();
             List<IStep> list = new ArrayList<>();
             for (IStep s = root; s != null; s = s.getNext()) {
                 if (s.getId() < lastId) {
@@ -239,18 +239,31 @@ public class Escalera implements ICache {
                 list.add(s);
             }
             for (IStep p : list) {
-                Sapato s = new Sapato(user.getStorage(schema), p);
+                Sapato s = new Sapato(mind.getUser().getStorage(schema), p);
                 s.append();
             }
 
-            root = user.getStorage(schema).getRoot();
-            top = user.getStorage(schema).getTop();
+            root = mind.getUser().getStorage(schema).getRoot();
+            top = mind.getUser().getStorage(schema).getTop();
             stack.clear();
 
             return true;
         } else {
             return false;
         }
+    }
+
+    @Override
+    public void setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        this.mind = mind;
+        for (IStep s = root; s != null; s = s.getNext()) {
+            if ((s.getData() instanceof IUnit) && ((IUnit) s.getData()).getMindId() > mind.getId()) {
+                ((IUnit) s.getData()).setMind(mind);
+            } else {
+                break;
+            }
+        }
+
     }
 
     public class WalkIterator implements Iterator {
@@ -263,10 +276,10 @@ public class Escalera implements ICache {
 
             try {
                 if (root instanceof Sapato) {
-                    root.setData(user.getStorage(schema).get(root.getId()).getData(user));
+                    root.setData(mind.getUser().getStorage(schema).get(root.getId()).getData(mind));
                 }
                 if (top instanceof Sapato) {
-                    top.setData(user.getStorage(schema).get(top.getId()).getData(user));
+                    top.setData(mind.getUser().getStorage(schema).get(top.getId()).getData(mind));
                 }
             } catch (Exception e) {
                 e.printStackTrace(System.err);
@@ -292,11 +305,11 @@ public class Escalera implements ICache {
 
 
             try {
-                o = step.getData(user);
+                o = step.getData(mind);
                 if (backward) {
                     step = step.getNext();
                 } else {
-                    if (step.getPrev() == null && !user.isClosed()) {
+                    if (step.getPrev() == null && !mind.getUser().isClosed()) {
                         // Чистая магия
                         IStep stop = step;
                         for (step = root; step != null; step = step.getNext()) {

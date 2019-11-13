@@ -1,11 +1,11 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.Escalera;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -28,13 +28,13 @@ public class TValueFactory implements Iterable<TValue> {
     private Map<TVariable, TValue> current = new HashMap<>();
 
     private ICache cache;
-    private IUser user = null;
+    private final Mind mind;
 
     private transient boolean action = false;
 
 
-    public TValueFactory(IUser user) {
-        this.user = user;
+    public TValueFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -43,9 +43,9 @@ public class TValueFactory implements Iterable<TValue> {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user, SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user, SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -56,9 +56,10 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public void commit(TValueFactory base) {
+    public void commit(TValueFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+            cache.setMind(mind);
 //            lastId = cache.getRoot().getId() + 1;
             if (cache.getTop() == null) {
                 cache.setTop(base.cache.getTop());
@@ -90,10 +91,10 @@ public class TValueFactory implements Iterable<TValue> {
     public TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = find(tv, o);
         if (t == null) {
-            t = new TValue(tv, o, user);
+            t = new TValue(tv, o, mind);
             t.setTVar(tv);
-            t.setId(user.nextId(SCHEMA));
-            t.setMindId(user.getMind().getId());
+            t.setId(mind.getUser().nextId(SCHEMA));
+            t.setMindId(mind.getId());
             cache.add(t);
             action = true;
 
@@ -129,10 +130,10 @@ public class TValueFactory implements Iterable<TValue> {
 
     public TValue load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (TValue) s.getData(user);
+                t = (TValue) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -182,8 +183,8 @@ public class TValueFactory implements Iterable<TValue> {
 //    }
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getTValues());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getTValues());
         } else {
             cache.clear();
             transaction(null);
@@ -213,8 +214,8 @@ public class TValueFactory implements Iterable<TValue> {
         return v;
     }
 
-    public int size() throws Exception {
-        return cache.size() + (user.isClosed() ? 0 : user.getStorage(SCHEMA).size());
+    public int size() {
+        return cache.size();
     }
 
     public void unlink() throws Exception {

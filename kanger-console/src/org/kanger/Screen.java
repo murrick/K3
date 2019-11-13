@@ -74,7 +74,7 @@ public class Screen {
         }
 
         try {
-            Global.getUdf();
+            Global.getUdf(user.getMind());
             System.out.println("UDF module loaded");
         } catch (RuntimeErrorException e) {
             System.err.println(e.toString());

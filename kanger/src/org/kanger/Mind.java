@@ -105,19 +105,19 @@ public class Mind {
     }
 
     private void init() {
-        terms = new DictionaryFactory(user);                    // Словарь констант
-        predicates = new PredicateFactory(user);                 // Предикаты
-        domains = new DomainFactory(user);                          // Список доменов
-        rights = new RightFactory(user);                             // Список правил
+        terms = new DictionaryFactory(this);                    // Словарь констант
+        predicates = new PredicateFactory(this);                 // Предикаты
+        domains = new DomainFactory(this);                          // Список доменов
+        rights = new RightFactory(this);                             // Список правил
 //        trees = new TreeFactory(user);                                // Список секвенций
 
-        tVars = new TVariableFactory(user);                      // t-переменные
-        tValues = new TValueFactory(user);                          // Подставленные значения
+        tVars = new TVariableFactory(this);                      // t-переменные
+        tValues = new TValueFactory(this);                          // Подставленные значения
 
-        functions = new FunctionFactory(user);                    // Функции
-        fValues = new FValueFactory(user);                          // Решения функций
+        functions = new FunctionFactory(this);                    // Функции
+        fValues = new FValueFactory(this);                          // Решения функций
 
-        library = new LibraryFactory(user);                            // Пользовательсткая библиотека функций и предикатов
+        library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов
 
         hypotesis = new HypotesisStore(user);                                // Список гипотез
         excluded = new HypotesisStore(user);                                // Список исключенных гипотез
@@ -127,10 +127,10 @@ public class Mind {
 
         log = new LogStore(this);                                        // Протокол вывода
 
-        calculator = new Calculator(user);                             // Калькулятор
-        analiser = new Analiser(user);                                   // Анализатор
-        compiler = new Compiler(user);                                   // Компилятор
-        linker = new Linker(user);                                         // Линкер
+        calculator = new Calculator(this);                             // Калькулятор
+        analiser = new Analiser(this);                                   // Анализатор
+        compiler = new Compiler(this);                                   // Компилятор
+        linker = new Linker(this);                                         // Линкер
 
     }
 
@@ -468,7 +468,7 @@ public class Mind {
 
         switch (line.charAt(0)) {
             case Enums.FOO:
-                r = Parser.implement(line, user);
+                r = Parser.implement(line, this);
                 if (r != null) {
                     library.add((SysOp) r);
                 }
@@ -485,7 +485,7 @@ public class Mind {
         }
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
-            r = new Compiler(user).compileLine(p, suc, orig, query, ext);
+            r = new Compiler(this).compileLine(p, suc, orig, query, ext);
         }
         return r;
     }

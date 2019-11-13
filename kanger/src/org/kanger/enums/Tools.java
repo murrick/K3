@@ -54,7 +54,7 @@ public abstract class Tools {
 //    }
 
     public static boolean isBlob(String ch) {
-        if (ch.charAt(0) == '#') {
+        if (ch.length() > 0 && ch.charAt(0) == '#') {
             return true;
         } else {
             return false;

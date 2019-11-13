@@ -1,6 +1,7 @@
 package org.kanger.interfaces;
 
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
@@ -11,9 +12,11 @@ public interface IStep {
 
     ByteBuffer pack();
 
-    IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException;
+    IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException, IOException, ClassNotFoundException;
 
-    Object getData(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
+//    Object getData(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
+
+    Object getData(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
 
     Object getData();
 

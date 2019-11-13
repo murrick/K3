@@ -1,10 +1,10 @@
 package org.kanger.primitives;
 
+import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Function;
 import org.kanger.units.TValue;
@@ -17,7 +17,7 @@ import java.util.List;
 
 public class ArgList extends ArrayList<Argument> {
 
-    private transient IUser user = null;
+    private transient Mind mind = null;
 
     public ArgList() {
         super();
@@ -40,13 +40,13 @@ public class ArgList extends ArrayList<Argument> {
         return packet.createMarked();
     }
 
-    public ArgList apply(ByteBuffer packet) throws OutOfBufferException {
+    public ArgList apply(ByteBuffer packet) throws OutOfBufferException, IOException, RuntimeErrorException, ClassNotFoundException {
         int count = packet.getInt();
         while (count-- > 0) {
             try {
                 packet.mark();
                 Argument a = new Argument().apply(packet);
-                a.setUser(user);
+                a.setMind(mind);
                 add(a);
             } finally {
                 packet.release();
@@ -203,7 +203,7 @@ public class ArgList extends ArrayList<Argument> {
         List<TVariable> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
-            a.setUser(user);
+            a.setMind(mind);
             if (a.isTSet() && !a.getT().isDeleted() && !a.getT().isDeleted() && !list.contains(a.getT())) {
                 list.add(a.getT());
             } else if (full && a.isFSet()) {
@@ -223,7 +223,7 @@ public class ArgList extends ArrayList<Argument> {
         List<Term> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
-            a.setUser(user);
+            a.setMind(mind);
             if (a.isCVar() && !a.getValue().isDeleted() && !list.contains(a.getValue())) {
                 list.add(a.getValue());
             } else if (full && a.isFSet()) {
@@ -283,14 +283,14 @@ public class ArgList extends ArrayList<Argument> {
         return str;
     }
 
-    public IUser getUser() {
-        return user;
+    public Mind getMind() {
+        return mind;
     }
 
-    public void setUser(IUser user) {
-        this.user = user;
+    public void setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        this.mind = mind;
         for (Argument a : this) {
-            a.setUser(user);
+            a.setMind(mind);
         }
     }
 

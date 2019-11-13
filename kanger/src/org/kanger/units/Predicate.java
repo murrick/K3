@@ -1,10 +1,10 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
@@ -23,7 +23,7 @@ public class Predicate implements IUnit<Predicate> {
     private Term name = null;               // Имя предиката
     private int range = 0;                  // К-во параметров
 
-    private IUser user = null;
+    private Mind mind = null;
 
     private transient long nameId = -1;
 
@@ -38,8 +38,8 @@ public class Predicate implements IUnit<Predicate> {
         this.nameId = name.getId();
     }
 
-    public Predicate(IUser user) {
-        this.user = user;
+    public Predicate(Mind mind) {
+        this.mind = mind;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class Predicate implements IUnit<Predicate> {
 
     public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {
-            name = user.getMind().getTerms().load(nameId);
+            name = mind.getTerms().load(nameId);
         }
         return name;
     }
@@ -95,8 +95,8 @@ public class Predicate implements IUnit<Predicate> {
 
     public Set<Domain> getSolves() throws Exception {
         Set<Domain> set = new HashSet<>();
-        for (long id : user.getMind().getRights().getDatabase(-1)) {
-            Right r = user.getMind().getRights().get(id);
+        for (long id : mind.getRights().getDatabase(-1)) {
+            Right r = mind.getRights().get(id);
             if (!r.isDeleted() && getId() == r.getDomain().getPredicateId()) {
                 set.add(r.getDomain());
             }
@@ -106,7 +106,7 @@ public class Predicate implements IUnit<Predicate> {
 
 //    public Set<Domain> getRelates() {
 //        Set<Domain> set = new HashSet<>();
-//        for (Domain d : user.getMind().getDomains()) {
+//        for (Domain d : mind.getDomains()) {
 //            if (getId() == d.getPredicate().getId()) {
 //                set.add(d);
 //            }
@@ -116,7 +116,7 @@ public class Predicate implements IUnit<Predicate> {
 
 //    public Set<Tree> getLinkedTrees() {
 //        Set<Tree> set = new HashSet<>();
-//        for (Tree t : user.getMind().getTrees()) {
+//        for (Tree t : mind.getTrees()) {
 //            for (Domain d : t.getSequence()) {
 //                if (getId() == d.getPredicate().getId()) {
 //                    set.add(t);
@@ -137,7 +137,7 @@ public class Predicate implements IUnit<Predicate> {
 //
 //    public Set<TVariable> getTVariables(boolean full) {
 //        Set<TVariable> set = new HashSet<>();
-//        for (Domain d : user.getMind().getDomains()) {
+//        for (Domain d : mind.getDomains()) {
 //            if (getId() == d.getPredicate().getId()) {
 //                set.addAll(d.getArguments().getTVariables(full));
 //                break;
@@ -227,13 +227,13 @@ public class Predicate implements IUnit<Predicate> {
     }
 
     @Override
-    public IUser getUser() {
-        return user;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public Predicate setUser(IUser user) {
-        this.user = user;
+    public Predicate setMind(Mind mind) {
+        this.mind = mind;
         return this;
     }
 

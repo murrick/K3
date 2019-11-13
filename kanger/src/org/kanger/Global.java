@@ -10,10 +10,10 @@ public class Global {
     private static IData data = null;
     private static Class udf = null;
 
-    public static SysOp getUdf() throws RuntimeErrorException {
+    public static SysOp getUdf(Mind mind) throws RuntimeErrorException {
         if (udf != null) {
             try {
-                return (SysOp) udf.getConstructors()[0].newInstance();
+                return (SysOp) udf.getConstructors()[0].newInstance(mind);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeErrorException(e.toString());
             }

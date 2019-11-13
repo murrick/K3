@@ -1,5 +1,6 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
@@ -7,7 +8,6 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
@@ -28,7 +28,7 @@ public class FValue implements IUnit<FValue> {
     private List<Long> stamp = new ArrayList<>();
 
     //    private FValue next = null;
-    private IUser user = null;
+    private Mind mind = null;
 
     private transient long functionId = -1;
     private transient long valueId = -1;
@@ -38,18 +38,18 @@ public class FValue implements IUnit<FValue> {
     public FValue() {
     }
 
-    public FValue(IUser user) {
-        this.user = user;
+    public FValue(Mind mind) {
+        this.mind = mind;
     }
 
-    public FValue(Function f, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public FValue(Function f, Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue();
         functionId = function.getId();
         if (value != null) {
             valueId = value.getId();
         }
-        condition.setUser(user);
+        condition.setMind(mind);
         for (Argument a : f.getArguments()) {
             if (a.isTSet()) {
                 condition.add(new Argument(a.getT().getCurrent()));
@@ -66,7 +66,7 @@ public class FValue implements IUnit<FValue> {
                 stamp.add(t.getCurrent().getValue().getId());
             }
         }
-        this.user = user;
+        this.mind = mind;
     }
 
     public ByteBuffer pack() {
@@ -85,7 +85,7 @@ public class FValue implements IUnit<FValue> {
         return packet.createMarked();
     }
 
-    public FValue apply(ByteBuffer packet) throws OutOfBufferException {
+    public FValue apply(ByteBuffer packet) throws OutOfBufferException, ClassNotFoundException, IOException, RuntimeErrorException {
         id = packet.getLong();
         mindId = packet.getLong();
         deleted = packet.getByte() != 0;
@@ -98,7 +98,7 @@ public class FValue implements IUnit<FValue> {
         try {
             packet.mark();
             condition = new ArgList().apply(packet);
-            condition.setUser(user);
+            condition.setMind(mind);
         } finally {
             packet.release();
         }
@@ -122,7 +122,7 @@ public class FValue implements IUnit<FValue> {
 
     public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (value == null && valueId != -1) {
-            value = user.getMind().getTerms().load(valueId);
+            value = mind.getTerms().load(valueId);
         }
         return value;
     }
@@ -150,7 +150,7 @@ public class FValue implements IUnit<FValue> {
 
     public Function getFunction() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (function == null) {
-            function = user.getMind().getFunctions().load(functionId);
+            function = mind.getFunctions().load(functionId);
         }
         return function;
     }
@@ -228,14 +228,14 @@ public class FValue implements IUnit<FValue> {
     }
 
     @Override
-    public IUser getUser() {
-        return user;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public FValue setUser(IUser user) {
-        this.user = user;
-        this.condition.setUser(user);
+    public FValue setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        this.mind = mind;
+        this.condition.setMind(mind);
         return this;
     }
 
@@ -288,7 +288,7 @@ public class FValue implements IUnit<FValue> {
                     }
 
                     String res = "";
-                    if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+                    if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
                         //                if (getResult() != null) {
                         if (getValue() != null) {
                             res = " {= " + getValue() + "}";
