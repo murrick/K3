@@ -44,6 +44,4 @@ public interface ICache extends Iterable {
 
     boolean update() throws IOException;
 
-    void delete(IStep s);
-
 }

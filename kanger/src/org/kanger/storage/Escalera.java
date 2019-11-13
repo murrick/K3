@@ -208,11 +208,6 @@ public class Escalera implements ICache {
         }
     }
 
-    @Override
-    public void delete(IStep s) {
-
-    }
-
     public class WalkIterator implements Iterator {
         private IStep step;
 
