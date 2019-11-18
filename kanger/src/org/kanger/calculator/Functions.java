@@ -1,11 +1,11 @@
 package org.kanger.calculator;
 
+import org.kanger.Mind;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.Tools;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.units.Function;
@@ -20,7 +20,7 @@ import java.util.*;
  */
 public class Functions {
 
-    private IUser user = null;
+    private final Mind mind;
     private final Map<String, SysOp> sysOps = new HashMap<String, SysOp>() {
 
 
@@ -371,7 +371,7 @@ public class Functions {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isEmpty()) {
-                        if (!((Function) o).setParameter(2, user.getMind().getTerms().add(new Term[]{arg.get(0).getValue(), arg.get(1).getValue()}))) {
+                        if (!((Function) o).setParameter(2, mind.getTerms().add(new Term[]{arg.get(0).getValue(), arg.get(1).getValue()}))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(2).getValue().getType() == DataType.INTERVAL && arg.get(1).getValue().compareTo(((List<Term>) arg.get(2).getValue().getValue()).get(1)) == 0) {
@@ -387,7 +387,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(2).getValue().getType() == DataType.INTERVAL
-                            && user.getMind().getTerms().add(new Term[]{arg.get(0).getValue(), arg.get(1).getValue()}).compareTo(arg.get(2).getValue()) == 0) {
+                            && mind.getTerms().add(new Term[]{arg.get(0).getValue(), arg.get(1).getValue()}).compareTo(arg.get(2).getValue()) == 0) {
                         ret = 2;
                     } else {
 //                        arg.createCVar(2).delValue(((Function) o).getOwner());
@@ -414,7 +414,7 @@ public class Functions {
                     }
 
                     if (ret != 0 && arg.get(arg.size() - 1).isEmpty()) {
-                        if (!((Function) o).setParameter(arg.size() - 1, user.getMind().getTerms().add(tmp))) {
+                        if (!((Function) o).setParameter(arg.size() - 1, mind.getTerms().add(tmp))) {
                             ret = 0;
                         }
                     } else if (ret != 0) {
@@ -963,7 +963,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
-                        if (!((Function) o).setParameter(0, _pow(arg.get(1).getValue(), user.getMind().getTerms().add(2)))) {
+                        if (!((Function) o).setParameter(0, _pow(arg.get(1).getValue(), mind.getTerms().add(2)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -971,7 +971,7 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                TValue v = arg.get(0).addValue(_pow(arg.get(1).getValue(), user.getMind().getTerms().add(2)));
+                                TValue v = arg.get(0).addValue(_pow(arg.get(1).getValue(), mind.getTerms().add(2)));
                                 SysOp.showLog((IUnit) o, v);
                             }
                             ret = 0;
@@ -995,7 +995,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty() && arg.get(2).isDefined()) {
-                        if (!((Function) o).setParameter(0, _root(arg.get(2).getValue(), user.getMind().getTerms().add(1)))) {
+                        if (!((Function) o).setParameter(0, _root(arg.get(2).getValue(), mind.getTerms().add(1)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
@@ -1003,7 +1003,7 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                TValue v = arg.get(0).addValue(_root(arg.get(2).getValue(), user.getMind().getTerms().add(1)));
+                                TValue v = arg.get(0).addValue(_root(arg.get(2).getValue(), mind.getTerms().add(1)));
                                 SysOp.showLog((IUnit) o, v);
                             }
                             ret = 0;
@@ -1027,7 +1027,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty() && arg.get(2).isDefined()) {
-                        if (!((Function) o).setParameter(0, _pow(arg.get(2).getValue(), user.getMind().getTerms().add(1)))) {
+                        if (!((Function) o).setParameter(0, _pow(arg.get(2).getValue(), mind.getTerms().add(1)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
@@ -1035,7 +1035,7 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                TValue v = arg.get(0).addValue(_pow(arg.get(2).getValue(), user.getMind().getTerms().add(1)));
+                                TValue v = arg.get(0).addValue(_pow(arg.get(2).getValue(), mind.getTerms().add(1)));
                                 SysOp.showLog((IUnit) o, v);
                             }
                             ret = 0;
@@ -1058,11 +1058,11 @@ public class Functions {
                     try {
                         ArgList arg = ((Function) o).getArguments();
                         if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(arg.get(0).getValue().toString().length()))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(arg.get(0).getValue().toString().length()))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
-                            if (user.getMind().getTerms().add(arg.get(0).getValue().toString().length()).compareTo(arg.get(1).getValue()) == 0) {
+                            if (mind.getTerms().add(arg.get(0).getValue().toString().length()).compareTo(arg.get(1).getValue()) == 0) {
                                 ret = 2;
                             } else {
                                 ret = 0;
@@ -1089,11 +1089,11 @@ public class Functions {
                         String result = arg.get(2).isEmpty() ? null : (String) arg.get(2).getValue().getValue();
 
                         if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isEmpty()) {
-                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(pos.intValue())))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isEmpty() && arg.get(2).isDefined()) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.indexOf(result)))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(src.indexOf(result)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
@@ -1101,7 +1101,7 @@ public class Functions {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(user.getMind().getTerms().add(src.indexOf(result)));
+                                    TValue v = arg.get(1).addValue(mind.getTerms().add(src.indexOf(result)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1129,20 +1129,20 @@ public class Functions {
                         String result = arg.get(3).isEmpty() ? null : (String) arg.get(3).getValue().getValue();
 
                         if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isEmpty()) {
-                            if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.substring(pos.intValue(), len.intValue())))) {
+                            if (!((Function) o).setParameter(3, mind.getTerms().add(src.substring(pos.intValue(), len.intValue())))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isEmpty() && arg.get(2).isDefined() && arg.get(3).isDefined()) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.indexOf(result)))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(src.indexOf(result)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isEmpty() && arg.get(3).isDefined() && src.indexOf(result) != -1) {
-                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.indexOf(result) + result.length()))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.indexOf(result) + result.length()))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isEmpty() && arg.get(2).isEmpty() && arg.get(3).isDefined() && src.indexOf(result) != -1) {
-                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.indexOf(result) + result.length()))
-                                    || !((Function) o).setParameter(1, user.getMind().getTerms().add(src.indexOf(result)))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.indexOf(result) + result.length()))
+                                    || !((Function) o).setParameter(1, mind.getTerms().add(src.indexOf(result)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()) {
@@ -1150,11 +1150,11 @@ public class Functions {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(user.getMind().getTerms().add(src.indexOf(result)));
+                                    TValue v = arg.get(1).addValue(mind.getTerms().add(src.indexOf(result)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 if (arg.get(2).isTSet()) {
-                                    TValue v = arg.get(2).addValue(user.getMind().getTerms().add(src.indexOf(result) + result.length()));
+                                    TValue v = arg.get(2).addValue(mind.getTerms().add(src.indexOf(result) + result.length()));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1181,11 +1181,11 @@ public class Functions {
                         String result = arg.get(2).isEmpty() ? null : (String) arg.get(2).getValue().getValue();
 
                         if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isEmpty()) {
-                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(0, pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(0, pos.intValue())))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isEmpty() && arg.get(2).isDefined() && src.startsWith(result)) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(result.length()))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(result.length()))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
@@ -1193,7 +1193,7 @@ public class Functions {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(user.getMind().getTerms().add(result.length()));
+                                    TValue v = arg.get(1).addValue(mind.getTerms().add(result.length()));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1220,11 +1220,11 @@ public class Functions {
                         String result = arg.get(2).isEmpty() ? null : (String) arg.get(2).getValue().getValue();
 
                         if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isEmpty()) {
-                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add(src.substring(src.length() - pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(src.length() - pos.intValue())))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isEmpty() && arg.get(2).isDefined() && src.endsWith(result)) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(result.length()))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(result.length()))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
@@ -1232,7 +1232,7 @@ public class Functions {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(user.getMind().getTerms().add(result.length()));
+                                    TValue v = arg.get(1).addValue(mind.getTerms().add(result.length()));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1257,7 +1257,7 @@ public class Functions {
                     String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.trim()))) {
+                        if (!((Function) o).setParameter(1, mind.getTerms().add(src.trim()))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -1283,7 +1283,7 @@ public class Functions {
                     String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toUpperCase()))) {
+                        if (!((Function) o).setParameter(1, mind.getTerms().add(src.toUpperCase()))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -1309,7 +1309,7 @@ public class Functions {
                     String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.toLowerCase()))) {
+                        if (!((Function) o).setParameter(1, mind.getTerms().add(src.toLowerCase()))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -1337,11 +1337,11 @@ public class Functions {
                         Double result = arg.get(2).isEmpty() ? null : (Double) arg.get(2).getValue().getValue();
 
                         if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isEmpty()) {
-                            if (!((Function) o).setParameter(2, user.getMind().getTerms().add((src.indexOf(sample))))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add((src.indexOf(sample))))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isEmpty() && arg.get(2).isDefined()) {
-                            if (!((Function) o).setParameter(1, user.getMind().getTerms().add(src.substring(result.intValue())))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(src.substring(result.intValue())))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined()) {
@@ -1349,7 +1349,7 @@ public class Functions {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(user.getMind().getTerms().add(src.substring(result.intValue())));
+                                    TValue v = arg.get(1).addValue(mind.getTerms().add(src.substring(result.intValue())));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1376,11 +1376,11 @@ public class Functions {
                     String result = arg.get(3).isEmpty() ? null : (String) arg.get(3).getValue().getValue();
 
                     if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isEmpty()) {
-                        if (!((Function) o).setParameter(3, user.getMind().getTerms().add(src.replaceAll(target, replacement)))) {
+                        if (!((Function) o).setParameter(3, mind.getTerms().add(src.replaceAll(target, replacement)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()) {
-                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(result.replaceAll(replacement, target)))) {
+                        if (!((Function) o).setParameter(0, mind.getTerms().add(result.replaceAll(replacement, target)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined() && arg.get(2).isDefined() && arg.get(3).isDefined()) {
@@ -1388,7 +1388,7 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                TValue v = arg.get(0).addValue(user.getMind().getTerms().add(result.replaceAll(replacement, target)));
+                                TValue v = arg.get(0).addValue(mind.getTerms().add(result.replaceAll(replacement, target)));
                                 SysOp.showLog((IUnit) o, v);
                             }
                             ret = 0;
@@ -1410,11 +1410,11 @@ public class Functions {
                     String result = arg.get(1).isEmpty() ? null : (String) arg.get(1).getValue().getValue();
 
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(String.format("%c", src.intValue())))) {
+                        if (!((Function) o).setParameter(1, mind.getTerms().add(String.format("%c", src.intValue())))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
-                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add((int) result.charAt(0)))) {
+                        if (!((Function) o).setParameter(0, mind.getTerms().add((int) result.charAt(0)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -1422,7 +1422,7 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                TValue v = arg.get(0).addValue(user.getMind().getTerms().add((int) result.charAt(0)));
+                                TValue v = arg.get(0).addValue(mind.getTerms().add((int) result.charAt(0)));
                                 SysOp.showLog((IUnit) o, v);
                             }
                             ret = 0;
@@ -1444,11 +1444,11 @@ public class Functions {
                     Double result = arg.get(1).isEmpty() ? null : (Double) arg.get(1).getValue().getValue();
 
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add((int) src.charAt(0)))) {
+                        if (!((Function) o).setParameter(1, mind.getTerms().add((int) src.charAt(0)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
-                        if (!((Function) o).setParameter(0, user.getMind().getTerms().add(String.format("%c", result.intValue())))) {
+                        if (!((Function) o).setParameter(0, mind.getTerms().add(String.format("%c", result.intValue())))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -1456,7 +1456,7 @@ public class Functions {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                TValue v = arg.get(0).addValue(user.getMind().getTerms().add(String.format("%c", result.intValue())));
+                                TValue v = arg.get(0).addValue(mind.getTerms().add(String.format("%c", result.intValue())));
                                 SysOp.showLog((IUnit) o, v);
                             }
                             ret = 0;
@@ -1492,7 +1492,7 @@ public class Functions {
                     ArgList arg = ((Function) o).getArguments();
 
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                        if (!((Function) o).setParameter(1, user.getMind().getTerms().add(arg.get(0).getValue().getType().name().toLowerCase()))) {
+                        if (!((Function) o).setParameter(1, mind.getTerms().add(arg.get(0).getValue().getType().name().toLowerCase()))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
@@ -1536,8 +1536,8 @@ public class Functions {
 
     };
 
-    public Functions(IUser user) {
-        this.user = user;
+    public Functions(Mind mind) {
+        this.mind = mind;
     }
 
     public Map<String, SysOp> getSysOps() {
@@ -1555,13 +1555,13 @@ public class Functions {
         } else if (a.getType() == DataType.SET) {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
-                for (Term n : user.getMind().getCalculator().getPredicates().expand(t, null)) {
+                for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
                     if (!list.contains(n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : user.getMind().getCalculator().getPredicates().expand(b, null)) {
+            for (Term t : mind.getCalculator().getPredicates().expand(b, null)) {
                 if (!list.contains(t)) {
                     list.add(new Argument(t));
                 }
@@ -1570,13 +1570,13 @@ public class Functions {
         } else if (b.getType() == DataType.SET) {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) b.getValue()) {
-                for (Term n : user.getMind().getCalculator().getPredicates().expand(t, null)) {
+                for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
                     if (!list.contains(n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : user.getMind().getCalculator().getPredicates().expand(a, null)) {
+            for (Term t : mind.getCalculator().getPredicates().expand(a, null)) {
                 if (!list.contains(t)) {
                     list.add(new Argument(t));
                 }
@@ -1585,7 +1585,7 @@ public class Functions {
         } else {
             res = a.getValue().toString() + b.getValue().toString();
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     protected Term _inc(Term a) throws Exception {
@@ -1599,7 +1599,7 @@ public class Functions {
         } else {
             res = a.getValue();
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     protected Term _dec(Term a) throws Exception {
@@ -1613,7 +1613,7 @@ public class Functions {
         } else {
             res = a.getValue();
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     protected Term _sub(Term a, Term b) throws Exception {
@@ -1629,13 +1629,13 @@ public class Functions {
         } else if (a.getType() == DataType.SET) {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
-                for (Term n : user.getMind().getCalculator().getPredicates().expand(t, null)) {
+                for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
                     if (!list.contains(n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : user.getMind().getCalculator().getPredicates().expand(b, null)) {
+            for (Term t : mind.getCalculator().getPredicates().expand(b, null)) {
                 if (list.contains(t)) {
                     list.remove(t);
                 }
@@ -1644,7 +1644,7 @@ public class Functions {
         } else {
             res = a.getValue().toString().replace(b.getValue().toString(), "");
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _mul(Term a, Term b) throws Exception {
@@ -1654,7 +1654,7 @@ public class Functions {
         } else if (a.getType() == DataType.SET && b.getType() == DataType.SET) {
             ArgList list1 = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
-                for (Term n : user.getMind().getCalculator().getPredicates().expand(t, null)) {
+                for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
                     if (!list1.contains(n)) {
                         list1.add(new Argument(n));
                     }
@@ -1662,7 +1662,7 @@ public class Functions {
             }
             ArgList list2 = new ArgList();
             for (Term t : (Collection<Term>) b.getValue()) {
-                for (Term n : user.getMind().getCalculator().getPredicates().expand(t, null)) {
+                for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
                     if (!list2.contains(n)) {
                         list2.add(new Argument(n));
                     }
@@ -1683,7 +1683,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _div(Term a, Term b) throws Exception {
@@ -1693,7 +1693,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _rem(Term a, Term b) throws Exception {
@@ -1703,7 +1703,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _neg(Term a) throws Exception {
@@ -1718,7 +1718,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _bitnot(Term a) throws Exception {
@@ -1728,7 +1728,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _bitleft(Term a, Term b) throws Exception {
@@ -1738,7 +1738,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _bitright(Term a, Term b) throws Exception {
@@ -1748,7 +1748,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _bitxor(Term a, Term b) throws Exception {
@@ -1758,7 +1758,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _bitand(Term a, Term b) throws Exception {
@@ -1768,7 +1768,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _bitor(Term a, Term b) throws Exception {
@@ -1778,7 +1778,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _bitandnot(Term a, Term b) throws Exception {
@@ -1788,7 +1788,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _log(Term a) throws Exception {
@@ -1798,7 +1798,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _exp(Term a) throws Exception {
@@ -1808,12 +1808,12 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _pi() throws Exception {
         Object res = Math.PI;
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _sin(Term a) throws Exception {
@@ -1823,7 +1823,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _asin(Term a) throws Exception {
@@ -1833,7 +1833,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _cos(Term a) throws Exception {
@@ -1843,7 +1843,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _acos(Term a) throws Exception {
@@ -1853,7 +1853,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _tan(Term a) throws Exception {
@@ -1863,7 +1863,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _atan(Term a) throws Exception {
@@ -1873,7 +1873,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _abs(Term a) throws Exception {
@@ -1883,7 +1883,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _int(Term a) throws Exception {
@@ -1893,7 +1893,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _round(Term a, Term b) throws Exception {
@@ -1911,7 +1911,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _sqrt(Term a) throws Exception {
@@ -1921,7 +1921,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _pow(Term a, Term b) throws Exception {
@@ -1931,7 +1931,7 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _root(Term a, Term b) throws Exception {
@@ -1941,12 +1941,12 @@ public class Functions {
         } else {
             res = (double) 0;
         }
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _now() throws Exception {
         Object res = new Date(System.currentTimeMillis());
-        return user.getMind().getTerms().add(res);
+        return mind.getTerms().add(res);
     }
 
     private Term _md5(Term a) throws Exception {
@@ -1958,7 +1958,7 @@ public class Functions {
             for (int i = 0; i < array.length; ++i) {
                 sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
             }
-            res = user.getMind().getTerms().add(sb.toString());
+            res = mind.getTerms().add(sb.toString());
         } catch (java.security.NoSuchAlgorithmException ex) {
             ex.printStackTrace(System.err);
         }

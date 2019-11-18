@@ -1,12 +1,12 @@
 package org.kanger.calculator;
 
+import org.kanger.Mind;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.units.Domain;
 import org.kanger.units.SysOp;
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class Predicates {
 
 
-    private IUser user = null;
+    private final Mind mind;
     private final Map<String, SysOp> sysOps = new HashMap<String, SysOp>() {
 
         /// Системные предикаты
@@ -38,11 +38,11 @@ public class Predicates {
                     ArgList arg = ((Domain) o).getArguments();
 
 //                    if (arg.get(0).isFSet() /*&& arg.get(0).getF().isCalculable() && !arg.get(0).getF().getResult().isEmpty() && arg.get(0).getF().isEmpty()*/) {
-//                        user.getMind().getCalculator().calculate(arg.get(0).getF(), user.getMind().isLogging());
+//                        mind.getCalculator().calculate(arg.get(0).getF(), mind.isLogging());
 //                    }
 //
 //                    if (arg.get(1).isFSet() /*&& arg.get(1).getF().isCalculable() && !arg.get(1).getF().getResult().isEmpty() && arg.get(1).getF().isEmpty()*/) {
-//                        user.getMind().getCalculator().calculate(arg.get(1).getF(), user.getMind().isLogging());
+//                        mind.getCalculator().calculate(arg.get(1).getF(), mind.isLogging());
 //                    }
 
                     if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
@@ -64,28 +64,28 @@ public class Predicates {
 
                             if (arg.get(0).isTSet() && !arg.get(1).isEmpty()) {
                                 TValue v = arg.get(0).addValue(arg.get(1).getValue());
-                                if (user.getMind().isLogging() && v != null) {
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                if (mind.isLogging() && v != null) {
+                                    mind.getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    mind.getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                                 }
                             }
                             if (arg.get(1).isTSet() && !arg.get(0).isEmpty()) {
                                 TValue v = arg.get(1).addValue(arg.get(0).getValue());
-                                if (user.getMind().isLogging() && v != null) {
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
-                                    user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                if (mind.isLogging() && v != null) {
+                                    mind.getLog().add(LogMode.ANALIZER, "Added: " + v);
+                                    mind.getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
+                                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                                 }
                             }
 
                             if (arg.get(0).isFSet() && arg.get(0).getF().isCalculable()) {
                                 arg.get(0).getF().setResult(v1);
-                                user.getMind().getCalculator().calculate(arg.get(0).getF(), user.getMind().isLogging());
+                                mind.getCalculator().calculate(arg.get(0).getF(), mind.isLogging());
                             }
                             if (arg.get(1).isFSet() && arg.get(1).getF().isCalculable()) {
                                 arg.get(1).getF().setResult(v0);
-                                user.getMind().getCalculator().calculate(arg.get(1).getF(), user.getMind().isLogging());
+                                mind.getCalculator().calculate(arg.get(1).getF(), mind.isLogging());
                             }
 
                             i = 0;
@@ -247,8 +247,8 @@ public class Predicates {
 
     };
 
-    public Predicates(IUser user) {
-        this.user = user;
+    public Predicates(Mind mind) {
+        this.mind = mind;
     }
 
     public Map<String, SysOp> getSysOps() {
@@ -259,7 +259,7 @@ public class Predicates {
         boolean res = false;
         if (rc < 0 ? (rcmin >= 0 && rcmax <= 0) : (rcmin <= 0 && rcmax >= 0)) {
             if (cur.getType() == DataType.NUMERIC && step == null) {
-                step = user.getMind().getTerms().add(1);
+                step = mind.getTerms().add(1);
             }
             if (cur.getType() == DataType.NUMERIC && step.getType() == DataType.NUMERIC
                     && Math.abs((double) step.getValue()) > Term.FLT_EPSILON
@@ -348,7 +348,7 @@ public class Predicates {
                 Matcher mt = pt.matcher(interval.getValue().toString());
                 if (mt.find()) {
                     for (int k = 0; k < mt.groupCount(); ++k) {
-                        Term t = user.getMind().getTerms().add(mt.group(k + 1) + "");
+                        Term t = mind.getTerms().add(mt.group(k + 1) + "");
                         if (cur.getId() == t.getId()) {
                             res = true;
                             break;
@@ -381,12 +381,12 @@ public class Predicates {
                 Term next;
                 if (step != null) {
                     next = rc < 0
-                            ? user.getMind().getCalculator().getFunctions()._add(cur, step)
-                            : user.getMind().getCalculator().getFunctions()._sub(cur, step);
+                            ? mind.getCalculator().getFunctions()._add(cur, step)
+                            : mind.getCalculator().getFunctions()._sub(cur, step);
                 } else {
                     next = rc < 0
-                            ? user.getMind().getCalculator().getFunctions()._inc(cur)
-                            : user.getMind().getCalculator().getFunctions()._dec(cur);
+                            ? mind.getCalculator().getFunctions()._inc(cur)
+                            : mind.getCalculator().getFunctions()._dec(cur);
                 }
                 if (next.getId() == cur.getId()) {
                     list.add(max);
@@ -413,7 +413,7 @@ public class Predicates {
         } else if (interval.getType() == DataType.STRING) {
             if (step == null) {
                 for (int k = 0; k < interval.getValue().toString().length(); ++k) {
-                    Term x = user.getMind().getTerms().add(interval.getValue().toString().charAt(k) + "");
+                    Term x = mind.getTerms().add(interval.getValue().toString().charAt(k) + "");
                     list.add(x);
                 }
             } else {
@@ -421,7 +421,7 @@ public class Predicates {
                 Matcher mt = pt.matcher(interval.getValue().toString());
                 if (mt.find()) {
                     for (int k = 0; k < mt.groupCount(); ++k) {
-                        Term t = user.getMind().getTerms().add(mt.group(k + 1) + "");
+                        Term t = mind.getTerms().add(mt.group(k + 1) + "");
                         list.add(t);
                     }
                 }

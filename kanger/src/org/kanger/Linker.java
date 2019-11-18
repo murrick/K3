@@ -6,7 +6,6 @@ import org.kanger.enums.LogMode;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
 import org.kanger.units.*;
@@ -19,7 +18,7 @@ import java.util.*;
  */
 public class Linker {
 
-    private final IUser user;
+    private final Mind mind;
 
     private int solvedPasses = 0;
     private int dumpedPasses = 0;
@@ -29,16 +28,16 @@ public class Linker {
 //    int cccc = 0;
 
 
-    public Linker(IUser user) {
-        this.user = user;
+    public Linker(Mind mind) {
+        this.mind = mind;
     }
 
     public void link(Right right, boolean logging) throws Exception {
 
-        user.getMind().getExcludedDomains().clear();
-        user.getMind().getUsedDomains().clear();
-        user.getMind().getCalculatedDomains().clear();
-        user.getMind().getUsedRights().clear();
+        mind.getExcludedDomains().clear();
+        mind.getUsedDomains().clear();
+        mind.getCalculatedDomains().clear();
+        mind.getUsedRights().clear();
 
         int passCounter = 0;
 
@@ -51,25 +50,25 @@ public class Linker {
         do {
 
             if (logging) {
-                user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
+                mind.getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
 
-            user.getMind().getRights().dropAction();
-            user.getMind().getTValues().dropAction();
-            user.getMind().getFValues().dropAction();
+            mind.getRights().dropAction();
+            mind.getTValues().dropAction();
+            mind.getFValues().dropAction();
 
             Set<Right> rightSet = new HashSet<>();
             if (right != null) {
                 rightSet.addAll(right.getNatives());
-                if (user.getMind().getUsedRights().containsKey(0L)) {
-                    for (Right r : user.getMind().getUsedRights().get(0L)) {
+                if (mind.getUsedRights().containsKey(0L)) {
+                    for (Right r : mind.getUsedRights().get(0L)) {
                         if (r.isUsed()) {
                             rightSet.addAll(r.getNatives());
                         }
                     }
                 }
             } else {
-                for (Right r : user.getMind().getRights()) {
+                for (Right r : mind.getRights()) {
                     if (!r.isDeleted()) {
                         rightSet.add(r);
                     }
@@ -98,22 +97,22 @@ public class Linker {
             rotator(rightList, causes, logging);
 
 
-        } while (user.getMind().getRights().isAction()
-                || user.getMind().getTValues().isAction()
-                || user.getMind().getFValues().isAction()
+        } while (mind.getRights().isAction()
+                || mind.getTValues().isAction()
+                || mind.getFValues().isAction()
         );
 
         if (logging) {
-            user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
-            user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
-            user.getMind().getLog().add(LogMode.TIMING, String.format("* LINKER Skiped passes: %03d", skipedPasses));
+            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
+            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
+            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Skiped passes: %03d", skipedPasses));
         }
 
         if (logging) {
-            if (user.getMind().getUsedRights().containsKey(0L) && !user.getMind().getUsedRights().get(0L).isEmpty()) {
-                user.getMind().getLog().add(LogMode.ANALIZER, String.format("---------- LINKER USED RIGHTS -------------"));
-                for (Right r : user.getMind().getUsedRights().get(0L)) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, r.toString());
+            if (mind.getUsedRights().containsKey(0L) && !mind.getUsedRights().get(0L).isEmpty()) {
+                mind.getLog().add(LogMode.ANALIZER, String.format("---------- LINKER USED RIGHTS -------------"));
+                for (Right r : mind.getUsedRights().get(0L)) {
+                    mind.getLog().add(LogMode.ANALIZER, r.toString());
                 }
             }
         }
@@ -125,9 +124,9 @@ public class Linker {
 
         for (Right r : rightList) {
 
-            user.getMind().getProducedDomains().clear();
-            user.getMind().getDomainSolves().clear();
-            user.getMind().getDomainCauses().clear();
+            mind.getProducedDomains().clear();
+            mind.getDomainSolves().clear();
+            mind.getDomainCauses().clear();
 
             final SortedSet<TVariable> tvars = new TreeSet<>();
             for (List<Domain> tree : r.getTree()) {
@@ -189,11 +188,11 @@ public class Linker {
         } else {
             final TVariable t = tvars.last();
             result[1] = false;
-            user.getMind().getTValues().forEach(t, new IReactor() {
+            mind.getTValues().forEach(t, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     result[1] = true;
-                    user.getMind().getTValues().set(t, (TValue) o);
+                    mind.getTValues().set(t, (TValue) o);
                     if (rotateVariables(tvars.headSet(t), logging, runnable)) {
                         result[0] = true;
                     }
@@ -214,7 +213,7 @@ public class Linker {
         boolean result = false;
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
-                for (Right right : user.getMind().getRights()) {
+                for (Right right : mind.getRights()) {
                     if (right.isDeleted() || !right.getPredicates().contains(slave.getPredicateId())) {
                         continue;
                     }
@@ -231,8 +230,8 @@ public class Linker {
 //                                master.recalculate(true);
 //                                slave.recalculate(true);
 
-                                user.getMind().getTValues().mark();
-                                user.getMind().getFValues().mark();
+                                mind.getTValues().mark();
+                                mind.getFValues().mark();
 
                                 boolean success = true;
                                 boolean applied = false;
@@ -257,9 +256,9 @@ public class Linker {
                                         if (master.get(i).isTSet()
                                                 && !slave.get(i).isEmpty()
                                                 && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                            TValue s = user.getMind().getTValues().find(master.get(i).getT(), slave.get(i).getValue());
+                                            TValue s = mind.getTValues().find(master.get(i).getT(), slave.get(i).getValue());
                                             if (s == null) {
-                                                s = user.getMind().getTValues().add(master.get(i).getT(), slave.get(i).getValue());
+                                                s = mind.getTValues().add(master.get(i).getT(), slave.get(i).getValue());
                                                 result = true;
                                             }
                                             substMaster[i] = s;
@@ -272,9 +271,9 @@ public class Linker {
                                         if (slave.get(i).isTSet()
                                                 && !master.get(i).isEmpty()
                                                 && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                            TValue s = user.getMind().getTValues().find(slave.get(i).getT(), master.get(i).getValue());
+                                            TValue s = mind.getTValues().find(slave.get(i).getT(), master.get(i).getValue());
                                             if (s == null) {
-                                                s = user.getMind().getTValues().add(slave.get(i).getT(), master.get(i).getValue());
+                                                s = mind.getTValues().add(slave.get(i).getT(), master.get(i).getValue());
                                                 result = true;
                                             }
                                             substSlave[i] = s;
@@ -288,13 +287,13 @@ public class Linker {
 //                                                && master.get(i).getF().isEmpty()
 //                                                && !slave.get(i).isEmpty()) {
 //
-//                                            long id = user.getMind().getFValues().getLastId();
+//                                            long id = mind.getFValues().getLastId();
 //                                            master.get(i).getF().setResult(slave.get(i).getValue());
-//                                            if (user.getMind().getCalculator().calculate(master.get(i).getF(), logging)
-//                                                    && id < user.getMind().getFValues().getLastId()) {
+//                                            if (mind.getCalculator().calculate(master.get(i).getF(), logging)
+//                                                    && id < mind.getFValues().getLastId()) {
 //                                                result = true;
 //                                                List<TValue> list = new ArrayList<>();
-//                                                for (TValue v : user.getMind().getTValues()) {
+//                                                for (TValue v : mind.getTValues()) {
 //                                                    if (v.getId() <= id) {
 //                                                        break;
 //                                                    } else {
@@ -313,13 +312,13 @@ public class Linker {
 //                                                && slave.get(i).getF().isEmpty()
 //                                                && !master.get(i).isEmpty()) {
 //
-//                                            long id = user.getMind().getFValues().getLastId();
+//                                            long id = mind.getFValues().getLastId();
 //                                            slave.get(i).getF().setResult(master.get(i).getValue());
-//                                            if (user.getMind().getCalculator().calculate(slave.get(i).getF(), logging)
-//                                                    && id < user.getMind().getFValues().getLastId()) {
+//                                            if (mind.getCalculator().calculate(slave.get(i).getF(), logging)
+//                                                    && id < mind.getFValues().getLastId()) {
 //                                                result = true;
 //                                                List<TValue> list = new ArrayList<>();
-//                                                for (TValue v : user.getMind().getTValues()) {
+//                                                for (TValue v : mind.getTValues()) {
 //                                                    if (v.getId() <= id) {
 //                                                        break;
 //                                                    } else {
@@ -352,8 +351,8 @@ public class Linker {
                                 if (success) {
                                     if (result) {
                                         ++solvedPasses;
-                                        user.getMind().getTValues().commit();
-                                        user.getMind().getFValues().commit();
+                                        mind.getTValues().commit();
+                                        mind.getFValues().commit();
 
                                     } else {
                                         ++dumpedPasses;
@@ -367,8 +366,8 @@ public class Linker {
 //                                    System.err.println("--- " + slave);
 //                                    System.err.println("--- ");
 
-                                    user.getMind().getTValues().release();
-                                    user.getMind().getFValues().release();
+                                    mind.getTValues().release();
+                                    mind.getFValues().release();
                                 }
 
                             }
@@ -408,7 +407,7 @@ public class Linker {
                             }
                             causes.get(r).add(s);
                             if (logging) {
-                                user.getMind().getLog().add(LogMode.ANALIZER, "Closed: " + v);
+                                mind.getLog().add(LogMode.ANALIZER, "Closed: " + v);
                             }
                             occurrs = true;
                         }
@@ -419,13 +418,13 @@ public class Linker {
         if (r != null) {
             master.setExcluded(slave.getArguments());
             if (occurrs && logging) {
-                user.getMind().pushDebugLevel();
-                user.getMind().setDebugLevel(user.getMind().getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
-                user.getMind().getLog().add(LogMode.ANALIZER, "From right: " + r); //master.getRight());
-                user.getMind().getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master);
-                user.getMind().popDebugLevel();
-                user.getMind().getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave);
-                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                mind.pushDebugLevel();
+                mind.setDebugLevel(mind.getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
+                mind.getLog().add(LogMode.ANALIZER, "From right: " + r); //master.getRight());
+                mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master);
+                mind.popDebugLevel();
+                mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave);
+                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
         }
         return r != null;
@@ -438,7 +437,7 @@ public class Linker {
         boolean occurs = false;
 
 
-        long tag = user.getMind().getTValues().incTag();
+        long tag = mind.getTValues().incTag();
 
 //        for (Domain d : tree) {
 //            d.recalculate(true);
@@ -472,10 +471,10 @@ public class Linker {
 
 //                for(Function f : d.getArguments().getFunctions()) {
 //                    f.clear();
-//                    user.getMind().getCalculator().calculate(f, logging);
+//                    mind.getCalculator().calculate(f, logging);
 //                }
 
-                for (Domain master : user.getMind().getDomains().getWaiters()) {
+                for (Domain master : mind.getDomains().getWaiters()) {
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
                         for (int i = 0; i < d.getRange(); ++i) {
@@ -527,7 +526,7 @@ public class Linker {
                     d.setCauses(causes.get(d.getRight()));
                     d.setSolves(solve);
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record: " + d);
+                        mind.getLog().add(LogMode.STORAGE, "DB assumed record: " + d);
                         logCauses(LogMode.STORAGE, d);
                     }
                 }
@@ -538,11 +537,11 @@ public class Linker {
                     if (!d.isStored()) {
                         result = true;
                         d.setProduced();
-                        d.setTag(tag = user.getMind().getTValues().incTag());
+                        d.setTag(tag = mind.getTValues().incTag());
                         d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record (x): " + d);
+                            mind.getLog().add(LogMode.STORAGE, "DB assumed record (x): " + d);
                             logCauses(LogMode.STORAGE, d);
                         }
                     }
@@ -556,11 +555,11 @@ public class Linker {
                     if (!d.isStored() /*|| d.isQuery()*/) {
                         result = true;
                         d.setProduced();
-                        d.setTag(tag = user.getMind().getTValues().incTag());
+                        d.setTag(tag = mind.getTValues().incTag());
                         d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record (c): " + d);
+                            mind.getLog().add(LogMode.STORAGE, "DB assumed record (c): " + d);
                             logCauses(LogMode.STORAGE, d);
                         }
                     }
@@ -589,7 +588,7 @@ public class Linker {
                         d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.STORAGE, "DB assumed record (a): " + d);
+                            mind.getLog().add(LogMode.STORAGE, "DB assumed record (a): " + d);
                             logCauses(LogMode.STORAGE, d);
                         }
                     }
@@ -597,7 +596,7 @@ public class Linker {
             }
             if (result) {
                 if (logging) {
-                    user.getMind().getLog().add(LogMode.STORAGE, "-------------------------------------------");
+                    mind.getLog().add(LogMode.STORAGE, "-------------------------------------------");
                 }
             }
 
@@ -611,10 +610,10 @@ public class Linker {
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
-                    user.getMind().getLog().add(mode, "\tFrom right: " + c.getDst().getRight());
+                    mind.getLog().add(mode, "\tFrom right: " + c.getDst().getRight());
                     rightShowed = true;
                 }
-                user.getMind().getLog().add(mode, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
+                mind.getLog().add(mode, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
             }
         }
     }
@@ -643,8 +642,8 @@ public class Linker {
 //    private boolean analizeProduces(List<ArgList> main, List<ArgList> calculated, List<Right> solves) {
 //        boolean result = false;
 //
-//        if(!user.getMind().getProducedDomains().isEmpty()) {
-//            for (Map.Entry<Domain, List<ArgList>> master : user.getMind().getProducedDomains().entrySet()) {
+//        if(!mind.getProducedDomains().isEmpty()) {
+//            for (Map.Entry<Domain, List<ArgList>> master : mind.getProducedDomains().entrySet()) {
 //                Domain dMaster = master.getKey();
 //                for (ArgList aMaster : master.getValue()) {
 //                    if (dMaster.isCalculated(aMaster)) {
@@ -657,7 +656,7 @@ public class Linker {
 //                        }
 //                        result = true;
 //                    } else {
-//                        for (Right right : user.getMind().getRights().getDatabase()) {
+//                        for (Right right : mind.getRights().getDatabase()) {
 //                            if (!right.getDomain().isCalculated()
 //                                    && dMaster.getPredicate().getId() == right.getDomain().getPredicate().getId()
 //                                    && dMaster.isAntc() != right.getDomain().isAntc()
@@ -681,8 +680,8 @@ public class Linker {
 //                }
 //            }
 //        } else {
-//            for(Right master : user.getMind().getRights().getDatabase()) {
-//                for (Right right : user.getMind().getRights().getDatabase(master.getId())) {
+//            for(Right master : mind.getRights().getDatabase()) {
+//                for (Right right : mind.getRights().getDatabase(master.getId())) {
 //                    if (!right.getDomain().isCalculated()
 //                            && master.getDomain().getPredicate().getId() == right.getDomain().getPredicate().getId()
 //                            && master.getDomain().isAntc() != right.getDomain().isAntc()
@@ -708,7 +707,7 @@ public class Linker {
 
     private boolean updateDatabase(boolean logging) throws Exception {
         boolean result = false;
-        for (Map.Entry<Domain, List<List<Term>>> e : user.getMind().getProducedDomains().entrySet()) {
+        for (Map.Entry<Domain, List<List<Term>>> e : mind.getProducedDomains().entrySet()) {
             Domain d = e.getKey();
             for (List<Term> args : e.getValue()) {
                 result = true;
@@ -717,7 +716,7 @@ public class Linker {
 
 //                for(Function f : d.getArguments().getFunctions()) {
 //                    f.clear();
-//                    user.getMind().getCalculator().calculate(f, logging);
+//                    mind.getCalculator().calculate(f, logging);
 //                }
 
 
@@ -737,7 +736,7 @@ public class Linker {
 //                if (d.getArguments().getTVariables(true).isEmpty()) {
 //                    x = d.setStored();
 //                    if (logging) {
-//                        user.getMind().getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+//                        mind.getLog().add(LogMode.ANALIZER, "DB set record: " + d);
 //                    }
 //                } else {
                     x = d.createStored();
@@ -745,7 +744,7 @@ public class Linker {
                         x.getDomain().setUsed();
                     }
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
+                        mind.getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
                     }
 //                }
 
@@ -772,7 +771,7 @@ public class Linker {
         }
 
         if (result && logging) {
-            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
         return result;
     }
@@ -785,7 +784,7 @@ public class Linker {
             for (Function f : d.getArguments().getFunctions()) {
                 if (f.isCalculable() && f.isEmpty()) {
                     f.clear();
-                    if (user.getMind().getCalculator().calculate(f, logging)) {
+                    if (mind.getCalculator().calculate(f, logging)) {
                         result = true;
                     }
                 }
@@ -796,7 +795,7 @@ public class Linker {
 //            for (Domain d : master) {
 //                for (Function f : d.getArguments().getFunctions()) {
 //                    if (f.isCalculable() && f.isEmpty()) {
-//                        if (user.getMind().getCalculator().calculate(f, logging)) {
+//                        if (mind.getCalculator().calculate(f, logging)) {
 //                            result = true;
 //                        }
 //                    }
@@ -805,7 +804,7 @@ public class Linker {
 //        }
 
         if (result && logging) {
-            user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
         }
         return result;
     }
@@ -848,7 +847,7 @@ public class Linker {
                 }
 
                 if (block && logging) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
+                    mind.getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
                 }
 //                d.popValues();
 

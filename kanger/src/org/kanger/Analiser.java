@@ -4,7 +4,6 @@ import org.kanger.enums.ArgumentType;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypotese;
 import org.kanger.units.Domain;
@@ -23,10 +22,10 @@ import java.util.Set;
 public class Analiser {
 
 
-    private final IUser user;
+    private final Mind mind;
 
-    public Analiser(IUser user) {
-        this.user = user;
+    public Analiser(Mind mind) {
+        this.mind = mind;
     }
 
 
@@ -37,48 +36,48 @@ public class Analiser {
         long start = System.currentTimeMillis();
 
         if (logging) {
-            user.getMind().getLog().add(LogMode.ANALIZER, "============= ANALISER ====================");
+            mind.getLog().add(LogMode.ANALIZER, "============= ANALISER ====================");
         }
 
-        user.getMind().getSolutions().clear();
-        user.getMind().getValues().clear();
+        mind.getSolutions().clear();
+        mind.getValues().clear();
 
         result = checkDatabase(right, logging);
 
         if (!result) {
 
             boolean occurs = false;
-            for (long id : user.getMind().getRights().getDatabase(-1)) {
-                Right r = user.getMind().getRights().get(id);
+            for (long id : mind.getRights().getDatabase(-1)) {
+                Right r = mind.getRights().get(id);
                 if (!r.isDeleted()) {
-                    if (r.getMindId() < user.getMind().getId()) {
+                    if (r.getMindId() < mind.getId()) {
                         break;
                     }
                     Domain d = r.getDomain();
                     for (Argument a : d.getArguments()) {
-                        if (a.isEmpty() || (a.getType() == ArgumentType.CVARIABLE && a.getValue().getMindId() == user.getMind().getId())) {
+                        if (a.isEmpty() || (a.getType() == ArgumentType.CVARIABLE && a.getValue().getMindId() == mind.getId())) {
                             d = null;
                             break;
                         }
                     }
                     if (d != null && !d.isQuery()
-                            && user.getMind().getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                        Hypotese h = user.getMind().getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                            && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+                        Hypotese h = mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
                         occurs = true;
                         if (logging) {
-                            user.getMind().getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                            mind.getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
                         }
                     }
                 }
             }
 
             if (occurs && logging) {
-                user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+                mind.getLog().add(LogMode.ANALIZER, "===========================================");
             }
         }
 
         if (logging) {
-            user.getMind().getLog().add(LogMode.TIMING, "* Analising time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
+            mind.getLog().add(LogMode.TIMING, "* Analising time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
         }
         return result;
     }
@@ -99,35 +98,35 @@ public class Analiser {
             }
 
             if (valid) {
-                user.getMind().getValues().add(p.getSolves());
+                mind.getValues().add(p.getSolves());
             }
 
             if (logging) {
-                user.getMind().getLog().add(LogMode.ANALIZER, "Calculated coincidence: ");
-                user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+                mind.getLog().add(LogMode.ANALIZER, "Calculated coincidence: ");
+                mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
+                mind.getLog().add(LogMode.ANALIZER, "===========================================");
             }
             result = true;
         } else {
-            for (long iq : user.getMind().getRights().getDatabase(p.getId())) {
-                Right q = user.getMind().getRights().get(iq);
+            for (long iq : mind.getRights().getDatabase(p.getId())) {
+                Right q = mind.getRights().get(iq);
                 if (!q.isDeleted()
                         && p.getDomain().equalsBase(q.getDomain())
                         && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
                     if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(true).isEmpty()) {
-                        user.getMind().getSolutions().add(q);
-                        user.getMind().getValues().add(p.getSolves());
+                        mind.getSolutions().add(q);
+                        mind.getValues().add(p.getSolves());
                     } else if (q.getDomain().isQuery() && q.getDomain().getArguments().getCVariables(true).isEmpty()) {
-                        user.getMind().getSolutions().add(p);
-                        user.getMind().getValues().add(q.getSolves());
+                        mind.getSolutions().add(p);
+                        mind.getValues().add(q.getSolves());
                     }
 
                     if (logging) {
-                        user.getMind().getLog().add(LogMode.ANALIZER, "Database coincidence: ");
-                        user.getMind().getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                        user.getMind().getLog().add(LogMode.ANALIZER, "\t" + q.toString());
-                        user.getMind().getLog().add(LogMode.ANALIZER, "===========================================");
+                        mind.getLog().add(LogMode.ANALIZER, "Database coincidence: ");
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
+                        mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
+                        mind.getLog().add(LogMode.ANALIZER, "===========================================");
                     }
                     result = true;
                 }
@@ -147,8 +146,8 @@ public class Analiser {
 
         Set<Right> orfans = new HashSet<>();
 
-        for (long id : user.getMind().getRights().getDatabase(-1)) {
-            Right p = user.getMind().getRights().get(id);
+        for (long id : mind.getRights().getDatabase(-1)) {
+            Right p = mind.getRights().get(id);
             if (!p.isDeleted() && checkRight(p, orfans, logging)) {
                 if (p.getDomain().isCalculated()) {
                     calculated = true;
@@ -162,9 +161,9 @@ public class Analiser {
             result = false;
             if (logging) {
                 for (Right r : orfans) {
-                    user.getMind().getLog().add(LogMode.ANALIZER, "Unresolved: \t" + r.getDomain().toString());
+                    mind.getLog().add(LogMode.ANALIZER, "Unresolved: \t" + r.getDomain().toString());
                 }
-                user.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
             }
         }
         return result;

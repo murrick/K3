@@ -127,10 +127,10 @@ public class Mind {
 
         log = new LogStore(this);                                        // Протокол вывода
 
-        calculator = new Calculator(user);                             // Калькулятор
-        analiser = new Analiser(user);                                   // Анализатор
-        compiler = new Compiler(user);                                   // Компилятор
-        linker = new Linker(user);                                         // Линкер
+        calculator = new Calculator(this);                             // Калькулятор
+        compiler = new Compiler(this);                                   // Компилятор
+        analiser = new Analiser(this);                                   // Анализатор
+        linker = new Linker(this);                                         // Линкер
 
     }
 
@@ -485,7 +485,7 @@ public class Mind {
         }
         if (suc != null) {
             PTree p = Parser.parser(line.substring(1));
-            r = new Compiler(user).compileLine(p, suc, orig, query, ext);
+            r = compiler.compileLine(p, suc, orig, query, ext);
         }
         return r;
     }
