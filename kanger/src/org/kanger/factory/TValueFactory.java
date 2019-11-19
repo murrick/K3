@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
@@ -26,12 +27,14 @@ public class TValueFactory implements Iterable<TValue> {
 
     private ICache cache;
     private IUser user = null;
+    private Mind mind = null;
 
     private transient boolean action = false;
 
 
     public TValueFactory(IUser user) {
         this.user = user;
+        this.mind = user.getMind();
         transaction(null);
     }
 
@@ -56,6 +59,11 @@ public class TValueFactory implements Iterable<TValue> {
     public void commit(TValueFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((TValue) s.getData()).setMind(mind);
+            }
+
 //            lastId = cache.getRoot().getId() + 1;
 //            if (cache.getTop() == null) {
 //                cache.setTop(base.cache.getTop());
@@ -87,7 +95,7 @@ public class TValueFactory implements Iterable<TValue> {
     public TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = find(tv, o);
         if (t == null) {
-            t = new TValue(tv, o, user);
+            t = new TValue(tv, o, mind);
             t.setTVar(tv);
             t.setId(user.nextId(SCHEMA));
             t.setMindId(user.getMind().getId());

@@ -1,5 +1,6 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
@@ -30,7 +31,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     //    private TValue next = null;          // Следующая переменная
     private transient long valueId = -1;
     private transient long tVarId = -1;
-    private transient IUser user = null;
+    private transient Mind mind = null;
 
     private transient boolean deleted = false;
 
@@ -44,12 +45,12 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         valueId = value.getId();
     }
 
-    public TValue(IUser user) {
-        this.user = user;
+    public TValue(Mind mind) {
+        this.mind = mind;
     }
 
-    public TValue(TVariable tv, Term t, IUser user) {
-        this.user = user;
+    public TValue(TVariable tv, Term t, Mind mind) {
+        this.mind = mind;
         this.tVar = tv;
         this.value = t;
         tVarId = tVar.getId();
@@ -93,7 +94,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (value == null && valueId != -1) {
-            value = user.getMind().getTerms().load(valueId);
+            value = mind.getTerms().load(valueId);
         }
         return value;
     }
@@ -120,7 +121,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     public TVariable getTVar() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (tVar == null && tVarId != -1) {
-            tVar = user.getMind().getTVars().load(tVarId);
+            tVar = mind.getTVars().load(tVarId);
         }
         return tVar;
     }
@@ -141,7 +142,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     @Override
     public String toString() {
         try {
-            return ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? getTVar().getVarName() + "=" : "") + getValue().toString();
+            return ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? getTVar().getVarName() + "=" : "") + getValue().toString();
         } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return "";
@@ -149,10 +150,10 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     public void setQuery() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (!user.getMind().getQueryValues().containsKey(getTVar())) {
-            user.getMind().getQueryValues().put(getTVar(), new HashSet<>());
+        if (!mind.getQueryValues().containsKey(getTVar())) {
+            mind.getQueryValues().put(getTVar(), new HashSet<>());
         }
-        user.getMind().getQueryValues().get(getTVar()).add(this);
+        mind.getQueryValues().get(getTVar()).add(this);
     }
 
     //    public void setBlocked() {
@@ -197,12 +198,22 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     @Override
     public IUser getUser() {
-        return user;
+        return null;
     }
 
     @Override
     public TValue setUser(IUser user) {
-        this.user = user;
+        //TODO: Переместить в setMind
+        mind = user.getMind();
+//        this.user = user;
+//        for (Cause c : causes) {
+//            c.setUser(user);
+//        }
+        return this;
+    }
+
+    public TValue setMind(Mind mind) {
+        this.mind = mind;
 //        for (Cause c : causes) {
 //            c.setUser(user);
 //        }
