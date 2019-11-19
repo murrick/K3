@@ -334,7 +334,7 @@ public class Right implements IUnit<Right> {
 //        }
         for (List<Domain> list : getTree()) {
             for (Domain d : list) {
-                d.setUser(user);
+                d.setMind(user.getMind());
             }
         }
         return this;

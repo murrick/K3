@@ -168,7 +168,7 @@ public class Compiler {
     private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<Term> externals) throws Exception {
 //        Domain d = mind.getDomains().add(mind.getRights().getRoot());
 
-        Domain d = new Domain(mind.getUser());
+        Domain d = new Domain(mind);
         d.setRight(r);
 
         ArgList arg = new ArgList();

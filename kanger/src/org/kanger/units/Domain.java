@@ -41,7 +41,6 @@ public class Domain implements IUnit<Domain> {
 
     private transient long predicateId = -1;
     private transient long rightId = -1;
-    private transient IUser user = null;
     private transient Mind mind = null;
 
     private transient boolean deleted = false;
@@ -60,8 +59,8 @@ public class Domain implements IUnit<Domain> {
         getArguments().addAll(args);
     }
 
-    public Domain(IUser user) {
-        this.user = user;
+    public Domain(Mind mind) {
+        this.mind = mind;
 
     }
 
@@ -105,7 +104,7 @@ public class Domain implements IUnit<Domain> {
 
     public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (predicate == null) {
-            predicate = user.getMind().getPredicates().load(predicateId);
+            predicate = mind.getPredicates().load(predicateId);
         }
         return predicate;
     }
@@ -118,7 +117,7 @@ public class Domain implements IUnit<Domain> {
 
     public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (right == null) {
-            right = user.getMind().getRights().load(rightId);
+            right = mind.getRights().load(rightId);
         }
         return right;
     }
@@ -196,9 +195,9 @@ public class Domain implements IUnit<Domain> {
 //        }
 //        return set;
 
-        ArgList args = arguments.convertBase(user.getMind());
-        if (user.getMind().getDomainCauses().containsKey(this) && user.getMind().getDomainCauses().get(this).containsKey(args)) {
-            return user.getMind().getDomainCauses().get(this).get(args);
+        ArgList args = arguments.convertBase(mind);
+        if (mind.getDomainCauses().containsKey(this) && mind.getDomainCauses().get(this).containsKey(args)) {
+            return mind.getDomainCauses().get(this).get(args);
         } else {
             return null;
         }
@@ -206,22 +205,22 @@ public class Domain implements IUnit<Domain> {
 
     public void setCauses(Collection<Cause> causes) throws Exception {
         if (causes != null) {
-            ArgList current = arguments.convertBase(user.getMind());
-            if (!user.getMind().getDomainCauses().containsKey(this)) {
-                user.getMind().getDomainCauses().put(this, new HashMap<>());
+            ArgList current = arguments.convertBase(mind);
+            if (!mind.getDomainCauses().containsKey(this)) {
+                mind.getDomainCauses().put(this, new HashMap<>());
             }
-            if (!user.getMind().getDomainCauses().get(this).containsKey(current)) {
-                user.getMind().getDomainCauses().get(this).put(current, new HashSet<>());
+            if (!mind.getDomainCauses().get(this).containsKey(current)) {
+                mind.getDomainCauses().get(this).put(current, new HashSet<>());
             } else {
-                user.getMind().getDomainCauses().get(this).get(current).clear();
+                mind.getDomainCauses().get(this).get(current).clear();
             }
             for (Cause c : causes) {
 
-                if (c.getArguments().equalsBase(user.getMind(), c.getSrc(user.getMind()).getArguments())
+                if (c.getArguments().equalsBase(mind, c.getSrc(mind).getArguments())
                         && sourceExists(c) == null
                         && getOverlaps(c.getArguments()) > 0
                 ) {
-                    user.getMind().getDomainCauses().get(this).get(current).add(c);
+                    mind.getDomainCauses().get(this).get(current).add(c);
                 }
             }
         }
@@ -233,8 +232,8 @@ public class Domain implements IUnit<Domain> {
 
 //    public void dropSolves(ArgList arguments) {
 //        ArgList args = arguments.convertBase();
-//        if (user.getMind().getDomainSolves().containsKey(this) && user.getMind().getDomainSolves().get(this).containsKey(args)) {
-//            user.getMind().getDomainSolves().get(this).remove(args);
+//        if (mind.getDomainSolves().containsKey(this) && mind.getDomainSolves().get(this).containsKey(args)) {
+//            mind.getDomainSolves().get(this).remove(args);
 //        }
 //    }
 
@@ -244,23 +243,23 @@ public class Domain implements IUnit<Domain> {
 
     public void setSolves(Collection<TValue> solves) {
         if (solves != null) {
-            ArgList current = arguments.convertBase(user.getMind());
-            if (!user.getMind().getDomainSolves().containsKey(this)) {
-                user.getMind().getDomainSolves().put(this, new HashMap<>());
+            ArgList current = arguments.convertBase(mind);
+            if (!mind.getDomainSolves().containsKey(this)) {
+                mind.getDomainSolves().put(this, new HashMap<>());
             }
-            if (!user.getMind().getDomainSolves().get(this).containsKey(current)) {
-                user.getMind().getDomainSolves().get(this).put(current, new TreeSet<>());
+            if (!mind.getDomainSolves().get(this).containsKey(current)) {
+                mind.getDomainSolves().get(this).put(current, new TreeSet<>());
             } else {
-                user.getMind().getDomainSolves().get(this).get(current).clear();
+                mind.getDomainSolves().get(this).get(current).clear();
             }
-            user.getMind().getDomainSolves().get(this).get(current).addAll(solves);
+            mind.getDomainSolves().get(this).get(current).addAll(solves);
         }
     }
 
     public Set<TValue> getSolves(ArgList arguments) {
-        ArgList args = arguments.convertBase(user.getMind());
-        if (user.getMind().getDomainSolves().containsKey(this) && user.getMind().getDomainSolves().get(this).containsKey(args)) {
-            return user.getMind().getDomainSolves().get(this).get(args);
+        ArgList args = arguments.convertBase(mind);
+        if (mind.getDomainSolves().containsKey(this) && mind.getDomainSolves().get(this).containsKey(args)) {
+            return mind.getDomainSolves().get(this).get(args);
         } else {
             return null;
         }
@@ -270,8 +269,8 @@ public class Domain implements IUnit<Domain> {
         Set<Cause> causes = getCauses();
         if (causes != null) {
             for (Cause x : causes) {
-                if (x.getSrc(user.getMind()).getPredicateId() == c.getSrc(user.getMind()).getPredicateId()
-                        && x.getSrc(user.getMind()).getArguments().equalsBase(user.getMind(), c.getSrc(user.getMind()).getArguments())) {
+                if (x.getSrc(mind).getPredicateId() == c.getSrc(mind).getPredicateId()
+                        && x.getSrc(mind).getArguments().equalsBase(mind, c.getSrc(mind).getArguments())) {
                     return x;
                 }
 //                if(x.getSrc().sourceExists(c)) {
@@ -327,20 +326,20 @@ public class Domain implements IUnit<Domain> {
         String s = "";
         //TODO: Костыль
 //        t.setUser(user);
-//        if(!t.isEmpty(user.getMind())) {
-//            t.getValue(user.getMind()).setMind(user.getMind());
+//        if(!t.isEmpty(mind)) {
+//            t.getValue(mind).setMind(mind);
 //        }
 
         if (t.isFSet()) {
-            s += t.getF(user.getMind()).toString();
+            s += t.getF(mind).toString();
         } else if (t.isTSet()) {
-            s += t.getT(user.getMind()).toString();
+            s += t.getT(mind).toString();
         } else if (t.isVSet()) {
-            s += t.getV(user.getMind()).toString();
+            s += t.getV(mind).toString();
         } else if (t.isRSet()) {
-            s += t.getR(user.getMind()).toString();
-        } else if (!t.isEmpty(user.getMind())) {
-            s += t.getValue(user.getMind()).toString();
+            s += t.getR(mind).toString();
+        } else if (!t.isEmpty(mind)) {
+            s += t.getValue(mind).toString();
         } else {
             s += "_";
         }
@@ -364,9 +363,9 @@ public class Domain implements IUnit<Domain> {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
 
             List<Term> cVars = new ArrayList<>();
-            for (Term t : arguments.getCVariables(user.getMind(), true)) {
+            for (Term t : arguments.getCVariables(mind, true)) {
                 //TODO: Костыль
-                t.setMind(user.getMind());
+                t.setMind(mind);
                 if (!cVars.contains(t)) {
                     cVars.add(t);
                 }
@@ -412,10 +411,10 @@ public class Domain implements IUnit<Domain> {
             }
 
             String suffix = "";
-            if ((user.getMind().getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
+            if ((mind.getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
                 suffix += " " + id;
             }
-            if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
+            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
                 try {
                     suffix += /*isDest() ||*/ isQuery(arguments) || isUsed() || isExcluded(arguments) || /*isProduced() ||*/ isStored(arguments) || isCalculated(arguments)
                             ? " " +
@@ -448,12 +447,12 @@ public class Domain implements IUnit<Domain> {
             return false;
         }
         for (int i = 0; i < arguments.size(); ++i) {
-            if (arguments.get(i).isEmpty(user.getMind()) || o.getArguments().get(i).isEmpty(user.getMind())) {
+            if (arguments.get(i).isEmpty(mind) || o.getArguments().get(i).isEmpty(mind)) {
                 return false;
             } else if (id != -1 && o.getId() != -1
-                    && arguments.get(i).getValue(user.getMind()).getId() != o.getArguments().get(i).getValue(user.getMind()).getId()) {
+                    && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()) {
                 return false;
-            } else if (!arguments.get(i).getValue(user.getMind()).equalsTo(o.getArguments().get(i).getValue(user.getMind()))) {
+            } else if (!arguments.get(i).getValue(mind).equalsTo(o.getArguments().get(i).getValue(mind))) {
                 return false;
             }
         }
@@ -497,8 +496,8 @@ public class Domain implements IUnit<Domain> {
         Set<Long> ids = new HashSet<>();
         for (Argument a : arguments) {
             for (Argument b : arg) {
-                if (!a.isEmpty(user.getMind()) && !b.isEmpty(user.getMind()) && a.getValue(user.getMind()).getId() == b.getValue(user.getMind()).getId()) {
-                    ids.add(a.getValue(user.getMind()).getId());
+                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                    ids.add(a.getValue(mind).getId());
                 }
             }
         }
@@ -506,7 +505,7 @@ public class Domain implements IUnit<Domain> {
     }
 
     public boolean contains(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        for (TVariable x : arguments.getTVariables(user.getMind(), true)) {
+        for (TVariable x : arguments.getTVariables(mind, true)) {
             if (x.getId() == t.getId()) {
                 return true;
             }
@@ -575,9 +574,9 @@ public class Domain implements IUnit<Domain> {
 //
 
     public boolean isUsed() {
-        if (user.getMind().getUsedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getUsedDomains().get(this)) {
-                if (arguments.equalsBase(user.getMind(), list)) {
+        if (mind.getUsedDomains().containsKey(this)) {
+            for (ArgList list : mind.getUsedDomains().get(this)) {
+                if (arguments.equalsBase(mind, list)) {
                     return true;
                 }
             }
@@ -587,18 +586,18 @@ public class Domain implements IUnit<Domain> {
 
     public void setUsed() {
 //        arguments.setUser(user);
-        if (!user.getMind().getUsedDomains().containsKey(this)) {
-            user.getMind().getUsedDomains().put(this, new HashSet<>());
+        if (!mind.getUsedDomains().containsKey(this)) {
+            mind.getUsedDomains().put(this, new HashSet<>());
         }
         if (!isUsed()) {
-            user.getMind().getUsedDomains().get(this).add(arguments.convertBase(user.getMind()));
+            mind.getUsedDomains().get(this).add(arguments.convertBase(mind));
         }
     }
 
     public boolean isExcluded(ArgList args) {
-        if (user.getMind().getExcludedDomains().containsKey(this)) {
-            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
-                if (args.equalsBase(user.getMind(), list)) {
+        if (mind.getExcludedDomains().containsKey(this)) {
+            for (ArgList list : mind.getExcludedDomains().get(this)) {
+                if (args.equalsBase(mind, list)) {
                     return true;
                 }
             }
@@ -608,8 +607,8 @@ public class Domain implements IUnit<Domain> {
 
     public boolean isExcluded() {
         return isExcluded(arguments);
-//        if (user.getMind().getExcludedDomains().containsKey(this)) {
-//            for (ArgList list : user.getMind().getExcludedDomains().get(this)) {
+//        if (mind.getExcludedDomains().containsKey(this)) {
+//            for (ArgList list : mind.getExcludedDomains().get(this)) {
 //                if (arguments.equalsBase(list)) {
 //                    return true;
 //                }
@@ -619,22 +618,22 @@ public class Domain implements IUnit<Domain> {
     }
 
     public void setExcluded(ArgList args) {
-        if (!user.getMind().getExcludedDomains().containsKey(this)) {
-            user.getMind().getExcludedDomains().put(this, new HashSet<>());
+        if (!mind.getExcludedDomains().containsKey(this)) {
+            mind.getExcludedDomains().put(this, new HashSet<>());
         }
         if (!isExcluded(args)) {
-            user.getMind().getExcludedDomains().get(this).add(args.convertBase(user.getMind()));
+            mind.getExcludedDomains().get(this).add(args.convertBase(mind));
         }
     }
 
     public void setExcluded() {
         setExcluded(arguments);
-//        if (!user.getMind().getExcludedDomains().containsKey(id)) {
-//            user.getMind().getExcludedDomains().put(id, new HashSet<>());
+//        if (!mind.getExcludedDomains().containsKey(id)) {
+//            mind.getExcludedDomains().put(id, new HashSet<>());
 //        }
 //        if (!isExcluded()) {
 ////            try {
-//            user.getMind().getExcludedDomains().get(id).add(arguments.convertBase());
+//            mind.getExcludedDomains().get(id).add(arguments.convertBase());
 ////            } catch (ParametersIncompleteException e) {
 //////                e.printStackTrace();
 ////            }
@@ -642,9 +641,9 @@ public class Domain implements IUnit<Domain> {
     }
 
     public boolean isProduced() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getProducedDomains().containsKey(this)) {
-            for (List<Term> list : user.getMind().getProducedDomains().get(this)) {
-                if (arguments.equalsStamp(user.getMind(), list)) {
+        if (mind.getProducedDomains().containsKey(this)) {
+            for (List<Term> list : mind.getProducedDomains().get(this)) {
+                if (arguments.equalsStamp(mind, list)) {
                     return true;
                 }
             }
@@ -653,12 +652,12 @@ public class Domain implements IUnit<Domain> {
     }
 
 //    public void setProduced(int tag, ArgList args) {
-//        if (!user.getMind().getProducedDomains().containsKey(this)) {
-//            user.getMind().getProducedDomains().put(this, new HashSet<>());
+//        if (!mind.getProducedDomains().containsKey(this)) {
+//            mind.getProducedDomains().put(this, new HashSet<>());
 //        }
 //        if (!isProduced(args)) {
 //            try {
-//                user.getMind().getProducedDomains().get(this).add(convertArguments(args));
+//                mind.getProducedDomains().get(this).add(convertArguments(args));
 //            } catch (ParametersIncompleteException e) {
 ////                e.printStackTrace();
 //            }
@@ -666,8 +665,8 @@ public class Domain implements IUnit<Domain> {
 //    }
 //
 //    public boolean isProduced(ArgList args) {
-//        if (user.getMind().getProducedDomains().containsKey(this)) {
-//            for (ArgList list : user.getMind().getProducedDomains().get(this)) {
+//        if (mind.getProducedDomains().containsKey(this)) {
+//            for (ArgList list : mind.getProducedDomains().get(this)) {
 //                if (isEqualsArguments(args, list)) {
 //                    return true;
 //                }
@@ -678,28 +677,28 @@ public class Domain implements IUnit<Domain> {
 //
 
     public void setTag(long tag) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        for (TVariable t : arguments.getTVariables(user.getMind(), true)) {
+        for (TVariable t : arguments.getTVariables(mind, true)) {
             t.getCurrent().setTag(tag);
         }
     }
 
 //    public Set<Long> getTag() {
 //        ArgList args = arguments;
-//        if (user.getMind().getDomainTags().containsKey(this)
-//                && user.getMind().getDomainTags().get(this).containsKey(args)) {
-//            return user.getMind().getDomainTags().get(this).get(args);
+//        if (mind.getDomainTags().containsKey(this)
+//                && mind.getDomainTags().get(this).containsKey(args)) {
+//            return mind.getDomainTags().get(this).get(args);
 //        } else {
 //            return new HashSet<>();
 //        }
 //    }
 
     public void setProduced() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (!user.getMind().getProducedDomains().containsKey(this)) {
-            user.getMind().getProducedDomains().put(this, new ArrayList<>());
+        if (!mind.getProducedDomains().containsKey(this)) {
+            mind.getProducedDomains().put(this, new ArrayList<>());
         }
         if (!isProduced()) {
             try {
-                user.getMind().getProducedDomains().get(this).add(arguments.getStamp(user.getMind()));
+                mind.getProducedDomains().get(this).add(arguments.getStamp(mind));
             } catch (ParametersIncompleteException | OutOfBufferException e) {
             }
         }
@@ -710,9 +709,9 @@ public class Domain implements IUnit<Domain> {
     }
 
     public boolean isCalculated(ArgList arguments) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getCalculatedDomains().containsKey(this)) {
-            for (List<Term> list : user.getMind().getCalculatedDomains().get(this)) {
-                if (arguments.equalsStamp(user.getMind(), list)) {
+        if (mind.getCalculatedDomains().containsKey(this)) {
+            for (List<Term> list : mind.getCalculatedDomains().get(this)) {
+                if (arguments.equalsStamp(mind, list)) {
                     return true;
                 }
             }
@@ -737,9 +736,9 @@ public class Domain implements IUnit<Domain> {
 
     public void unCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (isCalculated()) {
-            for (List<Term> list : user.getMind().getCalculatedDomains().get(this)) {
-                if (arguments.equalsStamp(user.getMind(), list)) {
-                    user.getMind().getCalculatedDomains().remove(list);
+            for (List<Term> list : mind.getCalculatedDomains().get(this)) {
+                if (arguments.equalsStamp(mind, list)) {
+                    mind.getCalculatedDomains().remove(list);
                     break;
                 }
             }
@@ -747,33 +746,33 @@ public class Domain implements IUnit<Domain> {
     }
 
     public void setCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (!user.getMind().getCalculatedDomains().containsKey(this)) {
-            user.getMind().getCalculatedDomains().put(this, new ArrayList<>());
+        if (!mind.getCalculatedDomains().containsKey(this)) {
+            mind.getCalculatedDomains().put(this, new ArrayList<>());
         }
         if (!isCalculated()) {
             try {
-                user.getMind().getCalculatedDomains().get(this).add(arguments.getStamp(user.getMind()));
+                mind.getCalculatedDomains().get(this).add(arguments.getStamp(mind));
             } catch (ParametersIncompleteException | OutOfBufferException e) {
             }
         }
     }
 
     public boolean isStored() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return user.getMind().getRights().find(this) != null;
+        return mind.getRights().find(this) != null;
     }
 
     public boolean isStored(ArgList args) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain d = new Domain(getPredicate(), antc, args);
-        return user.getMind().getRights().find(d) != null;
+        return mind.getRights().find(d) != null;
     }
 
     public Right setStored() throws Exception {
-        Right r = user.getMind().getRights().store(this);
+        Right r = mind.getRights().store(this);
         return r;
     }
 
     public Right createStored() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        Right r = user.getMind().getRights().add(this);
+        Right r = mind.getRights().add(this);
         return r;
     }
 
@@ -783,7 +782,7 @@ public class Domain implements IUnit<Domain> {
 
     public int execSystem() throws Exception {
         if (isSystem()) {
-            return user.getMind().executeSystem(this);
+            return mind.executeSystem(this);
         }
         return -1;
     }
@@ -795,7 +794,7 @@ public class Domain implements IUnit<Domain> {
 //                if (clear) {
 //                    f.clear();
 //                }
-//                if (user.getMind().getCalculator().calculate(f, user.getMind().isLogging())) {
+//                if (mind.getCalculator().calculate(f, mind.isLogging())) {
 //                    occurrs = true;
 //                }
 //            }
@@ -836,15 +835,15 @@ public class Domain implements IUnit<Domain> {
         if (getRight().isQuery()) {
             return true;
         } else {
-            for (TVariable t : arguments.getTVariables(user.getMind(), true)) {
+            for (TVariable t : arguments.getTVariables(mind, true)) {
                 if (t.isQuery()) {
                     return true;
                 }
             }
             for (Argument a : arguments) {
                 if (a.isVSet()
-                        && user.getMind().getQueryValues().containsKey(a.getV(user.getMind()).getTVar())
-                        && user.getMind().getQueryValues().get(a.getV(user.getMind()).getTVar()).contains(a.getV(user.getMind()))) {
+                        && mind.getQueryValues().containsKey(a.getV(mind).getTVar())
+                        && mind.getQueryValues().get(a.getV(mind).getTVar()).contains(a.getV(mind))) {
                     return true;
                 }
             }
@@ -906,9 +905,9 @@ public class Domain implements IUnit<Domain> {
         for (int i = 0; i < arguments.size(); ++i) {
             int ix = 0;
             if (arguments.get(i).isTSet()) {
-                ix = arguments.get(i).getT(user.getMind()).getIndex();
+                ix = arguments.get(i).getT(mind).getIndex();
             } else if (arguments.get(i).isCVar()) {
-                ix = arguments.get(i).getValue(user.getMind()).getIndex();
+                ix = arguments.get(i).getValue(mind).getIndex();
             } else {
                 ++plains;
             }
@@ -931,7 +930,7 @@ public class Domain implements IUnit<Domain> {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-//        arguments.setMind(user.getMind());
+//        arguments.setMind(mind);
         hash = 47 * hash + arguments.hashCode();
         return hash;
     }
@@ -945,12 +944,12 @@ public class Domain implements IUnit<Domain> {
                 int i = 0;
                 for (; i < getRange(); ++i) {
                     try {
-                        if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT(user.getMind()).getId() == arguments.get(i).getT(user.getMind()).getId())
-                                || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF(user.getMind()).getId() == arguments.get(i).getF(user.getMind()).getId())
+                        if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT(mind).getId() == arguments.get(i).getT(mind).getId())
+                                || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF(mind).getId() == arguments.get(i).getF(mind).getId())
                                 || (!to.get(i).isTSet() && !arguments.get(i).isTSet()
                                 && !to.get(i).isFSet() && !arguments.get(i).isFSet()
-                                && !to.get(i).isEmpty(user.getMind()) && !arguments.get(i).isEmpty(user.getMind())
-                                && to.get(i).getValue(user.getMind()).getId() == arguments.get(i).getValue(user.getMind()).getId())) {
+                                && !to.get(i).isEmpty(mind) && !arguments.get(i).isEmpty(mind)
+                                && to.get(i).getValue(mind).getId() == arguments.get(i).getValue(mind).getId())) {
                         } else {
                             break;
                         }
@@ -982,7 +981,7 @@ public class Domain implements IUnit<Domain> {
     public boolean isComplete() {
         boolean complete = true;
         for (Argument a : arguments) {
-            if (a.isEmpty(user.getMind())) {
+            if (a.isEmpty(mind)) {
                 complete = false;
                 break;
             }
@@ -992,7 +991,7 @@ public class Domain implements IUnit<Domain> {
 
     //    public Set<Tree> getParentTrees() {
 //        Set<Tree> set = new HashSet<>();
-//        for (Tree t : user.getMind().getTrees()) {
+//        for (Tree t : mind.getTrees()) {
 //            if (t.getSequence().contains(this)) {
 //                set.add(t);
 //            }
@@ -1019,12 +1018,18 @@ public class Domain implements IUnit<Domain> {
 //    }
 
     public IUser getUser() {
-        return user;
+        return null;
     }
 
     @Override
     public Domain setUser(IUser user) {
-        this.user = user;
+//        this.user = user;
+//        arguments.setUser(user);
+        return this;
+    }
+
+    public Domain setMind(Mind mind) {
+        this.mind = mind;
 //        arguments.setUser(user);
         return this;
     }
@@ -1093,11 +1098,11 @@ public class Domain implements IUnit<Domain> {
                     hash = 47 * hash + (i + 1) * getVarOrder(i);
                     break;
                 case TERM:
-                    long id = arguments.get(i).getValue(user.getMind()).getId();
+                    long id = arguments.get(i).getValue(mind).getId();
                     hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(user.getMind()).getHashStruct(getRight());
+                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(getRight());
                     break;
             }
         }
@@ -1119,12 +1124,12 @@ public class Domain implements IUnit<Domain> {
                             }
                             break;
                         case TERM:
-                            if (arguments.get(i).getValue(user.getMind()).getId() != to.getArguments().get(i).getValue(user.getMind()).getId()) {
+                            if (arguments.get(i).getValue(mind).getId() != to.getArguments().get(i).getValue(mind).getId()) {
                                 return false;
                             }
                             break;
                         case FUNCTION:
-                            if (!arguments.get(i).getF(user.getMind()).equalsToStruct(to.getArguments().get(i).getF(user.getMind()), getRight(), to.getRight())) {
+                            if (!arguments.get(i).getF(mind).equalsToStruct(to.getArguments().get(i).getF(mind), getRight(), to.getRight())) {
                                 return false;
                             }
                             break;

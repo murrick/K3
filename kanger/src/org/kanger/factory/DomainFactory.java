@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
@@ -29,9 +30,11 @@ public class DomainFactory implements Iterable<Domain> {
     private ICache cache;
     //    private Cache load = new Cache();
     private IUser user = null;
+    private Mind mind = null;
 
     public DomainFactory(IUser user) {
         this.user = user;
+        this.mind = user.getMind();
         transaction(null);
     }
 
@@ -57,6 +60,11 @@ public class DomainFactory implements Iterable<Domain> {
     public void commit(DomainFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((Domain) s.getData()).setMind(mind);
+            }
+
 //            lastId = cache.getRoot().getId() + 1;
 
 //            if (cache.getTop() == null) {
@@ -106,7 +114,7 @@ public class DomainFactory implements Iterable<Domain> {
         if (p != null) {
             return p;
         } else {
-            p = new Domain(user);
+            p = new Domain(user.getMind());
             p.setPredicate(pred);
             p.setAntc(antc);
             p.setRight(r);
