@@ -1,5 +1,6 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
@@ -27,15 +28,15 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     private transient long nameId = -1;
     private transient long rightId = -1;
-    private transient IUser user = null;
+    private transient Mind mind = null;
 
     private transient boolean deleted = false;
 
     public TVariable() {
     }
 
-    public TVariable(IUser user) {
-        this.user = user;
+    public TVariable(Mind mind) {
+        this.mind = mind;
     }
 
     public ByteBuffer pack() {
@@ -61,7 +62,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {
-            name = user.getMind().getTerms().load(nameId);
+            name = mind.getTerms().load(nameId);
         }
         return name;
     }
@@ -90,23 +91,23 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getTValues().get(this) != null) {
-            return user.getMind().getTValues().get(this).getValue();
+        if (mind.getTValues().get(this) != null) {
+            return mind.getTValues().get(this).getValue();
         } else {
             return null;
         }
     }
 
     public TValue getCurrent() {
-        if (user.getMind().getTValues().get(this) != null) {
-            return user.getMind().getTValues().get(this);
+        if (mind.getTValues().get(this) != null) {
+            return mind.getTValues().get(this);
         } else {
             return null;
         }
     }
 
     public TValue setCurrent(TValue v) {
-        return user.getMind().getTValues().set(this, v);
+        return mind.getTValues().set(this, v);
     }
 
     public TValue setValue(Term value) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException { //throws TValueOutOfOrderException {
@@ -114,8 +115,8 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
-        TValue v = value == null ? null : user.getMind().getTValues().add(this, value);
-        return user.getMind().getTValues().set(this, v);
+        TValue v = value == null ? null : mind.getTValues().add(this, value);
+        return mind.getTValues().set(this, v);
 //        } else {
 //            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
 //        }
@@ -126,7 +127,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 ////            if (mind.getTValues().find(this, value) == null) {
 ////                mind.getSubstituted().createTVar(this);
 ////            }
-//        TValue v = user.getMind().getTValues().add(this, value);
+//        TValue v = mind.getTValues().add(this, value);
 //        return v;
 ////        } else {
 ////            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
@@ -134,7 +135,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //    }
 
 //    public void reset() {
-//        user.getMind().getTValues().remove(this);
+//        mind.getTValues().remove(this);
 ////        if (mind.getTValues().createCVar(this).isEmpty()) {
 ////            mind.getTValues().createCVar(this).setRoot(null);
 ////            mind.getSubstituted().createTVar(this);
@@ -171,7 +172,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //    }
     public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (right == null && rightId != -1) {
-            right = user.getMind().getRights().load(rightId);
+            right = mind.getRights().load(rightId);
         }
         return right;
     }
@@ -182,7 +183,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     public String getVarName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        switch (user.getMind().getDebugLevel() & 0x00FF) {
+        switch (mind.getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_INFO:
                 return getName().toString();
             case Enums.DEBUG_LEVEL_DEBUG:
@@ -195,7 +196,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     @Override
     public String toString() {
         try {
-            return getVarName() + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
+            return getVarName() + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
         } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
             e.printStackTrace(System.err);
             return "";
@@ -218,12 +219,17 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     @Override
     public IUser getUser() {
-        return user;
+        return null;
     }
 
     @Override
     public TVariable setUser(IUser user) {
-        this.user = user;
+        this.mind = user.getMind();
+        return this;
+    }
+
+    public TVariable setMind(Mind mind) {
+        this.mind = mind;
         return this;
     }
 
@@ -250,19 +256,19 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     //
     public TValue find(Term value) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return user.getMind().getTValues().find(this, value);
+        return mind.getTValues().find(this, value);
     }
 
     public boolean isEmpty() {
-        return user.getMind().getTValues().isEmpty(this) || user.getMind().getTValues().get(this) == null;
+        return mind.getTValues().isEmpty(this) || mind.getTValues().get(this) == null;
     }
 
 //    public TValue rewind() {
-//        return user.getMind().getTValues().rewind(this);
+//        return mind.getTValues().rewind(this);
 //    }
 //
 //    public TValue next(TValue v) {
-//        return user.getMind().getTValues().next(v);
+//        return mind.getTValues().next(v);
 //    }
 
 //    public TValue rewindTop() {
@@ -275,7 +281,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
 //    public Set<Domain> getUsage() {
 //        Set<Domain> set = new HashSet<>();
-//        for (Domain d = user.getMind().getDomains().getRoot(); d != null; d = d.getNext()) {
+//        for (Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
 //            if (d.contains(this)) {
 //                set.add(d);
 //            }
@@ -317,8 +323,8 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     public boolean isQuery() {
         return !isEmpty()
-                && user.getMind().getQueryValues().containsKey(this)
-                && user.getMind().getQueryValues().get(this).contains(getCurrent());
+                && mind.getQueryValues().containsKey(this)
+                && mind.getQueryValues().get(this).contains(getCurrent());
     }
 
 //    public boolean isBlocked() {

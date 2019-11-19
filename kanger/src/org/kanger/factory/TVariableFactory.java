@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
@@ -29,9 +30,11 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     private ICache cache;
     private IUser user = null;
+    private Mind mind = null;
 
     public TVariableFactory(IUser user) {
         this.user = user;
+        this.mind = user.getMind();
         transaction(null);
     }
 
@@ -39,9 +42,9 @@ public class TVariableFactory implements Iterable<TVariable> {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user.getMind(), SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -55,6 +58,11 @@ public class TVariableFactory implements Iterable<TVariable> {
     public void commit(TVariableFactory base /*, Map<Integer, Object> vars*/) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((TVariable) s.getData()).setMind(mind);
+            }
+
 //            lastId = cache.getRoot().getId() + 1;
 //            if (cache.getTop() == null) {
 //                cache.setTop(base.cache.getTop());
@@ -93,10 +101,10 @@ public class TVariableFactory implements Iterable<TVariable> {
     }
 
     public TVariable createTVar(Right r, Term name) throws Exception {
-        TVariable p = new TVariable(user);
+        TVariable p = new TVariable(mind);
         p.setId(user.nextId(SCHEMA));
-        r.setMindId(user.getMind().getId());
-        p.setIndex(user.getMind().getTerms().nextVarIndex());
+        r.setMindId(mind.getId());
+        p.setIndex(mind.getTerms().nextVarIndex());
         p.setRight(r);
         p.setName(name);
         cache.add(p);
@@ -108,7 +116,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (TVariable) s.getData(user.getMind());
+                t = (TVariable) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -130,7 +138,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
-            user.getMind().getTValues().getCurrent().remove(o);
+            mind.getTValues().getCurrent().remove(o);
         }
         update();
 
@@ -146,9 +154,9 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     public void delete(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         t.setDeleted();
-        for (TValue v : user.getMind().getTValues()) {
+        for (TValue v : mind.getTValues()) {
             if (v.getTVar().getId() == t.getId()) {
-                user.getMind().getTValues().delete(v);
+                mind.getTValues().delete(v);
             }
         }
     }
@@ -157,21 +165,21 @@ public class TVariableFactory implements Iterable<TVariable> {
 //        TVariable t = get(id);
 //        if (t != null) {
 //            List<TValue> list = new ArrayList<>();
-//            for (TValue v : user.getMind().getTValues()) {
+//            for (TValue v : mind.getTValues()) {
 //                if (v.getTVarId() == t.getId()) {
 //                    list.add(v);
 //                }
 //            }
 //            for (TValue v : list) {
-//                user.getMind().getTValues().delete(v.getId());
+//                mind.getTValues().delete(v.getId());
 //            }
 //            cache.delete(id);
 //        }
 //    }
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getTVars());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getTVars());
         } else {
             cache.clear();
             transaction(null);

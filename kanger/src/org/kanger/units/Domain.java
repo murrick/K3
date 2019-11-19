@@ -1022,15 +1022,21 @@ public class Domain implements IUnit<Domain> {
     }
 
     @Override
-    public Domain setUser(IUser user) {
+    public Domain setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         //TODO: Перенести
         this.mind = user.getMind();
+        for (TVariable t : arguments.getTVariables(user.getMind(), true)) {
+            t.setMind(user.getMind());
+        }
 //        arguments.setUser(user);
         return this;
     }
 
-    public Domain setMind(Mind mind) {
+    public Domain setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         this.mind = mind;
+        for (TVariable t : arguments.getTVariables(mind, true)) {
+            t.setMind(mind);
+        }
 //        arguments.setUser(user);
         return this;
     }

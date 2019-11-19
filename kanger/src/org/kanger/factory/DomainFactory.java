@@ -57,7 +57,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public void commit(DomainFactory base) {
+    public void commit(DomainFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 
