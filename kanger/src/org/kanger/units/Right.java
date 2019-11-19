@@ -6,7 +6,6 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.storage.ByteBuffer;
 
@@ -324,24 +323,11 @@ public class Right implements IUnit<Right> {
     }
 
     @Override
-    public IUser getUser() {
-        return null;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public Right setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        this.mind = user.getMind();
-//        for (Cause c : getCauses()) {
-//            c.setUser(user);
-//        }
-        for (List<Domain> list : getTree()) {
-            for (Domain d : list) {
-                d.setMind(mind);
-            }
-        }
-        return this;
-    }
-
     public Right setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         this.mind = mind;
 //        for (Cause c : getCauses()) {

@@ -9,7 +9,6 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
@@ -472,17 +471,11 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     }
 
     @Override
-    public IUser getUser() {
-        return null;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public Term setUser(IUser user) {
-        //TODO: Перенести
-        this.mind = user.getMind();
-        return this;
-    }
-
     public Term setMind(Mind mind) {
         this.mind = mind;
         return this;

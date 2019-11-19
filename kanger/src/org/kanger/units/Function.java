@@ -1,5 +1,6 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
@@ -7,7 +8,6 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
@@ -29,7 +29,7 @@ public class Function implements IUnit<Function> {
     private int range = 0;
     private ArgList arguments = new ArgList();     // Параметры
 
-    private IUser user = null;
+    private Mind mind = null;
 
     private transient long nameId = -1;
 
@@ -39,8 +39,8 @@ public class Function implements IUnit<Function> {
 
     }
 
-    public Function(IUser user) {
-        this.user = user;
+    public Function(Mind mind) {
+        this.mind = mind;
     }
 
     public ByteBuffer pack() {
@@ -112,7 +112,7 @@ public class Function implements IUnit<Function> {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
-        arguments.get(range).setValue(user.getMind(), r);
+        arguments.get(range).setValue(mind, r);
         return arguments.get(range);
     }
 
@@ -139,7 +139,7 @@ public class Function implements IUnit<Function> {
 //            return true;
 //        } else {
 
-        return arguments.get(i).setValue(user.getMind(), r);
+        return arguments.get(i).setValue(mind, r);
 //        }
     }
 
@@ -156,7 +156,7 @@ public class Function implements IUnit<Function> {
 
     public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {
-            name = user.getMind().getTerms().load(nameId);
+            name = mind.getTerms().load(nameId);
         }
         return name;
     }
@@ -171,10 +171,10 @@ public class Function implements IUnit<Function> {
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
         if (t.isFSet()) {
-            s += (isOp ? "(" : "") + t.getF(user.getMind()).toString() + (isOp ? ")" : "");
+            s += (isOp ? "(" : "") + t.getF(mind).toString() + (isOp ? ")" : "");
         } else if (t.isTSet()) {
 //            if (v == null) {
-            s += t.getT(user.getMind()).toString();
+            s += t.getT(mind).toString();
 //            } else {
 //                TValue tv = v.getValue(t.getTVariable());
 //                s += t.getTVariable().getVarName()
@@ -182,8 +182,8 @@ public class Function implements IUnit<Function> {
 //                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && tv != null && tv.isBlocked() ? " (B)" : "");
 //
 //            }
-        } else if (!t.isEmpty(user.getMind())) {
-            s += t.getValue(user.getMind()).toString();
+        } else if (!t.isEmpty(mind)) {
+            s += t.getValue(mind).toString();
         } else {
             s += "_";
         }
@@ -222,12 +222,12 @@ public class Function implements IUnit<Function> {
                 }
 
                 String res = "";
-                if ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
+                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
                     //                if (getResult() != null) {
                     if (getCurrent() != null) {
                         res = " {= " + getValue() + "}";
-                    } else if (arguments.size() > range && !arguments.get(range).isEmpty(user.getMind())) {
-                        res = " [= " + arguments.get(range).getValue(user.getMind()) + "]";
+                    } else if (arguments.size() > range && !arguments.get(range).isEmpty(mind)) {
+                        res = " [= " + arguments.get(range).getValue(mind) + "]";
                     }
                 }
                 //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
@@ -282,7 +282,7 @@ public class Function implements IUnit<Function> {
 //    }
 
     //    public boolean isCalculated() {
-//        FValue f = user.getMind().getFValues().get(this);
+//        FValue f = mind.getFValues().get(this);
 //        if (f != null) {
 //            for (int i = 0; i < getRange(); ++i) {
 //                if (getArguments().get(i).getValue() == null
@@ -296,7 +296,7 @@ public class Function implements IUnit<Function> {
 //
     public boolean isComplete() throws Exception {
         for (Argument a : arguments) {
-            if (a.getValue(user.getMind()) == null) {
+            if (a.getValue(mind) == null) {
                 return false;
             }
         }
@@ -313,7 +313,7 @@ public class Function implements IUnit<Function> {
 //    }
 
     public boolean isCalculable() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return arguments.getTVariables(user.getMind(), true).size() > 0;
+        return arguments.getTVariables(mind, true).size() > 0;
     }
 
 //    public boolean isCalculated() {
@@ -322,15 +322,15 @@ public class Function implements IUnit<Function> {
 
 
     public FValue getCurrent() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return user.getMind().getFValues().find(this);
+        return mind.getFValues().find(this);
     }
 
     public int getHashBase() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        long valueId = getResult().isEmpty(user.getMind()) ? 0 : getResult().getValue(user.getMind()).getId();
+        long valueId = getResult().isEmpty(mind) ? 0 : getResult().getValue(mind).getId();
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         hash = 47 * hash + (int) (valueId ^ (valueId >>> 32));
-        for (TVariable t : arguments.getTVariables(user.getMind(), true)) {
+        for (TVariable t : arguments.getTVariables(mind, true)) {
             if (t.isEmpty()) {
                 hash = 47 * hash + 0;
             } else {
@@ -346,7 +346,7 @@ public class Function implements IUnit<Function> {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
-//        arguments.setMind(user.getMind());
+//        arguments.setMind(mind);
         hash = 47 * hash + arguments.hashCode();
         return hash;
     }
@@ -357,13 +357,13 @@ public class Function implements IUnit<Function> {
     }
 
     @Override
-    public IUser getUser() {
-        return user;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public Function setUser(IUser user) {
-        this.user = user;
+    public Function setMind(Mind mind) {
+        this.mind = mind;
 //        arguments.setUser(user);
         return this;
     }
@@ -381,17 +381,17 @@ public class Function implements IUnit<Function> {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case CVARIABLE:
-                    hash = 47 * hash + (i + 1) * (arguments.get(i).getValue(user.getMind()).getIndex() - r.getVarIndex());
+                    hash = 47 * hash + (i + 1) * (arguments.get(i).getValue(mind).getIndex() - r.getVarIndex());
                     break;
                 case TVARIABLE:
-                    hash = 47 * hash + (i + 1) * (arguments.get(i).getT(user.getMind()).getIndex() - r.getVarIndex());
+                    hash = 47 * hash + (i + 1) * (arguments.get(i).getT(mind).getIndex() - r.getVarIndex());
                     break;
                 case TERM:
-                    long id = arguments.get(i).getValue(user.getMind()).getId();
+                    long id = arguments.get(i).getValue(mind).getId();
                     hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(user.getMind()).getHashStruct(r);
+                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(r);
                     break;
             }
         }
@@ -404,24 +404,24 @@ public class Function implements IUnit<Function> {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case CVARIABLE:
-                            if ((arguments.get(i).getValue(user.getMind()).getIndex() - left.getVarIndex())
-                                    != (f.getArguments().get(i).getValue(user.getMind()).getIndex() - right.getVarIndex())) {
+                            if ((arguments.get(i).getValue(mind).getIndex() - left.getVarIndex())
+                                    != (f.getArguments().get(i).getValue(mind).getIndex() - right.getVarIndex())) {
                                 return false;
                             }
                             break;
                         case TVARIABLE:
-                            if ((arguments.get(i).getT(user.getMind()).getIndex() - left.getVarIndex())
-                                    != (f.getArguments().get(i).getT(user.getMind()).getIndex() - right.getVarIndex())) {
+                            if ((arguments.get(i).getT(mind).getIndex() - left.getVarIndex())
+                                    != (f.getArguments().get(i).getT(mind).getIndex() - right.getVarIndex())) {
                                 return false;
                             }
                             break;
                         case TERM:
-                            if (arguments.get(i).getValue(user.getMind()).getId() != f.getArguments().get(i).getValue(user.getMind()).getId()) {
+                            if (arguments.get(i).getValue(mind).getId() != f.getArguments().get(i).getValue(mind).getId()) {
                                 return false;
                             }
                             break;
                         case FUNCTION:
-                            if (!arguments.get(i).getF(user.getMind()).equalsToStruct(f.getArguments().get(i).getF(user.getMind()), left, right)) {
+                            if (!arguments.get(i).getF(mind).equalsToStruct(f.getArguments().get(i).getF(mind), left, right)) {
                                 return false;
                             }
                             break;

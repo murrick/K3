@@ -96,7 +96,7 @@ public class Sapato implements IStep {
     @Override
     public Object getData(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         if (data != null && data instanceof IUnit) {
-            ((IUnit) data).setUser(mind.getUser());
+            ((IUnit) data).setMind(mind);
         }
         return data;
     }

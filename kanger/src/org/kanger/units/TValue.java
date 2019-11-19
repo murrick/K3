@@ -6,7 +6,6 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.storage.ByteBuffer;
 
@@ -197,21 +196,11 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     @Override
-    public IUser getUser() {
-        return null;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public TValue setUser(IUser user) {
-        //TODO: Переместить в setMind
-        mind = user.getMind();
-//        this.user = user;
-//        for (Cause c : causes) {
-//            c.setUser(user);
-//        }
-        return this;
-    }
-
     public TValue setMind(Mind mind) {
         this.mind = mind;
 //        for (Cause c : causes) {

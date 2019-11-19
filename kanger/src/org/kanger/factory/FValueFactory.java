@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
@@ -23,11 +24,13 @@ public class FValueFactory {
 
     private ICache cache;
     private IUser user = null;
+    private Mind mind = null;
 
     private transient boolean action = false;
 
     public FValueFactory(IUser user) {
         this.user = user;
+        this.mind = user.getMind();
         transaction(null);
     }
 
@@ -36,9 +39,9 @@ public class FValueFactory {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user.getMind(), SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -53,6 +56,11 @@ public class FValueFactory {
     public void commit(FValueFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((FValue) s.getData()).setMind(mind);
+            }
+
 //            lastId = cache.getRoot().getId() + 1;
 //            if (cache.getTop() == null) {
 //                cache.setTop(base.cache.getTop());
@@ -84,9 +92,9 @@ public class FValueFactory {
         FValue t = find(f);
         if (t == null) {
             if (f.isComplete()) {
-                t = new FValue(f, user);
+                t = new FValue(f, mind);
                 t.setId(user.nextId(SCHEMA));
-                f.setMindId(user.getMind().getId());
+                f.setMindId(mind.getId());
                 cache.add(t);
                 action = true;
             } else {
@@ -112,7 +120,7 @@ public class FValueFactory {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (FValue) s.getData(user.getMind());
+                t = (FValue) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -127,8 +135,8 @@ public class FValueFactory {
 
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getFValues());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getFValues());
         } else {
             cache.clear();
             transaction(null);

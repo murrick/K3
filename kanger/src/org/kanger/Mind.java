@@ -117,7 +117,7 @@ public class Mind {
         functions = new FunctionFactory(user);                    // Функции
         fValues = new FValueFactory(user);                          // Решения функций
 
-        library = new LibraryFactory(user);                            // Пользовательсткая библиотека функций и предикатов
+        library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов
 
         hypotesis = new HypotesisStore(this);                                // Список гипотез
         excluded = new HypotesisStore(this);                                // Список исключенных гипотез
@@ -468,7 +468,7 @@ public class Mind {
 
         switch (line.charAt(0)) {
             case Enums.FOO:
-                r = Parser.implement(line, user);
+                r = Parser.implement(line, this);
                 if (r != null) {
                     library.add((SysOp) r);
                 }

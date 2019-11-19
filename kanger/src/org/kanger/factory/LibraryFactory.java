@@ -1,11 +1,11 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.Escalera;
 import org.kanger.units.SysOp;
 
@@ -24,7 +24,7 @@ public class LibraryFactory implements Iterable<SysOp> {
 //    private long firstId = 0;
 
     private ICache cache;
-    private IUser user = null;
+    private Mind mind = null;
 
 
 //    private SysOp root = null;
@@ -32,8 +32,8 @@ public class LibraryFactory implements Iterable<SysOp> {
 //    private Map<String, SysOp> index = new HashMap<>();
 //    private User user = null;
 
-    public LibraryFactory(IUser user) {
-        this.user = user;
+    public LibraryFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -41,9 +41,9 @@ public class LibraryFactory implements Iterable<SysOp> {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user.getMind(), SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -57,6 +57,11 @@ public class LibraryFactory implements Iterable<SysOp> {
     public void commit(LibraryFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((SysOp) s.getData()).setMind(mind);
+            }
+            
 //            lastId = cache.getRoot().getId() + 1;
 //            if (cache.getTop() == null) {
 //                cache.setTop(base.cache.getTop());
@@ -82,8 +87,8 @@ public class LibraryFactory implements Iterable<SysOp> {
             x.getParams().addAll(s.getParams());
 //            update();
         } else {
-            s.setId(user.nextId(SCHEMA));
-            s.setMindId(user.getMind().getId());
+            s.setId(mind.getUser().nextId(SCHEMA));
+            s.setMindId(mind.getId());
             cache.add(s);
             x = s;
         }
@@ -102,10 +107,10 @@ public class LibraryFactory implements Iterable<SysOp> {
 
     public SysOp load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         SysOp t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (SysOp) s.getData(user.getMind());
+                t = (SysOp) s.getData(mind);
 //                t.setUser(user);
             }
         }
@@ -165,8 +170,8 @@ public class LibraryFactory implements Iterable<SysOp> {
 //    }
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getLibrary());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getLibrary());
         } else {
             cache.clear();
             transaction(null);

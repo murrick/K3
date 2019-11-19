@@ -9,7 +9,6 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
@@ -1017,21 +1016,12 @@ public class Domain implements IUnit<Domain> {
 //        }
 //    }
 
-    public IUser getUser() {
-        return null;
+    @Override
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public Domain setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        //TODO: Перенести
-        this.mind = user.getMind();
-        for (TVariable t : arguments.getTVariables(user.getMind(), true)) {
-            t.setMind(user.getMind());
-        }
-//        arguments.setUser(user);
-        return this;
-    }
-
     public Domain setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         this.mind = mind;
         for (TVariable t : arguments.getTVariables(mind, true)) {

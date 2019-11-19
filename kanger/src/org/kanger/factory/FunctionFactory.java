@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
@@ -27,9 +28,11 @@ public class FunctionFactory implements Iterable<Function> {
 
     private ICache cache;
     private IUser user = null;
+    private Mind mind = null;
 
     public FunctionFactory(IUser user) {
         this.user = user;
+        this.mind = user.getMind();
         transaction(null);
     }
 
@@ -37,9 +40,9 @@ public class FunctionFactory implements Iterable<Function> {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
-            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user.getMind(), SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -53,6 +56,11 @@ public class FunctionFactory implements Iterable<Function> {
     public void commit(FunctionFactory base) {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((Function) s.getData()).setMind(mind);
+            }
+
 //            lastId = cache.getRoot().getId() + 1;
 //            if (cache.getTop() == null) {
 //                cache.setTop(base.cache.getTop());
@@ -69,7 +77,7 @@ public class FunctionFactory implements Iterable<Function> {
 
 
     public Function add(Term name, ArgList arguments) throws Exception {
-        Function f = new Function(user);
+        Function f = new Function(mind);
         f.setName(name);
         f.setRange(arguments.size());
         f.getArguments().clear();
@@ -77,11 +85,11 @@ public class FunctionFactory implements Iterable<Function> {
 //        f.setArguments(arguments);
         f.getArguments().add(new Argument());
         f.setId(user.nextId(SCHEMA));
-        f.setMindId(user.getMind().getId());
+        f.setMindId(mind.getId());
         cache.add(f);
 
         if (!f.isCalculable()) {
-            user.getMind().getCalculator().calculate(f, false);
+            mind.getCalculator().calculate(f, false);
         }
 
         return f;
@@ -92,7 +100,7 @@ public class FunctionFactory implements Iterable<Function> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Function) s.getData(user.getMind());
+                t = (Function) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -106,8 +114,8 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getFunctions());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getFunctions());
         } else {
             cache.clear();
             transaction(null);
@@ -151,9 +159,9 @@ public class FunctionFactory implements Iterable<Function> {
 
     public void delete(Function f) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         f.setDeleted();
-        FValue v = user.getMind().getFValues().find(f);
+        FValue v = mind.getFValues().find(f);
         if (v != null) {
-            user.getMind().getFValues().delete(v);
+            mind.getFValues().delete(v);
         }
     }
 }

@@ -23,7 +23,7 @@ public class UDF extends SysOp implements IReactor {
 
     @Override
     public Object run(Object o) throws Exception {
-        Mind mind = ((IUnit) o).getUser().getMind();
+        Mind mind = ((IUnit) o).getMind();
         ArgList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
 //                    ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
         Scriptable scope = scriptContext.initStandardObjects();
@@ -58,7 +58,7 @@ public class UDF extends SysOp implements IReactor {
                 script = "";
             }
 
-            scope.put("org/kanger", scope, user.getMind());
+            scope.put("org/kanger", scope, mind);
 
             scriptContext.evaluateString(scope, script, "script", 1, null);
 
@@ -68,13 +68,13 @@ public class UDF extends SysOp implements IReactor {
                     ret = 0;
                     arg.get(index).setValue(mind, null);
                 } else {
-                    if (!arg.get(index).setValue(mind, user.getMind().getTerms().add(val))) {
+                    if (!arg.get(index).setValue(mind, mind.getTerms().add(val))) {
                         ret = 0;
                     }
                 }
             } else if (fres != null) {
                 Object val = scope.get(params.get(params.size() - 1), scope);
-                Term cres = user.getMind().getTerms().add(val);
+                Term cres = mind.getTerms().add(val);
                 if (cres.getId() == fres.getId()) {
                     ret = 2;
                 } else {
@@ -87,7 +87,7 @@ public class UDF extends SysOp implements IReactor {
                             scriptContext.evaluateString(scope, script, "script", 1, null);
                             Object calc = scope.get(var, scope);
                             scope.put(var, scope, tmp);
-                            TValue v = arg.get(i).addValue(mind, user.getMind().getTerms().add(calc));
+                            TValue v = arg.get(i).addValue(mind, mind.getTerms().add(calc));
                             showLog((IUnit) o, v);
                         }
                     }

@@ -6,7 +6,6 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
@@ -218,16 +217,11 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     @Override
-    public IUser getUser() {
-        return null;
+    public Mind getMind() {
+        return mind;
     }
 
     @Override
-    public TVariable setUser(IUser user) {
-        this.mind = user.getMind();
-        return this;
-    }
-
     public TVariable setMind(Mind mind) {
         this.mind = mind;
         return this;
