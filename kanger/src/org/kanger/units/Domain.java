@@ -365,7 +365,7 @@ public class Domain implements IUnit<Domain> {
             List<Term> cVars = new ArrayList<>();
             for (Term t : arguments.getCVariables(mind, true)) {
                 //TODO: Костыль
-                t.setMind(mind);
+//                t.setMind(mind);
                 if (!cVars.contains(t)) {
                     cVars.add(t);
                 }
@@ -1023,7 +1023,8 @@ public class Domain implements IUnit<Domain> {
 
     @Override
     public Domain setUser(IUser user) {
-//        this.user = user;
+        //TODO: Перенести
+        this.mind = user.getMind();
 //        arguments.setUser(user);
         return this;
     }

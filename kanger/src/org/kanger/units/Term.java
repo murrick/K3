@@ -478,7 +478,8 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     @Override
     public Term setUser(IUser user) {
-//        this.user = user;
+        //TODO: Перенести
+        this.mind = user.getMind();
         return this;
     }
 
