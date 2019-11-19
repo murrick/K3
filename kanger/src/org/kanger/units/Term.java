@@ -1,5 +1,6 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.compiler.PTree;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
@@ -38,7 +39,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     private Right right = null;          // Ссылка на правило
 
     //    private Term next = null;      // Следующая запись
-    private IUser user = null;
+    private Mind mind = null;
 
     private transient boolean deleted = false;
     private transient long nameId = -1;
@@ -47,12 +48,12 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     public Term() {
     }
 
-    public Term(IUser user) {
-        this.user = user;
+    public Term(Mind mind) {
+        this.mind = mind;
     }
 
-    public Term(Object str, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        this.user = user;
+    public Term(Object str, Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        this.mind = mind;
         construct(str);
     }
 
@@ -168,8 +169,8 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         } else if (o instanceof PTree) {
             if ("..".equals(((PTree) o).getName())) {
                 List<Term> list = new ArrayList<>();
-                list.add(user.getMind().getTerms().add(((PTree) o).getLeft().getName()));
-                list.add(user.getMind().getTerms().add(((PTree) o).getRight().getName()));
+                list.add(mind.getTerms().add(((PTree) o).getLeft().getName()));
+                list.add(mind.getTerms().add(((PTree) o).getRight().getName()));
                 type = DataType.INTERVAL;
                 value = list;
             }
@@ -182,7 +183,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         } else if (o instanceof ArgList) {
             List<Term> list = new ArrayList<>();
             for (Argument a : (ArgList) o) {
-                list.add(a.getValue(user.getMind()));
+                list.add(a.getValue(mind));
             }
             type = DataType.SET;
             value = list;
@@ -271,7 +272,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
             List<Term> list = new ArrayList<>();
             for (String s : ch.split("\\.\\.")) {
                 if (!s.trim().isEmpty()) {
-                    Term t = user.getMind().getTerms().add(s);
+                    Term t = mind.getTerms().add(s);
                     list.add(t);
                 }
             }
@@ -297,7 +298,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (right == null) {
-            right = user.getMind().getRights().load(rightId);
+            right = mind.getRights().load(rightId);
         }
         return right;
     }
@@ -344,7 +345,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     public String toString() {
         if (value != null) {
             if (isCVariable()) {
-                switch (user.getMind().getDebugLevel() & 0x00FF) {
+                switch (mind.getDebugLevel() & 0x00FF) {
                     case Enums.DEBUG_LEVEL_DEBUG:
                         return formatValue();
                     default:
@@ -398,7 +399,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (name == null) {
-            name = user.getMind().getTerms().load(nameId);
+            name = mind.getTerms().load(nameId);
         }
         return name;
     }
@@ -472,12 +473,17 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     @Override
     public IUser getUser() {
-        return user;
+        return null;
     }
 
     @Override
     public Term setUser(IUser user) {
-        this.user = user;
+//        this.user = user;
+        return this;
+    }
+
+    public Term setMind(Mind mind) {
+        this.mind = mind;
         return this;
     }
 

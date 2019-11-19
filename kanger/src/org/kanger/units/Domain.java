@@ -1,5 +1,6 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
@@ -41,6 +42,7 @@ public class Domain implements IUnit<Domain> {
     private transient long predicateId = -1;
     private transient long rightId = -1;
     private transient IUser user = null;
+    private transient Mind mind = null;
 
     private transient boolean deleted = false;
 
@@ -60,6 +62,7 @@ public class Domain implements IUnit<Domain> {
 
     public Domain(IUser user) {
         this.user = user;
+
     }
 
     public ByteBuffer pack() {
@@ -324,6 +327,10 @@ public class Domain implements IUnit<Domain> {
         String s = "";
         //TODO: Костыль
 //        t.setUser(user);
+//        if(!t.isEmpty(user.getMind())) {
+//            t.getValue(user.getMind()).setMind(user.getMind());
+//        }
+
         if (t.isFSet()) {
             s += t.getF(user.getMind()).toString();
         } else if (t.isTSet()) {
@@ -358,6 +365,8 @@ public class Domain implements IUnit<Domain> {
 
             List<Term> cVars = new ArrayList<>();
             for (Term t : arguments.getCVariables(user.getMind(), true)) {
+                //TODO: Костыль
+                t.setMind(user.getMind());
                 if (!cVars.contains(t)) {
                     cVars.add(t);
                 }

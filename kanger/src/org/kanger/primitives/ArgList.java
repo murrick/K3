@@ -230,11 +230,16 @@ public class ArgList extends ArrayList<Argument> {
             //TODO: Костыль
 //            a.setUser(user);
             if (a.isCVar() && !a.getValue(mind).isDeleted() && !list.contains(a.getValue(mind))) {
-                list.add(a.getValue(mind));
+                Term t = a.getValue(mind);
+                //TODO: Костыль
+//                t.setMind(mind);
+                list.add(t);
             } else if (full && a.isFSet()) {
                 List<Term> temp = a.getF(mind).getArguments().getCVariables(mind, full);
                 for (Term t : temp) {
                     if (!list.contains(t)) {
+                        //TODO: Костыль
+//                        t.setMind(mind);
                         list.add(t);
                     }
                 }

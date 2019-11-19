@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
@@ -30,6 +31,7 @@ public class DictionaryFactory implements Iterable<Term> {
     private ICache cache;
     //    private Cache load = new Cache();
     private IUser user = null;
+    private Mind mind = null;
 
 //    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
 //    private Map<Long, Term> idCache = new HashMap<>();
@@ -38,6 +40,7 @@ public class DictionaryFactory implements Iterable<Term> {
 
     public DictionaryFactory(IUser user) {
         this.user = user;
+        this.mind = user.getMind();
         transaction(null);
     }
 
@@ -73,6 +76,10 @@ public class DictionaryFactory implements Iterable<Term> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 //            lastId = cache.getRoot().getId() + 1;
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((Term) s.getData()).setMind(mind);
+            }
+
             varIndex = base.varIndex;
 
 //            if (cache.getTop() == null) {
@@ -123,7 +130,7 @@ public class DictionaryFactory implements Iterable<Term> {
         if (p != null) {
             return p;
         } else {
-            p = new Term(o, user);
+            p = new Term(o, user.getMind());
             p.setId(user.nextId(SCHEMA));
             p.setMindId(user.getMind().getId());
             cache.add(p);
@@ -133,7 +140,7 @@ public class DictionaryFactory implements Iterable<Term> {
 
 
     public Term find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        Term t = new Term(o, user);
+        Term t = new Term(o, user.getMind());
         for (long id : cache.find(t.getHash())) {
             IUnit one = load(id);
             if (one.equalsTo(t)) {
