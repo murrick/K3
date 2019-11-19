@@ -31,7 +31,7 @@ public class Compiler {
             }
         }
 
-        Right r = new Right(mind.getUser());
+        Right r = new Right(mind);
         mind.getRights().register(r);
         r.setOrig(mind.getTerms().add(orig));
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);

@@ -1,5 +1,6 @@
 package org.kanger.units;
 
+import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
@@ -40,15 +41,16 @@ public class Right implements IUnit<Right> {
 
     private transient long origId = -1;
     private transient List<List<Long>> treeIds = new ArrayList<>();
-    private transient IUser user = null;
+    //    private transient IUser user = null;
+    private transient Mind mind = null;
 
     private transient boolean deleted = false;
 
     public Right() {
     }
 
-    public Right(IUser user) {
-        this.user = user;
+    public Right(Mind mind) {
+        this.mind = mind;
         List<Domain> t = new ArrayList<>();
         tree.add(t);
     }
@@ -116,7 +118,7 @@ public class Right implements IUnit<Right> {
             for (List<Long> ids : treeIds) {
                 List<Domain> branch = new ArrayList<>();
                 for (long id : ids) {
-                    Domain domain = user.getMind().getDomains().load(id);
+                    Domain domain = mind.getDomains().load(id);
                     branch.add(domain);
                     predicates.add(domain.getPredicateId());
                 }
@@ -129,11 +131,11 @@ public class Right implements IUnit<Right> {
 //    @Override
 //    public void linkExternal(User user) throws IOException, ClassNotFoundException {
 //        this.user = user;
-//        orig = user.getMind().getTerms().load(origId);
+//        orig = mind.getTerms().load(origId);
 //        for (List<Long> ids : treeIds) {
 //            List<Domain> branch = new ArrayList<>();
 //            for (long id : ids) {
-//                Domain domain = user.getMind().getDomains().load(id);
+//                Domain domain = mind.getDomains().load(id);
 //                branch.add(domain);
 //                predicates.add(domain.getPredicate());
 //            }
@@ -173,21 +175,21 @@ public class Right implements IUnit<Right> {
     }
 
     public boolean isUsed() {
-        return user.getMind().getUsedRights().containsKey(0L) && user.getMind().getUsedRights().get(0L).contains(this);
+        return mind.getUsedRights().containsKey(0L) && mind.getUsedRights().get(0L).contains(this);
     }
 
     public void setUsed() {
-        if (!user.getMind().getUsedRights().containsKey(0L)) {
-            user.getMind().getUsedRights().put(0L, new HashSet<>());
+        if (!mind.getUsedRights().containsKey(0L)) {
+            mind.getUsedRights().put(0L, new HashSet<>());
         }
-        user.getMind().getUsedRights().get(0L).add(this);
+        mind.getUsedRights().get(0L).add(this);
     }
 
     public Set<Right> getNatives() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Set<Right> list = new HashSet<>();
         for (List<Domain> t : getTree()) {
             for (Domain d : t) {
-                for (Right r : user.getMind().getRights()) {
+                for (Right r : mind.getRights()) {
                     if (r != null) {
                         if (!r.isDeleted() && r.getPredicates().contains(d.getPredicateId())) {
                             list.add(r);
@@ -218,7 +220,7 @@ public class Right implements IUnit<Right> {
 
     public Term getOrig() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (orig == null && origId != -1) {
-            orig = user.getMind().getTerms().load(origId);
+            orig = mind.getTerms().load(origId);
         }
         return orig;
     }
@@ -251,7 +253,7 @@ public class Right implements IUnit<Right> {
     public String toString() {
         try {
             return getOrig().toString()
-                    + ((user.getMind().getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (isGenerated() || isQuery() || isStored())
+                    + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (isGenerated() || isQuery() || isStored())
                     ? " " +
                     (isGenerated() ? "G" : "") +
                     (isStored() ? "B" : "") +
@@ -323,18 +325,31 @@ public class Right implements IUnit<Right> {
 
     @Override
     public IUser getUser() {
-        return user;
+        return null;
     }
 
     @Override
     public Right setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        this.user = user;
+        this.mind = user.getMind();
 //        for (Cause c : getCauses()) {
 //            c.setUser(user);
 //        }
         for (List<Domain> list : getTree()) {
             for (Domain d : list) {
-                d.setMind(user.getMind());
+                d.setMind(mind);
+            }
+        }
+        return this;
+    }
+
+    public Right setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        this.mind = mind;
+//        for (Cause c : getCauses()) {
+//            c.setUser(user);
+//        }
+        for (List<Domain> list : getTree()) {
+            for (Domain d : list) {
+                d.setMind(mind);
             }
         }
         return this;
@@ -349,14 +364,14 @@ public class Right implements IUnit<Right> {
                 for (; i < domain.getRange(); ++i) {
                     //TODO: Костыль!
 //                    x.get(i).setUser(user);
-                    if (!x.get(i).isEmpty(user.getMind())
-                            && !domain.getArguments().get(i).isEmpty(user.getMind())
-                            && x.get(i).getValue(user.getMind()).getId() != domain.getArguments().get(i).getValue(user.getMind()).getId()) {
+                    if (!x.get(i).isEmpty(mind)
+                            && !domain.getArguments().get(i).isEmpty(mind)
+                            && x.get(i).getValue(mind).getId() != domain.getArguments().get(i).getValue(mind).getId()) {
                         break;
                     }
 
-                    TValue a = x.get(i).isTSet() ? x.get(i).getT(user.getMind()).getCurrent() : x.get(i).getV(user.getMind());
-                    TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT(user.getMind()).getCurrent() : domain.getArguments().get(i).getV(user.getMind());
+                    TValue a = x.get(i).isTSet() ? x.get(i).getT(mind).getCurrent() : x.get(i).getV(mind);
+                    TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT(mind).getCurrent() : domain.getArguments().get(i).getV(mind);
                     if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                         break;
                     }

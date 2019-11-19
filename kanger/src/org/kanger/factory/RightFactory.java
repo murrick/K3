@@ -1,5 +1,6 @@
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
@@ -29,11 +30,13 @@ public class RightFactory implements Iterable<Right> {
     private ICache cache;
     private ICache stored;
     private IUser user = null;
+    private Mind mind = null;
 
     private transient boolean action = false;
 
     public RightFactory(IUser user) {
         this.user = user;
+        this.mind = user.getMind();
         transaction(null);
     }
 
@@ -47,12 +50,12 @@ public class RightFactory implements Iterable<Right> {
 
 //            lastId = user.nextId(SCHEMA);
 //            firstId = base.lastId;
-            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
-            stored = new Escalera(user.getMind(), SCHEMA_STORED, base.stored);
+            cache = new Escalera(mind, SCHEMA, base.cache);
+            stored = new Escalera(mind, SCHEMA_STORED, base.stored);
         } else {
 //            System.err.println(" =================================================== ");
-            cache = new Escalera(user.getMind(), SCHEMA, null);
-            stored = new Escalera(user.getMind(), SCHEMA_STORED, null);
+            cache = new Escalera(mind, SCHEMA, null);
+            stored = new Escalera(mind, SCHEMA_STORED, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -64,9 +67,14 @@ public class RightFactory implements Iterable<Right> {
     }
 
 
-    public void commit(RightFactory base) {
+    public void commit(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
+
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                ((Right) s.getData()).setMind(mind);
+            }
+
 //            lastId = cache.getRoot().getId() + 1;
 //            if (cache.getTop() == null) {
 //                cache.setTop(base.cache.getTop());
@@ -101,8 +109,8 @@ public class RightFactory implements Iterable<Right> {
 
     public Right register(Right r) {
         r.setId(user.nextId(SCHEMA));
-        r.setMindId(user.getMind().getId());
-        r.setVarIndex(user.getMind().getTerms().getVarIndex());
+        r.setMindId(mind.getId());
+        r.setVarIndex(mind.getTerms().getVarIndex());
         return r;
     }
 
@@ -123,10 +131,11 @@ public class RightFactory implements Iterable<Right> {
                 for (Domain d : list) {
                     r.getPredicates().add(d.getPredicateId());
                     d.setRight(r);
-                    for (TVariable t : d.getArguments().getTVariables(user.getMind(), true)) {
+//                    d.setMind(mind);
+                    for (TVariable t : d.getArguments().getTVariables(mind, true)) {
                         t.setRight(r);
                     }
-//                    user.getMind().getDomains().add(d);
+//                    mind.getDomains().add(d);
                 }
             }
             action = true;
@@ -146,8 +155,8 @@ public class RightFactory implements Iterable<Right> {
     public void expand(Right r) throws Exception {
         for (List<Domain> tree : r.getTree()) {
             if (tree.size() == 1) {
-                if (!tree.get(0).getArguments().getTVariables(user.getMind(), true).isEmpty()) {
-                    user.getMind().getDomains().getWaiters().add(tree.get(0));
+                if (!tree.get(0).getArguments().getTVariables(mind, true).isEmpty()) {
+                    mind.getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
                     Right rx = tree.get(0).setStored();
 //                    rx.setGenerated(false);
@@ -155,6 +164,10 @@ public class RightFactory implements Iterable<Right> {
                     Right rx = tree.get(0).createStored();
 //                    rx.setGenerated(false);
                 }
+            }
+
+            for (Domain d : tree) {
+                d.setMind(mind);
             }
         }
     }
@@ -164,7 +177,7 @@ public class RightFactory implements Iterable<Right> {
         if (t == null && !user.isClosed()) {
             IStep s = user.getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Right) s.getData(user.getMind());
+                t = (Right) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -178,8 +191,8 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getRights());
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getRights());
         } else {
             cache.clear();
             stored.clear();
@@ -191,7 +204,7 @@ public class RightFactory implements Iterable<Right> {
         r.setDeleted();
         for (List<Domain> list : r.getTree()) {
             for (Domain d : list) {
-                user.getMind().getDomains().delete(d);
+                mind.getDomains().delete(d);
             }
         }
 //            cache.delete(id);
@@ -203,7 +216,7 @@ public class RightFactory implements Iterable<Right> {
 //        if (r != null) {
 //            for (List<Domain> list : r.getTree()) {
 //                for (Domain d : list) {
-//                    user.getMind().getDomains().delete(d.getId());
+//                    mind.getDomains().delete(d.getId());
 //                }
 //            }
 //            cache.delete(id);
@@ -226,15 +239,15 @@ public class RightFactory implements Iterable<Right> {
         } else {
             ArgList list = null;
             if (domain.isQuery()) {
-                list = domain.getArguments().convert(user.getMind());
-                for (TValue t : list.getTValues(user.getMind(), true)) t.setQuery();
+                list = domain.getArguments().convert(mind);
+                for (TValue t : list.getTValues(mind, true)) t.setQuery();
             } else {
-                list = domain.getArguments().convertBase(user.getMind());
+                list = domain.getArguments().convertBase(mind);
             }
-            Right r = new Right(user);
+            Right r = new Right(mind);
             register(r);
 
-            Domain d = user.getMind().getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
+            Domain d = mind.getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
             r.getTree().get(0).add(d);
             r.setGenerated(true);
             r.setStored();
@@ -244,10 +257,10 @@ public class RightFactory implements Iterable<Right> {
                 r.setQuery(true);
             }
 
-            int save = user.getMind().getDebugLevel();
-            user.getMind().setDebugLevel(0);
-            Term origin = user.getMind().getTerms().add(d.toString());
-            user.getMind().setDebugLevel(save);
+            int save = mind.getDebugLevel();
+            mind.setDebugLevel(0);
+            Term origin = mind.getTerms().add(d.toString());
+            mind.setDebugLevel(save);
             r.setOrig(origin);
 
             return add(r);
@@ -261,7 +274,7 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right find(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        domain.setUser(user);
+//        domain.setUser(user);
         for (long id : cache.find(domain.getHashBase())) {
             Right one = load(id);
             if (one.equalsTo(domain)) {

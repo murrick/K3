@@ -133,7 +133,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain temp = new Domain(pred, antc, arg, r);
-        temp.setUser(user);
+//        temp.setUser(user);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = load(id);
             if (one.equalsTo(temp)) {
