@@ -175,7 +175,7 @@ public class KangerTest {
     }
 
     public Hypotese createHypotese(IUser user, boolean antc, Object predicate, Object... params) throws Exception {
-        Hypotese h = new Hypotese(user);
+        Hypotese h = new Hypotese();
         h.setAntc(antc);
         if (predicate instanceof Predicate) {
             h.setPredicate((Predicate) predicate);
@@ -184,9 +184,9 @@ public class KangerTest {
         }
 
         if (params[0] instanceof Collection) {
-            h.addParams((Collection) params[0]);
+            h.addParams(user.getMind(), (Collection) params[0]);
         } else {
-            h.addParams(Arrays.asList(params));
+            h.addParams(user.getMind(), Arrays.asList(params));
         }
         return h;
     }

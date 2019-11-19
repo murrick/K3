@@ -1,9 +1,9 @@
 package org.kanger.stores;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.units.TValue;
@@ -19,10 +19,10 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
 
     private List<ArgList> root = new ArrayList<>();
 
-    private IUser user = null;
+    private final Mind mind;
 
-    public ValuesStore(IUser user) {
-        this.user = user;
+    public ValuesStore(Mind mind) {
+        this.mind = mind;
     }
 
     public void commit(ValuesStore base) {
@@ -49,8 +49,8 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         List<Term> list = new ArrayList<>();
         for (ArgList row : root) {
             for (Argument t : row) {
-                if (name == null || name.equals(t.getV(user.getMind()).getTVar().getName().getValue())) {
-                    list.add(t.getV(user.getMind()).getValue());
+                if (name == null || name.equals(t.getV(mind).getTVar().getName().getValue())) {
+                    list.add(t.getV(mind).getValue());
                 }
             }
         }
@@ -89,7 +89,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
             SortedMap<String, Object> row = new TreeMap<>();
             for (Argument v : iterator.next()) {
                 try {
-                    row.put(v.getV(user.getMind()).getTVar().getName().toString(), v.getV(user.getMind()).getValue().getValue());
+                    row.put(v.getV(mind).getTVar().getName().toString(), v.getV(mind).getValue().getValue());
                 } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
                     e.printStackTrace(System.err);
                 }

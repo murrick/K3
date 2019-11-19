@@ -1,8 +1,8 @@
 package org.kanger.stores;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Hypotese;
 import org.kanger.units.Predicate;
@@ -20,10 +20,10 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
 
     private List<Hypotese> root = null;
     private boolean enableStore = true;
-    private IUser user = null;
+    private final Mind mind;
 
-    public HypotesisStore(IUser user) {
-        this.user = user;
+    public HypotesisStore(Mind mind) {
+        this.mind = mind;
     }
 
     public void commit(HypotesisStore base) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
@@ -55,10 +55,10 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return h;
         } else {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? antc : !antc;
-            h = new Hypotese(user);
+            h = new Hypotese();
             h.setAntc(antc);
             h.setPredicate(pred);
-            h.addParams(arg);
+            h.addParams(mind, arg);
             h.setQuery(isQuery);
             root.add(h);
             return h;
@@ -117,7 +117,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
                     for (; i < h.getSolve().size(); ++i) {
-                        if (h.getSolve().get(i) != null && arg.get(i) != null && !h.getSolve().get(i).equals(arg.get(i).getValue(user.getMind()))) {
+                        if (h.getSolve().get(i) != null && arg.get(i) != null && !h.getSolve().get(i).equals(arg.get(i).getValue(mind))) {
                             break;
                         }
                     }

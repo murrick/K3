@@ -119,10 +119,10 @@ public class Mind {
 
         library = new LibraryFactory(user);                            // Пользовательсткая библиотека функций и предикатов
 
-        hypotesis = new HypotesisStore(user);                                // Список гипотез
-        excluded = new HypotesisStore(user);                                // Список исключенных гипотез
-        solves = new SolutionsStore(user);                         // Список решений
-        values = new ValuesStore(user);                               // Список значений
+        hypotesis = new HypotesisStore(this);                                // Список гипотез
+        excluded = new HypotesisStore(this);                                // Список исключенных гипотез
+        solves = new SolutionsStore(this);                         // Список решений
+        values = new ValuesStore(this);                               // Список значений
 //        results = new ResultsStore(user);                               // Список значений
 
         log = new LogStore(this);                                        // Протокол вывода

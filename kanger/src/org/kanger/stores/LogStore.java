@@ -21,7 +21,7 @@ public class LogStore {
 
     private List<LogEntry> root = null;
     private boolean enableLogging = true;
-    private Mind mind = null;
+    private final Mind mind;
 
     public LogStore(Mind mind) {
         this.mind = mind;

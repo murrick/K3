@@ -6,11 +6,11 @@
 package org.kanger.primitives;
 
 
+import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
 import org.kanger.units.Right;
@@ -34,14 +34,14 @@ public class Hypotese implements Comparable<Hypotese> {
     private transient long predicateId = -1;
     private transient List<Long> solveIds = new ArrayList<>();
     private transient Set<Long> rightsIds = new HashSet<>();
-    private transient IUser user = null;
+//    private transient Mind mind = null;
 
     public Hypotese() {
     }
 
-    public Hypotese(IUser user) {
-        this.user = user;
-    }
+//    public Hypotese(IUser user) {
+//        this.user = user;
+//    }
 
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
@@ -96,9 +96,9 @@ public class Hypotese implements Comparable<Hypotese> {
 //
 
     public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (predicate == null) {
-            predicate = user.getMind().getPredicates().load(predicateId);
-        }
+//        if (predicate == null) {
+//            predicate = user.getMind().getPredicates().load(predicateId);
+//        }
         return predicate;
     }
 
@@ -108,22 +108,22 @@ public class Hypotese implements Comparable<Hypotese> {
     }
 
     public List<Term> getSolve() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (solve.isEmpty() && !solveIds.isEmpty()) {
-            for (long id : solveIds) {
-                Term t = user.getMind().getTerms().load(id);
-                solve.add(t);
-            }
-        }
+//        if (solve.isEmpty() && !solveIds.isEmpty()) {
+//            for (long id : solveIds) {
+//                Term t = user.getMind().getTerms().load(id);
+//                solve.add(t);
+//            }
+//        }
         return solve;
     }
 
     public Set<Right> getRights() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (rights.isEmpty() && !rightsIds.isEmpty()) {
-            for (long id : rightsIds) {
-                Right right = user.getMind().getRights().load(id);
-                rights.add(right);
-            }
-        }
+//        if (rights.isEmpty() && !rightsIds.isEmpty()) {
+//            for (long id : rightsIds) {
+//                Right right = user.getMind().getRights().load(id);
+//                rights.add(right);
+//            }
+//        }
         return rights;
     }
 
@@ -143,14 +143,14 @@ public class Hypotese implements Comparable<Hypotese> {
         this.query = query;
     }
 
-    public void addParams(Collection params) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void addParams(Mind mind, Collection params) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Object p : params) {
             if (p instanceof Argument) {
-                solve.add(((Argument) p).getValue(user.getMind()));
+                solve.add(((Argument) p).getValue(mind));
             } else if (p instanceof Term) {
                 solve.add((Term) p);
             } else {
-                solve.add(user.getMind().getTerms().add(p));
+                solve.add(mind.getTerms().add(p));
             }
         }
     }

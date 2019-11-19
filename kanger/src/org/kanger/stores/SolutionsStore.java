@@ -1,8 +1,8 @@
 package org.kanger.stores;
 
+import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.units.Domain;
 import org.kanger.units.Right;
 
@@ -18,10 +18,10 @@ public class SolutionsStore {
     private Set<Right> root = null;
     private boolean enableStore = true;
 
-    private IUser user = null;
+    private final Mind mind;
 
-    public SolutionsStore(IUser user) {
-        this.user = user;
+    public SolutionsStore(Mind mind) {
+        this.mind = mind;
     }
 
     public void commit(SolutionsStore base) {
