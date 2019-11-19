@@ -348,15 +348,15 @@ public class Right implements IUnit<Right> {
                 int i = 0;
                 for (; i < domain.getRange(); ++i) {
                     //TODO: Костыль!
-                    x.get(i).setUser(user);
-                    if (!x.get(i).isEmpty()
-                            && !domain.getArguments().get(i).isEmpty()
-                            && x.get(i).getValue().getId() != domain.getArguments().get(i).getValue().getId()) {
+//                    x.get(i).setUser(user);
+                    if (!x.get(i).isEmpty(user.getMind())
+                            && !domain.getArguments().get(i).isEmpty(user.getMind())
+                            && x.get(i).getValue(user.getMind()).getId() != domain.getArguments().get(i).getValue(user.getMind()).getId()) {
                         break;
                     }
 
-                    TValue a = x.get(i).isTSet() ? x.get(i).getT().getCurrent() : x.get(i).getV();
-                    TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT().getCurrent() : domain.getArguments().get(i).getV();
+                    TValue a = x.get(i).isTSet() ? x.get(i).getT(user.getMind()).getCurrent() : x.get(i).getV(user.getMind());
+                    TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT(user.getMind()).getCurrent() : domain.getArguments().get(i).getV(user.getMind());
                     if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                         break;
                     }

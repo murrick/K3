@@ -117,6 +117,7 @@ public class DomainFactory implements Iterable<Domain> {
                     p.add(t);
                 }
             }
+//            p.getArguments().setUser(user);
             cache.add(p);
             return p;
         }
@@ -124,6 +125,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain temp = new Domain(pred, antc, arg, r);
+        temp.setUser(user);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = load(id);
             if (one.equalsTo(temp)) {
@@ -176,13 +178,13 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void delete(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         d.setDeleted();
-        for (TVariable t : d.getArguments().getTVariables(true)) {
+        for (TVariable t : d.getArguments().getTVariables(user.getMind(), true)) {
             user.getMind().getTVars().delete(t);
         }
-        for (TValue v : d.getArguments().getTValues(true)) {
+        for (TValue v : d.getArguments().getTValues(user.getMind(), true)) {
             user.getMind().getTValues().delete(v);
         }
-        for (Function f : d.getArguments().getFunctions()) {
+        for (Function f : d.getArguments().getFunctions(user.getMind())) {
             user.getMind().getFunctions().delete(f);
         }
 

@@ -49,8 +49,8 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         List<Term> list = new ArrayList<>();
         for (ArgList row : root) {
             for (Argument t : row) {
-                if (name == null || name.equals(t.getV().getTVar().getName().getValue())) {
-                    list.add(t.getV().getValue());
+                if (name == null || name.equals(t.getV(user.getMind()).getTVar().getName().getValue())) {
+                    list.add(t.getV(user.getMind()).getValue());
                 }
             }
         }
@@ -89,7 +89,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
             SortedMap<String, Object> row = new TreeMap<>();
             for (Argument v : iterator.next()) {
                 try {
-                    row.put(v.getV().getTVar().getName().toString(), v.getV().getValue().getValue());
+                    row.put(v.getV(user.getMind()).getTVar().getName().toString(), v.getV(user.getMind()).getValue().getValue());
                 } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
                     e.printStackTrace(System.err);
                 }

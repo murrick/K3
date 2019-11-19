@@ -1,5 +1,6 @@
 package org.kanger.primitives;
 
+import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
@@ -23,13 +24,13 @@ public class Cause implements Comparable<Cause> {
     public Cause() {
     }
 
-    public Cause(int index, Domain dst, Domain src) {
+    public Cause(Mind mind, int index, Domain dst, Domain src) {
         this.index = index;
         this.dst = dst;
         this.src = src;
         this.dstId = dst.getId();
         this.srcId = src.getId();
-        this.arguments = src.getArguments().convertBase();
+        this.arguments = src.getArguments().convertBase(mind);
     }
 
     public ByteBuffer pack() {
@@ -48,7 +49,7 @@ public class Cause implements Comparable<Cause> {
         try {
             packet.mark();
             arguments = new ArgList().apply(packet);
-            arguments.setUser(user);
+//            arguments.setUser(user);
         } finally {
             packet.release();
         }
@@ -158,7 +159,7 @@ public class Cause implements Comparable<Cause> {
 
     public void setUser(IUser user) {
         this.user = user;
-        this.arguments.setUser(user);
+//        this.arguments.setUser(user);
     }
 
     public long getSrcId() {

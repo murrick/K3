@@ -37,41 +37,41 @@ public class Predicates {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
 
-//                    if (arg.get(0).isFSet() /*&& arg.get(0).getF().isCalculable() && !arg.get(0).getF().getResult().isEmpty() && arg.get(0).getF().isEmpty()*/) {
+//                    if (arg.get(0).isFSet() /*&& arg.get(0).getF().isCalculable() && !arg.get(0).getF().getResult().isEmpty(mind) && arg.get(0).getF().isEmpty(mind)*/) {
 //                        mind.getCalculator().calculate(arg.get(0).getF(), mind.isLogging());
 //                    }
 //
-//                    if (arg.get(1).isFSet() /*&& arg.get(1).getF().isCalculable() && !arg.get(1).getF().getResult().isEmpty() && arg.get(1).getF().isEmpty()*/) {
+//                    if (arg.get(1).isFSet() /*&& arg.get(1).getF().isCalculable() && !arg.get(1).getF().getResult().isEmpty(mind) && arg.get(1).getF().isEmpty(mind)*/) {
 //                        mind.getCalculator().calculate(arg.get(1).getF(), mind.isLogging());
 //                    }
 
-                    if (arg.get(0).isDefined() && arg.get(1).isEmpty()) {
-                        if (arg.get(1).setValue(arg.get(0).getValue())) {
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
+                        if (arg.get(1).setValue(mind, arg.get(0).getValue(mind))) {
                             i = 1;
                         }
-                    } else if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
-                        if (arg.get(0).setValue(arg.get(1).getValue())) {
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
+                        if (arg.get(0).setValue(mind, arg.get(1).getValue(mind))) {
                             i = 1;
                         }
-                    } else if (arg.get(0).isDefined() && arg.get(1).isDefined()) {
-                        if (arg.get(0).getValue().compareTo(arg.get(1).getValue()) == 0) {
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind)) == 0) {
                             i = 1;
-                        } else { //if ((arg.createCVar(0).getValue().isCVariable() && arg.createCVar(1).getValue().isCVariable()) || (!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())) {
+                        } else { //if ((arg.createCVar(0).getValue(mind).isCVariable() && arg.createCVar(1).getValue(mind).isCVariable()) || (!arg.createCVar(0).getValue(mind).isCVariable() && !arg.createCVar(1).getValue(mind).isCVariable())) {
 
-                            Term v0 = arg.get(0).getValue();
-                            Term v1 = arg.get(1).getValue();
+                            Term v0 = arg.get(0).getValue(mind);
+                            Term v1 = arg.get(1).getValue(mind);
 
 
-                            if (arg.get(0).isTSet() && !arg.get(1).isEmpty()) {
-                                TValue v = arg.get(0).addValue(arg.get(1).getValue());
+                            if (arg.get(0).isTSet() && !arg.get(1).isEmpty(mind)) {
+                                TValue v = arg.get(0).addValue(mind, arg.get(1).getValue(mind));
                                 if (mind.isLogging() && v != null) {
                                     mind.getLog().add(LogMode.ANALIZER, "Added: " + v);
                                     mind.getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
                                     mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                                 }
                             }
-                            if (arg.get(1).isTSet() && !arg.get(0).isEmpty()) {
-                                TValue v = arg.get(1).addValue(arg.get(0).getValue());
+                            if (arg.get(1).isTSet() && !arg.get(0).isEmpty(mind)) {
+                                TValue v = arg.get(1).addValue(mind, arg.get(0).getValue(mind));
                                 if (mind.isLogging() && v != null) {
                                     mind.getLog().add(LogMode.ANALIZER, "Added: " + v);
                                     mind.getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
@@ -79,18 +79,18 @@ public class Predicates {
                                 }
                             }
 
-                            if (arg.get(0).isFSet() && arg.get(0).getF().isCalculable()) {
-                                arg.get(0).getF().setResult(v1);
-                                mind.getCalculator().calculate(arg.get(0).getF(), mind.isLogging());
+                            if (arg.get(0).isFSet() && arg.get(0).getF(mind).isCalculable()) {
+                                arg.get(0).getF(mind).setResult(v1);
+                                mind.getCalculator().calculate(arg.get(0).getF(mind), mind.isLogging());
                             }
-                            if (arg.get(1).isFSet() && arg.get(1).getF().isCalculable()) {
-                                arg.get(1).getF().setResult(v0);
-                                mind.getCalculator().calculate(arg.get(1).getF(), mind.isLogging());
+                            if (arg.get(1).isFSet() && arg.get(1).getF(mind).isCalculable()) {
+                                arg.get(1).getF(mind).setResult(v0);
+                                mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
                             }
 
                             i = 0;
                         }
-//                        else //if(!arg.createCVar(0).getValue().isCVariable() && !arg.createCVar(1).getValue().isCVariable())
+//                        else //if(!arg.createCVar(0).getValue(mind).isCVariable() && !arg.createCVar(1).getValue(mind).isCVariable())
 //                            i = 0;
                     }
                     return i;
@@ -104,8 +104,8 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty()) {
-                        int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
+                    if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind)) {
+                        int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
                         if (rc != 0) {
                             i = 1;
                         } else if (rc == 0) {
@@ -122,8 +122,8 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
-                        int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
+                    if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
+                        int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
                         i = rc > 0 ? 1 : 0;
 //                        }
@@ -138,8 +138,8 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
-                        int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
+                    if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
+                        int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
                         i = rc >= 0 ? 1 : 0;
 //                        }
@@ -154,8 +154,8 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
-                        int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
+                    if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
+                        int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
                         i = rc < 0 ? 1 : 0;
 //                        }
@@ -170,8 +170,8 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
-                        int rc = arg.get(0).getValue().compareTo(arg.get(1).getValue());
+                    if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
+                        int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
                         i = rc <= 0 ? 1 : 0;
 //                        }
@@ -186,26 +186,26 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
-                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
-                                || arg.get(1).getValue().getType() == DataType.SET
-                                || arg.get(1).getValue().getType() == DataType.STRING) {
+                    if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
+                        if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
+                                || arg.get(1).getValue(mind).getType() == DataType.SET
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
                             Term top = null;
-                            for (Term cur : expand(arg.get(1).getValue(), null)) {
+                            for (Term cur : expand(arg.get(1).getValue(mind), null)) {
                                 if (top == null) top = cur;
-                                arg.get(0).addValue(cur);
+                                arg.get(0).addValue(mind, cur);
                                 i = 1;
                             }
                         }
                         Term top = null;
                         if (top != null) {
-                            arg.get(0).setValue(top);
+                            arg.get(0).setValue(mind, top);
                         }
-                    } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
-                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
-                                || arg.get(1).getValue().getType() == DataType.SET
-                                || arg.get(1).getValue().getType() == DataType.STRING) {
-                            i = _in(arg.get(0).getValue(), arg.get(1).getValue(), null) ? 1 : 0;
+                    } else if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
+                        if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
+                                || arg.get(1).getValue(mind).getType() == DataType.SET
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
+                            i = _in(arg.get(0).getValue(mind), arg.get(1).getValue(mind), null) ? 1 : 0;
                         }
                     }
                     return i;
@@ -218,26 +218,26 @@ public class Predicates {
                 public Object run(Object o) throws Exception {
                     int i = -1;
                     ArgList arg = ((Domain) o).getArguments();
-                    if (arg.get(0).isEmpty() && arg.get(1).isDefined()) {
-                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
-                                || arg.get(1).getValue().getType() == DataType.SET
-                                || arg.get(1).getValue().getType() == DataType.STRING) {
+                    if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
+                        if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
+                                || arg.get(1).getValue(mind).getType() == DataType.SET
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
                             Term top = null;
-                            for (Term cur : expand(arg.get(1).getValue(), arg.get(2).getValue())) {
+                            for (Term cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind))) {
                                 if (top == null) top = cur;
-                                arg.get(0).addValue(cur);
+                                arg.get(0).addValue(mind, cur);
                                 i = 1;
                             }
                         }
                         Term top = null;
                         if (top != null) {
-                            arg.get(0).setValue(top);
+                            arg.get(0).setValue(mind, top);
                         }
-                    } else if (!arg.get(0).isEmpty() && !arg.get(1).isEmpty() && !arg.get(0).getValue().isCVariable() && !arg.get(1).getValue().isCVariable()) {
-                        if (arg.get(1).getValue().getType() == DataType.INTERVAL
-                                || arg.get(1).getValue().getType() == DataType.SET
-                                || arg.get(1).getValue().getType() == DataType.STRING) {
-                            i = _in(arg.get(0).getValue(), arg.get(1).getValue(), arg.get(2).getValue()) ? 1 : 0;
+                    } else if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
+                        if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
+                                || arg.get(1).getValue(mind).getType() == DataType.SET
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
+                            i = _in(arg.get(0).getValue(mind), arg.get(1).getValue(mind), arg.get(2).getValue(mind)) ? 1 : 0;
                         }
                     }
                     return i;

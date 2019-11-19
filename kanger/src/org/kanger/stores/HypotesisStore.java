@@ -117,7 +117,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
                 int i = 0;
                 if (arg.size() == h.getSolve().size()) {
                     for (; i < h.getSolve().size(); ++i) {
-                        if (h.getSolve().get(i) != null && arg.get(i) != null && !h.getSolve().get(i).equals(arg.get(i).getValue())) {
+                        if (h.getSolve().get(i) != null && arg.get(i) != null && !h.getSolve().get(i).equals(arg.get(i).getValue(user.getMind()))) {
                             break;
                         }
                     }

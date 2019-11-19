@@ -1,11 +1,11 @@
 package org.kanger.primitives;
 
+import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
@@ -24,7 +24,7 @@ public class Argument {
 
     private transient long id = -1;
     private transient ArgumentType type = ArgumentType.EMPTY;
-    private transient IUser user = null;
+//    private transient IUser user = null;
 
     public Argument() {
     }
@@ -34,7 +34,7 @@ public class Argument {
         if (o != null) {
             id = o.getId();
             type = getObjectType();
-            user = d.getUser();
+//            user = d.getUser();
         }
     }
 
@@ -51,27 +51,23 @@ public class Argument {
         return this;
     }
 
-    private void load(IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private void load(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         switch (type) {
             case CVARIABLE:
             case TERM:
-                try {
-                    o = user.getMind().getTerms().load(id);
-                } catch (NullPointerException e) {
-                    e.printStackTrace(System.err);
-                }
+                o = mind.getTerms().load(id);
                 break;
             case TVARIABLE:
-                o = user.getMind().getTVars().load(id);
+                o = mind.getTVars().load(id);
                 break;
             case TVALUE:
-                o = user.getMind().getTValues().load(id);
+                o = mind.getTValues().load(id);
                 break;
             case FUNCTION:
-                o = user.getMind().getFunctions().load(id);
+                o = mind.getFunctions().load(id);
                 break;
             case FVALUE:
-                o = user.getMind().getFValues().load(id);
+                o = mind.getFValues().load(id);
                 break;
             default:
                 o = null;
@@ -99,32 +95,32 @@ public class Argument {
         }
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getValue(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         switch (type) {
             case CVARIABLE:
             case TERM:
-                return (Term) getO();
+                return (Term) getO(mind);
             case TVARIABLE:
-                return ((TVariable) getO()).getValue();
+                return ((TVariable) getO(mind)).getValue();
             case TVALUE:
-                return ((TValue) getO()).getValue();
+                return ((TValue) getO(mind)).getValue();
             case FVALUE:
-                return ((FValue) getO()).getValue();
+                return ((FValue) getO(mind)).getValue();
             case FUNCTION:
-                return ((Function) getO()).getValue();
+                return ((Function) getO(mind)).getValue();
             default:
                 return null;
         }
     }
 
-    public TValue addValue(Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TValue addValue(Mind mind, Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//        Mind mind = t.getUser().getMind();
         switch (type) {
             case TVARIABLE:
-                TVariable tv = (TVariable) getO();
-                user = tv.getUser();
-                TValue s = user.getMind().getTValues().find(tv, t);
+                TVariable tv = (TVariable) getO(mind);
+                TValue s = mind.getTValues().find(tv, t);
                 if (s == null) {
-                    s = user.getMind().getTValues().add(tv, t);
+                    s = mind.getTValues().add(tv, t);
                 } else {
                     s = null;
                 }
@@ -134,7 +130,8 @@ public class Argument {
         }
     }
 
-    public boolean setValue(Term t) throws Exception {
+    public boolean setValue(Mind mind, Term t) throws Exception {
+//        Mind mind = t.getUser().getMind();
         switch (type) {
             case EMPTY:
                 o = t;
@@ -148,23 +145,21 @@ public class Argument {
                 id = o.getId();
                 return true;
             case TVARIABLE:
-                TVariable tv = (TVariable) getO();
-                user = tv.getUser();
+                TVariable tv = (TVariable) getO(mind);
                 tv.setValue(t);
-//                TValue s = user.getMind().getTValues().find(tv, t);
+//                TValue s = mind.getTValues().find(tv, t);
 //                if (s == null) {
-//                    s = user.getMind().getTValues().add(tv, t);
+//                    s = mind.getTValues().add(tv, t);
 //                }
 //                if (tv.getCurrent() == null) {
 //                    tv.setCurrent(s);
 //                }
                 return true;
             case FUNCTION:
-                Function f = (Function) getO();
-                user = f.getUser();
+                Function f = (Function) getO(mind);
                 if (f.isCalculable()) {
                     f.setResult(t);
-                    user.getMind().getCalculator().calculate(f, user.getMind().isLogging());
+                    mind.getCalculator().calculate(f, mind.isLogging());
                 }
                 return true;
             default:
@@ -172,27 +167,27 @@ public class Argument {
         }
     }
 
-    private IUnit getO() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private IUnit getO(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
-            load(user);
+            load(mind);
         }
         return o;
     }
 
-    public TVariable getT() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return type == ArgumentType.TVARIABLE ? (TVariable) getO() : null;
+    public TVariable getT(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        return type == ArgumentType.TVARIABLE ? (TVariable) getO(mind) : null;
     }
 
-    public TValue getV() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return type == ArgumentType.TVALUE ? (TValue) getO() : null;
+    public TValue getV(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        return type == ArgumentType.TVALUE ? (TValue) getO(mind) : null;
     }
 
-    public Function getF() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return type == ArgumentType.FUNCTION ? (Function) getO() : null;
+    public Function getF(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        return type == ArgumentType.FUNCTION ? (Function) getO(mind) : null;
     }
 
-    public FValue getR() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return type == ArgumentType.FVALUE ? (FValue) getO() : null;
+    public FValue getR(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        return type == ArgumentType.FVALUE ? (FValue) getO(mind) : null;
     }
 
     public void clear() {
@@ -201,9 +196,9 @@ public class Argument {
         id = -1;
     }
 
-    public boolean isEmpty() {
+    public boolean isEmpty(Mind mind) {
         try {
-            return getValue() == null;
+            return getValue(mind) == null;
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return true;
@@ -226,10 +221,9 @@ public class Argument {
         return type == ArgumentType.FUNCTION;
     }
 
-    @Override
-    public String toString() {
+    public String asString(Mind mind) {
         try {
-            Object val = getValue();
+            Object val = getValue(mind);
             if (val != null) {
                 return val.toString();
             } else {
@@ -242,8 +236,8 @@ public class Argument {
     }
 
 
-    public boolean isDefined() throws Exception {
-        Term t = getValue();
+    public boolean isDefined(Mind mind) throws Exception {
+        Term t = getValue(mind);
         return t != null && type != ArgumentType.CVARIABLE;
     }
 
@@ -252,14 +246,14 @@ public class Argument {
         return type == ArgumentType.CVARIABLE; //!isEmpty() && getValue().isCVariable();
     }
 
-    public IUser getUser() {
-        return user;
-    }
-
-    public void setUser(IUser user) {
-        this.user = user;
-    }
-
+    //    public IUser getUser() {
+//        return user;
+//    }
+//
+//    public void setUser(IUser user) {
+//        this.user = user;
+//    }
+//
     public long getId() {
         return id;
     }

@@ -1,10 +1,10 @@
 package org.kanger.primitives;
 
+import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Function;
 import org.kanger.units.TValue;
@@ -17,7 +17,8 @@ import java.util.List;
 
 public class ArgList extends ArrayList<Argument> {
 
-    private transient IUser user = null;
+    //    private transient IUser user = null;
+    private Mind mind = null;
 
     public ArgList() {
         super();
@@ -46,7 +47,7 @@ public class ArgList extends ArrayList<Argument> {
             try {
                 packet.mark();
                 Argument a = new Argument().apply(packet);
-                a.setUser(user);
+//                a.setUser(user);
                 add(a);
             } finally {
                 packet.release();
@@ -55,13 +56,12 @@ public class ArgList extends ArrayList<Argument> {
         return this;
     }
 
-    @Override
     public int hashCode() {
         int hashCode = 1;
         try {
             for (Argument a : this) {
-                if (!a.isEmpty()) {
-                    hashCode = 31 * hashCode + a.getValue().hashCode();
+                if (!a.isEmpty(mind)) {
+                    hashCode = 31 * hashCode + a.getValue(mind).hashCode();
                 }
             }
         } catch (Exception e) {
@@ -83,7 +83,6 @@ public class ArgList extends ArrayList<Argument> {
 //        return buffer.toString().hashCode();
     }
 
-    @Override
     public boolean equals(Object o) {
         if (o != null) {
             ArgList arg = null;
@@ -96,14 +95,14 @@ public class ArgList extends ArrayList<Argument> {
                 int i = 0;
                 try {
                     for (; i < arg.size(); ++i) {
-                        if (!get(i).isEmpty()
-                                && !arg.get(i).isEmpty()
-                                && get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                        if (!get(i).isEmpty(mind)
+                                && !arg.get(i).isEmpty(mind)
+                                && get(i).getValue(mind).getId() != arg.get(i).getValue(mind).getId()) {
                             break;
                         }
 
-                        TValue a = get(i).isTSet() ? get(i).getT().getCurrent() : get(i).getV();
-                        TValue b = arg.get(i).isTSet() ? arg.get(i).getT().getCurrent() : arg.get(i).getV();
+                        TValue a = get(i).isTSet() ? get(i).getT(mind).getCurrent() : get(i).getV(mind);
+                        TValue b = arg.get(i).isTSet() ? arg.get(i).getT(mind).getCurrent() : arg.get(i).getV(mind);
                         if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                             break;
                         }
@@ -119,7 +118,7 @@ public class ArgList extends ArrayList<Argument> {
         return false;
     }
 
-    public boolean equalsBase(Object o) {
+    public boolean equalsBase(Mind mind, Object o) {
         if (o != null) {
             ArgList arg = null;
             if (o instanceof ArgList) {
@@ -131,9 +130,9 @@ public class ArgList extends ArrayList<Argument> {
                 int i = 0;
                 try {
                     for (; i < arg.size(); ++i) {
-                        if (!get(i).isEmpty()
-                                && !arg.get(i).isEmpty()
-                                && get(i).getValue().getId() != arg.get(i).getValue().getId()) {
+                        if (!get(i).isEmpty(mind)
+                                && !arg.get(i).isEmpty(mind)
+                                && get(i).getValue(mind).getId() != arg.get(i).getValue(mind).getId()) {
                             break;
                         }
                     }
@@ -148,42 +147,48 @@ public class ArgList extends ArrayList<Argument> {
         return false;
     }
 
-    public ArgList convert() {
+    public ArgList convert(Mind mind) {
         ArgList list = new ArgList();
         for (int i = 0; i < size(); ++i) {
             try {
                 Argument t = get(i);
                 if (t.isTSet()) {
-                    TValue v = t.getT().getCurrent();
+                    TValue v = t.getT(mind).getCurrent();
                     list.add(new Argument(v));
                 } else if (t.isFSet()) {
-                    list.add(new Argument(t.getF().getCurrent()));
+                    list.add(new Argument(t.getF(mind).getCurrent()));
                 } else {
-                    list.add(new Argument(t.getValue()));
+                    list.add(new Argument(t.getValue(mind)));
                 }
             } catch (Exception x) {
             }
         }
+        list.mind = mind;
         return list;
     }
 
-    public ArgList convertBase() {
+    public ArgList convertBase(Mind mind) {
         ArgList list = new ArgList();
         for (int i = 0; i < size(); ++i) {
             try {
-                list.add(new Argument(get(i).getValue()));
+                list.add(new Argument(get(i).getValue(mind)));
             } catch (Exception x) {
             }
         }
+        list.mind = mind;
         return list;
     }
 
-    public List<Function> getFunctions() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//    public void setMind(Mind mind) {
+//        this.mind = mind;
+//    }
+
+    public List<Function> getFunctions(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Function> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isFSet()) {
-                if (!list.contains(a.getF())) {
-                    list.add(a.getF());
+                if (!list.contains(a.getF(mind))) {
+                    list.add(a.getF(mind));
                 }
 //                if (full) {
 //                    List<Function> temp = a.getF().getArguments().getFunctions(full);
@@ -199,15 +204,15 @@ public class ArgList extends ArrayList<Argument> {
     }
 
 
-    public List<TVariable> getTVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<TVariable> getTVariables(Mind mind, boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<TVariable> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
-            a.setUser(user);
-            if (a.isTSet() && !a.getT().isDeleted() && !a.getT().isDeleted() && !list.contains(a.getT())) {
-                list.add(a.getT());
+//            a.setUser(user);
+            if (a.isTSet() && !a.getT(mind).isDeleted() && !a.getT(mind).isDeleted() && !list.contains(a.getT(mind))) {
+                list.add(a.getT(mind));
             } else if (full && a.isFSet()) {
-                List<TVariable> temp = a.getF().getArguments().getTVariables(full);
+                List<TVariable> temp = a.getF(mind).getArguments().getTVariables(mind, full);
                 for (TVariable t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
@@ -219,42 +224,41 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    public List<Term> getCVariables(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<Term> getCVariables(Mind mind, boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Term> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
-            a.setUser(user);
-            if (a.isCVar() && !a.getValue().isDeleted() && !list.contains(a.getValue())) {
-                list.add(a.getValue());
+//            a.setUser(user);
+            if (a.isCVar() && !a.getValue(mind).isDeleted() && !list.contains(a.getValue(mind))) {
+                list.add(a.getValue(mind));
             } else if (full && a.isFSet()) {
-                List<Term> temp = a.getF().getArguments().getCVariables(full);
+                List<Term> temp = a.getF(mind).getArguments().getCVariables(mind, full);
                 for (Term t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
                     }
                 }
             }
-
         }
         return list;
     }
 
-    public List<TValue> getTValues(boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<TValue> getTValues(Mind mind, boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<TValue> list = new ArrayList<>();
         for (Argument a : this) {
-            if (a.isTSet() && !a.getT().isDeleted() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
-                list.add(a.getT().getCurrent());
-            } else if (a.isVSet() && !a.getV().isDeleted() && !list.contains(a.getV())) {
-                list.add(a.getV());
+            if (a.isTSet() && !a.getT(mind).isDeleted() && !a.isEmpty(mind) && !list.contains(a.getT(mind).getCurrent())) {
+                list.add(a.getT(mind).getCurrent());
+            } else if (a.isVSet() && !a.getV(mind).isDeleted() && !list.contains(a.getV(mind))) {
+                list.add(a.getV(mind));
             } else if (full && a.isFSet()) {
-                List<TValue> temp = a.getF().getArguments().getTValues(full);
+                List<TValue> temp = a.getF(mind).getArguments().getTValues(mind, full);
                 for (TValue t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
                     }
                 }
             } else if (full && a.isRSet()) {
-                List<TValue> temp = a.getR().getCondition().getTValues(full);
+                List<TValue> temp = a.getR(mind).getCondition().getTValues(mind, full);
                 for (TValue t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
@@ -266,15 +270,14 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    @Override
-    public String toString() {
+    public String asString(Mind mind) {
         String str = "[";
         for (Argument a : this) {
             if (str.length() > 1) {
                 str += ", ";
             }
             try {
-                str += a.isVSet() ? a.getV().toString() : a.toString();
+                str += a.isVSet() ? a.getV(mind).toString() : a.asString(mind);
             } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
                 e.printStackTrace(System.err);
             }
@@ -283,20 +286,20 @@ public class ArgList extends ArrayList<Argument> {
         return str;
     }
 
-    public IUser getUser() {
-        return user;
-    }
+//    public IUser getUser() {
+//        return user;
+//    }
 
-    public void setUser(IUser user) {
-        this.user = user;
-        for (Argument a : this) {
-            a.setUser(user);
-        }
-    }
+//    public void setUser(IUser user) {
+//        this.user = user;
+//        for (Argument a : this) {
+//            a.setUser(user);
+//        }
+//    }
 
-    public List<Term> getStamp() throws IOException, ClassNotFoundException, ParametersIncompleteException, OutOfBufferException, RuntimeErrorException {
+    public List<Term> getStamp(Mind mind) throws IOException, ClassNotFoundException, ParametersIncompleteException, OutOfBufferException, RuntimeErrorException {
         List<Term> list = new ArrayList<>();
-        for (TVariable t : getTVariables(true)) {
+        for (TVariable t : getTVariables(mind, true)) {
             if (t.isEmpty()) {
                 throw new ParametersIncompleteException(t.toString());
             }
@@ -305,9 +308,9 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    public boolean equalsStamp(List<Term> list) throws IOException, ClassNotFoundException, RuntimeErrorException, OutOfBufferException {
+    public boolean equalsStamp(Mind mind, List<Term> list) throws IOException, ClassNotFoundException, RuntimeErrorException, OutOfBufferException {
         try {
-            List<Term> curr = getStamp();
+            List<Term> curr = getStamp(mind);
             if (curr.size() == list.size()) {
                 for (int i = 0; i < curr.size(); ++i) {
                     if (curr.get(i).isEmpty() || curr.get(i).getId() != list.get(i).getId()) {
@@ -323,14 +326,15 @@ public class ArgList extends ArrayList<Argument> {
         }
     }
 
-    public void applyArguments(ArgList arguments) throws Exception {
+    public void applyArguments(Mind mind, ArgList arguments) throws Exception {
         for (int i = 0; i < this.size(); ++i) {
-            this.get(i).setValue(arguments.get(i).getValue());
+            this.get(i).setValue(mind, arguments.get(i).getValue(mind));
         }
+//        this.setMind(mind);
     }
 
-    public void applyStamp(List<Term> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        List<TVariable> curr = getTVariables(true);
+    public void applyStamp(Mind mind, List<Term> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        List<TVariable> curr = getTVariables(mind, true);
         for (int i = 0; i < curr.size(); ++i) {
             if (curr.get(i).find(list.get(i)) != null) {
                 curr.get(i).setValue(list.get(i));
@@ -338,18 +342,18 @@ public class ArgList extends ArrayList<Argument> {
         }
     }
 
-    public boolean contains(Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean contains(Mind mind, Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Argument a : this) {
-            if (a.getValue().getId() == t.getId()) {
+            if (a.getValue(mind).getId() == t.getId()) {
                 return true;
             }
         }
         return false;
     }
 
-    public Argument remove(Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Argument remove(Mind mind, Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Argument a : this) {
-            if (a.getValue().getId() == t.getId()) {
+            if (a.getValue(mind).getId() == t.getId()) {
                 this.remove(a);
                 return a;
             }

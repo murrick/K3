@@ -182,7 +182,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         } else if (o instanceof ArgList) {
             List<Term> list = new ArrayList<>();
             for (Argument a : (ArgList) o) {
-                list.add(a.getValue());
+                list.add(a.getValue(user.getMind()));
             }
             type = DataType.SET;
             value = list;

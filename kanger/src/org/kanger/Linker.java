@@ -131,7 +131,7 @@ public class Linker {
             final SortedSet<TVariable> tvars = new TreeSet<>();
             for (List<Domain> tree : r.getTree()) {
                 for (Domain d : tree) {
-                    tvars.addAll(d.getArguments().getTVariables(true));
+                    tvars.addAll(d.getArguments().getTVariables(mind, true));
                 }
             }
 
@@ -239,11 +239,11 @@ public class Linker {
                                 // Отсечение несовпадений по константам
                                 for (int i = 0; i < slave.getRange(); ++i) {
                                     if (!master.get(i).isTSet() && !slave.get(i).isTSet()
-                                            && (!master.get(i).isFSet() || !master.get(i).getF().isEmpty())
-                                            && (!slave.get(i).isFSet() || !slave.get(i).getF().isEmpty())
-                                            && (master.get(i).isEmpty()
-                                            || slave.get(i).isEmpty()
-                                            || master.get(i).getValue().getId() != slave.get(i).getValue().getId())) {
+                                            && (!master.get(i).isFSet() || !master.get(i).getF(mind).isEmpty())
+                                            && (!slave.get(i).isFSet() || !slave.get(i).getF(mind).isEmpty())
+                                            && (master.get(i).isEmpty(mind)
+                                            || slave.get(i).isEmpty(mind)
+                                            || master.get(i).getValue(mind).getId() != slave.get(i).getValue(mind).getId())) {
                                         success = false;
                                         break;
                                     }
@@ -254,11 +254,11 @@ public class Linker {
 
                                         // Подстановка снизу вверх
                                         if (master.get(i).isTSet()
-                                                && !slave.get(i).isEmpty()
+                                                && !slave.get(i).isEmpty(mind)
                                                 && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                            TValue s = mind.getTValues().find(master.get(i).getT(), slave.get(i).getValue());
+                                            TValue s = mind.getTValues().find(master.get(i).getT(mind), slave.get(i).getValue(mind));
                                             if (s == null) {
-                                                s = mind.getTValues().add(master.get(i).getT(), slave.get(i).getValue());
+                                                s = mind.getTValues().add(master.get(i).getT(mind), slave.get(i).getValue(mind));
                                                 result = true;
                                             }
                                             substMaster[i] = s;
@@ -269,11 +269,11 @@ public class Linker {
 
                                         // Подстановка сверху вниз
                                         if (slave.get(i).isTSet()
-                                                && !master.get(i).isEmpty()
+                                                && !master.get(i).isEmpty(mind)
                                                 && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                            TValue s = mind.getTValues().find(slave.get(i).getT(), master.get(i).getValue());
+                                            TValue s = mind.getTValues().find(slave.get(i).getT(mind), master.get(i).getValue(mind));
                                             if (s == null) {
-                                                s = mind.getTValues().add(slave.get(i).getT(), master.get(i).getValue());
+                                                s = mind.getTValues().add(slave.get(i).getT(mind), master.get(i).getValue(mind));
                                                 result = true;
                                             }
                                             substSlave[i] = s;
@@ -333,8 +333,8 @@ public class Linker {
 //                                        }
 
                                         if (!applied) {
-                                            if (master.get(i).isEmpty() || slave.get(i).isEmpty()
-                                                    || master.get(i).getValue().getId() != slave.get(i).getValue().getId()) {
+                                            if (master.get(i).isEmpty(mind) || slave.get(i).isEmpty(mind)
+                                                    || master.get(i).getValue(mind).getId() != slave.get(i).getValue(mind).getId()) {
                                                 success = false;
                                                 break;
                                             } else {
@@ -394,7 +394,7 @@ public class Linker {
                 }
                 for (TValue v : list) {
                     boolean caused = false;
-                    Cause s = new Cause(i, master, slave);
+                    Cause s = new Cause(mind, i, master, slave);
                     if (!v.getCauses().contains(s)) {
                         v.getCauses().add(s);
                         caused = true;
@@ -479,8 +479,8 @@ public class Linker {
                         boolean success = true;
                         for (int i = 0; i < d.getRange(); ++i) {
                             if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {
-                            } else if (master.get(i).isEmpty()
-                                    || master.get(i).getValue().getId() != d.get(i).getValue().getId()) {
+                            } else if (master.get(i).isEmpty(mind)
+                                    || master.get(i).getValue(mind).getId() != d.get(i).getValue(mind).getId()) {
                                 success = false;
                                 break;
                             }
@@ -711,7 +711,7 @@ public class Linker {
             Domain d = e.getKey();
             for (List<Term> args : e.getValue()) {
                 result = true;
-                d.getArguments().applyStamp(args);
+                d.getArguments().applyStamp(mind, args);
                 if (d.isComplete()) {
 
 //                for(Function f : d.getArguments().getFunctions()) {
@@ -781,7 +781,7 @@ public class Linker {
         boolean result = false;
 
         for (Domain d : master) {
-            for (Function f : d.getArguments().getFunctions()) {
+            for (Function f : d.getArguments().getFunctions(mind)) {
                 if (f.isCalculable() && f.isEmpty()) {
                     f.clear();
                     if (mind.getCalculator().calculate(f, logging)) {
@@ -824,7 +824,7 @@ public class Linker {
 
                 int res = d.execSystem();
                 for (Argument a : d.getArguments()) {
-                    if (a.isEmpty()) {
+                    if (a.isEmpty(mind)) {
                         res = -2;
                         break;
                     }

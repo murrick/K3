@@ -44,22 +44,22 @@ public class FValue implements IUnit<FValue> {
 
     public FValue(Function f, IUser user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         function = f;
-        value = f.getArguments().get(f.getRange()).getValue();
+        value = f.getArguments().get(f.getRange()).getValue(user.getMind());
         functionId = function.getId();
         if (value != null) {
             valueId = value.getId();
         }
-        condition.setUser(user);
+//        condition.setUser(user);
         for (Argument a : f.getArguments()) {
             if (a.isTSet()) {
-                condition.add(new Argument(a.getT().getCurrent()));
+                condition.add(new Argument(a.getT(user.getMind()).getCurrent()));
             } else if (a.isFSet()) {
-                condition.add(new Argument(a.getF().getCurrent()));
+                condition.add(new Argument(a.getF(user.getMind()).getCurrent()));
             } else {
-                condition.add(new Argument(a.getValue()));
+                condition.add(new Argument(a.getValue(user.getMind())));
             }
         }
-        for (TVariable t : f.getArguments().getTVariables(true)) {
+        for (TVariable t : f.getArguments().getTVariables(user.getMind(), true)) {
             if (t.isEmpty()) {
                 stamp.add(0L);
             } else {
@@ -98,7 +98,7 @@ public class FValue implements IUnit<FValue> {
         try {
             packet.mark();
             condition = new ArgList().apply(packet);
-            condition.setUser(user);
+//            condition.setUser(user);
         } finally {
             packet.release();
         }
@@ -173,15 +173,15 @@ public class FValue implements IUnit<FValue> {
         boolean isOp = op != null && op.getRange() == getFunction().getRange();
         String s = "";
         if (t.isFSet()) {
-            s += (isOp ? "(" : "") + t.getF().toString() + (isOp ? ")" : "");
+            s += (isOp ? "(" : "") + t.getF(user.getMind()).toString() + (isOp ? ")" : "");
         } else if (t.isRSet()) {
-            s += (isOp ? "(" : "") + t.getR().toString() + (isOp ? ")" : "");
+            s += (isOp ? "(" : "") + t.getR(user.getMind()).toString() + (isOp ? ")" : "");
         } else if (t.isTSet()) {
-            s += t.getT().toString();
+            s += t.getT(user.getMind()).toString();
         } else if (t.isVSet()) {
-            s += t.getV().toString();
-        } else if (!t.isEmpty()) {
-            s += t.getValue().toString();
+            s += t.getV(user.getMind()).toString();
+        } else if (!t.isEmpty(user.getMind())) {
+            s += t.getValue(user.getMind()).toString();
         } else {
             s += "_";
         }
@@ -207,10 +207,10 @@ public class FValue implements IUnit<FValue> {
     public boolean equalsTo(Function f) {
         try {
             if (f.getId() == getFunction().getId()
-                    && !f.getResult().isEmpty()
-                    && valueId == f.getResult().getValue().getId()) {
+                    && !f.getResult().isEmpty(user.getMind())
+                    && valueId == f.getResult().getValue(user.getMind()).getId()) {
                 boolean complete = true;
-                List<TVariable> list = f.getArguments().getTVariables(true);
+                List<TVariable> list = f.getArguments().getTVariables(user.getMind(), true);
                 for (int i = 0; i < list.size(); ++i) {
                     if (list.get(i).isEmpty() || list.get(i).getValue().getId() != stamp.get(i)) {
                         complete = false;
@@ -235,7 +235,7 @@ public class FValue implements IUnit<FValue> {
     @Override
     public FValue setUser(IUser user) {
         this.user = user;
-        this.condition.setUser(user);
+//        this.condition.setUser(user);
         return this;
     }
 
@@ -292,8 +292,8 @@ public class FValue implements IUnit<FValue> {
                         //                if (getResult() != null) {
                         if (getValue() != null) {
                             res = " {= " + getValue() + "}";
-                        } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty()) {
-                            res = " [= " + condition.get(function.getRange()).getValue() + "]";
+                        } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty(user.getMind())) {
+                            res = " [= " + condition.get(function.getRange()).getValue(user.getMind()) + "]";
                         }
                     }
                     //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;

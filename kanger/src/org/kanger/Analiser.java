@@ -55,7 +55,7 @@ public class Analiser {
                     }
                     Domain d = r.getDomain();
                     for (Argument a : d.getArguments()) {
-                        if (a.isEmpty() || (a.getType() == ArgumentType.CVARIABLE && a.getValue().getMindId() == mind.getId())) {
+                        if (a.isEmpty(mind) || (a.getType() == ArgumentType.CVARIABLE && a.getValue(mind).getMindId() == mind.getId())) {
                             d = null;
                             break;
                         }
@@ -114,10 +114,10 @@ public class Analiser {
                         && p.getDomain().equalsBase(q.getDomain())
                         && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
-                    if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(true).isEmpty()) {
+                    if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(mind, true).isEmpty()) {
                         mind.getSolutions().add(q);
                         mind.getValues().add(p.getSolves());
-                    } else if (q.getDomain().isQuery() && q.getDomain().getArguments().getCVariables(true).isEmpty()) {
+                    } else if (q.getDomain().isQuery() && q.getDomain().getArguments().getCVariables(mind, true).isEmpty()) {
                         mind.getSolutions().add(p);
                         mind.getValues().add(q.getSolves());
                     }

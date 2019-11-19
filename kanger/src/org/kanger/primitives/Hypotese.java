@@ -146,7 +146,7 @@ public class Hypotese implements Comparable<Hypotese> {
     public void addParams(Collection params) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (Object p : params) {
             if (p instanceof Argument) {
-                solve.add(((Argument) p).getValue());
+                solve.add(((Argument) p).getValue(user.getMind()));
             } else if (p instanceof Term) {
                 solve.add((Term) p);
             } else {

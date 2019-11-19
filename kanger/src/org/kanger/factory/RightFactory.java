@@ -123,7 +123,7 @@ public class RightFactory implements Iterable<Right> {
                 for (Domain d : list) {
                     r.getPredicates().add(d.getPredicateId());
                     d.setRight(r);
-                    for (TVariable t : d.getArguments().getTVariables(true)) {
+                    for (TVariable t : d.getArguments().getTVariables(user.getMind(), true)) {
                         t.setRight(r);
                     }
 //                    user.getMind().getDomains().add(d);
@@ -146,7 +146,7 @@ public class RightFactory implements Iterable<Right> {
     public void expand(Right r) throws Exception {
         for (List<Domain> tree : r.getTree()) {
             if (tree.size() == 1) {
-                if (!tree.get(0).getArguments().getTVariables(true).isEmpty()) {
+                if (!tree.get(0).getArguments().getTVariables(user.getMind(), true).isEmpty()) {
                     user.getMind().getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
                     Right rx = tree.get(0).setStored();
@@ -226,10 +226,10 @@ public class RightFactory implements Iterable<Right> {
         } else {
             ArgList list = null;
             if (domain.isQuery()) {
-                list = domain.getArguments().convert();
-                for (TValue t : list.getTValues(true)) t.setQuery();
+                list = domain.getArguments().convert(user.getMind());
+                for (TValue t : list.getTValues(user.getMind(), true)) t.setQuery();
             } else {
-                list = domain.getArguments().convertBase();
+                list = domain.getArguments().convertBase(user.getMind());
             }
             Right r = new Right(user);
             register(r);
@@ -261,6 +261,7 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right find(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        domain.setUser(user);
         for (long id : cache.find(domain.getHashBase())) {
             Right one = load(id);
             if (one.equalsTo(domain)) {

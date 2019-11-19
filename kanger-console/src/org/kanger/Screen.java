@@ -773,7 +773,7 @@ public class Screen {
 
             boolean rightShowed = false;
             for (Cause c : dest.getCauses()) {
-                c.getSrc().getArguments().applyArguments(c.getArguments());
+                c.getSrc().getArguments().applyArguments(mind, c.getArguments());
                 if (!rightShowed) {
                     System.out.printf("\t\t%sRight: %s\n", indent, c.getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
                 }
@@ -821,7 +821,7 @@ public class Screen {
             for (Domain s : set) {
 //                if (!s.isDestFor()) {
 //                    mind.getSubstituted().reset();
-                showPredRecurse(mind, s.getArguments().getTVariables(true), 0, s, showCauses);
+                showPredRecurse(mind, s.getArguments().getTVariables(mind, true), 0, s, showCauses);
 //                }
             }
         }

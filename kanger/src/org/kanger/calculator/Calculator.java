@@ -43,14 +43,14 @@ public class Calculator {
 
 //        if(fu.isEmpty()) {
         for (int i = 0; i < fu.getRange(); ++i) {
-            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF().isEmpty()) {
-                fu.getArguments().get(i).getF().clear();
-                calculate(fu.getArguments().get(i).getF(), logging);
+            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF(mind).isEmpty()) {
+                fu.getArguments().get(i).getF(mind).clear();
+                calculate(fu.getArguments().get(i).getF(mind), logging);
             }
         }
 //        }
 
-        if (fu.isEmpty() || !fu.getResult().getValue().equalsTo(fu.getValue())) {
+        if (fu.isEmpty() || !fu.getResult().getValue(mind).equalsTo(fu.getValue())) {
             int k = execute(fu);
             if (k == 1 || k == 2) {
                 if (fu.isEmpty()) {
@@ -66,8 +66,8 @@ public class Calculator {
         }
 
 //        for (int i = 0; i < fu.getRange(); ++i) {
-//            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF().isEmpty()) {
-//                calculate(fu.getArguments().get(i).getF(), logging);
+//            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF(mind).isEmpty()) {
+//                calculate(fu.getArguments().get(i).getF(mind), logging);
 //            }
 //        }
         return result;
@@ -133,7 +133,7 @@ public class Calculator {
 //            }
 
             for (Argument a : fu.getArguments()) {
-                if (!a.isEmpty() && a.getType() == ArgumentType.CVARIABLE) {
+                if (!a.isEmpty(mind) && a.getType() == ArgumentType.CVARIABLE) {
 //                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;
                 }

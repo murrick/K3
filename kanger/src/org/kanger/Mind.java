@@ -738,9 +738,9 @@ public class Mind {
 
     public int executeSystem(Domain d) throws Exception {
         for (int i = 0; i < d.getRange(); ++i) {
-            if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF().isCalculable() && d.getArguments().get(i).getF().isEmpty()) {
+            if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF(this).isCalculable() && d.getArguments().get(i).getF(this).isEmpty()) {
 //                d.getArguments().get(i).getF().clear();
-                calculator.calculate(d.getArguments().get(i).getF(), logging);
+                calculator.calculate(d.getArguments().get(i).getF(this), logging);
             }
         }
 
@@ -1232,7 +1232,7 @@ public class Mind {
         boolean needPack = false;
         for (Right rx : mind.getRights()) {
             if (rx.getMindId() == mind.getId()) {
-                if (!rx.isDeleted() /*&& !rx.isQuery()*/ && rx.getDomain().getArguments().getCVariables(true).isEmpty()) {
+                if (!rx.isDeleted() /*&& !rx.isQuery()*/ && rx.getDomain().getArguments().getCVariables(this, true).isEmpty()) {
                     mind.getSolutions().add(rx);
                 } else {
                     getRights().delete(rx);
@@ -1250,7 +1250,7 @@ public class Mind {
             int i = 0;
             for (Right r : mind.getSolutions().getRoot()) {
                 if (r.isGenerated() && !r.isDeleted()) {
-                    ArgList arg = r.getDomain().getArguments().convertBase();
+                    ArgList arg = r.getDomain().getArguments().convertBase(this);
                     r.getDomain().getArguments().clear();
                     r.getDomain().getArguments().addAll(arg);
                     r.setGenerated(false);
@@ -1295,7 +1295,7 @@ public class Mind {
                     || c.getDst().getRightId() == r.getId()) {
                 return true;
             } else {
-                c.getSrc().getArguments().applyArguments(c.getArguments());
+                c.getSrc().getArguments().applyArguments(this, c.getArguments());
                 Right x = rights.find(c.getSrc());
                 if (x != null && isInherited(x, r)) {
                     return true;
