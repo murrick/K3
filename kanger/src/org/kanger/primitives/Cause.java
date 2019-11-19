@@ -4,7 +4,6 @@ import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 
@@ -18,7 +17,7 @@ public class Cause implements Comparable<Cause> {
 
     private transient long srcId = -1;
     private transient long dstId = -1;
-    private transient IUser user = null;
+//    private transient IUser user = null;
 
 
     public Cause() {
@@ -56,16 +55,16 @@ public class Cause implements Comparable<Cause> {
         return this;
     }
 
-    public Domain getSrc() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Domain getSrc(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (src == null) {
-            src = user.getMind().getDomains().load(srcId);
+            src = mind.getDomains().load(srcId);
         }
         return src;
     }
 
-    public Domain getDst() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Domain getDst(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (dst == null) {
-            dst = user.getMind().getDomains().load(dstId);
+            dst = mind.getDomains().load(dstId);
         }
         return dst;
     }
@@ -153,14 +152,14 @@ public class Cause implements Comparable<Cause> {
         }
     }
 
-    public IUser getUser() {
-        return user;
-    }
+//    public IUser getUser() {
+//        return user;
+//    }
 
-    public void setUser(IUser user) {
-        this.user = user;
+//    public void setUser(IUser user) {
+//        this.user = user;
 //        this.arguments.setUser(user);
-    }
+//    }
 
     public long getSrcId() {
         return srcId;

@@ -102,7 +102,7 @@ public class Right implements IUnit<Right> {
             try {
                 packet.mark();
                 Cause c = new Cause().apply(packet);
-                c.setUser(user);
+//                c.setUser(user);
                 causes.add(c);
             } finally {
                 packet.release();
@@ -329,9 +329,9 @@ public class Right implements IUnit<Right> {
     @Override
     public Right setUser(IUser user) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         this.user = user;
-        for (Cause c : getCauses()) {
-            c.setUser(user);
-        }
+//        for (Cause c : getCauses()) {
+//            c.setUser(user);
+//        }
         for (List<Domain> list : getTree()) {
             for (Domain d : list) {
                 d.setUser(user);

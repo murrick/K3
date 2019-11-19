@@ -610,10 +610,10 @@ public class Linker {
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
-                    mind.getLog().add(mode, "\tFrom right: " + c.getDst().getRight());
+                    mind.getLog().add(mode, "\tFrom right: " + c.getDst(mind).getRight());
                     rightShowed = true;
                 }
-                mind.getLog().add(mode, "\t\tUsing: " + c.getSrc().toString(c.getArguments()));
+                mind.getLog().add(mode, "\t\tUsing: " + c.getSrc(mind).toString(c.getArguments()));
             }
         }
     }

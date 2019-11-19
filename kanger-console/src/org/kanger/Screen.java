@@ -773,12 +773,12 @@ public class Screen {
 
             boolean rightShowed = false;
             for (Cause c : dest.getCauses()) {
-                c.getSrc().getArguments().applyArguments(mind, c.getArguments());
+                c.getSrc(mind).getArguments().applyArguments(mind, c.getArguments());
                 if (!rightShowed) {
-                    System.out.printf("\t\t%sRight: %s\n", indent, c.getDst().getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
+                    System.out.printf("\t\t%sRight: %s\n", indent, c.getDst(mind).getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
                 }
-                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc().toString()); //c.getArguments()));
-                showCauses(mind, c.getSrc(), level + 1);
+                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc(mind).toString()); //c.getArguments()));
+                showCauses(mind, c.getSrc(mind), level + 1);
             }
         }
     }

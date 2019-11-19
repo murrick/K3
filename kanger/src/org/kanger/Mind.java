@@ -245,7 +245,7 @@ public class Mind {
         for (TValue v : user.getMind().getTValues()) {
             Set<Cause> toDeleteC = new HashSet<>();
             for (Cause c : v.getCauses()) {
-                if (c.getSrc().isDeleted() || c.getDst().isDeleted()) {
+                if (c.getSrc(this).isDeleted() || c.getDst(this).isDeleted()) {
                     toDeleteC.add(c);
                 }
             }
@@ -267,7 +267,7 @@ public class Mind {
         for (TValue v : user.getMind().getTValues()) {
             Set<Cause> toDeleteC = new HashSet<>();
             for (Cause c : v.getCauses()) {
-                if (c.getSrc() == null || c.getDst() == null) {
+                if (c.getSrc(this) == null || c.getDst(this) == null) {
                     toDeleteC.add(c);
                 }
             }
@@ -1291,12 +1291,12 @@ public class Mind {
 
     private boolean isInherited(Right rx, Right r) throws Exception {
         for (Cause c : rx.getCauses()) {
-            if ((r.isStored() && c.getSrc().getId() == r.getDomain().getId())
-                    || c.getDst().getRightId() == r.getId()) {
+            if ((r.isStored() && c.getSrc(this).getId() == r.getDomain().getId())
+                    || c.getDst(this).getRightId() == r.getId()) {
                 return true;
             } else {
-                c.getSrc().getArguments().applyArguments(this, c.getArguments());
-                Right x = rights.find(c.getSrc());
+                c.getSrc(this).getArguments().applyArguments(this, c.getArguments());
+                Right x = rights.find(c.getSrc(this));
                 if (x != null && isInherited(x, r)) {
                     return true;
                 }

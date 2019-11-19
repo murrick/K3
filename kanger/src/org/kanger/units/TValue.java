@@ -82,7 +82,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
             try {
                 packet.mark();
                 Cause c = new Cause().apply(packet);
-                c.setUser(user);
+//                c.setUser(user);
                 causes.add(c);
             } finally {
                 packet.release();
@@ -203,9 +203,9 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     @Override
     public TValue setUser(IUser user) {
         this.user = user;
-        for (Cause c : causes) {
-            c.setUser(user);
-        }
+//        for (Cause c : causes) {
+//            c.setUser(user);
+//        }
         return this;
     }
 

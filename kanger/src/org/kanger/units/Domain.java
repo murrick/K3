@@ -214,7 +214,7 @@ public class Domain implements IUnit<Domain> {
             }
             for (Cause c : causes) {
 
-                if (c.getArguments().equalsBase(user.getMind(), c.getSrc().getArguments())
+                if (c.getArguments().equalsBase(user.getMind(), c.getSrc(user.getMind()).getArguments())
                         && sourceExists(c) == null
                         && getOverlaps(c.getArguments()) > 0
                 ) {
@@ -267,7 +267,8 @@ public class Domain implements IUnit<Domain> {
         Set<Cause> causes = getCauses();
         if (causes != null) {
             for (Cause x : causes) {
-                if (x.getSrc().getPredicateId() == c.getSrc().getPredicateId() && x.getSrc().getArguments().equalsBase(user.getMind(), c.getSrc().getArguments())) {
+                if (x.getSrc(user.getMind()).getPredicateId() == c.getSrc(user.getMind()).getPredicateId()
+                        && x.getSrc(user.getMind()).getArguments().equalsBase(user.getMind(), c.getSrc(user.getMind()).getArguments())) {
                     return x;
                 }
 //                if(x.getSrc().sourceExists(c)) {
