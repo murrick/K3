@@ -29,6 +29,7 @@ public class TValueFactory implements Iterable<TValue> {
     private Map<TVariable, TValue> current = new HashMap<>();
 
     private ICache cache;
+    private IStep top = null;
     private Mind mind = null;
 
     private transient boolean action = false;
@@ -57,33 +58,20 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public void commit(TValueFactory base) {
+    public void commit(TValueFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((TValue) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-//            lastId = cache.getRoot().getId() + 1;
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
         }
-
-//        List<TValue> list = new ArrayList();
-//        for (Object p : base.cache) {
-//            if (((Identifiable) p).getId() < base.firstId) {
-//                break;
-//            }
-//            list.add(0, (TValue) p);
-//        }
-//        for (TValue p : list) {
-//            p.setId(lastId++);
-//            cache.add(p);
-//        }
-
         action = base.isAction();
     }
 
@@ -101,6 +89,9 @@ public class TValueFactory implements Iterable<TValue> {
             t.setId(mind.getUser().nextId(SCHEMA));
             t.setMindId(mind.getId());
             cache.add(t);
+            if (top == null) {
+                top = cache.getRoot();
+            }
             action = true;
 
 //            //TODO: ПРИБИДБ

@@ -27,6 +27,7 @@ public class DomainFactory implements Iterable<Domain> {
     private Set<Domain> waiters = new HashSet<>();
 
     private ICache cache;
+    private IStep top = null;
     //    private Cache load = new Cache();
     private Mind mind = null;
 
@@ -55,35 +56,20 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void commit(DomainFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((Domain) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-//            lastId = cache.getRoot().getId() + 1;
-
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
         }
         waiters.addAll(base.waiters);
-
-
-//        List<Domain> list = new ArrayList();
-//        for (Object p : base.cache) {
-//            if (((Identifiable) p).getId() < base.firstId) {
-//                break;
-//            }
-//            list.add(0, (Domain) p);
-//        }
-//        for (Domain p : list) {
-//            p.setId(lastId++);
-//            cache.add(p);
-//        }
-//        waiters.addAll(base.waiters);
     }
 
     public void update() throws IOException {
@@ -124,6 +110,9 @@ public class DomainFactory implements Iterable<Domain> {
             }
 //            p.getArguments().setUser(user);
             cache.add(p);
+            if (top == null) {
+                top = cache.getRoot();
+            }
             return p;
         }
     }

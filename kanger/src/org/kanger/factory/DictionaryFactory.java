@@ -70,48 +70,20 @@ public class DictionaryFactory implements Iterable<Term> {
 //        firstId = user.lastId(SCHEMA);
     }
 
-    public void commit(DictionaryFactory base) throws IOException {
-//        if(base.top != null) {
-//            base.top.setNext(cache.getRoot());
-//        }
+    public void commit(DictionaryFactory base) throws IOException, OutOfBufferException, RuntimeErrorException, ClassNotFoundException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-//            lastId = cache.getRoot().getId() + 1;
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((Term) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
-
-//            for (Object p : cache) {
-//                if (((Term) p).getId() >= base.firstId) {
-//                    if (((Term) p).isCVariable()) {
-//                        vars.put(((Term) p).getIndex(), p);
-//                    }
-//                } else {
-//                    break;
-//                }
-//            }
         }
-
-//        List<Term> list = new ArrayList<>();
-//        for (Object p : base.cache) {
-//            if (((Identifiable) p).getId() < base.firstId) {
-//                break;
-//            }
-//            list.add((Term) p);
-//        }
-//        for (Term p : list) {
-//            p.setId(lastId++);
-//            cache.add(p);
-//            if (p.isCVariable()) {
-//                vars.add(p);
-//            }
-//        }
         varIndex = Math.max(base.varIndex, varIndex);
 
     }

@@ -26,6 +26,7 @@ public class FunctionFactory implements Iterable<Function> {
 //    private long firstId = 0;
 
     private ICache cache;
+    private IStep top = null;
     private Mind mind = null;
 
     public FunctionFactory(Mind mind) {
@@ -50,19 +51,19 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
-    public void commit(FunctionFactory base) {
+    public void commit(FunctionFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((Function) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-//            lastId = cache.getRoot().getId() + 1;
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
         }
     }
 
@@ -84,6 +85,9 @@ public class FunctionFactory implements Iterable<Function> {
         f.setId(mind.getUser().nextId(SCHEMA));
         f.setMindId(mind.getId());
         cache.add(f);
+        if (top == null) {
+            top = cache.getRoot();
+        }
 
         if (!f.isCalculable()) {
             mind.getCalculator().calculate(f, false);

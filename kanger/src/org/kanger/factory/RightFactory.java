@@ -28,6 +28,8 @@ public class RightFactory implements Iterable<Right> {
 
     private ICache cache;
     private ICache stored;
+    private IStep topCache = null;
+    private IStep topStored = null;
     private Mind mind = null;
 
     private transient boolean action = false;
@@ -65,18 +67,25 @@ public class RightFactory implements Iterable<Right> {
 
 
     public void commit(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.topCache != null) {
+            if (cache.getRoot() == null) {
+                topCache = base.topCache;
+            } else {
+                base.topCache.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((Right) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-//            lastId = cache.getRoot().getId() + 1;
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
+        }
+        if (base.topStored != null) {
+            if (stored.getRoot() == null) {
+                topStored = base.topStored;
+            } else {
+                base.topStored.setNext(stored.getRoot());
+            }
         }
         stored.setRoot(base.stored.getRoot());
 //        if (stored.getRoot() != null && stored.getTop() == null) {
@@ -121,8 +130,14 @@ public class RightFactory implements Iterable<Right> {
 //                r.setId(lastId++);
 //            }
             cache.add(r);
+            if (topCache == null) {
+                topCache = cache.getRoot();
+            }
             if (r.isStored()) {
                 stored.add(r.getId(), r.getId());
+                if (topStored == null) {
+                    topStored = cache.getRoot();
+                }
             }
             for (List<Domain> list : r.getTree()) {
                 for (Domain d : list) {

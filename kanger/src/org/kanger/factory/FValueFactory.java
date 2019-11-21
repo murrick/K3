@@ -22,6 +22,7 @@ public class FValueFactory {
 //    private long firstId = 0;
 
     private ICache cache;
+    private IStep top = null;
     private Mind mind = null;
 
     private transient boolean action = false;
@@ -50,32 +51,20 @@ public class FValueFactory {
 //        lastId = user.lastId(SCHEMA);
     }
 
-    public void commit(FValueFactory base) {
+    public void commit(FValueFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((FValue) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-//            lastId = cache.getRoot().getId() + 1;
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
         }
-
-//        List<FValue> list = new ArrayList();
-//        for (Object p : base.cache) {
-//            if (((Identifiable) p).getId() < base.firstId) {
-//                break;
-//            }
-//            list.add(0, (FValue) p);
-//        }
-//        for (FValue p : list) {
-//            p.setId(lastId++);
-//            cache.add(p);
-//        }
         action = base.isAction();
     }
 
@@ -93,6 +82,9 @@ public class FValueFactory {
                 t.setId(mind.getUser().nextId(SCHEMA));
                 f.setMindId(mind.getId());
                 cache.add(t);
+                if (top == null) {
+                    top = cache.getRoot();
+                }
                 action = true;
             } else {
                 return null;

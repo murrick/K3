@@ -28,6 +28,7 @@ public class TVariableFactory implements Iterable<TVariable> {
 //    private long firstId = 0;
 
     private ICache cache;
+    private IStep top = null;
     private Mind mind = null;
 
     public TVariableFactory(Mind mind) {
@@ -52,43 +53,20 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
     }
 
-    public void commit(TVariableFactory base /*, Map<Integer, Object> vars*/) {
+    public void commit(TVariableFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((TVariable) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-//            lastId = cache.getRoot().getId() + 1;
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
-
-//            for (Object p : cache) {
-//                if (((TVariable) p).getId() >= base.firstId) {
-//                    vars.put(((TVariable) p).getIndex(), p);
-//                } else {
-//                    break;
-//                }
-//            }
-
         }
-
-
-//        List<TVariable> list = new ArrayList();
-//        for (Object p : base.cache) {
-//            if (((Identifiable) p).getId() < base.firstId) {
-//                break;
-//            }
-//            list.add(0, (TVariable) p);
-//        }
-//        for (TVariable p : list) {
-//            p.setId(lastId++);
-//            cache.add(p);
-//            vars.add(p);
-//        }
     }
 
     public void update() throws IOException {
@@ -105,6 +83,9 @@ public class TVariableFactory implements Iterable<TVariable> {
         p.setRight(r);
         p.setName(name);
         cache.add(p);
+        if (top == null) {
+            top = cache.getRoot();
+        }
         return p;
     }
 

@@ -24,6 +24,7 @@ public class PredicateFactory implements Iterable<Predicate> {
 //    private long firstId = 0;
 
     private ICache cache;
+    private IStep top = null;
     private Mind mind = null;
 
     public PredicateFactory(Mind mind) {
@@ -48,33 +49,20 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public void commit(PredicateFactory base) {
+    public void commit(PredicateFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((Predicate) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-
-//            lastId = cache.getRoot().getId() + 1;
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
         }
-
-//        List<Predicate> list = new ArrayList();
-//        for (Object p : base.cache) {
-//            if (((Identifiable) p).getId() < base.firstId) {
-//                break;
-//            }
-//            list.add(0, (Predicate) p);
-//        }
-//        for (Predicate p : list) {
-////            p.setId(lastId++);
-//            cache.add(p);
-//        }
-//        lastId = cache.getRoot().getId() + 1;
     }
 
     public void update() throws IOException {
@@ -94,6 +82,9 @@ public class PredicateFactory implements Iterable<Predicate> {
             p.setRange(range);
             p.setName(line);
             cache.add(p);
+            if (top == null) {
+                top = cache.getRoot();
+            }
             return p;
         }
     }

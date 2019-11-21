@@ -24,6 +24,7 @@ public class LibraryFactory implements Iterable<SysOp> {
 //    private long firstId = 0;
 
     private ICache cache;
+    private IStep top = null;
     private Mind mind = null;
 
 
@@ -54,19 +55,19 @@ public class LibraryFactory implements Iterable<SysOp> {
         }
     }
 
-    public void commit(LibraryFactory base) {
+    public void commit(LibraryFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
+            }
+        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
-
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((SysOp) s.getData()).setMind(mind);
+                ((IUnit) s.getData()).setMind(mind);
             }
-            
-//            lastId = cache.getRoot().getId() + 1;
-//            if (cache.getTop() == null) {
-//                cache.setTop(base.cache.getTop());
-////                firstId = cache.getTop().getId();
-//            }
         }
     }
 
@@ -90,6 +91,9 @@ public class LibraryFactory implements Iterable<SysOp> {
             s.setId(mind.getUser().nextId(SCHEMA));
             s.setMindId(mind.getId());
             cache.add(s);
+            if (top == null) {
+                top = cache.getRoot();
+            }
             x = s;
         }
         return x;
