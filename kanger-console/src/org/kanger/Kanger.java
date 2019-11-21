@@ -48,7 +48,7 @@ public class Kanger {
         Global.setData(db);
         Global.setUdf(udf);
 
-        IUser user = new User(null);
+        IUser user = new User();
 
 //        List<Object> params = new ArrayList<>();
 //        params.add(1);

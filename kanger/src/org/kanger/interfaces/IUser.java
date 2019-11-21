@@ -8,21 +8,21 @@ import java.io.IOException;
 
 public interface IUser {
 
-    Mind getMind();
+//    Mind getMind();
 
-    void setMind(Mind mind);
+//    void setMind(Mind mind);
 
     boolean isClosed();
 
     IBase getStorage(String schema);
 
-    void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void clear(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     String getStorageName();
 
     void close() throws IOException;
 
-    void use(String name) throws RuntimeErrorException, IOException;
+    Mind use(Mind mind, String name) throws RuntimeErrorException, IOException, OutOfBufferException, ClassNotFoundException;
 
     void remove() throws IOException, RuntimeErrorException;
 
@@ -43,5 +43,7 @@ public interface IUser {
     long lastId();
 
     long nextId();
+
+    void flush() throws IOException;
 
 }

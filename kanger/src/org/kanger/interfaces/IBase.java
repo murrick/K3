@@ -22,7 +22,7 @@ public interface IBase {
 
     void delete(long id) throws IOException;
 
-    void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void clear() throws IOException, OutOfBufferException;
 
     boolean containsKey(long id) throws IOException;
 

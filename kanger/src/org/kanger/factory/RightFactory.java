@@ -6,7 +6,6 @@ import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.storage.Escalera;
 import org.kanger.units.*;
@@ -29,14 +28,12 @@ public class RightFactory implements Iterable<Right> {
 
     private ICache cache;
     private ICache stored;
-    private IUser user = null;
     private Mind mind = null;
 
     private transient boolean action = false;
 
-    public RightFactory(IUser user) {
-        this.user = user;
-        this.mind = user.getMind();
+    public RightFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -108,7 +105,7 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right register(Right r) {
-        r.setId(user.nextId(SCHEMA));
+        r.setId(mind.getUser().nextId(SCHEMA));
         r.setMindId(mind.getId());
         r.setVarIndex(mind.getTerms().getVarIndex());
         return r;
@@ -174,8 +171,8 @@ public class RightFactory implements Iterable<Right> {
 
     public Right load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Right) s.getData(mind);
 //                t.setUser(user);
@@ -190,7 +187,7 @@ public class RightFactory implements Iterable<Right> {
         return t;
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void clear() throws IOException, OutOfBufferException {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getRights());
         } else {

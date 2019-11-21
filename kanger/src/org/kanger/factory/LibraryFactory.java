@@ -169,7 +169,7 @@ public class LibraryFactory implements Iterable<SysOp> {
 //        index.clear();
 //    }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void clear() throws IOException, OutOfBufferException {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getLibrary());
         } else {

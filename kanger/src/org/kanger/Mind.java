@@ -11,6 +11,7 @@ import org.kanger.enums.Tools;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
+import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypotese;
@@ -40,7 +41,7 @@ public class Mind {
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private long id = 0;
     private Mind next = null;
-    private User user = null;
+    private IUser user = null;
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
@@ -75,9 +76,9 @@ public class Mind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
-    public Mind(User user) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Mind(IUser user) throws IOException, OutOfBufferException {
         this.user = user;
-        user.setMind(this);
+//        user.setMind(this);
         init();
         clear();
     }
@@ -85,7 +86,7 @@ public class Mind {
     public Mind(Mind root) {
         next = root;
         user = root.getUser();
-        user.setMind(this);
+//        user.setMind(this);
         id = user.nextId(); //root.getId() + 1;
         init();
 
@@ -105,17 +106,17 @@ public class Mind {
     }
 
     private void init() {
-        terms = new DictionaryFactory(user);                    // Словарь констант
-        predicates = new PredicateFactory(user);                 // Предикаты
-        domains = new DomainFactory(user);                          // Список доменов
-        rights = new RightFactory(user);                             // Список правил
+        terms = new DictionaryFactory(this);                    // Словарь констант
+        predicates = new PredicateFactory(this);                 // Предикаты
+        domains = new DomainFactory(this);                          // Список доменов
+        rights = new RightFactory(this);                             // Список правил
 //        trees = new TreeFactory(user);                                // Список секвенций
 
-        tVars = new TVariableFactory(user);                      // t-переменные
-        tValues = new TValueFactory(user);                          // Подставленные значения
+        tVars = new TVariableFactory(this);                      // t-переменные
+        tValues = new TValueFactory(this);                          // Подставленные значения
 
-        functions = new FunctionFactory(user);                    // Функции
-        fValues = new FValueFactory(user);                          // Решения функций
+        functions = new FunctionFactory(this);                    // Функции
+        fValues = new FValueFactory(this);                          // Решения функций
 
         library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов
 
@@ -139,7 +140,7 @@ public class Mind {
 
         m.pack();
 
-        user.setMind(this);
+//        user.setMind(this);
 
         terms.commit(m.getTerms());
         tVars.commit(m.getTVars());
@@ -191,13 +192,8 @@ public class Mind {
         }
     }
 
-    public void drop(Mind m) {
-        user.setMind(this);
-    }
-
     public void release(Mind m) throws Exception {
 
-        user.setMind(this);
         log.commit(m.getLog());
 
         solves.commit(m.getSolutions());
@@ -219,7 +215,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void clear() throws IOException, OutOfBufferException {
         terms.clear();
         predicates.clear();
         domains.clear();
@@ -242,7 +238,7 @@ public class Mind {
 
     public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 
-        for (TValue v : user.getMind().getTValues()) {
+        for (TValue v : tValues) {
             Set<Cause> toDeleteC = new HashSet<>();
             for (Cause c : v.getCauses()) {
                 if (c.getSrc(this).isDeleted() || c.getDst(this).isDeleted()) {
@@ -264,7 +260,7 @@ public class Mind {
         functions.pack();
         library.pack();
 
-        for (TValue v : user.getMind().getTValues()) {
+        for (TValue v : tValues) {
             Set<Cause> toDeleteC = new HashSet<>();
             for (Cause c : v.getCauses()) {
                 if (c.getSrc(this) == null || c.getDst(this) == null) {
@@ -303,7 +299,7 @@ public class Mind {
         debugLevel = debugLevelStack.pop();
     }
 
-    public User getUser() {
+    public IUser getUser() {
         return user;
     }
 

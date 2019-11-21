@@ -120,7 +120,7 @@ public class Escalera implements ICache {
 
 
     @Override
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void clear() throws OutOfBufferException, IOException {
         root = null;
         if (parent == null) {
             if (!mind.getUser().isClosed()) {

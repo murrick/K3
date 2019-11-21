@@ -184,7 +184,7 @@ public class Base implements IBase {
     }
 
     @Override
-    public void clear() throws IOException, OutOfBufferException, RuntimeErrorException {
+    public void clear() throws IOException, OutOfBufferException {
         while (size() > 0) {
             Cursor c = index.newCursor(null);
             c.first();

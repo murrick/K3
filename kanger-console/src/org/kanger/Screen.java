@@ -45,10 +45,10 @@ public class Screen {
 
     private static String lastLogFile = "analizer.log";
 
-    public static void session(IUser user) {
+    public static void session(IUser user) throws IOException, OutOfBufferException {
         boolean stop = false;
         boolean again = false;
-        Mind mind = user.getMind();
+        Mind mind = new Mind(user);
         String lastQuery = "";
 
         LineReader reader = null;
@@ -227,7 +227,7 @@ public class Screen {
                                 System.out.printf("Are you sure to erase workspace? [y/N]? ");
                                 String s = new Scanner(System.in).nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                    user.clear();
+                                    user.clear(mind);
 //                                mind.release();
                                 }
                             }
@@ -258,7 +258,7 @@ public class Screen {
                         case 'U':
                             if (line.split(" ").length == 2) {
                                 String name = line.split("\\ ")[1].replace(".", File.separatorChar + "");
-                                user.use(name);
+                                user.use(mind, name);
                                 if (!user.isClosed()) {
                                     System.out.println("Database used: " + user.getStorageName().replace(File.separatorChar + "", "."));
                                 } else {
@@ -358,7 +358,7 @@ public class Screen {
                                         break;
                                     case 't':
                                     case 'T':
-                                        KangerTest.test(user, "set_" + (line.length() > 3 ? line.substring(3) : ""));
+                                        KangerTest.test(mind, "set_" + (line.length() > 3 ? line.substring(3) : ""));
                                         break;
                                     case 'm':
                                     case 'M':

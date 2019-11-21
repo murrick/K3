@@ -6,7 +6,6 @@ import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.Escalera;
@@ -29,12 +28,10 @@ public class DomainFactory implements Iterable<Domain> {
 
     private ICache cache;
     //    private Cache load = new Cache();
-    private IUser user = null;
     private Mind mind = null;
 
-    public DomainFactory(IUser user) {
-        this.user = user;
-        this.mind = user.getMind();
+    public DomainFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -44,9 +41,9 @@ public class DomainFactory implements Iterable<Domain> {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             waiters.addAll(base.waiters);
-            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user.getMind(), SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -114,12 +111,12 @@ public class DomainFactory implements Iterable<Domain> {
         if (p != null) {
             return p;
         } else {
-            p = new Domain(user.getMind());
+            p = new Domain(mind);
             p.setPredicate(pred);
             p.setAntc(antc);
             p.setRight(r);
-            p.setId(user.nextId(SCHEMA));
-            p.setMindId(user.getMind().getId());
+            p.setId(mind.getUser().nextId(SCHEMA));
+            p.setMindId(mind.getId());
             if (arg != null) {
                 for (Argument t : arg) {
                     p.add(t);
@@ -145,10 +142,10 @@ public class DomainFactory implements Iterable<Domain> {
 
     public Domain load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Domain) s.getData(user.getMind());
+                t = (Domain) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -186,17 +183,17 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void delete(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         d.setDeleted();
-        for (TVariable t : d.getArguments().getTVariables(user.getMind(), true)) {
-            user.getMind().getTVars().delete(t);
+        for (TVariable t : d.getArguments().getTVariables(mind, true)) {
+            mind.getTVars().delete(t);
         }
-        for (TValue v : d.getArguments().getTValues(user.getMind(), true)) {
-            user.getMind().getTValues().delete(v);
+        for (TValue v : d.getArguments().getTValues(mind, true)) {
+            mind.getTValues().delete(v);
         }
-        for (Function f : d.getArguments().getFunctions(user.getMind())) {
-            user.getMind().getFunctions().delete(f);
+        for (Function f : d.getArguments().getFunctions(mind)) {
+            mind.getFunctions().delete(f);
         }
 
-//            for (TValue v : user.getMind().getTValues()) {
+//            for (TValue v : mind.getTValues()) {
 //                Set<Cause> toDelete = new HashSet<>();
 //                for (Cause c : v.getCauses()) {
 //                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
@@ -207,7 +204,7 @@ public class DomainFactory implements Iterable<Domain> {
 //                    v.getCauses().removeAll(toDelete);
 //                }
 //            }
-//            user.getMind().getTValues().update();
+//            mind.getTValues().update();
 //            waiters.remove(d);
 //            cache.delete(id);
     }
@@ -216,9 +213,9 @@ public class DomainFactory implements Iterable<Domain> {
 //        Domain d = get(id);
 //        if (d != null) {
 //            for (TVariable t : d.getArguments().getTVariables(true)) {
-//                user.getMind().getTVars().delete(t.getId());
+//                mind.getTVars().delete(t.getId());
 //            }
-//            for (TValue v : user.getMind().getTValues()) {
+//            for (TValue v : mind.getTValues()) {
 //                Set<Cause> toDelete = new HashSet<>();
 //                for (Cause c : v.getCauses()) {
 //                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
@@ -229,15 +226,15 @@ public class DomainFactory implements Iterable<Domain> {
 //                    v.getCauses().removeAll(toDelete);
 //                }
 //            }
-//            user.getMind().getTValues().update();
+//            mind.getTValues().update();
 //            waiters.remove(d);
 //            cache.delete(id);
 //        }
 //    }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getDomains());
+    public void clear() throws IOException, OutOfBufferException {
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getDomains());
         } else {
             cache.clear();
             transaction(null);

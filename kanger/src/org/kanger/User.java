@@ -14,26 +14,29 @@ import java.util.Map;
 
 public class User implements IUser {
 
-    private Mind mind = null;
+    //    private Mind mind = null;
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
 
     private static IData data = null;
 
-    public User(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (mind == null) {
-            this.mind = new Mind(this);
-        } else {
-            this.mind = mind;
-        }
+    public User() throws RuntimeErrorException {
+//        if (mind == null) {
+//            this.mind = new Mind(this);
+//        } else {
+//            this.mind = mind;
+//        }
         data = Global.getData();
     }
 
-    public void use(String name) throws IOException, RuntimeErrorException {
+    public Mind use(Mind mind, String name) throws IOException, RuntimeErrorException, OutOfBufferException, ClassNotFoundException {
 
         if (data != null) {
 
+            if (mind == null) {
+                mind = new Mind(this);
+            }
             data.use(name);
 
             storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
@@ -61,22 +64,18 @@ public class User implements IUser {
             mind.getTVars().transaction(null);
             mind.getLibrary().transaction(null);
 
+            return mind;
+
+        } else {
+            throw new RuntimeErrorException("DB module doens't loaded");
         }
-    }
-
-    public Mind getMind() {
-        return mind;
-    }
-
-    public void setMind(Mind mind) {
-        this.mind = mind;
     }
 
     public IBase getStorage(String schema) {
         return storage.get(schema);
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void clear(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
@@ -107,7 +106,7 @@ public class User implements IUser {
                 }
                 //TODO: Переиндексация БД
             }
-            use(data.getStorageName());
+//            use(data.getStorageName());
         }
     }
 
@@ -200,6 +199,7 @@ public class User implements IUser {
         return data == null ? "" : data.getStorageName();
     }
 
+    @Override
     public void flush() throws IOException {
         if (data != null) {
             data.flush();

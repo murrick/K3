@@ -7,7 +7,6 @@ import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Right;
 import org.kanger.units.Term;
@@ -29,8 +28,8 @@ public class DictionaryFactory implements Iterable<Term> {
 
     //    private Stack<Object[]> stack = new Stack<>();
     private ICache cache;
+    private IStep top = null;
     //    private Cache load = new Cache();
-    private IUser user = null;
     private Mind mind = null;
 
 //    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
@@ -38,9 +37,8 @@ public class DictionaryFactory implements Iterable<Term> {
 //    private DictionaryFactory base = null;
 
 
-    public DictionaryFactory(IUser user) {
-        this.user = user;
-        this.mind = user.getMind();
+    public DictionaryFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -51,9 +49,9 @@ public class DictionaryFactory implements Iterable<Term> {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             varIndex = base.varIndex;
-            cache = new Escalera(user.getMind(), SCHEMA, base.cache);
+            cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
-            cache = new Escalera(user.getMind(), SCHEMA, null);
+            cache = new Escalera(mind, SCHEMA, null);
             if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -72,7 +70,10 @@ public class DictionaryFactory implements Iterable<Term> {
 //        firstId = user.lastId(SCHEMA);
     }
 
-    public void commit(DictionaryFactory base/*, Map<Integer, Object> vars*/) {
+    public void commit(DictionaryFactory base) throws IOException {
+//        if(base.top != null) {
+//            base.top.setNext(cache.getRoot());
+//        }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
 //            lastId = cache.getRoot().getId() + 1;
@@ -80,7 +81,6 @@ public class DictionaryFactory implements Iterable<Term> {
                 ((Term) s.getData()).setMind(mind);
             }
 
-            varIndex = base.varIndex;
 
 //            if (cache.getTop() == null) {
 //                cache.setTop(base.cache.getTop());
@@ -112,6 +112,7 @@ public class DictionaryFactory implements Iterable<Term> {
 //                vars.add(p);
 //            }
 //        }
+        varIndex = Math.max(base.varIndex, varIndex);
 
     }
 
@@ -130,17 +131,20 @@ public class DictionaryFactory implements Iterable<Term> {
         if (p != null) {
             return p;
         } else {
-            p = new Term(o, user.getMind());
-            p.setId(user.nextId(SCHEMA));
-            p.setMindId(user.getMind().getId());
+            p = new Term(o, mind);
+            p.setId(mind.getUser().nextId(SCHEMA));
+            p.setMindId(mind.getId());
             cache.add(p);
+            if (top == null) {
+                top = cache.getRoot();
+            }
             return p;
         }
     }
 
 
     public Term find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        Term t = new Term(o, user.getMind());
+        Term t = new Term(o, mind);
         for (long id : cache.find(t.getHash())) {
             IUnit one = load(id);
             if (one.equalsTo(t)) {
@@ -162,10 +166,10 @@ public class DictionaryFactory implements Iterable<Term> {
 
     public Term load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Term t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (Term) s.getData(user.getMind());
+                t = (Term) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -219,9 +223,9 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (user.getMind().getNext() != null) {
-            transaction(user.getMind().getNext().getTerms());
+    public void clear() throws IOException, OutOfBufferException {
+        if (mind.getNext() != null) {
+            transaction(mind.getNext().getTerms());
         } else {
             cache.clear();
             transaction(null);

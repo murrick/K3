@@ -23,7 +23,7 @@ public interface ICache extends Iterable {
 
     Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void clear() throws IOException, OutOfBufferException;
 
     long mark();
 

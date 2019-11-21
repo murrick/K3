@@ -6,7 +6,6 @@ import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.Escalera;
@@ -27,12 +26,10 @@ public class FunctionFactory implements Iterable<Function> {
 //    private long firstId = 0;
 
     private ICache cache;
-    private IUser user = null;
     private Mind mind = null;
 
-    public FunctionFactory(IUser user) {
-        this.user = user;
-        this.mind = user.getMind();
+    public FunctionFactory(Mind mind) {
+        this.mind = mind;
         transaction(null);
     }
 
@@ -84,7 +81,7 @@ public class FunctionFactory implements Iterable<Function> {
         f.getArguments().addAll(arguments);
 //        f.setArguments(arguments);
         f.getArguments().add(new Argument());
-        f.setId(user.nextId(SCHEMA));
+        f.setId(mind.getUser().nextId(SCHEMA));
         f.setMindId(mind.getId());
         cache.add(f);
 
@@ -97,8 +94,8 @@ public class FunctionFactory implements Iterable<Function> {
 
     public Function load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Function t = get(id);
-        if (t == null && !user.isClosed()) {
-            IStep s = user.getStorage(SCHEMA).get(id);
+        if (t == null && !mind.getUser().isClosed()) {
+            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Function) s.getData(mind);
 //                t.setUser(user);
@@ -113,7 +110,7 @@ public class FunctionFactory implements Iterable<Function> {
         return t;
     }
 
-    public void clear() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void clear() throws IOException, OutOfBufferException {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getFunctions());
         } else {
