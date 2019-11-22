@@ -47,9 +47,8 @@ public class Analiser {
         if (!result) {
 
             boolean occurs = false;
-            for (long id : mind.getRights().getDatabase(-1)) {
-                Right r = mind.getRights().get(id);
-                if (!r.isDeleted()) {
+            for (Right r : mind.getRights()) {
+                if (r.isStored() && !r.isDeleted()) {
                     if (r.getMindId() < mind.getId()) {
                         break;
                     }
@@ -108,10 +107,18 @@ public class Analiser {
             }
             result = true;
         } else {
-            for (long iq : mind.getRights().getDatabase(p.getId())) {
-                Right q = mind.getRights().get(iq);
-                if (!q.isDeleted()
-                        && p.getDomain().equalsBase(q.getDomain())
+//            boolean trigger = false;
+            for (Right q : mind.getRights()) {
+                if (q.isDeleted() || !q.isStored() || q.getId() > p.getId()) {
+                    continue;
+                }
+
+//                System.err.println(p.getId() + " --- " + q.getId());
+//                if(q.getId() == p.getId()) {
+//                    trigger = true;
+//                }
+
+                if (p.getDomain().equalsBase(q.getDomain())
                         && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
                     if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(mind, true).isEmpty()) {
@@ -146,9 +153,8 @@ public class Analiser {
 
         Set<Right> orfans = new HashSet<>();
 
-        for (long id : mind.getRights().getDatabase(-1)) {
-            Right p = mind.getRights().get(id);
-            if (!p.isDeleted() && checkRight(p, orfans, logging)) {
+        for (Right p : mind.getRights()) {
+            if (!p.isDeleted() && p.isStored() && checkRight(p, orfans, logging)) {
                 if (p.getDomain().isCalculated()) {
                     calculated = true;
                 }

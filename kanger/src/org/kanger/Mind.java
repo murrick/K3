@@ -92,13 +92,19 @@ public class Mind {
 
         terms.transaction(root.getTerms());
         predicates.transaction(root.getPredicates());
+        functions.transaction(root.getFunctions());
+        library.transaction(root.getLibrary());
+
+//        terms = root.getTerms();
+//        predicates = root.getPredicates();
+//        functions = root.getFunctions();
+//        library = root.getLibrary();
+
         domains.transaction(root.getDomains());
         rights.transaction(root.getRights());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
-        functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
-        library.transaction(root.getLibrary());
 
         debugLevel = root.getDebugLevel();
 
@@ -108,6 +114,9 @@ public class Mind {
     private void init() {
         terms = new DictionaryFactory(this);                    // Словарь констант
         predicates = new PredicateFactory(this);                 // Предикаты
+        functions = new FunctionFactory(this);                    // Функции
+        library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов
+
         domains = new DomainFactory(this);                          // Список доменов
         rights = new RightFactory(this);                             // Список правил
 //        trees = new TreeFactory(user);                                // Список секвенций
@@ -115,10 +124,8 @@ public class Mind {
         tVars = new TVariableFactory(this);                      // t-переменные
         tValues = new TValueFactory(this);                          // Подставленные значения
 
-        functions = new FunctionFactory(this);                    // Функции
         fValues = new FValueFactory(this);                          // Решения функций
 
-        library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов
 
         hypotesis = new HypotesisStore(this);                                // Список гипотез
         excluded = new HypotesisStore(this);                                // Список исключенных гипотез
@@ -143,14 +150,15 @@ public class Mind {
 //        user.setMind(this);
 
         terms.commit(m.getTerms());
+        predicates.commit(m.getPredicates());
+        functions.commit(m.getFunctions());
+        library.commit(m.getLibrary());
+
         tVars.commit(m.getTVars());
         tValues.commit(m.getTValues());
         fValues.commit(m.getFValues());
-        predicates.commit(m.getPredicates());
         domains.commit(m.getDomains());
         rights.commit(m.getRights());
-        functions.commit(m.getFunctions());
-        library.commit(m.getLibrary());
 
 //        log.commit(m.getLog());
 //        solves.commit(m.getSolutions());
@@ -999,7 +1007,7 @@ public class Mind {
 
                     boolean found = false;
                     for (Right rx : getRights()) {
-                        if (rx.isGenerated()) {
+                        if (!rx.isDeleted() && rx.isGenerated()) {
                             if (logging) {
                                 getLog().add(LogMode.STORAGE, "Delete produced right: " + String.format("%03d: %s", rx.getId(), rx));
                             }

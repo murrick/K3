@@ -1,6 +1,7 @@
 package org.kanger.test;
 
 import org.kanger.Mind;
+import org.kanger.Screen;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.primitives.Argument;
@@ -13,6 +14,7 @@ import org.kanger.units.Term;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 public class KangerTest {
 
@@ -87,7 +89,8 @@ public class KangerTest {
         } catch (Exception e) {
             e.printStackTrace(System.err);
         } finally {
-            mind.clear();
+            //TODO: Включть!
+//            mind.clear();
             if (!mind.getUser().isClosed()) {
                 mind.getUser().remove();
                 mind.getUser().close();
@@ -2154,6 +2157,97 @@ public class KangerTest {
         if (mind.getValues().size() != 11) {
             fail("Expected 11 rows");
         }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_08_01() throws Exception {
+
+        mind.clear();
+
+//        mind.query("!value(0, 0, 0);");
+
+        Mind a = new Mind(mind);
+        Mind b = new Mind(mind);
+        Mind c = new Mind(mind);
+
+        CountDownLatch latch = new CountDownLatch(3);
+//
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < 10; ++i) {
+                        Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
+                        Thread.sleep(10);
+                    }
+                    mind.commit(a);
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latch.countDown();
+                }
+            }
+        });
+
+        Thread t2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < 10; ++i) {
+                        Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
+                        Thread.sleep(10);
+                    }
+                    mind.commit(b);
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latch.countDown();
+                }
+            }
+        });
+
+        Thread t3 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < 10; ++i) {
+                        Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
+                        Thread.sleep(10);
+                    }
+                    mind.commit(c);
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latch.countDown();
+                }
+            }
+        });
+
+        t1.start();
+        t2.start();
+        t3.start();
+
+//        latch.countDown();
+//        latch.countDown();
+        latch.await();
+
+//        mind.commit(c);
+//        mind.commit(b);
+//        mind.commit(a);
+
+//        Screen.showBase(a, false, null);
+        Screen.showBase(a, false, null);
+        Screen.showBase(b, false, null);
+        Screen.showBase(c, false, null);
+        Screen.showBase(mind, false, null);
+
+        mind.query("?$y value(1, 2, y);");
+        showResult(true);
+        if (mind.getValues().size() != 30) {
+            fail("Expected 30 rows");
+        }
+
         System.out.println("OK");
         System.out.println("====================================================");
     }

@@ -413,4 +413,13 @@ public class Right implements IUnit<Right> {
         this.mindId = mindId;
     }
 
+    public void commit(Mind m) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (m.getRights().find(this) == null) {
+            for (List<Domain> list : tree) {
+                for (Domain d : list) {
+//                    d.commit(m);
+                }
+            }
+        }
+    }
 }

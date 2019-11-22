@@ -69,7 +69,11 @@ public class TValueFactory implements Iterable<TValue> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((IUnit) s.getData()).setMind(mind);
+                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+                    ((IUnit) s.getData()).setMind(mind);
+                } else {
+                    break;
+                }
             }
         }
         action = base.isAction();

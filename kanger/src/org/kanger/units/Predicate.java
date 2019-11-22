@@ -95,9 +95,8 @@ public class Predicate implements IUnit<Predicate> {
 
     public Set<Domain> getSolves() throws Exception {
         Set<Domain> set = new HashSet<>();
-        for (long id : mind.getRights().getDatabase(-1)) {
-            Right r = mind.getRights().get(id);
-            if (!r.isDeleted() && getId() == r.getDomain().getPredicateId()) {
+        for (Right r : mind.getRights()) {
+            if (r.isStored() && !r.isDeleted() && getId() == r.getDomain().getPredicateId()) {
                 set.add(r.getDomain());
             }
         }

@@ -367,10 +367,19 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     @Override
     public int getHash() {
-        int hash = 3;
-        hash = 47 * hash + type.ordinal();
-        hash = 47 * hash + Objects.hashCode(value);
-        return hash;
+        if (value == null) {
+            return 0;
+        } else {
+            if (type == DataType.DATE) {
+                return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format((Date) value).hashCode();
+            } else {
+                return formatValue().hashCode();
+            }
+        }
+//        int hash = 3;
+//        hash = 47 * hash + type.ordinal();
+//        hash = 47 * hash + Objects.hashCode(value);
+//        return hash;
     }
 
     @Override
@@ -506,5 +515,8 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.mindId = mindId;
     }
 
+    public Term commit(Mind m) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        return m.getTerms().add(this);
+    }
 }
 

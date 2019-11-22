@@ -25,10 +25,7 @@ import org.kanger.units.*;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 //import java.awt.*;
 //import java.awt.datatransfer.Clipboard;
@@ -163,6 +160,16 @@ public class Screen {
                             break;
                         case 'X':
                             showLog(mind, LogMode.ALL, line.charAt(0) != 'x');
+                            break;
+
+                        case 'N':
+                            SortedSet<String> set = new TreeSet<>();
+                            for (Term t : mind.getTerms()) {
+                                set.add(String.format("%s (%d)", t.toString(), t.getHash()));
+                            }
+                            for (String s : set) {
+                                System.out.println(s);
+                            }
                             break;
 //                        case 'T':
 //                            showTValues(mind);

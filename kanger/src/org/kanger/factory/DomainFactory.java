@@ -66,7 +66,12 @@ public class DomainFactory implements Iterable<Domain> {
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                ((IUnit) s.getData()).setMind(mind);
+                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+                    ((IUnit) s.getData()).setMind(mind);
+//                    System.err.println(s.getData());
+                } else {
+                    break;
+                }
             }
         }
         waiters.addAll(base.waiters);
@@ -108,21 +113,28 @@ public class DomainFactory implements Iterable<Domain> {
                     p.add(t);
                 }
             }
-//            p.getArguments().setUser(user);
-            cache.add(p);
-            if (top == null) {
-                top = cache.getRoot();
-            }
-            return p;
+            return add(p);
         }
+    }
+
+    public Domain add(Domain p) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        cache.add(p);
+        if (top == null) {
+            top = cache.getRoot();
+        }
+        return p;
     }
 
     public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain temp = new Domain(pred, antc, arg, r);
+        return find(temp);
 //        temp.setUser(user);
-        for (long id : cache.find(temp.getHash())) {
+    }
+
+    public Domain find(Domain d) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        for (long id : cache.find(d.getHash())) {
             IUnit one = load(id);
-            if (one.equalsTo(temp)) {
+            if (one.equalsTo(d)) {
                 return (Domain) one;
             }
         }
