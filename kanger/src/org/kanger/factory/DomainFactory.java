@@ -187,11 +187,13 @@ public class DomainFactory implements Iterable<Domain> {
         for (TVariable t : d.getArguments().getTVariables(mind, true)) {
             mind.getTVars().delete(t);
         }
-        for (TValue v : d.getArguments().getTValues(mind, true)) {
-            mind.getTValues().delete(v);
-        }
         for (Function f : d.getArguments().getFunctions(mind)) {
             mind.getFunctions().delete(f);
+        }
+        for (TValue v : d.getArguments().getTValues(mind, true)) {
+            if (v.getMindId() == mind.getId()) {
+                mind.getTValues().delete(v);
+            }
         }
 
 //            for (TValue v : mind.getTValues()) {

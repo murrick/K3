@@ -2165,7 +2165,7 @@ public class KangerTest {
 
         mind.clear();
 
-//        mind.query("!value(0, 0, 0);");
+//        mind.query("!value(1, 7, 7);");
 
         Mind a = new Mind(mind);
         Mind b = new Mind(mind);
@@ -2177,11 +2177,11 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
-                    for (int i = 0; i < 10; ++i) {
+                    for (int i = 1; i < 3; ++i) {
                         Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
-                        Thread.sleep(10);
+//                        Thread.sleep(10);
                     }
-                    mind.commit(a);
+//                    mind.commit(a);
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2194,11 +2194,11 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
-                    for (int i = 0; i < 10; ++i) {
+                    for (int i = 1; i < 3; ++i) {
                         Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
-                        Thread.sleep(10);
+//                        Thread.sleep(10);
                     }
-                    mind.commit(b);
+//                    mind.commit(b);
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2211,11 +2211,11 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
-                    for (int i = 0; i < 10; ++i) {
+                    for (int i = 1; i < 3; ++i) {
                         Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
-                        Thread.sleep(10);
+//                        Thread.sleep(10);
                     }
-                    mind.commit(c);
+//                    mind.commit(c);
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2232,20 +2232,20 @@ public class KangerTest {
 //        latch.countDown();
         latch.await();
 
-//        mind.commit(c);
-//        mind.commit(b);
-//        mind.commit(a);
+        mind.commit(a);
+        mind.commit(b);
+        mind.commit(c);
 
 //        Screen.showBase(a, false, null);
-        Screen.showBase(a, false, null);
-        Screen.showBase(b, false, null);
-        Screen.showBase(c, false, null);
+//        Screen.showBase(a, false, null);
+//        Screen.showBase(b, false, null);
+//        Screen.showBase(c, false, null);
         Screen.showBase(mind, false, null);
 
-        mind.query("?$y value(1, 2, y);");
+        mind.query("?$x $y value(1, x, y);");
         showResult(true);
-        if (mind.getValues().size() != 30) {
-            fail("Expected 30 rows");
+        if (mind.getValues().size() != 6) {
+            fail("Expected 6 rows");
         }
 
         System.out.println("OK");

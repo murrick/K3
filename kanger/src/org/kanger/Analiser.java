@@ -54,7 +54,7 @@ public class Analiser {
                     }
                     Domain d = r.getDomain();
                     for (Argument a : d.getArguments()) {
-                        if (a.isEmpty(mind) || (a.getType() == ArgumentType.CVARIABLE && a.getValue(mind).getMindId() == mind.getId())) {
+                        if (a.isEmpty(mind) || (a.getType() == ArgumentType.CVARIABLE && a.getValue(mind).getMindId() >= mind.getId())) {
                             d = null;
                             break;
                         }

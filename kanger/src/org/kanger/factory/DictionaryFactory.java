@@ -78,17 +78,13 @@ public class DictionaryFactory implements Iterable<Term> {
                 base.top.setNext(cache.getRoot());
             }
         }
-        for (IStep s = base.cache.getRoot(); s != null; s = s.getNext()) {
-            Term t = (Term) s.getData();
-            if (t.getMindId() == base.mind.getId()) {
-                Term x = find(t);
-                if (x == null) {
-                    t.setMind(mind);
+        if (cache.getRoot() != null) {
+            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+                    ((IUnit) s.getData()).setMind(mind);
                 } else {
-
+                    break;
                 }
-            } else {
-                break;
             }
         }
         cache.setRoot(base.cache.getRoot());

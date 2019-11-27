@@ -270,4 +270,13 @@ public class Predicate implements IUnit<Predicate> {
         this.mindId = mindId;
     }
 
+    public Predicate commit(Mind m) throws Exception {
+        setName(name.commit(m));
+        Predicate predicate = m.getPredicates().find(name, range);
+        if (predicate == null) {
+            predicate = m.getPredicates().add(name, range);
+        }
+        predicate.setMind(m);
+        return predicate;
+    }
 }

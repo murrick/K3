@@ -115,10 +115,10 @@ public class FValue implements IUnit<FValue> {
         this.id = id;
     }
 
-//    public Term setValue(Term value) {
-//        this.value = value;
-//        return value;
-//    }
+    public void setValue(Term value) {
+        this.value = value;
+        valueId = value.getId();
+    }
 
     public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (value == null && valueId != -1) {
@@ -315,6 +315,26 @@ public class FValue implements IUnit<FValue> {
     }
 
     @Override
+    public FValue commit(Mind m) throws Exception {
+        setValue(value.commit(m));
+        for (Argument a : condition) {
+            a.setO((IUnit) a.getO(mind).commit(m));
+        }
+        List<Long> temp = new ArrayList<>();
+        for (long id : stamp) {
+            Term x = mind.getTerms().get(id);
+            if (x != null) {
+                temp.add(m.getTerms().add(x).getId());
+            } else {
+                temp.add(0L);
+            }
+        }
+        stamp = temp;
+        setMind(m);
+        return this;
+    }
+
+    @Override
     public long getMindId() {
         return mindId;
     }
@@ -324,4 +344,7 @@ public class FValue implements IUnit<FValue> {
         this.mindId = mindId;
     }
 
+    public long getFunctionId() {
+        return functionId;
+    }
 }

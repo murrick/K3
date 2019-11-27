@@ -35,4 +35,6 @@ public interface IUnit<T> {
     T apply(ByteBuffer packet) throws OutOfBufferException;
 
     UnitType getUnitType();
+
+    T commit(Mind m) throws Exception;
 }

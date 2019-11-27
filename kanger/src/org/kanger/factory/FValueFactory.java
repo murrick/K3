@@ -12,9 +12,10 @@ import org.kanger.units.Function;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public class FValueFactory {
+public class FValueFactory implements Iterable<FValue> {
 
     public static final String SCHEMA = "fvalues";
 
@@ -196,4 +197,8 @@ public class FValueFactory {
         action = false;
     }
 
+    @Override
+    public Iterator iterator() {
+        return cache.iterator();
+    }
 }

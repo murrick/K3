@@ -376,7 +376,7 @@ public class Screen {
                                             System.out.println("Cache used: " + user.getUsedCacheSize());
                                             System.out.println();
                                         }
-                                        System.out.println("Database: " + mind.getRights().storedSize());
+//                                        System.out.println("Database: " + mind.getRights().storedSize());
                                         System.out.println("Dictionary: " + mind.getTerms().size());
                                         System.out.println("Domains: " + mind.getDomains().size());
                                         System.out.println("Functions: " + mind.getFunctions().size());

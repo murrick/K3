@@ -98,10 +98,10 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return value;
     }
 
-//    public Object setValue(Term value) {
-//        this.value = value;
-//        return value;
-//    }
+    public void setValue(Term value) {
+        this.value = value;
+        valueId = value.getId();
+    }
 
     public Set<Cause> getCauses() {
         return causes;
@@ -255,4 +255,12 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.mindId = mindId;
     }
 
+    public TValue commit(Mind m) throws Exception {
+        setMind(m);
+        setValue(value.commit(m));
+        for (Cause c : causes) {
+            c.commit(mind, m);
+        }
+        return this;
+    }
 }

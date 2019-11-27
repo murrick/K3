@@ -4,6 +4,7 @@ import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 
@@ -176,6 +177,12 @@ public class Cause implements Comparable<Cause> {
     public void setSrc(Domain domain) {
         src = domain;
         srcId = domain.getId();
+    }
+
+    public void commit(Mind mind, Mind m) throws Exception {
+        for (Argument a : arguments) {
+            a.setO((IUnit) a.getO(mind).commit(m));
+        }
     }
 
 //    public boolean isStored() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {

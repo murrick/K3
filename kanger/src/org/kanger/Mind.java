@@ -92,18 +92,20 @@ public class Mind {
 
         terms.transaction(root.getTerms());
         predicates.transaction(root.getPredicates());
-        functions.transaction(root.getFunctions());
         library.transaction(root.getLibrary());
 
 //        terms = root.getTerms();
 //        predicates = root.getPredicates();
-//        functions = root.getFunctions();
 //        library = root.getLibrary();
+
+
+//        functions = root.getFunctions();
 
         domains.transaction(root.getDomains());
         rights.transaction(root.getRights());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
+        functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
 
         debugLevel = root.getDebugLevel();
@@ -142,23 +144,27 @@ public class Mind {
 
     }
 
-    public void commit(Mind m) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void commit(Mind m) throws Exception {
 //        SortedMap <Integer, Object> vars = new TreeMap<>();
 
         m.pack();
 
 //        user.setMind(this);
 
+//        rights.commit(m.getRights());
+
         terms.commit(m.getTerms());
         predicates.commit(m.getPredicates());
-        functions.commit(m.getFunctions());
         library.commit(m.getLibrary());
 
+        functions.commit(m.getFunctions());
+        fValues.commit(m.getFValues());
         tVars.commit(m.getTVars());
         tValues.commit(m.getTValues());
-        fValues.commit(m.getFValues());
         domains.commit(m.getDomains());
-        rights.commit(m.getRights());
+        rights.commit2(m.getRights());
+//
+//        rights.commit(m.getRights());
 
 //        log.commit(m.getLog());
 //        solves.commit(m.getSolutions());

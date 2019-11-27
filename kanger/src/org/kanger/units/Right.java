@@ -346,23 +346,23 @@ public class Right implements IUnit<Right> {
         if (x.isAntc() == domain.isAntc()
                 && x.getPredicateId() == domain.getPredicateId()
                 && x.getRange() == domain.getRange()) {
-                int i = 0;
-                for (; i < domain.getRange(); ++i) {
-                    //TODO: Костыль!
+            int i = 0;
+            for (; i < domain.getRange(); ++i) {
+                //TODO: Костыль!
 //                    x.get(i).setUser(user);
-                    if (!x.get(i).isEmpty(mind)
-                            && !domain.getArguments().get(i).isEmpty(mind)
-                            && x.get(i).getValue(mind).getId() != domain.getArguments().get(i).getValue(mind).getId()) {
-                        break;
-                    }
-
-                    TValue a = x.get(i).isTSet() ? x.get(i).getT(mind).getCurrent() : x.get(i).getV(mind);
-                    TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT(mind).getCurrent() : domain.getArguments().get(i).getV(mind);
-                    if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
-                        break;
-                    }
+                if (!x.get(i).isEmpty(mind)
+                        && !domain.getArguments().get(i).isEmpty(mind)
+                        && x.get(i).getValue(mind).getId() != domain.getArguments().get(i).getValue(mind).getId()) {
+                    break;
                 }
-                return i == domain.getRange();
+
+                TValue a = x.get(i).isTSet() ? x.get(i).getT(mind).getCurrent() : x.get(i).getV(mind);
+                TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT(mind).getCurrent() : domain.getArguments().get(i).getV(mind);
+                if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
+                    break;
+                }
+            }
+            return i == domain.getRange();
         } else {
             return false;
         }
@@ -413,13 +413,33 @@ public class Right implements IUnit<Right> {
         this.mindId = mindId;
     }
 
-    public void commit(Mind m) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Right commit(Mind m) throws Exception {
         if (m.getRights().find(this) == null) {
+            setOrig(orig.commit(m));
+            predicates.clear();
             for (List<Domain> list : tree) {
                 for (Domain d : list) {
-//                    d.commit(m);
+                    d.commit(m);
+                    predicates.add(d.getPredicateId());
                 }
             }
+            for (TVariable t : mind.getTVars()) {
+                if (t.getRight().getId() == id) {
+                    t.commit(m);
+                }
+            }
+            for (Cause c : causes) {
+                c.commit(mind, m);
+            }
+            for (TValue t : solves) {
+                t.commit(m);
+            }
+            m.getRights().register(this);
+            m.getRights().add(this);
+            this.setMind(m);
+        } else {
+            mind.getRights().delete(this);
         }
+        return this;
     }
 }

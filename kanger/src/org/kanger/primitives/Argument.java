@@ -167,11 +167,21 @@ public class Argument {
         }
     }
 
-    private IUnit getO(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public IUnit getO(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
             load(mind);
         }
         return o;
+    }
+
+    public void setO(IUnit o) {
+        this.o = o;
+        type = getObjectType();
+        if (o != null) {
+            id = o.getId();
+        } else {
+            id = -1;
+        }
     }
 
     public TVariable getT(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {

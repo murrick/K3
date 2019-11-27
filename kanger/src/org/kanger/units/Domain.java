@@ -1160,5 +1160,14 @@ public class Domain implements IUnit<Domain> {
     public void setMindId(long mindId) {
         this.mindId = mindId;
     }
+
+    public Domain commit(Mind m) throws Exception {
+        setPredicate(predicate.commit(m));
+        for (Argument a : arguments) {
+            a.setO((IUnit) a.getO(mind).commit(m));
+        }
+        setMind(m);
+        return this;
+    }
 }
 

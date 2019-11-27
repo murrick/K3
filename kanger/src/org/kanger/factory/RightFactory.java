@@ -21,15 +21,15 @@ import java.util.List;
 public class RightFactory implements Iterable<Right> {
 
     public static final String SCHEMA = "rights";
-    public static final String SCHEMA_STORED = "stored";
+//    public static final String SCHEMA_STORED = "stored";
 
 //    private long lastId = 0;
 //    private long firstId = 0;
 
     private ICache cache;
-    private ICache stored;
-    private IStep topCache = null;
-    private IStep topStored = null;
+    //    private ICache stored;
+    private IStep top = null;
+    //    private IStep topStored = null;
     private Mind mind = null;
 
     private transient boolean action = false;
@@ -50,11 +50,11 @@ public class RightFactory implements Iterable<Right> {
 //            lastId = user.nextId(SCHEMA);
 //            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
-            stored = new Escalera(mind, SCHEMA_STORED, base.stored);
+//            stored = new Escalera(mind, SCHEMA_STORED, base.stored);
         } else {
 //            System.err.println(" =================================================== ");
             cache = new Escalera(mind, SCHEMA, null);
-            stored = new Escalera(mind, SCHEMA_STORED, null);
+//            stored = new Escalera(mind, SCHEMA_STORED, null);
 //            if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
@@ -66,12 +66,23 @@ public class RightFactory implements Iterable<Right> {
     }
 
 
-    public void commit(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        if (base.topCache != null) {
-            if (cache.getRoot() == null) {
-                topCache = base.topCache;
+    public void commit(RightFactory base) throws Exception {
+        for (IStep s = base.cache.getRoot(); s != null; s = s.getNext()) {
+            if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+                Right r = (Right) s.getData();
+                r.commit(mind);
             } else {
-                base.topCache.setNext(cache.getRoot());
+                break;
+            }
+        }
+    }
+
+    public void commit2(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (base.top != null) {
+            if (cache.getRoot() == null) {
+                top = base.top;
+            } else {
+                base.top.setNext(cache.getRoot());
             }
         }
         cache.setRoot(base.cache.getRoot());
@@ -86,14 +97,14 @@ public class RightFactory implements Iterable<Right> {
             }
         }
 
-        if (base.topStored != null) {
-            if (stored.getRoot() == null) {
-                topStored = base.topStored;
-            } else {
-                base.topStored.setNext(stored.getRoot());
-            }
-        }
-        stored.setRoot(base.stored.getRoot());
+//        if (base.topStored != null) {
+//            if (stored.getRoot() == null) {
+//                topStored = base.topStored;
+//            } else {
+//                base.topStored.setNext(stored.getRoot());
+//            }
+//        }
+//        stored.setRoot(base.stored.getRoot());
 //        if (stored.getRoot() != null && stored.getTop() == null) {
 //            stored.setTop(base.stored.getTop());
 //        }
@@ -114,7 +125,7 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public void update() throws IOException {
-        if (cache.update() && stored.update()) {
+        if (cache.update()) {
 //            firstId = lastId;
         }
     }
@@ -136,15 +147,15 @@ public class RightFactory implements Iterable<Right> {
 //                r.setId(lastId++);
 //            }
             cache.add(r);
-            if (topCache == null) {
-                topCache = cache.getRoot();
+            if (top == null) {
+                top = cache.getRoot();
             }
-            if (r.isStored()) {
-                stored.add(r.getId(), r.getId());
-                if (topStored == null) {
-                    topStored = cache.getRoot();
-                }
-            }
+//            if (r.isStored()) {
+//                stored.add(r.getId(), r.getId());
+//                if (topStored == null) {
+//                    topStored = cache.getRoot();
+//                }
+//            }
             for (List<Domain> list : r.getTree()) {
                 for (Domain d : list) {
                     r.getPredicates().add(d.getPredicateId());
@@ -213,7 +224,7 @@ public class RightFactory implements Iterable<Right> {
             transaction(mind.getNext().getRights());
         } else {
             cache.clear();
-            stored.clear();
+//            stored.clear();
             transaction(null);
         }
     }
@@ -246,9 +257,9 @@ public class RightFactory implements Iterable<Right> {
         return cache.size();
     }
 
-    public int storedSize() {
-        return stored.size();
-    }
+//    public int storedSize() {
+//        return stored.size();
+//    }
 
     public Right add(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right p = find(domain);
@@ -287,7 +298,7 @@ public class RightFactory implements Iterable<Right> {
 
     public Right store(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         d.getRight().setStored();
-        stored.add(d.getRight().getId(), d.getRight().getId());
+//        stored.add(d.getRight().getId(), d.getRight().getId());
         return d.getRight();
     }
 
@@ -341,14 +352,14 @@ public class RightFactory implements Iterable<Right> {
 
     // ****************** DATABASE
 
-    public Iterable<Long> getDatabase(long fromId) {
-        return new Iterable<Long>() {
-            @Override
-            public Iterator iterator() {
-                return stored.iterator(fromId);
-            }
-        };
-    }
+//    public Iterable<Long> getDatabase(long fromId) {
+//        return new Iterable<Long>() {
+//            @Override
+//            public Iterator iterator() {
+//                return stored.iterator(fromId);
+//            }
+//        };
+//    }
 
 
     public void pack() throws IOException, ClassNotFoundException {
@@ -360,7 +371,7 @@ public class RightFactory implements Iterable<Right> {
         }
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
-            stored.delete(((IUnit) o).getId());
+//            stored.delete(((IUnit) o).getId());
         }
         update();
 

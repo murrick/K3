@@ -166,6 +166,13 @@ public class SysOp implements IUnit<SysOp> {
         return UnitType.SYSOP;
     }
 
+    @Override
+    public SysOp commit(Mind m) throws Exception {
+        m.getLibrary().add(this);
+        this.setMind(m);
+        return this;
+    }
+
 
     @Override
     public long getId() {

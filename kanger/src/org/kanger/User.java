@@ -45,7 +45,6 @@ public class User implements IUser {
             storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
             storage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
             storage.put(RightFactory.SCHEMA, data.getBase(RightFactory.SCHEMA));
-            storage.put(RightFactory.SCHEMA_STORED, data.getBase(RightFactory.SCHEMA_STORED));
             storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
             storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
             storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
