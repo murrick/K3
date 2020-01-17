@@ -78,7 +78,7 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
 
-    public Function add(Term name, ArgList arguments) throws Exception {
+    public synchronized Function add(Term name, ArgList arguments) throws Exception {
         Function f = new Function(mind);
         f.setName(name);
         f.setRange(arguments.size());
@@ -130,6 +130,19 @@ public class FunctionFactory implements Iterable<Function> {
 //    public void unlink() throws Exception {
 //        cache.unlink();
 //    }
+
+    public void mark() throws Exception {
+        cache.mark();
+    }
+
+
+    public void commit() throws Exception {
+        cache.commit();
+    }
+
+    public void release() throws Exception {
+        cache.release();
+    }
 
     public int size() throws Exception {
         return cache.size();

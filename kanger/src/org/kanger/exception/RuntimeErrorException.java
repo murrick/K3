@@ -6,7 +6,7 @@ import org.kanger.units.SysOp;
  * Created by Dmitry Kuznetsov on 30.12.2015.
  */
 public class RuntimeErrorException extends Exception {
-    String exceptionMessage = "ERROR";
+    String exceptionMessage = "Runtime error";
     String error = "";
     Object object = null;
 

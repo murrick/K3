@@ -411,7 +411,7 @@ public class Domain implements IUnit<Domain> {
 
             String suffix = "";
             if ((mind.getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
-                suffix += " " + id;
+                suffix += " " + id + " " + mindId + " " + mind.getId();
             }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
                 try {
@@ -1120,6 +1120,7 @@ public class Domain implements IUnit<Domain> {
                                 return false;
                             }
                             break;
+                        case TVALUE:
                         case TERM:
                             if (arguments.get(i).getValue(mind).getId() != to.getArguments().get(i).getValue(mind).getId()) {
                                 return false;

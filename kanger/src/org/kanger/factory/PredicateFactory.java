@@ -76,20 +76,22 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public Predicate add(Term line, int range) throws Exception {
-        Predicate p = find(line, range);
-        if (p != null) {
-            return p;
-        } else {
-            p = new Predicate(mind);
-            p.setId(mind.getUser().nextId(SCHEMA));
-            p.setMindId(mind.getId());
-            p.setRange(range);
-            p.setName(line);
-            cache.add(p);
-            if (top == null) {
-                top = cache.getRoot();
+        synchronized (mind.getUser()) {
+            Predicate p = find(line, range);
+            if (p != null) {
+                return p;
+            } else {
+                p = new Predicate(mind);
+                p.setId(mind.getUser().nextId(SCHEMA));
+                p.setMindId(mind.getId());
+                p.setRange(range);
+                p.setName(line);
+                cache.add(p);
+                if (top == null) {
+                    top = cache.getRoot();
+                }
+                return p;
             }
-            return p;
         }
     }
 

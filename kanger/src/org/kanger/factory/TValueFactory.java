@@ -85,7 +85,7 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = find(tv, o);
         if (t == null) {
             t = new TValue(tv, o, mind);

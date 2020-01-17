@@ -103,22 +103,24 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
     public Term add(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        Term p = find(o);
-        if (p != null) {
-            return p;
-        } else {
-            if (p instanceof Term) {
-                p.setMind(mind);
+        synchronized (mind.getUser()) {
+            Term p = find(o);
+            if (p != null) {
+                return p;
             } else {
-                p = new Term(o, mind);
-                p.setId(mind.getUser().nextId(SCHEMA));
-                p.setMindId(mind.getId());
+                if (p instanceof Term) {
+                    p.setMind(mind);
+                } else {
+                    p = new Term(o, mind);
+                    p.setId(mind.getUser().nextId(SCHEMA));
+                    p.setMindId(mind.getId());
+                }
+                cache.add(p);
+                if (top == null) {
+                    top = cache.getRoot();
+                }
+                return p;
             }
-            cache.add(p);
-            if (top == null) {
-                top = cache.getRoot();
-            }
-            return p;
         }
     }
 

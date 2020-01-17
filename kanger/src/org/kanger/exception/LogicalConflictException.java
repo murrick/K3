@@ -3,15 +3,15 @@ package org.kanger.exception;
 /**
  * Created by Dmitry Kuznetsov on 30.12.2015.
  */
-public class SubstitutionException extends Exception {
-    String exceptionMessage = "ERROR";
+public class LogicalConflictException extends Exception {
+    String exceptionMessage = "Logical conflict";
     String error = "";
     Object object = null;
 
-    public SubstitutionException() {
+    public LogicalConflictException() {
     }
 
-    public SubstitutionException(String msg) {
+    public LogicalConflictException(String msg) {
         exceptionMessage += ": " + msg;
     }
 

@@ -15,7 +15,10 @@ import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -462,7 +465,8 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                     return ((Comparable) value).compareTo(o.getValue());
                 }
             } else if (type == DataType.BLOB) {
-                return Arrays.compare((byte[]) value, (byte[]) o.getValue());
+                //TODO: Для совместимости с 8
+                return -1; //Arrays.compare((byte[]) value, (byte[]) o.getValue());
             } else {
                 return ((Comparable) value).compareTo(o.getValue());
             }

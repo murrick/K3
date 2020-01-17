@@ -29,6 +29,7 @@ public class RightFactory implements Iterable<Right> {
     private ICache cache;
     //    private ICache stored;
     private IStep top = null;
+    private IStep bottom = null;
     //    private IStep topStored = null;
     private Mind mind = null;
 
@@ -49,6 +50,7 @@ public class RightFactory implements Iterable<Right> {
 
 //            lastId = user.nextId(SCHEMA);
 //            firstId = base.lastId;
+            bottom = base.top;
             cache = new Escalera(mind, SCHEMA, base.cache);
 //            stored = new Escalera(mind, SCHEMA_STORED, base.stored);
         } else {
@@ -67,16 +69,30 @@ public class RightFactory implements Iterable<Right> {
 
 
     public void commit(RightFactory base) throws Exception {
+        List<Right> list = new ArrayList<>();
         for (IStep s = base.cache.getRoot(); s != null; s = s.getNext()) {
-            if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-                Right r = (Right) s.getData();
-                r.commit(mind);
-            } else {
+            if (bottom != null && s.getId() == bottom.getId()) {
                 break;
             }
+//            if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+            Right r = (Right) s.getData();
+            r = (Right) mind.compileLine(r.getOrig().toString(), false, null);
+            list.add(r);
+//                r.commit(mind);
+//            } else {
+//                break;
+//            }
+        }
+        Boolean res = mind.analise(null, false);
+        if (res != null && res) {
+            for (Right r : list) {
+                r.setDeleted();
+            }
+            throw new RuntimeErrorException("Conflict in committed transaction");
         }
     }
 
+    //TODO: Проверять дублирующиеся правила!
     public void commit2(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         if (base.top != null) {
             if (cache.getRoot() == null) {
@@ -89,8 +105,9 @@ public class RightFactory implements Iterable<Right> {
         if (cache.getRoot() != null) {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-                    Right r = (Right) s.getData();
-                    r.setMind(mind);
+                    ((IUnit) s.getData()).setMind(mind);
+//                    Right r = (Right) s.getData();
+//                    r.setMind(mind);
                 } else {
                     break;
                 }
@@ -253,6 +270,19 @@ public class RightFactory implements Iterable<Right> {
 //        }
 //    }
 
+    public void mark() throws Exception {
+        cache.mark();
+    }
+
+
+    public void commit() throws Exception {
+        cache.commit();
+    }
+
+    public void release() throws Exception {
+        cache.release();
+    }
+
     public int size() {
         return cache.size();
     }
@@ -261,7 +291,7 @@ public class RightFactory implements Iterable<Right> {
 //        return stored.size();
 //    }
 
-    public Right add(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized Right add(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right p = find(domain);
         if (p != null) {
             return p;
@@ -383,5 +413,19 @@ public class RightFactory implements Iterable<Right> {
 ////            firstId = 0;
 //        }
 
+    }
+
+    public boolean isSequencedBy(RightFactory r) {
+        return top == null || (r.bottom != null && top.getId() == r.bottom.getId());
+    }
+
+    public List<Right> getResults() {
+        List<Right> list = new ArrayList<>();
+        for (Object o : cache) {
+            if (((IUnit) o).getMind().getId() == mind.getId()) {
+                list.add((Right) o);
+            }
+        }
+        return list;
     }
 }

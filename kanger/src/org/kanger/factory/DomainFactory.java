@@ -97,7 +97,7 @@ public class DomainFactory implements Iterable<Domain> {
 //    }
 
 
-    public Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
@@ -247,6 +247,19 @@ public class DomainFactory implements Iterable<Domain> {
 //    public void unlink() throws Exception {
 //        cache.unlink();
 //    }
+
+    public void mark() throws Exception {
+        cache.mark();
+    }
+
+
+    public void commit() throws Exception {
+        cache.commit();
+    }
+
+    public void release() throws Exception {
+        cache.release();
+    }
 
     public int size() throws Exception {
         return cache.size();

@@ -76,6 +76,8 @@ public class Mind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
+    private volatile boolean blockCommit = false;
+
     public Mind(IUser user) throws IOException, OutOfBufferException {
         this.user = user;
 //        user.setMind(this);
@@ -90,13 +92,13 @@ public class Mind {
         id = user.nextId(); //root.getId() + 1;
         init();
 
-        terms.transaction(root.getTerms());
-        predicates.transaction(root.getPredicates());
-        library.transaction(root.getLibrary());
+//        terms.transaction(root.getTerms());
+//        predicates.transaction(root.getPredicates());
+//        library.transaction(root.getLibrary());
 
-//        terms = root.getTerms();
-//        predicates = root.getPredicates();
-//        library = root.getLibrary();
+        terms = root.getTerms();
+        predicates = root.getPredicates();
+        library = root.getLibrary();
 
 
 //        functions = root.getFunctions();
@@ -144,18 +146,31 @@ public class Mind {
 
     }
 
-    public void commit(Mind m) throws Exception {
-//        SortedMap <Integer, Object> vars = new TreeMap<>();
 
+    public synchronized boolean commit(Mind m) throws Exception {
+
+//        System.err.println("Commit + " + id + " <- " + m.getId());
         m.pack();
+        boolean result = true;
 
-//        user.setMind(this);
+        boolean sequencedBy = isSequencedBy(m);
+        if (!sequencedBy) {
+            //TODO: Сделать mark() для всех factory
 
+//            System.err.println("------------");
+            functions.mark();
+            fValues.mark();
+            tVars.mark();
+            tValues.mark();
+            domains.mark();
+            rights.mark();
+        }
 //        rights.commit(m.getRights());
 
-        terms.commit(m.getTerms());
-        predicates.commit(m.getPredicates());
-        library.commit(m.getLibrary());
+//        if (isSequencedBy(m)) {
+//            terms.commit(m.getTerms());
+//            predicates.commit(m.getPredicates());
+//            library.commit(m.getLibrary());
 
         functions.commit(m.getFunctions());
         fValues.commit(m.getFValues());
@@ -163,6 +178,32 @@ public class Mind {
         tValues.commit(m.getTValues());
         domains.commit(m.getDomains());
         rights.commit2(m.getRights());
+//        } else {
+//            rights.commit(m.getRights());
+//            pack();
+//        }
+
+        if (!sequencedBy) {
+            Boolean res = analise(null, false);
+            if (res != null && res) {
+                //TODO: Сделать release() для всех Factory
+                functions.release();
+                fValues.release();
+                tVars.release();
+                tValues.release();
+                domains.release();
+                rights.release();
+                result = false;
+            } else {
+                //TODO: Сделать commit() для всех Factory
+                functions.commit();
+                fValues.commit();
+                tVars.commit();
+                tValues.commit();
+                domains.commit();
+                rights.commit();
+            }
+        }
 //
 //        rights.commit(m.getRights());
 
@@ -183,10 +224,11 @@ public class Mind {
 
         update();
 
-
         log.commit(m.getLog());
         queryResult = (Boolean) m.getQueryResult();
 
+//        System.err.println("Commit - " + id + " <- " + m.getId());
+        return result;
     }
 
     public void update() throws IOException {
@@ -614,7 +656,7 @@ public class Mind {
         return query(line, null);
     }
 
-    public Boolean query(String line, Object[] ext) throws Exception {
+    public synchronized Boolean query(String line, Object[] ext) throws Exception {
         querySource = line;
         queryPass = QueryPass.SILENCE;
         queryContext = null;
@@ -798,7 +840,7 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
-    public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
+    public synchronized Boolean query(String line, Object[] ext, boolean logging) throws Exception {
 //        querySource = line;
 //        queryPass = QueryPass.SILENCE;
 //        queryContext = null;
@@ -1431,6 +1473,7 @@ public class Mind {
         }
     }
 
+
     public boolean isLogging() {
         return logging;
     }
@@ -1489,6 +1532,13 @@ public class Mind {
 ////        }
 //    }
 
+    public boolean isSequencedBy(Mind m) {
+        return rights.isSequencedBy(m.rights);
+    }
+
+    public List<Right> getResults() {
+        return rights.getResults();
+    }
 }
 
 

@@ -93,7 +93,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         return p;
     }
 
-    public TVariable load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized TVariable load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TVariable t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
@@ -166,6 +166,19 @@ public class TVariableFactory implements Iterable<TVariable> {
             cache.clear();
             transaction(null);
         }
+    }
+
+    public void mark() throws Exception {
+        cache.mark();
+    }
+
+
+    public void commit() throws Exception {
+        cache.commit();
+    }
+
+    public void release() throws Exception {
+        cache.release();
     }
 
     public int size() throws Exception {

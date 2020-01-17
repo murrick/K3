@@ -413,6 +413,37 @@ public class Right implements IUnit<Right> {
         this.mindId = mindId;
     }
 
+//    public Right commit(Mind m) throws Exception {
+//        m.compile(orig.toString());
+//        if (m.getRights().find(this) == null) {
+//            setOrig(orig.commit(m));
+//            predicates.clear();
+//            for (List<Domain> list : tree) {
+//                for (Domain d : list) {
+//                    d.commit(m);
+//                    predicates.add(d.getPredicateId());
+//                }
+//            }
+//            for (TVariable t : mind.getTVars()) {
+//                if (t.getRight().getId() == id) {
+//                    t.commit(m);
+//                }
+//            }
+//            for (Cause c : causes) {
+//                c.commit(mind, m);
+//            }
+//            for (TValue t : solves) {
+//                t.commit(m);
+//            }
+//            m.getRights().register(this);
+//            m.getRights().add(this);
+//            this.setMind(m);
+//        } else {
+//            mind.getRights().delete(this);
+//        }
+//        return this;
+//    }
+
     public Right commit(Mind m) throws Exception {
         if (m.getRights().find(this) == null) {
             setOrig(orig.commit(m));

@@ -1,9 +1,9 @@
 package org.kanger.test;
 
 import org.kanger.Mind;
-import org.kanger.Screen;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypotese;
 import org.kanger.units.Domain;
@@ -132,34 +132,61 @@ public class KangerTest {
         return false;
     }
 
-    private void showResult(Boolean assertResult) throws RuntimeErrorException {
-        for (Right r : mind.getRights()) {
-            if (!r.isDeleted() && !r.isGenerated() && !r.isQuery()) {
-                System.out.println("Right: " + r.toString());
-            }
-        }
+    private void showResult(Mind mind, Boolean assertResult, boolean local) throws RuntimeErrorException, OutOfBufferException, IOException, ClassNotFoundException {
+//        for (Right r : mind.getRights()) {
+//            if (!r.isDeleted() && !r.isGenerated() && !r.isQuery() && (!local || r.getMind().getId() == mind.getId())) {
+//                System.out.println("Right: " + r.toString());
+//            }
+//        }
+
         System.out.println("Query: " + mind.getQuerySource());
         System.out.println("Result: " + mind.getQueryResult());
-        if (mind.getSolutions().size() > 0) {
-            System.out.println("Solves (" + mind.getSolutions().size() + "):");
-            int i = 0;
+        int size = mind.getSolutions().size();
+        if (local) {
+            size = 0;
             for (Right log : mind.getSolutions().getRoot()) {
-                System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
+                if (log.getMind().getId() == mind.getId()) {
+                    ++size;
+                }
             }
         }
-        if (mind.getValues().size() > 0) {
-//            mind.getValues().normalize();
-            System.out.println("Values (" + mind.getValues().size() + "):");
+
+        if (size > 0) {
+            System.out.println("Solves (" + size + "):");
             int i = 0;
-            for (Map<String, Object> row : mind.getValues()) {
-                String s = String.format("\tRow %03d: ", ++i);
-                for (Map.Entry<String, Object> log : row.entrySet()) {
-                    if (!s.endsWith(" ")) {
-                        s += " ";
-                    }
-                    s += log.getKey() + "=" + log.getValue();
+            for (Right log : mind.getSolutions().getRoot()) {
+                if (!local || log.getMind().getId() == mind.getId()) {
+                    System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
                 }
-                System.out.println(s);
+            }
+        }
+
+        size = mind.getValues().size();
+        if (local) {
+            size = 0;
+            for (ArgList a : mind.getValues().getRoot()) {
+                if (a.get(0).getV(mind).getMind().getId() == mind.getId()) {
+                    ++size;
+                }
+            }
+        }
+
+
+        if (size > 0) {
+//            mind.getValues().normalize();
+            System.out.println("Values (" + size + "):");
+            int i = 0;
+            for (ArgList a : mind.getValues().getRoot()) {
+                if (!local || a.get(0).getV(mind).getMind().getId() == mind.getId()) {
+                    String s = String.format("\tRow %03d: ", ++i);
+                    for (Argument v : a) {
+                        if (!s.endsWith(" ")) {
+                            s += " ";
+                        }
+                        s += v.getV(mind).getTVar().getName().toString() + "=" + v.getV(mind).getValue().getValue();
+                    }
+                    System.out.println(s);
+                }
             }
         }
         if (assertResult == null && !mind.getHypotesisStore().isEmpty()) {
@@ -172,6 +199,11 @@ public class KangerTest {
         if (!(mind.getQueryResult() + "").equals(assertResult + "")) {
             fail("Expected: " + assertResult);
         }
+    }
+
+
+    private void showResult(Boolean assertResult) throws RuntimeErrorException, IOException, OutOfBufferException, ClassNotFoundException {
+        showResult(mind, assertResult, false);
     }
 
     public Hypotese createHypotese(Mind mind, boolean antc, Object predicate, Object... params) throws Exception {
@@ -2164,6 +2196,11 @@ public class KangerTest {
     public void set_08_01() throws Exception {
 
         mind.clear();
+//        mind = new Mind(mind.getUser());
+
+        final int COUNT = 13;
+
+//        Screen.session(mind.getUser());
 
 //        mind.query("!value(1, 7, 7);");
 
@@ -2177,11 +2214,12 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
-                    for (int i = 1; i < 3; ++i) {
+                    for (int i = 0; i < COUNT; ++i) {
                         Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
 //                        Thread.sleep(10);
                     }
-//                    mind.commit(a);
+                    System.out.println("PROCESS 1 STOP: " + a.getResults().size());
+                    mind.commit(a);
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2194,11 +2232,12 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
-                    for (int i = 1; i < 3; ++i) {
+                    for (int i = 0; i < COUNT; ++i) {
                         Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
 //                        Thread.sleep(10);
                     }
-//                    mind.commit(b);
+                    System.out.println("PROCESS 2 STOP: " + b.getResults().size());
+                    mind.commit(b);
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2211,11 +2250,12 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
-                    for (int i = 1; i < 3; ++i) {
+                    for (int i = 0; i < COUNT; ++i) {
                         Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
 //                        Thread.sleep(10);
                     }
-//                    mind.commit(c);
+                    System.out.println("PROCESS 3 STOP: " + c.getResults().size());
+                    mind.commit(c);
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2232,20 +2272,140 @@ public class KangerTest {
 //        latch.countDown();
         latch.await();
 
-        mind.commit(a);
-        mind.commit(b);
-        mind.commit(c);
+        System.out.println("PROCESSES STOP: " + mind.getResults().size());
+
+//        mind.commit(a);
+//        mind.commit(b);
+//        mind.commit(c);
 
 //        Screen.showBase(a, false, null);
 //        Screen.showBase(a, false, null);
 //        Screen.showBase(b, false, null);
 //        Screen.showBase(c, false, null);
-        Screen.showBase(mind, false, null);
+//        Screen.showBase(mind, false, null);
+
+//        a.query("?$x $y value(1, x, y);");
+//        showResult(a, true, true);
+//        b.query("?$x $y value(1, x, y);");
+//        showResult(b, true, true);
+//        c.query("?$x $y value(1, x, y);");
+//        showResult(c, true, true);
 
         mind.query("?$x $y value(1, x, y);");
         showResult(true);
-        if (mind.getValues().size() != 6) {
-            fail("Expected 6 rows");
+        if (mind.getValues().size() != COUNT * 3) {
+            fail("Expected " + (COUNT * 3) + " rows");
+        }
+
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_08_02() throws Exception {
+
+        mind.clear();
+        mind = new Mind(mind.getUser());
+
+        final int COUNT = 13;
+
+//        Screen.session(mind.getUser());
+
+//        mind.query("!value(1, 7, 7);");
+
+        Mind a = new Mind(mind);
+        Mind b = new Mind(mind);
+        Mind c = new Mind(mind);
+
+        CountDownLatch latch = new CountDownLatch(3);
+//
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < COUNT; ++i) {
+                        Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
+//                        Thread.sleep(10);
+                    }
+                    System.out.println("PROCESS 1 STOP: " + a.getResults().size());
+                    mind.commit(a);
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latch.countDown();
+                }
+            }
+        });
+
+        Thread t2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < COUNT; ++i) {
+                        Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
+//                        Thread.sleep(10);
+                    }
+                    b.query("!~value(1, " + 2 + ", " + (1000 + 2) + ");");
+//                    Thread.sleep(10);
+                    System.out.println("PROCESS 2 STOP: " + b.getResults().size());
+                    mind.commit(b);
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latch.countDown();
+                }
+            }
+        });
+
+        Thread t3 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < COUNT; ++i) {
+                        Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
+//                        Thread.sleep(10);
+                    }
+//                    b.compile("!value(1, " + 2 + ", " + (1000 + 2) + ");");
+                    System.out.println("PROCESS 3 STOP: " + c.getResults().size());
+                    mind.commit(c);
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latch.countDown();
+                }
+            }
+        });
+
+        t1.start();
+        t2.start();
+        t3.start();
+
+//        latch.countDown();
+//        latch.countDown();
+        latch.await();
+
+        System.out.println("PROCESSES STOP: " + mind.getResults().size());
+
+//        mind.commit(a);
+//        mind.commit(b);
+//        mind.commit(c);
+
+//        Screen.showBase(a, false, null);
+//        Screen.showBase(a, false, null);
+//        Screen.showBase(b, false, null);
+//        Screen.showBase(c, false, null);
+//        Screen.showBase(mind, false, null);
+//        a.query("?$x $y value(1, x, y);");
+//        showResult(a, true, true);
+//        b.query("?$x $y value(1, x, y);");
+//        showResult(b, true, true);
+//        c.query("?$x $y value(1, x, y);");
+//        showResult(c, true, true);
+
+
+        mind.query("?$x $y value(1, x, y);");
+        showResult(true);
+        if (mind.getValues().size() != COUNT * 2) {
+            fail("Expected " + (COUNT * 2) + " rows");
         }
 
         System.out.println("OK");

@@ -79,7 +79,7 @@ public class FValueFactory implements Iterable<FValue> {
         }
     }
 
-    public FValue add(Function f) throws Exception {
+    public synchronized FValue add(Function f) throws Exception {
         FValue t = find(f);
         if (t == null) {
             if (f.isComplete()) {

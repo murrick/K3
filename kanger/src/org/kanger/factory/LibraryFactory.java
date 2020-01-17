@@ -82,25 +82,27 @@ public class LibraryFactory implements Iterable<SysOp> {
     }
 
     public SysOp add(SysOp s) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        SysOp x = find(s.toString());
-        if (x != null) {
-            x.setMode(s.getMode());
-            x.setProc(s.getProc());
-            x.getScripts().clear();
-            x.getScripts().addAll(s.getScripts());
-            x.getParams().clear();
-            x.getParams().addAll(s.getParams());
+        synchronized (mind.getUser()) {
+            SysOp x = find(s.toString());
+            if (x != null) {
+                x.setMode(s.getMode());
+                x.setProc(s.getProc());
+                x.getScripts().clear();
+                x.getScripts().addAll(s.getScripts());
+                x.getParams().clear();
+                x.getParams().addAll(s.getParams());
 //            update();
-        } else {
-            s.setId(mind.getUser().nextId(SCHEMA));
-            s.setMindId(mind.getId());
-            cache.add(s);
-            if (top == null) {
-                top = cache.getRoot();
+            } else {
+                s.setId(mind.getUser().nextId(SCHEMA));
+                s.setMindId(mind.getId());
+                cache.add(s);
+                if (top == null) {
+                    top = cache.getRoot();
+                }
+                x = s;
             }
-            x = s;
+            return x;
         }
-        return x;
     }
 
     public SysOp find(String title) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {

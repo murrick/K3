@@ -32,6 +32,9 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         }
     }
 
+    public List<ArgList> getRoot() {
+        return root;
+    }
 
     public void add(Collection<TValue> raw) {
         if (!raw.isEmpty()) {

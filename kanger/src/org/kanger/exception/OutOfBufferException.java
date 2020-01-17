@@ -5,7 +5,7 @@ package org.kanger.exception;
  */
 public class OutOfBufferException extends Exception {
 
-    String exceptionMessage = "Ошибочное смещение в буфере";
+    String exceptionMessage = "Out of buffer";
 
     public OutOfBufferException() {
     }
