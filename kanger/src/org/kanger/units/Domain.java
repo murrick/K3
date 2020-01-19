@@ -929,8 +929,7 @@ public class Domain implements IUnit<Domain> {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-//        arguments.setMind(mind);
-        hash = 47 * hash + arguments.hashCode();
+        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
     }
 

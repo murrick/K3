@@ -56,31 +56,38 @@ public class ArgList extends ArrayList<Argument> {
         return this;
     }
 
+//    public int getHash(Mind mind) {
+//        int hashCode = 1;
+//        try {
+//            for (Argument a : this) {
+//                if (!a.isEmpty(mind)) {
+//                    long id = a.getValue(mind).getId();
+////                    hashCode = 31 * hashCode + a.getValue(mind).hashCode();
+//                    hashCode = 31 * hashCode + (int) (id ^ (id >>> 32));
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace(System.err);
+//        }
+//
+//        return hashCode;
+//
+//    }
+
     public int hashCode() {
         int hashCode = 1;
         try {
             for (Argument a : this) {
                 if (!a.isEmpty(mind)) {
+//                    long id = a.getValue(mind).getId();
                     hashCode = 31 * hashCode + a.getValue(mind).hashCode();
+//                    hashCode = 31 * hashCode + (int) (id ^ (id >>> 32));
                 }
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
-
         return hashCode;
-
-//        StringBuffer buffer = new StringBuffer();
-//        try {
-//            for (Argument a : this) {
-//                if (!a.isEmpty()) {
-//                    buffer.append(a.getValue().getId());
-//                }
-//            }
-//        } catch (RuntimeErrorException e) {
-//            e.printStackTrace(System.err);
-//        }
-//        return buffer.toString().hashCode();
     }
 
     public boolean equals(Object o) {

@@ -150,7 +150,7 @@ public class Mind {
     public synchronized boolean commit(Mind m) throws Exception {
 
 //        System.err.println("Commit + " + id + " <- " + m.getId());
-        m.pack();
+//        m.pack();
         boolean result = true;
 
         boolean sequencedBy = isSequencedBy(m);
@@ -177,14 +177,14 @@ public class Mind {
         tVars.commit(m.getTVars());
         tValues.commit(m.getTValues());
         domains.commit(m.getDomains());
-        rights.commit2(m.getRights());
+        rights.commit(m.getRights());
 //        } else {
 //            rights.commit(m.getRights());
 //            pack();
 //        }
 
         if (!sequencedBy) {
-            Boolean res = analise(null, false);
+            Boolean res = analiser.checkDatabase(null, false);
             if (res != null && res) {
                 //TODO: Сделать release() для всех Factory
                 functions.release();
@@ -222,6 +222,7 @@ public class Mind {
 //            }
 //        }
 
+        pack();
         update();
 
         log.commit(m.getLog());
@@ -233,17 +234,18 @@ public class Mind {
 
     public void update() throws IOException {
 
-        if (!user.isClosed()) {
-            terms.update();
-            tVars.update();
-            tValues.update();
-            fValues.update();
-            predicates.update();
-            domains.update();
-            rights.update();
-            functions.update();
-            library.update();
+//        if (next == null && !user.isClosed()) {
+        terms.update();
+        tVars.update();
+        tValues.update();
+        fValues.update();
+        predicates.update();
+        domains.update();
+        rights.update();
+        functions.update();
+        library.update();
 
+        if (next == null && !user.isClosed()) {
             user.flush();
         }
     }
@@ -1536,7 +1538,7 @@ public class Mind {
         return rights.isSequencedBy(m.rights);
     }
 
-    public List<Right> getResults() {
+    public List<Right> getResults() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         return rights.getResults();
     }
 }

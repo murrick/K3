@@ -1,7 +1,6 @@
 package org.kanger;
 
 import org.kanger.enums.ArgumentType;
-import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
@@ -50,7 +49,7 @@ public class Analiser {
             boolean occurs = false;
             for (Right r : mind.getRights()) {
                 if (r.isStored() && !r.isDeleted()) {
-                    if (r.getMindId() < mind.getId()) {
+                    if (r.getMindId() != mind.getId()) {
                         break;
                     }
                     Domain d = r.getDomain();
@@ -124,18 +123,6 @@ public class Analiser {
 //                    trigger = true;
 //                }
 
-                if (p.getDomain().getRange() == 3 && p.getDomain().isAntc() != q.getDomain().isAntc()
-                        && p.getDomain().getArguments().get(0).getValue(mind).getType() == DataType.NUMERIC
-                        && p.getDomain().getArguments().get(1).getValue(mind).getType() == DataType.NUMERIC
-                        && p.getDomain().getArguments().get(2).getValue(mind).getType() == DataType.NUMERIC
-                        && p.getDomain().getArguments().get(0).getValue(mind).toString().equals(q.getDomain().getArguments().get(0).getValue(mind).toString())
-                        && p.getDomain().getArguments().get(1).getValue(mind).toString().equals(q.getDomain().getArguments().get(1).getValue(mind).toString())
-                        && p.getDomain().getArguments().get(2).getValue(mind).toString().equals(q.getDomain().getArguments().get(2).getValue(mind).toString())
-                ) {
-                    System.err.println("!");
-                }
-
-
                 if (p.getDomain().equalsBase(q.getDomain())
                         && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
@@ -156,14 +143,6 @@ public class Analiser {
                     result = true;
 
                 }
-//                else if (p.getDomain().isAntc() != q.getDomain().isAntc() && p.getDomain().getRange() == 3
-//                        && p.getDomain().getArguments().get(2).getValue(mind).getType() == DataType.NUMERIC
-//                        && q.getDomain().getArguments().get(2).getValue(mind).getType() == DataType.NUMERIC
-//                        && q.getDomain().getArguments().get(1).getValue(mind).getValue().toString().equals(p.getDomain().getArguments().get(1).getValue(mind).getValue().toString())
-//                        && q.getDomain().getArguments().get(2).getValue(mind).getValue().toString().equals(p.getDomain().getArguments().get(2).getValue(mind).getValue().toString())) {
-//                    System.err.println("!");
-//                }
-
             }
 
             if (!result && p.getDomain().isQuery() && !p.getDomain().isUsed()) {

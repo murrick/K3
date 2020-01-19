@@ -1713,19 +1713,19 @@ public class KangerTest {
         mind.clear();
         mind.compile(
                 "!@x $y parent(y,x);" +
-                "!@x ~parent(x,x);" +
-                "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
-                "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
-                "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
-                "!@x @y father(x,y) -> male(x), parent(x,y);" +
-                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
-                "!@x @y daughter(x,y) -> female(x), child(x,y);" +
-                "!@x @y son(x,y) -> male(x), child(x,y);" +
-                "!father(John, Tom);" +
-                "!daughter(Sarah, John);" +
-                "!age(John, 37);" +
-                "!age(Tom, 12);" +
-                "!age(Sarah, 4);"
+                        "!@x ~parent(x,x);" +
+                        "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                        "!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));" +
+                        "!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));" +
+                        "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                        "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                        "!@x @y daughter(x,y) -> female(x), child(x,y);" +
+                        "!@x @y son(x,y) -> male(x), child(x,y);" +
+                        "!father(John, Tom);" +
+                        "!daughter(Sarah, John);" +
+                        "!age(John, 37);" +
+                        "!age(Tom, 12);" +
+                        "!age(Sarah, 4);"
         );
         mind.query("?$x $y $z father(x,y) && age(x, z) && z >= 30;");
         showResult(true);
@@ -2364,7 +2364,7 @@ public class KangerTest {
                         Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
 //                        Thread.sleep(10);
                     }
-//                    b.compile("!value(1, " + 2 + ", " + (1000 + 2) + ");");
+                    c.query("!value(1, " + 3 + ", " + (1000 + 3) + ");");
                     System.out.println("PROCESS 3 STOP: " + c.getResults().size());
                     mind.commit(c);
                 } catch (Exception e) {
@@ -2404,8 +2404,8 @@ public class KangerTest {
 
         mind.query("?$x $y value(1, x, y);");
         showResult(true);
-        if (mind.getValues().size() != COUNT * 2) {
-            fail("Expected " + (COUNT * 2) + " rows");
+        if (mind.getSolutions().size() != COUNT * 2) {
+            fail("Expected " + (COUNT * 2) + " solves");
         }
 
         System.out.println("OK");

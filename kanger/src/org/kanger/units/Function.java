@@ -347,7 +347,7 @@ public class Function implements IUnit<Function> {
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
 //        arguments.setMind(mind);
-        hash = 47 * hash + arguments.hashCode();
+        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
     }
 

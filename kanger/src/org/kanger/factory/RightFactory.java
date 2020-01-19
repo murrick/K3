@@ -68,32 +68,52 @@ public class RightFactory implements Iterable<Right> {
     }
 
 
-    public void commit(RightFactory base) throws Exception {
-        List<Right> list = new ArrayList<>();
-        for (IStep s = base.cache.getRoot(); s != null; s = s.getNext()) {
-            if (bottom != null && s.getId() == bottom.getId()) {
-                break;
-            }
-//            if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-            Right r = (Right) s.getData();
-            r = (Right) mind.compileLine(r.getOrig().toString(), false, null);
-            list.add(r);
-//                r.commit(mind);
-//            } else {
+//    public void commit(RightFactory base) throws Exception {
+//        List<Right> list = new ArrayList<>();
+//        for (IStep s = base.cache.getRoot(); s != null; s = s.getNext()) {
+//            if (bottom != null && s.getId() == bottom.getId()) {
 //                break;
 //            }
-        }
-        Boolean res = mind.analise(null, false);
-        if (res != null && res) {
-            for (Right r : list) {
-                r.setDeleted();
-            }
-            throw new RuntimeErrorException("Conflict in committed transaction");
-        }
-    }
+////            if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+//            Right r = (Right) s.getData();
+//            r = (Right) mind.compileLine(r.getOrig().toString(), false, null);
+//            list.add(r);
+////                r.commit(mind);
+////            } else {
+////                break;
+////            }
+//        }
+//        Boolean res = mind.analise(null, false);
+//        if (res != null && res) {
+//            for (Right r : list) {
+//                r.setDeleted();
+//            }
+//            throw new RuntimeErrorException("Conflict in committed transaction");
+//        }
+//    }
 
     //TODO: Проверять дублирующиеся правила!
-    public void commit2(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void commit(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+
+        if (base.cache.getRoot() != null) {
+            for (IStep s = base.cache.getRoot(); s != null; s = s.getNext()) {
+                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+
+//                    System.err.println(((IUnit) s.getData()).getMindId() + ": " + s.getData());
+                    if (find((Right) s.getData()) != null) {
+                        base.delete((Right) s.getData());
+                    } else {
+                        ((IUnit) s.getData()).setMind(mind);
+                        ((IUnit) s.getData()).setMindId(mind.getId());
+//                    Right r = (Right) s.getData();
+//                    r.setMind(mind);
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -102,17 +122,6 @@ public class RightFactory implements Iterable<Right> {
             }
         }
         cache.setRoot(base.cache.getRoot());
-        if (cache.getRoot() != null) {
-            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-                    ((IUnit) s.getData()).setMind(mind);
-//                    Right r = (Right) s.getData();
-//                    r.setMind(mind);
-                } else {
-                    break;
-                }
-            }
-        }
 
 //        if (base.topStored != null) {
 //            if (stored.getRoot() == null) {
@@ -147,14 +156,14 @@ public class RightFactory implements Iterable<Right> {
         }
     }
 
-    public Right register(Right r) {
+    public synchronized Right register(Right r) {
         r.setId(mind.getUser().nextId(SCHEMA));
         r.setMindId(mind.getId());
         r.setVarIndex(mind.getTerms().getVarIndex());
         return r;
     }
 
-    public Right add(Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized Right add(Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right x = find(r);
         if (x != null) {
             delete(r);
@@ -419,9 +428,10 @@ public class RightFactory implements Iterable<Right> {
         return top == null || (r.bottom != null && top.getId() == r.bottom.getId());
     }
 
-    public List<Right> getResults() {
+    public List<Right> getResults() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         List<Right> list = new ArrayList<>();
         for (Object o : cache) {
+//            o = load(((IUnit) o).getId());
             if (((IUnit) o).getMind().getId() == mind.getId()) {
                 list.add((Right) o);
             }

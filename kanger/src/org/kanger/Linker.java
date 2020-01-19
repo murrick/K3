@@ -108,14 +108,14 @@ public class Linker {
             mind.getLog().add(LogMode.TIMING, String.format("* LINKER Skiped passes: %03d", skipedPasses));
         }
 
-        if (logging) {
-            if (mind.getUsedRights().containsKey(0L) && !mind.getUsedRights().get(0L).isEmpty()) {
-                mind.getLog().add(LogMode.ANALIZER, String.format("---------- LINKER USED RIGHTS -------------"));
-                for (Right r : mind.getUsedRights().get(0L)) {
-                    mind.getLog().add(LogMode.ANALIZER, r.toString());
-                }
-            }
-        }
+//        if (logging) {
+//            if (mind.getUsedRights().containsKey(0L) && !mind.getUsedRights().get(0L).isEmpty()) {
+//                mind.getLog().add(LogMode.ANALIZER, String.format("---------- LINKER USED RIGHTS -------------"));
+//                for (Right r : mind.getUsedRights().get(0L)) {
+//                    mind.getLog().add(LogMode.ANALIZER, r.toString());
+//                }
+//            }
+//        }
     }
 
     private boolean rotator(Collection<Right> rightList, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
