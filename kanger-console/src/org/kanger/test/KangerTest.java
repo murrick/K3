@@ -2444,6 +2444,7 @@ public class KangerTest {
 
 
         mind.query("?$x $y value(1, x, y);");
+
         showResult(true);
         if (mind.getSolutions().size() != COUNT * 3) {
             fail("Expected " + (COUNT * 3) + " solves");

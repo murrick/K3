@@ -220,6 +220,15 @@ public class Right implements IUnit<Right> {
     public Term getOrig() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (orig == null && origId != -1) {
             orig = mind.getTerms().load(origId);
+
+            //TODO: Кастыль
+            if (orig == null && isStored()) {
+                int save = mind.getDebugLevel();
+                mind.setDebugLevel(0);
+                orig = mind.getTerms().add(getDomain().toString());
+                mind.setDebugLevel(save);
+            }
+
         }
         return orig;
     }

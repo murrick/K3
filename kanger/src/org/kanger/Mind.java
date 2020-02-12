@@ -78,6 +78,7 @@ public class Mind {
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private volatile boolean blockCommit = false;
+    private final Object locker = new Object();
 
     public Mind(IUser user) throws IOException, OutOfBufferException {
         this.user = user;
@@ -149,53 +150,55 @@ public class Mind {
 
 
     public synchronized boolean commit(Mind m) throws Exception {
+        synchronized (locker) {
 
-        boolean result = true;
+            boolean result = true;
 
-        boolean sequencedBy = isSequencedBy(m);
-        if (!sequencedBy) {
-            functions.mark();
-            fValues.mark();
-            tVars.mark();
-            tValues.mark();
-            domains.mark();
-            rights.mark();
-        }
-
-        functions.commit(m.getFunctions());
-        fValues.commit(m.getFValues());
-        tVars.commit(m.getTVars());
-        tValues.commit(m.getTValues());
-        domains.commit(m.getDomains());
-        rights.commit(m.getRights());
-
-        if (!sequencedBy) {
-            Boolean res = analiser.checkDatabase(null, false);
-            if (res != null && res) {
-                functions.release();
-                fValues.release();
-                tVars.release();
-                tValues.release();
-                domains.release();
-                rights.release();
-                result = false;
-            } else {
-                functions.commit();
-                fValues.commit();
-                tVars.commit();
-                tValues.commit();
-                domains.commit();
-                rights.commit();
+            boolean sequencedBy = isSequencedBy(m);
+            if (!sequencedBy) {
+                functions.mark();
+                fValues.mark();
+                tVars.mark();
+                tValues.mark();
+                domains.mark();
+                rights.mark();
             }
+
+            functions.commit(m.getFunctions());
+            fValues.commit(m.getFValues());
+            tVars.commit(m.getTVars());
+            tValues.commit(m.getTValues());
+            domains.commit(m.getDomains());
+            rights.commit(m.getRights());
+
+            if (!sequencedBy) {
+                Boolean res = analiser.checkDatabase(null, false);
+                if (res != null && res) {
+                    functions.release();
+                    fValues.release();
+                    tVars.release();
+                    tValues.release();
+                    domains.release();
+                    rights.release();
+                    result = false;
+                } else {
+                    functions.commit();
+                    fValues.commit();
+                    tVars.commit();
+                    tValues.commit();
+                    domains.commit();
+                    rights.commit();
+                }
+            }
+
+            pack();
+            update();
+
+            log.commit(m.getLog());
+            queryResult = (Boolean) m.getQueryResult();
+
+            return result;
         }
-
-        pack();
-        update();
-
-        log.commit(m.getLog());
-        queryResult = (Boolean) m.getQueryResult();
-
-        return result;
     }
 
     public synchronized void update() throws IOException {
@@ -214,14 +217,15 @@ public class Mind {
     }
 
     public synchronized void release(Mind m) throws Exception {
+        synchronized (locker) {
 
-        log.commit(m.getLog());
+            log.commit(m.getLog());
 
-        solves.commit(m.getSolutions());
-        values.commit(m.getValues());
+            solves.commit(m.getSolutions());
+            values.commit(m.getValues());
 //        results.commit(m.getResults());
 
-        // Сброс индексов связи предикаторв
+            // Сброс индексов связи предикаторв
 //        terms.unlink();
 //        tVars.unlink();
 //        tValues.unlink();
@@ -232,71 +236,76 @@ public class Mind {
 //        functions.unlink();
 //        library.unlink();
 
-        queryResult = (Boolean) m.getQueryResult();
+            queryResult = (Boolean) m.getQueryResult();
+        }
 //        querySource = m.getQuerySource();
     }
 
     public synchronized void clear() throws IOException, OutOfBufferException {
-        terms.clear();
-        predicates.clear();
-        domains.clear();
-        tVars.clear();
-        tValues.clear();
-        rights.clear();
-        functions.clear();
-        fValues.clear();
-        library.clear();
+        synchronized (locker) {
 
-        update();
+            terms.clear();
+            predicates.clear();
+            domains.clear();
+            tVars.clear();
+            tValues.clear();
+            rights.clear();
+            functions.clear();
+            fValues.clear();
+            library.clear();
 
-        solves.clear();
-        values.clear();
+            update();
+
+            solves.clear();
+            values.clear();
 //        results.clear();
-        hypotesis.clear();
-        excluded.clear();
-
+            hypotesis.clear();
+            excluded.clear();
+        }
     }
 
     public synchronized void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        synchronized (locker) {
 
-        for (TValue v : tValues) {
-            Set<Cause> toDeleteC = new HashSet<>();
-            for (Cause c : v.getCauses()) {
-                if (c.getSrc(this).isDeleted() || c.getDst(this).isDeleted()) {
-                    toDeleteC.add(c);
+            for (TValue v : tValues) {
+                Set<Cause> toDeleteC = new HashSet<>();
+                for (Cause c : v.getCauses()) {
+                    if (c.getSrc(this).isDeleted() || c.getDst(this).isDeleted()) {
+                        toDeleteC.add(c);
+                    }
+                }
+                if (!toDeleteC.isEmpty()) {
+                    v.getCauses().removeAll(toDeleteC);
                 }
             }
-            if (!toDeleteC.isEmpty()) {
-                v.getCauses().removeAll(toDeleteC);
-            }
-        }
 
-        terms.pack();
-        predicates.pack();
+            terms.pack();
+            predicates.pack();
 //        tValues.pack();
-        tVars.pack();
-        domains.pack();
-        rights.pack();
-        fValues.pack();
-        functions.pack();
-        library.pack();
+            tVars.pack();
+            domains.pack();
+            rights.pack();
+            fValues.pack();
+            functions.pack();
+            library.pack();
 
-        for (TValue v : tValues) {
-            Set<Cause> toDeleteC = new HashSet<>();
-            for (Cause c : v.getCauses()) {
-                if (c.getSrc(this) == null || c.getDst(this) == null) {
-                    toDeleteC.add(c);
+            for (TValue v : tValues) {
+                Set<Cause> toDeleteC = new HashSet<>();
+                for (Cause c : v.getCauses()) {
+                    if (c.getSrc(this) == null || c.getDst(this) == null) {
+                        toDeleteC.add(c);
+                    }
+                }
+                if (!toDeleteC.isEmpty()) {
+                    v.getCauses().removeAll(toDeleteC);
+                }
+                if (v.getCauses().isEmpty()) {
+                    tValues.delete(v);
                 }
             }
-            if (!toDeleteC.isEmpty()) {
-                v.getCauses().removeAll(toDeleteC);
-            }
-            if (v.getCauses().isEmpty()) {
-                tValues.delete(v);
-            }
-        }
 
-        tValues.pack();
+            tValues.pack();
+        }
 //        tValues.update();
 
 //        update();
@@ -621,7 +630,7 @@ public class Mind {
         return query(line, null);
     }
 
-    public synchronized Boolean query(String line, Object[] ext) throws Exception {
+    public Boolean query(String line, Object[] ext) throws Exception {
         querySource = line;
         queryPass = QueryPass.SILENCE;
         queryContext = null;
@@ -805,7 +814,7 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
-    public synchronized Boolean query(String line, Object[] ext, boolean logging) throws Exception {
+    public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
 //        querySource = line;
 //        queryPass = QueryPass.SILENCE;
 //        queryContext = null;

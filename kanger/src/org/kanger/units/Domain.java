@@ -202,7 +202,8 @@ public class Domain implements IUnit<Domain> {
         }
     }
 
-    public void setCauses(Collection<Cause> causes) throws Exception {
+    public boolean setCauses(Collection<Cause> causes) throws Exception {
+        boolean result = false;
         if (causes != null) {
             ArgList current = arguments.convertBase(mind);
             if (!mind.getDomainCauses().containsKey(this)) {
@@ -214,15 +215,18 @@ public class Domain implements IUnit<Domain> {
                 mind.getDomainCauses().get(this).get(current).clear();
             }
             for (Cause c : causes) {
-
-                if (c.getArguments().equalsBase(mind, c.getSrc(mind).getArguments())
+                if (c.getSrc(mind).isComplete()
+                        && c.getArguments().equalsBase(mind, current)
+                        && c.getArguments().equalsBase(mind, c.getSrc(mind).getArguments())
                         && sourceExists(c) == null
                         && getOverlaps(c.getArguments()) > 0
                 ) {
                     mind.getDomainCauses().get(this).get(current).add(c);
+                    result = true;
                 }
             }
         }
+        return result;
     }
 
     public Set<TValue> getSolves() {

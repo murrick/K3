@@ -353,7 +353,6 @@ public class Linker {
                                         ++solvedPasses;
                                         mind.getTValues().commit();
                                         mind.getFValues().commit();
-
                                     } else {
                                         ++dumpedPasses;
                                     }
@@ -369,15 +368,12 @@ public class Linker {
                                     mind.getTValues().release();
                                     mind.getFValues().release();
                                 }
-
                             }
                         }
                     }
                 }
-
             }
         }
-
         return result;
     }
 
@@ -517,13 +513,12 @@ public class Linker {
 
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];
-//                d.setCauses(causes.get(d.getRight()));
                 occurs = true;
-                if (!d.isStored()) {
+                if (!d.isStored() && (d.setCauses(causes.get(d.getRight())) || !calculated.isEmpty() || !excluded.isEmpty())) {
                     result = true;
                     d.setProduced();
                     d.setTag(tag);
-                    d.setCauses(causes.get(d.getRight()));
+//                    d.setCauses(causes.get(d.getRight()));
                     d.setSolves(solve);
                     if (logging) {
                         mind.getLog().add(LogMode.STORAGE, "DB assumed record: " + d);
@@ -533,12 +528,11 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
-//                    d.setCauses(causes.get(d.getRight()));
-                    if (!d.isStored()) {
+                    if (!d.isStored() && d.setCauses(causes.get(d.getRight()))) {
                         result = true;
                         d.setProduced();
                         d.setTag(tag = mind.getTValues().incTag());
-                        d.setCauses(causes.get(d.getRight()));
+//                        d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
                             mind.getLog().add(LogMode.STORAGE, "DB assumed record (x): " + d);
@@ -581,11 +575,11 @@ public class Linker {
                 if (candidates.size() == 1 && !excluded.isEmpty()) {
                     Domain d = candidates.toArray(new Domain[]{})[0];
 //                    d.setCauses(causes.get(d.getRight()));
-                    if (!d.isStored()) {
+                    if (!d.isStored() && d.setCauses(causes.get(d.getRight()))) {
                         result = true;
                         d.setProduced();
                         d.setTag(tag);
-                        d.setCauses(causes.get(d.getRight()));
+//                        d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve);
                         if (logging) {
                             mind.getLog().add(LogMode.STORAGE, "DB assumed record (a): " + d);
