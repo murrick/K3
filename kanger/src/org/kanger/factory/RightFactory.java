@@ -240,7 +240,7 @@ public class RightFactory implements Iterable<Right> {
         return t;
     }
 
-    public Right get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Right get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right t = (Right) cache.get(id);
         return t;
     }
@@ -412,7 +412,7 @@ public class RightFactory implements Iterable<Right> {
             cache.delete(((IUnit) o).getId());
 //            stored.delete(((IUnit) o).getId());
         }
-        update();
+//        update();
 
 //        if (!cache.isEmpty()) {
 //            lastId = cache.getRoot().getId() + 1;
@@ -431,7 +431,8 @@ public class RightFactory implements Iterable<Right> {
     public List<Right> getResults() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         List<Right> list = new ArrayList<>();
         for (Object o : cache) {
-//            o = load(((IUnit) o).getId());
+            //TODO: ----
+            o = load(((IUnit) o).getId());
             if (((IUnit) o).getMind().getId() == mind.getId()) {
                 list.add((Right) o);
             }

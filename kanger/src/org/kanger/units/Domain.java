@@ -929,7 +929,9 @@ public class Domain implements IUnit<Domain> {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
+        //TODO: ---
+        hash = 47 * hash + arguments.getHash(mind);
+//        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
     }
 
@@ -967,7 +969,11 @@ public class Domain implements IUnit<Domain> {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        return hash;
+
+//        return ("" + id).hashCode();
     }
 
 

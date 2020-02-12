@@ -211,7 +211,10 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        return hash;
+//        return ("" + id).hashCode();
     }
 
     @Override

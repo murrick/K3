@@ -74,7 +74,7 @@ public class ArgList extends ArrayList<Argument> {
 //
 //    }
 
-    public int hashCode() {
+    public int getHash(Mind mind) {
         int hashCode = 1;
         try {
             for (Argument a : this) {
@@ -88,6 +88,10 @@ public class ArgList extends ArrayList<Argument> {
             e.printStackTrace(System.err);
         }
         return hashCode;
+    }
+
+    public int hashCode() {
+        return getHash(mind);
     }
 
     public boolean equals(Object o) {

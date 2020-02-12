@@ -30,6 +30,7 @@ import java.util.*;
 public class Mind {
 
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
+
     private final Map<Long, Set<Right>> usedRights = new HashMap<>();
     private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
@@ -149,15 +150,10 @@ public class Mind {
 
     public synchronized boolean commit(Mind m) throws Exception {
 
-//        System.err.println("Commit + " + id + " <- " + m.getId());
-//        m.pack();
         boolean result = true;
 
         boolean sequencedBy = isSequencedBy(m);
         if (!sequencedBy) {
-            //TODO: Сделать mark() для всех factory
-
-//            System.err.println("------------");
             functions.mark();
             fValues.mark();
             tVars.mark();
@@ -165,12 +161,6 @@ public class Mind {
             domains.mark();
             rights.mark();
         }
-//        rights.commit(m.getRights());
-
-//        if (isSequencedBy(m)) {
-//            terms.commit(m.getTerms());
-//            predicates.commit(m.getPredicates());
-//            library.commit(m.getLibrary());
 
         functions.commit(m.getFunctions());
         fValues.commit(m.getFValues());
@@ -178,15 +168,10 @@ public class Mind {
         tValues.commit(m.getTValues());
         domains.commit(m.getDomains());
         rights.commit(m.getRights());
-//        } else {
-//            rights.commit(m.getRights());
-//            pack();
-//        }
 
         if (!sequencedBy) {
             Boolean res = analiser.checkDatabase(null, false);
             if (res != null && res) {
-                //TODO: Сделать release() для всех Factory
                 functions.release();
                 fValues.release();
                 tVars.release();
@@ -195,7 +180,6 @@ public class Mind {
                 rights.release();
                 result = false;
             } else {
-                //TODO: Сделать commit() для всех Factory
                 functions.commit();
                 fValues.commit();
                 tVars.commit();
@@ -204,23 +188,6 @@ public class Mind {
                 rights.commit();
             }
         }
-//
-//        rights.commit(m.getRights());
-
-//        log.commit(m.getLog());
-//        solves.commit(m.getSolutions());
-//        values.commit(m.getValues());
-
-//        for (Object o : vars.values()) {
-//            int i = terms.nextVarIndex();
-//            if (o instanceof Term) {
-//                String temp = String.format("%c%d", Enums.CVC, i);
-//                ((Term) o).setIndex(i);
-//                ((Term) o).setValue(temp);
-//            } else {
-//                ((TVariable) o).setIndex(i);
-//            }
-//        }
 
         pack();
         update();
@@ -228,13 +195,11 @@ public class Mind {
         log.commit(m.getLog());
         queryResult = (Boolean) m.getQueryResult();
 
-//        System.err.println("Commit - " + id + " <- " + m.getId());
         return result;
     }
 
-    public void update() throws IOException {
+    public synchronized void update() throws IOException {
 
-//        if (next == null && !user.isClosed()) {
         terms.update();
         tVars.update();
         tValues.update();
@@ -245,12 +210,10 @@ public class Mind {
         functions.update();
         library.update();
 
-        if (next == null && !user.isClosed()) {
-            user.flush();
-        }
+        user.flush();
     }
 
-    public void release(Mind m) throws Exception {
+    public synchronized void release(Mind m) throws Exception {
 
         log.commit(m.getLog());
 
@@ -273,7 +236,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public void clear() throws IOException, OutOfBufferException {
+    public synchronized void clear() throws IOException, OutOfBufferException {
         terms.clear();
         predicates.clear();
         domains.clear();
@@ -294,7 +257,7 @@ public class Mind {
 
     }
 
-    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 
         for (TValue v : tValues) {
             Set<Cause> toDeleteC = new HashSet<>();
@@ -1538,9 +1501,9 @@ public class Mind {
         return rights.isSequencedBy(m.rights);
     }
 
-    public List<Right> getResults() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        return rights.getResults();
-    }
+//    public List<Right> getResults() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        return rights.getResults();
+//    }
 }
 
 

@@ -183,21 +183,34 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean update() throws IOException {
+    public synchronized boolean update() throws IOException {
         // Это самый низ
         if (parent == null && !mind.getUser().isClosed()) {
-            long lastId = mind.getUser().getStorage(schema).isEmpty() ? -1 : mind.getUser().getStorage(schema).getRoot().getId();
+
             List<IStep> list = new ArrayList<>();
             for (IStep s = root; s != null; s = s.getNext()) {
-                if (s.getId() < lastId) {
-                    break;
+                if (s instanceof Step /*!mind.getUser().getStorage(schema).containsKey(s.getId())*/) {
+                    list.add(s);
                 }
-                list.add(s);
             }
-            for (IStep p : list) {
-                Sapato s = new Sapato(mind.getUser().getStorage(schema), p);
-                s.append();
+            for (IStep s : list) {
+                Sapato p = new Sapato(mind.getUser().getStorage(schema), s);
+                p.append();
             }
+
+
+//            long lastId = mind.getUser().getStorage(schema).isEmpty() ? -1 : mind.getUser().getStorage(schema).getRoot().getId();
+//            List<IStep> list = new ArrayList<>();
+//            for (IStep s = root; s != null; s = s.getNext()) {
+//                if (s.getId() < lastId) {
+//                    break;
+//                }
+//                list.add(s);
+//            }
+//            for (IStep p : list) {
+//                Sapato s = new Sapato(mind.getUser().getStorage(schema), p);
+//                s.append();
+//            }
 
             root = mind.getUser().getStorage(schema).getRoot();
             stack.clear();

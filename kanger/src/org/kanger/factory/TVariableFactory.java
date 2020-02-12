@@ -106,7 +106,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         return t;
     }
 
-    public TVariable get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private TVariable get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TVariable t = (TVariable) cache.get(id);
         return t;
     }
@@ -122,7 +122,7 @@ public class TVariableFactory implements Iterable<TVariable> {
             cache.delete(((IUnit) o).getId());
             mind.getTValues().getCurrent().remove(o);
         }
-        update();
+//        update();
 
 //        if (!cache.isEmpty()) {
 //            lastId = cache.getRoot().getId() + 1;

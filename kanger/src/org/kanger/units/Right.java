@@ -260,7 +260,7 @@ public class Right implements IUnit<Right> {
                     (isQuery() ? "Q" : "")
                     : "")
                     ;
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException | NullPointerException e) {
             e.printStackTrace(System.err);
             return "";
         }
@@ -374,7 +374,10 @@ public class Right implements IUnit<Right> {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        return hash;
+//        return ("" + id).hashCode();
     }
 
     @Override

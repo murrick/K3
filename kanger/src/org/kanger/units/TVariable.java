@@ -229,7 +229,10 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        return hash;
+//        return ("" + id).hashCode();
     }
 
     @Override

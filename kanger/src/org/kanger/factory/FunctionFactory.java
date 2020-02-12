@@ -113,7 +113,7 @@ public class FunctionFactory implements Iterable<Function> {
         return t;
     }
 
-    public Function get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Function get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Function t = (Function) cache.get(id);
         return t;
     }
@@ -163,7 +163,7 @@ public class FunctionFactory implements Iterable<Function> {
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
         }
-        update();
+//        update();
 
 //        if (!cache.isEmpty()) {
 //            lastId = cache.getRoot().getId() + 1;

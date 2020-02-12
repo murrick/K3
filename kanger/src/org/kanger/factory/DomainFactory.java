@@ -154,7 +154,7 @@ public class DomainFactory implements Iterable<Domain> {
         return t;
     }
 
-    public Domain get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Domain get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain t = (Domain) cache.get(id);
         return t;
     }
@@ -170,7 +170,7 @@ public class DomainFactory implements Iterable<Domain> {
             waiters.remove(o);
             cache.delete(((IUnit) o).getId());
         }
-        update();
+//        update();
 
 //        if (!cache.isEmpty()) {
 //            lastId = cache.getRoot().getId() + 1;

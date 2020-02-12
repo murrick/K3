@@ -127,7 +127,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         return t;
     }
 
-    public SysOp get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private SysOp get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         SysOp t = (SysOp) cache.get(id);
         return t;
     }
@@ -146,7 +146,7 @@ public class LibraryFactory implements Iterable<SysOp> {
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
         }
-        update();
+//        update();
 
 //        if (!cache.isEmpty()) {
 //            lastId = cache.getRoot().getId() + 1;

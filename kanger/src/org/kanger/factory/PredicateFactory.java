@@ -119,7 +119,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         return t;
     }
 
-    public Predicate get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Predicate get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Predicate t = (Predicate) cache.get(id);
         return t;
     }
@@ -147,6 +147,6 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public void pack() throws IOException {
-        update();
+//        update();
     }
 }

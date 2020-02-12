@@ -58,7 +58,7 @@ public class DB implements IData {
     }
 
     @Override
-    public void flush() throws IOException {
+    public synchronized void flush() throws IOException {
         if (!isClosed()) {
             db.checkpoint();
         }

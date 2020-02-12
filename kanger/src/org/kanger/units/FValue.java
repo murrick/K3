@@ -251,7 +251,11 @@ public class FValue implements IUnit<FValue> {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        return hash;
+
+//        return ("" + id).hashCode();
     }
 
     @Override
@@ -322,7 +326,7 @@ public class FValue implements IUnit<FValue> {
         }
         List<Long> temp = new ArrayList<>();
         for (long id : stamp) {
-            Term x = mind.getTerms().get(id);
+            Term x = mind.getTerms().load(id);
             if (x != null) {
                 temp.add(m.getTerms().add(x).getId());
             } else {

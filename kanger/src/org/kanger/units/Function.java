@@ -370,7 +370,10 @@ public class Function implements IUnit<Function> {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        return hash;
+//        return ("" + id).hashCode();
     }
 
     public int getHashStruct(Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {

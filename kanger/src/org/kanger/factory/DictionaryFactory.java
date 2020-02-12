@@ -164,7 +164,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    public Term get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Term get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Term t = (Term) cache.get(id);
         return t;
     }
@@ -237,6 +237,6 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
     public void pack() throws IOException {
-        update();
+//        update();
     }
 }

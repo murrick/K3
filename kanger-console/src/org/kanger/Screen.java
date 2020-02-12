@@ -201,7 +201,7 @@ public class Screen {
                             if (line.split(" ").length == 2) {
                                 try {
                                     long id = Long.parseLong(line.split(" ")[1]);
-                                    Right r = mind.getRights().get(id);
+                                    Right r = mind.getRights().load(id);
                                     if (r != null) {
                                         if (r.isGenerated()) {
                                             System.out.printf("Right %03d: %s is production and can't be erased.\n", id, r);

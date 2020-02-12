@@ -122,7 +122,7 @@ public class FValueFactory implements Iterable<FValue> {
         return t;
     }
 
-    public FValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private FValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         FValue t = (FValue) cache.get(id);
         return t;
     }
@@ -173,7 +173,7 @@ public class FValueFactory implements Iterable<FValue> {
             cache.delete(((IUnit) o).getId());
         }
 
-        update();
+//        update();
 
 //        if (!cache.isEmpty()) {
 //            lastId = cache.getRoot().getId() + 1;

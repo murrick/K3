@@ -248,7 +248,10 @@ public class Predicate implements IUnit<Predicate> {
 
     @Override
     public int hashCode() {
-        return ("" + id).hashCode();
+        int hash = 3;
+        hash = 47 * hash + (int) (id ^ (id >>> 32));
+        return hash;
+//        return ("" + id).hashCode();
     }
 
     public long getNameId() {

@@ -126,6 +126,9 @@ public class Analiser {
                 if (p.getDomain().equalsBase(q.getDomain())
                         && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
+                    if (q.getMind() == null) {
+                        q.setMind(mind);
+                    }
                     if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(mind, true).isEmpty()) {
                         mind.getSolutions().add(q);
                         mind.getValues().add(p.getSolves());

@@ -141,7 +141,7 @@ public class TValueFactory implements Iterable<TValue> {
         return t;
     }
 
-    public TValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private TValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TValue t = (TValue) cache.get(id);
         return t;
     }
@@ -159,7 +159,7 @@ public class TValueFactory implements Iterable<TValue> {
                 current.remove(((TValue) o).getTVar());
             }
         }
-        update();
+//        update();
 
 //        if (!cache.isEmpty()) {
 //            lastId = cache.getRoot().getId() + 1;
