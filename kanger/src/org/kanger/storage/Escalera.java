@@ -28,7 +28,9 @@ public class Escalera implements ICache {
             root = this.parent.getRoot();
         } else {
             if (!mind.getUser().isClosed()) {
-                root = mind.getUser().getStorage(schema).getRoot();
+                synchronized (mind.getUser().getStorage(schema)) {
+                    root = mind.getUser().getStorage(schema).getRoot();
+                }
             }
         }
     }
@@ -86,7 +88,9 @@ public class Escalera implements ICache {
             }
         }
         if (!mind.getUser().isClosed()) {
-            mind.getUser().getStorage(schema).delete(id);
+            synchronized (mind.getUser().getStorage(schema)) {
+                mind.getUser().getStorage(schema).delete(id);
+            }
         }
     }
 
@@ -124,7 +128,9 @@ public class Escalera implements ICache {
         root = null;
         if (parent == null) {
             if (!mind.getUser().isClosed()) {
-                mind.getUser().getStorage(schema).clear();
+                synchronized (mind.getUser().getStorage(schema)) {
+                    mind.getUser().getStorage(schema).clear();
+                }
             } else {
                 mind.getUser().clearCounters(schema);
             }
@@ -183,20 +189,21 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public synchronized boolean update() throws IOException {
+    public boolean update() throws IOException {
         // Это самый низ
         if (parent == null && !mind.getUser().isClosed()) {
+            synchronized (mind.getUser().getStorage(schema)) {
 
-            List<IStep> list = new ArrayList<>();
-            for (IStep s = root; s != null; s = s.getNext()) {
-                if (s instanceof Step /*!mind.getUser().getStorage(schema).containsKey(s.getId())*/) {
-                    list.add(s);
+                List<IStep> list = new ArrayList<>();
+                for (IStep s = root; s != null; s = s.getNext()) {
+                    if (s instanceof Step /*!mind.getUser().getStorage(schema).containsKey(s.getId())*/) {
+                        list.add(s);
+                    }
                 }
-            }
-            for (IStep s : list) {
-                Sapato p = new Sapato(mind.getUser().getStorage(schema), s);
-                p.append();
-            }
+                for (IStep s : list) {
+                    Sapato p = new Sapato(mind.getUser().getStorage(schema), s);
+                    p.append();
+                }
 
 
 //            long lastId = mind.getUser().getStorage(schema).isEmpty() ? -1 : mind.getUser().getStorage(schema).getRoot().getId();
@@ -212,10 +219,11 @@ public class Escalera implements ICache {
 //                s.append();
 //            }
 
-            root = mind.getUser().getStorage(schema).getRoot();
-            stack.clear();
+                root = mind.getUser().getStorage(schema).getRoot();
+                stack.clear();
 
-            return true;
+                return true;
+            }
         } else {
             return false;
         }

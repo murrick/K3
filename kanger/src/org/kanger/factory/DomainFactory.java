@@ -68,7 +68,7 @@ public class DomainFactory implements Iterable<Domain> {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
                     ((IUnit) s.getData()).setMind(mind);
-//                    System.err.println(s.getData());
+                    ((IUnit) s.getData()).setMindId(mind.getId());
                 } else {
                     break;
                 }
@@ -117,7 +117,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
-    public Domain add(Domain p) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public synchronized Domain add(Domain p) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         cache.add(p);
         if (top == null) {
             top = cache.getRoot();

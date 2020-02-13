@@ -2309,7 +2309,7 @@ public class KangerTest {
         mind.clear();
         mind = new Mind(mind.getUser());
 
-        final int COUNT = 13;
+        final int COUNT = 37;
 
 //        Screen.session(mind.getUser());
 
@@ -2330,7 +2330,7 @@ public class KangerTest {
                 try {
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
-//                        Thread.sleep(10);
+//                        Thread.sleep(7);
                     }
                     System.out.println("PROCESS 1 STRT: " + a.getRights().size() + "/" + mind.getRights().size());
                     mind.commit(a);
@@ -2355,7 +2355,7 @@ public class KangerTest {
                     }
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
-//                        Thread.sleep(10);
+//                        Thread.sleep(3);
                     }
                     b.query("!~value(1, " + 2 + ", " + (1000 + 2) + ");");
 //                    Thread.sleep(10);
@@ -2379,7 +2379,7 @@ public class KangerTest {
                     }
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
-//                        Thread.sleep(10);
+//                        Thread.sleep(9);
                     }
                     c.query("!value(1, " + 3 + ", " + (1000 + 3) + ");");
                     System.out.println("PROCESS 3 STRT: " + c.getRights().size() + "/" + mind.getRights().size());
@@ -2402,7 +2402,7 @@ public class KangerTest {
                     }
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = d.query("!value(1, " + i + ", " + (4000 + i) + ");");
-//                        Thread.sleep(10);
+//                        Thread.sleep(2);
                     }
                     System.out.println("PROCESS 4 STRT: " + d.getRights().size() + "/" + mind.getRights().size());
                     mind.commit(d);

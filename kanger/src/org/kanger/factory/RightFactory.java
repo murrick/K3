@@ -11,9 +11,7 @@ import org.kanger.storage.Escalera;
 import org.kanger.units.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
@@ -93,8 +91,9 @@ public class RightFactory implements Iterable<Right> {
 //    }
 
     //TODO: Проверять дублирующиеся правила!
-    public void commit(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Set<Long> commit(RightFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
 
+        Set<Long> list = new HashSet<>();
         if (base.cache.getRoot() != null) {
             for (IStep s = base.cache.getRoot(); s != null; s = s.getNext()) {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
@@ -105,6 +104,7 @@ public class RightFactory implements Iterable<Right> {
                     } else {
                         ((IUnit) s.getData()).setMind(mind);
                         ((IUnit) s.getData()).setMindId(mind.getId());
+                        list.add(s.getId());
 //                    Right r = (Right) s.getData();
 //                    r.setMind(mind);
                     }
@@ -147,7 +147,7 @@ public class RightFactory implements Iterable<Right> {
 //        }
 
         action = base.isAction();
-
+        return list;
     }
 
     public void update() throws IOException {

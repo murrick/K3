@@ -68,6 +68,7 @@ public class LibraryFactory implements Iterable<SysOp> {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
                     ((IUnit) s.getData()).setMind(mind);
+                    ((IUnit) s.getData()).setMindId(mind.getId());
                 } else {
                     break;
                 }
@@ -81,18 +82,17 @@ public class LibraryFactory implements Iterable<SysOp> {
         }
     }
 
-    public SysOp add(SysOp s) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        synchronized (mind.getUser()) {
-            SysOp x = find(s.toString());
-            if (x != null) {
-                x.setMode(s.getMode());
-                x.setProc(s.getProc());
-                x.getScripts().clear();
-                x.getScripts().addAll(s.getScripts());
-                x.getParams().clear();
-                x.getParams().addAll(s.getParams());
+    public synchronized SysOp add(SysOp s) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        SysOp x = find(s.toString());
+        if (x != null) {
+            x.setMode(s.getMode());
+            x.setProc(s.getProc());
+            x.getScripts().clear();
+            x.getScripts().addAll(s.getScripts());
+            x.getParams().clear();
+            x.getParams().addAll(s.getParams());
 //            update();
-            } else {
+        } else {
                 s.setId(mind.getUser().nextId(SCHEMA));
                 s.setMindId(mind.getId());
                 cache.add(s);
@@ -102,7 +102,6 @@ public class LibraryFactory implements Iterable<SysOp> {
                 x = s;
             }
             return x;
-        }
     }
 
     public SysOp find(String title) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {

@@ -42,7 +42,7 @@ public class Analiser {
         mind.getSolutions().clear();
         mind.getValues().clear();
 
-        result = checkDatabase(right, logging);
+        result = checkDatabase(null /*right*/, logging);
 
         if (!result) {
 
@@ -82,7 +82,7 @@ public class Analiser {
     }
 
 
-    private boolean checkRight(Right p, Set<Right> orfans, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private boolean checkRight(Right p, Set<Right> orfans, Set<Long> list, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         boolean result = false;
         if (p.getDomain().isCalculated()) {
 
@@ -114,7 +114,7 @@ public class Analiser {
 
 //            boolean trigger = false;
             for (Right q : mind.getRights()) {
-                if (q.isDeleted() || !q.isStored() || q.getId() > p.getId()) {
+                if (q.isDeleted() || !q.isStored() || (list == null && q.getId() > p.getId()) || (list != null && list.contains(q.getId()))) {
                     continue;
                 }
 
@@ -155,7 +155,7 @@ public class Analiser {
         return result;
     }
 
-    public boolean checkDatabase(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean checkDatabase(Set<Long> list, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 
         boolean result = false;
         boolean calculated = false;
@@ -163,7 +163,7 @@ public class Analiser {
         Set<Right> orfans = new HashSet<>();
 
         for (Right p : mind.getRights()) {
-            if (!p.isDeleted() && p.isStored() && checkRight(p, orfans, logging)) {
+            if (!p.isDeleted() && p.isStored() && (list == null || list.contains(p.getId())) && checkRight(p, orfans, list, logging)) {
                 if (p.getDomain().isCalculated()) {
                     calculated = true;
                 }

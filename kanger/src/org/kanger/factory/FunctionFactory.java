@@ -64,6 +64,7 @@ public class FunctionFactory implements Iterable<Function> {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
                     ((IUnit) s.getData()).setMind(mind);
+                    ((IUnit) s.getData()).setMindId(mind.getId());
                 } else {
                     break;
                 }

@@ -66,6 +66,7 @@ public class TVariableFactory implements Iterable<TVariable> {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
                     ((IUnit) s.getData()).setMind(mind);
+                    ((IUnit) s.getData()).setMindId(mind.getId());
                 } else {
                     break;
                 }
@@ -79,7 +80,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
     }
 
-    public TVariable createTVar(Right r, Term name) throws Exception {
+    public synchronized TVariable createTVar(Right r, Term name) throws Exception {
         TVariable p = new TVariable(mind);
         p.setId(mind.getUser().nextId(SCHEMA));
         r.setMindId(mind.getId());
@@ -93,7 +94,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         return p;
     }
 
-    public synchronized TVariable load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TVariable load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         TVariable t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);

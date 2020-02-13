@@ -82,6 +82,7 @@ public class DictionaryFactory implements Iterable<Term> {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
                     ((IUnit) s.getData()).setMind(mind);
+                    ((IUnit) s.getData()).setMindId(mind.getId());
                 } else {
                     break;
                 }
@@ -102,18 +103,17 @@ public class DictionaryFactory implements Iterable<Term> {
         }
     }
 
-    public Term add(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        synchronized (mind.getUser()) {
-            Term p = find(o);
-            if (p != null) {
-                return p;
+    public synchronized Term add(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        Term p = find(o);
+        if (p != null) {
+            return p;
+        } else {
+            if (p instanceof Term) {
+                p.setMind(mind);
             } else {
-                if (p instanceof Term) {
-                    p.setMind(mind);
-                } else {
-                    p = new Term(o, mind);
-                    p.setId(mind.getUser().nextId(SCHEMA));
-                    p.setMindId(mind.getId());
+                p = new Term(o, mind);
+                p.setId(mind.getUser().nextId(SCHEMA));
+                p.setMindId(mind.getId());
                 }
                 cache.add(p);
                 if (top == null) {
@@ -121,7 +121,6 @@ public class DictionaryFactory implements Iterable<Term> {
                 }
                 return p;
             }
-        }
     }
 
 

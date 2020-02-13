@@ -169,10 +169,11 @@ public class Mind {
             tVars.commit(m.getTVars());
             tValues.commit(m.getTValues());
             domains.commit(m.getDomains());
-            rights.commit(m.getRights());
+
+            Set<Long> list = rights.commit(m.getRights());
 
             if (!sequencedBy) {
-                Boolean res = analiser.checkDatabase(null, false);
+                Boolean res = analiser.checkDatabase(list, false);
                 if (res != null && res) {
                     functions.release();
                     fValues.release();
@@ -201,17 +202,18 @@ public class Mind {
         }
     }
 
-    public synchronized void update() throws IOException {
+    public void update() throws IOException {
 
         terms.update();
+        predicates.update();
+        library.update();
+
+        functions.update();
+        fValues.update();
         tVars.update();
         tValues.update();
-        fValues.update();
-        predicates.update();
         domains.update();
         rights.update();
-        functions.update();
-        library.update();
 
         user.flush();
     }
