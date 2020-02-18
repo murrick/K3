@@ -97,7 +97,7 @@ public class DictionaryFactory implements Iterable<Term> {
 //        cache.unlink();
 //    }
 
-    public void update() throws IOException {
+    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (cache.update()) {
 //            firstId = user.lastId(SCHEMA);
         }

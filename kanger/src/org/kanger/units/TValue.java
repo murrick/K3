@@ -6,12 +6,10 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
-import org.kanger.primitives.Cause;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 13.12.16.
@@ -25,7 +23,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     private Term value = null;
     private TVariable tVar = null;
     private long tag = 0;
-    private Set<Cause> causes = new HashSet<>();
+//    private Set<Cause> causes = new HashSet<>();
 
     //    private TValue next = null;          // Следующая переменная
     private transient long valueId = -1;
@@ -63,11 +61,11 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
                 .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(valueId)
-                .putLong(tVarId)
-                .putInt(causes.size());
-        for (Cause c : causes) {
-            packet.append(c.pack());
-        }
+                .putLong(tVarId);
+//                .putInt(causes.size());
+//        for (Cause c : causes) {
+//            packet.append(c.pack());
+//        }
         return packet.createMarked();
     }
 
@@ -77,17 +75,17 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         deleted = packet.getByte() != 0;
         valueId = packet.getLong();
         tVarId = packet.getLong();
-        int count = packet.getInt();
-        while (count-- > 0) {
-            try {
-                packet.mark();
-                Cause c = new Cause().apply(packet);
-//                c.setUser(user);
-                causes.add(c);
-            } finally {
-                packet.release();
-            }
-        }
+//        int count = packet.getInt();
+//        while (count-- > 0) {
+//            try {
+//                packet.mark();
+//                Cause c = new Cause().apply(packet);
+////                c.setUser(user);
+//                causes.add(c);
+//            } finally {
+//                packet.release();
+//            }
+//        }
         return this;
     }
 
@@ -103,9 +101,9 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         valueId = value.getId();
     }
 
-    public Set<Cause> getCauses() {
-        return causes;
-    }
+//    public Set<Cause> getCauses() {
+//        return causes;
+//    }
 
 
     @Override
@@ -258,12 +256,12 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.mindId = mindId;
     }
 
-    public TValue commit(Mind m) throws Exception {
-        setMind(m);
-        setValue(value.commit(m));
-        for (Cause c : causes) {
-            c.commit(mind, m);
-        }
-        return this;
-    }
+//    public TValue commit(Mind m) throws Exception {
+//        setMind(m);
+//        setValue(value.commit(m));
+////        for (Cause c : causes) {
+////            c.commit(mind, m);
+////        }
+//        return this;
+//    }
 }

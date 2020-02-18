@@ -318,25 +318,25 @@ public class FValue implements IUnit<FValue> {
         return UnitType.FVALUE;
     }
 
-    @Override
-    public FValue commit(Mind m) throws Exception {
-        setValue(value.commit(m));
-        for (Argument a : condition) {
-            a.setO((IUnit) a.getO(mind).commit(m));
-        }
-        List<Long> temp = new ArrayList<>();
-        for (long id : stamp) {
-            Term x = mind.getTerms().load(id);
-            if (x != null) {
-                temp.add(m.getTerms().add(x).getId());
-            } else {
-                temp.add(0L);
-            }
-        }
-        stamp = temp;
-        setMind(m);
-        return this;
-    }
+//    @Override
+//    public FValue commit(Mind m) throws Exception {
+//        setValue(value.commit(m));
+//        for (Argument a : condition) {
+//            a.setO((IUnit) a.getO(mind).commit(m));
+//        }
+//        List<Long> temp = new ArrayList<>();
+//        for (long id : stamp) {
+//            Term x = mind.getTerms().load(id);
+//            if (x != null) {
+//                temp.add(m.getTerms().add(x).getId());
+//            } else {
+//                temp.add(0L);
+//            }
+//        }
+//        stamp = temp;
+//        setMind(m);
+//        return this;
+//    }
 
     @Override
     public long getMindId() {

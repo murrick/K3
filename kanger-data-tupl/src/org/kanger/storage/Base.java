@@ -87,7 +87,7 @@ public class Base implements IBase {
 //    }
 
     @Override
-    public void add(Sapato one) throws IOException {
+    public void add(IStep one) throws IOException {
         index.store(null, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
 
 //        int h = one.getHash();
@@ -100,7 +100,7 @@ public class Base implements IBase {
     }
 
     @Override
-    public void update(Sapato one) throws IOException {
+    public void update(IStep one) throws IOException {
         index.store(null, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
     }
 
@@ -118,8 +118,8 @@ public class Base implements IBase {
                 ByteBuffer packet = new ByteBuffer(o);
                 try {
                     packet.mark();
-                    step = new Sapato();
-                    step.setBase(this);
+                    step = new Sapato(this);
+//                    step.setBase(this);
                     step.apply(packet);
                 } finally {
                     packet.release();

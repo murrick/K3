@@ -122,6 +122,8 @@ public class Linker {
 
         boolean used = false;
 
+        mind.getRightSolves().clear();
+
         for (Right r : rightList) {
 
             mind.getProducedDomains().clear();
@@ -137,9 +139,27 @@ public class Linker {
 
             boolean wasUsed = r.isUsed();
 
+            if (!r.getTSolves().isEmpty()) {
+                System.err.println("========================================");
+                for (TSolve s : r.getTSolves()) {
+                    System.err.println("---- " + s.getSolve().get(0).getTVar().getRight() + " : " + s);
+                }
+            }
+
+
             for (List<Domain> tree : r.getTree()) {
 
                 final List<Domain> t = tree;
+
+//                System.err.println("========================================");
+//                mind.getTSolves().forEach(new IReactor() {
+//                    @Override
+//                    public Object run(Object o) throws Exception {
+//                        ((TSolve) o).getSolve().get(0).getTVar().getRight();
+//                        System.err.println("---- " + ((TSolve) o).getSolve().get(0).getTVar().getRight() + " : " + o);
+//                        return null;
+//                    }
+//                });
 
                 rotateVariables(tvars, logging, new IReactor() {
                     @Override
@@ -380,37 +400,55 @@ public class Linker {
     private boolean markExcluded(Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right r = null;
         boolean occurrs = false;
+        List<TValue> list = new ArrayList<>();
         for (int i = 0; i < slave.getRange(); ++i) {
             if (subst[i] != null) {
-                List<TValue> list = new ArrayList<>();
                 if (subst[i] instanceof Collection) {
                     list.addAll((Collection<TValue>) subst[i]);
                 } else {
                     list.add((TValue) subst[i]);
                 }
-                for (TValue v : list) {
-                    boolean caused = false;
-                    Cause s = new Cause(mind, i, master, slave);
-                    if (!v.getCauses().contains(s)) {
-                        v.getCauses().add(s);
-                        caused = true;
-                    }
-                    if (caused || !master.isExcluded(slave.getArguments())) {
-                        r = v.getTVar().getRight();
-                        if (caused) {
-                            if (!causes.containsKey(r)) {
-                                causes.put(r, new HashSet<>());
-                            }
-                            causes.get(r).add(s);
-                            if (logging) {
-                                mind.getLog().add(LogMode.ANALIZER, "Closed: " + v);
-                            }
-                            occurrs = true;
-                        }
-                    }
+            }
+        }
+
+        // Отсечение конфликтных подстановок
+        for (int i = 0; i < list.size(); ++i) {
+            for (int j = 0; j < list.size(); ++j) {
+                if (list.get(i).getTVar().getId() == list.get(j).getTVar().getId() && list.get(i).getValue().getId() != list.get(j).getValue().getId()) {
+                    return false;
                 }
             }
         }
+
+        if (!list.isEmpty()) {
+//            boolean caused = false;
+            TSolve t = master.getRight().findTSolve(list);
+            Cause s = new Cause(mind, master, slave);
+//            if (!t.getCauses().contains(s)) {
+//                t.getCauses().add(s);
+//                caused = true;
+//            }
+
+            if (t == null || !t.getCauses().contains(s) || !master.isExcluded(slave.getArguments())) {
+                r = master.getRight();
+                if (t == null) {
+                    t = master.getRight().addTSolve(list);
+                }
+                if (!t.getCauses().contains(s)) {
+                    t.getCauses().add(s);
+                    if (!causes.containsKey(r)) {
+                        causes.put(r, new HashSet<>());
+                    }
+                    causes.get(r).add(s);
+                    if (logging) {
+                        mind.getLog().add(LogMode.ANALIZER, "Closed: " + t);
+                    }
+                    occurrs = true;
+                }
+            }
+        }
+//            }
+//        }
         if (r != null) {
             master.setExcluded(slave.getArguments());
             if (occurrs && logging) {

@@ -15,7 +15,7 @@ public interface ICache extends Iterable {
 
     Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    void delete(long id) throws IOException, ClassNotFoundException;
+    void delete(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     int size();
 
@@ -42,6 +42,6 @@ public interface ICache extends Iterable {
     @Override
     Iterator<Object> iterator();
 
-    boolean update() throws IOException;
+    boolean update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
 }

@@ -40,6 +40,7 @@ public class Right implements IUnit<Right> {
 
     private transient long origId = -1;
     private transient List<List<Long>> treeIds = new ArrayList<>();
+
     //    private transient IUser user = null;
     private transient Mind mind = null;
 
@@ -410,6 +411,39 @@ public class Right implements IUnit<Right> {
         this.deleted = true;
     }
 
+    public TSolve addTSolve(List<TValue> list) {
+        TSolve tmp = findTSolve(list);
+        if (tmp != null) {
+            return tmp;
+        } else {
+            if (!mind.getRightSolves().containsKey(this)) {
+                mind.getRightSolves().put(this, new ArrayList<>());
+            }
+            tmp = new TSolve(list, mind);
+            mind.getRightSolves().get(this).add(tmp);
+            return tmp;
+        }
+    }
+
+    public TSolve findTSolve(List<TValue> list) {
+        TSolve tmp = new TSolve(list, mind);
+        if (mind.getRightSolves().containsKey(this)) {
+            for (TSolve t : mind.getRightSolves().get(this)) {
+                if (tmp.equalsTo(t)) {
+                    return t;
+                }
+            }
+        }
+        return null;
+    }
+
+    public List<TSolve> getTSolves() {
+        if (!mind.getRightSolves().containsKey(this)) {
+            mind.getRightSolves().put(this, new ArrayList<>());
+        }
+        return mind.getRightSolves().get(this);
+    }
+
     @Override
     public UnitType getUnitType() {
         return UnitType.RIGHT;
@@ -456,33 +490,33 @@ public class Right implements IUnit<Right> {
 //        return this;
 //    }
 
-    public Right commit(Mind m) throws Exception {
-        if (m.getRights().find(this) == null) {
-            setOrig(orig.commit(m));
-            predicates.clear();
-            for (List<Domain> list : tree) {
-                for (Domain d : list) {
-                    d.commit(m);
-                    predicates.add(d.getPredicateId());
-                }
-            }
-            for (TVariable t : mind.getTVars()) {
-                if (t.getRight().getId() == id) {
-                    t.commit(m);
-                }
-            }
-            for (Cause c : causes) {
-                c.commit(mind, m);
-            }
-            for (TValue t : solves) {
-                t.commit(m);
-            }
-            m.getRights().register(this);
-            m.getRights().add(this);
-            this.setMind(m);
-        } else {
-            mind.getRights().delete(this);
-        }
-        return this;
-    }
+//    public Right commit(Mind m) throws Exception {
+//        if (m.getRights().find(this) == null) {
+//            setOrig(orig.commit(m));
+//            predicates.clear();
+//            for (List<Domain> list : tree) {
+//                for (Domain d : list) {
+//                    d.commit(m);
+//                    predicates.add(d.getPredicateId());
+//                }
+//            }
+//            for (TVariable t : mind.getTVars()) {
+//                if (t.getRight().getId() == id) {
+//                    t.commit(m);
+//                }
+//            }
+//            for (Cause c : causes) {
+//                c.commit(mind, m);
+//            }
+//            for (TValue t : solves) {
+//                t.commit(m);
+//            }
+//            m.getRights().register(this);
+//            m.getRights().add(this);
+//            this.setMind(m);
+//        } else {
+//            mind.getRights().delete(this);
+//        }
+//        return this;
+//    }
 }

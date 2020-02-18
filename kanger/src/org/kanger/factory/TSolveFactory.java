@@ -8,25 +8,22 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.Escalera;
+import org.kanger.units.TSolve;
 import org.kanger.units.TValue;
-import org.kanger.units.TVariable;
-import org.kanger.units.Term;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class TValueFactory implements Iterable<TValue> {
+public class TSolveFactory implements Iterable<TSolve> {
 
-    public static final String SCHEMA = "tvalues";
+    public static final String SCHEMA = "tsolves";
 
-    //    private long lastId = 0;
-//    private long firstId = 0;
     private long tag = 0;
-
-    private Map<TVariable, TValue> current = new HashMap<>();
 
     private ICache cache;
     private IStep top = null;
@@ -35,30 +32,20 @@ public class TValueFactory implements Iterable<TValue> {
     private transient boolean action = false;
 
 
-    public TValueFactory(Mind mind) {
+    public TSolveFactory(Mind mind) {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(TValueFactory base) {
-        current.clear();
+    public void transaction(TSolveFactory base) {
         if (base != null) {
-//            lastId = base.lastId;
-//            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
             cache = new Escalera(mind, SCHEMA, null);
-//            if (!cache.isEmpty()) {
-//                lastId = cache.getRoot().getId() + 1;
-//                firstId = lastId;
-//            } else {
-//                lastId = 0;
-//                firstId = 0;
-//            }
         }
     }
 
-    public void commit(TValueFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void commit(TSolveFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -86,11 +73,10 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public synchronized TValue add(TVariable tv, Term o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        TValue t = find(tv, o);
+    public synchronized TSolve add(List<TValue> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        TSolve t = find(list);
         if (t == null) {
-            t = new TValue(tv, o, mind);
-            t.setTVar(tv);
+            t = new TSolve(list, mind);
             t.setId(mind.getUser().nextId(SCHEMA));
             t.setMindId(mind.getId());
             cache.add(t);
@@ -98,43 +84,39 @@ public class TValueFactory implements Iterable<TValue> {
                 top = cache.getRoot();
             }
             action = true;
-
-//            //TODO: ПРИБИДБ
-//            System.out.println("++++++ " + t);
         }
-
         return t;
     }
 
-    public TValue get(TVariable tv) {
-        if (isEmpty(tv)) {
-            return null;
-        }
-        TValue v = current.get(tv);
-        return v;
-    }
+//    public TValue get(TVariable tv) {
+//        if (isEmpty(tv)) {
+//            return null;
+//        }
+//        TValue v = current.get(tv);
+//        return v;
+//    }
 
-    public boolean isEmpty(TVariable tv) {
-        return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
-    }
+//    public boolean isEmpty(TVariable tv) {
+//        return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
+//    }
 
-    public TValue find(TVariable tv, Term v) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        TValue temp = new TValue(tv, v);
+    public TSolve find(List<TValue> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        TSolve temp = new TSolve(list, mind);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = load(id);
             if (one.equalsTo(temp)) {
-                return (TValue) one;
+                return (TSolve) one;
             }
         }
         return null;
     }
 
-    public TValue load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        TValue t = get(id);
+    public TSolve load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        TSolve t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
-                t = (TValue) s.getData(mind);
+                t = (TSolve) s.getData(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -142,8 +124,8 @@ public class TValueFactory implements Iterable<TValue> {
         return t;
     }
 
-    private TValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        TValue t = (TValue) cache.get(id);
+    private TSolve get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        TSolve t = (TSolve) cache.get(id);
         return t;
     }
 
@@ -156,23 +138,10 @@ public class TValueFactory implements Iterable<TValue> {
         }
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
-            if (current.containsKey(((TValue) o).getTVar()) && current.get(((TValue) o).getTVar()).getId() == ((TValue) o).getId()) {
-                current.remove(((TValue) o).getTVar());
-            }
         }
-//        update();
-
-//        if (!cache.isEmpty()) {
-//            lastId = cache.getRoot().getId() + 1;
-//            firstId = lastId;
-//        } else {
-//            lastId = 0;
-//            firstId = 0;
-//        }
-
     }
 
-    public void delete(TValue v) throws IOException, ClassNotFoundException {
+    public void delete(TSolve v) throws IOException, ClassNotFoundException {
         v.setDeleted();
     }
 
@@ -185,7 +154,7 @@ public class TValueFactory implements Iterable<TValue> {
 
     public void clear() throws IOException, OutOfBufferException {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getTValues());
+//            transaction(mind.getNext().getTSolves());
         } else {
             cache.clear();
             transaction(null);
@@ -206,14 +175,14 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
 
-    public TValue set(TVariable tv, TValue v) {
-        if (v == null) {
-            current.remove(tv);
-        } else {
-            current.put(tv, v);
-        }
-        return v;
-    }
+//    public TValue set(TVariable tv, TValue v) {
+//        if (v == null) {
+//            current.remove(tv);
+//        } else {
+//            current.put(tv, v);
+//        }
+//        return v;
+//    }
 
     public int size() throws Exception {
         return cache.size();
@@ -237,10 +206,10 @@ public class TValueFactory implements Iterable<TValue> {
         return cache.iterator();
     }
 
-    public TValue getRoot(TVariable t) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        for (TValue v : this) {
-            if (!v.isDeleted() && v.getTVar().getId() == t.getId()) {
-                return v;
+    public TSolve getRoot() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        for (TSolve s : this) {
+            if (!s.isDeleted()) {
+                return s;
             }
         }
         return null;
@@ -250,32 +219,28 @@ public class TValueFactory implements Iterable<TValue> {
         return ++tag;
     }
 
-    public Map<TVariable, TValue> getCurrent() {
-        return current;
-    }
+//    public Map<TVariable, TValue> getCurrent() {
+//        return current;
+//    }
 
-    private void forward(IStep root, TVariable t, long stopId, IReactor reactor) throws Exception {
+    private void forward(IStep root, long stopId, IReactor reactor) throws Exception {
         if (root.getId() <= stopId) {
             return;
         } else if (root.getNext() != null) {
-            forward(root.getNext(), t, stopId, reactor);
-            if (((TValue) root.getData()).getTVarId() == t.getId()) {
-                reactor.run(root.getData(mind));
-            }
+            forward(root.getNext(), stopId, reactor);
+            reactor.run(root.getData(mind));
         } else {
-            if (((TValue) root.getData()).getTVarId() == t.getId()) {
-                reactor.run(root.getData(mind));
-            }
+            reactor.run(root.getData(mind));
         }
     }
 
-    public void forEach(TVariable t, IReactor reactor) throws Exception {
+    public void forEach(IReactor reactor) throws Exception {
         if (cache.size() > 0) {
             long rootId;
             long newsId = -1;
             do {
                 rootId = newsId;
-                forward(cache.getRoot(), t, rootId, reactor);
+                forward(cache.getRoot(), rootId, reactor);
                 newsId = cache.getRoot().getId();
             } while (newsId > rootId);
         }

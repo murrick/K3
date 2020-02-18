@@ -1171,13 +1171,13 @@ public class Domain implements IUnit<Domain> {
         this.mindId = mindId;
     }
 
-    public Domain commit(Mind m) throws Exception {
-        setPredicate(predicate.commit(m));
-        for (Argument a : arguments) {
-            a.setO((IUnit) a.getO(mind).commit(m));
-        }
-        setMind(m);
-        return this;
-    }
+//    public Domain commit(Mind m) throws Exception {
+//        setPredicate(predicate.commit(m));
+//        for (Argument a : arguments) {
+//            a.setO((IUnit) a.getO(mind).commit(m));
+//        }
+//        setMind(m);
+//        return this;
+//    }
 }
 

@@ -522,10 +522,10 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.mindId = mindId;
     }
 
-    public Term commit(Mind m) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        Term term = m.getTerms().add(this);
-        term.setMind(m);
-        return term;
-    }
+//    public Term commit(Mind m) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        Term term = m.getTerms().add(this);
+//        term.setMind(m);
+//        return term;
+//    }
 }
 

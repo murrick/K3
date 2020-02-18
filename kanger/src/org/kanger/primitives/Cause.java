@@ -4,7 +4,6 @@ import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 
@@ -14,7 +13,7 @@ public class Cause implements Comparable<Cause> {
     private Domain src = null;
     private Domain dst = null;
     private ArgList arguments = null;
-    private int index = -1;
+//    private int index = -1;
 
     private transient long srcId = -1;
     private transient long dstId = -1;
@@ -24,8 +23,8 @@ public class Cause implements Comparable<Cause> {
     public Cause() {
     }
 
-    public Cause(Mind mind, int index, Domain dst, Domain src) {
-        this.index = index;
+    public Cause(Mind mind, Domain dst, Domain src) {
+//        this.index = index;
         this.dst = dst;
         this.src = src;
         this.dstId = dst.getId();
@@ -35,7 +34,7 @@ public class Cause implements Comparable<Cause> {
 
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
-                .putInt(index)
+//                .putInt(index)
                 .putLong(srcId)
                 .putLong(dstId)
                 .append(arguments.pack());
@@ -43,7 +42,7 @@ public class Cause implements Comparable<Cause> {
     }
 
     public Cause apply(ByteBuffer packet) throws OutOfBufferException {
-        index = packet.getInt();
+//        index = packet.getInt();
         srcId = packet.getLong();
         dstId = packet.getLong();
         try {
@@ -70,13 +69,13 @@ public class Cause implements Comparable<Cause> {
         return dst;
     }
 
-    public int getIndex() {
-        return index;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
+//    public int getIndex() {
+//        return index;
+//    }
+//
+//    public void setIndex(int index) {
+//        this.index = index;
+//    }
 
     public ArgList getArguments() {
         return arguments;
@@ -177,12 +176,6 @@ public class Cause implements Comparable<Cause> {
     public void setSrc(Domain domain) {
         src = domain;
         srcId = domain.getId();
-    }
-
-    public void commit(Mind mind, Mind m) throws Exception {
-        for (Argument a : arguments) {
-            a.setO((IUnit) a.getO(mind).commit(m));
-        }
     }
 
 //    public boolean isStored() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {

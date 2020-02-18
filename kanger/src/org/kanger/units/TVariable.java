@@ -348,18 +348,18 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return UnitType.TVARIABLE;
     }
 
-    @Override
-    public TVariable commit(Mind m) throws Exception {
-        setName(name.commit(m));
-        setMind(m);
-        for (TValue v : mind.getTValues()) {
-            if (v.getTVarId() == id) {
-                v.commit(m);
-            }
-        }
-
-        return this;
-    }
+//    @Override
+//    public TVariable commit(Mind m) throws Exception {
+//        setName(name.commit(m));
+//        setMind(m);
+//        for (TValue v : mind.getTValues()) {
+//            if (v.getTVarId() == id) {
+//                v.commit(m);
+//            }
+//        }
+//
+//        return this;
+//    }
 
     @Override
     public long getMindId() {

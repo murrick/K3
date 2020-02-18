@@ -74,7 +74,7 @@ public class FValueFactory implements Iterable<FValue> {
         action = base.isAction();
     }
 
-    public void update() throws IOException {
+    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (cache.update()) {
 //            firstId = lastId;
         }
@@ -163,7 +163,7 @@ public class FValueFactory implements Iterable<FValue> {
         return cache.isEmpty() ? -1 : cache.getRoot().getId();
     }
 
-    public void pack() throws IOException, ClassNotFoundException {
+    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted()) {

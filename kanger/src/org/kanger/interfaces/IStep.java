@@ -32,13 +32,13 @@ public interface IStep {
 
     void setHash(int hash);
 
-    void update() throws IOException;
+    void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    void append() throws IOException;
+    void append() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    IBase getBase();
-
-    void setBase(IBase base);
+//    IBase getBase();
+//
+//    void setBase(IBase base);
 
 //    void delete() throws IOException;
 

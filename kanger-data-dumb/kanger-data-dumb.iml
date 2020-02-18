@@ -7,9 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="lib" level="project" />
     <orderEntry type="module" module-name="kanger" />
-    <orderEntry type="module" module-name="kanger-udf" />
-    <orderEntry type="module" module-name="kanger-data-dumb" />
   </component>
 </module>

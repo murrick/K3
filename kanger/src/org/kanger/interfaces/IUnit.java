@@ -36,5 +36,5 @@ public interface IUnit<T> {
 
     UnitType getUnitType();
 
-    T commit(Mind m) throws Exception;
+//    T commit(Mind m) throws Exception;
 }

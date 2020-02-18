@@ -42,7 +42,7 @@ public class Screen {
 
     private static String lastLogFile = "analizer.log";
 
-    public static void session(IUser user) throws IOException, OutOfBufferException {
+    public static void session(IUser user) throws IOException, OutOfBufferException, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
         boolean again = false;
         Mind mind = new Mind(user);
@@ -299,9 +299,9 @@ public class Screen {
                             }
                             break;
                         case 'M':
-                            for (TValue t : mind.getTValues()) {
-                                System.out.println(t + "\t" + t.getCauses().size());
-                            }
+//                            for (TSolve t : mind.getTSolves()) {
+//                                System.out.println(t + "\t" + t.getCauses().size());
+//                            }
                             break;
                         case 'P':
                             if (!user.isClosed()) {

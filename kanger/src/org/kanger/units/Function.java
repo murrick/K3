@@ -457,20 +457,20 @@ public class Function implements IUnit<Function> {
         return UnitType.FUNCTION;
     }
 
-    @Override
-    public Function commit(Mind m) throws Exception {
-        setName(name.commit(m));
-        for (int i = 0; i < range; ++i) {
-            arguments.get(i).setO((IUnit) arguments.get(i).getO(mind).commit(m));
-        }
-        setMind(m);
-        for (FValue v : mind.getFValues()) {
-            if (v.getFunctionId() == id) {
-                v.commit(m);
-            }
-        }
-        return this;
-    }
+//    @Override
+//    public Function commit(Mind m) throws Exception {
+//        setName(name.commit(m));
+//        for (int i = 0; i < range; ++i) {
+//            arguments.get(i).setO((IUnit) arguments.get(i).getO(mind).commit(m));
+//        }
+//        setMind(m);
+//        for (FValue v : mind.getFValues()) {
+//            if (v.getFunctionId() == id) {
+//                v.commit(m);
+//            }
+//        }
+//        return this;
+//    }
 
     @Override
     public long getMindId() {

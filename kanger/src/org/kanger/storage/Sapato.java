@@ -27,7 +27,8 @@ public class Sapato implements IStep {
     private IBase base = null;
     private long size = 0;
 
-    public Sapato() {
+    public Sapato(IBase base) {
+        this.base = base;
     }
 
     public Sapato(IBase base, IStep c) {
@@ -162,25 +163,25 @@ public class Sapato implements IStep {
     }
 
     @Override
-    public void update() throws IOException {
+    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         base.update(this);
     }
 
     @Override
-    public void append() throws IOException {
+    public void append() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         base.add(this);
     }
 
 
-    @Override
-    public IBase getBase() {
-        return base;
-    }
-
-    @Override
-    public void setBase(IBase base) {
-        this.base = base;
-    }
+//    @Override
+//    public IBase getBase() {
+//        return base;
+//    }
+//
+//    @Override
+//    public void setBase(IBase base) {
+//        this.base = base;
+//    }
 
 //    @Override
 //    public void delete() throws IOException {

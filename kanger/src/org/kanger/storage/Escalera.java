@@ -76,7 +76,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void delete(long id) throws IOException {
+    public void delete(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (root != null && root.getId() == id) {
             root = root.getNext();
         } else {
@@ -189,7 +189,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean update() throws IOException {
+    public boolean update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         // Это самый низ
         if (parent == null && !mind.getUser().isClosed()) {
             synchronized (mind.getUser().getStorage(schema)) {

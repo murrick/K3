@@ -2,15 +2,14 @@ package org.kanger.interfaces;
 
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.storage.Sapato;
 
 import java.io.IOException;
 
 public interface IBase {
 
-    void add(Sapato one) throws IOException;
+    void add(IStep one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
-    void update(Sapato one) throws IOException;
+    void update(IStep one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     IStep get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
@@ -20,7 +19,7 @@ public interface IBase {
 
     boolean isEmpty();
 
-    void delete(long id) throws IOException;
+    void delete(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
 
     void clear() throws IOException, OutOfBufferException;
 

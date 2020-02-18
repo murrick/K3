@@ -274,6 +274,9 @@ public class Predicates {
         return res;
     }
 
+
+    //TODO: ОШИБКА! ?$x x : "123123123123";
+
     public boolean _in(Term cur, Term interval, Term step) throws Exception {
         boolean res = false;
         if (interval.getType() == DataType.INTERVAL

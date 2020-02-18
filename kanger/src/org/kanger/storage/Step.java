@@ -3,7 +3,6 @@ package org.kanger.storage;
 import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 
@@ -85,15 +84,15 @@ public class Step implements IStep {
 
     }
 
-    @Override
-    public IBase getBase() {
-        return null;
-    }
-
-    @Override
-    public void setBase(IBase base) {
-
-    }
+//    @Override
+//    public IBase getBase() {
+//        return null;
+//    }
+//
+//    @Override
+//    public void setBase(IBase base) {
+//
+//    }
 
 //    @Override
 //    public void delete() throws IOException {

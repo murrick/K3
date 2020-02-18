@@ -38,8 +38,9 @@ public class Mind {
     private final Map<Domain, List<List<Term>>> producedDomains = new HashMap<>();
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
     private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
-    //    private final Map<Domain, Map<ArgList, Set<Long>>> domainTags = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
+    private final Map<Right, List<TSolve>> rightSolves = new HashMap<>();
+
     private long id = 0;
     private Mind next = null;
     private IUser user = null;
@@ -49,6 +50,7 @@ public class Mind {
     private RightFactory rights = null;                             // Список правил
     private TVariableFactory tVars = null;                      // t-переменные
     private TValueFactory tValues = null;                          // Подставленные значения
+    //    private TSolveFactory tSolves = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
     private HypotesisStore hypotesis = null;                                // Список гипотез
@@ -80,7 +82,7 @@ public class Mind {
     private volatile boolean blockCommit = false;
     private final Object locker = new Object();
 
-    public Mind(IUser user) throws IOException, OutOfBufferException {
+    public Mind(IUser user) throws IOException, OutOfBufferException, ClassNotFoundException, RuntimeErrorException {
         this.user = user;
 //        user.setMind(this);
         init();
@@ -109,6 +111,7 @@ public class Mind {
         rights.transaction(root.getRights());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
+//        tSolves.transaction(root.getTSolves());
         functions.transaction(root.getFunctions());
         fValues.transaction(root.getFValues());
 
@@ -129,6 +132,7 @@ public class Mind {
 
         tVars = new TVariableFactory(this);                      // t-переменные
         tValues = new TValueFactory(this);                          // Подставленные значения
+//        tSolves = new TSolveFactory(this);
 
         fValues = new FValueFactory(this);                          // Решения функций
 
@@ -160,6 +164,7 @@ public class Mind {
                 fValues.mark();
                 tVars.mark();
                 tValues.mark();
+//                tSolves.mark();
                 domains.mark();
                 rights.mark();
             }
@@ -168,6 +173,7 @@ public class Mind {
             fValues.commit(m.getFValues());
             tVars.commit(m.getTVars());
             tValues.commit(m.getTValues());
+//            tSolves.commit(m.getTSolves());
             domains.commit(m.getDomains());
 
             Set<Long> list = rights.commit(m.getRights());
@@ -179,6 +185,7 @@ public class Mind {
                     fValues.release();
                     tVars.release();
                     tValues.release();
+//                    tSolves.release();
                     domains.release();
                     rights.release();
                     result = false;
@@ -187,6 +194,7 @@ public class Mind {
                     fValues.commit();
                     tVars.commit();
                     tValues.commit();
+//                    tSolves.commit();
                     domains.commit();
                     rights.commit();
                 }
@@ -202,7 +210,7 @@ public class Mind {
         }
     }
 
-    public void update() throws IOException {
+    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 
         terms.update();
         predicates.update();
@@ -212,6 +220,7 @@ public class Mind {
         fValues.update();
         tVars.update();
         tValues.update();
+//        tSolves.update();
         domains.update();
         rights.update();
 
@@ -243,7 +252,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public synchronized void clear() throws IOException, OutOfBufferException {
+    public synchronized void clear() throws IOException, OutOfBufferException, ClassNotFoundException, RuntimeErrorException {
         synchronized (locker) {
 
             terms.clear();
@@ -251,6 +260,7 @@ public class Mind {
             domains.clear();
             tVars.clear();
             tValues.clear();
+//            tSolves.clear();
             rights.clear();
             functions.clear();
             fValues.clear();
@@ -269,17 +279,17 @@ public class Mind {
     public synchronized void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         synchronized (locker) {
 
-            for (TValue v : tValues) {
-                Set<Cause> toDeleteC = new HashSet<>();
-                for (Cause c : v.getCauses()) {
-                    if (c.getSrc(this).isDeleted() || c.getDst(this).isDeleted()) {
-                        toDeleteC.add(c);
-                    }
-                }
-                if (!toDeleteC.isEmpty()) {
-                    v.getCauses().removeAll(toDeleteC);
-                }
-            }
+//            for (TSolve v : tSolves) {
+//                Set<Cause> toDeleteC = new HashSet<>();
+//                for (Cause c : v.getCauses()) {
+//                    if (c.getSrc(this).isDeleted() || c.getDst(this).isDeleted()) {
+//                        toDeleteC.add(c);
+//                    }
+//                }
+//                if (!toDeleteC.isEmpty()) {
+//                    v.getCauses().removeAll(toDeleteC);
+//                }
+//            }
 
             terms.pack();
             predicates.pack();
@@ -291,22 +301,22 @@ public class Mind {
             functions.pack();
             library.pack();
 
-            for (TValue v : tValues) {
-                Set<Cause> toDeleteC = new HashSet<>();
-                for (Cause c : v.getCauses()) {
-                    if (c.getSrc(this) == null || c.getDst(this) == null) {
-                        toDeleteC.add(c);
-                    }
-                }
-                if (!toDeleteC.isEmpty()) {
-                    v.getCauses().removeAll(toDeleteC);
-                }
-                if (v.getCauses().isEmpty()) {
-                    tValues.delete(v);
-                }
-            }
-
-            tValues.pack();
+//            for (TSolve v : tSolves) {
+//                Set<Cause> toDeleteC = new HashSet<>();
+//                for (Cause c : v.getCauses()) {
+//                    if (c.getSrc(this) == null || c.getDst(this) == null) {
+//                        toDeleteC.add(c);
+//                    }
+//                }
+//                if (!toDeleteC.isEmpty()) {
+//                    v.getCauses().removeAll(toDeleteC);
+//                }
+//                if (v.getCauses().isEmpty()) {
+//                    tSolves.delete(v);
+//                }
+//            }
+//
+//            tSolves.pack();
         }
 //        tValues.update();
 
@@ -422,6 +432,10 @@ public class Mind {
     public TValueFactory getTValues() {
         return tValues;
     }
+
+//    public TSolveFactory getTSolves() {
+//        return tSolves;
+//    }
 
     public FValueFactory getFValues() {
         return fValues;
@@ -672,7 +686,11 @@ public class Mind {
         return usedRights;
     }
 
-//    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
+    public Map<Right, List<TSolve>> getRightSolves() {
+        return rightSolves;
+    }
+
+    //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
 //        return domainTags;
 //    }
 
