@@ -72,6 +72,7 @@ public class TValueFactory implements Iterable<TValue> {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
                     ((IUnit) s.getData()).setMind(mind);
                     ((IUnit) s.getData()).setMindId(mind.getId());
+
                 } else {
                     break;
                 }
@@ -254,11 +255,9 @@ public class TValueFactory implements Iterable<TValue> {
         return current;
     }
 
-    private void forward(IStep root, TVariable t, long stopId, IReactor reactor) throws Exception {
-        if (root.getId() <= stopId) {
-            return;
-        } else if (root.getNext() != null) {
-            forward(root.getNext(), t, stopId, reactor);
+    private void forward(IStep root, TVariable t, IReactor reactor) throws Exception {
+        if (root.getNext() != null) {
+            forward(root.getNext(), t, reactor);
             if (((TValue) root.getData()).getTVarId() == t.getId()) {
                 reactor.run(root.getData(mind));
             }
@@ -271,13 +270,7 @@ public class TValueFactory implements Iterable<TValue> {
 
     public void forEach(TVariable t, IReactor reactor) throws Exception {
         if (cache.size() > 0) {
-            long rootId;
-            long newsId = -1;
-            do {
-                rootId = newsId;
-                forward(cache.getRoot(), t, rootId, reactor);
-                newsId = cache.getRoot().getId();
-            } while (newsId > rootId);
+            forward(cache.getRoot(), t, reactor);
         }
     }
 
@@ -289,7 +282,9 @@ public class TValueFactory implements Iterable<TValue> {
                 root = cache.getRoot();
                 IStep saveRoot = root;
                 for (; root != bottom; root = root.getNext()) {
-                    reactor.run(root.getData(mind));
+                    if (((TValue) root.getData(mind)).getTVarId() == t.getId()) {
+                        reactor.run(root.getData(mind));
+                    }
                 }
                 bottom = saveRoot;
             } while (root != cache.getRoot());
