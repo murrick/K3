@@ -187,7 +187,7 @@ public class RightFactory implements Iterable<Right> {
                     r.getPredicates().add(d.getPredicateId());
                     d.setRight(r);
 //                    d.setMind(mind);
-                    for (TVariable t : d.getArguments().getTVariables(mind, true)) {
+                    for (TVariable t : d.getArguments().getTVariables(mind)) {
                         t.setRight(r);
                     }
 //                    mind.getDomains().add(d);
@@ -210,7 +210,7 @@ public class RightFactory implements Iterable<Right> {
     public void expand(Right r) throws Exception {
         for (List<Domain> tree : r.getTree()) {
             if (tree.size() == 1) {
-                if (!tree.get(0).getArguments().getTVariables(mind, true).isEmpty()) {
+                if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {
                     mind.getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
                     Right rx = tree.get(0).setStored();

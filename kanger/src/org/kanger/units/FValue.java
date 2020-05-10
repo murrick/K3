@@ -59,7 +59,7 @@ public class FValue implements IUnit<FValue> {
                 condition.add(new Argument(a.getValue(mind)));
             }
         }
-        for (TVariable t : f.getArguments().getTVariables(mind, true)) {
+        for (TVariable t : f.getArguments().getTVariables(mind)) {
             if (t.isEmpty()) {
                 stamp.add(0L);
             } else {
@@ -210,7 +210,7 @@ public class FValue implements IUnit<FValue> {
                     && !f.getResult().isEmpty(mind)
                     && valueId == f.getResult().getValue(mind).getId()) {
                 boolean complete = true;
-                List<TVariable> list = f.getArguments().getTVariables(mind, true);
+                List<TVariable> list = f.getArguments().getTVariables(mind);
                 for (int i = 0; i < list.size(); ++i) {
                     if (list.get(i).isEmpty() || list.get(i).getValue().getId() != stamp.get(i)) {
                         complete = false;

@@ -114,6 +114,12 @@ public class Analiser {
 
 //            boolean trigger = false;
             for (Right q : mind.getRights()) {
+
+//                if (p.getDomain().equalsBase(q.getDomain())
+//                        && p.getDomain().isAntc() != q.getDomain().isAntc()) {
+//                    System.err.println("!!");
+//                }
+
                 if (q.isDeleted() || !q.isStored() || (list == null && q.getId() > p.getId()) || (list != null && list.contains(q.getId()))) {
                     continue;
                 }
@@ -126,6 +132,7 @@ public class Analiser {
                 if (p.getDomain().equalsBase(q.getDomain())
                         && p.getDomain().isAntc() != q.getDomain().isAntc()) {
 
+                    //TODO: Костыль
                     if (q.getMind() == null) {
                         q.setMind(mind);
                     }

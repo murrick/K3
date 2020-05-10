@@ -114,8 +114,17 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
 //            }
-        TValue v = value == null ? null : mind.getTValues().add(this, value);
-        return mind.getTValues().set(this, v);
+        TValue v = null;
+        if (value != null) {
+            v = mind.getTValues().add(this, value);
+
+//            List<TValue> list = new ArrayList<>();
+//            list.add(v);
+//            mind.addTSolve(list);
+        }
+//        value == null ? null : mind.getTValues().add(this, value);
+        return setCurrent(v);
+//        return mind.getTValues().set(this, v);
 //        } else {
 //            throw new TValueOutOfOrderException(String.format("%c%d:%s", Enums.TVC, index, value.toString()));
 //        }

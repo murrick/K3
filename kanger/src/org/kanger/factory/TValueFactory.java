@@ -281,6 +281,21 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
+    public void scan(TVariable t, IReactor reactor) throws Exception {
+        if (!cache.isEmpty()) {
+            IStep root = null;
+            IStep bottom = null;
+            do {
+                root = cache.getRoot();
+                IStep saveRoot = root;
+                for (; root != bottom; root = root.getNext()) {
+                    reactor.run(root.getData(mind));
+                }
+                bottom = saveRoot;
+            } while (root != cache.getRoot());
+        }
+    }
+
 //    public Iterator<TValue> iterator(TVariable tVariable) {
 //        return new TValueIterator(true, tVariable);
 //    }

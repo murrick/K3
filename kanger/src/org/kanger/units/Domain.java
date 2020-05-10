@@ -22,7 +22,7 @@ import java.util.*;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Domain implements IUnit<Domain> {
+public class Domain implements IUnit<Domain>, Comparable<Domain> {
 
     private static final long serialVersionUID = 196402070001L;
 
@@ -508,7 +508,7 @@ public class Domain implements IUnit<Domain> {
     }
 
     public boolean contains(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        for (TVariable x : arguments.getTVariables(mind, true)) {
+        for (TVariable x : arguments.getTVariables(mind)) {
             if (x.getId() == t.getId()) {
                 return true;
             }
@@ -680,7 +680,7 @@ public class Domain implements IUnit<Domain> {
 //
 
     public void setTag(long tag) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        for (TVariable t : arguments.getTVariables(mind, true)) {
+        for (TVariable t : arguments.getTVariables(mind)) {
             t.getCurrent().setTag(tag);
         }
     }
@@ -838,7 +838,7 @@ public class Domain implements IUnit<Domain> {
         if (getRight().isQuery()) {
             return true;
         } else {
-            for (TVariable t : arguments.getTVariables(mind, true)) {
+            for (TVariable t : arguments.getTVariables(mind)) {
                 if (t.isQuery()) {
                     return true;
                 }
@@ -1033,7 +1033,7 @@ public class Domain implements IUnit<Domain> {
     @Override
     public Domain setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
         this.mind = mind;
-        for (TVariable t : arguments.getTVariables(mind, true)) {
+        for (TVariable t : arguments.getTVariables(mind)) {
             t.setMind(mind);
         }
 //        arguments.setUser(user);
@@ -1169,6 +1169,11 @@ public class Domain implements IUnit<Domain> {
     @Override
     public void setMindId(long mindId) {
         this.mindId = mindId;
+    }
+
+    @Override
+    public int compareTo(Domain domain) {
+        return (int) (rightId == domain.rightId ? id - domain.id : rightId - domain.rightId);
     }
 
 //    public Domain commit(Mind m) throws Exception {

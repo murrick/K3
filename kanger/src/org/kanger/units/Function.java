@@ -13,6 +13,8 @@ import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
@@ -139,8 +141,18 @@ public class Function implements IUnit<Function> {
 //            return true;
 //        } else {
 
-        return arguments.get(i).setValue(mind, r);
-//        }
+        if (arguments.get(i).setValue(mind, r)) {
+
+            if (arguments.get(i).isTSet()) {
+                List<TValue> list = new ArrayList<>();
+                list.add(arguments.get(i).getT(mind).getCurrent());
+                mind.addTSolve(list);
+            }
+            return true;
+
+        } else {
+            return false;
+        }
     }
 
 //    public boolean isCalculated() {
@@ -313,7 +325,7 @@ public class Function implements IUnit<Function> {
 //    }
 
     public boolean isCalculable() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        return arguments.getTVariables(mind, true).size() > 0;
+        return arguments.getTVariables(mind).size() > 0;
     }
 
 //    public boolean isCalculated() {
@@ -330,7 +342,7 @@ public class Function implements IUnit<Function> {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         hash = 47 * hash + (int) (valueId ^ (valueId >>> 32));
-        for (TVariable t : arguments.getTVariables(mind, true)) {
+        for (TVariable t : arguments.getTVariables(mind)) {
             if (t.isEmpty()) {
                 hash = 47 * hash + 0;
             } else {

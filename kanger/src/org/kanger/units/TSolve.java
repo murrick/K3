@@ -37,9 +37,22 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     }
 
     public TSolve(List<TValue> list, Mind mind) {
-        this.solve = list;
+        this.solve.addAll(list);
         this.mind = mind;
-        for (TValue v : list) {
+        for (TValue v : solve) {
+            solveIds.add(v.getId());
+        }
+    }
+
+    public TSolve(TValue vv, Mind mind) {
+        solve.add(vv);
+        solveIds.add(vv.getId());
+        this.mind = mind;
+    }
+
+    public void add(TValue v) {
+        if (!solveIds.contains(v.getId())) {
+            solve.add(v);
             solveIds.add(v.getId());
         }
     }
@@ -92,18 +105,26 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         return solve;
     }
 
-    public void setSolve(List<TValue> solve) {
-        this.solve = solve;
-        solveIds.clear();
-        for (TValue v : solve) {
-            solveIds.add(v.getId());
-        }
-    }
+//    public void setSolve(List<TValue> solve) {
+//        this.solve = solve;
+//        solveIds.clear();
+//        for (TValue v : solve) {
+//            solveIds.add(v.getId());
+//        }
+//    }
 
     public Set<Cause> getCauses() {
         return causes;
     }
 
+    public TValue getValue(TVariable t) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        for (TValue v : solve) {
+            if (t.getId() == v.getTVar().getId()) {
+                return v;
+            }
+        }
+        return null;
+    }
 
     @Override
     public long getId() {
@@ -215,6 +236,60 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     @Override
     public void setMindId(long mindId) {
         this.mindId = mindId;
+    }
+
+    public void clearCurrent() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        for (TValue v : solve) {
+            v.getTVar().setCurrent(null);
+        }
+    }
+
+    /**
+     * @return 3 состояния. null, пустой список, полный список
+     * @throws ClassNotFoundException
+     * @throws RuntimeErrorException
+     * @throws OutOfBufferException
+     * @throws IOException
+     */
+    public Set<TVariable> activate() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        Set<TVariable> list = new HashSet<>();
+        boolean fail = false;
+        for (TValue v : solve) {
+            if (!v.getTVar().isEmpty() && v.getTVar().getValue().getId() != v.getValueId()) {
+                return null;
+            }
+        }
+        if (!fail) {
+            for (TValue v : solve) {
+                if (v.getTVar().isEmpty()) {
+                    v.getTVar().setCurrent(v);
+                    list.add(v.getTVar());
+                }
+            }
+        }
+        return list;
+    }
+
+    public boolean containsTVar(TVariable t) {
+        for (TValue v : solve) {
+            if (v.getTVarId() == t.getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean containsTValue(TValue t) {
+        for (TValue v : solve) {
+            if (v.getId() == t.getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int size() {
+        return solve.size();
     }
 
 //    public TSolve commit(Mind m) throws Exception {

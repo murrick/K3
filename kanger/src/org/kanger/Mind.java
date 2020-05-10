@@ -15,6 +15,7 @@ import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypotese;
+import org.kanger.primitives.TVariableSet;
 import org.kanger.stores.HypotesisStore;
 import org.kanger.stores.LogStore;
 import org.kanger.stores.SolutionsStore;
@@ -39,7 +40,7 @@ public class Mind {
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
     private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
-    private final Map<Right, List<TSolve>> rightSolves = new HashMap<>();
+    private final Map<TVariableSet, List<TSolve>> rightSolves = new LinkedHashMap<>();
 
     private long id = 0;
     private Mind next = null;
@@ -104,6 +105,8 @@ public class Mind {
         predicates = root.getPredicates();
         library = root.getLibrary();
 
+        rightSolves.putAll(root.getRightSolves());
+
 
 //        functions = root.getFunctions();
 
@@ -116,6 +119,7 @@ public class Mind {
         fValues.transaction(root.getFValues());
 
         debugLevel = root.getDebugLevel();
+
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
     }
@@ -200,6 +204,12 @@ public class Mind {
                 }
             }
 
+            for (Map.Entry<TVariableSet, List<TSolve>> e : m.getRightSolves().entrySet()) {
+                for (TSolve t : e.getValue()) {
+                    addTSolve(t.getSolve());
+                }
+            }
+
             pack();
             update();
 
@@ -273,6 +283,8 @@ public class Mind {
 //        results.clear();
             hypotesis.clear();
             excluded.clear();
+
+            rightSolves.clear();
         }
     }
 
@@ -686,7 +698,7 @@ public class Mind {
         return usedRights;
     }
 
-    public Map<Right, List<TSolve>> getRightSolves() {
+    public Map<TVariableSet, List<TSolve>> getRightSolves() {
         return rightSolves;
     }
 
@@ -1529,6 +1541,51 @@ public class Mind {
     public boolean isSequencedBy(Mind m) {
         return rights.isSequencedBy(m.rights);
     }
+
+    public TSolve findTSolve(List<TValue> list) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        TVariableSet ts = new TVariableSet(list);
+        if (getRightSolves().containsKey(ts)) {
+            TSolve tmp = new TSolve(list, this);
+            for (TSolve t : getRightSolves().get(ts)) {
+                if (tmp.equalsTo(t)) {
+                    return t;
+                }
+            }
+        }
+        return null;
+    }
+
+    public TSolve addTSolve(List<TValue> list) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        TSolve tmp = findTSolve(list);
+        if (tmp != null) {
+            return tmp;
+        } else {
+            tmp = new TSolve(list, this);
+            TVariableSet ts = new TVariableSet(tmp);
+            if (!getRightSolves().containsKey(ts)) {
+                getRightSolves().put(ts, new ArrayList<>());
+            }
+            getRightSolves().get(ts).add(tmp);
+            return tmp;
+        }
+    }
+
+//    public TSolve addTSolve(TValue vv) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        List<TValue> list = new ArrayList<>();
+//        list.add(vv);
+//        TSolve tmp = findTSolve(list);
+//        if (tmp != null) {
+//            return tmp;
+//        } else {
+//            tmp = new TSolve(list, this);
+//            TVariableSet ts = new TVariableSet(tmp);
+//            if (!getRightSolves().containsKey(ts)) {
+//                getRightSolves().put(ts, new ArrayList<>());
+//            }
+//            getRightSolves().get(ts).add(tmp);
+//            return tmp;
+//        }
+//    }
 
 //    public List<Right> getResults() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
 //        return rights.getResults();

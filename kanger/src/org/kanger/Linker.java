@@ -8,6 +8,7 @@ import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
+import org.kanger.primitives.TVariableSet;
 import org.kanger.units.*;
 
 import java.io.IOException;
@@ -39,6 +40,8 @@ public class Linker {
         mind.getCalculatedDomains().clear();
         mind.getUsedRights().clear();
 
+        mind.getRightSolves().clear();
+
         int passCounter = 0;
 
         solvedPasses = 0;
@@ -46,12 +49,14 @@ public class Linker {
         skipedPasses = 0;
 
         final Map<Right, Set<Cause>> causes = new HashMap<>();
-
+//        int sz = 0;
         do {
 
             if (logging) {
                 mind.getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
+
+//            sz = mind.getRightSolves().size();
 
             mind.getRights().dropAction();
             mind.getTValues().dropAction();
@@ -100,6 +105,7 @@ public class Linker {
         } while (mind.getRights().isAction()
                 || mind.getTValues().isAction()
                 || mind.getFValues().isAction()
+//                || mind.getRightSolves().size() > sz
         );
 
         if (logging) {
@@ -122,7 +128,16 @@ public class Linker {
 
         boolean used = false;
 
-        mind.getRightSolves().clear();
+//        mind.getRightSolves().clear();
+
+//        final SortedSet<TVariable> tvars = new TreeSet<>();
+//        for (Right r : rightList) {
+//            for (List<Domain> tree : r.getTree()) {
+//                for (Domain d : tree) {
+//                    tvars.addAll(d.getArguments().getTVariables(mind, true));
+//                }
+//            }
+//        }
 
         for (Right r : rightList) {
 
@@ -133,25 +148,31 @@ public class Linker {
             final SortedSet<TVariable> tvars = new TreeSet<>();
             for (List<Domain> tree : r.getTree()) {
                 for (Domain d : tree) {
-                    tvars.addAll(d.getArguments().getTVariables(mind, true));
+                    tvars.addAll(d.getArguments().getTVariables(mind));
                 }
             }
 
             boolean wasUsed = r.isUsed();
 
-            if (!r.getTSolves().isEmpty()) {
-                System.err.println("========================================");
-                for (TSolve s : r.getTSolves()) {
-                    System.err.println("---- " + s.getSolve().get(0).getTVar().getRight() + " : " + s);
-                }
-            }
+//            if (!mind.getRightSolves().isEmpty()) {
+//                System.err.println("========================================");
+//                for (Map.Entry<TVariableSet, List<TSolve>> e : mind.getRightSolves().entrySet()) {
+//                    for (TSolve s : e.getValue()) {
+//                        if (!s.getSolve().isEmpty()) {
+//                            System.err.println("---- " + " : " + s);
+//                        } else {
+//                            //TODO: Убрать
+//                            System.err.println("?");
+//                        }
+//                    }
+//                }
+//            }
 
 
             for (List<Domain> tree : r.getTree()) {
 
                 final List<Domain> t = tree;
 
-//                System.err.println("========================================");
 //                mind.getTSolves().forEach(new IReactor() {
 //                    @Override
 //                    public Object run(Object o) throws Exception {
@@ -161,24 +182,47 @@ public class Linker {
 //                    }
 //                });
 
-                rotateVariables(tvars, logging, new IReactor() {
+                rotateVariables(tvars, tvars, new IReactor() {
+
+//                for(List<TSolve> list : mind.getRightSolves().values()) {
+//                    for(TSolve s : list) {
+//                        for(TValue v : s.getSolve()) {
+//                            v.getTVar().setCurrent(null);
+//                        }
+//                    }
+//                }
+//
+//                for (TVariable v : tvars) {
+//                    v.setCurrent(null);
+//                }
+
+                    //                rotateRights(0, mind.getRightSolves(), new IReactor() {
                     @Override
                     public Object run(Object o) {
                         boolean result = false;
-                        boolean logging = (boolean) o;
+//                            boolean logging = (boolean) o;
 
                         try {
 
-                            if (linkDomains(t, causes, logging)) {
+//                            for (List<Domain> tree : r.getTree()) {
+//
+//                                final List<Domain> t = tree;
+
+//                            Map<Right, List<Object[]>> variants = new HashMap<>();
+
+                            if (linkDomains(t, rightList, causes, logging)) {
                                 result = true;
                             }
                             if (calcFunctions(t, causes, logging)) {
                                 result = true;
                             }
 
-                            if (linkDatabase(t, causes, tvars, logging)) {
+                            if (linkDatabase(t, causes, /*(SortedSet<TVariable>) o*/ tvars, logging)) {
                                 result = true;
                             }
+//                            }
+
+//                            if(variants.containsKey(r)) {
 
 
                         } catch (Exception e) {
@@ -191,7 +235,22 @@ public class Linker {
                 });
             }
 
+
             updateDatabase(logging);
+
+//            if (!mind.getRightSolves().isEmpty()) {
+//                System.err.println("========================================");
+//                for (Map.Entry<TVariableSet, List<TSolve>> e : mind.getRightSolves().entrySet()) {
+//                    for (TSolve s : e.getValue()) {
+//                        if (!s.getSolve().isEmpty()) {
+//                            System.err.println("---- " + " : " + s);
+//                        } else {
+//                            //TODO: Убрать
+//                            System.err.println("?");F
+//                        }
+//                    }
+//                }
+//            }
 
             if (!wasUsed && r.isUsed()) {
                 used = true;
@@ -201,10 +260,55 @@ public class Linker {
         return used;
     }
 
-    private boolean rotateVariables(SortedSet<TVariable> tvars, boolean logging, IReactor runnable) throws Exception {
+    private boolean rotateRights(int pos, Map<TVariableSet, List<TSolve>> solves, IReactor runnable) throws Exception {
+        boolean result = false;
+        if (pos >= solves.size()) {
+            result = (boolean) runnable.run(null);
+        } else {
+            TVariableSet key = new ArrayList<>(solves.keySet()).get(pos);
+            List<TSolve> tv = solves.get(key);
+            int i = -1;
+            while (++i < tv.size()) {
+                TSolve s = tv.get(i);
+                Set<TVariable> temp = s.activate();
+                if (rotateRights(++pos, solves, runnable)) {
+                    result = true;
+                }
+                if (temp != null) {
+                    if (temp != null) {
+                        for (TVariable t : temp) {
+                            t.setCurrent(null);
+                        }
+                    }
+                }
+            }
+//            if (!result[1]) {
+//                if (rotateRights(++pos, solves, runnable)) {
+//                    result[0] = true;
+//                }
+//            }
+
+        }
+
+        return result;
+    }
+
+//    private List<TValue> getTSolves(TValue v) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        List<TValue> list = new ArrayList<>();
+//        Right r = v.getTVar().getRight();
+//        for(TSolve s : r.getTSolves()) {
+//            if(s.getValue(v.getTVar()).getValue().getId() == v.getId()) {
+//                list.addAll(s.getSolve());
+//                break;
+//            }
+//        }
+//
+//    }
+
+    private boolean rotateVariables(SortedSet<TVariable> tvars, SortedSet<TVariable> base, IReactor runnable) throws Exception {
         final boolean[] result = new boolean[]{false, false};
         if (tvars.isEmpty()) {
-            result[0] = (boolean) runnable.run(logging);
+            result[0] = (boolean) runnable.run(tvars);
         } else {
             final TVariable t = tvars.last();
             result[1] = false;
@@ -212,31 +316,85 @@ public class Linker {
                 @Override
                 public Object run(Object o) throws Exception {
                     result[1] = true;
-                    mind.getTValues().set(t, (TValue) o);
-                    if (rotateVariables(tvars.headSet(t), logging, runnable)) {
-                        result[0] = true;
+                    t.setCurrent((TValue) o);
+                    if (isValidFor(base.tailSet(t))) {
+//                    mind.getTValues().set(t, (TValue) o);
+                        if (rotateVariables(tvars.headSet(t), base, runnable)) {
+                            result[0] = true;
+                        }
                     }
                     return true;
                 }
             });
             if (!result[1]) {
-                if (rotateVariables(tvars.headSet(t), logging, runnable)) {
+//                if(isValidFor(base.tailSet(t))) {
+                if (rotateVariables(tvars.headSet(t), base, runnable)) {
                     result[0] = true;
                 }
+//                }
             }
         }
         return result[0];
     }
 
-    private boolean linkDomains(List<Domain> treeSlave, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
-
+    private boolean isValidFor(SortedSet<TVariable> tail) {
+        final TVariable t = tail.first();
+        boolean found = false;
         boolean result = false;
+        for (TVariableSet key : mind.getRightSolves().keySet()) {
+            if (key.contains(t)) {
+                found = true;
+                boolean success = false;
+                for (TSolve s : mind.getRightSolves().get(key)) {
+                    if (s.containsTValue(t.getCurrent())) {
+                        if (s.size() > 1) {
+                            boolean complete = true;
+                            for (TVariable x : tail) {
+                                if (x.getId() != t.getId()) {
+                                    if (s.containsTVar(x)) {
+                                        if (!s.containsTValue(x.getCurrent())) {
+                                            complete = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (complete) {
+                                success = true;
+                                break;
+                            }
+                        } else {
+                            success = true;
+                            break;
+                        }
+                    } else if (s.size() == 1) {
+                        success = true;
+                        break;
+                    }
+                }
+                if (success) {
+                    result = true;
+                    break;
+                }
+            }
+        }
+//        if(!(!found || result)) {
+//            System.err.println(t);
+//        }
+        return !found || result;
+    }
+
+    private boolean linkDomains(List<Domain> treeSlave, Collection<Right> rightList, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
+
+        Map<Right, List<Object[]>> variants = new HashMap<>();
+        boolean result = false;
+
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
-                for (Right right : mind.getRights()) {
-                    if (right.isDeleted() || !right.getPredicates().contains(slave.getPredicateId())) {
-                        continue;
-                    }
+                for (Right right : rightList /*mind.getRights()*/) {
+//                    if (right.isDeleted() || !right.getPredicates().contains(slave.getPredicateId())) {
+//                        continue;
+//                    }
 
 //                    System.err.println("\t" + right.getId() + ": " + right);
 
@@ -376,8 +534,8 @@ public class Linker {
                                     } else {
                                         ++dumpedPasses;
                                     }
-                                    markExcluded(substMaster, master, slave, causes, logging);
-                                    markExcluded(substSlave, slave, master, causes, logging);
+                                    markExcluded(substMaster, master, slave, causes, variants, logging);
+                                    markExcluded(substSlave, slave, master, causes, variants, logging);
                                 } else {
                                     ++skipedPasses;
 
@@ -393,64 +551,144 @@ public class Linker {
                     }
                 }
             }
+
+            for (List<Object[]> variantsList : variants.values()) {
+                for (Object[] subst : variantsList) {
+                    List<TValue> list = new ArrayList<>();
+                    for (Object x : subst) {
+                        if (x == null) {
+                        } else if (x instanceof TValue) {
+                            list.add((TValue) x);
+                        }
+                    }
+                    mind.addTSolve(list);
+                }
+            }
+
         }
         return result;
     }
 
-    private boolean markExcluded(Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//    private TSolve findTSolve(List<TValue> list) {
+//        TSolve tmp = new TSolve(list, mind);
+//            for (TSolve t : mind.getRightSolves()) {
+//                if (tmp.equalsTo(t)) {
+//                    return t;
+//                }
+//            }
+//        return null;
+//    }
+//
+//    public TSolve addTSolve(List<TValue> list) {
+//        TSolve tmp = findTSolve(list);
+//        if (tmp != null) {
+//            return tmp;
+//        } else {
+//            tmp = new TSolve(list, mind);
+//            mind.getRightSolves().add(tmp);
+//            return tmp;
+//        }
+//    }
+
+    private boolean markExcluded(Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, Map<Right, List<Object[]>> variants, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right r = null;
         boolean occurrs = false;
-        List<TValue> list = new ArrayList<>();
+
+
         for (int i = 0; i < slave.getRange(); ++i) {
             if (subst[i] != null) {
+                List<TValue> list = new ArrayList<>();
                 if (subst[i] instanceof Collection) {
                     list.addAll((Collection<TValue>) subst[i]);
                 } else {
                     list.add((TValue) subst[i]);
                 }
-            }
-        }
-
-        // Отсечение конфликтных подстановок
-        for (int i = 0; i < list.size(); ++i) {
-            for (int j = 0; j < list.size(); ++j) {
-                if (list.get(i).getTVar().getId() == list.get(j).getTVar().getId() && list.get(i).getValue().getId() != list.get(j).getValue().getId()) {
-                    return false;
+                for (TValue v : list) {
+//                    boolean caused = false;
+                    Cause s = new Cause(mind, master, slave);
+//                    if (!v.getCauses().contains(s)) {
+//                        v.getCauses().add(s);
+//                        caused = true;
+//                    }
+                    if (/*caused || */!master.isExcluded(slave.getArguments())) {
+                        r = v.getTVar().getRight();
+//                        if (caused) {
+                        if (!causes.containsKey(r)) {
+                            causes.put(r, new HashSet<>());
+                        }
+                        causes.get(r).add(s);
+                        if (logging) {
+                            mind.getLog().add(LogMode.ANALIZER, "Closed: " + v);
+                        }
+                        occurrs = true;
+//                        }
+                    }
                 }
             }
         }
 
-        if (!list.isEmpty()) {
-//            boolean caused = false;
-            TSolve t = master.getRight().findTSolve(list);
-            Cause s = new Cause(mind, master, slave);
-//            if (!t.getCauses().contains(s)) {
-//                t.getCauses().add(s);
-//                caused = true;
+
+//        boolean complete = true;
+//        List<TValue> list = new ArrayList<>();
+//        for (int i = 0; i < slave.getRange(); ++i) {
+//            if (subst[i] != null) {
+//                if (subst[i] instanceof Collection) {
+//                    list.addAll((Collection<TValue>) subst[i]);
+//                } else {
+//                    list.add((TValue) subst[i]);
+//                }
+//            } else {
+//                complete = false;
 //            }
+//        }
 
-            if (t == null || !t.getCauses().contains(s) || !master.isExcluded(slave.getArguments())) {
-                r = master.getRight();
-                if (t == null) {
-                    t = master.getRight().addTSolve(list);
-                }
-                if (!t.getCauses().contains(s)) {
-                    t.getCauses().add(s);
-                    if (!causes.containsKey(r)) {
-                        causes.put(r, new HashSet<>());
-                    }
-                    causes.get(r).add(s);
-                    if (logging) {
-                        mind.getLog().add(LogMode.ANALIZER, "Closed: " + t);
-                    }
-                    occurrs = true;
-                }
-            }
-        }
+
+//        if (!list.isEmpty()) {
+//
+//            // Отсечение конфликтных подстановок
+//            for (int i = 0; i < list.size(); ++i) {
+//                for (int j = 0; j < list.size(); ++j) {
+//                    if (list.get(i).getTVar().getId() == list.get(j).getTVar().getId() && list.get(i).getValue().getId() != list.get(j).getValue().getId()) {
+//                        return false;
+//                    }
+//                }
+//            }
+//
+////            boolean caused = false;
+//            TSolve t = mind.findTSolve(list);
+//            Cause s = new Cause(mind, master, slave);
+////            if (!t.getCauses().contains(s)) {
+////                t.getCauses().add(s);
+////                caused = true;
+////            }
+//
+//            if (t == null || !t.getCauses().contains(s) || !master.isExcluded(slave.getArguments())) {
+//                r = master.getRight();
+//                if (t == null) {
+//                    t = mind.addTSolve(list);
+//                }
+//                if (!t.getCauses().contains(s)) {
+//                    t.getCauses().add(s);
+//                    if (!causes.containsKey(r)) {
+//                        causes.put(r, new HashSet<>());
+//                    }
+//                    causes.get(r).add(s);
+//                    if (logging) {
+//                        mind.getLog().add(LogMode.ANALIZER, "Closed: " + t);
+//                    }
+//                    occurrs = true;
+//                }
+//            }
+//        }
 //            }
 //        }
         if (r != null) {
             master.setExcluded(slave.getArguments());
+            if (!variants.containsKey(master.getRight())) {
+                variants.put(master.getRight(), new ArrayList<>());
+            }
+            variants.get(master.getRight()).add(subst);
+
             if (occurrs && logging) {
                 mind.pushDebugLevel();
                 mind.setDebugLevel(mind.getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
@@ -797,6 +1035,10 @@ public class Linker {
                         x.getSolves().clear();
                         x.getSolves().addAll(d.getSolves());
                     }
+
+//                    if(!rightList.contains(x)) {
+//                        rightList.add(x);
+//                    }
                 }
 
             }
@@ -844,6 +1086,7 @@ public class Linker {
     public boolean checkSystem(List<Domain> tree, boolean logging) throws Exception {
         boolean block = false;
         boolean success = false;
+        List<List<TValue>> solves = new ArrayList<>();
         for (Domain d : tree) {
             if (d.isSystem()) {
 
@@ -881,6 +1124,16 @@ public class Linker {
                 if (block && logging) {
                     mind.getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
                 }
+                if (!block & d.isComplete()) {
+                    List<TValue> list = new ArrayList<>();
+                    for (TVariable t : d.getArguments().getTVariables(mind)) {
+                        list.add(t.getCurrent());
+                    }
+//                    Right r = d.getRight();
+                    if (!list.isEmpty()) {
+                        solves.add(list);
+                    }
+                }
 //                d.popValues();
 
 //                List<TVariable> ts = d.getArguments().getTVariables(true);
@@ -904,6 +1157,10 @@ public class Linker {
                         d.unCalculated();
                     }
                 }
+            } else if (!solves.isEmpty()) {
+                for (List<TValue> list : solves) {
+                    mind.addTSolve(list);
+                }
             }
         }
 
@@ -912,9 +1169,6 @@ public class Linker {
 
 }
 
-//TODO Убрать Record, перевести функционал на Right
-//TODO Query с параметрами
-//TODO Множества {} SET
 //TODO Запрсы +(insert), -(delete), =(update)
 //TODO счетчик ссылок для сборки мусор
 //TODO time для каждой записи в базе

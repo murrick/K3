@@ -828,7 +828,7 @@ public class Screen {
             for (Domain s : set) {
 //                if (!s.isDestFor()) {
 //                    mind.getSubstituted().reset();
-                showPredRecurse(mind, s.getArguments().getTVariables(mind, true), 0, s, showCauses);
+                showPredRecurse(mind, s.getArguments().getTVariables(mind), 0, s, showCauses);
 //                }
             }
         }

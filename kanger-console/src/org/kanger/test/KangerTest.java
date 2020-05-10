@@ -2309,7 +2309,7 @@ public class KangerTest {
         mind.clear();
         mind = new Mind(mind.getUser());
 
-        final int COUNT = 13;
+        final int COUNT = 130;
 
 //        Screen.session(mind.getUser());
 

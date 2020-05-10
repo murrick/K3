@@ -184,7 +184,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void delete(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         d.setDeleted();
-        for (TVariable t : d.getArguments().getTVariables(mind, true)) {
+        for (TVariable t : d.getArguments().getTVariables(mind)) {
             mind.getTVars().delete(t);
         }
         for (Function f : d.getArguments().getFunctions(mind)) {

@@ -48,6 +48,7 @@ public class User implements IUser {
             storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
             storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
             storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
+            storage.put(TSolveFactory.SCHEMA, data.getBase(TSolveFactory.SCHEMA));
 
             while (mind.getNext() != null) {
                 mind = mind.getNext();
@@ -62,6 +63,7 @@ public class User implements IUser {
             mind.getTValues().transaction(null);
             mind.getTVars().transaction(null);
             mind.getLibrary().transaction(null);
+//            mind.getTSolves().transaction(null);
 
             return mind;
 

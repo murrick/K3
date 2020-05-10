@@ -17,8 +17,9 @@ import java.util.List;
 
 public class ArgList extends ArrayList<Argument> {
 
-    //    private transient IUser user = null;
     private Mind mind = null;
+    private List<TVariable> tVariables = null;
+    private List<Long> tVariablesIds = new ArrayList<>();
 
     public ArgList() {
         super();
@@ -215,15 +216,24 @@ public class ArgList extends ArrayList<Argument> {
     }
 
 
-    public List<TVariable> getTVariables(Mind mind, boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<TVariable> getTVariables(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//        if(tVariables == null || tVariables.size() != tVariablesIds.size()) {
+//            tVariables = new ArrayList<>();
+//            for(long id : tVariablesIds) {
+//                TVariable t = mind.getTVars().load(id);
+//                tVariables.add(t);
+//            }
+//        }
+//        return  tVariables;
+//
         List<TVariable> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
             if (a.isTSet() && !a.getT(mind).isDeleted() && !a.getT(mind).isDeleted() && !list.contains(a.getT(mind))) {
                 list.add(a.getT(mind));
-            } else if (full && a.isFSet()) {
-                List<TVariable> temp = a.getF(mind).getArguments().getTVariables(mind, full);
+            } else if (a.isFSet()) {
+                List<TVariable> temp = a.getF(mind).getArguments().getTVariables(mind);
                 for (TVariable t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
@@ -315,7 +325,7 @@ public class ArgList extends ArrayList<Argument> {
 
     public List<Term> getStamp(Mind mind) throws IOException, ClassNotFoundException, ParametersIncompleteException, OutOfBufferException, RuntimeErrorException {
         List<Term> list = new ArrayList<>();
-        for (TVariable t : getTVariables(mind, true)) {
+        for (TVariable t : getTVariables(mind)) {
             if (t.isEmpty()) {
                 throw new ParametersIncompleteException(t.toString());
             }
@@ -350,7 +360,7 @@ public class ArgList extends ArrayList<Argument> {
     }
 
     public void applyStamp(Mind mind, List<Term> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        List<TVariable> curr = getTVariables(mind, true);
+        List<TVariable> curr = getTVariables(mind);
         for (int i = 0; i < curr.size(); ++i) {
             if (curr.get(i).find(list.get(i)) != null) {
                 curr.get(i).setValue(list.get(i));
@@ -381,4 +391,13 @@ public class ArgList extends ArrayList<Argument> {
         return UnitType.ARGLIST;
     }
 
+    @Override
+    public boolean add(Argument argument) {
+        if (argument.isTSet()) {
+            if (!tVariablesIds.contains(argument.getId())) {
+                tVariablesIds.add(argument.getId());
+            }
+        }
+        return super.add(argument);
+    }
 }

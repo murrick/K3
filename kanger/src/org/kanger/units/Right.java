@@ -411,38 +411,52 @@ public class Right implements IUnit<Right> {
         this.deleted = true;
     }
 
-    public TSolve addTSolve(List<TValue> list) {
-        TSolve tmp = findTSolve(list);
-        if (tmp != null) {
-            return tmp;
-        } else {
-            if (!mind.getRightSolves().containsKey(this)) {
-                mind.getRightSolves().put(this, new ArrayList<>());
-            }
-            tmp = new TSolve(list, mind);
-            mind.getRightSolves().get(this).add(tmp);
-            return tmp;
-        }
-    }
+//    public TSolve addTSolve(List<TValue> list) {
+//        TSolve tmp = findTSolve(list);
+//        if (tmp != null) {
+//            return tmp;
+//        } else {
+//            if (!mind.getRightSolves().containsKey(this)) {
+//                mind.getRightSolves().put(this, new ArrayList<>());
+//            }
+//            tmp = new TSolve(list, mind);
+//            mind.getRightSolves().get(this).add(tmp);
+//            return tmp;
+//        }
+//    }
+//
+//    public TSolve findTSolve(List<TValue> list) {
+//        TSolve tmp = new TSolve(list, mind);
+//        if (mind.getRightSolves().containsKey(this)) {
+//            for (TSolve t : mind.getRightSolves().get(this)) {
+//                if (tmp.equalsTo(t)) {
+//                    return t;
+//                }
+//            }
+//        }
+//        return null;
+//    }
+//
+//    public List<TSolve> getTSolves() {
+//        if (!mind.getRightSolves().containsKey(this)) {
+//            mind.getRightSolves().put(this, new ArrayList<>());
+//        }
+//        return mind.getRightSolves().get(this);
+//    }
 
-    public TSolve findTSolve(List<TValue> list) {
-        TSolve tmp = new TSolve(list, mind);
-        if (mind.getRightSolves().containsKey(this)) {
-            for (TSolve t : mind.getRightSolves().get(this)) {
-                if (tmp.equalsTo(t)) {
-                    return t;
-                }
-            }
-        }
-        return null;
-    }
-
-    public List<TSolve> getTSolves() {
-        if (!mind.getRightSolves().containsKey(this)) {
-            mind.getRightSolves().put(this, new ArrayList<>());
-        }
-        return mind.getRightSolves().get(this);
-    }
+//    public Set<TVariable> setTSlolve(TSolve s) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        final SortedSet<TVariable> tvars = new TreeSet<>();
+//        for (List<Domain> tree : getTree()) {
+//            for (Domain d : tree) {
+//                tvars.addAll(d.getArguments().getTVariables(mind, true));
+//            }
+//        }
+//        for (TVariable t : tvars) {
+//            t.setCurrent(s == null ? null : s.getValue(t));
+////            mind.getTValues().set(t, s == null ? null : s.getValue(t));
+//        }
+//        return tvars;
+//    }
 
     @Override
     public UnitType getUnitType() {

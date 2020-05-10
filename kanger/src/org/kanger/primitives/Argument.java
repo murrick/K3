@@ -10,6 +10,8 @@ import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
@@ -121,6 +123,11 @@ public class Argument {
                 TValue s = mind.getTValues().find(tv, t);
                 if (s == null) {
                     s = mind.getTValues().add(tv, t);
+
+                    List<TValue> list = new ArrayList<>();
+                    list.add(s);
+                    mind.addTSolve(list);
+
                 } else {
                     s = null;
                 }
@@ -146,7 +153,10 @@ public class Argument {
                 return true;
             case TVARIABLE:
                 TVariable tv = (TVariable) getO(mind);
-                tv.setValue(t);
+                TValue s = tv.setValue(t);
+//                mind.addTSolve(s);
+
+
 //                TValue s = mind.getTValues().find(tv, t);
 //                if (s == null) {
 //                    s = mind.getTValues().add(tv, t);

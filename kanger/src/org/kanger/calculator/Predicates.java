@@ -48,10 +48,20 @@ public class Predicates {
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (arg.get(1).setValue(mind, arg.get(0).getValue(mind))) {
                             i = 1;
+                            if (arg.get(1).isTSet()) {
+                                List<TValue> list = new ArrayList<>();
+                                list.add(arg.get(1).getT(mind).getCurrent());
+                                mind.addTSolve(list);
+                            }
                         }
                     } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
                         if (arg.get(0).setValue(mind, arg.get(1).getValue(mind))) {
                             i = 1;
+                            if (arg.get(0).isTSet()) {
+                                List<TValue> list = new ArrayList<>();
+                                list.add(arg.get(0).getT(mind).getCurrent());
+                                mind.addTSolve(list);
+                            }
                         }
                     } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
                         if (arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind)) == 0) {
