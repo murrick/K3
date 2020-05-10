@@ -341,40 +341,42 @@ public class Linker {
         final TVariable t = tail.first();
         boolean found = false;
         boolean result = false;
-        for (TVariableSet key : mind.getRightSolves().keySet()) {
-            if (key.contains(t)) {
-                found = true;
-                boolean success = false;
-                for (TSolve s : mind.getRightSolves().get(key)) {
-                    if (s.containsTValue(t.getCurrent())) {
-                        if (s.size() > 1) {
-                            boolean complete = true;
-                            for (TVariable x : tail) {
-                                if (x.getId() != t.getId()) {
-                                    if (s.containsTVar(x)) {
-                                        if (!s.containsTValue(x.getCurrent())) {
-                                            complete = false;
-                                            break;
+        if (tail.size() > 1) {
+            for (TVariableSet key : mind.getRightSolves().keySet()) {
+                if (key.contains(t)) {
+                    found = true;
+                    boolean success = false;
+                    for (TSolve s : mind.getRightSolves().get(key)) {
+                        if (s.containsTValue(t.getCurrent())) {
+                            if (s.size() > 1) {
+                                boolean complete = true;
+                                for (TVariable x : tail) {
+                                    if (x.getId() != t.getId()) {
+                                        if (s.containsTVar(x)) {
+                                            if (!s.containsTValue(x.getCurrent())) {
+                                                complete = false;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
-                            }
-                            if (complete) {
+                                if (complete) {
+                                    success = true;
+                                    break;
+                                }
+                            } else {
                                 success = true;
                                 break;
                             }
-                        } else {
+                        } else if (s.size() == 1) {
                             success = true;
                             break;
                         }
-                    } else if (s.size() == 1) {
-                        success = true;
+                    }
+                    if (success) {
+                        result = true;
                         break;
                     }
-                }
-                if (success) {
-                    result = true;
-                    break;
                 }
             }
         }
