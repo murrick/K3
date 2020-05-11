@@ -136,10 +136,10 @@ public class Analiser {
                     if (q.getMind() == null) {
                         q.setMind(mind);
                     }
-                    if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(mind, true).isEmpty()) {
+                    if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
                         mind.getSolutions().add(q);
                         mind.getValues().add(p.getSolves());
-                    } else if (q.getDomain().isQuery() && q.getDomain().getArguments().getCVariables(mind, true).isEmpty()) {
+                    } else if (q.getDomain().isQuery() && q.getDomain().getArguments().getCVariables(mind).isEmpty()) {
                         mind.getSolutions().add(p);
                         mind.getValues().add(q.getSolves());
                     }

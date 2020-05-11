@@ -245,18 +245,18 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    public List<Term> getCVariables(Mind mind, boolean full) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<Term> getCVariables(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         List<Term> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
-            if (a.isCVar() && !a.getValue(mind).isDeleted() && !list.contains(a.getValue(mind))) {
+            if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && !a.getValue(mind).isDeleted() && !list.contains(a.getValue(mind))) {
                 Term t = a.getValue(mind);
                 //TODO: Костыль
 //                t.setMind(mind);
                 list.add(t);
-            } else if (full && a.isFSet()) {
-                List<Term> temp = a.getF(mind).getArguments().getCVariables(mind, full);
+            } else if (a.isFSet()) {
+                List<Term> temp = a.getF(mind).getArguments().getCVariables(mind);
                 for (Term t : temp) {
                     if (!list.contains(t)) {
                         //TODO: Костыль

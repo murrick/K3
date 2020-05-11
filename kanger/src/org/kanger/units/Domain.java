@@ -366,7 +366,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
 
             List<Term> cVars = new ArrayList<>();
-            for (Term t : arguments.getCVariables(mind, true)) {
+            for (Term t : arguments.getCVariables(mind)) {
                 //TODO: Костыль
 //                t.setMind(mind);
                 if (!cVars.contains(t)) {

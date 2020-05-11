@@ -789,6 +789,21 @@ public class Linker {
                 }
             }
 
+            if (excluded.size() > 1) {
+                boolean cFound = false;
+                boolean xFound = false;
+                for (Domain d : excluded) {
+                    if (!d.getArguments().getCVariables(mind).isEmpty()) {
+                        cFound = true;
+                    } else {
+                        xFound = true;
+                    }
+                }
+                if (cFound && xFound) {
+//                    excluded.clear();
+                }
+            }
+
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];
                 occurs = true;
