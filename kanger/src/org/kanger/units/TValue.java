@@ -25,6 +25,9 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     private long tag = 0;
 //    private Set<Cause> causes = new HashSet<>();
 
+    private boolean cVariable = false;        // Родительская c-переменная
+//    private long parentId = -1;               // Родительская c-переменная
+
     //    private TValue next = null;          // Следующая переменная
     private transient long valueId = -1;
     private transient long tVarId = -1;
@@ -40,6 +43,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         value = val;
         tVarId = tVar.getId();
         valueId = value.getId();
+        cVariable = val.isCVariable();
     }
 
     public TValue(Mind mind) {
@@ -52,7 +56,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.value = t;
         tVarId = tVar.getId();
         valueId = value.getId();
-
+        cVariable = t.isCVariable();
     }
 
     public ByteBuffer pack() {
@@ -61,7 +65,10 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
                 .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
                 .putLong(valueId)
-                .putLong(tVarId);
+                .putLong(tVarId)
+                .putByte(cVariable ? 1 : 0);
+//                .putLong(parentId);
+
 //                .putInt(causes.size());
 //        for (Cause c : causes) {
 //            packet.append(c.pack());
@@ -75,6 +82,8 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         deleted = packet.getByte() != 0;
         valueId = packet.getLong();
         tVarId = packet.getLong();
+        cVariable = packet.getByte() != 0;
+//        parentId = packet.getLong();
 //        int count = packet.getInt();
 //        while (count-- > 0) {
 //            try {
@@ -99,6 +108,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     public void setValue(Term value) {
         this.value = value;
         valueId = value.getId();
+        cVariable = value.isCVariable();
     }
 
 //    public Set<Cause> getCauses() {
@@ -264,4 +274,21 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 ////        }
 //        return this;
 //    }
+
+
+    //    public long getParentId() {
+//        return parentId;
+//    }
+//
+//    public void setParentId(long parentId) {
+//        this.parentId = parentId;
+//    }
+//
+    public boolean isCVariable() {
+        return cVariable;
+    }
+
+    public void setCVariable(boolean cVariable) {
+        this.cVariable = cVariable;
+    }
 }

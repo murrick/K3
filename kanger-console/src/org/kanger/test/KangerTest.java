@@ -2069,6 +2069,15 @@ public class KangerTest {
         }
     }
 
+//    public void set_06_0B() throws Exception {
+//
+//        mind.clear();
+//        mind.compile("!@x $y parent(y,x);" +
+//                "!@x ~parent(x,x);");
+//        mind.query("?@x @y $z parent(z,x) && parent(z,y);");
+//        showResult(null);
+//    }
+
     public void set_07_01() throws Exception {
 
         mind.clear();
@@ -2309,7 +2318,7 @@ public class KangerTest {
         mind.clear();
         mind = new Mind(mind.getUser());
 
-        final int COUNT = 130;
+        final int COUNT = 13;
 
 //        Screen.session(mind.getUser());
 
@@ -2430,7 +2439,7 @@ public class KangerTest {
 //        mind.commit(b);
 //        mind.commit(c);
 
-//        Screen.showBase(a, false, null);
+//        Screen.showBase(mind, false, null);
 //        Screen.showBase(a, false, null);
 //        Screen.showBase(b, false, null);
 //        Screen.showBase(c, false, null);

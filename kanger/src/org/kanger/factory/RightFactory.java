@@ -311,6 +311,14 @@ public class RightFactory implements Iterable<Right> {
                 for (TValue t : list.getTValues(mind, true)) t.setQuery();
             } else {
                 list = domain.getArguments().convertBase(mind);
+//                list = new ArgList();
+//                for (Argument a : domain.getArguments().convertBase(mind)) {
+//                    if (a.isCVar()) {
+//                        list.add(new Argument(mind.getTerms().createCVar(domain.getRight(), a.getValue(mind).getName())));
+//                    } else {
+//                        list.add(a);
+//                    }
+//                }
             }
             Right r = new Right(mind);
             register(r);

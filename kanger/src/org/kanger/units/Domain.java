@@ -365,17 +365,17 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
 
-            List<Term> cVars = new ArrayList<>();
-            for (Term t : arguments.getCVariables(mind)) {
-                //TODO: Костыль
-//                t.setMind(mind);
-                if (!cVars.contains(t)) {
-                    cVars.add(t);
-                }
-            }
-            for (Term t : cVars) {
-                s += "$" + t.getName() + " ";
-            }
+//            List<Term> cVars = new ArrayList<>();
+//            for (Term t : arguments.getCVariables(mind)) {
+//                //TODO: Костыль
+////                t.setMind(mind);
+//                if (!cVars.contains(t)) {
+//                    cVars.add(t);
+//                }
+//            }
+//            for (Term t : cVars) {
+//                s += "$" + t.getName() + " ";
+//            }
 
             Operation op = Parser.getOp(getPredicate().getName().toString(), getRange());
 
@@ -415,7 +415,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 
             String suffix = "";
             if ((mind.getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
-                suffix += " " + id + " " + mindId + " " + mind.getId();
+                suffix += " " + id; // + " " + mindId + " " + mind.getId();
             }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
                 try {
@@ -452,6 +452,11 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
         for (int i = 0; i < arguments.size(); ++i) {
             if (arguments.get(i).isEmpty(mind) || o.getArguments().get(i).isEmpty(mind)) {
                 return false;
+//            } else if (id != -1 && o.getId() != -1
+//                    && arguments.get(i).isCVar(mind) && o.getArguments().get(i).isCVar(mind)
+//                    && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()
+//                    && !arguments.get(i).getValue(mind).getSlaves().isEmpty() && !o.getArguments().get(i).getValue(mind).getSlaves().isEmpty()                    ) {
+//                return false;
             } else if (id != -1 && o.getId() != -1
                     && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()) {
                 return false;
@@ -901,27 +906,36 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 //        return cnt;
 //    }
 
-    public int getVarOrder(int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        List<Integer> list = new ArrayList<>();
-        SortedMap<Integer, Integer> sort = new TreeMap<>();
-        int plains = 0;
-        for (int i = 0; i < arguments.size(); ++i) {
-            int ix = 0;
-            if (arguments.get(i).isTSet()) {
-                ix = arguments.get(i).getT(mind).getIndex();
-            } else if (arguments.get(i).isCVar()) {
-                ix = arguments.get(i).getValue(mind).getIndex();
-            } else {
-                ++plains;
+    public void calcVarOrders() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        for (int pos = 0; pos < getRange(); ++pos) {
+            List<Integer> list = new ArrayList<>();
+            SortedMap<Integer, Integer> sort = new TreeMap<>();
+            int plains = 0;
+            for (int i = 0; i < arguments.size(); ++i) {
+                int ix = 0;
+                if (arguments.get(i).isTSet()) {
+                    ix = arguments.get(i).getT(mind).getIndex();
+                } else if (arguments.get(i).isCVar(mind) && arguments.get(i).getValue(mind).getRightId() == rightId) {
+                    ix = arguments.get(i).getValue(mind).getIndex();
+                } else {
+                    ++plains;
+                }
+                list.add(ix);
+                sort.put(ix, ix);
             }
-            list.add(ix);
-            sort.put(ix, ix);
+            int i = sort.firstKey() == 0 ? 0 : 1;
+            for (Integer e : sort.keySet()) {
+                sort.put(e, i++);
+            }
+            arguments.get(pos).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
         }
-        int i = sort.firstKey() == 0 ? 0 : 1;
-        for (Integer e : sort.keySet()) {
-            sort.put(e, i++);
+    }
+
+    public int getVarOrder(int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        if (arguments.get(pos).getVarOrder() == -1) {
+            calcVarOrders();
         }
-        return plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0;
+        return arguments.get(pos).getVarOrder();
     }
 
     @Override
@@ -1099,7 +1113,6 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
         for (int i = 0; i < range; ++i) {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
-                case CVARIABLE:
                 case TVARIABLE:
                     hash = 47 * hash + (i + 1) * getVarOrder(i);
                     break;
@@ -1124,7 +1137,6 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
                 if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
-                        case CVARIABLE:
                             if (getVarOrder(i) != to.getVarOrder(i)) {
                                 return false;
                             }
@@ -1175,6 +1187,14 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
     public int compareTo(Domain domain) {
         return (int) (rightId == domain.rightId ? id - domain.id : rightId - domain.rightId);
     }
+
+//    public int compareVars(Domain slave, int pos) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        if(arguments.get(pos).isTSet() && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
+//            return arguments.get(pos).getT(mind).getIndex() - slave.get(pos).getValue(mind).getIndex();
+//        } else {
+//            return 0;
+//        }
+//    }
 
 //    public Domain commit(Mind m) throws Exception {
 //        setPredicate(predicate.commit(m));

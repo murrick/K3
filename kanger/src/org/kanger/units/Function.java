@@ -395,9 +395,6 @@ public class Function implements IUnit<Function> {
         for (int i = 0; i < range; ++i) {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
-                case CVARIABLE:
-                    hash = 47 * hash + (i + 1) * (arguments.get(i).getValue(mind).getIndex() - r.getVarIndex());
-                    break;
                 case TVARIABLE:
                     hash = 47 * hash + (i + 1) * (arguments.get(i).getT(mind).getIndex() - r.getVarIndex());
                     break;
@@ -418,12 +415,6 @@ public class Function implements IUnit<Function> {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
-                        case CVARIABLE:
-                            if ((arguments.get(i).getValue(mind).getIndex() - left.getVarIndex())
-                                    != (f.getArguments().get(i).getValue(mind).getIndex() - right.getVarIndex())) {
-                                return false;
-                            }
-                            break;
                         case TVARIABLE:
                             if ((arguments.get(i).getT(mind).getIndex() - left.getVarIndex())
                                     != (f.getArguments().get(i).getT(mind).getIndex() - right.getVarIndex())) {

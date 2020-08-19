@@ -140,13 +140,13 @@ public class DictionaryFactory implements Iterable<Term> {
         return null;
     }
 
-    public Term createCVar(Right r, String name) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term createCVar(Right r, Term name) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
         t.setRight(r);
         t.setIndex(i);
-        t.setName(add(name));
+        t.setName(name);
         return t;
     }
 

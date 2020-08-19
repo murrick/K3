@@ -98,7 +98,7 @@ public class Functions {
                         if (!((Function) o).setParameter(1, _bitnot(arg.get(0).getValue(mind)))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar()) {
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar(mind)) {
                         if (!((Function) o).setParameter(0, _bitnot(arg.get(1).getValue(mind)))) {
                             ret = 0;
                         }
@@ -130,7 +130,7 @@ public class Functions {
                         if (!((Function) o).setParameter(1, _neg(arg.get(0).getValue(mind)))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar()) {
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar(mind)) {
                         if (!((Function) o).setParameter(0, _neg(arg.get(1).getValue(mind)))) {
                             ret = 0;
                         }
@@ -162,7 +162,7 @@ public class Functions {
                         if (!((Function) o).setParameter(1, arg.get(0).getValue(mind))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar()) {
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar(mind)) {
                         if (!((Function) o).setParameter(0, arg.get(1).getValue(mind))) {
                             ret = 0;
                         }
@@ -1052,17 +1052,17 @@ public class Functions {
         // String functions
         /// Строковые функции
         {
-            put("strlen(1)", new SysOp(LibMode.FUNCTION, "strlen", 1, new IReactor() {
+            put("length(1)", new SysOp(LibMode.FUNCTION, "length", 1, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
                         ArgList arg = ((Function) o).getArguments();
                         if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(arg.get(0).getValue(mind).toString().length()))) {
+                            if (!((Function) o).setParameter(1, _length(arg.get(0).getValue(mind)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
-                            if (mind.getTerms().add(arg.get(0).getValue(mind).toString().length()).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            if (_length(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
                                 ret = 2;
                             } else {
                                 ret = 0;
@@ -1078,6 +1078,7 @@ public class Functions {
             }));
         }
 
+        //TODO: Сделать для BLOB
         {
             put("mid(2)", new SysOp(LibMode.FUNCTION, "mid", 2, new IReactor() {
                 public Object run(Object o) {
@@ -1582,6 +1583,11 @@ public class Functions {
                 }
             }
             res = list;
+        } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
+            byte[] buffer = new byte[((byte[]) a.getValue()).length + ((byte[]) b.getValue()).length];
+            System.arraycopy(a.getValue(), 0, buffer, 0, ((byte[]) a.getValue()).length);
+            System.arraycopy(b.getValue(), 0, buffer, ((byte[]) a.getValue()).length, ((byte[]) b.getValue()).length);
+            res = buffer;
         } else {
             res = a.getValue().toString() + b.getValue().toString();
         }
@@ -1963,6 +1969,20 @@ public class Functions {
             ex.printStackTrace(System.err);
         }
         return res;
+    }
+
+    private Term _length(Term a) throws Exception {
+        Object res = null;
+        if (a.getType() == DataType.STRING) {
+            res = a.getValue().toString().length();
+        } else if (a.getType() == DataType.BLOB) {
+            res = ((byte[]) a.getValue()).length;
+        } else if (a.getType() == DataType.INTERVAL) {
+            res = mind.getCalculator().getPredicates().expand(a, null).size();
+        } else if (a.getType() == DataType.SET) {
+            res = mind.getCalculator().getPredicates().expand(a, null).size();
+        }
+        return mind.getTerms().add(res);
     }
 
 }

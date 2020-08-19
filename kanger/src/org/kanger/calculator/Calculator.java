@@ -1,7 +1,6 @@
 package org.kanger.calculator;
 
 import org.kanger.Mind;
-import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
@@ -133,7 +132,7 @@ public class Calculator {
 //            }
 
             for (Argument a : fu.getArguments()) {
-                if (!a.isEmpty(mind) && a.getType() == ArgumentType.CVARIABLE) {
+                if (!a.isEmpty(mind) && a.isCVar(mind)) {
 //                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;
                 }

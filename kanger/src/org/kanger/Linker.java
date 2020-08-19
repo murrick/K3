@@ -101,6 +101,7 @@ public class Linker {
             rotator(leftList, causes, logging);
             rotator(rightList, causes, logging);
 
+//            break;
 
         } while (mind.getRights().isAction()
                 || mind.getTValues().isAction()
@@ -315,6 +316,7 @@ public class Linker {
             mind.getTValues().forEach(t, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
+//                    if (!((TValue) o).getValue().isCVariable() || !((TValue) o).getValue().getSlaves().isEmpty()) {
                     result[1] = true;
                     t.setCurrent((TValue) o);
                     if (isValidFor(base.tailSet(t))) {
@@ -323,6 +325,7 @@ public class Linker {
                             result[0] = true;
                         }
                     }
+//                    }
                     return true;
                 }
             });
@@ -417,17 +420,19 @@ public class Linker {
                                 boolean applied = false;
 
                                 // Отсечение несовпадений по константам
-                                for (int i = 0; i < slave.getRange(); ++i) {
-                                    if (!master.get(i).isTSet() && !slave.get(i).isTSet()
-                                            && (!master.get(i).isFSet() || !master.get(i).getF(mind).isEmpty())
-                                            && (!slave.get(i).isFSet() || !slave.get(i).getF(mind).isEmpty())
-                                            && (master.get(i).isEmpty(mind)
-                                            || slave.get(i).isEmpty(mind)
-                                            || master.get(i).getValue(mind).getId() != slave.get(i).getValue(mind).getId())) {
-                                        success = false;
-                                        break;
-                                    }
-                                }
+//                                for (int i = 0; i < slave.getRange(); ++i) {
+//                                    if (!master.get(i).isTSet() && !slave.get(i).isTSet()
+//                                            && (!master.get(i).isFSet() || !master.get(i).getF(mind).isEmpty())
+//                                            && (!slave.get(i).isFSet() || !slave.get(i).getF(mind).isEmpty())
+//                                            && (!slave.get(i).isCVar(mind) || !slave.get(i).getValue(mind).getSlaves().isEmpty())
+//                                            && (!master.get(i).isCVar(mind) || !master.get(i).getValue(mind).getSlaves().isEmpty())
+//                                            && (master.get(i).isEmpty(mind)
+//                                            || slave.get(i).isEmpty(mind)
+//                                            || master.get(i).getValue(mind).getId() != slave.get(i).getValue(mind).getId())) {
+//                                        success = false;
+//                                        break;
+//                                    }
+//                                }
 
                                 if (success) {
                                     for (int i = 0; i < slave.getRange(); ++i) {
@@ -435,10 +440,27 @@ public class Linker {
                                         // Подстановка снизу вверх
                                         if (master.get(i).isTSet()
                                                 && !slave.get(i).isEmpty(mind)
-                                                && master.getVarOrder(i) >= slave.getVarOrder(i)) {
-                                            TValue s = mind.getTValues().find(master.get(i).getT(mind), slave.get(i).getValue(mind));
+//                                                && (!slave.get(i).isCVar() || slave.isComplete())
+//                                                && (/*master.getRightId() != slave.get(i).getValue(mind).getRightId() ||*/ master.getVarOrder(i) >= slave.getVarOrder(i))) {
+                                                && master.getVarOrder(i) > slave.getVarOrder(i)
+//                                                && (!slave.get(i).isCVar(mind)
+//                                                || slave.get(i).getValue(mind).getRightId() != master.get(i).getT(mind).getRightId()
+//                                                || slave.get(i).getValue(mind).getIndex() < master.get(i).getT(mind).getIndex())
+                                        ) {
+
+//                                            if(master.getRightId() == slave.get(i).getValue(mind).getRightId()) {
+//                                                System.err.println("=== " + master.getVarOrder(i) + ":" + master + " <-- " + slave.getVarOrder(i) + ":" + slave);
+//                                            }
+
+//                                            long parentId = -1;
+                                            Term tm = slave.get(i).getValue(mind);
+//                                            if (tm.isCVariable() && tm.getSlaves().isEmpty()) {
+//                                                tm = mind.getTerms().createCVar(tm.getRight(), tm.getName());
+//                                            }
+                                            TValue s = mind.getTValues().find(master.get(i).getT(mind), tm);
                                             if (s == null) {
-                                                s = mind.getTValues().add(master.get(i).getT(mind), slave.get(i).getValue(mind));
+                                                s = mind.getTValues().add(master.get(i).getT(mind), tm);
+//                                                s.setParentId(parentId);
                                                 result = true;
                                             }
                                             substMaster[i] = s;
@@ -447,13 +469,31 @@ public class Linker {
                                             applied = true;
                                         }
 
+
                                         // Подстановка сверху вниз
                                         if (slave.get(i).isTSet()
                                                 && !master.get(i).isEmpty(mind)
-                                                && slave.getVarOrder(i) >= master.getVarOrder(i)) {
-                                            TValue s = mind.getTValues().find(slave.get(i).getT(mind), master.get(i).getValue(mind));
+//                                                && (!master.get(i).isCVar() || master.isComplete())
+//                                                && (/*slave.getRightId() != master.get(i).getValue(mind).getRightId() ||*/ slave.getVarOrder(i) >= master.getVarOrder(i))) {
+                                                && slave.getVarOrder(i) >= master.getVarOrder(i)
+//                                                && (!master.get(i).isCVar(mind)
+//                                                || master.get(i).getValue(mind).getRightId() != slave.get(i).getT(mind).getRightId()
+//                                                || master.get(i).getValue(mind).getIndex() < slave.get(i).getT(mind).getIndex())
+                                        ) {
+
+//                                            if(slave.getRightId() == master.get(i).getValue(mind).getRightId()) {
+//                                                System.err.println("=== " + slave.getVarOrder(i) + ":" + slave + " <-- " + master.getVarOrder(i) + ":" + master);
+//                                            }
+
+//                                            long parentId = -1;
+                                            Term tm = master.get(i).getValue(mind);
+//                                            if (tm.isCVariable() && tm.getSlaves().isEmpty()) {
+//                                                tm = mind.getTerms().createCVar(tm.getRight(), tm.getName());
+//                                            }
+                                            TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
                                             if (s == null) {
-                                                s = mind.getTValues().add(slave.get(i).getT(mind), master.get(i).getValue(mind));
+                                                s = mind.getTValues().add(slave.get(i).getT(mind), tm);
+//                                                s.setParentId(parentId);
                                                 result = true;
                                             }
                                             substSlave[i] = s;
@@ -789,20 +829,21 @@ public class Linker {
                 }
             }
 
-            if (excluded.size() > 1) {
-                boolean cFound = false;
-                boolean xFound = false;
-                for (Domain d : excluded) {
-                    if (!d.getArguments().getCVariables(mind).isEmpty()) {
-                        cFound = true;
-                    } else {
-                        xFound = true;
-                    }
-                }
-                if (cFound && xFound) {
-//                    excluded.clear();
-                }
-            }
+            //TODO: Интересно. Сделать репликацию c-переменных
+//            if (excluded.size() > 1) {
+//                boolean cFound = false;
+//                boolean xFound = false;
+//                for (Domain d : excluded) {
+//                    if (!d.getArguments().getCVariables(mind).isEmpty()) {
+//                        cFound = true;
+//                    } else {
+//                        xFound = true;
+//                    }
+//                }
+//                if (cFound && xFound) {
+////                    excluded.clear();
+//                }
+//            }
 
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];

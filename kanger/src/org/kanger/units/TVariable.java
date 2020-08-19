@@ -380,4 +380,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.mindId = mindId;
     }
 
+    public long getRightId() {
+        return rightId;
+    }
 }

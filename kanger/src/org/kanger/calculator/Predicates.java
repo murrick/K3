@@ -199,7 +199,8 @@ public class Predicates {
                     if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
                                 || arg.get(1).getValue(mind).getType() == DataType.SET
-                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING
+                                || arg.get(1).getValue(mind).getType() == DataType.BLOB) {
                             Term top = null;
                             for (Term cur : expand(arg.get(1).getValue(mind), null)) {
                                 if (top == null) top = cur;
@@ -214,7 +215,8 @@ public class Predicates {
                     } else if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
                                 || arg.get(1).getValue(mind).getType() == DataType.SET
-                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING
+                                || arg.get(1).getValue(mind).getType() == DataType.BLOB) {
                             i = _in(arg.get(0).getValue(mind), arg.get(1).getValue(mind), null) ? 1 : 0;
                         }
                     }
@@ -231,7 +233,8 @@ public class Predicates {
                     if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
                                 || arg.get(1).getValue(mind).getType() == DataType.SET
-                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING
+                                || arg.get(1).getValue(mind).getType() == DataType.BLOB) {
                             Term top = null;
                             for (Term cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind))) {
                                 if (top == null) top = cur;
@@ -246,7 +249,8 @@ public class Predicates {
                     } else if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
                                 || arg.get(1).getValue(mind).getType() == DataType.SET
-                                || arg.get(1).getValue(mind).getType() == DataType.STRING) {
+                                || arg.get(1).getValue(mind).getType() == DataType.STRING
+                                || arg.get(1).getValue(mind).getType() == DataType.BLOB) {
                             i = _in(arg.get(0).getValue(mind), arg.get(1).getValue(mind), arg.get(2).getValue(mind)) ? 1 : 0;
                         }
                     }
@@ -369,6 +373,25 @@ public class Predicates {
                     }
                 }
             }
+        } else if (interval.getType() == DataType.BLOB) {
+            int pos = 0;
+            while (pos < ((byte[]) interval.getValue()).length) {
+                boolean complete = true;
+                for (int i = 0; i < ((byte[]) cur.getValue()).length; ++i) {
+                    if (((byte[]) interval.getValue()).length <= pos + i) {
+                        break;
+                    } else if (((byte[]) cur.getValue())[i] != ((byte[]) interval.getValue())[pos + i]) {
+                        complete = false;
+                        break;
+                    }
+                }
+                if (complete) {
+                    res = true;
+                    break;
+                } else {
+                    ++pos;
+                }
+            }
         }
         return res;
     }
@@ -437,6 +460,41 @@ public class Predicates {
                         Term t = mind.getTerms().add(mt.group(k + 1) + "");
                         list.add(t);
                     }
+                }
+            }
+        } else if (interval.getType() == DataType.BLOB) {
+            if (step == null) {
+                for (int k = 0; k < ((byte[]) interval.getValue()).length; ++k) {
+                    Term x = mind.getTerms().add(new byte[]{((byte[]) interval.getValue())[k]});
+                    list.add(x);
+                }
+            } else {
+                int bytes = ((Double) step.getValue()).intValue();
+                byte[] cell = null;
+                int pos = 0;
+                int len = 0;
+                int k = 0;
+                while (k < ((byte[]) interval.getValue()).length) {
+                    if (cell == null) {
+                        len = Math.min(bytes, ((byte[]) interval.getValue()).length - k);
+                        if (len > 0) {
+                            cell = new byte[len];
+                            pos = 0;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (pos < len) {
+                        cell[pos++] = ((byte[]) interval.getValue())[k++];
+                    } else {
+                        Term x = mind.getTerms().add(cell);
+                        list.add(x);
+                        cell = null;
+                    }
+                }
+                if (cell != null) {
+                    Term x = mind.getTerms().add(cell);
+                    list.add(x);
                 }
             }
         } else {

@@ -98,10 +98,7 @@ public class TValueFactory implements Iterable<TValue> {
             if (top == null) {
                 top = cache.getRoot();
             }
-            action = true;
-
-//            //TODO: ПРИБИДБ
-//            System.out.println("++++++ " + t);
+            action = true; //!o.isCVariable() || !o.getSlaves().isEmpty();
         }
 
         return t;
@@ -291,6 +288,17 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
+    public boolean isCVariabled(TVariable t, Term tm) throws Exception {
+        boolean found = false;
+        for (IStep root = cache.getRoot(); root != null; root = root.getNext()) {
+            TValue v = (TValue) root.getData(mind);
+            if (v.isCVariable()) { // && (v.getTVarId() == t.getId() || v.getParentId() == t.getId()) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
 //    public Iterator<TValue> iterator(TVariable tVariable) {
 //        return new TValueIterator(true, tVariable);
 //    }

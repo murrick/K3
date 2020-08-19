@@ -26,6 +26,9 @@ public class Argument {
 
     private transient long id = -1;
     private transient ArgumentType type = ArgumentType.EMPTY;
+
+    private transient int varOrder = -1;
+
 //    private transient IUser user = null;
 
     public Argument() {
@@ -55,7 +58,6 @@ public class Argument {
 
     private void load(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         switch (type) {
-            case CVARIABLE:
             case TERM:
                 o = mind.getTerms().load(id);
                 break;
@@ -79,11 +81,7 @@ public class Argument {
 
     private ArgumentType getObjectType() {
         if (o instanceof Term) {
-            if (((Term) o).isCVariable()) {
-                return ArgumentType.CVARIABLE;
-            } else {
                 return ArgumentType.TERM;
-            }
         } else if (o instanceof TVariable) {
             return ArgumentType.TVARIABLE;
         } else if (o instanceof TValue) {
@@ -99,7 +97,6 @@ public class Argument {
 
     public Term getValue(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         switch (type) {
-            case CVARIABLE:
             case TERM:
                 return (Term) getO(mind);
             case TVARIABLE:
@@ -143,10 +140,8 @@ public class Argument {
             case EMPTY:
                 o = t;
                 id = o.getId();
-                type = t.isCVariable() ? ArgumentType.CVARIABLE : ArgumentType.TERM;
+                type = ArgumentType.TERM;
                 return true;
-            case CVARIABLE:
-                return false;
             case TERM:
                 o = t;
                 id = o.getId();
@@ -258,12 +253,13 @@ public class Argument {
 
     public boolean isDefined(Mind mind) throws Exception {
         Term t = getValue(mind);
-        return t != null && type != ArgumentType.CVARIABLE;
+        return t != null && !isCVar(mind); //type != ArgumentType.CVARIABLE;
     }
 
 
-    public boolean isCVar() {
-        return type == ArgumentType.CVARIABLE; //!isEmpty() && getValue().isCVariable();
+    public boolean isCVar(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        return type == ArgumentType.CVARIABLE; //
+        return !isEmpty(mind) && getValue(mind).isCVariable();
     }
 
     //    public IUser getUser() {
@@ -286,4 +282,11 @@ public class Argument {
         return UnitType.ARGUMENT;
     }
 
+    public int getVarOrder() {
+        return varOrder;
+    }
+
+    public void setVarOrder(int varOrder) {
+        this.varOrder = varOrder;
+    }
 }

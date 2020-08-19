@@ -5,6 +5,7 @@ import org.kanger.Version;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class Index implements Closeable, Iterable<Index.IndexOne> {
 
@@ -14,8 +15,8 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private static final int BLOCK_SIZE = 512;
     private final Object locker = new Object();
     private int version = Version.VERSION_CODE;
-    private NavigableMap<Long, IndexOne> baseIndex = new TreeMap<>();
-    private NavigableMap<Long, IndexOne> currentBlock = new TreeMap<>();
+    private NavigableMap<Long, IndexOne> baseIndex = new ConcurrentSkipListMap<>();
+    private NavigableMap<Long, IndexOne> currentBlock = new ConcurrentSkipListMap<>();
     private File file;
     private RandomAccessFile ras;
     private boolean changed;

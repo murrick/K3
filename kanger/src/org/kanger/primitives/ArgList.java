@@ -183,7 +183,11 @@ public class ArgList extends ArrayList<Argument> {
         ArgList list = new ArgList();
         for (int i = 0; i < size(); ++i) {
             try {
-                list.add(new Argument(get(i).getValue(mind)));
+                Term t = get(i).getValue(mind);
+//                if(t.isCVariable()) {
+//                    t = mind.getTerms().createCVar(t.getRight(), t.getName());
+//                }
+                list.add(new Argument(t));
             } catch (Exception x) {
             }
         }

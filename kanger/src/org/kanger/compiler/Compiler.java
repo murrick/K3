@@ -46,6 +46,16 @@ public class Compiler {
         return r;
     }
 
+//    private Map<String, Argument> incReplacements(Map<String, Argument> replacements, Right r) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        for(Map.Entry<String, Argument> e : replacements.entrySet()) {
+//            if(e.getValue().isCVar()) {
+//                Argument p = new Argument(mind.getTerms().createCVar(r, e.getKey()));
+//                e.setValue(p);
+//            }
+//        }
+//        return replacements;
+//    }
+
     private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<Term> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
@@ -157,9 +167,22 @@ public class Compiler {
 
         Argument p = null;
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
-            p = new Argument(mind.getTVars().createTVar(r, mind.getTerms().add(varName)));
+            TVariable t = mind.getTVars().createTVar(r, mind.getTerms().add(varName));
+            p = new Argument(t);
+
+            /* Формирование списка подчиненных t-переменных для последней появившейся ранее c-переменной.
+             */
+            Term c = null;
+            for (Argument a : replacements.values()) {
+                if (a.isCVar(mind) && (c == null || c.getIndex() < a.getValue(mind).getIndex())) {
+                    c = a.getValue(mind);
+                }
+            }
+            if (c != null) {
+                c.getSlaves().add(t.getId());
+            }
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
-            p = new Argument(mind.getTerms().createCVar(r, varName));
+            p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName)));
         }
         replacements.put(varName, p);
         return antc;
@@ -275,6 +298,10 @@ public class Compiler {
             Argument t;
             if ((t = replacements.get(root.getName())) == null) {
                 t = new Argument(mind.getTerms().add(root.getName()));
+//            } else {
+//                if(t.isCVar()) {
+//                    t = new Argument(mind.getTerms().createCVar(d.getRight(), t.getValue(mind).getName().toString()));
+//                }
             }
             arg.add(t);
         }

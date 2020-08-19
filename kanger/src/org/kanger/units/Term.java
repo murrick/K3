@@ -15,10 +15,7 @@ import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -39,6 +36,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     private int index = 0;              // Индекс c-переменной
     private Term name = null;             // Оригинальное имя c-переменной
     private Right right = null;          // Ссылка на правило
+    private Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
 
     //    private Term next = null;      // Следующая запись
     private Mind mind = null;
@@ -99,6 +97,10 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         if (index > 0) {
             packet.putLong(nameId);
             packet.putLong(rightId);
+            packet.putWord(slaves.size());
+            for (long id : slaves) {
+                packet.putLong(id);
+            }
         }
         return packet.createMarked();
     }
@@ -153,6 +155,13 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         if (index > 0) {
             nameId = packet.getLong();
             rightId = packet.getLong();
+            slaves.clear();
+            int cnt = packet.getWord();
+            while (cnt-- > 0) {
+                long id = packet.getLong();
+                slaves.add(id);
+            }
+
         }
         return this;
     }
@@ -468,13 +477,28 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                     return ((Comparable) value).compareTo(o.getValue());
                 }
             } else if (type == DataType.BLOB) {
-                //TODO: Для совместимости с 8
-                return -1; //Arrays.compare((byte[]) value, (byte[]) o.getValue());
+                //TODO: Для совместимости с 8 ???
+//                return -1; //Arrays.compare((byte[]) value, (byte[]) o.getValue());
+                return compareBytes((byte[]) value, (byte[]) o.getValue());
             } else {
                 return ((Comparable) value).compareTo(o.getValue());
             }
         } else {
             return Integer.valueOf(index).compareTo(((TVariable) oo).getIndex());
+        }
+    }
+
+    private int compareBytes(byte[] a, byte[] b) {
+        int length = Math.min(a.length, b.length);
+        for (int i = 0; i < length; ++i) {
+            if ((a[i] & 0xFF) != (b[i] & 0xFF)) {
+                return (a[i] & 0xFF) - (b[i] & 0xFF);
+            }
+        }
+        if (a.length == b.length) {
+            return 0;
+        } else {
+            return a.length - b.length;
         }
     }
 
@@ -527,5 +551,14 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 //        term.setMind(m);
 //        return term;
 //    }
+
+
+    public long getRightId() {
+        return rightId;
+    }
+
+    public Set<Long> getSlaves() {
+        return slaves;
+    }
 }
 
