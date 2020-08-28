@@ -2,6 +2,7 @@ package org.kanger.calculator;
 
 import org.kanger.Mind;
 import org.kanger.enums.DataType;
+import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.Tools;
 import org.kanger.interfaces.IReactor;
@@ -653,6 +654,70 @@ public class Functions {
         }
 
         {
+            put("log10(1)", new SysOp(LibMode.FUNCTION, "log10", 1, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(1, _log10(arg.get(0).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
+                        if (!((Function) o).setParameter(0, _exp10(arg.get(1).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_log10(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            if (arg.get(0).isTSet()) {
+                                TValue v = arg.get(0).addValue(mind, _exp10(arg.get(1).getValue(mind)));
+                                SysOp.showLog((IUnit) o, v);
+                            }
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("exp10(1)", new SysOp(LibMode.FUNCTION, "exp10", 1, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(1, _exp10(arg.get(0).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
+                        if (!((Function) o).setParameter(0, _log10(arg.get(1).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_exp10(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            if (arg.get(0).isTSet()) {
+                                TValue v = arg.get(0).addValue(mind, _log10(arg.get(1).getValue(mind)));
+                                SysOp.showLog((IUnit) o, v);
+                            }
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
             put("pi(0)", new SysOp(LibMode.FUNCTION, "pi", 0, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
@@ -863,11 +928,179 @@ public class Functions {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
-                        if (!((Function) o).setParameter(1, _int(arg.get(0).getValue(mind)))) {
+                        if (!((Function) o).setParameter(1, _int(arg.get(0).getValue(mind), null))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
-                        if (_int(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_int(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("int(2)", new SysOp(LibMode.FUNCTION, "int", 2, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(2, _int(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_int(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("blob(1)", new SysOp(LibMode.FUNCTION, "blob", 1, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(1, _blob(arg.get(0).getValue(mind), null))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_blob(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("blob(2)", new SysOp(LibMode.FUNCTION, "blob", 2, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(2, _blob(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_blob(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("date(1)", new SysOp(LibMode.FUNCTION, "date", 1, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(1, _date(arg.get(0).getValue(mind), null))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_date(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("date(2)", new SysOp(LibMode.FUNCTION, "date", 2, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(2, _date(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_date(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("string(1)", new SysOp(LibMode.FUNCTION, "string", 1, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(1, _string(arg.get(0).getValue(mind), null))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_string(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            ret = 2;
+                        } else {
+                            ret = 0;
+                        }
+                    } else {
+//                        arg.createCVar(1).delValue(((Function) o).getOwner());
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("string(2)", new SysOp(LibMode.FUNCTION, "string", 2, new IReactor() {
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    ArgList arg = ((Function) o).getArguments();
+                    if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
+                        if (!((Function) o).setParameter(2, _string(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
+                            ret = 0;
+                        }
+                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                        if (_string(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1078,31 +1311,30 @@ public class Functions {
             }));
         }
 
-        //TODO: Сделать для BLOB
         {
             put("mid(2)", new SysOp(LibMode.FUNCTION, "mid", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
                         ArgList arg = ((Function) o).getArguments();
-                        String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
+                        Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
-                        String result = arg.get(2).isEmpty(mind) ? null : (String) arg.get(2).getValue(mind).getValue();
+                        Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
 
                         if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
-                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(_substring(src, pos.intValue(), 0)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind)) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(src.indexOf(result)))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(_indexOf(src, result)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind)) {
-                            if (result.equals(src.substring(pos.intValue()))) {
+                            if (_equals(result, _substring(src, pos.intValue(), 0))) {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(src.indexOf(result)));
+                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(_indexOf(src, result)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1124,38 +1356,38 @@ public class Functions {
                     int ret = 1;
                     try {
                         ArgList arg = ((Function) o).getArguments();
-                        String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
+                        Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
                         Double len = arg.get(2).isEmpty(mind) ? null : (Double) arg.get(2).getValue(mind).getValue();
-                        String result = arg.get(3).isEmpty(mind) ? null : (String) arg.get(3).getValue(mind).getValue();
+                        Object result = arg.get(3).isEmpty(mind) ? null : arg.get(3).getValue(mind).getValue();
 
                         if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind) && arg.get(3).isEmpty(mind)) {
-                            if (!((Function) o).setParameter(3, mind.getTerms().add(src.substring(pos.intValue(), len.intValue())))) {
+                            if (!((Function) o).setParameter(3, mind.getTerms().add(_substring(src, pos.intValue(), len.intValue())))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind) && arg.get(3).isDefined(mind)) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(src.indexOf(result)))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(_indexOf(src, result)))) {
                                 ret = 0;
                             }
-                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind) && arg.get(3).isDefined(mind) && src.indexOf(result) != -1) {
-                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.indexOf(result) + result.length()))) {
+                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind) && arg.get(3).isDefined(mind) && _indexOf(src, result) != -1) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(_indexOf(src, result) + __length(result)))) {
                                 ret = 0;
                             }
-                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isEmpty(mind) && arg.get(3).isDefined(mind) && src.indexOf(result) != -1) {
-                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.indexOf(result) + result.length()))
-                                    || !((Function) o).setParameter(1, mind.getTerms().add(src.indexOf(result)))) {
+                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isEmpty(mind) && arg.get(3).isDefined(mind) && _indexOf(src, result) != -1) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(_indexOf(src, result) + __length(result)))
+                                    || !((Function) o).setParameter(1, mind.getTerms().add(_indexOf(src, result)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind) && arg.get(3).isDefined(mind)) {
-                            if (result.equals(src.substring(pos.intValue(), len.intValue()))) {
+                            if (_equals(result, _substring(src, pos.intValue(), len.intValue()))) {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(src.indexOf(result)));
+                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(_indexOf(src, result)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 if (arg.get(2).isTSet()) {
-                                    TValue v = arg.get(2).addValue(mind, mind.getTerms().add(src.indexOf(result) + result.length()));
+                                    TValue v = arg.get(2).addValue(mind, mind.getTerms().add(_indexOf(src, result) + __length(result)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1177,24 +1409,24 @@ public class Functions {
                     int ret = 1;
                     try {
                         ArgList arg = ((Function) o).getArguments();
-                        String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
+                        Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
-                        String result = arg.get(2).isEmpty(mind) ? null : (String) arg.get(2).getValue(mind).getValue();
+                        Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
 
                         if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
-                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(0, pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(_substring(src, 0, pos.intValue())))) {
                                 ret = 0;
                             }
-                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind) && src.startsWith(result)) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(result.length()))) {
+                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind) && _startsWith(src, result)) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(__length(result)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind)) {
-                            if (result.equals(src.substring(0, pos.intValue()))) {
+                            if (_equals(result, _substring(src, 0, pos.intValue()))) {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(result.length()));
+                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(__length(result)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1216,24 +1448,24 @@ public class Functions {
                     int ret = 1;
                     try {
                         ArgList arg = ((Function) o).getArguments();
-                        String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
+                        Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
-                        String result = arg.get(2).isEmpty(mind) ? null : (String) arg.get(2).getValue(mind).getValue();
+                        Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
 
                         if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
-                            if (!((Function) o).setParameter(2, mind.getTerms().add(src.substring(src.length() - pos.intValue())))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add(_substring(src, __length(src) - pos.intValue(), 0)))) {
                                 ret = 0;
                             }
-                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind) && src.endsWith(result)) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(result.length()))) {
+                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind) && _endsWith(src, result)) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(__length(result)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind)) {
-                            if (result.equals(src.substring(src.length() - pos.intValue()))) {
+                            if (_equals(result, _substring(src, __length(src) - pos.intValue(), 0))) {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(result.length()));
+                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(__length(result)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1333,24 +1565,24 @@ public class Functions {
                     int ret = 1;
                     try {
                         ArgList arg = ((Function) o).getArguments();
-                        String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
-                        String sample = arg.get(1).isEmpty(mind) ? null : (String) arg.get(1).getValue(mind).getValue();
+                        Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
+                        Object sample = arg.get(1).isEmpty(mind) ? null : arg.get(1).getValue(mind).getValue();
                         Double result = arg.get(2).isEmpty(mind) ? null : (Double) arg.get(2).getValue(mind).getValue();
 
                         if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
-                            if (!((Function) o).setParameter(2, mind.getTerms().add((src.indexOf(sample))))) {
+                            if (!((Function) o).setParameter(2, mind.getTerms().add((_indexOf(src, sample))))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind)) {
-                            if (!((Function) o).setParameter(1, mind.getTerms().add(src.substring(result.intValue())))) {
+                            if (!((Function) o).setParameter(1, mind.getTerms().add(_substring(src, result.intValue(), 0)))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind)) {
-                            if (result == src.indexOf(sample)) {
+                            if (result == _indexOf(src, sample)) {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).isTSet()) {
-                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(src.substring(result.intValue())));
+                                    TValue v = arg.get(1).addValue(mind, mind.getTerms().add(_substring(src, result.intValue(), 0)));
                                     SysOp.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
@@ -1371,25 +1603,25 @@ public class Functions {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
                     ArgList arg = ((Function) o).getArguments();
-                    String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
-                    String target = arg.get(1).isEmpty(mind) ? null : (String) arg.get(1).getValue(mind).getValue();
-                    String replacement = arg.get(2).isEmpty(mind) ? null : (String) arg.get(2).getValue(mind).getValue();
-                    String result = arg.get(3).isEmpty(mind) ? null : (String) arg.get(3).getValue(mind).getValue();
+                    Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
+                    Object target = arg.get(1).isEmpty(mind) ? null : arg.get(1).getValue(mind).getValue();
+                    Object replacement = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
+                    Object result = arg.get(3).isEmpty(mind) ? null : arg.get(3).getValue(mind).getValue();
 
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind) && arg.get(3).isEmpty(mind)) {
-                        if (!((Function) o).setParameter(3, mind.getTerms().add(src.replaceAll(target, replacement)))) {
+                        if (!((Function) o).setParameter(3, mind.getTerms().add(_replaceAll(src, target, replacement)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind) && arg.get(3).isDefined(mind)) {
-                        if (!((Function) o).setParameter(0, mind.getTerms().add(result.replaceAll(replacement, target)))) {
+                        if (!((Function) o).setParameter(0, mind.getTerms().add(_replaceAll(result, replacement, target)))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind) && arg.get(3).isDefined(mind)) {
-                        if (result.equals(src.replaceAll(target, replacement))) {
+                        if (_equals(result, _replaceAll(src, target, replacement))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).isTSet()) {
-                                TValue v = arg.get(0).addValue(mind, mind.getTerms().add(result.replaceAll(replacement, target)));
+                                TValue v = arg.get(0).addValue(mind, mind.getTerms().add(_replaceAll(result, replacement, target)));
                                 SysOp.showLog((IUnit) o, v);
                             }
                             ret = 0;
@@ -1545,6 +1777,126 @@ public class Functions {
         return sysOps;
     }
 
+    protected boolean _startsWith(Object a, Object b) {
+        if (a instanceof String && b instanceof String) {
+            return ((String) a).startsWith((String) b);
+        } else if (a instanceof byte[] && b instanceof byte[]) {
+            if (((byte[]) a).length < ((byte[]) b).length) {
+                return false;
+            }
+            for (int i = 0; i < ((byte[]) b).length; ++i) {
+                if (((byte[]) a)[i] != ((byte[]) b)[i]) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected boolean _endsWith(Object a, Object b) {
+        if (a instanceof String && b instanceof String) {
+            return ((String) a).endsWith((String) b);
+        } else if (a instanceof byte[] && b instanceof byte[]) {
+            if (((byte[]) a).length < ((byte[]) b).length) {
+                return false;
+            }
+            int offset = ((byte[]) a).length - ((byte[]) b).length;
+            for (int i = 0; i < ((byte[]) b).length; ++i) {
+                if (((byte[]) a)[offset + i] != ((byte[]) b)[i]) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected int __length(Object src) {
+        if (src instanceof String) {
+            return ((String) src).length();
+        } else if (src instanceof byte[]) {
+            return ((byte[]) src).length;
+        } else {
+            return 0;
+        }
+    }
+
+    protected boolean _equals(Object a, Object b) {
+        if (a instanceof String && b instanceof String) {
+            return a.equals(b);
+        } else if (a instanceof byte[] && b instanceof byte[]) {
+            if (((byte[]) a).length != ((byte[]) b).length) {
+                return false;
+            }
+            for (int i = 0; i < ((byte[]) a).length; ++i) {
+                if (((byte[]) a)[i] != ((byte[]) b)[i]) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected Object _substring(Object src, int start, int length) {
+        if (src instanceof String) {
+            return ((String) src).substring(start, start + length);
+        } else if (src instanceof byte[]) {
+            int len = length > 0 ? length : ((byte[]) src).length - start;
+            if (len > 0) {
+                byte[] buffer = new byte[len];
+                System.arraycopy(src, start, buffer, 0, len);
+                return buffer;
+            } else {
+                return src;
+            }
+        } else {
+            return src;
+        }
+    }
+
+    protected Object _replaceAll(Object src, Object target, Object replacement) {
+        if (src instanceof String) {
+            return ((String) src).replaceAll((String) replacement, (String) target);
+        } else if (src instanceof byte[]) {
+            int pos;
+            while ((pos = _indexOf(src, target)) != -1) {
+                int len = ((byte[]) src).length - ((byte[]) target).length + ((byte[]) replacement).length;
+                if (len > 0) {
+                    byte[] buffer = new byte[len];
+                    if (pos > 0) {
+                        System.arraycopy(src, 0, buffer, 0, pos);
+                    }
+                    System.arraycopy(replacement, 0, buffer, pos, ((byte[]) replacement).length);
+                    if (pos + ((byte[]) target).length < ((byte[]) src).length) {
+                        System.arraycopy(src, pos + ((byte[]) target).length, buffer, pos + ((byte[]) replacement).length,
+                                ((byte[]) src).length - pos - ((byte[]) target).length);
+                    }
+                    src = buffer;
+                } else {
+                    return src;
+                }
+            }
+            return src;
+        } else {
+            return src;
+        }
+    }
+
+    protected int _indexOf(Object src, Object sample) {
+        if (src instanceof String && sample instanceof String) {
+            return ((String) src).indexOf((String) sample);
+        } else if (src instanceof byte[] && sample instanceof byte[]) {
+            return mind.getCalculator().getPredicates().indexOf((byte[]) src, (byte[]) sample);
+        } else {
+            return -1;
+        }
+    }
+
     protected Term _add(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
@@ -1642,11 +1994,28 @@ public class Functions {
                 }
             }
             for (Term t : mind.getCalculator().getPredicates().expand(b, null)) {
-                if (list.contains(t)) {
-                    list.remove(t);
-                }
+                list.remove(t);
             }
             res = list;
+        } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
+            int pos = mind.getCalculator().getPredicates().indexOf((byte[]) a.getValue(), (byte[]) b.getValue());
+            if (pos != -1) {
+                int size = ((byte[]) a.getValue()).length - ((byte[]) b.getValue()).length;
+                if (size > 0) {
+                    byte[] buffer = new byte[size];
+                    if (pos > 0) {
+                        System.arraycopy(a.getValue(), 0, buffer, 0, pos);
+                    }
+                    if (pos + ((byte[]) b.getValue()).length < ((byte[]) a.getValue()).length) {
+                        System.arraycopy(a.getValue(), pos + ((byte[]) b.getValue()).length, buffer, pos, size - pos);
+                    }
+                    res = buffer;
+                } else {
+                    res = a.getValue();
+                }
+            } else {
+                res = a.getValue();
+            }
         } else {
             res = a.getValue().toString().replace(b.getValue().toString(), "");
         }
@@ -1730,7 +2099,17 @@ public class Functions {
     private Term _bitnot(Term a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = Long.valueOf((long) a.getValue()).doubleValue();
+            res = Long.valueOf(~(long) a.getValue()).doubleValue();
+        } else if (a.getType() == DataType.BLOB) {
+            if (((byte[]) a.getValue()).length > 0) {
+                byte[] buffer = new byte[((byte[]) a.getValue()).length];
+                for (int i = 0; i < ((byte[]) a.getValue()).length; ++i) {
+                    buffer[i] = (byte) ((~((byte[]) a.getValue())[i]) & 0xFF);
+                }
+                res = buffer;
+            } else {
+                res = a.getValue();
+            }
         } else {
             res = (double) 0;
         }
@@ -1761,6 +2140,20 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() ^ (long) b.getValue()).doubleValue();
+        } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
+            if (((byte[]) a.getValue()).length > 0 && ((byte[]) b.getValue()).length > 0) {
+                byte[] buffer = new byte[((byte[]) a.getValue()).length];
+                int k = 0;
+                for (int i = 0; i < ((byte[]) a.getValue()).length; ++i) {
+                    buffer[i] = (byte) ((((byte[]) a.getValue())[i] ^ (((byte[]) b.getValue())[k++])) & 0xFF);
+                    if (k >= ((byte[]) b.getValue()).length) {
+                        k = 0;
+                    }
+                }
+                res = buffer;
+            } else {
+                res = a.getValue();
+            }
         } else {
             res = (double) 0;
         }
@@ -1771,6 +2164,20 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() & (long) b.getValue()).doubleValue();
+        } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
+            if (((byte[]) a.getValue()).length > 0 && ((byte[]) b.getValue()).length > 0) {
+                byte[] buffer = new byte[((byte[]) a.getValue()).length];
+                int k = 0;
+                for (int i = 0; i < ((byte[]) a.getValue()).length; ++i) {
+                    buffer[i] = (byte) ((((byte[]) a.getValue())[i] & (((byte[]) b.getValue())[k++])) & 0xFF);
+                    if (k >= ((byte[]) b.getValue()).length) {
+                        k = 0;
+                    }
+                }
+                res = buffer;
+            } else {
+                res = a.getValue();
+            }
         } else {
             res = (double) 0;
         }
@@ -1781,6 +2188,20 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() | (long) b.getValue()).doubleValue();
+        } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
+            if (((byte[]) a.getValue()).length > 0 && ((byte[]) b.getValue()).length > 0) {
+                byte[] buffer = new byte[((byte[]) a.getValue()).length];
+                int k = 0;
+                for (int i = 0; i < ((byte[]) a.getValue()).length; ++i) {
+                    buffer[i] = (byte) ((((byte[]) a.getValue())[i] | (((byte[]) b.getValue())[k++])) & 0xFF);
+                    if (k >= ((byte[]) b.getValue()).length) {
+                        k = 0;
+                    }
+                }
+                res = buffer;
+            } else {
+                res = a.getValue();
+            }
         } else {
             res = (double) 0;
         }
@@ -1791,6 +2212,20 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() & ~(long) b.getValue()).doubleValue();
+        } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
+            if (((byte[]) a.getValue()).length > 0 && ((byte[]) b.getValue()).length > 0) {
+                byte[] buffer = new byte[((byte[]) a.getValue()).length];
+                int k = 0;
+                for (int i = 0; i < ((byte[]) a.getValue()).length; ++i) {
+                    buffer[i] = (byte) ((((byte[]) a.getValue())[i] & ~(((byte[]) b.getValue())[k++])) & 0xFF);
+                    if (k >= ((byte[]) b.getValue()).length) {
+                        k = 0;
+                    }
+                }
+                res = buffer;
+            } else {
+                res = a.getValue();
+            }
         } else {
             res = (double) 0;
         }
@@ -1811,6 +2246,26 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.exp((double) a.getValue());
+        } else {
+            res = (double) 0;
+        }
+        return mind.getTerms().add(res);
+    }
+
+    private Term _log10(Term a) throws Exception {
+        Object res;
+        if (a.getType() == DataType.NUMERIC) {
+            res = Math.log10((double) a.getValue());
+        } else {
+            res = (double) 0;
+        }
+        return mind.getTerms().add(res);
+    }
+
+    private Term _exp10(Term a) throws Exception {
+        Object res;
+        if (a.getType() == DataType.NUMERIC) {
+            res = Math.pow(10.0, (double) a.getValue());
         } else {
             res = (double) 0;
         }
@@ -1892,12 +2347,124 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _int(Term a) throws Exception {
+    /**
+     * @param a
+     * @param param NUMERIC, игнорируются, STRING - 10,16 или 8, BLOB - 0 - little-endian, 1-big-endian, DATE - 0-unixtime, 1-год, 2-месяц, 3-день, 4-час, 5-минута, 6-секунда, 7-мс
+     * @return
+     * @throws Exception
+     */
+    private Term _int(Term a, Term param) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
-            res = (double) (long) (double) a.getValue();
+            res = ((Double) a.getValue()).longValue();
+        } else if (a.getType() == DataType.STRING) {
+            if (((String) a.getValue()).contains(".")) {
+                res = Double.valueOf((String) a.getValue()).longValue();
+            } else if (param != null && param.getType() == DataType.NUMERIC) {
+                res = Long.valueOf((String) a.getValue(), ((Double) param.getValue()).intValue());
+            } else {
+                res = Long.valueOf((String) a.getValue());
+            }
+        } else if (a.getType() == DataType.BLOB) {
+            long val = 0;
+            int pos = 0;
+            for (byte b : (byte[]) a.getValue()) {
+                if (param == null || ((Double) param.getValue()).intValue() == 0) {
+                    val |= ((long) b & 0xFF) << (pos * Byte.SIZE);
+                } else {
+                    val <<= Byte.SIZE;
+                    val |= (b & 0xFF);
+                }
+                if (++pos >= Long.BYTES) {
+                    break;
+                }
+            }
+            res = Long.valueOf(val);
+        } else if (a.getType() == DataType.DATE) {
+            if (param == null || param.getType() != DataType.STRING || !Enums.INTERVALS.containsKey(((String) param.getValue()).toLowerCase())) {
+                res = ((Date) a.getValue()).getTime();
+            } else {
+                switch (Enums.INTERVALS.get(((String) param.getValue()).toLowerCase()).intValue()) {
+                    case (int) Enums.INTERVAL_YEAR:
+                        res = Tools.getYear(((Date) a.getValue()));
+                        break;
+                    case (int) Enums.INTERVAL_MONTH:
+                        res = Tools.getMonth(((Date) a.getValue()));
+                        break;
+                    case (int) Enums.INTERVAL_DAY:
+                        res = Tools.getDay(((Date) a.getValue()));
+                        break;
+                    case (int) Enums.INTERVAL_HOUR:
+                        res = Tools.getHour(((Date) a.getValue()));
+                        break;
+                    case (int) Enums.INTERVAL_MINUTE:
+                        res = Tools.getMinute(((Date) a.getValue()));
+                        break;
+                    case (int) Enums.INTERVAL_SECOND:
+                        res = Tools.getSecond(((Date) a.getValue()));
+                        break;
+                    case (int) Enums.INTERVAL_MILLISECOND:
+                        res = Tools.getMillisecond(((Date) a.getValue()));
+                        break;
+                    default:
+                        res = ((Date) a.getValue()).getTime();
+                }
+            }
         } else {
             res = (double) 0;
+        }
+        return mind.getTerms().add(res);
+    }
+
+    private Term _blob(Term a, Term param) throws Exception {
+        Object res;
+        if (a.getType() == DataType.NUMERIC || a.getType() == DataType.DATE) {
+            byte[] buffer = new byte[Long.BYTES];
+            long val = a.getType() == DataType.NUMERIC ? ((Double) a.getValue()).longValue() : ((Date) a.getValue()).getTime();
+            for (int pos = 0; pos < Long.BYTES; ++pos) {
+                if (param == null || ((Double) param.getValue()).intValue() == 0) {
+                    buffer[pos] = (byte) ((val >> (pos * Byte.SIZE)) & 0xFF);
+                } else {
+                    buffer[Long.BYTES - pos - 1] = (byte) ((val >> (pos * Byte.SIZE)) & 0xFF);
+                }
+            }
+            res = buffer;
+        } else if (a.getType() == DataType.STRING) {
+            if (param != null && param.getType() == DataType.STRING) {
+                res = ((String) a.getValue()).getBytes((String) param.getValue());
+            } else {
+                res = ((String) a.getValue()).getBytes();
+            }
+        } else {
+            res = new byte[]{};
+        }
+        return mind.getTerms().add(res);
+    }
+
+    private Term _string(Term a, Term param) throws Exception {
+        Object res;
+        if (a.getType() == DataType.BLOB) {
+            if (param != null && param.getType() == DataType.STRING) {
+                res = new String((byte[]) a.getValue(), (String) param.getValue());
+            } else {
+                res = new String((byte[]) a.getValue());
+            }
+        } else {
+            res = a.getValue().toString();
+        }
+        return mind.getTerms().add(res);
+    }
+
+    private Term _date(Term a, Term param) throws Exception {
+        Object res;
+        if (a.getType() == DataType.NUMERIC) {
+            res = new Date(((Double) a.getValue()).longValue());
+        } else if (a.getType() == DataType.BLOB) {
+            res = new Date(((Double) _int(a, param).getValue()).longValue());
+        } else if (a.getType() == DataType.DATE) {
+            res = a;
+        } else {
+            res = new Date(0);
         }
         return mind.getTerms().add(res);
     }
@@ -1959,10 +2526,10 @@ public class Functions {
         Term res = null;
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
-            byte[] array = md.digest(a.toString().getBytes());
+            byte[] array = md.digest(a.getType() == DataType.BLOB ? (byte[]) a.getValue() : a.toString().getBytes());
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < array.length; ++i) {
-                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100), 1, 3);
             }
             res = mind.getTerms().add(sb.toString());
         } catch (java.security.NoSuchAlgorithmException ex) {

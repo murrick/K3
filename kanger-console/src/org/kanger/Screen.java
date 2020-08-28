@@ -437,6 +437,7 @@ public class Screen {
 //                                incomplete = line;
 //                                line = "";
 //                            } else {
+                            mind.setCompliedLine(line);
                             SysOp op = (SysOp) mind.compileLine(line, false, null);
                             System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
 //                            }
@@ -453,7 +454,7 @@ public class Screen {
                 int pos = Integer.parseInt(x.split("@")[0]);
                 String msg = x.split("@")[1];
                 System.out.println("ERROR: " + msg);
-                System.out.println(line);
+                System.out.println(mind.getCompliedLine());
                 while (pos-- > 0) {
                     System.out.print(" ");
                 }
@@ -764,6 +765,19 @@ public class Screen {
 //        return str;
 //    }
     //
+
+    public static void showCauses(Mind mind, Cause c, int level) {
+        //ПРЕДОХРАНИТЕЛЬ
+        if (level > 50) {
+            return;
+        }
+
+        String indent = "";
+        for (int i = 0; i < level; ++i) {
+            indent += "\t";
+        }
+    }
+
     public static void showCauses(Mind mind, Domain d, int level) throws Exception {
         //ПРЕДОХРАНИТЕЛЬ
         if (level > 50) {

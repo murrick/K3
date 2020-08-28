@@ -137,6 +137,48 @@ public abstract class Tools {
         return c.getTime();
     }
 
+    public static int getYear(Date a) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(a.getTime());
+        return c.get(Calendar.YEAR);
+    }
+
+    public static int getMonth(Date a) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(a.getTime());
+        return c.get(Calendar.MONTH) + 1;
+    }
+
+    public static int getDay(Date a) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(a.getTime());
+        return c.get(Calendar.DAY_OF_MONTH);
+    }
+
+    public static int getHour(Date a) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(a.getTime());
+        return c.get(Calendar.HOUR_OF_DAY);
+    }
+
+    public static int getMinute(Date a) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(a.getTime());
+        return c.get(Calendar.MINUTE);
+    }
+
+    public static int getSecond(Date a) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(a.getTime());
+        return c.get(Calendar.SECOND);
+    }
+
+    public static int getMillisecond(Date a) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(a.getTime());
+        return c.get(Calendar.MILLISECOND);
+    }
+
     public static String dateDiff(Date a, Date b) {
         int months = 0;
         int years = 0;

@@ -1,7 +1,6 @@
 package org.kanger.units;
 
 import org.kanger.Mind;
-import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
@@ -12,6 +11,7 @@ import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
+import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
@@ -22,24 +22,25 @@ import java.util.*;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Domain implements IUnit<Domain>, Comparable<Domain> {
+public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     private static final long serialVersionUID = 196402070001L;
 
     private long id = -1;                                       // id домена
     private long mindId = -1;                                   // id транзакции
-    private boolean antc = true;                                // ! или ?
-    private Predicate predicate = null;                         // Ссылка на описатель предиката
-    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
+    //    private boolean antc = true;                                // ! или ?
+//    private Predicate predicate = null;                         // Ссылка на описатель предиката
+//    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
     private Right right = null;                                        // Ссылка на правило
-    private int range = 0;
+//    private int range = 0;
 //    private Domain next = null;                                 // Следующий элемент
 
 //    private Stack<List<TValue>> tStack = new Stack<>();
 //    private Map<ArgList, SortedSet<Cause>> causes = new HashMap<>();
 
-    private transient long predicateId = -1;
-    private transient long rightId = -1;
+//    private transient long predicateId = -1;
+//    private transient long rightId = -1;
+
     private transient Mind mind = null;
 
     private transient boolean deleted = false;
@@ -53,16 +54,13 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public Domain(Predicate pred, boolean antc, ArgList args) {
-        setPredicate(pred);
-        setAntc(antc);
-        getArguments().addAll(args);
+        super(pred, antc, args);
     }
 
     public Domain(Mind mind) {
         this.mind = mind;
 
     }
-
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
@@ -102,17 +100,12 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (predicate == null) {
-            predicate = mind.getPredicates().load(predicateId);
-        }
-        return predicate;
+        return super.getPredicate(mind);
     }
 
-    public void setPredicate(Predicate predicate) {
-        this.predicateId = predicate.getId();
-        this.predicate = predicate;
-        this.range = predicate.getRange();
-    }
+//    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//        return super.getRight(mind);
+//    }
 
     public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         if (right == null) {
@@ -125,6 +118,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
         this.rightId = r.getId();
         right = r;
     }
+
 
     @Override
     public long getId() {
@@ -182,6 +176,11 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 
 
     public Set<Cause> getCauses() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        ArgList args = arguments.convertBase(mind);
+        return getCauses(args);
+    }
+
+    public Set<Cause> getCauses(ArgList args) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
 //        Set<Cause> set =  new HashSet<>();
 //        for(TVariable t : arguments.getTVariables(true)) {
 //            if(!t.isEmpty()) {
@@ -194,7 +193,6 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 //        }
 //        return set;
 
-        ArgList args = arguments.convertBase(mind);
         if (mind.getDomainCauses().containsKey(this) && mind.getDomainCauses().get(this).containsKey(args)) {
             return mind.getDomainCauses().get(this).get(args);
         } else {
@@ -284,18 +282,6 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
         return null;
     }
 
-    public ArgList getArguments() {
-        return arguments;
-    }
-
-    public boolean isAntc() {
-        return antc;
-    }
-
-    public void setAntc(boolean antc) {
-        this.antc = antc;
-    }
-
 //    public Set<TVariable> getRelatedTVariables(boolean full) {
 //        Set<TVariable> set = new HashSet<>();
 //        for (Domain d : predicate.getRelates()) {
@@ -326,27 +312,28 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 //    s += ");";
 //    return s;
     private String formatParam(Argument t) throws Exception {
-        String s = "";
-        //TODO: Костыль
-//        t.setUser(user);
-//        if(!t.isEmpty(mind)) {
-//            t.getValue(mind).setMind(mind);
+        return super.formatParam(mind, t);
+//        String s = "";
+//        //TODO: Костыль
+////        t.setUser(user);
+////        if(!t.isEmpty(mind)) {
+////            t.getValue(mind).setMind(mind);
+////        }
+//
+//        if (t.isFSet()) {
+//            s += t.getF(mind).toString();
+//        } else if (t.isTSet()) {
+//            s += t.getT(mind).toString();
+//        } else if (t.isVSet()) {
+//            s += t.getV(mind).toString();
+//        } else if (t.isRSet()) {
+//            s += t.getR(mind).toString();
+//        } else if (!t.isEmpty(mind)) {
+//            s += t.getValue(mind).toString();
+//        } else {
+//            s += "_";
 //        }
-
-        if (t.isFSet()) {
-            s += t.getF(mind).toString();
-        } else if (t.isTSet()) {
-            s += t.getT(mind).toString();
-        } else if (t.isVSet()) {
-            s += t.getV(mind).toString();
-        } else if (t.isRSet()) {
-            s += t.getR(mind).toString();
-        } else if (!t.isEmpty(mind)) {
-            s += t.getValue(mind).toString();
-        } else {
-            s += "_";
-        }
-        return s;
+//        return s;
     }
 
     @Override
@@ -363,55 +350,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 
     public String toString(ArgList arguments) {
         try {
-            String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
-
-//            List<Term> cVars = new ArrayList<>();
-//            for (Term t : arguments.getCVariables(mind)) {
-//                //TODO: Костыль
-////                t.setMind(mind);
-//                if (!cVars.contains(t)) {
-//                    cVars.add(t);
-//                }
-//            }
-//            for (Term t : cVars) {
-//                s += "$" + t.getName() + " ";
-//            }
-
-            Operation op = Parser.getOp(getPredicate().getName().toString(), getRange());
-
-            if (op == null) {
-                op = Parser.getOp(getPredicate().getName().toString(), 0);
-            }
-
-            if (op == null) {
-                s += getPredicate().getName() + "(";
-                int i = 0;
-                for (Argument t : arguments) {
-                    s += formatParam(t);
-                    if (i + 1 != getRange()) {
-                        s += (char) Enums.COMMA;
-                    }
-                    ++i;
-                }
-                s += ")";
-            } else if (op.getRange() == 1) {
-                if (op.isPost()) {
-                    s += formatParam(arguments.get(0)) + op.getName();
-                } else {
-                    s += op.getName() + formatParam(arguments.get(0));
-                }
-            } else {
-                for (int i = 0; i < op.getRange(); ++i) {
-                    s += formatParam(arguments.get(i));
-                    if (i + 1 < op.getRange()) {
-                        if (i == 0) {
-                            s += " " + op.getName() + " ";
-                        } else {
-                            s += (char) Enums.COMMA;
-                        }
-                    }
-                }
-            }
+            String s = super.toString(mind, arguments);
 
             String suffix = "";
             if ((mind.getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
@@ -434,7 +373,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
                     e.printStackTrace(System.err);
                 }
             }
-            return s + ";" + suffix;
+            return s + suffix;
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
@@ -906,37 +845,37 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 //        return cnt;
 //    }
 
-    public void calcVarOrders() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        for (int pos = 0; pos < getRange(); ++pos) {
-            List<Integer> list = new ArrayList<>();
-            SortedMap<Integer, Integer> sort = new TreeMap<>();
-            int plains = 0;
-            for (int i = 0; i < arguments.size(); ++i) {
-                int ix = 0;
-                if (arguments.get(i).isTSet()) {
-                    ix = arguments.get(i).getT(mind).getIndex();
-                } else if (arguments.get(i).isCVar(mind) && arguments.get(i).getValue(mind).getRightId() == rightId) {
-                    ix = arguments.get(i).getValue(mind).getIndex();
-                } else {
-                    ++plains;
-                }
-                list.add(ix);
-                sort.put(ix, ix);
-            }
-            int i = sort.firstKey() == 0 ? 0 : 1;
-            for (Integer e : sort.keySet()) {
-                sort.put(e, i++);
-            }
-            arguments.get(pos).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
-        }
-    }
-
-    public int getVarOrder(int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (arguments.get(pos).getVarOrder() == -1) {
-            calcVarOrders();
-        }
-        return arguments.get(pos).getVarOrder();
-    }
+//    public void calcVarOrders() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//        for (int pos = 0; pos < getRange(); ++pos) {
+//            List<Integer> list = new ArrayList<>();
+//            SortedMap<Integer, Integer> sort = new TreeMap<>();
+//            int plains = 0;
+//            for (int i = 0; i < arguments.size(); ++i) {
+//                int ix = 0;
+//                if (arguments.get(i).isTSet()) {
+//                    ix = arguments.get(i).getT(mind).getIndex();
+//                } else if (arguments.get(i).isCVar(mind) && arguments.get(i).getValue(mind).getRightId() == rightId) {
+//                    ix = arguments.get(i).getValue(mind).getIndex();
+//                } else {
+//                    ++plains;
+//                }
+//                list.add(ix);
+//                sort.put(ix, ix);
+//            }
+//            int i = sort.firstKey() == 0 ? 0 : 1;
+//            for (Integer e : sort.keySet()) {
+//                sort.put(e, i++);
+//            }
+//            arguments.get(pos).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
+//        }
+//    }
+//
+//    public int getVarOrder(int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//        if (arguments.get(pos).getVarOrder() == -1) {
+//            calcVarOrders();
+//        }
+//        return arguments.get(pos).getVarOrder();
+//    }
 
     @Override
     public int getHash() {
@@ -955,34 +894,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
 
     @Override
     public boolean equalsTo(Domain to) {
-        try {
-            if (to.isAntc() == antc
-                    && to.getPredicateId() == predicateId
-                    && (rightId == -1 || to.getRightId() == rightId)) {
-                int i = 0;
-                for (; i < getRange(); ++i) {
-                    try {
-                        if ((to.get(i).isTSet() && arguments.get(i).isTSet() && to.get(i).getT(mind).getId() == arguments.get(i).getT(mind).getId())
-                                || (to.get(i).isFSet() && arguments.get(i).isFSet() && to.get(i).getF(mind).getId() == arguments.get(i).getF(mind).getId())
-                                || (!to.get(i).isTSet() && !arguments.get(i).isTSet()
-                                && !to.get(i).isFSet() && !arguments.get(i).isFSet()
-                                && !to.get(i).isEmpty(mind) && !arguments.get(i).isEmpty(mind)
-                                && to.get(i).getValue(mind).getId() == arguments.get(i).getValue(mind).getId())) {
-                        } else {
-                            break;
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace(System.err);
-                    }
-                }
-                return i == getRange();
-            } else {
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            return false;
-        }
+        return super.equalsTo(mind, to);
     }
 
     @Override
@@ -1054,22 +966,6 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
         return this;
     }
 
-    public long getPredicateId() {
-        return predicateId;
-    }
-
-    public long getRightId() {
-        return rightId;
-    }
-
-    public int getRange() {
-        return range;
-    }
-
-    public void setRange(int range) {
-        this.range = range;
-    }
-
 //    public boolean isIntersected(Domain d) {
 //        List<TValue> tValues = arguments.getTValues(true);
 //        if (tValues.isEmpty()) {
@@ -1114,7 +1010,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case TVARIABLE:
-                    hash = 47 * hash + (i + 1) * getVarOrder(i);
+                    hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
                     break;
                 case TERM:
                     long id = arguments.get(i).getValue(mind).getId();
@@ -1137,7 +1033,7 @@ public class Domain implements IUnit<Domain>, Comparable<Domain> {
                 if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
-                            if (getVarOrder(i) != to.getVarOrder(i)) {
+                            if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
                                 return false;
                             }
                             break;

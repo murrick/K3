@@ -33,116 +33,123 @@ public class Enums {
     public static final int COMMA = ',';
     public static final int EOLN = ';';
 
+    public static final long INTERVAL_MILLISECOND = 1L;
+    public static final long INTERVAL_SECOND = 1000L;
+    public static final long INTERVAL_MINUTE = 1000L * 60L;
+    public static final long INTERVAL_HOUR = 1000L * 60L * 60L;
+    public static final long INTERVAL_DAY = 1000L * 60L * 60L * 24L;
+    public static final long INTERVAL_WEEK = 1000L * 60L * 60L * 24L * 7;
     public static final long INTERVAL_MONTH = -1L;
     public static final long INTERVAL_YEAR = -2L;
+
     public static final Map<String, Long> INTERVALS = new LinkedHashMap<String, Long>() {
         {
             put("..", 0L);
         }
 
         {
-            put("ms", 1L);
+            put("ms", INTERVAL_MILLISECOND);
         }
 
         {
-            put("msec", 1L);
+            put("msec", INTERVAL_MILLISECOND);
         }
 
         {
-            put("msecs", 1L);
+            put("msecs", INTERVAL_MILLISECOND);
         }
 
         {
-            put("millisecond", 1L);
+            put("millisecond", INTERVAL_MILLISECOND);
         }
 
         {
-            put("milliseconds", 1L);
+            put("milliseconds", INTERVAL_MILLISECOND);
         }
 
         {
-            put("sec", 1000L);
+            put("sec", INTERVAL_SECOND);
         }
 
         {
-            put("secs", 1000L);
+            put("secs", INTERVAL_SECOND);
         }
 
         {
-            put("second", 1000L);
+            put("second", INTERVAL_SECOND);
         }
 
         {
-            put("seconds", 1000L);
+            put("seconds", INTERVAL_SECOND);
         }
 
 
         {
-            put("min", 1000L * 60L);
+            put("min", INTERVAL_MINUTE);
         }
 
         {
-            put("mns", 1000L * 60L);
+            put("mns", INTERVAL_MINUTE);
         }
 
         {
-            put("mins", 1000L * 60L);
+            put("mins", INTERVAL_MINUTE);
         }
 
         {
-            put("minute", 1000L * 60L);
+            put("minute", INTERVAL_MINUTE);
         }
 
         {
-            put("minutes", 1000L * 60L);
+            put("minutes", INTERVAL_MINUTE);
         }
 
         {
-            put("hs", 1000L * 60L * 60L);
+            put("hs", INTERVAL_HOUR);
         }
 
         {
-            put("hr", 1000L * 60L * 60L);
+            put("hr", INTERVAL_HOUR);
         }
 
         {
-            put("hrs", 1000L * 60L * 60L);
+            put("hrs", INTERVAL_HOUR);
         }
 
         {
-            put("hour", 1000L * 60L * 60L);
+            put("hour", INTERVAL_HOUR);
         }
 
         {
-            put("hours", 1000L * 60L * 60L);
+            put("hours", INTERVAL_HOUR);
         }
 
         {
-            put("dy", 1000L * 60L * 60L * 24L);
+            put("dy", INTERVAL_DAY);
         }
 
         {
-            put("ds", 1000L * 60L * 60L * 24L);
+            put("ds", INTERVAL_DAY);
         }
 
         {
-            put("day", 1000L * 60L * 60L * 24L);
+            put("day", INTERVAL_DAY);
         }
 
         {
-            put("days", 1000L * 60L * 60L * 24L);
+            put("days", INTERVAL_DAY);
         }
 
         {
-            put("wks", 1000L * 60L * 60L * 24L * 7);
+            put("wks", INTERVAL_WEEK);
         }
 
         {
-            put("week", 1000L * 60L * 60L * 24L * 7);
+            put("week", INTERVAL_WEEK);
         }
 
         {
-            put("weeks", 1000L * 60L * 60L * 24L * 7);
+            put("weeks", INTERVAL_WEEK);
         }
 
         {

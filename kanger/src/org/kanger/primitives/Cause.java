@@ -8,10 +8,17 @@ import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Cause implements Comparable<Cause> {
-    private Domain src = null;
+    private Solve result = null;
+    private Solve donor = null;
+    private Set<Cause> next = new HashSet<>();
+
     private Domain dst = null;
+
+    private Domain src = null;
     private ArgList arguments = null;
 //    private int index = -1;
 
@@ -23,13 +30,18 @@ public class Cause implements Comparable<Cause> {
     public Cause() {
     }
 
-    public Cause(Mind mind, Domain dst, Domain src) {
+    public Cause(Mind mind, Domain dst, Domain src) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
 //        this.index = index;
         this.dst = dst;
         this.src = src;
         this.dstId = dst.getId();
         this.srcId = src.getId();
         this.arguments = src.getArguments().convertBase(mind);
+
+        donor = new Solve(src.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
+        if (src.getCauses(arguments) != null) {
+            next.addAll(src.getCauses(arguments));
+        }
     }
 
     public ByteBuffer pack() {

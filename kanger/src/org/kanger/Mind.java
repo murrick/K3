@@ -80,6 +80,7 @@ public class Mind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
+    private String compliedLine = "";
     private volatile boolean blockCommit = false;
     private final Object locker = new Object();
 
@@ -487,6 +488,7 @@ public class Mind {
 //            m.compileLine(line, false);
 
             Mind x = new Mind(m);
+            setCompliedLine(line);
             Object r = x.compileLine(line, false, null);
             if (r instanceof Right && ((Right) r).isDeleted()) {
                 m.release(x);
@@ -517,6 +519,7 @@ public class Mind {
 
     public Object compileLine(String line, boolean query, Object[] ext) throws Exception {
         String orig = line.trim();
+        compliedLine = orig;
         Object r = null;
         Boolean suc = null;
 
@@ -664,6 +667,14 @@ public class Mind {
         queryContext = null;
         queryResult = query(line, ext, true);
         return queryResult;
+    }
+
+    public String getCompliedLine() {
+        return compliedLine;
+    }
+
+    public void setCompliedLine(String compliedLine) {
+        this.compliedLine = compliedLine;
     }
 
     public String getVersion() {
@@ -901,6 +912,7 @@ public class Mind {
                 line = invert(line);
                 line = invert(line);
 
+                setCompliedLine(line);
                 Right r = (Right) m.compileLine(line, true, ext);
                 if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
@@ -945,6 +957,7 @@ public class Mind {
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.ACCEPT);
 
+                setCompliedLine(line);
                 Right r = (Right) m.compileLine(line, false, ext);
                 if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
@@ -1012,6 +1025,7 @@ public class Mind {
                     m.getLog().add(LogMode.ANALIZER, "============= DELETE ======================");
                 }
                 line = invert(line);
+                setCompliedLine(line);
                 Right r = (Right) m.compileLine(line, true, ext);
                 if (r != null && !r.isDeleted()) {
 //                    r.setQuery(true);
@@ -1160,6 +1174,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING ==============");
                         }
 
+                        setCompliedLine(line);
                         Right r = (Right) m.compileLine(invert(line), true, ext);
                         if (r != null && !r.isDeleted()) {
                             r.setQuery(true);
@@ -1205,6 +1220,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING ===============");
                         }
 
+                        setCompliedLine(line);
                         Right r = (Right) m.compileLine(line, true, ext);
                         if (r != null && !r.isDeleted()) {
                             r.setQuery(true);

@@ -236,7 +236,6 @@ public class Linker {
                 });
             }
 
-
             updateDatabase(logging);
 
 //            if (!mind.getRightSolves().isEmpty()) {
@@ -442,7 +441,7 @@ public class Linker {
                                                 && !slave.get(i).isEmpty(mind)
 //                                                && (!slave.get(i).isCVar() || slave.isComplete())
 //                                                && (/*master.getRightId() != slave.get(i).getValue(mind).getRightId() ||*/ master.getVarOrder(i) >= slave.getVarOrder(i))) {
-                                                && master.getVarOrder(i) > slave.getVarOrder(i)
+                                                && master.getVarOrder(mind, i) > slave.getVarOrder(mind, i)
 //                                                && (!slave.get(i).isCVar(mind)
 //                                                || slave.get(i).getValue(mind).getRightId() != master.get(i).getT(mind).getRightId()
 //                                                || slave.get(i).getValue(mind).getIndex() < master.get(i).getT(mind).getIndex())
@@ -475,7 +474,7 @@ public class Linker {
                                                 && !master.get(i).isEmpty(mind)
 //                                                && (!master.get(i).isCVar() || master.isComplete())
 //                                                && (/*slave.getRightId() != master.get(i).getValue(mind).getRightId() ||*/ slave.getVarOrder(i) >= master.getVarOrder(i))) {
-                                                && slave.getVarOrder(i) >= master.getVarOrder(i)
+                                                && slave.getVarOrder(mind, i) >= master.getVarOrder(mind, i)
 //                                                && (!master.get(i).isCVar(mind)
 //                                                || master.get(i).getValue(mind).getRightId() != slave.get(i).getT(mind).getRightId()
 //                                                || master.get(i).getValue(mind).getIndex() < slave.get(i).getT(mind).getIndex())
@@ -792,7 +791,7 @@ public class Linker {
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
                         for (int i = 0; i < d.getRange(); ++i) {
-                            if (master.get(i).isTSet() && master.getVarOrder(i) >= d.getVarOrder(i)) {
+                            if (master.get(i).isTSet() && master.getVarOrder(mind, i) >= d.getVarOrder(mind, i)) {
                             } else if (master.get(i).isEmpty(mind)
                                     || master.get(i).getValue(mind).getId() != d.get(i).getValue(mind).getId()) {
                                 success = false;
@@ -1040,6 +1039,12 @@ public class Linker {
             for (List<Term> args : e.getValue()) {
                 result = true;
                 d.getArguments().applyStamp(mind, args);
+                for (int i = 0; i < d.getRange(); ++i) {
+                    if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF(mind).isCalculable() && d.getArguments().get(i).getF(mind).isEmpty()) {
+                        d.getArguments().get(i).getF(mind).clear();
+                        mind.getCalculator().calculate(d.getArguments().get(i).getF(mind), logging);
+                    }
+                }
                 if (d.isComplete()) {
 
 //                for(Function f : d.getArguments().getFunctions()) {

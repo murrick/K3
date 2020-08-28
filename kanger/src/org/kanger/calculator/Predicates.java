@@ -374,28 +374,31 @@ public class Predicates {
                 }
             }
         } else if (interval.getType() == DataType.BLOB) {
-            int pos = 0;
-            while (pos < ((byte[]) interval.getValue()).length) {
-                boolean complete = true;
-                for (int i = 0; i < ((byte[]) cur.getValue()).length; ++i) {
-                    if (((byte[]) interval.getValue()).length <= pos + i) {
-                        break;
-                    } else if (((byte[]) cur.getValue())[i] != ((byte[]) interval.getValue())[pos + i]) {
-                        complete = false;
-                        break;
-                    }
-                }
-                if (complete) {
-                    res = true;
-                    break;
-                } else {
-                    ++pos;
-                }
-            }
+            res = indexOf((byte[]) interval.getValue(), (byte[]) cur.getValue()) != -1;
         }
         return res;
     }
 
+    public int indexOf(byte[] source, byte[] sample) {
+        int pos = 0;
+        while (pos < source.length) {
+            boolean complete = true;
+            for (int i = 0; i < sample.length; ++i) {
+                if (source.length <= pos + i) {
+                    break;
+                } else if (sample[i] != source[pos + i]) {
+                    complete = false;
+                    break;
+                }
+            }
+            if (complete) {
+                return pos;
+            } else {
+                ++pos;
+            }
+        }
+        return -1;
+    }
 
     public List<Term> expand(Term interval, Term step) throws Exception {
         List<Term> list = new ArrayList<>();
