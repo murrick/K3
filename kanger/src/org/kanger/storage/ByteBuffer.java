@@ -6,7 +6,6 @@ import org.kanger.exception.OutOfBufferException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Base64;
 import java.util.Stack;
 
@@ -18,23 +17,27 @@ public class ByteBuffer {
     private final Stack<Integer> mark;
     private boolean reverse = false;
     private byte[] buffer;
+    private int length;
     private int i;
 
     public ByteBuffer() {
         buffer = new byte[]{};
         i = 0;
+        length = 0;
         mark = new Stack<>();
     }
 
     public ByteBuffer(byte[] buffer) {
         this.buffer = buffer;
         i = 0;
+        length = buffer.length;
         mark = new Stack<>();
     }
 
     public ByteBuffer(byte[] buffer, int offset) {
         this.buffer = buffer;
         i = offset;
+        length = buffer.length;
         mark = new Stack<>();
     }
 
@@ -57,6 +60,7 @@ public class ByteBuffer {
         }
 
         i = 0;
+        length = buffer.length;
     }
 
     public ByteBuffer(String str) {
@@ -76,14 +80,15 @@ public class ByteBuffer {
             buffer[i] = (byte) (Integer.parseInt(sub, 16) & 0xFF);
         }
         i = 0;
+        length = buffer.length;
         mark = new Stack<>();
     }
 
-    public static byte[] reverse(byte[] buffer) {
-        if (buffer.length > 0) {
-            byte[] tmp = new byte[buffer.length];
-            for (int i = 0; i < buffer.length; ++i) {
-                tmp[buffer.length - i - 1] = buffer[i];
+    public static byte[] reverse(byte[] buffer, int len) {
+        if (len > 0) {
+            byte[] tmp = new byte[len];
+            for (int i = 0; i < len; ++i) {
+                tmp[len - i - 1] = buffer[i];
             }
             return tmp;
         } else {
@@ -91,18 +96,18 @@ public class ByteBuffer {
         }
     }
 
-    public static byte[] copy(byte[] str, int offset, int len) {
-        byte[] dst = new byte[len];
-        System.arraycopy(str, offset, dst, 0, len);
-        return dst;
-    }
-
-    public static byte[] copy(byte[] str, int offset) {
-        int len = str.length - offset;
-        byte[] dst = new byte[len];
-        System.arraycopy(str, offset, dst, 0, len);
-        return dst;
-    }
+//    public static byte[] copy(byte[] str, int offset, int len) {
+//        byte[] dst = new byte[len];
+//        System.arraycopy(str, offset, dst, 0, len);
+//        return dst;
+//    }
+//
+//    public static byte[] copy(byte[] str, int offset) {
+//        int len = str.length - offset;
+//        byte[] dst = new byte[len];
+//        System.arraycopy(str, offset, dst, 0, len);
+//        return dst;
+//    }
 
     public static ByteBuffer fromHex(String hex) {
         return new ByteBuffer(hex);
@@ -114,7 +119,7 @@ public class ByteBuffer {
     }
 
     public int length() {
-        return !mark.isEmpty() ? mark.peek() : buffer.length;
+        return !mark.isEmpty() ? mark.peek() : length;
     }
 
     public int rest() {
@@ -144,14 +149,24 @@ public class ByteBuffer {
         return this;
     }
 
+    public ByteBuffer cut() {
+        length = i;
+        return this;
+    }
+
+//    public ByteBuffer cut(int pos) {
+//        length = pos;
+//        return this;
+//    }
+
     public byte[] getBytes() throws OutOfBufferException {
         if (rest() < 2) {
-            throw new OutOfBufferException("need 2, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 2, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         int len = getWord();
         if (len == -1) {
             if (rest() < 4) {
-                throw new OutOfBufferException("need 4, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+                throw new OutOfBufferException("need 4, rest " + rest() + ", length " + length() + ", buffer " + length);
             }
             len = (int) getDWord();
         }
@@ -161,7 +176,7 @@ public class ByteBuffer {
     public byte[] getBytes(int len) throws OutOfBufferException {
         if (len > 0) {
             if (len > rest()) {
-                throw new OutOfBufferException("need " + len + ", rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+                throw new OutOfBufferException("need " + len + ", rest " + rest() + ", length " + length() + ", buffer " + length);
             }
             byte[] packet = new byte[len];
             System.arraycopy(buffer, i, packet, 0, len);
@@ -175,7 +190,7 @@ public class ByteBuffer {
 
     public int getByte() throws OutOfBufferException {
         if (rest() < 1) {
-            throw new OutOfBufferException("need 1, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 1, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         int r = (buffer[i] & 0xFF);
         i += 1;
@@ -187,7 +202,7 @@ public class ByteBuffer {
 
     public int getWord() throws OutOfBufferException {
         if (rest() < 2) {
-            throw new OutOfBufferException("need 2, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 2, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         int r = reverse
                 ? ((buffer[i] & 0xFF) << 8) | (buffer[i + 1] & 0x00FF) & 0xFFFF
@@ -199,20 +214,9 @@ public class ByteBuffer {
         return r;
     }
 
-    //    public int getWordReverse() throws OutOfBufferException {
-//        if (rest() < 2) {
-//            throw new OutOfBufferException("need 2, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
-//        }
-//        int r = ((buffer[i + 0] << 8) & 0xFF00) | ((buffer[i + 1] << 0) & 0x00FF) & 0xFFFF;
-//        i += 2;
-//        if (r == 0xFFFF) {
-//            r = -1;
-//        }
-//        return r;
-//    }
     public long getDWord() throws OutOfBufferException {
         if (rest() < 4) {
-            throw new OutOfBufferException("need 4, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 4, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         long r = reverse
                 ? (buffer[i + 3] & 0xFF) | ((buffer[i + 2] << 8) & 0xFF00) | ((buffer[i + 1] << 16) & 0xFF0000) | ((buffer[i] << 24) & 0xFF000000) & 0xFFFFFFFFL
@@ -226,7 +230,7 @@ public class ByteBuffer {
 
     public long get3Word() throws OutOfBufferException {
         if (rest() < 3) {
-            throw new OutOfBufferException("need 3, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 3, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         long r = reverse
                 ? (buffer[i + 2] & 0xFF) | ((buffer[i + 1] << 8) & 0xFF00) | ((buffer[i] << 16) & 0xFF0000) & 0xFFFFFFL
@@ -240,7 +244,7 @@ public class ByteBuffer {
 
     public long get6Word() throws OutOfBufferException {
         if (rest() < 6) {
-            throw new OutOfBufferException("need 6, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 6, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         long r = reverse
                 ? (long) (buffer[i + 5] & 0xFF)
@@ -264,7 +268,7 @@ public class ByteBuffer {
 
     public double getDouble() throws OutOfBufferException {
         if (rest() < 8) {
-            throw new OutOfBufferException("need 8, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 8, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         long z = reverse
                 ? buffer[i + 7] & 0xFF
@@ -289,7 +293,7 @@ public class ByteBuffer {
 
     public float getFloat() throws OutOfBufferException {
         if (rest() < 4) {
-            throw new OutOfBufferException("need 4, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 4, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         int z = reverse
                 ? buffer[i + 3] & 0xFF
@@ -306,7 +310,7 @@ public class ByteBuffer {
 
     public long getLong() throws OutOfBufferException {
         if (rest() < 8) {
-            throw new OutOfBufferException("need 8, rest " + rest() + ", length " + length() + ", buffer " + buffer.length);
+            throw new OutOfBufferException("need 8, rest " + rest() + ", length " + length() + ", buffer " + length);
         }
         long z = reverse
                 ? buffer[i + 7] & 0xFF
@@ -333,6 +337,10 @@ public class ByteBuffer {
         return (int) getDWord();
     }
 
+    public ByteBuffer putInt(int val) {
+        return putDWord(val);
+    }
+
     public String getString() throws OutOfBufferException {
         return new String(getBytes());
     }
@@ -348,14 +356,14 @@ public class ByteBuffer {
         } else {
             putWord(packet.length);
         }
-        buffer = _append(buffer, packet);
+        _append(packet);
         return this;
     }
 
     public ByteBuffer putByte(int x) {
         byte[] tmp = new byte[1];
         tmp[0] = (byte) (x & 0xFF);
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -372,7 +380,7 @@ public class ByteBuffer {
             tmp[1] = (byte) ((b >> 16) & 0xFF);
             tmp[0] = (byte) ((b >> 24) & 0xFF);
         }
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -387,7 +395,7 @@ public class ByteBuffer {
             tmp[1] = (byte) ((b >> 8) & 0xFF);
             tmp[0] = (byte) ((b >> 16) & 0xFF);
         }
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -408,7 +416,7 @@ public class ByteBuffer {
             tmp[1] = (byte) ((b >> 32) & 0xFF);
             tmp[0] = (byte) ((b >> 40) & 0xFF);
         }
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -421,7 +429,7 @@ public class ByteBuffer {
             tmp[1] = (byte) (b & 0xFF);
             tmp[0] = (byte) ((b >> 8) & 0xFF);
         }
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -447,7 +455,7 @@ public class ByteBuffer {
             tmp[1] = (byte) ((b >> 48) & 0xFF);
             tmp[0] = (byte) ((b >> 56) & 0xFF);
         }
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -465,7 +473,7 @@ public class ByteBuffer {
             tmp[1] = (byte) ((b >> 16) & 0xFF);
             tmp[0] = (byte) ((b >> 24) & 0xFF);
         }
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -490,7 +498,7 @@ public class ByteBuffer {
             tmp[1] = (byte) ((b >> 48) & 0xFF);
             tmp[0] = (byte) ((b >> 56) & 0xFF);
         }
-        buffer = _append(buffer, tmp);
+        _append(tmp);
         return this;
     }
 
@@ -507,7 +515,7 @@ public class ByteBuffer {
         } catch (UnsupportedEncodingException ex) {
             //
         }
-        buffer = _append(buffer, tmp.getBuffer());
+        _append(tmp.getBuffer());
         return this;
     }
 
@@ -524,7 +532,7 @@ public class ByteBuffer {
         } catch (UnsupportedEncodingException ex) {
             //
         }
-        buffer = _append(buffer, tmp.getBuffer());
+        _append(tmp.getBuffer());
         return this;
     }
 
@@ -570,40 +578,44 @@ public class ByteBuffer {
             i += 2;
         }
         String str = "";
-        try {
-            str = len > 0 ? new String(copy(buffer, i, len), "windows-1251") : "";
-            i += len;
-        } catch (UnsupportedEncodingException ex) {
-            //
+        if (len > 0) {
+            try {
+                byte[] dst = new byte[len];
+                System.arraycopy(buffer, i, dst, 0, len);
+                str = len > 0 ? new String(dst, "windows-1251") : "";
+                i += len;
+            } catch (UnsupportedEncodingException ex) {
+                ex.printStackTrace(System.err);
+            }
         }
         return str;
     }
 
     public ByteBuffer append(ByteBuffer tail) {
-        buffer = _append(buffer, tail.buffer);
+        _append(tail.buffer);
         return this;
     }
 
     public ByteBuffer append(byte[] packet) {
-        buffer = _append(buffer, packet);
+        _append(packet);
         return this;
     }
 
-    public ByteBuffer append(byte[] packet, int start, int length) {
-        buffer = _append(buffer, packet, start, length);
-        return this;
-    }
-
-    public ByteBuffer append(ByteBuffer tail, int start, int length) {
-        buffer = _append(buffer, tail.buffer, start, length);
-        return this;
-    }
+//    public ByteBuffer append(byte[] packet, int start, int length) {
+//        buffer = _append(buffer, packet, start, length);
+//        return this;
+//    }
+//
+//    public ByteBuffer append(ByteBuffer tail, int start, int length) {
+//        buffer = _append(buffer, tail.buffer, start, length);
+//        return this;
+//    }
 
     public byte[] getBuffer() {
         if (!reverse) {
             return buffer;
         } else {
-            return reverse(buffer);
+            return reverse(buffer, buffer.length);
         }
     }
 
@@ -632,14 +644,16 @@ public class ByteBuffer {
     }
 
     public int getPartsCount(int partSize) {
-        return (buffer.length / partSize) + (buffer.length % partSize > 0 ? 1 : 0);
+        return (length / partSize) + (length % partSize > 0 ? 1 : 0);
     }
 
     public byte[] getPart(int index, int partSize) {
-        int len = buffer.length - partSize * index;
+        int len = length - partSize * index;
         if (len > 0) {
             len = len > partSize ? partSize : len;
-            return copy(buffer, partSize * index, len);
+            byte[] dst = new byte[len];
+            System.arraycopy(buffer, partSize * index, dst, 0, len);
+            return dst;
         } else {
             return new byte[]{};
         }
@@ -669,12 +683,13 @@ public class ByteBuffer {
     }
 
     public String toBase64() throws UnsupportedEncodingException {
-        return URLEncoder.encode(Base64.getEncoder().encodeToString(buffer), "windows-1251");
+        return Base64.getEncoder().encodeToString(buffer);
     }
 
     public ByteBuffer clear() {
         buffer = new byte[]{};
         i = 0;
+        length = 0;
         mark.clear();
         return this;
     }
@@ -683,27 +698,41 @@ public class ByteBuffer {
         return i >= length();
     }
 
-    private byte[] _append(byte[] src, byte[] tail) {
-        byte[] dst = new byte[src.length + tail.length];
-        System.arraycopy(src, 0, dst, 0, src.length);
-        System.arraycopy(tail, 0, dst, src.length, tail.length);
-        return dst;
+    private void _append(byte[] tail) {
+        if (buffer.length < length + tail.length) {
+            byte[] dst = new byte[length + tail.length];
+            System.arraycopy(buffer, 0, dst, 0, length);
+            buffer = dst;
+        }
+        System.arraycopy(tail, 0, buffer, length, tail.length);
+        length = length + tail.length;
     }
 
-    private byte[] _append(byte[] src, byte[] tail, int start, int length) {
-        length = tail.length > length ? length : tail.length;
-        byte[] dst = new byte[src.length + length];
-        System.arraycopy(src, 0, dst, 0, src.length);
-        System.arraycopy(tail, start, dst, src.length, length);
-        return dst;
-    }
+
+//    private byte[] _append(byte[] src, byte[] tail) {
+//        byte[] dst = new byte[src.length + tail.length];
+//        System.arraycopy(src, 0, dst, 0, src.length);
+//        System.arraycopy(tail, 0, dst, src.length, tail.length);
+//        return dst;
+//    }
+//
+//    private byte[] _append(byte[] src, byte[] tail, int start, int length) {
+//        length = tail.length > length ? length : tail.length;
+//        byte[] dst = new byte[src.length + length];
+//        System.arraycopy(src, 0, dst, 0, src.length);
+//        System.arraycopy(tail, start, dst, src.length, length);
+//        return dst;
+//    }
 
     public byte[] getRest() {
-        return copy(buffer, i, buffer.length - i);
+        if (length - i > 0) {
+            byte[] dst = new byte[length - i];
+            System.arraycopy(buffer, i, dst, 0, length - i);
+            return dst;
+        } else {
+            return new byte[]{};
+        }
     }
 
 
-    public ByteBuffer putInt(int val) {
-        return putDWord(val);
-    }
 }

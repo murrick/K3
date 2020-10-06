@@ -43,6 +43,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     private transient Mind mind = null;
 
+    protected transient long rightId = -1;
+
     private transient boolean deleted = false;
 
     public Domain() {
@@ -61,33 +63,26 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         this.mind = mind;
 
     }
+
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
-                .putByte(antc ? 1 : 0)
-                .putInt(range)
-                .putLong(predicateId)
                 .putLong(rightId)
-                .append(arguments.pack());
+                .append(super.pack());
         return packet.createMarked();
     }
 
     public Domain apply(ByteBuffer packet) throws OutOfBufferException {
-//        arguments.setUser(user);
-
         id = packet.getLong();
         mindId = packet.getLong();
         deleted = packet.getByte() != 0;
-        antc = packet.getByte() != 0;
-        range = packet.getInt();
-        predicateId = packet.getLong();
         rightId = packet.getLong();
+
         try {
             packet.mark();
-            arguments = new ArgList().apply(packet);
-//            arguments.setUser(user);
+            super.apply(packet);
         } finally {
             packet.release();
         }
@@ -212,17 +207,28 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
             } else {
                 mind.getDomainCauses().get(this).get(current).clear();
             }
+            Set<Cause> set = new HashSet<>();
             for (Cause c : causes) {
-                if (c.getSrc(mind).isComplete()
-                        && c.getArguments().equalsBase(mind, current)
-                        && c.getArguments().equalsBase(mind, c.getSrc(mind).getArguments())
-                        && sourceExists(c) == null
-                        && getOverlaps(c.getArguments()) > 0
-                ) {
-                    mind.getDomainCauses().get(this).get(current).add(c);
-                    result = true;
+                if (arguments.isOverlaps(c.getDonor().getArguments())) {
+                    set.add(c);
                 }
             }
+
+            if (set.size() > 1) {
+                Set<Cause> toDelete = new HashSet<>();
+                for (Cause c : set) {
+                    if (c.getDonor().getPredicateId() == predicateId) {
+                        toDelete.add(c);
+                    }
+                }
+                if (set.size() != toDelete.size()) {
+                    set.removeAll(toDelete);
+                }
+            }
+
+            mind.getDomainCauses().get(this).get(current).addAll(set);
+
+            result = !set.isEmpty();
         }
         return result;
     }
@@ -270,8 +276,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         Set<Cause> causes = getCauses();
         if (causes != null) {
             for (Cause x : causes) {
-                if (x.getSrc(mind).getPredicateId() == c.getSrc(mind).getPredicateId()
-                        && x.getSrc(mind).getArguments().equalsBase(mind, c.getSrc(mind).getArguments())) {
+                if (x.getDonor().getPredicateId() == c.getDonor().getPredicateId()
+                        && x.getDonor().getArguments().equalsBase(mind, c.getDonor().getArguments())) {
                     return x;
                 }
 //                if(x.getSrc().sourceExists(c)) {
@@ -439,17 +445,33 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return success;
 //    }
 
-    public int getOverlaps(ArgList arg) throws Exception {
-        Set<Long> ids = new HashSet<>();
-        for (Argument a : arguments) {
-            for (Argument b : arg) {
-                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-                    ids.add(a.getValue(mind).getId());
-                }
-            }
-        }
-        return ids.size();
-    }
+//    public int getOverlaps(ArgList arg) throws Exception {
+//        Set<Long> ids = new HashSet<>();
+//        for (Argument a : arguments) {
+//            for (Argument b : arg) {
+//                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+//                    ids.add(a.getValue(mind).getId());
+//                }
+//            }
+//        }
+//        return ids.size();
+//    }
+
+//    public boolean isOverlaps(ArgList arg) throws Exception {
+//        for (Argument a : arguments) {
+//            boolean found = false;
+//            for (Argument b : arg) {
+//                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+//                    found = true;
+//                    break;
+//                }
+//            }
+//            if (!found) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 
     public boolean contains(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (TVariable x : arguments.getTVariables(mind)) {
@@ -893,11 +915,6 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     @Override
-    public boolean equalsTo(Domain to) {
-        return super.equalsTo(mind, to);
-    }
-
-    @Override
     public int hashCode() {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
@@ -1100,5 +1117,75 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        setMind(m);
 //        return this;
 //    }
+
+
+    public void calcVarOrders(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        for (int pos = 0; pos < getRange(); ++pos) {
+            List<Integer> list = new ArrayList<>();
+            SortedMap<Integer, Integer> sort = new TreeMap<>();
+            int plains = 0;
+            for (int i = 0; i < arguments.size(); ++i) {
+                int ix = 0;
+                if (arguments.get(i).isTSet()) {
+                    ix = arguments.get(i).getT(mind).getIndex();
+                } else if (arguments.get(i).isCVar(mind) && arguments.get(i).getValue(mind).getRightId() == rightId) {
+                    ix = arguments.get(i).getValue(mind).getIndex();
+                } else {
+                    ++plains;
+                }
+                list.add(ix);
+                sort.put(ix, ix);
+            }
+            int i = sort.firstKey() == 0 ? 0 : 1;
+            for (Integer e : sort.keySet()) {
+                sort.put(e, i++);
+            }
+            arguments.get(pos).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
+        }
+    }
+
+    public int getVarOrder(Mind mind, int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+        if (arguments.get(pos).getVarOrder() == -1) {
+            calcVarOrders(mind);
+        }
+        return arguments.get(pos).getVarOrder();
+    }
+
+    public boolean equalsTo(Domain to) {
+        try {
+            if (to.isAntc() == antc
+                    && to.getPredicateId() == predicateId
+                    && (rightId == -1 || to.getRightId() == rightId)) {
+                int i = 0;
+                for (; i < getRange(); ++i) {
+                    try {
+                        if ((to.getArguments().get(i).isTSet() && arguments.get(i).isTSet() && to.getArguments().get(i).getT(mind).getId() == arguments.get(i).getT(mind).getId())
+                                || (to.getArguments().get(i).isFSet() && arguments.get(i).isFSet() && to.getArguments().get(i).getF(mind).getId() == arguments.get(i).getF(mind).getId())
+                                || (!to.getArguments().get(i).isTSet() && !arguments.get(i).isTSet()
+                                && !to.getArguments().get(i).isFSet() && !arguments.get(i).isFSet()
+                                && !to.getArguments().get(i).isEmpty(mind) && !arguments.get(i).isEmpty(mind)
+                                && to.getArguments().get(i).getValue(mind).getId() == arguments.get(i).getValue(mind).getId())) {
+                        } else {
+                            break;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace(System.err);
+                    }
+                }
+                return i == getRange();
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
+
+    public long getRightId() {
+        return rightId;
+    }
+
+
 }
 

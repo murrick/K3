@@ -28,6 +28,8 @@ public class Parser {
             new Operation("+", "_val", 1, 1, 1, false, false),
             new Operation("~~", "_bitnot", 1, 1, 1, false, false),
 
+            new Operation("~", "", 1, 1, 1, false, false),
+
             /*  2 */
             new Operation("*", "_mul", 2, 2, 0, false, false),
             new Operation("/", "_div", 2, 2, 0, false, false),
@@ -48,7 +50,7 @@ public class Parser {
 //            new Operation(",", "", 10, 2, 0, false, false),
 
             /* 11 */
-            new Operation("~", "", 1, 1, 1, false, false),
+//            new Operation("~", "", 1, 1, 1, false, false),
 
             /* 12 */
             new Operation(":", "_in", 12, 2, 0, false, false),
@@ -590,14 +592,14 @@ public class Parser {
         return f;
     }
 
-    private static PTree squeze(PTree t) {
+    private static PTree squeeze(PTree t) {
         if (t == null) {
             return null;
         }
-        t.setLeft(squeze(t.getLeft()));
-        t.setRight(squeze(t.getRight()));
+        t.setLeft(squeeze(t.getLeft()));
+        t.setRight(squeeze(t.getRight()));
         if (t.getName().charAt(0) == Enums.LB && t.getLeft() == null) {
-            return squeze(t.getRight());
+            return squeeze(t.getRight());
         } else {
             return t;
         }
@@ -609,7 +611,7 @@ public class Parser {
         if (!ln.isEmpty() && ln.trim().charAt(ln.trim().length() - 1) != Enums.EOLN) {
             throw new ParseErrorException(ln.trim().length() - 1, ParseError.EOLN);
         }
-        return squeze(parse(ln, 0 /*, 0*/));
+        return squeeze(parse(ln, 0 /*, 0*/));
 //        return parse(ln, 0, 0);
     }
 

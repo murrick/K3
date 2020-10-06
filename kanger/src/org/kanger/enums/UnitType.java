@@ -8,7 +8,7 @@ public enum UnitType {
     DOMAIN,
     FUNCTION,
     FVALUE,
-    PREFICATE,
+    PREDICATE,
     RIGHT,
     SYSOP,
     TERM,

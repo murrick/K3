@@ -211,6 +211,7 @@ public class Linker {
 
 //                            Map<Right, List<Object[]>> variants = new HashMap<>();
 
+
                             if (linkDomains(t, rightList, causes, logging)) {
                                 result = true;
                             }
@@ -575,8 +576,8 @@ public class Linker {
                                     } else {
                                         ++dumpedPasses;
                                     }
-                                    markExcluded(substMaster, master, slave, causes, variants, logging);
-                                    markExcluded(substSlave, slave, master, causes, variants, logging);
+                                    markExcluded(result, substMaster, master, slave, causes, variants, logging);
+                                    markExcluded(result, substSlave, slave, master, causes, variants, logging);
                                 } else {
                                     ++skipedPasses;
 
@@ -631,7 +632,7 @@ public class Linker {
 //        }
 //    }
 
-    private boolean markExcluded(Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, Map<Right, List<Object[]>> variants, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private boolean markExcluded(boolean result, Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, Map<Right, List<Object[]>> variants, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Right r = null;
         boolean occurrs = false;
 
@@ -645,24 +646,12 @@ public class Linker {
                     list.add((TValue) subst[i]);
                 }
                 for (TValue v : list) {
-//                    boolean caused = false;
-                    Cause s = new Cause(mind, master, slave);
-//                    if (!v.getCauses().contains(s)) {
-//                        v.getCauses().add(s);
-//                        caused = true;
-//                    }
-                    if (/*caused || */!master.isExcluded(slave.getArguments())) {
+                    if (!master.isExcluded(slave.getArguments())) {
                         r = v.getTVar().getRight();
-//                        if (caused) {
-                        if (!causes.containsKey(r)) {
-                            causes.put(r, new HashSet<>());
-                        }
-                        causes.get(r).add(s);
                         if (logging) {
                             mind.getLog().add(LogMode.ANALIZER, "Closed: " + v);
                         }
                         occurrs = true;
-//                        }
                     }
                 }
             }
@@ -724,6 +713,15 @@ public class Linker {
 //            }
 //        }
         if (r != null) {
+
+            if (occurrs /*&& !result*/) {
+                Cause s = new Cause(mind, master, slave);
+                if (!causes.containsKey(r)) {
+                    causes.put(r, new HashSet<>());
+                }
+                causes.get(r).add(s);
+            }
+
             master.setExcluded(slave.getArguments());
             if (!variants.containsKey(master.getRight())) {
                 variants.put(master.getRight(), new ArrayList<>());
@@ -937,10 +935,10 @@ public class Linker {
         if (d.getCauses() != null) {
             for (Cause c : d.getCauses()) {
                 if (!rightShowed) {
-                    mind.getLog().add(mode, "\tFrom right: " + c.getDst(mind).getRight());
+                    mind.getLog().add(mode, "\tFrom right: " + c.getRight(mind));
                     rightShowed = true;
                 }
-                mind.getLog().add(mode, "\t\tUsing: " + c.getSrc(mind).toString(c.getArguments()));
+                mind.getLog().add(mode, "\t\tUsing: " + c.getDonor().toString(mind));
             }
         }
     }
@@ -1087,6 +1085,9 @@ public class Linker {
                     if (d.getCauses() != null) {
                         x.getCauses().clear();
                         x.getCauses().addAll(d.getCauses());
+
+                        //TODO: XPRMNT
+//                        x.getDomain().setCauses(d.getCauses());
 
 //                    for(Cause c : x.getCauses()) {
 //                        if(!c.getDst().isStored()) {

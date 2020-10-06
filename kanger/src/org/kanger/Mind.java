@@ -121,6 +121,7 @@ public class Mind {
 
         debugLevel = root.getDebugLevel();
 
+//        domainCauses.putAll(root.getDomainCauses());
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
     }
@@ -180,6 +181,9 @@ public class Mind {
             tValues.commit(m.getTValues());
 //            tSolves.commit(m.getTSolves());
             domains.commit(m.getDomains());
+
+//            domainCauses.clear();
+//            domainCauses.putAll(m.getDomainCauses());
 
             Set<Long> list = rights.commit(m.getRights());
 
@@ -1363,16 +1367,21 @@ public class Mind {
 //        return i;
 //    }
 
-    private boolean isInherited(Right rx, Right r) throws Exception {
-        for (Cause c : rx.getCauses()) {
-            if ((r.isStored() && c.getSrc(this).getId() == r.getDomain().getId())
-                    || c.getDst(this).getRightId() == r.getId()) {
-                return true;
-            } else {
-                c.getSrc(this).getArguments().applyArguments(this, c.getArguments());
-                Right x = rights.find(c.getSrc(this));
-                if (x != null && isInherited(x, r)) {
+    private boolean isInherited(Set<Cause> rx, Right r) throws Exception {
+        if (r.isStored()) {
+            for (Cause c : rx) {
+                if (c.getDonor().equals(r.getDomain())) {
                     return true;
+                }
+            }
+        }
+        for (Cause c : rx) {
+            if (!c.getDonor().equals(r.getDomain())) {
+                Right x = getRights().find(c.getDonor());
+                if (x != null) {
+                    if (isInherited(x.getCauses(), r)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -1383,7 +1392,7 @@ public class Mind {
         Set<Right> set = new HashSet<>();
         set.add(r);
         for (Right rx : rights) {
-            if (rx.getId() != r.getId() && rx.isGenerated() && isInherited(rx, r)) {
+            if (rx.getId() != r.getId() && rx.isGenerated() && isInherited(rx.getCauses(), r)) {
                 set.add(rx);
             }
         }

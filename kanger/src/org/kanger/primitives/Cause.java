@@ -6,99 +6,104 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
+import org.kanger.units.Right;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
-public class Cause implements Comparable<Cause> {
-    private Solve result = null;
+public class Cause /*implements Comparable<Cause>*/ {
+    //    private Solve result = null;
+//    private Solve acceptor = null;
     private Solve donor = null;
-    private Set<Cause> next = new HashSet<>();
 
-    private Domain dst = null;
+    private Right right = null;
 
-    private Domain src = null;
-    private ArgList arguments = null;
-//    private int index = -1;
+//    private Right next = null;
 
-    private transient long srcId = -1;
-    private transient long dstId = -1;
-//    private transient IUser user = null;
+    private transient long rightId = -1;
+//    private transient long nextId = -1;
 
 
     public Cause() {
     }
 
     public Cause(Mind mind, Domain dst, Domain src) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-//        this.index = index;
-        this.dst = dst;
-        this.src = src;
-        this.dstId = dst.getId();
-        this.srcId = src.getId();
-        this.arguments = src.getArguments().convertBase(mind);
+        this.donor = new Solve(dst.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
+        this.right = dst.getRight();
+//        this.next = mind.getRights().find(src);
 
-        donor = new Solve(src.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
-        if (src.getCauses(arguments) != null) {
-            next.addAll(src.getCauses(arguments));
-        }
+        rightId = dst.getRightId();
+//        nextId = next == null ? -1 : next.getId();
+
+//        if(src.getCauses() != null) {
+//            for (Cause c : src.getCauses()) {
+//                c.setResult(donor);
+//                next.add(c);
+//            }
+//        } else
+//            if(src.getRight().getCauses() != null) {
+//            for (Cause c : src.getRight().getCauses()) {
+//                c.setResult(donor);
+//                next.add(c);
+//            }
+//        }
     }
+
+//    public Solve getResult() {
+//        return result;
+//    }
+//
+//    public void setResult(Solve result) {
+//        this.result = result;
+//    }
 
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
-//                .putInt(index)
-                .putLong(srcId)
-                .putLong(dstId)
-                .append(arguments.pack());
+                .putLong(rightId)
+//                .putLong(nextId)
+                .append(donor.pack());
+//                .append(acceptor.pack());
+//        if(result != null) {
+//            packet.append(result.pack());
+//        }
         return packet.createMarked();
     }
 
     public Cause apply(ByteBuffer packet) throws OutOfBufferException {
 //        index = packet.getInt();
-        srcId = packet.getLong();
-        dstId = packet.getLong();
+        rightId = packet.getLong();
+//        nextId = packet.getLong();
         try {
             packet.mark();
-            arguments = new ArgList().apply(packet);
-//            arguments.setUser(user);
+            donor = new Solve().apply(packet);
         } finally {
             packet.release();
         }
+//        try {
+//            packet.mark();
+//            acceptor = new Solve().apply(packet);
+//        } finally {
+//            packet.release();
+//        }
+//        if(!packet.isEod()) {
+//            try {
+//                packet.mark();
+//                result = new Solve().apply(packet);
+//            } finally {
+//                packet.release();
+//            }
+//        }
         return this;
-    }
-
-    public Domain getSrc(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (src == null) {
-            src = mind.getDomains().load(srcId);
-        }
-        return src;
-    }
-
-    public Domain getDst(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (dst == null) {
-            dst = mind.getDomains().load(dstId);
-        }
-        return dst;
-    }
-
-//    public int getIndex() {
-//        return index;
-//    }
-//
-//    public void setIndex(int index) {
-//        this.index = index;
-//    }
-
-    public ArgList getArguments() {
-        return arguments;
     }
 
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 47 * hash + (int) (srcId ^ (srcId >>> 32));
-        hash = 47 * hash + (int) (dstId ^ (dstId >>> 32));
-//        hash = 47 * hash + index;
+        hash = 47 * hash + (int) (rightId ^ (rightId >>> 32));
+        hash = 47 * hash + donor.hashCode();
+//        hash = 47 * hash + acceptor.hashCode();
+//        if(result != null) {
+//            hash = 47 * hash + result.hashCode();
+//        }
         return hash;
     }
 
@@ -108,9 +113,9 @@ public class Cause implements Comparable<Cause> {
 //        }
 
     private boolean equalsId(ArgList args) {
-        if (args.size() == arguments.size()) {
+        if (args.size() == donor.arguments.size()) {
             for (int i = 0; i < args.size(); ++i) {
-                if (args.get(i).getId() != arguments.get(i).getId()) {
+                if (args.get(i).getId() != donor.arguments.get(i).getId()) {
                     return false;
                 }
             }
@@ -125,12 +130,10 @@ public class Cause implements Comparable<Cause> {
         try {
             return o != null
                     && o instanceof Cause
-                    && srcId != -1 && dstId != -1
-                    && ((Cause) o).getSrcId() != -1 && ((Cause) o).getDstId() != -1
-                    && srcId == ((Cause) o).getSrcId()
-                    && dstId == ((Cause) o).getDstId()
-//                    && index == ((Cause) o).getIndex()
-                    && equalsId(((Cause) o).getArguments());
+                    && ((Cause) o).getRightId() == rightId
+                    && donor.equals(((Cause) o).getDonor());
+//                    && acceptor.equals(((Cause) o).getAcceptor())
+//                    && ((result == null && ((Cause) o).getResult() == null) || (result.equals(((Cause) o).getResult())));
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return false;
@@ -155,14 +158,13 @@ public class Cause implements Comparable<Cause> {
 //        }
 //    }
 
-    @Override
-    public int compareTo(Cause o) {
-        if (o.getDstId() != dstId) {
-            return (int) (o.getDstId() - dstId);
-        } else {
-            return (int) (o.getSrcId() - srcId);
-        }
-    }
+//    @Override
+//    public int compareTo(Cause o) {
+//            return (int) (o.getDstId() - dstId);
+//        } else {
+//            return (int) (o.getSrcId() - srcId);
+//        }
+//    }
 
 //    public IUser getUser() {
 //        return user;
@@ -173,21 +175,52 @@ public class Cause implements Comparable<Cause> {
 //        this.arguments.setUser(user);
 //    }
 
-    public long getSrcId() {
-        return srcId;
-    }
-
-    public long getDstId() {
-        return dstId;
-    }
-
     public UnitType getUnitType() {
         return UnitType.CAUSE;
     }
 
-    public void setSrc(Domain domain) {
-        src = domain;
-        srcId = domain.getId();
+//    public Solve getAcceptor() {
+//        return acceptor;
+//    }
+//
+//    public void setAcceptor(Solve acceptor) {
+//        this.acceptor = acceptor;
+//    }
+
+    public Solve getDonor() {
+        return donor;
+    }
+
+    public void setDonor(Solve donor) {
+        this.donor = donor;
+    }
+
+    public Right getRight(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+        if (right == null) {
+            right = mind.getRights().load(rightId);
+        }
+        return right;
+    }
+
+    public void setRight(Right right) {
+        this.right = right;
+        this.rightId = right.getId();
+    }
+
+//    public Right getNext() {
+//        return next;
+//    }
+//
+//    public void setNext(Right next) {
+//        this.next = next;
+//    }
+
+    public long getRightId() {
+        return rightId;
+    }
+
+    public void setRightId(long rightId) {
+        this.rightId = rightId;
     }
 
 //    public boolean isStored() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {

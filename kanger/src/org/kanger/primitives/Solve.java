@@ -6,13 +6,10 @@ import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -24,12 +21,12 @@ public class Solve {
     private static final long serialVersionUID = 196402070001L;
 
     protected boolean antc = true;                                // ! или ?
+    protected int range = 0;
     protected Predicate predicate = null;                         // Ссылка на описатель предиката
     protected ArgList arguments = new ArgList();       // Массив подстановочных переменных
-    protected int range = 0;
 
     protected transient long predicateId = -1;
-    protected transient long rightId = -1;
+//    protected transient long rightId = -1;
 
     public Solve() {
     }
@@ -143,6 +140,10 @@ public class Solve {
     //Values (1):
     //	Row 001: x=%2
 
+    public String toString(Mind mind) {
+        return toString(mind, arguments);
+    }
+
     public String toString(Mind mind, ArgList arguments) {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
@@ -202,38 +203,6 @@ public class Solve {
         }
     }
 
-    public void calcVarOrders(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
-        for (int pos = 0; pos < getRange(); ++pos) {
-            List<Integer> list = new ArrayList<>();
-            SortedMap<Integer, Integer> sort = new TreeMap<>();
-            int plains = 0;
-            for (int i = 0; i < arguments.size(); ++i) {
-                int ix = 0;
-                if (arguments.get(i).isTSet()) {
-                    ix = arguments.get(i).getT(mind).getIndex();
-                } else if (arguments.get(i).isCVar(mind) && arguments.get(i).getValue(mind).getRightId() == rightId) {
-                    ix = arguments.get(i).getValue(mind).getIndex();
-                } else {
-                    ++plains;
-                }
-                list.add(ix);
-                sort.put(ix, ix);
-            }
-            int i = sort.firstKey() == 0 ? 0 : 1;
-            for (Integer e : sort.keySet()) {
-                sort.put(e, i++);
-            }
-            arguments.get(pos).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
-        }
-    }
-
-    public int getVarOrder(Mind mind, int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
-        if (arguments.get(pos).getVarOrder() == -1) {
-            calcVarOrders(mind);
-        }
-        return arguments.get(pos).getVarOrder();
-    }
-
     @Override
     public int hashCode() {
         int hash = 3;
@@ -255,49 +224,19 @@ public class Solve {
 //        return hash;
 //    }
 
-    public boolean equalsTo(Mind mind, Solve to) {
-        try {
-            if (to.isAntc() == antc
-                    && to.getPredicateId() == predicateId
-                    && (rightId == -1 || to.getRightId() == rightId)) {
-                int i = 0;
-                for (; i < getRange(); ++i) {
-                    try {
-                        if ((to.getArguments().get(i).isTSet() && arguments.get(i).isTSet() && to.getArguments().get(i).getT(mind).getId() == arguments.get(i).getT(mind).getId())
-                                || (to.getArguments().get(i).isFSet() && arguments.get(i).isFSet() && to.getArguments().get(i).getF(mind).getId() == arguments.get(i).getF(mind).getId())
-                                || (!to.getArguments().get(i).isTSet() && !arguments.get(i).isTSet()
-                                && !to.getArguments().get(i).isFSet() && !arguments.get(i).isFSet()
-                                && !to.getArguments().get(i).isEmpty(mind) && !arguments.get(i).isEmpty(mind)
-                                && to.getArguments().get(i).getValue(mind).getId() == arguments.get(i).getValue(mind).getId())) {
-                        } else {
-                            break;
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace(System.err);
-                    }
-                }
-                return i == getRange();
-            } else {
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            return false;
-        }
-    }
-
     @Override
     public boolean equals(Object d) {
-        if (d == null || !(d instanceof Solve) || ((Solve) d).getPredicateId() != predicateId || ((Solve) d).getRightId() != rightId || ((Solve) d).getRange() != range) {
-            return false;
-        } else {
-            for (int i = 0; i < arguments.size(); ++i) {
-                if (arguments.get(i).getId() != ((Solve) d).getArguments().get(i).getId()) {
-                    return false;
+        if (d != null) {
+            if (((Solve) d).getPredicateId() == predicateId || ((Solve) d).getRange() == range) {
+                for (int i = 0; i < arguments.size(); ++i) {
+                    if (arguments.get(i).getId() != ((Solve) d).getArguments().get(i).getId()) {
+                        return false;
+                    }
                 }
+                return true;
             }
-            return true;
         }
+        return false;
     }
 
 //    public boolean isComplete() {
@@ -343,16 +282,34 @@ public class Solve {
         return predicateId;
     }
 
-    public long getRightId() {
-        return rightId;
-    }
-
     public int getRange() {
         return range;
     }
 
     public void setRange(int range) {
         this.range = range;
+    }
+
+    public ByteBuffer pack() {
+        ByteBuffer packet = new ByteBuffer()
+                .putLong(predicateId)
+                .putInt(range)
+                .putByte(antc ? 1 : 0)
+                .append(arguments.pack());
+        return packet.createMarked();
+    }
+
+    public Solve apply(ByteBuffer packet) throws OutOfBufferException {
+        predicateId = packet.getLong();
+        range = packet.getInt();
+        antc = packet.getByte() != 0;
+        try {
+            packet.mark();
+            arguments = new ArgList().apply(packet);
+        } finally {
+            packet.release();
+        }
+        return this;
     }
 
 //    public boolean isIntersected(Domain d) {
@@ -489,5 +446,15 @@ public class Solve {
 //        setMind(m);
 //        return this;
 //    }
+
+    public int getHash(Mind mind) {
+        int hash = 3;
+        hash = 47 * hash + (antc ? 1 : 0);
+        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
+        //TODO: ---
+        hash = 47 * hash + arguments.getHash(mind);
+//        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
+        return hash;
+    }
 }
 

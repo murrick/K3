@@ -7,6 +7,7 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.Cause;
+import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
@@ -351,7 +352,7 @@ public class Right implements IUnit<Right> {
         return this;
     }
 
-    public boolean equalsTo(Domain x) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean equalsTo(Solve x) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
                 && x.getPredicateId() == domain.getPredicateId()
@@ -360,13 +361,13 @@ public class Right implements IUnit<Right> {
             for (; i < domain.getRange(); ++i) {
                 //TODO: Костыль!
 //                    x.get(i).setUser(user);
-                if (!x.get(i).isEmpty(mind)
+                if (!x.getArguments().get(i).isEmpty(mind)
                         && !domain.getArguments().get(i).isEmpty(mind)
-                        && x.get(i).getValue(mind).getId() != domain.getArguments().get(i).getValue(mind).getId()) {
+                        && x.getArguments().get(i).getValue(mind).getId() != domain.getArguments().get(i).getValue(mind).getId()) {
                     break;
                 }
 
-                TValue a = x.get(i).isTSet() ? x.get(i).getT(mind).getCurrent() : x.get(i).getV(mind);
+                TValue a = x.getArguments().get(i).isTSet() ? x.getArguments().get(i).getT(mind).getCurrent() : x.getArguments().get(i).getV(mind);
                 TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT(mind).getCurrent() : domain.getArguments().get(i).getV(mind);
                 if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                     break;

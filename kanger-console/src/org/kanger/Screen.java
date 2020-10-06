@@ -778,7 +778,7 @@ public class Screen {
         }
     }
 
-    public static void showCauses(Mind mind, Domain d, int level) throws Exception {
+    public static void showCauses(Mind mind, Set<Cause> causes, int level) throws Exception {
         //ПРЕДОХРАНИТЕЛЬ
         if (level > 50) {
             return;
@@ -788,33 +788,58 @@ public class Screen {
         for (int i = 0; i < level; ++i) {
             indent += "\t";
         }
-
-        Right dest = mind.getRights().find(d);
-        if (dest != null && !dest.getCauses().isEmpty()) {
-
-            boolean rightShowed = false;
-            for (Cause c : dest.getCauses()) {
-                c.getSrc(mind).getArguments().applyArguments(mind, c.getArguments());
-                if (!rightShowed) {
-                    System.out.printf("\t\t%sRight: %s\n", indent, c.getDst(mind).getRight().toString().replaceAll("\n", " ").replaceAll("  ", " "));
-                }
-                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc(mind).toString()); //c.getArguments()));
-                showCauses(mind, c.getSrc(mind), level + 1);
+        boolean rightShowed = false;
+        for (Cause c : causes) {
+            if (!rightShowed) {
+                System.out.printf("\t\t%sRight: %s\n", indent, c.getRight(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
+            }
+            System.out.printf("\t\t%sCause: %s\n", indent, c.getDonor().toString(mind)); //c.getArguments()));
+            Right r = mind.getRights().find(c.getDonor());
+            if (r != null) {
+                showCauses(mind, r.getCauses(), level + 1);
             }
         }
     }
+
+//    public static void showCauses(Mind mind, Domain d, int level) throws Exception {
+//        //ПРЕДОХРАНИТЕЛЬ
+//        if (level > 50) {
+//            return;
+//        }
+//
+//        String indent = "";
+//        for (int i = 0; i < level; ++i) {
+//            indent += "\t";
+//        }
+//
+//        Right dest = mind.getRights().find(d);
+//        if (dest != null && !dest.getCauses().isEmpty()) {
+//
+//            boolean rightShowed = false;
+//            for (Cause c : dest.getCauses()) {
+//                if (!rightShowed) {
+//                    System.out.printf("\t\t%sRight: %s\n", indent, c.getRight(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
+//                }
+//                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc(mind).toString()); //c.getArguments()));
+//                showCauses(mind, c.getSrc(mind), level + 1);
+//            }
+//        }
+//    }
 
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws Exception {
 //        if (tIndex >= tvars.size()) {
         if (d.isStored()) {
 //                d.recalculate();
-            if (showCauses) {
-                System.out.println("\t-------------------------------------------");
-            }
-            System.out.printf("\t%s\n", d.toString());
-            if (showCauses) {
-                showCauses(mind, d, 0);
+            Right dest = mind.getRights().find(d);
+            if (dest != null) {
+                if (showCauses) {
+                    System.out.println("\t-------------------------------------------");
+                }
+                System.out.printf("\t%s\n", d.toString());
+                if (showCauses && !dest.getCauses().isEmpty()) {
+                    showCauses(mind, dest.getCauses(), 0);
+                }
             }
         }
 //        } else {

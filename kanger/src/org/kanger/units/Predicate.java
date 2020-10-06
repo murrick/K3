@@ -260,7 +260,7 @@ public class Predicate implements IUnit<Predicate> {
 
     @Override
     public UnitType getUnitType() {
-        return UnitType.PREFICATE;
+        return UnitType.PREDICATE;
     }
 
     @Override

@@ -7,6 +7,7 @@ import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
+import org.kanger.primitives.Solve;
 import org.kanger.storage.Escalera;
 import org.kanger.units.*;
 
@@ -349,9 +350,9 @@ public class RightFactory implements Iterable<Right> {
         return d.getRight();
     }
 
-    public Right find(Domain domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Right find(Solve domain) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
 //        domain.setUser(user);
-        for (long id : cache.find(domain.getHashBase())) {
+        for (long id : cache.find(domain.getHash(mind))) {
             Right one = load(id);
             if (one.equalsTo(domain)) {
                 return (Right) one;

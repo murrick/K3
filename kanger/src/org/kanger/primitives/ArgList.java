@@ -404,4 +404,32 @@ public class ArgList extends ArrayList<Argument> {
         }
         return super.add(argument);
     }
+
+    public boolean isOverlaps(ArgList arg) throws Exception {
+
+//        for (Argument a : this) {
+//            boolean found = false;
+//            for (Argument b : arg) {
+//                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+//                    found = true;
+//                    break;
+//                }
+//            }
+//            if (!found) {
+//                return false;
+//            }
+//        }
+//        return true;
+
+        for (Argument a : this) {
+            for (Argument b : arg) {
+                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+
+    }
+
 }

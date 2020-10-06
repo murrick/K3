@@ -220,7 +220,7 @@ public class Sapato implements IStep {
                 return new TValue();
             case FUNCTION:
                 return new Function();
-            case PREFICATE:
+            case PREDICATE:
                 return new Predicate();
             case TVARIABLE:
                 return new TVariable();
