@@ -2217,12 +2217,19 @@ public class KangerTest {
         Mind b = new Mind(mind);
         Mind c = new Mind(mind);
 
-        CountDownLatch latch = new CountDownLatch(3);
-//
+        CountDownLatch latchEnd = new CountDownLatch(3);
+        CountDownLatch latchStart = new CountDownLatch(3);
+        final Object locker = new Object();
+
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    synchronized (locker) {
+                        latchStart.countDown();
+                        locker.wait();
+                    }
+
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
 //                        Thread.sleep(10);
@@ -2233,7 +2240,7 @@ public class KangerTest {
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
-                    latch.countDown();
+                    latchEnd.countDown();
                 }
             }
         });
@@ -2242,6 +2249,11 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
+                    synchronized (locker) {
+                        latchStart.countDown();
+                        locker.wait();
+                    }
+
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
 //                        Thread.sleep(10);
@@ -2252,7 +2264,7 @@ public class KangerTest {
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
-                    latch.countDown();
+                    latchEnd.countDown();
                 }
             }
         });
@@ -2261,6 +2273,11 @@ public class KangerTest {
             @Override
             public void run() {
                 try {
+                    synchronized (locker) {
+                        latchStart.countDown();
+                        locker.wait();
+                    }
+
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
 //                        Thread.sleep(10);
@@ -2271,7 +2288,7 @@ public class KangerTest {
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
-                    latch.countDown();
+                    latchEnd.countDown();
                 }
             }
         });
@@ -2280,9 +2297,16 @@ public class KangerTest {
         t2.start();
         t3.start();
 
+        latchStart.await();
+
+        synchronized (locker) {
+            locker.notifyAll();
+        }
+
+
 //        latch.countDown();
 //        latch.countDown();
-        latch.await();
+        latchEnd.await();
 
         System.out.println("PROCESSES STOP: " + mind.getRights().size());
 
@@ -2328,29 +2352,38 @@ public class KangerTest {
         Mind a = new Mind(mind);
         Mind b = new Mind(mind);
         Mind c = new Mind(mind);
-        Mind d = new Mind(mind);
+//        Mind d = new Mind(mind);
 
-        CountDownLatch latch = new CountDownLatch(4);
+        CountDownLatch latchEnd = new CountDownLatch(3);
+        CountDownLatch latchStart = new CountDownLatch(3);
         final Object locker = new Object();
 //
+        for (int i = 0; i < COUNT; ++i) {
+            Boolean res = mind.query("!value(1, " + i + ", " + (1000 + i) + ");");
+//                        Thread.sleep(7);
+        }
+
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    for (int i = 0; i < COUNT; ++i) {
-                        Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
-//                        Thread.sleep(7);
+                    synchronized (locker) {
+                        latchStart.countDown();
+                        locker.wait();
                     }
-                    System.out.println("PROCESS 1 STRT: " + a.getRights().size() + "/" + mind.getRights().size());
+                    for (int i = 0; i < COUNT; ++i) {
+                        Boolean res = a.query("!value(1, " + i + ", " + (2000 + i) + ");");
+//                        Thread.sleep(3);
+                    }
+                    a.query("!~value(1, " + 2 + ", " + (1000 + 2) + ");");
+//                    Thread.sleep(10);
+                    System.out.println("PROCESS 2 STRT: " + a.getRights().size() + "/" + mind.getRights().size());
                     mind.commit(a);
-                    System.out.println("PROCESS 1 STOP: " + a.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 2 STOP: " + a.getRights().size() + "/" + mind.getRights().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
-                    latch.countDown();
-                    synchronized (locker) {
-                        locker.notifyAll();
-                    }
+                    latchEnd.countDown();
                 }
             }
         });
@@ -2360,21 +2393,21 @@ public class KangerTest {
             public void run() {
                 try {
                     synchronized (locker) {
+                        latchStart.countDown();
                         locker.wait();
                     }
                     for (int i = 0; i < COUNT; ++i) {
-                        Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
-//                        Thread.sleep(3);
+                        Boolean res = b.query("!value(1, " + i + ", " + (3000 + i) + ");");
+//                        Thread.sleep(9);
                     }
-                    b.query("!~value(1, " + 2 + ", " + (1000 + 2) + ");");
-//                    Thread.sleep(10);
-                    System.out.println("PROCESS 2 STRT: " + b.getRights().size() + "/" + mind.getRights().size());
+                    b.query("!value(1, " + 3 + ", " + (1000 + 3) + ");");
+                    System.out.println("PROCESS 3 STRT: " + b.getRights().size() + "/" + mind.getRights().size());
                     mind.commit(b);
-                    System.out.println("PROCESS 2 STOP: " + b.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 3 STOP: " + b.getRights().size() + "/" + mind.getRights().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
-                    latch.countDown();
+                    latchEnd.countDown();
                 }
             }
         });
@@ -2384,54 +2417,37 @@ public class KangerTest {
             public void run() {
                 try {
                     synchronized (locker) {
+                        latchStart.countDown();
                         locker.wait();
                     }
                     for (int i = 0; i < COUNT; ++i) {
-                        Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
-//                        Thread.sleep(9);
-                    }
-                    c.query("!value(1, " + 3 + ", " + (1000 + 3) + ");");
-                    System.out.println("PROCESS 3 STRT: " + c.getRights().size() + "/" + mind.getRights().size());
-                    mind.commit(c);
-                    System.out.println("PROCESS 3 STOP: " + c.getRights().size() + "/" + mind.getRights().size());
-                } catch (Exception e) {
-                    e.printStackTrace(System.err);
-                } finally {
-                    latch.countDown();
-                }
-            }
-        });
-
-        Thread t4 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    synchronized (locker) {
-                        locker.wait();
-                    }
-                    for (int i = 0; i < COUNT; ++i) {
-                        Boolean res = d.query("!value(1, " + i + ", " + (4000 + i) + ");");
+                        Boolean res = c.query("!value(1, " + i + ", " + (4000 + i) + ");");
 //                        Thread.sleep(2);
                     }
-                    System.out.println("PROCESS 4 STRT: " + d.getRights().size() + "/" + mind.getRights().size());
-                    mind.commit(d);
-                    System.out.println("PROCESS 4 STOP: " + d.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 4 STRT: " + c.getRights().size() + "/" + mind.getRights().size());
+                    mind.commit(c);
+                    System.out.println("PROCESS 4 STOP: " + c.getRights().size() + "/" + mind.getRights().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
-                    latch.countDown();
+                    latchEnd.countDown();
                 }
             }
         });
 
         t1.start();
-        t2.start();
-        t4.start();
         t3.start();
+        t2.start();
+
+        latchStart.await();
+
+        synchronized (locker) {
+            locker.notifyAll();
+        }
 
 //        latch.countDown();
 //        latch.countDown();
-        latch.await();
+        latchEnd.await();
 
         System.out.println("PROCESSES STOP: " + mind.getRights().size());
 

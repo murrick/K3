@@ -175,7 +175,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return getCauses(args);
     }
 
-    public Set<Cause> getCauses(ArgList args) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Set<Cause> getCauses(ArgList args) {
 //        Set<Cause> set =  new HashSet<>();
 //        for(TVariable t : arguments.getTVariables(true)) {
 //            if(!t.isEmpty()) {
@@ -207,28 +207,17 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
             } else {
                 mind.getDomainCauses().get(this).get(current).clear();
             }
-            Set<Cause> set = new HashSet<>();
             for (Cause c : causes) {
-                if (arguments.isOverlaps(c.getDonor().getArguments())) {
-                    set.add(c);
+                if (
+//                        c.getDonor().getArguments().equalsBase(mind, current)
+//                        && sourceExists(c) == null
+//                        &&
+                        getOverlaps(c.getDonor().getArguments()) > 0
+                ) {
+                    mind.getDomainCauses().get(this).get(current).add(c);
+                    result = true;
                 }
             }
-
-            if (set.size() > 1) {
-                Set<Cause> toDelete = new HashSet<>();
-                for (Cause c : set) {
-                    if (c.getDonor().getPredicateId() == predicateId) {
-                        toDelete.add(c);
-                    }
-                }
-                if (set.size() != toDelete.size()) {
-                    set.removeAll(toDelete);
-                }
-            }
-
-            mind.getDomainCauses().get(this).get(current).addAll(set);
-
-            result = !set.isEmpty();
         }
         return result;
     }
@@ -445,33 +434,17 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return success;
 //    }
 
-//    public int getOverlaps(ArgList arg) throws Exception {
-//        Set<Long> ids = new HashSet<>();
-//        for (Argument a : arguments) {
-//            for (Argument b : arg) {
-//                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-//                    ids.add(a.getValue(mind).getId());
-//                }
-//            }
-//        }
-//        return ids.size();
-//    }
-
-//    public boolean isOverlaps(ArgList arg) throws Exception {
-//        for (Argument a : arguments) {
-//            boolean found = false;
-//            for (Argument b : arg) {
-//                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-//                    found = true;
-//                    break;
-//                }
-//            }
-//            if (!found) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
+    public int getOverlaps(ArgList arg) throws Exception {
+        Set<Long> ids = new HashSet<>();
+        for (Argument a : arguments) {
+            for (Argument b : arg) {
+                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                    ids.add(a.getValue(mind).getId());
+                }
+            }
+        }
+        return ids.size();
+    }
 
     public boolean contains(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
         for (TVariable x : arguments.getTVariables(mind)) {
