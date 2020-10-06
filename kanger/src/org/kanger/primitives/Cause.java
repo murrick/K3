@@ -14,7 +14,6 @@ public class Cause /*implements Comparable<Cause>*/ {
     //    private Solve result = null;
 //    private Solve acceptor = null;
     private Solve donor = null;
-
     private Right right = null;
 
 //    private Right next = null;
