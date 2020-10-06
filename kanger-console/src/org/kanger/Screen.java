@@ -156,7 +156,27 @@ public class Screen {
                             showLog(mind, LogMode.VALUES, false);
                             break;
                         case 'S':
-                            showLog(mind, LogMode.SOLVES, false);
+                            if (line.charAt(0) != 's') {
+                                if (!mind.getSolutions().isEmpty()) {
+                                    String posStr = line.trim().contains(" ") ? line.split(" ")[1] : null;
+                                    int pos = posStr == null ? -1 : Integer.parseInt(posStr);
+                                    int i = 0;
+                                    for (Right log : mind.getSolutions().getRoot()) {
+                                        if (++i == pos || pos == -1) {
+                                            System.out.println(String.format("\tSolution %03d: %s", i, log.toString()));
+                                            if (!log.getCauses().isEmpty()) {
+                                                showCauses(mind, log.getCauses(), 0);
+                                                System.out.println();
+                                            }
+                                            if (pos != -1) {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                showLog(mind, LogMode.SOLVES, false);
+                            }
                             break;
                         case 'X':
                             showLog(mind, LogMode.ALL, line.charAt(0) != 'x');

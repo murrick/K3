@@ -37,14 +37,22 @@
  * 2) x является родителем y. 
  */
 
-!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));
+//!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));
+
+!@x @y child(x,y) -> parent(y,x);
+!@x @y child(x,y), male(x) -> son(x,y);
+!@x @y child(x,y), female(x) -> daughter(x,y);
 /* Если x ребенок y, то 
  * 1) у является родителем x, 
  * 2) если x мужского пола, то он сын x, 
  * 3) если женского – то дочь.
  */
 
-!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));
+//!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));
+
+!@x @y parent(x,y) -> child(y,x);
+!@x @y parent(x,y), male(x) -> father(x,y);
+!@x @y parent(x,y), female(x) -> mother(x,y);
 /* Если x родитель y, то
  * 1) y является ребенком x,
  * 2) если x мужского пола то он отец x,
