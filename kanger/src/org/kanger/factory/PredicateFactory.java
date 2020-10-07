@@ -1,8 +1,6 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -49,7 +47,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public void commit(PredicateFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void commit(PredicateFactory base) throws Exception {
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -70,7 +68,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
         }
@@ -105,7 +103,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         return null;
     }
 
-    public Predicate load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Predicate load(long id) throws Exception {
         Predicate t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
@@ -118,12 +116,12 @@ public class PredicateFactory implements Iterable<Predicate> {
         return t;
     }
 
-    private Predicate get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Predicate get(long id) throws Exception {
         Predicate t = (Predicate) cache.get(id);
         return t;
     }
 
-    public void clear() throws IOException, OutOfBufferException {
+    public void clear() throws Exception {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getPredicates());
         } else {

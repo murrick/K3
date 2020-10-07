@@ -1,8 +1,6 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -13,7 +11,6 @@ import org.kanger.units.FValue;
 import org.kanger.units.Function;
 import org.kanger.units.Term;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -51,7 +48,7 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
-    public void commit(FunctionFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void commit(FunctionFactory base) throws Exception {
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -72,7 +69,7 @@ public class FunctionFactory implements Iterable<Function> {
         }
     }
 
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
         }
@@ -101,7 +98,7 @@ public class FunctionFactory implements Iterable<Function> {
         return f;
     }
 
-    public Function load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Function load(long id) throws Exception {
         Function t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
@@ -114,12 +111,12 @@ public class FunctionFactory implements Iterable<Function> {
         return t;
     }
 
-    private Function get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Function get(long id) throws Exception {
         Function t = (Function) cache.get(id);
         return t;
     }
 
-    public void clear() throws IOException, OutOfBufferException {
+    public void clear() throws Exception {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getFunctions());
         } else {
@@ -154,7 +151,7 @@ public class FunctionFactory implements Iterable<Function> {
         return cache.iterator();
     }
 
-    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted()) {
@@ -176,7 +173,7 @@ public class FunctionFactory implements Iterable<Function> {
 
     }
 
-    public void delete(Function f) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void delete(Function f) throws Exception {
         f.setDeleted();
         FValue v = mind.getFValues().find(f);
         if (v != null) {

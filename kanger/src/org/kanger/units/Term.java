@@ -7,13 +7,11 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.Tools;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -52,7 +50,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.mind = mind;
     }
 
-    public Term(Object str, Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term(Object str, Mind mind) throws Exception {
         this.mind = mind;
         construct(str);
     }
@@ -166,7 +164,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         return this;
     }
 
-    private void construct(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private void construct(Object o) throws Exception {
         value = null;
         if (o instanceof Number) {
             type = DataType.NUMERIC;
@@ -275,7 +273,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         return buffer;
     }
 
-    private Object conatructInterval(String ch) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Object conatructInterval(String ch) throws Exception {
         if (ch.contains("..")) {
             if (ch.startsWith("{") && ch.endsWith("}")) {
                 ch = ch.substring(1, ch.length() - 1);
@@ -307,7 +305,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.id = id;
     }
 
-    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Right getRight() throws Exception {
         if (right == null) {
             right = mind.getRights().load(rightId);
         }
@@ -362,7 +360,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                     default:
                         try {
                             return getName().toString();
-                        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+                        } catch (Exception e) {
                             e.printStackTrace(System.err);
                             return "";
                         }
@@ -420,7 +418,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.value = value;
     }
 
-    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getName() throws Exception {
         if (name == null) {
             name = mind.getTerms().load(nameId);
         }
@@ -546,7 +544,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.mindId = mindId;
     }
 
-//    public Term commit(Mind m) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public Term commit(Mind m) throws Exception {
 //        Term term = m.getTerms().add(this);
 //        term.setMind(m);
 //        return term;

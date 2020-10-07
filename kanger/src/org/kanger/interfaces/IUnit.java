@@ -3,10 +3,7 @@ package org.kanger.interfaces;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
-
-import java.io.IOException;
 
 public interface IUnit<T> {
 
@@ -18,13 +15,13 @@ public interface IUnit<T> {
 
     void setMindId(long id);
 
-    int getHash() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    int getHash() throws Exception;
 
-    boolean equalsTo(T to) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    boolean equalsTo(T to) throws Exception;
 
     Mind getMind();
 
-    T setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
+    T setMind(Mind mind) throws Exception;
 
     boolean isDeleted();
 

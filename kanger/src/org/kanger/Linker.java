@@ -3,15 +3,12 @@ package org.kanger;
 
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.TVariableSet;
 import org.kanger.units.*;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -294,7 +291,7 @@ public class Linker {
         return result;
     }
 
-//    private List<TValue> getTSolves(TValue v) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    private List<TValue> getTSolves(TValue v) throws Exception {
 //        List<TValue> list = new ArrayList<>();
 //        Right r = v.getTVar().getRight();
 //        for(TSolve s : r.getTSolves()) {
@@ -442,31 +439,41 @@ public class Linker {
                                                 && !slave.get(i).isEmpty(mind)
 //                                                && (!slave.get(i).isCVar() || slave.isComplete())
 //                                                && (/*master.getRightId() != slave.get(i).getValue(mind).getRightId() ||*/ master.getVarOrder(i) >= slave.getVarOrder(i))) {
-                                                && master.getVarOrder(mind, i) > slave.getVarOrder(mind, i)
+//                                                && (master.getVarOrder(mind, i) > slave.getVarOrder(mind, i)
+//                                                    || (slave.get(i).isCVar(mind)
+//                                                && slave.get(i).getValue(mind).getRight().isQuery()
+//                                                && master.get(i).getT(mind).getRightId() != slave.get(i).getValue(mind).getRightId() )
+//                                                )
 //                                                && (!slave.get(i).isCVar(mind)
 //                                                || slave.get(i).getValue(mind).getRightId() != master.get(i).getT(mind).getRightId()
-//                                                || slave.get(i).getValue(mind).getIndex() < master.get(i).getT(mind).getIndex())
+//                                                || slave.get(i).getValue(mind).getIndex() < master.get(i).getT(mind).getIndex()
+//                                                //|| slave.get(i).getValue(mind).getRight().isQuery()
+//                                                )
                                         ) {
 
+                                            if (master.getVarOrder(mind, i) < slave.getVarOrder(mind, i)) {
+//                                                System.err.println(slave + " -> " + master);
+                                            } else {
 //                                            if(master.getRightId() == slave.get(i).getValue(mind).getRightId()) {
 //                                                System.err.println("=== " + master.getVarOrder(i) + ":" + master + " <-- " + slave.getVarOrder(i) + ":" + slave);
 //                                            }
 
 //                                            long parentId = -1;
-                                            Term tm = slave.get(i).getValue(mind);
+                                                Term tm = slave.get(i).getValue(mind);
 //                                            if (tm.isCVariable() && tm.getSlaves().isEmpty()) {
 //                                                tm = mind.getTerms().createCVar(tm.getRight(), tm.getName());
 //                                            }
-                                            TValue s = mind.getTValues().find(master.get(i).getT(mind), tm);
-                                            if (s == null) {
-                                                s = mind.getTValues().add(master.get(i).getT(mind), tm);
+                                                TValue s = mind.getTValues().find(master.get(i).getT(mind), tm);
+                                                if (s == null) {
+                                                    s = mind.getTValues().add(master.get(i).getT(mind), tm);
 //                                                s.setParentId(parentId);
-                                                result = true;
+                                                    result = true;
+                                                }
+                                                substMaster[i] = s;
+                                                slave.setUsed();
+                                                master.setUsed();
+                                                applied = true;
                                             }
-                                            substMaster[i] = s;
-                                            slave.setUsed();
-                                            master.setUsed();
-                                            applied = true;
                                         }
 
 
@@ -475,31 +482,41 @@ public class Linker {
                                                 && !master.get(i).isEmpty(mind)
 //                                                && (!master.get(i).isCVar() || master.isComplete())
 //                                                && (/*slave.getRightId() != master.get(i).getValue(mind).getRightId() ||*/ slave.getVarOrder(i) >= master.getVarOrder(i))) {
-                                                && slave.getVarOrder(mind, i) >= master.getVarOrder(mind, i)
+//                                                && (slave.getVarOrder(mind, i) >= master.getVarOrder(mind, i)
+//                                                || (master.get(i).isCVar(mind)
+//                                                && master.get(i).getValue(mind).getRight().isQuery()
+//                                                && slave.get(i).getT(mind).getRightId() != master.get(i).getValue(mind).getRightId())
+//                                                )
 //                                                && (!master.get(i).isCVar(mind)
 //                                                || master.get(i).getValue(mind).getRightId() != slave.get(i).getT(mind).getRightId()
 //                                                || master.get(i).getValue(mind).getIndex() < slave.get(i).getT(mind).getIndex())
+//                                                //|| master.get(i).getValue(mind).getRight().isQuery()
                                         ) {
+
+                                            if (slave.getVarOrder(mind, i) < master.getVarOrder(mind, i)) {
+//                                                System.err.println(master + " -> " + slave);
+                                            } else {
 
 //                                            if(slave.getRightId() == master.get(i).getValue(mind).getRightId()) {
 //                                                System.err.println("=== " + slave.getVarOrder(i) + ":" + slave + " <-- " + master.getVarOrder(i) + ":" + master);
 //                                            }
 
 //                                            long parentId = -1;
-                                            Term tm = master.get(i).getValue(mind);
+                                                Term tm = master.get(i).getValue(mind);
 //                                            if (tm.isCVariable() && tm.getSlaves().isEmpty()) {
 //                                                tm = mind.getTerms().createCVar(tm.getRight(), tm.getName());
 //                                            }
-                                            TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
-                                            if (s == null) {
-                                                s = mind.getTValues().add(slave.get(i).getT(mind), tm);
+                                                TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
+                                                if (s == null) {
+                                                    s = mind.getTValues().add(slave.get(i).getT(mind), tm);
 //                                                s.setParentId(parentId);
-                                                result = true;
+                                                    result = true;
+                                                }
+                                                substSlave[i] = s;
+                                                master.setUsed();
+                                                slave.setUsed();
+                                                applied = true;
                                             }
-                                            substSlave[i] = s;
-                                            master.setUsed();
-                                            slave.setUsed();
-                                            applied = true;
                                         }
 
 //                                        if (master.get(i).isFSet()
@@ -632,7 +649,7 @@ public class Linker {
 //        }
 //    }
 
-    private boolean markExcluded(boolean result, Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, Map<Right, List<Object[]>> variants, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private boolean markExcluded(boolean result, Object[] subst, Domain master, Domain slave, Map<Right, Set<Cause>> causes, Map<Right, List<Object[]>> variants, boolean logging) throws Exception {
         Right r = null;
         boolean occurrs = false;
 

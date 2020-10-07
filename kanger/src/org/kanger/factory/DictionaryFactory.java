@@ -2,8 +2,6 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -70,7 +68,7 @@ public class DictionaryFactory implements Iterable<Term> {
 //        firstId = user.lastId(SCHEMA);
     }
 
-    public void commit(DictionaryFactory base) throws IOException, OutOfBufferException, RuntimeErrorException, ClassNotFoundException {
+    public void commit(DictionaryFactory base) throws Exception {
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -97,13 +95,13 @@ public class DictionaryFactory implements Iterable<Term> {
 //        cache.unlink();
 //    }
 
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
         if (cache.update()) {
 //            firstId = user.lastId(SCHEMA);
         }
     }
 
-    public synchronized Term add(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized Term add(Object o) throws Exception {
         Term p = find(o);
         if (p != null) {
             return p;
@@ -124,7 +122,7 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
 
-    public Term find(Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term find(Object o) throws Exception {
         Term t;
         if (o instanceof Term) {
             t = (Term) o;
@@ -140,7 +138,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return null;
     }
 
-    public Term createCVar(Right r, Term name) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term createCVar(Right r, Term name) throws Exception {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
@@ -150,7 +148,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    public Term load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term load(long id) throws Exception {
         Term t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
@@ -163,7 +161,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    private Term get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Term get(long id) throws Exception {
         Term t = (Term) cache.get(id);
         return t;
     }
@@ -209,7 +207,7 @@ public class DictionaryFactory implements Iterable<Term> {
     }
 
 
-    public void clear() throws IOException, OutOfBufferException {
+    public void clear() throws Exception {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getTerms());
         } else {

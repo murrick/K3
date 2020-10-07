@@ -1,13 +1,12 @@
 package org.kanger.storage;
 
-import org.cojen.tupl.Cursor;
-import org.cojen.tupl.Database;
-import org.cojen.tupl.Index;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -17,7 +16,7 @@ public class Base implements IBase {
 
     private static long MAX_CACHE_SIZE = 1024 * 512;
 
-    private Index index;
+    private Connection connection;
     private Map<Long, IStep> cache = new HashMap<>();
     private Queue<Long> timing = new LinkedList<>();
     private volatile long cacheSize = 0L;
@@ -26,14 +25,24 @@ public class Base implements IBase {
     private String name = "";
 //    private IUser user = null;
 
-    public Base(Database db, String name) throws IOException {
+    public Base(Connection db, String name) throws Exception {
 //        this.user = user;
         this.name = name;
         if (System.getProperties().containsKey("cache.size")) {
             MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
         }
 
-        this.index = db.openIndex(name + ".index");
+        this.connection = db;
+        try (Statement st = connection.createStatement()) {
+            st.executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS " +
+                            name + " (" +
+                            "id BIGINT NOT NULL, " +
+                            "data BLOB, " +
+                            "PRIMARY KEY (id)" +
+                            ");");
+            st.executeUpdate("SET TABLE " + name + " TYPE CACHED;");
+        }
         IStep root = getRoot();
         if (root != null) {
             lastId = root.getId() + 1;
@@ -86,57 +95,63 @@ public class Base implements IBase {
 //    }
 
     @Override
-    public void add(IStep one) throws IOException {
-        index.store(null, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
-
-//        int h = one.getHash();
-//        Set<Long> set = (Set<Long>) toObject(hash.load(null, fromObject(h)));
-//        if (set == null) {
-//            set = new HashSet<>();
-//        }
-//        set.add(one.getId());
-//        hash.store(null, fromObject(h), fromObject(set));
+    public void add(IStep one) throws Exception {
+        try (PreparedStatement ps = connection.prepareStatement("INSERT INTO " + name + " (id, data) VALUES (?, ?);")) {
+            ps.setLong(1, one.getId());
+            ps.setBytes(2, one.pack().getBuffer());
+            ps.executeUpdate();
+        }
     }
 
     @Override
-    public void update(IStep one) throws IOException {
-        index.store(null, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
+    public void update(IStep one) throws Exception {
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE " + name + " SET " +
+                "data = ? " +
+                "WHERE id = ?")) {
+            ps.setBytes(1, one.pack().getBuffer());
+            ps.setLong(2, one.getId());
+            ps.executeUpdate();
+        }
     }
 
     @Override
-    public IStep get(long id) throws Exception, RuntimeErrorException, ClassNotFoundException {
+    public IStep get(long id) throws Exception {
         if (cache.containsKey(id)) {
             timing.remove(id);
             timing.add(id);
             return cache.get(id);
         } else {
             IStep step = null;
-            byte[] o = index.load(null, new ByteBuffer().putLong(id).getBuffer());
-            if (o != null) {
+            try (PreparedStatement ps = connection.prepareStatement("SELECT data FROM " + name + " WHERE id = ?")) {
+                ps.setLong(1, id);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    byte[] o = rs.getBytes("data");
+                    if (o != null) {
 
-                ByteBuffer packet = new ByteBuffer(o);
-                try {
-                    packet.mark();
-                    step = new Sapato(this);
+                        ByteBuffer packet = new ByteBuffer(o);
+                        try {
+                            packet.mark();
+                            step = new Sapato(this);
 //                    step.setBase(this);
-                    step.apply(packet);
-                } finally {
-                    packet.release();
-                }
-                cache.put(id, step);
+                            step.apply(packet);
+                        } finally {
+                            packet.release();
+                        }
+                        cache.put(id, step);
 //                if (step.getData() instanceof IUnit) {
 //                    ((IUnit) step.getData()).setUser(user);
 //                }
 
-                timing.add(id);
-                step.setSize(o.length);
-                cacheSize += step.getSize();
-                while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
-                    long topId = timing.poll();
-                    IStep top = cache.get(topId);
-                    cache.remove(topId);
-                    cacheSize -= top.getSize();
-                }
+                        timing.add(id);
+                        step.setSize(o.length);
+                        cacheSize += step.getSize();
+                        while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
+                            long topId = timing.poll();
+                            IStep top = cache.get(topId);
+                            cache.remove(topId);
+                            cacheSize -= top.getSize();
+                        }
 
 //                    try {
 //                        ((Identifiable) step.getData()).linkExternal(user);
@@ -145,14 +160,23 @@ public class Base implements IBase {
 //                    }
 ////                cache.remove(id);
 //                }
+                    }
+                }
             }
             return step;
         }
     }
 
     @Override
-    public int size() throws IOException {
-        return (int) (index.count(null, null));
+    public int size() throws Exception {
+        int count = 0;
+        try (Statement st = connection.createStatement()) {
+            ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + name + ";");
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        }
+        return count;
     }
 
     @Override
@@ -173,32 +197,31 @@ public class Base implements IBase {
     }
 
     @Override
-    public void delete(long id) throws IOException {
+    public void delete(long id) throws Exception {
         cache.remove(id);
         timing.remove(id);
-        Object one = index.load(null, new ByteBuffer().putLong(id).getBuffer());
-        if (one != null) {
-            index.delete(null, new ByteBuffer().putLong(id).getBuffer());
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM " + name + " WHERE id = ?;")) {
+            ps.setLong(1, id);
+            ps.executeUpdate();
         }
     }
 
     @Override
     public void clear() throws Exception {
-        while (size() > 0) {
-            Cursor c = index.newCursor(null);
-            c.first();
-            byte[] first = c.key();
-            c.last();
-            byte[] last = new ByteBuffer().putLong(new ByteBuffer(c.key()).getLong() + 1).getBuffer();
-            index.evict(null, first, last, null, true);
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM " + name + ";")) {
+            ps.executeUpdate();
         }
         clearCache();
         lastId = 0;
     }
 
     @Override
-    public boolean containsKey(long id) throws IOException {
-        return index.load(null, new ByteBuffer().putLong(id).getBuffer()) != null;
+    public boolean containsKey(long id) throws Exception {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT id FROM " + name + " WHERE id = ?;")) {
+            ps.setLong(1, id);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        }
     }
 
     @Override
@@ -207,9 +230,13 @@ public class Base implements IBase {
             if (isEmpty()) {
                 return null;
             } else {
-                Cursor c = index.newCursor(null);
-                c.last();
-                long id = new ByteBuffer(c.key()).getLong();
+                long id = -1;
+                try (PreparedStatement ps = connection.prepareStatement("SELECT MAX(id) FROM " + name + ";")) {
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        id = rs.getLong(1);
+                    }
+                }
                 IStep step = get(id);
                 return step;
             }
@@ -225,9 +252,13 @@ public class Base implements IBase {
             if (isEmpty()) {
                 return null;
             } else {
-                Cursor c = index.newCursor(null);
-                c.first();
-                long id = new ByteBuffer(c.key()).getLong();
+                long id = -1;
+                try (PreparedStatement ps = connection.prepareStatement("SELECT MIN(id) FROM " + name + ";")) {
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        id = rs.getLong(1);
+                    }
+                }
                 IStep step = get(id);
                 return step;
             }

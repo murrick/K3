@@ -11,7 +11,6 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
@@ -42,7 +41,7 @@ public class Screen {
 
     private static String lastLogFile = "analizer.log";
 
-    public static void session(IUser user) throws IOException, OutOfBufferException, ClassNotFoundException, RuntimeErrorException {
+    public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
         boolean again = false;
         Mind mind = new Mind(user);
@@ -957,7 +956,7 @@ public class Screen {
 
     //
 //
-    public static void showTree(Mind mind, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public static void showTree(Mind mind, Right r) throws Exception {
         List<List<String>> net = LogStore.formatTree(mind, r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
@@ -972,7 +971,7 @@ public class Screen {
         }
     }
 
-//    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws Exception {
 //        if (tset.isEmpty()) {
 //            showTree(mind, r);
 //        } else {
@@ -990,7 +989,7 @@ public class Screen {
 //        }
 //    }
 
-    public static void showRights(Mind mind, boolean showTree) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public static void showRights(Mind mind, boolean showTree) throws Exception {
 //        int i = 0;
         for (Right r : mind.getRights()) {
 

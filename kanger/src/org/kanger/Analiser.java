@@ -1,15 +1,12 @@
 package org.kanger;
 
 import org.kanger.enums.LogMode;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypotese;
 import org.kanger.units.Domain;
 import org.kanger.units.Right;
 import org.kanger.units.TValue;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +25,7 @@ public class Analiser {
     }
 
 
-    public boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean analise(Right right, boolean logging) throws Exception {
         boolean result = false;
         int counter = 0;
 
@@ -81,7 +78,7 @@ public class Analiser {
     }
 
 
-    private boolean checkRight(Right p, Set<Right> orfans, Set<Long> list, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private boolean checkRight(Right p, Set<Right> orfans, Set<Long> list, boolean logging) throws Exception {
         boolean result = false;
         if (p.getDomain().isCalculated()) {
 
@@ -161,7 +158,7 @@ public class Analiser {
         return result;
     }
 
-    public boolean checkDatabase(Set<Long> list, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean checkDatabase(Set<Long> list, boolean logging) throws Exception {
 
         boolean result = false;
         boolean calculated = false;

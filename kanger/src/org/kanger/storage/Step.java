@@ -1,12 +1,8 @@
 package org.kanger.storage;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
-
-import java.io.IOException;
 
 public class Step implements IStep {
     private Object data = null;
@@ -27,7 +23,7 @@ public class Step implements IStep {
     }
 
     @Override
-    public Object getData(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Object getData(Mind mind) throws Exception {
         if (data != null && data instanceof IUnit) {
             ((IUnit) data).setMind(mind);
         }

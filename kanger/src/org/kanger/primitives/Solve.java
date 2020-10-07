@@ -5,11 +5,8 @@ import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
-
-import java.io.IOException;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -37,7 +34,7 @@ public class Solve {
         getArguments().addAll(args);
     }
 
-    public Predicate getPredicate(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Predicate getPredicate(Mind mind) throws Exception {
         if (predicate == null) {
             predicate = mind.getPredicates().load(predicateId);
         }
@@ -50,7 +47,7 @@ public class Solve {
         this.range = predicate.getRange();
     }
 
-//    public Right getRight(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//    public Right getRight(Mind mind) throws Exception {
 //        if (right == null) {
 //            right = mind.getRights().load(rightId);
 //        }
@@ -347,7 +344,7 @@ public class Solve {
 //    public int getValOrder(int i) {
 //    }
 
-//    public int getHashStruct(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//    public int getHashStruct(Mind mind) throws Exception {
 //        int hash = 3;
 //        hash = 47 * hash + (antc ? 1 : 0);
 //        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
@@ -370,7 +367,7 @@ public class Solve {
 //        return hash;
 //    }
 //
-//    public boolean equalsToStruct(Mind mind, Solve to) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public boolean equalsToStruct(Mind mind, Solve to) throws Exception {
 //        if (to.isAntc() == antc
 //                && to.getRange() == range
 //                && to.getPredicateId() == predicateId) {
@@ -430,7 +427,7 @@ public class Solve {
 //        return (int) (rightId == domain.rightId ? id - domain.id : rightId - domain.rightId);
 //    }
 
-//    public int compareVars(Domain slave, int pos) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public int compareVars(Domain slave, int pos) throws Exception {
 //        if(arguments.get(pos).isTSet() && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
 //            return arguments.get(pos).getT(mind).getIndex() - slave.get(pos).getValue(mind).getIndex();
 //        } else {

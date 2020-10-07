@@ -44,12 +44,23 @@ public class DB implements IData {
             ((Base) b).close();
         }
         bases.clear();
+        storageName = "";
+        dbPath = "";
     }
 
     @Override
     public void flush() throws IOException {
         for (IBase b : bases.values()) {
             ((Base) b).flush();
+        }
+    }
+
+    @Override
+    public void remove() throws IOException {
+        if (!isClosed()) {
+            String tmp = dbPath;
+            close();
+            deleteDirectory(new File(tmp));
         }
     }
 
@@ -70,5 +81,15 @@ public class DB implements IData {
             bases.put(context, base);
         }
         return bases.get(context);
+    }
+
+    private boolean deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 }

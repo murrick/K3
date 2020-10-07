@@ -46,7 +46,7 @@ public class Compiler {
         return r;
     }
 
-//    private Map<String, Argument> incReplacements(Map<String, Argument> replacements, Right r) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    private Map<String, Argument> incReplacements(Map<String, Argument> replacements, Right r) throws Exception {
 //        for(Map.Entry<String, Argument> e : replacements.entrySet()) {
 //            if(e.getValue().isCVar()) {
 //                Argument p = new Argument(mind.getTerms().createCVar(r, e.getKey()));

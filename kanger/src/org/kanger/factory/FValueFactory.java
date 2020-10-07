@@ -1,8 +1,6 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -10,7 +8,6 @@ import org.kanger.storage.Escalera;
 import org.kanger.units.FValue;
 import org.kanger.units.Function;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -52,7 +49,7 @@ public class FValueFactory implements Iterable<FValue> {
 //        lastId = user.lastId(SCHEMA);
     }
 
-    public void commit(FValueFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void commit(FValueFactory base) throws Exception {
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -74,7 +71,7 @@ public class FValueFactory implements Iterable<FValue> {
         action = base.isAction();
     }
 
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
         }
@@ -100,7 +97,7 @@ public class FValueFactory implements Iterable<FValue> {
     }
 
 
-    public FValue find(Function f) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public FValue find(Function f) throws Exception {
         for (long id : cache.find(f.getHashBase())) {
             FValue one = load(id);
             if (one.equalsTo(f)) {
@@ -110,7 +107,7 @@ public class FValueFactory implements Iterable<FValue> {
         return null;
     }
 
-    public FValue load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public FValue load(long id) throws Exception {
         FValue t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
@@ -123,13 +120,13 @@ public class FValueFactory implements Iterable<FValue> {
         return t;
     }
 
-    private FValue get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private FValue get(long id) throws Exception {
         FValue t = (FValue) cache.get(id);
         return t;
     }
 
 
-    public void clear() throws IOException, OutOfBufferException {
+    public void clear() throws Exception {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getFValues());
         } else {
@@ -163,7 +160,7 @@ public class FValueFactory implements Iterable<FValue> {
         return cache.isEmpty() ? -1 : cache.getRoot().getId();
     }
 
-    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted()) {

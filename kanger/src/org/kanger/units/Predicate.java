@@ -3,11 +3,9 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -63,7 +61,7 @@ public class Predicate implements IUnit<Predicate> {
         return this;
     }
 
-    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getName() throws Exception {
         if (name == null) {
             name = mind.getTerms().load(nameId);
         }
@@ -187,7 +185,7 @@ public class Predicate implements IUnit<Predicate> {
     public String toString() {
         try {
             return getName() + "(" + range + ")";
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }

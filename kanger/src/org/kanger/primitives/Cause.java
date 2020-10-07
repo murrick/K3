@@ -3,12 +3,9 @@ package org.kanger.primitives;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 import org.kanger.units.Right;
-
-import java.io.IOException;
 
 public class Cause /*implements Comparable<Cause>*/ {
     //    private Solve result = null;
@@ -25,7 +22,7 @@ public class Cause /*implements Comparable<Cause>*/ {
     public Cause() {
     }
 
-    public Cause(Mind mind, Domain dst, Domain src) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Cause(Mind mind, Domain dst, Domain src) throws Exception {
         this.donor = new Solve(dst.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
         this.right = dst.getRight();
 //        this.next = mind.getRights().find(src);
@@ -194,7 +191,7 @@ public class Cause /*implements Comparable<Cause>*/ {
         this.donor = donor;
     }
 
-    public Right getRight(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Right getRight(Mind mind) throws Exception {
         if (right == null) {
             right = mind.getRights().load(rightId);
         }
@@ -222,7 +219,7 @@ public class Cause /*implements Comparable<Cause>*/ {
         this.rightId = rightId;
     }
 
-//    public boolean isStored() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public boolean isStored() throws Exception {
 //        if (src.getRight().isStored()) {
 //            return true;
 //        } else if (src.getCauses() != null) {

@@ -1,15 +1,12 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.units.TValue;
 import org.kanger.units.Term;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -48,7 +45,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         }
     }
 
-    public List<Term> getValues(String name) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<Term> getValues(String name) throws Exception {
         List<Term> list = new ArrayList<>();
         for (ArgList row : root) {
             for (Argument t : row) {
@@ -93,7 +90,7 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
             for (Argument v : iterator.next()) {
                 try {
                     row.put(v.getV(mind).getTVar().getName().toString(), v.getV(mind).getValue().getValue());
-                } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+                } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }
             }

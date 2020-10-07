@@ -1,37 +1,33 @@
 package org.kanger.interfaces;
 
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
-
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 
 public interface ICache extends Iterable {
 
-    void add(IUnit one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void add(IUnit one) throws Exception;
 
-    void add(long id, Object one) throws IOException;
+    void add(long id, Object one) throws Exception;
 
-    Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    Object get(long id) throws Exception;
 
-    void delete(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void delete(long id) throws Exception;
 
     int size();
 
     boolean isEmpty();
 
-    Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    Set<Long> find(int h) throws Exception;
 
-    void clear() throws IOException, OutOfBufferException;
+    void clear() throws Exception;
 
     long mark();
 
     long commit();
 
-    long release() throws IOException, ClassNotFoundException;
+    long release() throws Exception;
 
-    boolean containsKey(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    boolean containsKey(long id) throws Exception;
 
     Iterator<Object> iterator(long fromId);
 
@@ -42,6 +38,6 @@ public interface ICache extends Iterable {
     @Override
     Iterator<Object> iterator();
 
-    boolean update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    boolean update() throws Exception;
 
 }

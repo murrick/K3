@@ -8,8 +8,6 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.QueryPass;
 import org.kanger.enums.Tools;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -22,7 +20,6 @@ import org.kanger.stores.SolutionsStore;
 import org.kanger.stores.ValuesStore;
 import org.kanger.units.*;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -84,7 +81,7 @@ public class Mind {
     private volatile boolean blockCommit = false;
     private final Object locker = new Object();
 
-    public Mind(IUser user) throws IOException, OutOfBufferException, ClassNotFoundException, RuntimeErrorException {
+    public Mind(IUser user) throws Exception {
         this.user = user;
 //        user.setMind(this);
         init();
@@ -225,7 +222,7 @@ public class Mind {
         }
     }
 
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
 
         terms.update();
         predicates.update();
@@ -267,7 +264,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public synchronized void clear() throws IOException, OutOfBufferException, ClassNotFoundException, RuntimeErrorException {
+    public synchronized void clear() throws Exception {
         synchronized (locker) {
 
             terms.clear();
@@ -293,7 +290,7 @@ public class Mind {
         }
     }
 
-    public synchronized void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized void pack() throws Exception {
         synchronized (locker) {
 
 //            for (TSolve v : tSolves) {
@@ -470,7 +467,7 @@ public class Mind {
         linker.link(r, logging);
     }
 
-    public Boolean analise(Right right, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Boolean analise(Right right, boolean logging) throws Exception {
         return analiser.analise(right, logging);
     }
 
@@ -801,7 +798,7 @@ public class Mind {
 //        return null;
 //    }
 
-    public boolean isSystem(Predicate p) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isSystem(Predicate p) throws Exception {
         return calculator.exists(p);
     }
 
@@ -1305,7 +1302,7 @@ public class Mind {
         return res;
     }
 
-    private void appendResult(Mind mind, boolean logging) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private void appendResult(Mind mind, boolean logging) throws Exception {
 
         boolean needPack = false;
         for (Right rx : mind.getRights()) {
@@ -1567,7 +1564,7 @@ public class Mind {
         return rights.isSequencedBy(m.rights);
     }
 
-    public TSolve findTSolve(List<TValue> list) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public TSolve findTSolve(List<TValue> list) throws Exception {
         TVariableSet ts = new TVariableSet(list);
         if (getRightSolves().containsKey(ts)) {
             TSolve tmp = new TSolve(list, this);
@@ -1580,7 +1577,7 @@ public class Mind {
         return null;
     }
 
-    public TSolve addTSolve(List<TValue> list) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public TSolve addTSolve(List<TValue> list) throws Exception {
         TSolve tmp = findTSolve(list);
         if (tmp != null) {
             return tmp;
@@ -1595,7 +1592,7 @@ public class Mind {
         }
     }
 
-//    public TSolve addTSolve(TValue vv) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public TSolve addTSolve(TValue vv) throws Exception {
 //        List<TValue> list = new ArrayList<>();
 //        list.add(vv);
 //        TSolve tmp = findTSolve(list);
@@ -1612,7 +1609,7 @@ public class Mind {
 //        }
 //    }
 
-//    public List<Right> getResults() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public List<Right> getResults() throws Exception {
 //        return rights.getResults();
 //    }
 }

@@ -95,7 +95,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         return this;
     }
 
-    public List<TValue> getSolve() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public List<TValue> getSolve() throws Exception {
         if (solve.isEmpty() && !solveIds.isEmpty()) {
             for (long id : solveIds) {
                 TValue v = mind.getTValues().load(id);
@@ -117,7 +117,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         return causes;
     }
 
-    public TValue getValue(TVariable t) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public TValue getValue(TVariable t) throws Exception {
         for (TValue v : solve) {
             if (t.getId() == v.getTVar().getId()) {
                 return v;
@@ -155,7 +155,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
                 str += v.toString();
             }
             return str;
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }
@@ -238,7 +238,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         this.mindId = mindId;
     }
 
-    public void clearCurrent() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void clearCurrent() throws Exception {
         for (TValue v : solve) {
             v.getTVar().setCurrent(null);
         }
@@ -251,7 +251,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
      * @throws OutOfBufferException
      * @throws IOException
      */
-    public Set<TVariable> activate() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Set<TVariable> activate() throws Exception {
         Set<TVariable> list = new HashSet<>();
         boolean fail = false;
         for (TValue v : solve) {

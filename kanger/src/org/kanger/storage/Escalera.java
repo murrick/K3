@@ -1,8 +1,6 @@
 package org.kanger.storage;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -37,7 +35,7 @@ public class Escalera implements ICache {
 
 
     @Override
-    public void add(IUnit one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void add(IUnit one) throws Exception {
         Step s = new Step();
         s.setData(one);
         s.setId(one.getId());
@@ -57,7 +55,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public Object get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Object get(long id) throws Exception {
         if (root instanceof Sapato) {
             IStep e = mind.getUser().getStorage(schema).get(root.getId());
             root.setData(e.getData(mind));
@@ -76,7 +74,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void delete(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void delete(long id) throws Exception {
         if (root != null && root.getId() == id) {
             root = root.getNext();
         } else {
@@ -109,7 +107,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public Set<Long> find(int h) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Set<Long> find(int h) throws Exception {
         Set<Long> set = new HashSet<>();
         if (root instanceof Sapato) {
             root.setData(((Sapato) mind.getUser().getStorage(schema).get(root.getId())).getData(mind));
@@ -124,7 +122,7 @@ public class Escalera implements ICache {
 
 
     @Override
-    public void clear() throws OutOfBufferException, IOException {
+    public void clear() throws Exception {
         root = null;
         if (parent == null) {
             if (!mind.getUser().isClosed()) {
@@ -163,7 +161,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean containsKey(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean containsKey(long id) throws Exception {
         return get(id) != null;
     }
 
@@ -189,7 +187,7 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public boolean update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean update() throws Exception {
         // Это самый низ
         if (parent == null && !mind.getUser().isClosed()) {
             synchronized (mind.getUser().getStorage(schema)) {

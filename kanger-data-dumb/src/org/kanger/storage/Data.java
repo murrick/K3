@@ -89,7 +89,7 @@ public class Data implements Closeable, Iterable<IStep> {
         }
     }
 
-    public IStep get(long offset) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public IStep get(long offset) throws Exception {
         if (offset != currentOffset) {
             if (changed) {
                 saveCurrentBlock();

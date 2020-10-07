@@ -1,7 +1,6 @@
 package org.kanger.test;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
@@ -11,7 +10,6 @@ import org.kanger.units.Predicate;
 import org.kanger.units.Right;
 import org.kanger.units.Term;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -92,8 +90,8 @@ public class KangerTest {
             //TODO: Включть!
 //            mind.clear();
             if (!mind.getUser().isClosed()) {
+//                mind.getUser().close();
                 mind.getUser().remove();
-                mind.getUser().close();
                 try {
                     mind.getUser().use(mind, dbName);
                 } catch (RuntimeErrorException e) {
@@ -123,7 +121,7 @@ public class KangerTest {
 //        return false;
 //    }
 
-    private boolean exists(String name, Object o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private boolean exists(String name, Object o) throws Exception {
         for (Term t : mind.getValues().getValues(name)) {
             if (o.equals(t.getValue())) {
                 return true;
@@ -132,7 +130,7 @@ public class KangerTest {
         return false;
     }
 
-    private void showResult(Mind mind, Boolean assertResult, boolean local) throws RuntimeErrorException, OutOfBufferException, IOException, ClassNotFoundException {
+    private void showResult(Mind mind, Boolean assertResult, boolean local) throws RuntimeErrorException, Exception, ClassNotFoundException {
 //        for (Right r : mind.getRights()) {
 //            if (!r.isDeleted() && !r.isGenerated() && !r.isQuery() && (!local || r.getMind().getId() == mind.getId())) {
 //                System.out.println("Right: " + r.toString());
@@ -202,7 +200,7 @@ public class KangerTest {
     }
 
 
-    private void showResult(Boolean assertResult) throws RuntimeErrorException, IOException, OutOfBufferException, ClassNotFoundException {
+    private void showResult(Boolean assertResult) throws RuntimeErrorException, Exception, ClassNotFoundException {
         showResult(mind, assertResult, false);
     }
 
@@ -1059,6 +1057,17 @@ public class KangerTest {
         System.out.println("OK");
         System.out.println("====================================================");
     }
+
+    public void set_03_08() throws Exception {
+
+        mind.clear();
+        mind.compile("!@x ~a(x,x); !@x @y b(x,y) -> a(x,y);");
+        mind.query("?$x b(x, x);");
+        showResult(false);
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
 
     public void set_04_01() throws Exception {
 
@@ -2342,7 +2351,7 @@ public class KangerTest {
         mind.clear();
         mind = new Mind(mind.getUser());
 
-        final int COUNT = 13;
+        final int COUNT = 64;
 
 //        Screen.session(mind.getUser());
 

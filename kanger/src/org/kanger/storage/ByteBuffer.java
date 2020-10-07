@@ -3,7 +3,6 @@ package org.kanger.storage;
 
 import org.kanger.exception.OutOfBufferException;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.UnsupportedEncodingException;
 import java.util.Base64;
@@ -41,7 +40,7 @@ public class ByteBuffer {
         mark = new Stack<>();
     }
 
-    public ByteBuffer(ObjectInput dis) throws IOException, OutOfBufferException {
+    public ByteBuffer(ObjectInput dis) throws Exception {
         i = 0;
         buffer = new byte[2];
         mark = new Stack<>();

@@ -4,13 +4,11 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -114,7 +112,7 @@ public class Right implements IUnit<Right> {
         return this;
     }
 
-    private void checkTreeIsLoaded() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private void checkTreeIsLoaded() throws Exception {
         if (tree.isEmpty() && !treeIds.isEmpty()) {
             for (List<Long> ids : treeIds) {
                 List<Domain> branch = new ArrayList<>();
@@ -147,7 +145,7 @@ public class Right implements IUnit<Right> {
 //        }
 //    }
 
-    public Domain getDomain() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Domain getDomain() throws Exception {
         return getTree().get(0).get(0);
     }
 
@@ -186,7 +184,7 @@ public class Right implements IUnit<Right> {
         mind.getUsedRights().get(0L).add(this);
     }
 
-    public Set<Right> getNatives() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Set<Right> getNatives() throws Exception {
         Set<Right> list = new HashSet<>();
         for (List<Domain> t : getTree()) {
             for (Domain d : t) {
@@ -204,7 +202,7 @@ public class Right implements IUnit<Right> {
         return list;
     }
 
-    public List<List<Domain>> getTree() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<List<Domain>> getTree() throws Exception {
         checkTreeIsLoaded();
         return tree;
     }
@@ -219,7 +217,7 @@ public class Right implements IUnit<Right> {
         this.id = id;
     }
 
-    public Term getOrig() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getOrig() throws Exception {
         if (orig == null && origId != -1) {
             orig = mind.getTerms().load(origId);
 
@@ -248,11 +246,11 @@ public class Right implements IUnit<Right> {
         this.query = current;
     }
 
-    public int size() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public int size() throws Exception {
         return getTree().size();
     }
 
-    public List<Domain> cloneTree(List<Domain> branch) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<Domain> cloneTree(List<Domain> branch) throws Exception {
         List<Domain> list = new ArrayList<>();
         list.addAll(branch);
         getTree().add(list);
@@ -271,7 +269,7 @@ public class Right implements IUnit<Right> {
                     (isQuery() ? "Q" : "")
                     : "")
                     ;
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException | NullPointerException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }
@@ -280,7 +278,7 @@ public class Right implements IUnit<Right> {
     //TODO: 5  !~b(z); ?b(z) -> c(z);  => TRUE - Не верно
 
     @Override
-    public int getHash() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public int getHash() throws Exception {
         //TODO: 4
         if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
             return getDomain().getHashBase();
@@ -297,7 +295,7 @@ public class Right implements IUnit<Right> {
         }
     }
 
-    private boolean branchEquals(List<Domain> a, List<Domain> b) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    private boolean branchEquals(List<Domain> a, List<Domain> b) throws Exception {
         List<Domain> tmp = new ArrayList<>();
         tmp.addAll(b);
         for (Domain d : a) {
@@ -312,7 +310,7 @@ public class Right implements IUnit<Right> {
     }
 
     @Override
-    public boolean equalsTo(Right to) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean equalsTo(Right to) throws Exception {
 //        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
 //            return equalsTo(to.getDomain());
 //        } else
@@ -339,7 +337,7 @@ public class Right implements IUnit<Right> {
     }
 
     @Override
-    public Right setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Right setMind(Mind mind) throws Exception {
         this.mind = mind;
 //        for (Cause c : getCauses()) {
 //            c.setUser(user);
@@ -352,7 +350,7 @@ public class Right implements IUnit<Right> {
         return this;
     }
 
-    public boolean equalsTo(Solve x) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean equalsTo(Solve x) throws Exception {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
                 && x.getPredicateId() == domain.getPredicateId()
@@ -445,7 +443,7 @@ public class Right implements IUnit<Right> {
 //        return mind.getRightSolves().get(this);
 //    }
 
-//    public Set<TVariable> setTSlolve(TSolve s) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public Set<TVariable> setTSlolve(TSolve s) throws Exception {
 //        final SortedSet<TVariable> tvars = new TreeSet<>();
 //        for (List<Domain> tree : getTree()) {
 //            for (Domain d : tree) {

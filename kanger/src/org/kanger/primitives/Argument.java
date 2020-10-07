@@ -4,12 +4,10 @@ import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +54,7 @@ public class Argument {
         return this;
     }
 
-    private void load(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private void load(Mind mind) throws Exception {
         switch (type) {
             case TERM:
                 o = mind.getTerms().load(id);
@@ -95,7 +93,7 @@ public class Argument {
         }
     }
 
-    public Term getValue(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getValue(Mind mind) throws Exception {
         switch (type) {
             case TERM:
                 return (Term) getO(mind);
@@ -112,7 +110,7 @@ public class Argument {
         }
     }
 
-    public TValue addValue(Mind mind, Term t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TValue addValue(Mind mind, Term t) throws Exception {
 //        Mind mind = t.getUser().getMind();
         switch (type) {
             case TVARIABLE:
@@ -172,7 +170,7 @@ public class Argument {
         }
     }
 
-    public IUnit getO(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public IUnit getO(Mind mind) throws Exception {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
             load(mind);
         }
@@ -189,19 +187,19 @@ public class Argument {
         }
     }
 
-    public TVariable getT(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TVariable getT(Mind mind) throws Exception {
         return type == ArgumentType.TVARIABLE ? (TVariable) getO(mind) : null;
     }
 
-    public TValue getV(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TValue getV(Mind mind) throws Exception {
         return type == ArgumentType.TVALUE ? (TValue) getO(mind) : null;
     }
 
-    public Function getF(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Function getF(Mind mind) throws Exception {
         return type == ArgumentType.FUNCTION ? (Function) getO(mind) : null;
     }
 
-    public FValue getR(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public FValue getR(Mind mind) throws Exception {
         return type == ArgumentType.FVALUE ? (FValue) getO(mind) : null;
     }
 
@@ -257,7 +255,7 @@ public class Argument {
     }
 
 
-    public boolean isCVar(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public boolean isCVar(Mind mind) throws Exception {
 //        return type == ArgumentType.CVARIABLE; //
         return !isEmpty(mind) && getValue(mind).isCVariable();
     }

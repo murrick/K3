@@ -1,6 +1,5 @@
 package org.kanger;
 
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IBase;
@@ -30,7 +29,7 @@ public class User implements IUser {
         data = Global.getData();
     }
 
-    public Mind use(Mind mind, String name) throws IOException, RuntimeErrorException, OutOfBufferException, ClassNotFoundException {
+    public Mind use(Mind mind, String name) throws Exception {
 
         if (data != null) {
 
@@ -76,7 +75,7 @@ public class User implements IUser {
         return storage.get(schema);
     }
 
-    public void clear(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void clear(Mind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
@@ -90,11 +89,12 @@ public class User implements IUser {
         }
     }
 
-    public void remove() {
+    public void remove() throws Exception {
         if (data != null && !data.isClosed()) {
-            for (Map.Entry<String, IBase> e : storage.entrySet()) {
-                //TODO: Удаление БД
-            }
+            data.remove();
+//            for (Map.Entry<String, IBase> e : storage.entrySet()) {
+//                //TODO: Удаление БД
+//            }
         }
     }
 
@@ -182,7 +182,7 @@ public class User implements IUser {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clearCache();
@@ -201,7 +201,7 @@ public class User implements IUser {
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() throws Exception {
         if (data != null) {
             data.flush();
         }

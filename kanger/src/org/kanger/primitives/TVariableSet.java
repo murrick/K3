@@ -1,12 +1,9 @@
 package org.kanger.primitives;
 
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.units.TSolve;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -15,13 +12,13 @@ public class TVariableSet implements Comparable<TVariableSet> {
 
     private SortedSet<TVariable> set = new TreeSet<>();
 
-    public TVariableSet(List<TValue> list) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public TVariableSet(List<TValue> list) throws Exception {
         for (TValue v : list) {
             set.add(v.getTVar());
         }
     }
 
-    public TVariableSet(TSolve solve) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public TVariableSet(TSolve solve) throws Exception {
         for (TValue v : solve.getSolve()) {
             set.add(v.getTVar());
         }

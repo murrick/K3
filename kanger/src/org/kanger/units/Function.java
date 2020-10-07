@@ -6,13 +6,11 @@ import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,7 +92,7 @@ public class Function implements IUnit<Function> {
         return arguments;
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getValue() throws Exception {
         FValue c = getCurrent();
         if (c != null) {
             return getCurrent().getValue();
@@ -166,7 +164,7 @@ public class Function implements IUnit<Function> {
 //    }
 
 
-    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getName() throws Exception {
         if (name == null) {
             name = mind.getTerms().load(nameId);
         }
@@ -324,7 +322,7 @@ public class Function implements IUnit<Function> {
 //        return true;
 //    }
 
-    public boolean isCalculable() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isCalculable() throws Exception {
         return arguments.getTVariables(mind).size() > 0;
     }
 
@@ -333,11 +331,11 @@ public class Function implements IUnit<Function> {
 //    }
 
 
-    public FValue getCurrent() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public FValue getCurrent() throws Exception {
         return mind.getFValues().find(this);
     }
 
-    public int getHashBase() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public int getHashBase() throws Exception {
         long valueId = getResult().isEmpty(mind) ? 0 : getResult().getValue(mind).getId();
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
@@ -388,7 +386,7 @@ public class Function implements IUnit<Function> {
 //        return ("" + id).hashCode();
     }
 
-    public int getHashStruct(Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public int getHashStruct(Right r) throws Exception {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
@@ -410,7 +408,7 @@ public class Function implements IUnit<Function> {
         return hash;
     }
 
-    public boolean equalsToStruct(Function f, Right left, Right right) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean equalsToStruct(Function f, Right left, Right right) throws Exception {
         if (nameId == f.nameId && range == f.getRange()) {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {

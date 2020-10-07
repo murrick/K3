@@ -4,11 +4,8 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
-
-import java.io.IOException;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -59,7 +56,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return this;
     }
 
-    public Term getName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getName() throws Exception {
         if (name == null) {
             name = mind.getTerms().load(nameId);
         }
@@ -89,7 +86,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.index = index;
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getValue() throws Exception {
         if (mind.getTValues().get(this) != null) {
             return mind.getTValues().get(this).getValue();
         } else {
@@ -109,7 +106,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return mind.getTValues().set(this, v);
     }
 
-    public TValue setValue(Term value) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException { //throws TValueOutOfOrderException {
+    public TValue setValue(Term value) throws Exception { //throws TValueOutOfOrderException {
 //        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
@@ -178,7 +175,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //        mind.getTValues().createCVar(this).setLevel(owner);
 //
 //    }
-    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Right getRight() throws Exception {
         if (right == null && rightId != -1) {
             right = mind.getRights().load(rightId);
         }
@@ -190,7 +187,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.rightId = right.getId();
     }
 
-    public String getVarName() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public String getVarName() throws Exception {
         switch (mind.getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_INFO:
                 return getName().toString();
@@ -205,7 +202,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     public String toString() {
         try {
             return getVarName() + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }
@@ -261,7 +258,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //    }
 
     //
-    public TValue find(Term value) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TValue find(Term value) throws Exception {
         return mind.getTValues().find(this, value);
     }
 

@@ -1,21 +1,19 @@
 package org.kanger.interfaces;
 
-import org.kanger.exception.RuntimeErrorException;
-
-import java.io.IOException;
-
 public interface IData {
     void init();
 
-    void use(String name) throws IOException;
+    void use(String name) throws Exception;
 
-    void close() throws IOException;
+    void close() throws Exception;
 
-    void flush() throws IOException;
+    void flush() throws Exception;
+
+    void remove() throws Exception;
 
     boolean isClosed();
 
     String getStorageName();
 
-    IBase getBase(String context) throws IOException, RuntimeErrorException;
+    IBase getBase(String context) throws Exception;
 }

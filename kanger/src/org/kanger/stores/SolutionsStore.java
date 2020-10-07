@@ -1,12 +1,9 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.units.Domain;
 import org.kanger.units.Right;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,7 +51,7 @@ public class SolutionsStore {
         return d;
     }
 
-    public boolean contains(Domain d) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean contains(Domain d) throws Exception {
         if (!isEmpty()) {
             for (Right r : root) {
                 if (!r.isDeleted() && r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {

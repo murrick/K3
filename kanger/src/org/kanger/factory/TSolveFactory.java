@@ -1,8 +1,6 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IStep;
@@ -45,7 +43,7 @@ public class TSolveFactory implements Iterable<TSolve> {
         }
     }
 
-    public void commit(TSolveFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void commit(TSolveFactory base) throws Exception {
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -67,13 +65,13 @@ public class TSolveFactory implements Iterable<TSolve> {
         action = base.isAction();
     }
 
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
         }
     }
 
-    public synchronized TSolve add(List<TValue> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized TSolve add(List<TValue> list) throws Exception {
         TSolve t = find(list);
         if (t == null) {
             t = new TSolve(list, mind);
@@ -100,7 +98,7 @@ public class TSolveFactory implements Iterable<TSolve> {
 //        return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
 //    }
 
-    public TSolve find(List<TValue> list) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TSolve find(List<TValue> list) throws Exception {
         TSolve temp = new TSolve(list, mind);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = load(id);
@@ -111,7 +109,7 @@ public class TSolveFactory implements Iterable<TSolve> {
         return null;
     }
 
-    public TSolve load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TSolve load(long id) throws Exception {
         TSolve t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
@@ -124,12 +122,12 @@ public class TSolveFactory implements Iterable<TSolve> {
         return t;
     }
 
-    private TSolve get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private TSolve get(long id) throws Exception {
         TSolve t = (TSolve) cache.get(id);
         return t;
     }
 
-    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted()) {
@@ -152,7 +150,7 @@ public class TSolveFactory implements Iterable<TSolve> {
 //        }
 //    }
 
-    public void clear() throws IOException, OutOfBufferException {
+    public void clear() throws Exception {
         if (mind.getNext() != null) {
 //            transaction(mind.getNext().getTSolves());
         } else {
@@ -206,7 +204,7 @@ public class TSolveFactory implements Iterable<TSolve> {
         return cache.iterator();
     }
 
-    public TSolve getRoot() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public TSolve getRoot() throws Exception {
         for (TSolve s : this) {
             if (!s.isDeleted()) {
                 return s;

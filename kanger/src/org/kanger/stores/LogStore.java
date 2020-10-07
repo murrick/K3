@@ -3,13 +3,10 @@ package org.kanger.stores;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.primitives.LogEntry;
 import org.kanger.units.Domain;
 import org.kanger.units.Right;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -27,7 +24,7 @@ public class LogStore {
         this.mind = mind;
     }
 
-    public static List<List<String>> formatTree(Mind mind, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public static List<List<String>> formatTree(Mind mind, Right r) throws Exception {
 //        int save = mind.getDebugLevel();
 //        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
         List<List<String>> list = new ArrayList<>();
@@ -87,7 +84,7 @@ public class LogStore {
         return root == null || root.isEmpty();
     }
 
-    public LogEntry add(LogMode m, Right r) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public LogEntry add(LogMode m, Right r) throws Exception {
         if (!enableLogging) {
             return null;
         }

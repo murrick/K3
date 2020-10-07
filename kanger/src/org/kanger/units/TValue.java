@@ -4,11 +4,9 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
 import java.util.HashSet;
 
 /**
@@ -98,7 +96,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return this;
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getValue() throws Exception {
         if (value == null && valueId != -1) {
             value = mind.getTerms().load(valueId);
         }
@@ -126,7 +124,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.id = id;
     }
 
-    public TVariable getTVar() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TVariable getTVar() throws Exception {
         if (tVar == null && tVarId != -1) {
             tVar = mind.getTVars().load(tVarId);
         }
@@ -150,13 +148,13 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     public String toString() {
         try {
             return ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? getTVar().getVarName() + "=" : "") + getValue().toString();
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }
     }
 
-    public void setQuery() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void setQuery() throws Exception {
         if (!mind.getQueryValues().containsKey(getTVar())) {
             mind.getQueryValues().put(getTVar(), new HashSet<>());
         }

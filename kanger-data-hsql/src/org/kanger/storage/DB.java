@@ -1,33 +1,29 @@
 package org.kanger.storage;
 
-import org.cojen.tupl.Database;
-import org.cojen.tupl.DatabaseConfig;
-import org.cojen.tupl.DurabilityMode;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DB implements IData {
 
-    DatabaseConfig config = null;
+    Connection connection = null;
     private String storageName = "";
-    private Database db = null;
     private Map<String, IBase> bases = new HashMap<>();
 
     @Override
     public void init() {
-        config = new DatabaseConfig()
-                .minCacheSize(100_000_000)
-                .durabilityMode(DurabilityMode.NO_FLUSH);
     }
 
     @Override
-    public void use(String name) throws IOException {
+    public void use(String name) throws Exception {
         if (!isClosed()) {
             close();
         }
@@ -41,17 +37,16 @@ public class DB implements IData {
         }
         dbPath += name;
 
-        config.baseFilePath(dbPath);
-        db = Database.open(config);
+        connection = DriverManager.getConnection("jdbc:hsqldb:file:"
+                + dbPath, "SA", "");
 
         storageName = name;
     }
 
     @Override
-    public void close() throws IOException {
-        if (db != null) {
-            db.shutdown();
-            db = null;
+    public void close() throws Exception {
+        if (connection != null) {
+            connection.close();
             bases.clear();
             storageName = "";
         }
@@ -59,13 +54,10 @@ public class DB implements IData {
 
     @Override
     public synchronized void flush() throws IOException {
-        if (!isClosed()) {
-            db.checkpoint();
-        }
     }
 
     @Override
-    public void remove() throws IOException {
+    public void remove() throws Exception {
         if (!isClosed()) {
             String dbPath = System.getProperty("database.dir");
             if (dbPath == null || dbPath.isEmpty()) {
@@ -82,7 +74,11 @@ public class DB implements IData {
 
     @Override
     public boolean isClosed() {
-        return db == null;
+        try {
+            return connection == null || connection.isClosed();
+        } catch (SQLException throwables) {
+            return true;
+        }
     }
 
 
@@ -92,10 +88,10 @@ public class DB implements IData {
     }
 
     @Override
-    public IBase getBase(String context) throws IOException, RuntimeErrorException {
-        if (db != null) {
+    public IBase getBase(String context) throws Exception {
+        if (!isClosed()) {
             if (!bases.containsKey(context)) {
-                IBase base = new Base(db, context);
+                IBase base = new Base(connection, context);
                 bases.put(context, base);
             }
             return bases.get(context);

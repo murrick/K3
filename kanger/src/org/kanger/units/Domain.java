@@ -6,7 +6,6 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
@@ -14,7 +13,6 @@ import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -94,15 +92,15 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return UnitType.DOMAIN;
     }
 
-    public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Predicate getPredicate() throws Exception {
         return super.getPredicate(mind);
     }
 
-//    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//    public Right getRight() throws Exception {
 //        return super.getRight(mind);
 //    }
 
-    public Right getRight() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Right getRight() throws Exception {
         if (right == null) {
             right = mind.getRights().load(rightId);
         }
@@ -170,7 +168,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 
 
-    public Set<Cause> getCauses() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Set<Cause> getCauses() throws Exception {
         ArgList args = arguments.convertBase(mind);
         return getCauses(args);
     }
@@ -261,7 +259,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    private Cause sourceExists(Cause c) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private Cause sourceExists(Cause c) throws Exception {
         Set<Cause> causes = getCauses();
         if (causes != null) {
             for (Cause x : causes) {
@@ -376,7 +374,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
 
-    public boolean equalsBase(Domain o) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean equalsBase(Domain o) throws Exception {
         if (predicateId != o.getPredicateId()) {
             return false;
         }
@@ -446,7 +444,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return ids.size();
     }
 
-    public boolean contains(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean contains(TVariable t) throws Exception {
         for (TVariable x : arguments.getTVariables(mind)) {
             if (x.getId() == t.getId()) {
                 return true;
@@ -582,7 +580,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        }
     }
 
-    public boolean isProduced() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isProduced() throws Exception {
         if (mind.getProducedDomains().containsKey(this)) {
             for (List<Term> list : mind.getProducedDomains().get(this)) {
                 if (arguments.equalsStamp(mind, list)) {
@@ -618,7 +616,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 //
 
-    public void setTag(long tag) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void setTag(long tag) throws Exception {
         for (TVariable t : arguments.getTVariables(mind)) {
             t.getCurrent().setTag(tag);
         }
@@ -634,7 +632,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        }
 //    }
 
-    public void setProduced() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void setProduced() throws Exception {
         if (!mind.getProducedDomains().containsKey(this)) {
             mind.getProducedDomains().put(this, new ArrayList<>());
         }
@@ -646,11 +644,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public boolean isCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isCalculated() throws Exception {
         return isCalculated(arguments);
     }
 
-    public boolean isCalculated(ArgList arguments) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isCalculated(ArgList arguments) throws Exception {
         if (mind.getCalculatedDomains().containsKey(this)) {
             for (List<Term> list : mind.getCalculatedDomains().get(this)) {
                 if (arguments.equalsStamp(mind, list)) {
@@ -676,7 +674,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     }
 
-    public void unCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void unCalculated() throws Exception {
         if (isCalculated()) {
             for (List<Term> list : mind.getCalculatedDomains().get(this)) {
                 if (arguments.equalsStamp(mind, list)) {
@@ -687,7 +685,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public void setCalculated() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void setCalculated() throws Exception {
         if (!mind.getCalculatedDomains().containsKey(this)) {
             mind.getCalculatedDomains().put(this, new ArrayList<>());
         }
@@ -699,11 +697,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public boolean isStored() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isStored() throws Exception {
         return mind.getRights().find(this) != null;
     }
 
-    public boolean isStored(ArgList args) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isStored(ArgList args) throws Exception {
         Domain d = new Domain(getPredicate(), antc, args);
         return mind.getRights().find(d) != null;
     }
@@ -713,12 +711,12 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return r;
     }
 
-    public Right createStored() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Right createStored() throws Exception {
         Right r = mind.getRights().add(this);
         return r;
     }
 
-    public boolean isSystem() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isSystem() throws Exception {
         return Parser.getOp(getPredicate().getName().toString(), getRange()) != null;
     }
 
@@ -766,11 +764,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return false;
 //    }
 
-    public boolean isQuery() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isQuery() throws Exception {
         return isQuery(arguments);
     }
 
-    public boolean isQuery(ArgList arguments) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public boolean isQuery(ArgList arguments) throws Exception {
         if (rightId == -1) {
             return false;
         }
@@ -840,7 +838,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return cnt;
 //    }
 
-//    public void calcVarOrders() throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public void calcVarOrders() throws Exception {
 //        for (int pos = 0; pos < getRange(); ++pos) {
 //            List<Integer> list = new ArrayList<>();
 //            SortedMap<Integer, Integer> sort = new TreeMap<>();
@@ -865,7 +863,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        }
 //    }
 //
-//    public int getVarOrder(int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+//    public int getVarOrder(int pos) throws Exception {
 //        if (arguments.get(pos).getVarOrder() == -1) {
 //            calcVarOrders();
 //        }
@@ -947,7 +945,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     @Override
-    public Domain setMind(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Domain setMind(Mind mind) throws Exception {
         this.mind = mind;
         for (TVariable t : arguments.getTVariables(mind)) {
             t.setMind(mind);
@@ -991,7 +989,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    public int getValOrder(int i) {
 //    }
 
-    public int getHashStruct() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public int getHashStruct() throws Exception {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
@@ -1014,7 +1012,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return hash;
     }
 
-    public boolean equalsToStruct(Domain to) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public boolean equalsToStruct(Domain to) throws Exception {
         if (to.isAntc() == antc
                 && to.getRange() == range
                 && to.getPredicateId() == predicateId) {
@@ -1074,7 +1072,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return (int) (rightId == domain.rightId ? id - domain.id : rightId - domain.rightId);
     }
 
-//    public int compareVars(Domain slave, int pos) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+//    public int compareVars(Domain slave, int pos) throws Exception {
 //        if(arguments.get(pos).isTSet() && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
 //            return arguments.get(pos).getT(mind).getIndex() - slave.get(pos).getValue(mind).getIndex();
 //        } else {
@@ -1092,7 +1090,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 
 
-    public void calcVarOrders(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void calcVarOrders(Mind mind) throws Exception {
         for (int pos = 0; pos < getRange(); ++pos) {
             List<Integer> list = new ArrayList<>();
             SortedMap<Integer, Integer> sort = new TreeMap<>();
@@ -1117,7 +1115,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public int getVarOrder(Mind mind, int pos) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public int getVarOrder(Mind mind, int pos) throws Exception {
         if (arguments.get(pos).getVarOrder() == -1) {
             calcVarOrders(mind);
         }

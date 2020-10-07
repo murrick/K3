@@ -1,7 +1,5 @@
 package org.kanger.storage;
 
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 
@@ -58,7 +56,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     @Override
-    public synchronized void add(IStep one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public synchronized void add(IStep one) throws Exception {
         Index.IndexOne current = index.getOne(one.getId());
         if (current != null) {
             long currentOffset = current.getData().get(0);
@@ -88,7 +86,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     @Override
-    public void update(IStep one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update(IStep one) throws Exception {
         add(one);
     }
 
@@ -100,7 +98,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     @Override
-    public IStep get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public IStep get(long id) throws Exception {
         if (cache.containsKey(id)) {
             timing.remove(id);
             timing.add(id);
@@ -273,7 +271,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     @Override
-    public void delete(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void delete(long id) throws Exception {
         cache.remove(id);
         timing.remove(id);
         Index.IndexOne current = index.getOne(id);
@@ -370,7 +368,7 @@ public class Base implements IBase, Iterable<IStep> {
             Index.IndexOne one = (Index.IndexOne) iterator.next();
             try {
                 return data.get(one.getData().get(0));
-            } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+            } catch (Exception e) {
                 e.printStackTrace(System.err);
                 return null;
             }

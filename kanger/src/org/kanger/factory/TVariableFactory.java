@@ -1,8 +1,6 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -12,7 +10,6 @@ import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 import org.kanger.units.Term;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +50,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
     }
 
-    public void commit(TVariableFactory base) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public void commit(TVariableFactory base) throws Exception {
         if (base.top != null) {
             if (cache.getRoot() == null) {
                 top = base.top;
@@ -74,7 +71,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
     }
 
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
         }
@@ -94,7 +91,7 @@ public class TVariableFactory implements Iterable<TVariable> {
         return p;
     }
 
-    public TVariable load(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public TVariable load(long id) throws Exception {
         TVariable t = get(id);
         if (t == null && !mind.getUser().isClosed()) {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
@@ -107,12 +104,12 @@ public class TVariableFactory implements Iterable<TVariable> {
         return t;
     }
 
-    private TVariable get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    private TVariable get(long id) throws Exception {
         TVariable t = (TVariable) cache.get(id);
         return t;
     }
 
-    public void pack() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted()) {
@@ -135,7 +132,7 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     }
 
-    public void delete(TVariable t) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void delete(TVariable t) throws Exception {
         t.setDeleted();
         for (TValue v : mind.getTValues()) {
             if (v.getTVar().getId() == t.getId()) {
@@ -160,7 +157,7 @@ public class TVariableFactory implements Iterable<TVariable> {
 //        }
 //    }
 
-    public void clear() throws IOException, OutOfBufferException {
+    public void clear() throws Exception {
         if (mind.getNext() != null) {
             transaction(mind.getNext().getTVars());
         } else {

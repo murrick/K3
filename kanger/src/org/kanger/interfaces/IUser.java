@@ -1,10 +1,6 @@
 package org.kanger.interfaces;
 
 import org.kanger.Mind;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
-
-import java.io.IOException;
 
 public interface IUser {
 
@@ -16,17 +12,17 @@ public interface IUser {
 
     IBase getStorage(String schema);
 
-    void clear(Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void clear(Mind mind) throws Exception;
 
     String getStorageName();
 
-    void close() throws IOException;
+    void close() throws Exception;
 
-    Mind use(Mind mind, String name) throws RuntimeErrorException, IOException, OutOfBufferException, ClassNotFoundException;
+    Mind use(Mind mind, String name) throws Exception;
 
-    void remove() throws IOException, RuntimeErrorException;
+    void remove() throws Exception;
 
-    void reindex(IReactor iReactor) throws IOException, RuntimeErrorException;
+    void reindex(IReactor iReactor) throws Exception;
 
     long getUsedCacheSize();
 
@@ -44,6 +40,6 @@ public interface IUser {
 
     long nextId();
 
-    void flush() throws IOException;
+    void flush() throws Exception;
 
 }

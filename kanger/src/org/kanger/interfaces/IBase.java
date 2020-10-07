@@ -1,29 +1,24 @@
 package org.kanger.interfaces;
 
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
-
-import java.io.IOException;
-
 public interface IBase {
 
-    void add(IStep one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void add(IStep one) throws Exception;
 
-    void update(IStep one) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void update(IStep one) throws Exception;
 
-    IStep get(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    IStep get(long id) throws Exception;
 
-    int size() throws IOException;
+    int size() throws Exception;
 
     void clearCache();
 
     boolean isEmpty();
 
-    void delete(long id) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void delete(long id) throws Exception;
 
-    void clear() throws IOException, OutOfBufferException;
+    void clear() throws Exception;
 
-    boolean containsKey(long id) throws IOException;
+    boolean containsKey(long id) throws Exception;
 
     IStep getRoot();
 

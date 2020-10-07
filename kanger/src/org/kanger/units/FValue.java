@@ -6,13 +6,11 @@ import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +40,7 @@ public class FValue implements IUnit<FValue> {
         this.mind = mind;
     }
 
-    public FValue(Function f, Mind mind) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public FValue(Function f, Mind mind) throws Exception {
         function = f;
         value = f.getArguments().get(f.getRange()).getValue(mind);
         functionId = function.getId();
@@ -120,7 +118,7 @@ public class FValue implements IUnit<FValue> {
         valueId = value.getId();
     }
 
-    public Term getValue() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Term getValue() throws Exception {
         if (value == null && valueId != -1) {
             value = mind.getTerms().load(valueId);
         }
@@ -148,7 +146,7 @@ public class FValue implements IUnit<FValue> {
 //        return condition;
 //    }
 
-    public Function getFunction() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Function getFunction() throws Exception {
         if (function == null) {
             function = mind.getFunctions().load(functionId);
         }
@@ -200,7 +198,7 @@ public class FValue implements IUnit<FValue> {
     }
 
     @Override
-    public boolean equalsTo(FValue f) throws OutOfBufferException, IOException, ClassNotFoundException, RuntimeErrorException {
+    public boolean equalsTo(FValue f) throws Exception {
         return equalsTo(f.getFunction());
     }
 
@@ -307,7 +305,7 @@ public class FValue implements IUnit<FValue> {
                     return "";
                 }
             }
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
         }

@@ -6,15 +6,13 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 
-import java.io.IOException;
-
 public interface IStep {
 
     ByteBuffer pack();
 
     IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException;
 
-    Object getData(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException;
+    Object getData(Mind mind) throws Exception;
 
     Object getData();
 
@@ -32,9 +30,9 @@ public interface IStep {
 
     void setHash(int hash);
 
-    void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void update() throws Exception;
 
-    void append() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException;
+    void append() throws Exception;
 
 //    IBase getBase();
 //

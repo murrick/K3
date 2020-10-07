@@ -10,13 +10,11 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
 import org.kanger.units.Right;
 import org.kanger.units.Term;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -95,7 +93,7 @@ public class Hypotese implements Comparable<Hypotese> {
 //    }
 //
 
-    public Predicate getPredicate() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Predicate getPredicate() throws Exception {
 //        if (predicate == null) {
 //            predicate = user.getMind().getPredicates().load(predicateId);
 //        }
@@ -107,7 +105,7 @@ public class Hypotese implements Comparable<Hypotese> {
         this.predicateId = predicate.getId();
     }
 
-    public List<Term> getSolve() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public List<Term> getSolve() throws Exception {
 //        if (solve.isEmpty() && !solveIds.isEmpty()) {
 //            for (long id : solveIds) {
 //                Term t = user.getMind().getTerms().load(id);
@@ -117,7 +115,7 @@ public class Hypotese implements Comparable<Hypotese> {
         return solve;
     }
 
-    public Set<Right> getRights() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public Set<Right> getRights() throws Exception {
 //        if (rights.isEmpty() && !rightsIds.isEmpty()) {
 //            for (long id : rightsIds) {
 //                Right right = user.getMind().getRights().load(id);
@@ -143,7 +141,7 @@ public class Hypotese implements Comparable<Hypotese> {
         this.query = query;
     }
 
-    public void addParams(Mind mind, Collection params) throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void addParams(Mind mind, Collection params) throws Exception {
         for (Object p : params) {
             if (p instanceof Argument) {
                 solve.add(((Argument) p).getValue(mind));
@@ -196,7 +194,7 @@ public class Hypotese implements Comparable<Hypotese> {
             }
             tmp += ");";
             line += tmp;
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
         return line;
@@ -257,7 +255,7 @@ public class Hypotese implements Comparable<Hypotese> {
     public int compareTo(Hypotese o) {
         try {
             return getPredicate().getName().compareTo(o.getPredicate().getName());
-        } catch (IOException | ClassNotFoundException | OutOfBufferException | RuntimeErrorException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
             return 0;
         }

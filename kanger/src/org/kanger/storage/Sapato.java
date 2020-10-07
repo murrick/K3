@@ -10,7 +10,6 @@ import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.units.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -95,7 +94,7 @@ public class Sapato implements IStep {
 
 
     @Override
-    public Object getData(Mind mind) throws ClassNotFoundException, RuntimeErrorException, OutOfBufferException, IOException {
+    public Object getData(Mind mind) throws Exception {
         if (data != null && data instanceof IUnit) {
             ((IUnit) data).setMind(mind);
         }
@@ -163,12 +162,12 @@ public class Sapato implements IStep {
     }
 
     @Override
-    public void update() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void update() throws Exception {
         base.update(this);
     }
 
     @Override
-    public void append() throws IOException, ClassNotFoundException, OutOfBufferException, RuntimeErrorException {
+    public void append() throws Exception {
         base.add(this);
     }
 
