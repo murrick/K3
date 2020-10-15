@@ -1,8 +1,6 @@
 package org.kanger.storage;
 
 import org.kanger.Version;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 
@@ -346,7 +344,7 @@ public class Data implements Closeable, Iterable<IStep> {
                     } else {
                         return get(currentOffset + blockSize + Long.BYTES * 2);
                     }
-                } catch (ClassNotFoundException | IOException | OutOfBufferException | RuntimeErrorException e) {
+                } catch (Exception e) {
                     e.printStackTrace(System.err);
                     return null;
                 }

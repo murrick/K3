@@ -28,8 +28,9 @@ public class Enums {
 
     public static final int CVC = '%';        /* Символ для с-переменных */
     public static final int TVC = '#';        /* Символ для т-переменных */
+    public static final int XVC = '*';        /* Символ для cc-переменных */
 
-    public static final int REM = '*';        /* Коментарий */
+    //    public static final int REM = '*';        /* Коментарий */
     public static final int COMMA = ',';
     public static final int EOLN = ';';
 

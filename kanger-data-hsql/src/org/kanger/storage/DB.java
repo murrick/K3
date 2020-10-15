@@ -6,6 +6,7 @@ import org.kanger.interfaces.IData;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -59,6 +60,10 @@ public class DB implements IData {
     @Override
     public void remove() throws Exception {
         if (!isClosed()) {
+
+            String tmp = storageName;
+            close();
+
             String dbPath = System.getProperty("database.dir");
             if (dbPath == null || dbPath.isEmpty()) {
                 dbPath = System.getProperty("user.dir");
@@ -66,9 +71,19 @@ public class DB implements IData {
             if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
                 dbPath += File.separatorChar;
             }
-            dbPath += storageName;
-            close();
-            new File(dbPath).delete();
+            dbPath += tmp;
+            String name = Paths.get(dbPath).getFileName().toString();
+            dbPath = dbPath.substring(0, dbPath.length() - name.length());
+
+
+            File[] allContents = new File(dbPath).listFiles();
+            if (allContents != null) {
+                for (File file : allContents) {
+                    if (file.getName().startsWith(name)) {
+                        file.delete();
+                    }
+                }
+            }
         }
     }
 

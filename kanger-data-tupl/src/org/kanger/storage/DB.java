@@ -76,7 +76,7 @@ public class DB implements IData {
             }
             dbPath += storageName;
             close();
-            new File(dbPath).delete();
+            new File(dbPath + ".db").delete();
         }
     }
 

@@ -38,7 +38,7 @@ public class Base implements IBase {
                     "CREATE TABLE IF NOT EXISTS " +
                             name + " (" +
                             "id BIGINT NOT NULL, " +
-                            "data BLOB, " +
+                            "data LONGVARBINARY, " +
                             "PRIMARY KEY (id)" +
                             ");");
             st.executeUpdate("SET TABLE " + name + " TYPE CACHED;");

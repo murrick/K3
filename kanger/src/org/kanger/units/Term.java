@@ -321,6 +321,10 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         return index > 0;
     }
 
+    public boolean isXVariable() {
+        return index > 0 && value.toString().charAt(0) == Enums.XVC;
+    }
+
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {

@@ -40,11 +40,11 @@ public abstract class Tools {
         return i /= k;
     }
 
-    public static boolean isKey(int ch) {
-        return (ch == Enums.LB || ch == Enums.RB || ch == Enums.NOT || ch == Enums.CON || ch == Enums.DIS
-                || ch == Enums.IMP || ch == Enums.PQN || ch == Enums.AQN || ch == Enums.SUC || ch == Enums.ANT
-                || ch == Enums.CVC || ch == Enums.TVC || ch == Enums.COMMA || ch == Enums.EOLN || ch == ' ');
-    }
+//    public static boolean isKey(int ch) {
+//        return (ch == Enums.LB || ch == Enums.RB || ch == Enums.NOT || ch == Enums.CON || ch == Enums.DIS
+//                || ch == Enums.IMP || ch == Enums.PQN || ch == Enums.AQN || ch == Enums.SUC || ch == Enums.ANT
+//                || ch == Enums.CVC || ch == Enums.TVC || ch == Enums.COMMA || ch == Enums.EOLN || ch == ' ');
+//    }
 
     //    public static String cutBraces(String a) {
 //        if (a.length() > 1 && ((a.charAt(0) == '\"' && a.charAt(a.length() - 1) == '\"') || (a.charAt(0) == '\'' && a.charAt(a.length() - 1) == '\''))) {

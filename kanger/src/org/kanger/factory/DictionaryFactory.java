@@ -148,6 +148,16 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
+    public Term createXVar(Right r, Term name) throws Exception {
+        int i = nextVarIndex();
+        String temp = String.format("%c%d", Enums.XVC, i);
+        Term t = add(temp);
+        t.setRight(r);
+        t.setIndex(i);
+        t.setName(name);
+        return t;
+    }
+
     public Term load(long id) throws Exception {
         Term t = get(id);
         if (t == null && !mind.getUser().isClosed()) {

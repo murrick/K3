@@ -10,64 +10,56 @@
 !@x (male(x) || female(x)) && ~(male(x) && female(x));
 // Каждый является или мужчиной, или женщиной.
 
-!@x @y daughter(x,y) -> female(x), child(x,y);
+!@x @y daughter(x,y) -> female(x), child(x,y), parent(y,x);
 /* Если x дочь y то 
  * 1) x женского пола, 
  * 2) x является ребенком y
  */
 
-!@x @y son(x,y) -> male(x), child(x,y);
+!@x @y son(x,y) -> male(x), child(x,y), parent(y,x);
 /* Если x сын y, то 
  * 1) x мужского пола, 
  * 2) x является ребенком y
  */
 
-!@x @y father(x,y) -> male(x), parent(x,y);
+!@x @y father(x,y) -> male(x), parent(x,y), child(y,x);
 /* Если x отец y, то 
  * 1) x мужского пола, 
  * 2) x является родителем y. 
  */
 
-!@x @y mother(x,y) -> female(x), parent(x,y);
+!@x @y mother(x,y) -> female(x), parent(x,y), child(y,x);
 /* Если x мать y, то 
  * 1) x женского пола, 
  * 2) x является родителем y. 
  */
 
-//!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));
-
-!@x @y child(x,y) -> parent(y,x);
-!@x @y child(x,y), male(x) -> son(x,y);
-!@x @y child(x,y), female(x) -> daughter(x,y);
-/* Если x ребенок y, то 
+!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));
+/* Если x ребенок y, то
  * 1) у является родителем x, 
  * 2) если x мужского пола, то он сын x, 
  * 3) если женского – то дочь.
  */
 
-//!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));
-
-!@x @y parent(x,y) -> child(y,x);
-!@x @y parent(x,y), male(x) -> father(x,y);
-!@x @y parent(x,y), female(x) -> mother(x,y);
+!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));
 /* Если x родитель y, то
  * 1) y является ребенком x,
  * 2) если x мужского пола то он отец x,
  * 3) если женского то мать
  */
 
-!@x @y ($z child(x,z) && child(y,z) && x != y) -> native(x,y);
-// Если двое имеют общего предка, то 
+!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> native(x,y);
+// Если двое имеют общего предка, то
 // эти двое родственники.
 
+!@x @y native(x,y) -> ~parent(x,y);
+// Если двое имеют общего предка, то
+// эти двое не могут быть предками друг другу.
 
-//!@x @y ($z parent(z,x) && parent(z,y)) -> (~parent(x,y) && ~parent(y,x));
-/* Если двое имеют общего предка, то
- * не могут быть предками друг друга.
- */
+!@x @y ~(parent(x,y), parent(y,x));
+// Никто не может быть предком своего предка.
 
-
-// **** База данных 
+// **** База данных
 
 // Утверждения
 

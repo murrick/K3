@@ -381,6 +381,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         if (arguments.size() != o.getArguments().size()) {
             return false;
         }
+//        boolean found = false;
+        int cnt = 0;
         for (int i = 0; i < arguments.size(); ++i) {
             if (arguments.get(i).isEmpty(mind) || o.getArguments().get(i).isEmpty(mind)) {
                 return false;
@@ -389,14 +391,44 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                    && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()
 //                    && !arguments.get(i).getValue(mind).getSlaves().isEmpty() && !o.getArguments().get(i).getValue(mind).getSlaves().isEmpty()                    ) {
 //                return false;
-            } else if (id != -1 && o.getId() != -1
-                    && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()) {
+            } else if (//id != -1 && o.getId() != -1
+                //&&
+                    arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()
+//                            && ((!o.getArguments().get(i).isCVar(mind)
+//                            && !arguments.get(i).isCVar(mind)) || arguments.get(i).getValue(mind).getRightId() == o.getArguments().get(i).getValue(mind).getRightId())
+            ) {
                 return false;
-            } else if (!arguments.get(i).getValue(mind).equalsTo(o.getArguments().get(i).getValue(mind))) {
+            } else if (!arguments.get(i).getValue(mind).equalsTo(o.getArguments().get(i).getValue(mind))
+////                    && !o.getArguments().get(i).isCVar(mind)
+////                    && !arguments.get(i).isCVar(mind)
+            ) {
                 return false;
+//            } else if (arguments.get(i).isCVar(mind) && o.getArguments().get(i).isCVar(mind)
+//                    && !arguments.get(i).getValue(mind).getRight().isQuery()
+//                    && !o.getArguments().get(i).getValue(mind).getRight().isQuery()
+//                    && arguments.get(i).getValue(mind).getRightId() != o.getArguments().get(i).getValue(mind).getRightId()
+//            ) {
+//                ++cnt;
             }
+
+//             Если аргументы только С - результат неопределен
+//            if (!arguments.get(i).isCVar(mind)
+//                    || !o.getArguments().get(i).isCVar(mind)
+//                    || arguments.get(i).getValue(mind).getRight().isQuery()
+//                    || o.getArguments().get(i).getValue(mind).getRight().isQuery()
+//            ) {
+//                ++cnt;
+//            }
         }
-        return true;
+
+//        if(!found) {
+//            for (int i = 0; i < arguments.size(); ++i) {
+//                if(arguments.get(i).getValue(mind).getRightId() == o.getArguments().get(i).getValue(mind).getRightId()) {
+//                    found = true;
+//                }
+//            }
+//        }
+        return cnt != arguments.size();
     }
 
 //    public boolean equalsSolve(Domain slave) {

@@ -81,6 +81,8 @@ public class Mind {
     private volatile boolean blockCommit = false;
     private final Object locker = new Object();
 
+    private volatile boolean busyCommit = false;
+
     public Mind(IUser user) throws Exception {
         this.user = user;
 //        user.setMind(this);
@@ -157,8 +159,13 @@ public class Mind {
 
 
     public synchronized boolean commit(Mind m) throws Exception {
-        synchronized (locker) {
+//        synchronized (locker) {
 
+        while (busyCommit) {
+            Thread.sleep(100);
+        }
+        try {
+            busyCommit = true;
             boolean result = true;
 
             boolean sequencedBy = isSequencedBy(m);
@@ -219,6 +226,9 @@ public class Mind {
             queryResult = (Boolean) m.getQueryResult();
 
             return result;
+//        }
+        } finally {
+            busyCommit = false;
         }
     }
 

@@ -127,6 +127,7 @@ public class Analiser {
 
                 if (p.getDomain().equalsBase(q.getDomain())
                         && p.getDomain().isAntc() != q.getDomain().isAntc()) {
+                        //&& p.getDomain().getArguments().getCVariables(mind).size() != p.getDomain().getRange()) {
 
                     //TODO: Костыль
                     if (q.getMind() == null) {
@@ -157,6 +158,18 @@ public class Analiser {
         }
         return result;
     }
+
+//    private boolean equalsCVars(Domain p, Domain q) throws Exception {
+//        for (int i = 0; i < p.getArguments().size(); ++i) {
+//            if(p.get(i).isCVar(mind) && q.get(i).isCVar(mind)) {
+//                if(p.get(i).getValue(mind).getRightId() == q.get(i).getValue(mind).getRightId()) {
+//
+//                }
+//            } else {
+//                return true;
+//            }
+//        }
+//    }
 
     public boolean checkDatabase(Set<Long> list, boolean logging) throws Exception {
 

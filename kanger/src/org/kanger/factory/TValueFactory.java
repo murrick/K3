@@ -114,12 +114,30 @@ public class TValueFactory implements Iterable<TValue> {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
+    public TValue getXValue(TVariable tv) throws Exception {
+        TValue[] result = new TValue[]{null};
+        mind.getTValues().forEach(tv, new IReactor<TValue>() {
+            @Override
+            public Object run(TValue o) throws Exception {
+                if (o.getValue().isXVariable()) {
+                    result[0] = o;
+                }
+                return true;
+            }
+        });
+        return result[0];
+    }
+
     public TValue find(TVariable tv, Term v) throws Exception {
-        TValue temp = new TValue(tv, v);
-        for (long id : cache.find(temp.getHash())) {
-            IUnit one = load(id);
-            if (one.equalsTo(temp)) {
-                return (TValue) one;
+        if (v.isXVariable()) {
+            return getXValue(tv);
+        } else {
+            TValue temp = new TValue(tv, v);
+            for (long id : cache.find(temp.getHash())) {
+                IUnit one = load(id);
+                if (one.equalsTo(temp)) {
+                    return (TValue) one;
+                }
             }
         }
         return null;
