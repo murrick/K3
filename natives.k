@@ -10,25 +10,25 @@
 !@x (male(x) || female(x)) && ~(male(x) && female(x));
 // Каждый является или мужчиной, или женщиной.
 
-!@x @y daughter(x,y) -> female(x), child(x,y), parent(y,x);
+!@x @y daughter(x,y) -> female(x), child(x,y);
 /* Если x дочь y то 
  * 1) x женского пола, 
  * 2) x является ребенком y
  */
 
-!@x @y son(x,y) -> male(x), child(x,y), parent(y,x);
+!@x @y son(x,y) -> male(x), child(x,y);
 /* Если x сын y, то 
  * 1) x мужского пола, 
  * 2) x является ребенком y
  */
 
-!@x @y father(x,y) -> male(x), parent(x,y), child(y,x);
+!@x @y father(x,y) -> male(x), parent(x,y);
 /* Если x отец y, то 
  * 1) x мужского пола, 
  * 2) x является родителем y. 
  */
 
-!@x @y mother(x,y) -> female(x), parent(x,y), child(y,x);
+!@x @y mother(x,y) -> female(x), parent(x,y);
 /* Если x мать y, то 
  * 1) x женского пола, 
  * 2) x является родителем y. 
@@ -52,7 +52,7 @@
 // Если двое имеют общего предка, то
 // эти двое родственники.
 
-!@x @y native(x,y) -> ~parent(x,y);
+!@x @y ~(native(x,y), parent(x,y));
 // Если двое имеют общего предка, то
 // эти двое не могут быть предками друг другу.
 
@@ -71,5 +71,4 @@
 !age(John, 37);
 !age(Tom, 12);
 !age(Sarah, 4);
-
 

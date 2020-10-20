@@ -29,6 +29,8 @@ public class Right implements IUnit<Right> {
     private boolean query = false;                          // Вновь введенное правило
     private boolean generated = false;                      // Правило добавлено в процессе выводс
     private boolean stored = false;                         // Правило добавлено в процессе выводс
+    private boolean substitutable = false;                  // Правило содержит t-переменные
+    private boolean abstractable = false;                    // Правило содержит c-переменные
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<Cause> causes = new HashSet<>();
 
@@ -64,6 +66,8 @@ public class Right implements IUnit<Right> {
                 .putByte(query ? 1 : 0)
                 .putByte(generated ? 1 : 0)
                 .putByte(stored ? 1 : 0)
+                .putByte(substitutable ? 1 : 0)
+                .putByte(abstractable ? 1 : 0)
                 .putInt(tree.size());
         for (List<Domain> branch : tree) {
             packet.putInt(branch.size());
@@ -87,6 +91,8 @@ public class Right implements IUnit<Right> {
         query = packet.getByte() != 0;
         generated = packet.getByte() != 0;
         stored = packet.getByte() != 0;
+        substitutable = packet.getByte() != 0;
+        abstractable = packet.getByte() != 0;
         tree.clear();
         int width = packet.getInt();
         while (width-- > 0) {
@@ -410,6 +416,22 @@ public class Right implements IUnit<Right> {
         this.deleted = true;
     }
 
+    public boolean isSubstitutable() {
+        return substitutable;
+    }
+
+    public void setSubstitutable(boolean substitutable) {
+        this.substitutable = substitutable;
+    }
+
+    public boolean isAbstractable() {
+        return abstractable;
+    }
+
+    public void setAbstractable(boolean abstractable) {
+        this.abstractable = abstractable;
+    }
+
 //    public TSolve addTSolve(List<TValue> list) {
 //        TSolve tmp = findTSolve(list);
 //        if (tmp != null) {
@@ -532,4 +554,13 @@ public class Right implements IUnit<Right> {
 //        }
 //        return this;
 //    }
+public List<TVariable> getTVariables() {
+    List<TVariable> list = new ArrayList<>();
+    for (TVariable t : mind.getTVars()) {
+        if (t.getRightId() == id) {
+            list.add(t);
+        }
+    }
+    return list;
+}
 }

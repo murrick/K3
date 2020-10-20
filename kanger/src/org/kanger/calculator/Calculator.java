@@ -128,7 +128,7 @@ public class Calculator {
 //            }
 
             for (Argument a : fu.getArguments()) {
-                if (!a.isEmpty(mind) && a.isCVar(mind)) {
+                if (!a.isEmpty(mind) && a.getValue(mind).isCVariable()) {
 //                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;
                 }

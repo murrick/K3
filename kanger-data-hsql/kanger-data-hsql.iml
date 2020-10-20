@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="$project_name$" />
+    <orderEntry type="module" module-name="kanger" />
   </component>
 </module>

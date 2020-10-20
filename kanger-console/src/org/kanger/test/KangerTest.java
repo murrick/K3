@@ -1068,6 +1068,25 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
+//TODO: Неуверен что это корректно
+//    public void set_03_09() throws Exception {
+//
+//        mind.clear();
+//        mind.compile("!@x $y a(y,x); !@x @y a(x,y) -> b(x,y);");
+//        mind.query("?$x b(x, A);");
+//        showResult(true);
+//        System.out.println("OK");
+//        System.out.println("====================================================");
+//    }
+//
+//    public void set_03_0A() throws Exception {
+//        mind.clear();
+//        mind.compile("!@x ~a(x,x); !@x $y a(y,x); !@x @y b(x,y) -> a(x,y); !@x @y a(x,y) -> b(x,y);");
+//        mind.query("?@x $y b(y, x);");
+//        showResult(true);
+//        System.out.println("OK");
+//        System.out.println("====================================================");
+//    }
 
     public void set_04_01() throws Exception {
 

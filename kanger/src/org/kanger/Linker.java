@@ -451,29 +451,99 @@ public class Linker {
                                 boolean blockRight = false;
                                 boolean blockLeft = false;
 
+//                                boolean constFound = false;
+//                                boolean cvarFound = false;
+//                                boolean clear = false;
                                 for (int i = 0; i < master.getRange(); ++i) {
-                                    if (master.get(i).isTSet()
-                                            || slave.get(i).isEmpty(mind)
-                                            || (!slave.get(i).isEmpty(mind)
-                                            && !master.get(i).isEmpty(mind)
-                                            && master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId())) {
+                                    if (master.get(i).isTSet() /*&& !blockByOrder(i, master, slave)*/) {
+                                    } else if (slave.get(i).isEmpty(mind) || master.get(i).isEmpty(mind)) {
+//                                    } else if (slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isCVariable()) {
+//                                    } else if (slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isXVariable()) {
+//                                    } else if (slave.get(i).getValue(mind).isXVariable() && master.get(i).getValue(mind).isCVariable()) {
+                                    } else if (master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId()) {
+//                                    } else if (master.get(i).getValue(mind).getParent().getId() == slave.get(i).getValue(mind).getId()) {
+//                                    } else if (slave.get(i).getValue(mind).getParent().getId() == master.get(i).getValue(mind).getId()) {
                                     } else {
+//                                        if(slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isCVariable()) {
+//                                            cvarFound = true;
+//                                        } else {
+//                                            clear = true;
+//                                        }
                                         blockRight = true;
-                                        break;
+//                                        break;
                                     }
+//                                            || slave.get(i).isEmpty(mind)
+////                                            || slave.get(i).getValue(mind).isCVariable()
+//                                            || (!slave.get(i).isEmpty(mind)
+//                                            && !master.get(i).isEmpty(mind)
+//                                            && (master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId()
+////                                            || (master.get(i).getValue(mind).isXVariable() && master.get(i).getValue(mind).getParent().getId() == slave.get(i).getValue(mind).getId())
+////                                            || (slave.get(i).getValue(mind).isXVariable() && slave.get(i).getValue(mind).getParent().getId() == master.get(i).getValue(mind).getId())
+////                                            || master.get(i).getValue(mind).getChilds().contains(slave.get(i).getValue(mind).getId())
+////                                            || slave.get(i).getValue(mind).getChilds().contains(master.get(i).getValue(mind).getId())
+//                                    ))) {
+////                                        if(slave.get(i).getType() == ArgumentType.TERM && !slave.get(i).getValue(mind).isCVariable()) {
+////                                            constFound = true;
+////                                        }
+////                                        if(!slave.get(i).isEmpty(mind) && slave.get(i).getValue(mind).isCVariable()) {
+////                                            cvarFound = true;
+////                                        }
+//                                    } else {
+//                                        blockRight = true;
+//                                        break;
+//                                    }
                                 }
 
+//                                if(!blockRight && cvarFound && !constFound) {
+//                                    blockRight = true;
+//                                }
+
+//                                constFound = false;
+//                                cvarFound = false;
                                 for (int i = 0; i < slave.getRange(); ++i) {
-                                    if (slave.get(i).isTSet()
-                                            || master.get(i).isEmpty(mind)
-                                            || (!slave.get(i).isEmpty(mind)
-                                            && !master.get(i).isEmpty(mind)
-                                            && master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId())) {
+                                    if (slave.get(i).isTSet() /*&& !blockByOrder(i, slave, master)*/) {
+                                    } else if (slave.get(i).isEmpty(mind) || master.get(i).isEmpty(mind)) {
+//                                    } else if (slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isCVariable()) {
+//                                    } else if (slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isXVariable()) {
+//                                    } else if (slave.get(i).getValue(mind).isXVariable() && master.get(i).getValue(mind).isCVariable()) {
+                                    } else if (master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId()) {
+//                                    } else if (master.get(i).getValue(mind).getParent().getId() == slave.get(i).getValue(mind).getId()) {
+//                                    } else if (slave.get(i).getValue(mind).getParent().getId() == master.get(i).getValue(mind).getId()) {
                                     } else {
+//                                        if(slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isCVariable()) {
+//                                            cvarFound = true;
+//                                        } else {
+//                                            clear = true;
+//                                        }
                                         blockLeft = true;
-                                        break;
+//                                        break;
                                     }
+
+//                                    if (slave.get(i).isTSet() //&& !blockByOrder(i, slave, master))
+//                                            || master.get(i).isEmpty(mind)
+////                                            || master.get(i).getValue(mind).isCVariable()
+//                                            || (!slave.get(i).isEmpty(mind)
+//                                            && !master.get(i).isEmpty(mind)
+//                                            && (master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId()
+////                                            || (slave.get(i).getValue(mind).isXVariable() && slave.get(i).getValue(mind).getParent().getId() == master.get(i).getValue(mind).getId())
+////                                            || (master.get(i).getValue(mind).isXVariable() && master.get(i).getValue(mind).getParent().getId() == slave.get(i).getValue(mind).getId())
+////                                            || master.get(i).getValue(mind).getChilds().contains(slave.get(i).getValue(mind).getId())
+////                                            || slave.get(i).getValue(mind).getChilds().contains(master.get(i).getValue(mind).getId())
+//                                    ))) {
+////                                        if(master.get(i).getType() == ArgumentType.TERM && !master.get(i).getValue(mind).isCVariable()) {
+////                                            constFound = true;
+////                                        }
+////                                        if(!master.get(i).isEmpty(mind) && master.get(i).getValue(mind).isCVariable()) {
+////                                            cvarFound = true;
+////                                        }
+//                                    } else {
+//                                        blockLeft = true;
+//                                        break;
+//                                    }
                                 }
+//                                if(!blockLeft && cvarFound && !constFound) {
+//                                    blockLeft = true;
+//                                }
 
 //                                    } !slave.get(i).isTSet()
 //                                            && (!master.get(i).isFSet() || !master.get(i).getF(mind).isEmpty())
@@ -487,6 +557,19 @@ public class Linker {
 //                                        break;
 //                                    }
 
+
+//                                if(blockRight && blockLeft && cvarFound && !clear) {
+//                                    System.err.println(master + " <- " + slave);
+////                                    for (int i = 0; i < slave.getRange(); ++i) {
+////                                        if (master.get(i).isTSet() && !slave.get(i).isEmpty(mind) && !slave.get(i).getValue(mind).isCVariable()) {
+////                                            blockRight = false;
+////                                        }
+////                                        if (slave.get(i).isTSet() && !master.get(i).isEmpty(mind) && !master.get(i).getValue(mind).isCVariable()) {
+////                                            blockLeft = false;
+////                                        }
+////                                    }
+//
+//                                }
 
                                 if (success) {
 
@@ -502,47 +585,47 @@ public class Linker {
                                                 if (!slave.get(i).isEmpty(mind)) {
 
 //                                            if (master.getVarOrder(mind, i) < slave.getVarOrder(mind, i)) {
-                                                    if (blockByOrder(i, master, slave)) {
+//                                                    if (blockByOrder(i, master, slave)) {
 //                                                System.err.println(slave + " -> " + master);
-                                                    } else {
+//                                                    } else {
 //                                            if(master.getRightId() == slave.get(i).getValue(mind).getRightId()) {
 //                                                System.err.println("=== " + master.getVarOrder(i) + ":" + master + " <-- " + slave.getVarOrder(i) + ":" + slave);
 //                                            }
 
 //                                            long parentId = -1;
 
-                                                        Term tm = slave.get(i).getValue(mind);
-                                                        TVariable t = master.get(i).getT(mind);
-                                                        TValue s = null;
-                                                        if (tm.isCVariable() && slave.getRightId() == tm.getRightId() && tm.getSlaves().isEmpty() && !slave.getArguments().getTVariables(mind).isEmpty()/*&& tm.getSlaves().contains(t.getId())*/) {
-                                                            s = mind.getTValues().getXValue(t);
-                                                            if (s == null) {
-                                                                tm = mind.getTerms().createXVar(tm.getRight(), tm.getName());
-                                                            }
-                                                        } else {
-                                                            s = mind.getTValues().find(t, tm);
-                                                        }
+                                                    Term tm = slave.get(i).getValue(mind);
+                                                    TVariable t = master.get(i).getT(mind);
+                                                    TValue s = null;
+                                                    if (tm.isCVariable() && slave.getRightId() == tm.getRightId() && (tm.getSlaves().isEmpty() && tm.getRight().isSubstitutable()) /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                        s = mind.getTValues().getXValue(t);
                                                         if (s == null) {
-                                                            s = mind.getTValues().add(t, tm);
-//                                                s.setParentId(parentId);
-                                                            result = true;
+                                                            tm = mind.getTerms().createXVar(tm);
                                                         }
+                                                    } else {
+                                                        s = mind.getTValues().find(t, tm);
+                                                    }
+                                                    if (s == null) {
+                                                        s = mind.getTValues().add(t, tm);
+//                                                s.setParentId(parentId);
+                                                        result = true;
+                                                    }
 
 //                                                    if (master.get(i).isEmpty(mind)) {
 //                                                        master.get(i).getT(mind).setCurrent(s);
 //                                                    }
 
-                                                        substMaster[i] = s;
-                                                        slave.setUsed();
-                                                        master.setUsed();
-                                                        applied = true;
-                                                    }
+                                                    substMaster[i] = s;
+                                                    slave.setUsed();
+                                                    master.setUsed();
+                                                    applied = true;
+                                                }
 //                                            } else if(slave.isQuery()){
 //                                                success = false;
 //                                                break;
-                                                }
                                             }
                                         }
+//                                        }
 //                                        }
 
 
@@ -553,49 +636,49 @@ public class Linker {
                                                 if (!master.get(i).isEmpty(mind)) {
 
 //                                            if (slave.getVarOrder(mind, i) < master.getVarOrder(mind, i)) {
-                                                    if (blockByOrder(i, slave, master)) {
+//                                                    if (blockByOrder(i, slave, master)) {
 //                                                System.err.println(master + " -> " + slave);
-                                                    } else {
+//                                                    } else {
 
 //                                            if(slave.getRightId() == master.get(i).getValue(mind).getRightId()) {
 //                                                System.err.println("=== " + slave.getVarOrder(i) + ":" + slave + " <-- " + master.getVarOrder(i) + ":" + master);
 //                                            }
 
 //                                            long parentId = -1;
-                                                        Term tm = master.get(i).getValue(mind);
-                                                        TVariable t = slave.get(i).getT(mind);
-                                                        TValue s = null;
-                                                        if (tm.isCVariable() && master.getRightId() == tm.getRightId() && tm.getSlaves().isEmpty() && !master.getArguments().getTVariables(mind).isEmpty()/*&& tm.getSlaves().contains(t.getId())*/) {
-                                                            s = mind.getTValues().getXValue(t);
-                                                            if (s == null) {
-                                                                tm = mind.getTerms().createXVar(tm.getRight(), tm.getName());
-                                                            }
-                                                        } else {
-                                                            s = mind.getTValues().find(t, tm);
+                                                    Term tm = master.get(i).getValue(mind);
+                                                    TVariable t = slave.get(i).getT(mind);
+                                                    TValue s = null;
+                                                    if (tm.isCVariable() && master.getRightId() == tm.getRightId() && (tm.getSlaves().isEmpty() && tm.getRight().isSubstitutable()) /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                        s = mind.getTValues().getXValue(t);
+                                                        if (s == null) {
+                                                            tm = mind.getTerms().createXVar(tm);
                                                         }
+                                                    } else {
+                                                        s = mind.getTValues().find(t, tm);
+                                                    }
 
 //                                                        TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
-                                                        if (s == null) {
-                                                            s = mind.getTValues().add(t, tm);
+                                                    if (s == null) {
+                                                        s = mind.getTValues().add(t, tm);
 //                                                s.setParentId(parentId);
-                                                            result = true;
-                                                        }
+                                                        result = true;
+                                                    }
 
 //                                                    if (slave.get(i).isEmpty(mind)) {
 //                                                        slave.get(i).getT(mind).setCurrent(s);
 //                                                    }
 
-                                                        substSlave[i] = s;
-                                                        master.setUsed();
-                                                        slave.setUsed();
-                                                        applied = true;
-                                                    }
+                                                    substSlave[i] = s;
+                                                    master.setUsed();
+                                                    slave.setUsed();
+                                                    applied = true;
+                                                }
 //                                            } else if(master.isQuery()){
 //                                                success = false;
 //                                                break;
-                                                }
                                             }
                                         }
+//                                        }
 //                                        }
 
 //                                        if (master.get(i).isFSet()
@@ -649,14 +732,14 @@ public class Linker {
 //                                        }
 
                                         if (!applied) {
-                                            if (master.get(i).isEmpty(mind) || slave.get(i).isEmpty(mind)
-                                                    || master.get(i).getValue(mind).getId() != slave.get(i).getValue(mind).getId()) {
-                                                success = false;
-                                                break;
-                                            } else {
-                                                substMaster[i] = null;
-                                                substSlave[i] = null;
-                                            }
+//                                            if (master.get(i).isEmpty(mind) || slave.get(i).isEmpty(mind)
+//                                                    || master.get(i).getValue(mind).getId() != slave.get(i).getValue(mind).getId()) {
+//                                                success = false;
+//                                                break;
+//                                            } else {
+                                            substMaster[i] = null;
+                                            substSlave[i] = null;
+//                                            }
                                         } else {
                                             master.getRight().setUsed();
                                         }
@@ -713,18 +796,18 @@ public class Linker {
         return result;
     }
 
-    private boolean blockByOrder(int pos, Domain master, Domain slave) throws Exception {
-//        if (slave.get(pos).getValue(mind).isCVariable()) {
-//            if (master.getRightId() == slave.get(pos).getValue(mind).getRightId()) {
-//                return master.get(pos).getT(mind).getIndex() < slave.get(pos).getValue(mind).getIndex();
-////            } else if (master.isQuery()){
-//            } else if (!slave.get(pos).isTSet()) {
-//                master.calcVarOrders(mind);
-//                return master.getVarOrder(mind, pos) < slave.getVarOrder(mind, pos);
-//            }
-//        }
-        return false;
-    }
+//    private boolean blockByOrder(int pos, Domain master, Domain slave) throws Exception {
+////        if (slave.get(pos).getValue(mind).isCVariable()) {
+////            if (master.getRightId() == slave.get(pos).getValue(mind).getRightId()) {
+////                return master.get(pos).getT(mind).getIndex() < slave.get(pos).getValue(mind).getIndex();
+//////            } else if (master.isQuery()){
+////            } else if (!slave.get(pos).isTSet()) {
+//        master.calcVarOrders(mind);
+//        return master.getVarOrder(mind, pos) < slave.getVarOrder(mind, pos);
+////            }
+////        }
+////        return false;
+//    }
 
 //    private TSolve findTSolve(List<TValue> list) {
 //        TSolve tmp = new TSolve(list, mind);
@@ -763,13 +846,13 @@ public class Linker {
             }
         }
         for (TValue v : list) {
-            if (!master.isExcluded(slave.getArguments())) {
+//            if (!master.isExcluded(slave.getArguments())) {
                 r = v.getTVar().getRight();
                 if (logging) {
                     mind.getLog().add(LogMode.ANALIZER, "Closed: " + v);
                 }
                 occurrs = true;
-            }
+//            }
         }
 
 
@@ -916,10 +999,11 @@ public class Linker {
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
                         for (int i = 0; i < d.getRange(); ++i) {
-                            if (master.get(i).isTSet() && master.getVarOrder(mind, i) >= d.getVarOrder(mind, i)) {
-                            } else if (master.get(i).isEmpty(mind)
-                                    || master.get(i).getValue(mind).getId() != d.get(i).getValue(mind).getId()
-                                    || master.get(i).isCVar(mind)) {
+                            if (master.get(i).isTSet() /*&& master.getVarOrder(mind, i) >= d.getVarOrder(mind, i)*/) {
+//                            } else if(master.get(i).isEmpty(mind) || d.get(i).isEmpty(mind)) {
+                            } else if (master.get(i).getValue(mind).getId() == d.get(i).getValue(mind).getId()) {
+                            } else {
+//                                    || master.get(i).getValue(mind).isCVariable()) {
                                 success = false;
                                 break;
                             }
@@ -1227,6 +1311,10 @@ public class Linker {
 //                        mind.getLog().add(LogMode.ANALIZER, "DB set record: " + d);
 //                    }
 //                } else {
+//                    for(Term t : d.getArguments().getCVariables(mind)) {
+//                        t.toCVariable();
+//                    }
+
                     x = d.createStored();
                     if (d.isUsed()) {
                         x.getDomain().setUsed();

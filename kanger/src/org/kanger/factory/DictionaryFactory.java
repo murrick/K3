@@ -148,13 +148,24 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    public Term createXVar(Right r, Term name) throws Exception {
+    public Term createXVar(Term c) throws Exception {
+        Term t = null;
+//        for(Term x : this) {
+//            if(x.getParent().getId() == c.getId()) {
+//                t = x;
+//                break;
+//            }
+//        }
+//        if(t == null) {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.XVC, i);
-        Term t = add(temp);
-        t.setRight(r);
+        t = add(temp);
+        t.setRight(c.getRight());
         t.setIndex(i);
-        t.setName(name);
+        t.setName(c.getName());
+//            c.getChilds().add(t.getId());
+        t.setParent(c);
+//        }
         return t;
     }
 

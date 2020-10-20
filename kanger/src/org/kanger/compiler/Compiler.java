@@ -35,6 +35,16 @@ public class Compiler {
         mind.getRights().register(r);
         r.setOrig(mind.getTerms().add(orig));
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
+
+        // Если есть с-переменные и нет t-переменных - то все c-переменные это просто термы
+//        if(r.isAbstractable() && !r.isSubstitutable()) {
+//            for(Term t : mind.getTerms()) {
+//                if(t.getRightId() == r.getId() && t.getIndex() > 0) {
+//                    t.setIndex(0);
+//                }
+//            }
+//        }
+
         Right x = mind.getRights().add(r);
 
         if (!r.isDeleted()) {
@@ -169,12 +179,13 @@ public class Compiler {
         if ((root.getName().charAt(0) == Enums.AQN && antc) || (root.getName().charAt(0) == Enums.PQN && !antc)) {
             TVariable t = mind.getTVars().createTVar(r, mind.getTerms().add(varName));
             p = new Argument(t);
+            r.setSubstitutable(true);
 
             /* Формирование списка подчиненных t-переменных для последней появившейся ранее c-переменной.
              */
             Term c = null;
             for (Argument a : replacements.values()) {
-                if (a.isCVar(mind) && (c == null || c.getIndex() < a.getValue(mind).getIndex())) {
+                if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && (c == null || c.getIndex() < a.getValue(mind).getIndex())) {
                     c = a.getValue(mind);
                 }
             }
@@ -183,6 +194,7 @@ public class Compiler {
             }
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName)));
+            r.setAbstractable(true);
         }
         replacements.put(varName, p);
         return antc;

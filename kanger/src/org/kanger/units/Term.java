@@ -34,7 +34,9 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     private int index = 0;              // Индекс c-переменной
     private Term name = null;             // Оригинальное имя c-переменной
     private Right right = null;          // Ссылка на правило
-    private Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
+    private final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
+    //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
+    private Term parent = null;
 
     //    private Term next = null;      // Следующая запись
     private Mind mind = null;
@@ -42,6 +44,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     private transient boolean deleted = false;
     private transient long nameId = -1;
     private transient long rightId = -1;
+    private transient long parentId = -1;
 
     public Term() {
     }
@@ -95,9 +98,10 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         if (index > 0) {
             packet.putLong(nameId);
             packet.putLong(rightId);
+            packet.putLong(parentId);
             packet.putWord(slaves.size());
-            for (long id : slaves) {
-                packet.putLong(id);
+            for (long sid : slaves) {
+                packet.putLong(sid);
             }
         }
         return packet.createMarked();
@@ -153,6 +157,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         if (index > 0) {
             nameId = packet.getLong();
             rightId = packet.getLong();
+            parentId = packet.getLong();
             slaves.clear();
             int cnt = packet.getWord();
             while (cnt-- > 0) {
@@ -322,7 +327,13 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     }
 
     public boolean isXVariable() {
-        return index > 0 && value.toString().charAt(0) == Enums.XVC;
+        return parentId > 0;
+    }
+
+    public void toCVariable() {
+        if (isXVariable()) {
+            value = String.format("%c%d", Enums.CVC, index);
+        }
     }
 
     public String formatValue() {
@@ -561,6 +572,26 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     public Set<Long> getSlaves() {
         return slaves;
+    }
+
+    //    public Set<Long> getChilds() {
+//        return childs;
+//    }
+//
+    public Term getParent() throws Exception {
+        if (parent == null) {
+            parent = mind.getTerms().load(parentId);
+        }
+        return parent;
+    }
+
+    public void setParent(Term parent) {
+        this.parent = parent;
+        this.parentId = parent.getId();
+    }
+
+    public long getParentId() {
+        return parentId;
     }
 }
 

@@ -1,6 +1,7 @@
 package org.kanger.primitives;
 
 import org.kanger.Mind;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
@@ -182,6 +183,10 @@ public class ArgList extends ArrayList<Argument> {
         for (int i = 0; i < size(); ++i) {
             try {
                 Term t = get(i).getValue(mind);
+//                if(t.isXVariable()) {
+//                    t.toCVariable();
+//                }
+
 //                if(t.isCVariable()) {
 //                    t = mind.getTerms().createCVar(t.getRight(), t.getName());
 //                }
@@ -288,6 +293,26 @@ public class ArgList extends ArrayList<Argument> {
             } else if (full && a.isRSet()) {
                 List<TValue> temp = a.getR(mind).getCondition().getTValues(mind, full);
                 for (TValue t : temp) {
+                    if (!list.contains(t)) {
+                        list.add(t);
+                    }
+                }
+            }
+
+        }
+        return list;
+    }
+
+    public List<Term> getTerms(Mind mind) throws Exception {
+        List<Term> list = new ArrayList<>();
+        for (Argument a : this) {
+            //TODO: Костыль
+//            a.setUser(user);
+            if (a.getType() == ArgumentType.TERM) {
+                list.add(a.getValue(mind));
+            } else if (a.isFSet()) {
+                List<Term> temp = a.getF(mind).getArguments().getTerms(mind);
+                for (Term t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
                     }

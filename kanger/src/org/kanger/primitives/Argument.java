@@ -44,13 +44,15 @@ public class Argument {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
-                .putInt(type.ordinal());
+                .putInt(type.ordinal())
+                .putInt(varOrder);
         return packet.createMarked();
     }
 
     public Argument apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         type = ArgumentType.values()[packet.getInt()];
+        varOrder = packet.getInt();
         return this;
     }
 
@@ -79,7 +81,7 @@ public class Argument {
 
     private ArgumentType getObjectType() {
         if (o instanceof Term) {
-                return ArgumentType.TERM;
+            return ArgumentType.TERM;
         } else if (o instanceof TVariable) {
             return ArgumentType.TVARIABLE;
         } else if (o instanceof TValue) {
@@ -251,14 +253,14 @@ public class Argument {
 
     public boolean isDefined(Mind mind) throws Exception {
         Term t = getValue(mind);
-        return t != null && !isCVar(mind); //type != ArgumentType.CVARIABLE;
+        return t != null && !t.isCVariable(); //isCVar(mind); //type != ArgumentType.CVARIABLE;
     }
 
 
-    public boolean isCVar(Mind mind) throws Exception {
+//    public boolean isCVar(Mind mind) throws Exception {
 //        return type == ArgumentType.CVARIABLE; //
-        return !isEmpty(mind) && getValue(mind).isCVariable();
-    }
+//        return !isEmpty(mind) && getValue(mind).isCVariable();
+//    }
 
     //    public IUser getUser() {
 //        return user;

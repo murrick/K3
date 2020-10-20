@@ -99,7 +99,7 @@ public class Functions {
                         if (!((Function) o).setParameter(1, _bitnot(arg.get(0).getValue(mind)))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar(mind)) {
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) /*&& !arg.get(0).isCVar(mind)*/) {
                         if (!((Function) o).setParameter(0, _bitnot(arg.get(1).getValue(mind)))) {
                             ret = 0;
                         }
@@ -131,7 +131,7 @@ public class Functions {
                         if (!((Function) o).setParameter(1, _neg(arg.get(0).getValue(mind)))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar(mind)) {
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) /*&& !arg.get(0).isCVar(mind)*/) {
                         if (!((Function) o).setParameter(0, _neg(arg.get(1).getValue(mind)))) {
                             ret = 0;
                         }
@@ -163,7 +163,7 @@ public class Functions {
                         if (!((Function) o).setParameter(1, arg.get(0).getValue(mind))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && !arg.get(0).isCVar(mind)) {
+                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) /*&& !arg.get(0).isCVar(mind)*/) {
                         if (!((Function) o).setParameter(0, arg.get(1).getValue(mind))) {
                             ret = 0;
                         }

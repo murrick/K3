@@ -1122,7 +1122,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 
 
-    public void calcVarOrders(Mind mind) throws Exception {
+    private void calcVarOrders(Mind mind) throws Exception {
         for (int pos = 0; pos < getRange(); ++pos) {
             List<Integer> list = new ArrayList<>();
             SortedMap<Integer, Integer> sort = new TreeMap<>();
@@ -1131,7 +1131,10 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 int ix = 0;
                 if (arguments.get(i).isTSet()) {
                     ix = arguments.get(i).getT(mind).getIndex();
-                } else if (arguments.get(i).isCVar(mind) && arguments.get(i).getValue(mind).getRightId() == rightId) {
+//                } else if (arguments.get(i).getValue(mind).isXVariable() && arguments.get(i).getValue(mind).getParent().getRightId() == rightId) {
+//                    ix = arguments.get(i).getValue(mind).getParent().getIndex();
+//                    ++plains;
+                } else if (!arguments.get(i).isEmpty(mind) && arguments.get(i).getValue(mind).isCVariable() && arguments.get(i).getValue(mind).getRightId() == rightId) {
                     ix = arguments.get(i).getValue(mind).getIndex();
                 } else {
                     ++plains;
@@ -1147,7 +1150,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public int getVarOrder(Mind mind, int pos) throws Exception {
+    private int getVarOrder(Mind mind, int pos) throws Exception {
         if (arguments.get(pos).getVarOrder() == -1) {
             calcVarOrders(mind);
         }
