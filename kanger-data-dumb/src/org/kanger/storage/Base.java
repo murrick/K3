@@ -9,14 +9,14 @@ import java.util.*;
 
 public class Base implements IBase, Iterable<IStep> {
 
-    private static long MAX_CACHE_SIZE = 1024 * 512;
+    private static long MAX_CACHE_SIZE = 1024L * 1024L;
 
     private Index index = null;
     private Index hash = null;
     private Data data = null;
 
-    private Map<Long, IStep> cache = new HashMap<>();
-    private Queue<Long> timing = new LinkedList<>();
+    private final Map<Long, IStep> cache = new HashMap<>();
+    private final Queue<Long> timing = new LinkedList<>();
     private volatile long cacheSize = 0L;
     private long lastId = -1;
 
@@ -99,30 +99,37 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public IStep get(long id) throws Exception {
-        if (cache.containsKey(id)) {
-            timing.remove(id);
-            timing.add(id);
-            return cache.get(id);
-        } else {
-            Index.IndexOne x = index.getOne(id);
-            if (x != null) {
-                IStep one = data.get(x.getData().get(0));
-
-                cache.put(id, one);
+        synchronized (cache) {
+            if (cache.containsKey(id)) {
+                timing.remove(id);
                 timing.add(id);
-                one.setSize(data.getDataSize());
-                cacheSize += one.getSize();
-                while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
-                    long topId = timing.poll();
-                    IStep top = cache.get(topId);
-                    cache.remove(topId);
-                    cacheSize -= top.getSize();
-                }
-
-                return one;
-            } else {
-                return null;
+                return cache.get(id);
             }
+        }
+
+        Index.IndexOne x = index.getOne(id);
+        if (x != null) {
+            IStep one = data.get(x.getData().get(0));
+            if (one != null) {
+                one.setSize(data.getDataSize());
+
+                synchronized (cache) {
+                    if (!cache.containsKey(id)) {
+                        cache.put(id, one);
+                        timing.add(id);
+                        cacheSize += one.getSize();
+                        while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
+                            long topId = timing.poll();
+                            IStep top = cache.remove(topId);
+                            cacheSize -= top.getSize();
+                        }
+                    }
+                }
+            }
+
+            return one;
+        } else {
+            return null;
         }
     }
 
@@ -255,9 +262,11 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void clearCache() {
-        cache.clear();
-        timing.clear();
-        cacheSize = 0;
+        synchronized (cache) {
+            cache.clear();
+            timing.clear();
+            cacheSize = 0;
+        }
     }
 
     @Override

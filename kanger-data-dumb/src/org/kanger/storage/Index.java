@@ -11,8 +11,8 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     private static final int DELETED = 0x01;
     private static final int BLOCK_MARK = 0x10;
+    private static final int BLOCK_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = 512;
     private final Object locker = new Object();
     private int version = Version.VERSION_CODE;
     private NavigableMap<Long, IndexOne> baseIndex = new ConcurrentSkipListMap<>();
@@ -45,38 +45,42 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         this.baseIndex.clear();
         this.currentBlock.clear();
 
-        try {
-            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
-            version = ras.readShort();
-            blockSize = ras.readInt();
-            do {
-                IndexOne one = new IndexOne().readFrom(ras);
-                if (!one.isDeleted() && one.isBlockMark() && one.getSize() > 0) {
-                    baseIndex.put(one.getId(), one);
-                    ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
-                } else if (ras.length() > ras.getFilePointer()) {
-                    if (one.isBlockMark()) {
+        synchronized (locker) {
+            try {
+                ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
+                version = ras.readShort();
+                blockSize = ras.readInt();
+                do {
+                    IndexOne one = new IndexOne().readFrom(ras);
+                    if (!one.isDeleted() && one.isBlockMark() && one.getSize() > 0) {
+                        baseIndex.put(one.getId(), one);
                         ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
+                    } else if (ras.length() > ras.getFilePointer()) {
+                        if (one.isBlockMark()) {
+                            ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
+                        } else {
+                            ras.seek(one.getData().get(0) + one.getSize() * Long.BYTES + one.getRecordSize());
+                        }
                     } else {
-                        ras.seek(one.getData().get(0) + one.getSize() * Long.BYTES + one.getRecordSize());
+                        break;
                     }
-                } else {
-                    break;
+                } while (ras.length() > ras.getFilePointer());
+                if (baseIndex.isEmpty()) {
+                    clear();
                 }
-            } while (ras.length() > ras.getFilePointer());
-            if (baseIndex.isEmpty()) {
+            } catch (FileNotFoundException ex) {
                 clear();
+                ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
             }
-        } catch (FileNotFoundException ex) {
-            clear();
-            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
         }
     }
 
     @Override
     public void close() throws IOException {
         flush();
-        ras.close();
+        synchronized (locker) {
+            ras.close();
+        }
         ras = null;
         baseIndex.clear();
         currentBlock.clear();
@@ -314,14 +318,16 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 flush();
             }
             block.clear();
-            ras.seek(head.getData().get(0) + head.getRecordSize());
             boolean wasRead = false;
-            for (int i = 0; i < head.getSize(); ++i) {
-                IndexOne one = new IndexOne().readFrom(ras);
-                if (!one.isDeleted()) {
-                    block.put(one.getId(), one);
+            synchronized (locker) {
+                ras.seek(head.getData().get(0) + head.getRecordSize());
+                for (int i = 0; i < head.getSize(); ++i) {
+                    IndexOne one = new IndexOne().readFrom(ras);
+                    if (!one.isDeleted()) {
+                        block.put(one.getId(), one);
+                    }
+                    wasRead = true;
                 }
-                wasRead = true;
             }
             if (head.getSize() != block.size()) {
                 head.setSize(block.size());

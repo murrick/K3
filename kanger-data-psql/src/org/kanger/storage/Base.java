@@ -15,10 +15,9 @@ import java.util.Queue;
 public class Base implements IBase {
 
     private static long MAX_CACHE_SIZE = 1024L * 1024L;
-
-    private Connection connection;
     private final Map<Long, IStep> cache = new HashMap<>();
     private final Queue<Long> timing = new LinkedList<>();
+    private Connection connection;
     private volatile long cacheSize = 0L;
     private long lastId = -1;
 
@@ -38,10 +37,9 @@ public class Base implements IBase {
                     "CREATE TABLE IF NOT EXISTS " +
                             name + " (" +
                             "id BIGINT NOT NULL, " +
-                            "data LONGVARBINARY, " +
-                            "PRIMARY KEY (id)" +
+                            "data BYTEA, " +
+                            "CONSTRAINT " + name + "_pk PRIMARY KEY (id)" +
                             ");");
-            st.executeUpdate("SET TABLE " + name + " TYPE CACHED;");
         }
         IStep root = getRoot();
         if (root != null) {
@@ -309,4 +307,5 @@ public class Base implements IBase {
     public synchronized long nextId() {
         return lastId++;
     }
+
 }
