@@ -90,7 +90,7 @@ public class Mind {
         clear();
     }
 
-    public Mind(Mind root) {
+    public Mind(Mind root) throws Exception {
         next = root;
         user = root.getUser();
 //        user.setMind(this);
@@ -125,7 +125,7 @@ public class Mind {
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
     }
 
-    private void init() {
+    private void init() throws Exception {
         terms = new DictionaryFactory(this);                    // Словарь констант
         predicates = new PredicateFactory(this);                 // Предикаты
         functions = new FunctionFactory(this);                    // Функции

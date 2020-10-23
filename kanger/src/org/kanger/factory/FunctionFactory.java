@@ -26,16 +26,21 @@ public class FunctionFactory implements Iterable<Function> {
     private IStep top = null;
     private Mind mind = null;
 
-    public FunctionFactory(Mind mind) {
+    public FunctionFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(FunctionFactory base) {
+    public void transaction(FunctionFactory base) throws Exception {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
+
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
+
         } else {
             cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {

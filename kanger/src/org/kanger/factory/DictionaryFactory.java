@@ -35,12 +35,12 @@ public class DictionaryFactory implements Iterable<Term> {
 //    private DictionaryFactory base = null;
 
 
-    public DictionaryFactory(Mind mind) {
+    public DictionaryFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(DictionaryFactory base) {
+    public void transaction(DictionaryFactory base) throws Exception {
 //        cache.clear();
 //        load.clear();
         if (base != null) {
@@ -48,6 +48,11 @@ public class DictionaryFactory implements Iterable<Term> {
 //            firstId = base.lastId;
             varIndex = base.varIndex;
             cache = new Escalera(mind, SCHEMA, base.cache);
+
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
+
         } else {
             cache = new Escalera(mind, SCHEMA, null);
             if (!cache.isEmpty()) {

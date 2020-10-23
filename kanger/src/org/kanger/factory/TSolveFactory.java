@@ -30,14 +30,17 @@ public class TSolveFactory implements Iterable<TSolve> {
     private transient boolean action = false;
 
 
-    public TSolveFactory(Mind mind) {
+    public TSolveFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(TSolveFactory base) {
+    public void transaction(TSolveFactory base) throws Exception {
         if (base != null) {
             cache = new Escalera(mind, SCHEMA, base.cache);
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
         } else {
             cache = new Escalera(mind, SCHEMA, null);
         }

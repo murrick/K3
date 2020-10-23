@@ -28,18 +28,23 @@ public class DomainFactory implements Iterable<Domain> {
     //    private Cache load = new Cache();
     private Mind mind = null;
 
-    public DomainFactory(Mind mind) {
+    public DomainFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(DomainFactory base) {
+    public void transaction(DomainFactory base) throws Exception {
         waiters.clear();
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             waiters.addAll(base.waiters);
             cache = new Escalera(mind, SCHEMA, base.cache);
+
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
+
         } else {
             cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {

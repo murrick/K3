@@ -33,17 +33,21 @@ public class TValueFactory implements Iterable<TValue> {
     private transient boolean action = false;
 
 
-    public TValueFactory(Mind mind) {
+    public TValueFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(TValueFactory base) {
+    public void transaction(TValueFactory base) throws Exception {
         current.clear();
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
+
         } else {
             cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {

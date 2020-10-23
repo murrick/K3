@@ -30,16 +30,21 @@ public class LibraryFactory implements Iterable<SysOp> {
 //    private Map<String, SysOp> index = new HashMap<>();
 //    private User user = null;
 
-    public LibraryFactory(Mind mind) {
+    public LibraryFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(LibraryFactory base) {
+    public void transaction(LibraryFactory base) throws Exception {
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
+
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
+
         } else {
             cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {

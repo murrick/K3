@@ -25,17 +25,22 @@ public class FValueFactory implements Iterable<FValue> {
 
     private transient boolean action = false;
 
-    public FValueFactory(Mind mind) {
+    public FValueFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(FValueFactory base) {
+    public void transaction(FValueFactory base) throws Exception {
 //        cache.clear();
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
+
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
+
         } else {
             cache = new Escalera(mind, SCHEMA, null);
 //            if (!cache.isEmpty()) {

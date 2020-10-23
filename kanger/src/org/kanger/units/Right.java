@@ -179,11 +179,11 @@ public class Right implements IUnit<Right> {
         this.stored = true;
     }
 
-    public boolean isUsed() {
+    public boolean isUsed(Mind mind) {
         return mind.getUsedRights().containsKey(0L) && mind.getUsedRights().get(0L).contains(this);
     }
 
-    public void setUsed() {
+    public void setUsed(Mind mind) {
         if (!mind.getUsedRights().containsKey(0L)) {
             mind.getUsedRights().put(0L, new HashSet<>());
         }
@@ -271,7 +271,7 @@ public class Right implements IUnit<Right> {
                     ? " " +
                     (isGenerated() ? "G" : "") +
                     (isStored() ? "B" : "") +
-                    (isStored() && getDomain().isUsed() ? "U" : "") +
+                    (isStored() && getDomain().isUsed(mind) ? "U" : "") +
                     (isQuery() ? "Q" : "")
                     : "")
                     ;
@@ -348,6 +348,7 @@ public class Right implements IUnit<Right> {
 //        for (Cause c : getCauses()) {
 //            c.setUser(user);
 //        }
+
         for (List<Domain> list : getTree()) {
             for (Domain d : list) {
                 d.setMind(mind);

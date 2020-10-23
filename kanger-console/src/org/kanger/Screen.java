@@ -848,7 +848,7 @@ public class Screen {
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws Exception {
 //        if (tIndex >= tvars.size()) {
-        if (d.isStored()) {
+        if (d.isStored(mind)) {
 //                d.recalculate();
             Right dest = mind.getRights().find(d);
             if (dest != null) {

@@ -32,12 +32,12 @@ public class RightFactory implements Iterable<Right> {
 
     private transient boolean action = false;
 
-    public RightFactory(Mind mind) {
+    public RightFactory(Mind mind) throws Exception {
         this.mind = mind;
         transaction(null);
     }
 
-    public void transaction(RightFactory base) {
+    public void transaction(RightFactory base) throws Exception {
 //        cache.clear();
 //        stored.clear();
 //        user.nextId(SCHEMA);
@@ -49,6 +49,11 @@ public class RightFactory implements Iterable<Right> {
 //            firstId = base.lastId;
             bottom = base.top;
             cache = new Escalera(mind, SCHEMA, base.cache);
+
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                ((IUnit) s.getData()).setMind(mind);
+//            }
+
 //            stored = new Escalera(mind, SCHEMA_STORED, base.stored);
         } else {
 //            System.err.println(" =================================================== ");
@@ -212,10 +217,10 @@ public class RightFactory implements Iterable<Right> {
                 if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {
                     mind.getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
-                    Right rx = tree.get(0).setStored();
+                    Right rx = tree.get(0).setStored(mind);
 //                    rx.setGenerated(false);
                 } else {
-                    Right rx = tree.get(0).createStored();
+                    Right rx = tree.get(0).createStored(mind);
 //                    rx.setGenerated(false);
                 }
             }
@@ -306,7 +311,7 @@ public class RightFactory implements Iterable<Right> {
             return p;
         } else {
             ArgList list = null;
-            if (domain.isQuery()) {
+            if (domain.isQuery(mind)) {
                 list = domain.getArguments().convert(mind);
                 for (TValue t : list.getTValues(mind, true)) t.setQuery();
             } else {
@@ -335,7 +340,7 @@ public class RightFactory implements Iterable<Right> {
             r.setStored();
 
             //TODO: 1
-            if (domain.isQuery()) {
+            if (domain.isQuery(mind)) {
                 r.setQuery(true);
             }
 
@@ -454,10 +459,10 @@ public class RightFactory implements Iterable<Right> {
         return list;
     }
 
-    public Right getTop() {
+    public Right getTop() throws Exception {
         IStep s = cache.getRoot();
         if (s != null) {
-            return (Right) s.getData();
+            return (Right) s.getData(mind);
         } else {
             return null;
         }

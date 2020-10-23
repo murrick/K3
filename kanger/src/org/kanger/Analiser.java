@@ -55,9 +55,9 @@ public class Analiser {
                             break;
                         }
                     }
-                    if (d != null && !d.isQuery()
+                    if (d != null && !d.isQuery(mind)
                             && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                        Hypotese h = mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(), d.getPredicate(), d.getArguments());
+                        Hypotese h = mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
                         occurs = true;
                         if (logging) {
                             mind.getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
@@ -80,9 +80,9 @@ public class Analiser {
 
     private boolean checkRight(Right p, Set<Right> orfans, Set<Long> list, boolean logging) throws Exception {
         boolean result = false;
-        if (p.getDomain().isCalculated()) {
+        if (p.getDomain().isCalculated(mind)) {
 
-            boolean valid = p.getDomain().isQuery();
+            boolean valid = p.getDomain().isQuery(mind);
             if (!valid) {
                 for (TValue v : p.getSolves()) {
                     if (v.getTVar().isQuery()) {
@@ -133,10 +133,10 @@ public class Analiser {
                     if (q.getMind() == null) {
                         q.setMind(mind);
                     }
-                    if (p.getDomain().isQuery() && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                    if (p.getDomain().isQuery(mind) && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
                         mind.getSolutions().add(q);
                         mind.getValues().add(p.getSolves());
-                    } else if (q.getDomain().isQuery() && q.getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                    } else if (q.getDomain().isQuery(mind) && q.getDomain().getArguments().getCVariables(mind).isEmpty()) {
                         mind.getSolutions().add(p);
                         mind.getValues().add(q.getSolves());
                     }
@@ -152,7 +152,7 @@ public class Analiser {
                 }
             }
 
-            if (!result && p.getDomain().isQuery() && !p.getDomain().isUsed()) {
+            if (!result && p.getDomain().isQuery(mind) && !p.getDomain().isUsed(mind)) {
                 orfans.add(p);
             }
         }
@@ -180,7 +180,7 @@ public class Analiser {
 
         for (Right p : mind.getRights()) {
             if (!p.isDeleted() && p.isStored() && (list == null || list.contains(p.getId())) && checkRight(p, orfans, list, logging)) {
-                if (p.getDomain().isCalculated()) {
+                if (p.getDomain().isCalculated(mind)) {
                     calculated = true;
                 }
                 result = true;

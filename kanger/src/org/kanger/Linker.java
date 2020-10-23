@@ -70,7 +70,7 @@ public class Linker {
                 rightSet.addAll(right.getNatives());
                 for (Right r : mind.getRights()) {
                     if (!r.isDeleted()) {
-                        if (r.isUsed()) {
+                        if (r.isUsed(mind)) {
                             rightSet.add(r);
                             rightSet.addAll(r.getNatives());
                         } else if (r.isGenerated() && r.getId() > topId) {
@@ -163,7 +163,7 @@ public class Linker {
                 }
             }
 
-            boolean wasUsed = r.isUsed();
+            boolean wasUsed = r.isUsed(mind);
 
 //            if (!mind.getRightSolves().isEmpty()) {
 //                System.err.println("========================================");
@@ -264,7 +264,7 @@ public class Linker {
 //                }
 //            }
 
-            if (!wasUsed && r.isUsed()) {
+            if (!wasUsed && r.isUsed(mind)) {
                 used = true;
             }
         }
@@ -448,8 +448,8 @@ public class Linker {
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
 
                                 //TODO: Костыль
-                                master.setMind(mind);
-                                slave.setMind(mind);
+//                                master.setMind(mind);
+//                                slave.setMind(mind);
 
                                 TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
@@ -651,8 +651,8 @@ public class Linker {
 //                                                    }
 
                                                     substMaster[i] = s;
-                                                    slave.setUsed();
-                                                    master.setUsed();
+                                                    slave.setUsed(mind);
+                                                    master.setUsed(mind);
                                                     applied = true;
                                                 }
 //                                            } else if(slave.isQuery()){
@@ -705,8 +705,8 @@ public class Linker {
 //                                                    }
 
                                                     substSlave[i] = s;
-                                                    master.setUsed();
-                                                    slave.setUsed();
+                                                    master.setUsed(mind);
+                                                    slave.setUsed(mind);
                                                     applied = true;
                                                 }
 //                                            } else if(master.isQuery()){
@@ -799,8 +799,8 @@ public class Linker {
                                     markExcluded(result, substMaster, master, slave, causes, variants, logging);
                                     markExcluded(result, substSlave, slave, master, causes, variants, logging);
 
-                                    master.getRight().setUsed();
-                                    slave.getRight().setUsed();
+                                    master.getRight().setUsed(mind);
+                                    slave.getRight().setUsed(mind);
 //                                    for(Right r : usedRights) {
 //                                        r.setUsed();
 //                                    }
@@ -964,7 +964,7 @@ public class Linker {
 
 //            mind.addTSolve(list);
 
-            master.setExcluded(slave.getArguments());
+            master.setExcluded(slave.getArguments(), mind);
             if (!variants.containsKey(master)) {
                 variants.put(master, new ArrayList<>());
             }
@@ -1064,18 +1064,18 @@ public class Linker {
 //                    continue;
 //                }
 
-                if (d.isCalculated()) {
+                if (d.isCalculated(mind)) {
                     calculated.add(d);
                 } else if (d.isSystem() || !d.isComplete()) {
                     excluded.clear();
                     candidates.clear();
                     break;
-                } else if (d.isExcluded()) {
+                } else if (d.isExcluded(mind)) {
                     excluded.add(d);
                 } else {
                     candidates.add(d);
                 }
-                if (d.isStored()) {
+                if (d.isStored(mind)) {
                     stored.add(d);
                 }
             }
@@ -1100,7 +1100,7 @@ public class Linker {
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];
                 occurs = true;
-                if (!d.isStored() && (d.setCauses(causes.get(d.getRight())) || !calculated.isEmpty() || !excluded.isEmpty())) {
+                if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRight()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
 
 //                    System.err.println();
 //                    System.err.println(d);
@@ -1116,10 +1116,10 @@ public class Linker {
 
                     if (isValid(d) && d.getArguments().getCVariables(mind).isEmpty()) {
                         result = true;
-                        d.setProduced();
+                        d.setProduced(mind);
 //                        d.setTag(tag);
 //                    d.setCauses(causes.get(d.getRight()));
-                        d.setSolves(solve);
+                        d.setSolves(solve, mind);
                         if (logging) {
                             logBranch(tree, logging);
                             mind.getLog().add(LogMode.STORAGE, "DB assumed record: " + d);
@@ -1130,13 +1130,13 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
-                    if (!d.isStored() && d.setCauses(causes.get(d.getRight()))) {
+                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRight()), mind)) {
                         if (isValid(d)) {
                             result = true;
-                            d.setProduced();
+                            d.setProduced(mind);
 //                            d.setTag(tag = mind.getTValues().incTag());
 //                        d.setCauses(causes.get(d.getRight()));
-                            d.setSolves(solve);
+                            d.setSolves(solve, mind);
                             if (logging) {
                                 logBranch(tree, logging);
                                 mind.getLog().add(LogMode.STORAGE, "DB assumed record (x): " + d);
@@ -1151,13 +1151,13 @@ public class Linker {
                 occurs = true;
                 for (Domain d : calculated) {
 //                    d.setCauses(causes.get(d.getRight()));
-                    if (!d.isStored() /*|| d.isQuery()*/) {
+                    if (!d.isStored(mind) /*|| d.isQuery()*/) {
                         if (isValid(d)) {
                             result = true;
-                            d.setProduced();
+                            d.setProduced(mind);
 //                            d.setTag(tag = mind.getTValues().incTag());
-                            d.setCauses(causes.get(d.getRight()));
-                            d.setSolves(solve);
+                            d.setCauses(causes.get(d.getRight()), mind);
+                            d.setSolves(solve, mind);
                             if (logging) {
                                 logBranch(tree, logging);
                                 mind.getLog().add(LogMode.STORAGE, "DB assumed record (c): " + d);
@@ -1172,8 +1172,8 @@ public class Linker {
                 candidates.clear();
                 excluded.clear();
                 for (Domain d : tree) {
-                    if (d.isComplete() && !d.isCalculated() && !d.isSystem() && !assumed.contains(d)) {
-                        if (!d.isExcluded()) {
+                    if (d.isComplete() && !d.isCalculated(mind) && !d.isSystem() && !assumed.contains(d)) {
+                        if (!d.isExcluded(mind)) {
                             candidates.add(d);
                         } else {
                             excluded.add(d);
@@ -1183,13 +1183,13 @@ public class Linker {
                 if (candidates.size() == 1 && !excluded.isEmpty()) {
                     Domain d = candidates.toArray(new Domain[]{})[0];
 //                    d.setCauses(causes.get(d.getRight()));
-                    if (!d.isStored() && d.setCauses(causes.get(d.getRight()))) {
+                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRight()), mind)) {
                         if (isValid(d)) {
                             result = true;
-                            d.setProduced();
+                            d.setProduced(mind);
 //                            d.setTag(tag);
 //                        d.setCauses(causes.get(d.getRight()));
-                            d.setSolves(solve);
+                            d.setSolves(solve, mind);
                             if (logging) {
                                 logBranch(tree, logging);
                                 mind.getLog().add(LogMode.STORAGE, "DB assumed record (a): " + d);
@@ -1212,8 +1212,8 @@ public class Linker {
 
     private void logCauses(LogMode mode, Domain d) throws Exception {
         boolean rightShowed = false;
-        if (d.getCauses() != null) {
-            for (Cause c : d.getCauses()) {
+        if (d.getCauses(mind) != null) {
+            for (Cause c : d.getCauses(mind)) {
                 if (!rightShowed) {
                     mind.getLog().add(mode, "\tFrom right: " + c.getRight(mind));
                     rightShowed = true;
@@ -1357,21 +1357,21 @@ public class Linker {
 //                        t.toCVariable();
 //                    }
 
-                    x = d.createStored();
-                    if (d.isUsed()) {
-                        x.getDomain().setUsed();
+                    x = d.createStored(mind);
+                    if (d.isUsed(mind)) {
+                        x.getDomain().setUsed(mind);
                     }
                     if (logging) {
                         mind.getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
                     }
 //                }
 
-                    if (d.isCalculated()) {
-                        x.getDomain().setCalculated();
+                    if (d.isCalculated(mind)) {
+                        x.getDomain().setCalculated(mind);
                     }
-                    if (d.getCauses() != null) {
+                    if (d.getCauses(mind) != null) {
                         x.getCauses().clear();
-                        x.getCauses().addAll(d.getCauses());
+                        x.getCauses().addAll(d.getCauses(mind));
 
                         //TODO: XPRMNT
 //                        x.getDomain().setCauses(d.getCauses());
@@ -1382,9 +1382,9 @@ public class Linker {
 //                        }
 //                    }
                     }
-                    if (d.getSolves() != null) {
+                    if (d.getSolves(mind) != null) {
                         x.getSolves().clear();
-                        x.getSolves().addAll(d.getSolves());
+                        x.getSolves().addAll(d.getSolves(mind));
                     }
 
 //                    if(!rightList.contains(x)) {
@@ -1448,7 +1448,7 @@ public class Linker {
 //                    list.add(t.getCurrent());
 //                }
 
-                int res = d.execSystem();
+                int res = d.execSystem(mind);
                 for (Argument a : d.getArguments()) {
                     if (a.isEmpty(mind)) {
                         res = -2;
@@ -1458,14 +1458,14 @@ public class Linker {
 
                 if (res == 0) {
                     if (d.isAntc()) {
-                        d.setCalculated();
+                        d.setCalculated(mind);
                         success = true;
                     } else {
                         block = true;
                     }
                 } else if (res == 1) {
                     if (!d.isAntc()) {
-                        d.setCalculated();
+                        d.setCalculated(mind);
                         success = true;
                     } else {
                         block = true;
@@ -1498,14 +1498,14 @@ public class Linker {
 
         if (success && !block) {
             for (Domain d : tree) {
-                if (d.isSystem() && !d.isCalculated()) {
+                if (d.isSystem() && !d.isCalculated(mind)) {
                     block = true;
                 }
             }
             if (block) {
                 for (Domain d : tree) {
-                    if (d.isCalculated()) {
-                        d.unCalculated();
+                    if (d.isCalculated(mind)) {
+                        d.unCalculated(mind);
                     }
                 }
             } else if (!solves.isEmpty()) {
