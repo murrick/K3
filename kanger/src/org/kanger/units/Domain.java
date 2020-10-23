@@ -814,7 +814,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
             return true;
         } else {
             for (TVariable t : arguments.getTVariables(mind)) {
-                if (t.isQuery()) {
+                if (t.isQuery(mind)) {
                     return true;
                 }
             }

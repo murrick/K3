@@ -313,7 +313,7 @@ public class RightFactory implements Iterable<Right> {
             ArgList list = null;
             if (domain.isQuery(mind)) {
                 list = domain.getArguments().convert(mind);
-                for (TValue t : list.getTValues(mind, true)) t.setQuery();
+                for (TValue t : list.getTValues(mind, true)) t.setQuery(mind);
             } else {
                 list = domain.getArguments().convertBase(mind);
                 for (Argument a : list) {

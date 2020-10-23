@@ -85,7 +85,7 @@ public class Analiser {
             boolean valid = p.getDomain().isQuery(mind);
             if (!valid) {
                 for (TValue v : p.getSolves()) {
-                    if (v.getTVar().isQuery()) {
+                    if (v.getTVar().isQuery(mind)) {
                         valid = true;
                         break;
                     }

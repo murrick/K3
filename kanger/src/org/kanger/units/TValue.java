@@ -154,7 +154,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         }
     }
 
-    public void setQuery() throws Exception {
+    public void setQuery(Mind mind) throws Exception {
         if (!mind.getQueryValues().containsKey(getTVar())) {
             mind.getQueryValues().put(getTVar(), new HashSet<>());
         }

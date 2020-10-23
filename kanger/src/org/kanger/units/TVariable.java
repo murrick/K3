@@ -324,7 +324,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //        mind.getQueryValues().createCVar(id).createTVar(getValue().getId());
 //    }
 
-    public boolean isQuery() {
+    public boolean isQuery(Mind mind) {
         return !isEmpty()
                 && mind.getQueryValues().containsKey(this)
                 && mind.getQueryValues().get(this).contains(getCurrent());
