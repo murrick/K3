@@ -77,7 +77,6 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         mindId = packet.getLong();
         deleted = packet.getByte() != 0;
         rightId = packet.getLong();
-
         try {
             packet.mark();
             super.apply(packet);
@@ -648,11 +647,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 //
 
-    public void setTag(long tag) throws Exception {
-        for (TVariable t : arguments.getTVariables(mind)) {
-            t.getCurrent().setTag(tag);
-        }
-    }
+//    public void setTag(long tag) throws Exception {
+//        for (TVariable t : arguments.getTVariables(mind)) {
+//            t.getCurrent().setTag(tag);
+//        }
+//    }
 
 //    public Set<Long> getTag() {
 //        ArgList args = arguments;

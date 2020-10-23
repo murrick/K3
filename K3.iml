@@ -6,6 +6,5 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="jdk" jdkName="12" jdkType="JavaSDK" />
-    <orderEntry type="module" module-name="$project_name$" />
   </component>
 </module>

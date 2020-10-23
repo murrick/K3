@@ -97,6 +97,7 @@ public class TVariableFactory implements Iterable<TVariable> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (TVariable) s.getData(mind);
+//                t.setMind(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }

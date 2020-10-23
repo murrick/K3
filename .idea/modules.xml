@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/kanger-console/kanger-console.iml" filepath="$PROJECT_DIR$/kanger-console/kanger-console.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger-data-dumb/kanger-data-dumb.iml" filepath="$PROJECT_DIR$/kanger-data-dumb/kanger-data-dumb.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger-data-hsql/kanger-data-hsql.iml" filepath="$PROJECT_DIR$/kanger-data-hsql/kanger-data-hsql.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kanger-data-jdbm/kanger-data-jdbm.iml" filepath="$PROJECT_DIR$/kanger-data-jdbm/kanger-data-jdbm.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger-data-psql/kanger-data-psql.iml" filepath="$PROJECT_DIR$/kanger-data-psql/kanger-data-psql.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger-data-tupl/kanger-data-tupl.iml" filepath="$PROJECT_DIR$/kanger-data-tupl/kanger-data-tupl.iml" />
       <module fileurl="file://$PROJECT_DIR$/kanger-udf/kanger-udf.iml" filepath="$PROJECT_DIR$/kanger-udf/kanger-udf.iml" />

@@ -5,6 +5,7 @@ import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
+import org.kanger.primitives.Argument;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.Escalera;
 import org.kanger.units.*;
@@ -231,6 +232,7 @@ public class RightFactory implements Iterable<Right> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Right) s.getData(mind);
+//                t.setMind(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -309,6 +311,12 @@ public class RightFactory implements Iterable<Right> {
                 for (TValue t : list.getTValues(mind, true)) t.setQuery();
             } else {
                 list = domain.getArguments().convertBase(mind);
+                for (Argument a : list) {
+                    if (a.getValue(mind).isXVariable()) {
+                        a.setValue(mind, a.getValue(mind).getParent());
+                    }
+//                    a.getValue(mind).toCVariable();
+                }
 //                list = new ArgList();
 //                for (Argument a : domain.getArguments().convertBase(mind)) {
 //                    if (a.isCVar()) {
@@ -444,5 +452,14 @@ public class RightFactory implements Iterable<Right> {
             }
         }
         return list;
+    }
+
+    public Right getTop() {
+        IStep s = cache.getRoot();
+        if (s != null) {
+            return (Right) s.getData();
+        } else {
+            return null;
+        }
     }
 }

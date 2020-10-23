@@ -175,6 +175,7 @@ public class DictionaryFactory implements Iterable<Term> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Term) s.getData(mind);
+//                t.setMind(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }

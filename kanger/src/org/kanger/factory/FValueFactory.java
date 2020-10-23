@@ -113,6 +113,7 @@ public class FValueFactory implements Iterable<FValue> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (FValue) s.getData(mind);
+//                t.setMind(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }

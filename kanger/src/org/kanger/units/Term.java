@@ -333,6 +333,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     public void toCVariable() {
         if (isXVariable()) {
             value = String.format("%c%d", Enums.CVC, index);
+            parentId = -1;
         }
     }
 
@@ -579,7 +580,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 //    }
 //
     public Term getParent() throws Exception {
-        if (parent == null) {
+        if (parent == null && parentId > 0) {
             parent = mind.getTerms().load(parentId);
         }
         return parent;

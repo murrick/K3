@@ -104,6 +104,7 @@ public class FunctionFactory implements Iterable<Function> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Function) s.getData(mind);
+//                t.setMind(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }

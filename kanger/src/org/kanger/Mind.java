@@ -496,16 +496,25 @@ public class Mind {
             pos = (int) t[1];
             String line = (String) t[0];
 
-//            m.compileLine(line, false);
+            m.compileLine(line, false, null);
 
-            Mind x = new Mind(m);
-            setCompliedLine(line);
-            Object r = x.compileLine(line, false, null);
-            if (r instanceof Right && ((Right) r).isDeleted()) {
-                m.release(x);
-            } else {
-                m.commit(x);
-            }
+//            Mind x = new Mind(m);
+//            setCompliedLine(line);
+//            Object r = x.compileLine(line, false, null);
+//            if (r instanceof Right && ((Right) r).isDeleted()) {
+//                m.release(x);
+//                m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
+//            } else if (r instanceof Right) {
+//                m.commit(x);
+//                m.getLog().add(LogMode.ANALIZER, "Compiled: " + ((Right) r).getOrig());
+//                m.getLog().add(LogMode.ANALIZER, (Right) r);
+//                for (Right rx : m.rights) {
+//                    if (rx.getId() > ((Right) r).getId() && rx.isGenerated()) {
+//                        m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
+//                    }
+//                }
+//
+//            }
         }
 
         m.link(null, logging);
@@ -552,8 +561,25 @@ public class Mind {
                 break;
         }
         if (suc != null) {
+            Mind x = new Mind(this);
+
             PTree p = Parser.parser(line.substring(1));
-            r = compiler.compileLine(p, suc, orig, query, ext);
+            r = x.compiler.compileLine(p, suc, orig, query, ext);
+            x.setCompliedLine(line);
+            if (r instanceof Right && ((Right) r).isDeleted()) {
+                release(x);
+                getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
+                r = null;
+            } else if (r instanceof Right) {
+                commit(x);
+                getLog().add(LogMode.ANALIZER, "Compiled: " + ((Right) r).getOrig());
+                getLog().add(LogMode.ANALIZER, (Right) r);
+                for (Right rx : rights) {
+                    if (rx.getId() > ((Right) r).getId() && rx.isGenerated()) {
+                        getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
+                    }
+                }
+            }
         }
         return r;
     }
@@ -899,6 +925,13 @@ public class Mind {
 //            res = null;
 //        } else {
 
+        //TODO: Непонятно почему продукции не формируются или не коммитятся
+//        link(null, logging);
+//        Boolean arx = analise(null, true);
+//        if (arx) {
+//            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+//            res = null;
+//        } else {
 
         if (logging) {
             if (!excluded.isEmpty()) {
@@ -925,13 +958,18 @@ public class Mind {
 
                 setCompliedLine(line);
                 Right r = (Right) m.compileLine(line, true, ext);
-                if (r != null && !r.isDeleted()) {
+                if (r != null/* && !r.isDeleted()*/) {
 //                    r.setQuery(true);
 
-                    if (logging) {
-                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-                        m.getLog().add(LogMode.ANALIZER, r);
-                    }
+//                    if (logging) {
+//                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+//                        m.getLog().add(LogMode.ANALIZER, r);
+//                        for (Right rx : m.rights) {
+//                            if (rx.getId() > r.getId() && rx.isGenerated()) {
+//                                m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
+//                            }
+//                        }
+//                    }
 
                     m.link(r, logging);
                     boolean ar = m.analise(r, logging);
@@ -948,6 +986,8 @@ public class Mind {
 
 //                        excluded.commit(m.getHypotesisStore());
                         setChanged(true);
+
+//                        link(null, logging);
                         res = true;
                     }
                     queryContext = m;
@@ -965,17 +1005,24 @@ public class Mind {
                     getLog().add(LogMode.ANALIZER, "============= ACCEPTING ===================");
                 }
 
+//                res = compile(line, logging);
+
                 Mind m = new Mind(this);
                 m.setQueryPass(QueryPass.ACCEPT);
 
                 setCompliedLine(line);
                 Right r = (Right) m.compileLine(line, false, ext);
-                if (r != null && !r.isDeleted()) {
+                if (r != null /*&& !r.isDeleted()*/) {
 //                    r.setQuery(true);
-                    if (logging) {
-                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-                        m.getLog().add(LogMode.ANALIZER, r);
-                    }
+//                        if (logging) {
+//                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+//                            m.getLog().add(LogMode.ANALIZER, r);
+//                            for(Right rx : m.rights) {
+//                                if(rx.getId() > r.getId() && rx.isGenerated()) {
+//                                    m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
+//                                }
+//                            }
+//                        }
                     boolean ar = m.analise(r, logging);
                     if (ar) {
                         if (logging) {
@@ -1000,9 +1047,13 @@ public class Mind {
                                 m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
                                 m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
                             }
+//                                m.link(null, logging);
+
                             commit(m);
                             excluded.commit(m.getHypotesisStore());
                             setChanged(true);
+
+
                             res = true;
                         }
                     }
@@ -1038,12 +1089,17 @@ public class Mind {
                 line = invert(line);
                 setCompliedLine(line);
                 Right r = (Right) m.compileLine(line, true, ext);
-                if (r != null && !r.isDeleted()) {
+                if (r != null /*&& !r.isDeleted()*/) {
 //                    r.setQuery(true);
-                    if (logging) {
-                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-                        m.getLog().add(LogMode.ANALIZER, r);
-                    }
+//                    if (logging) {
+//                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+//                        m.getLog().add(LogMode.ANALIZER, r);
+//                        for (Right rx : m.rights) {
+//                            if (rx.getId() > r.getId() && rx.isGenerated()) {
+//                                m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
+//                            }
+//                        }
+//                    }
                     m.link(r, logging);
                     boolean ar = m.analise(r, logging);
                     if (ar) {
@@ -1187,13 +1243,17 @@ public class Mind {
 
                         setCompliedLine(line);
                         Right r = (Right) m.compileLine(invert(line), true, ext);
-                        if (r != null && !r.isDeleted()) {
-                            r.setQuery(true);
-
-                            if (logging) {
-                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-                                m.getLog().add(LogMode.ANALIZER, r);
-                            }
+                        if (r != null /*&& !r.isDeleted()*/) {
+//                            r.setQuery(true);
+//                            if (logging) {
+//                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+//                                m.getLog().add(LogMode.ANALIZER, r);
+//                                for (Right rx : m.rights) {
+//                                    if (rx.getId() > r.getId() && rx.isGenerated()) {
+//                                        m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
+//                                    }
+//                                }
+//                            }
 
                             boolean ar = m.analise(r, logging);
                             if (ar) {
@@ -1233,12 +1293,17 @@ public class Mind {
 
                         setCompliedLine(line);
                         Right r = (Right) m.compileLine(line, true, ext);
-                        if (r != null && !r.isDeleted()) {
-                            r.setQuery(true);
-                            if (logging) {
-                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-                                m.getLog().add(LogMode.ANALIZER, r);
-                            }
+                        if (r != null /*&& !r.isDeleted()*/) {
+//                            r.setQuery(true);
+//                            if (logging) {
+//                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
+//                                m.getLog().add(LogMode.ANALIZER, r);
+//                                for (Right rx : m.rights) {
+//                                    if (rx.getId() > r.getId() && rx.isGenerated()) {
+//                                        m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
+//                                    }
+//                                }
+//                            }
                             boolean ar = m.analise(r, logging);
                             if (ar) {
                                 if (logging) {
@@ -1280,6 +1345,7 @@ public class Mind {
                 break;
             }
         }
+//        }
 
         if (logging) {
             getLog().add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));

@@ -117,6 +117,7 @@ public class LibraryFactory implements Iterable<SysOp> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (SysOp) s.getData(mind);
+//                t.setMind(mind);
 //                t.setUser(user);
             }
         }

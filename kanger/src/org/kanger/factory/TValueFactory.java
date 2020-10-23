@@ -149,6 +149,7 @@ public class TValueFactory implements Iterable<TValue> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (TValue) s.getData(mind);
+//                t.setMind(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);
             }
@@ -304,17 +305,18 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public boolean isCVariabled(TVariable t, Term tm) throws Exception {
-        boolean found = false;
-        for (IStep root = cache.getRoot(); root != null; root = root.getNext()) {
-            TValue v = (TValue) root.getData(mind);
-            if (v.isCVariable()) { // && (v.getTVarId() == t.getId() || v.getParentId() == t.getId()) {
-                found = true;
-                break;
-            }
-        }
-        return found;
-    }
+//    public boolean isCVariabled(TVariable t, Term tm) throws Exception {
+//        boolean found = false;
+//        for (IStep root = cache.getRoot(); root != null; root = root.getNext()) {
+//            TValue v = (TValue) root.getData(mind);
+//            if (v.isCVariable()) { // && (v.getTVarId() == t.getId() || v.getParentId() == t.getId()) {
+//                found = true;
+//                break;
+//            }
+//        }
+//        return found;
+//    }
+
 //    public Iterator<TValue> iterator(TVariable tVariable) {
 //        return new TValueIterator(true, tVariable);
 //    }

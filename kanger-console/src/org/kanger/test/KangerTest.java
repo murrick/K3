@@ -988,6 +988,28 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
+    public void set_02_0F() throws Exception {
+
+        mind.clear();
+        mind.compile("!@x @y yy1(x), yy2(y) -> solve(x,y);" +
+                        "!@a @b @c @d xx(a,b,c,d) -> yy2((-b-sqrt(d))/(2*a));" +
+                        "!@a @b @c @d xx(a,b,c,d) -> yy1((-b+sqrt(d))/(2*a));" +
+                        "!@a @b @c k(a,b,c) -> xx(a,b,c,pow(b,2)-4*a*c);"
+//                "!k(1, -37, 27);"
+        );
+        mind.query("?$x $y k(1, -37, 27) -> solve(x,y);");
+//        mind.query("?$x $y solve(x,y);");
+        showResult(true);
+        if (!exists("x", 36.2552809045647)) {
+            fail("Expected: x=36.2552809045647");
+        }
+        if (!exists("y", 0.7447190954352969)) {
+            fail("Expected: y=0.7447190954352969");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
     public void set_03_01() throws Exception {
 
         mind.clear();
@@ -1058,17 +1080,18 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
-    public void set_03_08() throws Exception {
-
-        mind.clear();
-        mind.compile("!@x ~a(x,x); !@x @y b(x,y) -> a(x,y);");
-        mind.query("?$x b(x, x);");
-        showResult(false);
-        System.out.println("OK");
-        System.out.println("====================================================");
-    }
-
 //TODO: Неуверен что это корректно
+
+//    public void set_03_08() throws Exception {
+//
+//        mind.clear();
+//        mind.compile("!@x ~a(x,x); !@x @y b(x,y) -> a(x,y);");
+//        mind.query("?$x b(x, x);");
+//        showResult(false);
+//        System.out.println("OK");
+//        System.out.println("====================================================");
+//    }
+//
 //    public void set_03_09() throws Exception {
 //
 //        mind.clear();
