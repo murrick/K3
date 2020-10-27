@@ -18,6 +18,8 @@ public class User implements IUser {
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
 
+    private final Object locker = new Object();
+
     private static IData data = null;
 
     public User() throws RuntimeErrorException {
@@ -41,13 +43,14 @@ public class User implements IUser {
             storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
             storage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
             storage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
-            storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
             storage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
             storage.put(RightFactory.SCHEMA, data.getBase(RightFactory.SCHEMA));
-            storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
             storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
             storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
-            storage.put(TSolveFactory.SCHEMA, data.getBase(TSolveFactory.SCHEMA));
+//            storage.put(TSolveFactory.SCHEMA, data.getBase(TSolveFactory.SCHEMA));
+
+            storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
+            storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
 
             while (mind.getNext() != null) {
                 mind = mind.getNext();
@@ -207,4 +210,8 @@ public class User implements IUser {
         }
     }
 
+    @Override
+    public Object getLocker() {
+        return locker;
+    }
 }

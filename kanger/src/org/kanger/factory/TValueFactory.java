@@ -118,12 +118,14 @@ public class TValueFactory implements Iterable<TValue> {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
-    public TValue getXValue(TVariable tv) throws Exception {
+    public TValue getXValue(TVariable tv, Term parent) throws Exception {
         TValue[] result = new TValue[]{null};
         mind.getTValues().forEach(tv, new IReactor<TValue>() {
             @Override
             public Object run(TValue o) throws Exception {
-                if (o.getValue().isXVariable()) {
+                if (o.getValue().isXVariable()
+                        && (o.getValue().getParentId() == parent.getId()
+                        || o.getValue().getParentId() == parent.getParentId())) {
                     result[0] = o;
                 }
                 return true;
@@ -134,7 +136,7 @@ public class TValueFactory implements Iterable<TValue> {
 
     public TValue find(TVariable tv, Term v) throws Exception {
         if (v.isXVariable()) {
-            return getXValue(tv);
+            return getXValue(tv, v.getParent());
         } else {
             TValue temp = new TValue(tv, v);
             for (long id : cache.find(temp.getHash())) {

@@ -359,26 +359,26 @@ public class Linker {
         return result[0];
     }
 
-    private boolean isValidFor(TValue[] subst) throws Exception {
-        boolean nulls = true;
-        for (TValue v : subst) {
-            if (v != null) {
-                nulls = false;
-                break;
-            }
-        }
-        if (subst.length > 1 && !nulls) {
-            for (TVariableSet key : mind.getRightSolves().keySet()) {
-                for (TSolve s : mind.getRightSolves().get(key)) {
-                    if (s.isValid(subst)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-        return true;
-    }
+//    private boolean isValidFor(TValue[] subst) throws Exception {
+//        boolean nulls = true;
+//        for (TValue v : subst) {
+//            if (v != null) {
+//                nulls = false;
+//                break;
+//            }
+//        }
+//        if (subst.length > 1 && !nulls) {
+//            for (TVariableSet key : mind.getRightSolves().keySet()) {
+//                for (TSolve s : mind.getRightSolves().get(key)) {
+//                    if (s.isValid(subst)) {
+//                        return true;
+//                    }
+//                }
+//            }
+//            return false;
+//        }
+//        return true;
+//    }
 
     private boolean isValidFor(SortedSet<TVariable> tail) {
         final TVariable t = tail.first();
@@ -632,7 +632,7 @@ public class Linker {
                                                     TVariable t = master.get(i).getT(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && slave.getRightId() == tm.getRightId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        s = mind.getTValues().getXValue(t);
+                                                        s = mind.getTValues().getXValue(t, tm);
                                                         if (s == null) {
                                                             tm = mind.getTerms().createXVar(tm);
                                                         }
@@ -684,7 +684,7 @@ public class Linker {
                                                     TVariable t = slave.get(i).getT(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && master.getRightId() == tm.getRightId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        s = mind.getTValues().getXValue(t);
+                                                        s = mind.getTValues().getXValue(t, tm);
                                                         if (s == null) {
                                                             tm = mind.getTerms().createXVar(tm);
                                                         }

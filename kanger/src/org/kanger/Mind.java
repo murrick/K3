@@ -48,7 +48,6 @@ public class Mind {
     private RightFactory rights = null;                             // Список правил
     private TVariableFactory tVars = null;                      // t-переменные
     private TValueFactory tValues = null;                          // Подставленные значения
-    //    private TSolveFactory tSolves = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
     private HypotesisStore hypotesis = null;                                // Список гипотез
@@ -81,7 +80,7 @@ public class Mind {
     private volatile boolean blockCommit = false;
     private final Object locker = new Object();
 
-    private volatile boolean busyCommit = false;
+//    private volatile boolean busyCommit = false;
 
     public Mind(IUser user) throws Exception {
         this.user = user;
@@ -101,31 +100,32 @@ public class Mind {
 //        predicates.transaction(root.getPredicates());
 //        library.transaction(root.getLibrary());
 
-        terms = root.getTerms();
-        predicates = root.getPredicates();
-        library = root.getLibrary();
+        synchronized (locker) {
+            terms = root.getTerms();
+            predicates = root.getPredicates();
+            library = root.getLibrary();
 
-        rightSolves.putAll(root.getRightSolves());
+//            rightSolves.putAll(root.getRightSolves());
 
 
 //        functions = root.getFunctions();
 
-        domains.transaction(root.getDomains());
-        rights.transaction(root.getRights());
-        tVars.transaction(root.getTVars());
-        tValues.transaction(root.getTValues());
-//        tSolves.transaction(root.getTSolves());
-        functions.transaction(root.getFunctions());
-        fValues.transaction(root.getFValues());
+            domains.transaction(root.getDomains());
+            rights.transaction(root.getRights());
+            tVars.transaction(root.getTVars());
+            tValues.transaction(root.getTValues());
+            functions.transaction(root.getFunctions());
+            fValues.transaction(root.getFValues());
 
-        debugLevel = root.getDebugLevel();
-
+            debugLevel = root.getDebugLevel();
 //        domainCauses.putAll(root.getDomainCauses());
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
+        }
     }
 
     private void init() throws Exception {
+//        synchronized (user.getLocker()) {
         terms = new DictionaryFactory(this);                    // Словарь констант
         predicates = new PredicateFactory(this);                 // Предикаты
         functions = new FunctionFactory(this);                    // Функции
@@ -137,7 +137,6 @@ public class Mind {
 
         tVars = new TVariableFactory(this);                      // t-переменные
         tValues = new TValueFactory(this);                          // Подставленные значения
-//        tSolves = new TSolveFactory(this);
 
         fValues = new FValueFactory(this);                          // Решения функций
 
@@ -154,27 +153,22 @@ public class Mind {
         compiler = new Compiler(this);                                   // Компилятор
         analiser = new Analiser(this);                                   // Анализатор
         linker = new Linker(this);                                         // Линкер
-
+//        }
     }
 
 
-    public synchronized boolean commit(Mind m) throws Exception {
-//        synchronized (locker) {
+    public boolean commit(Mind m) throws Exception {
+        synchronized (locker) {
 
-        while (busyCommit) {
-            Thread.sleep(100);
-        }
-        try {
-            busyCommit = true;
             boolean result = true;
 
-            boolean sequencedBy = isSequencedBy(m);
+            boolean sequencedBy = rights.isSequencedBy(m.getRights());
             if (!sequencedBy) {
                 functions.mark();
                 fValues.mark();
                 tVars.mark();
                 tValues.mark();
-//                tSolves.mark();
+
                 domains.mark();
                 rights.mark();
             }
@@ -183,12 +177,8 @@ public class Mind {
             fValues.commit(m.getFValues());
             tVars.commit(m.getTVars());
             tValues.commit(m.getTValues());
-//            tSolves.commit(m.getTSolves());
+
             domains.commit(m.getDomains());
-
-//            domainCauses.clear();
-//            domainCauses.putAll(m.getDomainCauses());
-
             Set<Long> list = rights.commit(m.getRights());
 
             if (!sequencedBy) {
@@ -198,7 +188,7 @@ public class Mind {
                     fValues.release();
                     tVars.release();
                     tValues.release();
-//                    tSolves.release();
+
                     domains.release();
                     rights.release();
                     result = false;
@@ -207,17 +197,17 @@ public class Mind {
                     fValues.commit();
                     tVars.commit();
                     tValues.commit();
-//                    tSolves.commit();
+
                     domains.commit();
                     rights.commit();
                 }
             }
 
-            for (Map.Entry<TVariableSet, List<TSolve>> e : m.getRightSolves().entrySet()) {
-                for (TSolve t : e.getValue()) {
-                    addTSolve(t.getSolve());
-                }
-            }
+//                for (Map.Entry<TVariableSet, List<TSolve>> e : m.getRightSolves().entrySet()) {
+//                    for (TSolve t : e.getValue()) {
+//                        addTSolve(t.getSolve());
+//                    }
+//                }
 
             pack();
             update();
@@ -227,13 +217,12 @@ public class Mind {
 
             return result;
 //        }
-        } finally {
-            busyCommit = false;
         }
     }
 
     public void update() throws Exception {
 
+//        synchronized (locker) {
         terms.update();
         predicates.update();
         library.update();
@@ -242,11 +231,11 @@ public class Mind {
         fValues.update();
         tVars.update();
         tValues.update();
-//        tSolves.update();
         domains.update();
         rights.update();
 
         user.flush();
+//        }
     }
 
     public synchronized void release(Mind m) throws Exception {
@@ -282,11 +271,11 @@ public class Mind {
             domains.clear();
             tVars.clear();
             tValues.clear();
-//            tSolves.clear();
             rights.clear();
             functions.clear();
             fValues.clear();
             library.clear();
+//        }
 
             update();
 
@@ -300,48 +289,20 @@ public class Mind {
         }
     }
 
-    public synchronized void pack() throws Exception {
-        synchronized (locker) {
+    public void pack() throws Exception {
+//        synchronized (locker) {
 
-//            for (TSolve v : tSolves) {
-//                Set<Cause> toDeleteC = new HashSet<>();
-//                for (Cause c : v.getCauses()) {
-//                    if (c.getSrc(this).isDeleted() || c.getDst(this).isDeleted()) {
-//                        toDeleteC.add(c);
-//                    }
-//                }
-//                if (!toDeleteC.isEmpty()) {
-//                    v.getCauses().removeAll(toDeleteC);
-//                }
-//            }
-
-            terms.pack();
-            predicates.pack();
+        terms.pack();
+        predicates.pack();
 //        tValues.pack();
-            tVars.pack();
-            domains.pack();
-            rights.pack();
-            fValues.pack();
-            functions.pack();
-            library.pack();
+        tVars.pack();
+        domains.pack();
+        rights.pack();
+        fValues.pack();
+        functions.pack();
+        library.pack();
 
-//            for (TSolve v : tSolves) {
-//                Set<Cause> toDeleteC = new HashSet<>();
-//                for (Cause c : v.getCauses()) {
-//                    if (c.getSrc(this) == null || c.getDst(this) == null) {
-//                        toDeleteC.add(c);
-//                    }
-//                }
-//                if (!toDeleteC.isEmpty()) {
-//                    v.getCauses().removeAll(toDeleteC);
-//                }
-//                if (v.getCauses().isEmpty()) {
-//                    tSolves.delete(v);
-//                }
-//            }
-//
-//            tSolves.pack();
-        }
+//        }
 //        tValues.update();
 
 //        update();
@@ -456,10 +417,6 @@ public class Mind {
     public TValueFactory getTValues() {
         return tValues;
     }
-
-//    public TSolveFactory getTSolves() {
-//        return tSolves;
-//    }
 
     public FValueFactory getFValues() {
         return fValues;
@@ -1636,9 +1593,9 @@ public class Mind {
 ////        }
 //    }
 
-    public boolean isSequencedBy(Mind m) {
-        return rights.isSequencedBy(m.rights);
-    }
+//    public boolean isSequencedBy(Mind m) {
+//        return rights.isSequencedBy(m.rights);
+//    }
 
     public TSolve findTSolve(List<TValue> list) throws Exception {
         TVariableSet ts = new TVariableSet(list);

@@ -37,10 +37,8 @@ public class DB implements IData {
             dbPath += File.separatorChar;
         }
         dbPath += name;
-        dbPath = dbPath.replaceAll("/", File.separatorChar + "");
-        dbPath = dbPath.replaceAll("\\\\", File.separatorChar + "");
-
-        String[] tmp = dbPath.split(File.separatorChar + "");
+        dbPath = dbPath.replaceAll("/|\\\\", String.format("\\%s", File.separatorChar));
+        String[] tmp = dbPath.split(String.format("\\%s", File.separatorChar));
         if (tmp.length > 1) {
             String path = dbPath.substring(0, dbPath.length() - tmp[tmp.length - 1].length());
             FileUtil.makeDirectories(path);

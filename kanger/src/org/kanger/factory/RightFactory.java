@@ -311,17 +311,13 @@ public class RightFactory implements Iterable<Right> {
             return p;
         } else {
             ArgList list = null;
+
             if (domain.isQuery(mind)) {
                 list = domain.getArguments().convert(mind);
                 for (TValue t : list.getTValues(mind, true)) t.setQuery(mind);
             } else {
                 list = domain.getArguments().convertBase(mind);
-                for (Argument a : list) {
-                    if (a.getValue(mind).isXVariable()) {
-                        a.setValue(mind, a.getValue(mind).getParent());
-                    }
 //                    a.getValue(mind).toCVariable();
-                }
 //                list = new ArgList();
 //                for (Argument a : domain.getArguments().convertBase(mind)) {
 //                    if (a.isCVar()) {
@@ -333,6 +329,13 @@ public class RightFactory implements Iterable<Right> {
             }
             Right r = new Right(mind);
             register(r);
+
+            for (Argument a : list) {
+                if (!a.isEmpty(mind) && a.getValue(mind).isXVariable()) {
+                    Term t = mind.getTerms().createCVar(r, a.getValue(mind).getName());
+                    a.setValue(mind, a.getValue(mind).getParent());
+                }
+            }
 
             Domain d = mind.getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
             r.getTree().get(0).add(d);

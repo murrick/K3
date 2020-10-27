@@ -42,4 +42,5 @@ public interface IUser {
 
     void flush() throws Exception;
 
+    Object getLocker();
 }

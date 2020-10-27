@@ -124,7 +124,7 @@ public class Base implements IBase {
 //            ps.setLong(1, id);
 //            ResultSet rs = ps.executeQuery();
 //            if (rs.next()) {
-        synchronized (locker) {
+//        synchronized (locker) {
             byte[] o = index.get(id); //rs.getBytes("data");
 
             if (o != null) {
@@ -164,7 +164,7 @@ public class Base implements IBase {
 ////                cache.remove(id);
 //                }
             }
-        }
+//        }
 //            }
 //        }
         return step;
@@ -173,9 +173,9 @@ public class Base implements IBase {
 
     @Override
     public int size() throws Exception {
-        synchronized (locker) {
+//        synchronized (locker) {
             return index.size();
-        }
+//        }
 //        int count = 0;
 //        try (Statement st = connection.createStatement()) {
 //            ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + name + ";");
@@ -237,9 +237,9 @@ public class Base implements IBase {
 
     @Override
     public boolean containsKey(long id) throws Exception {
-        synchronized (locker) {
+//        synchronized (locker) {
             return index.containsKey(id);
-        }
+//        }
 //        try (PreparedStatement ps = connection.prepareStatement("SELECT id FROM " + name + " WHERE id = ?;")) {
 //            ps.setLong(1, id);
 //            ResultSet rs = ps.executeQuery();

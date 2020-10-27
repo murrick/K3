@@ -8,24 +8,29 @@ import java.io.*;
 import java.util.*;
 
 public class Data implements Closeable, Iterable<IStep> {
+
     private static final long MAX_CACHE_SIZE = 1024L * 1024L;
 
-    private final Object locker = new Object();
     private int version = Version.VERSION_CODE;
-    private int headerSize = 0;
-    private boolean changed = false;
+
+    private final Map<Long, DataOne> cache = new HashMap<>();
+    private final Object locker = new Object();
+
+    //    private IStep data = null;
+//    private boolean changed = false;
+//    private byte[] buffer = null;
     private File file = null;
+    private int headerSize = 0;
+    //    private long blockSize = 0;
+//    private long dataSize = 0;
     private RandomAccessFile ras = null;
-    private long currentOffset = -1;
-    private long blockSize = 0;
-    private long dataSize = 0;
-    private IStep data = null;
-    private byte[] buffer = null;
+    private DataOne currentOne = null;
     private final Queue<Long> timing = new LinkedList<>();
+    private long maxCacheSize = MAX_CACHE_SIZE;
+//    private long currentOne = -1;
+
     private int readCounter = 0;
     private int writeCounter = 0;
-    private final Map<Long, DataOne> cache = new HashMap<>();
-    private long maxCacheSize = MAX_CACHE_SIZE;
     private volatile long cacheSize = 0L;
 
     private IBase base = null;
@@ -41,26 +46,26 @@ public class Data implements Closeable, Iterable<IStep> {
 
     public void open(File file) throws IOException {
         this.file = file;
-        synchronized (locker) {
-            try {
-                ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
-                ras.seek(0);
-                version = ras.readShort();
-                headerSize = ras.readInt();
-                changed = false;
-            } catch (FileNotFoundException ex) {
-                clear();
-                ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
-            }
+        try {
+            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
+            ras.seek(0);
+            version = ras.readShort();
+            headerSize = ras.readInt();
+//            changed = false;
+
+            cache.clear();
+            timing.clear();
+            cacheSize = 0L;
+        } catch (FileNotFoundException ex) {
+            clear();
+            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
         }
     }
 
     @Override
     public void close() throws IOException {
         flush();
-        synchronized (locker) {
-            ras.close();
-        }
+        ras.close();
         ras = null;
     }
 
@@ -75,198 +80,180 @@ public class Data implements Closeable, Iterable<IStep> {
                 ras.writeShort(version);
                 headerSize = (int) (ras.getFilePointer() + Integer.BYTES);
                 ras.writeInt(headerSize);
-                changed = false;
+//                changed = false;
             }
+        }
+        synchronized (cache) {
+            cache.clear();
+            timing.clear();
+            cacheSize = 0L;
         }
     }
 
     public void flush() throws IOException {
-        if (changed) {
-            saveCurrentBlock();
-            changed = false;
-
-            synchronized (cache) {
-                if (cache.containsKey(currentOffset)) {
-                    timing.remove(currentOffset);
-                    DataOne o = cache.remove(currentOffset);
-                    cacheSize -= o.blockSize;
+        synchronized (cache) {
+            for (DataOne one : cache.values()) {
+                if (one.isChanged()) {
+                    one.saveBlock();
+                    one.setChanged(false);
                 }
             }
-            addToCache();
+        }
+//        if (changed) {
+//            saveCurrentBlock();
+//            changed = false;
+//
+//            synchronized (cache) {
+//                if (cache.containsKey(currentOffset)) {
+//                    timing.remove(currentOffset);
+//                    DataOne o = cache.remove(currentOffset);
+//                    cacheSize -= o.blockSize;
+//                }
+//            }
+//            addToCache();
+//        }
+    }
+
+    private DataOne getOne(long offset) throws Exception {
+        DataOne one = null;
+        synchronized (cache) {
+            if (cache.containsKey(offset)) {
+                one = cache.get(offset);
+
+                timing.remove(offset);
+                timing.add(offset);
+            }
+        }
+
+        if (offset > 0 && one == null) {
+            long blockSize = -1;
+            long dataSize = -1;
+            byte[] buffer = null;
+            synchronized (locker) {
+                if (offset < ras.length()) {
+
+                    ras.seek(offset);
+                    blockSize = ras.readLong();
+                    dataSize = ras.readLong();
+                    if (dataSize > 0) {
+                        buffer = new byte[(int) dataSize];
+                        ras.read(buffer);
+                        ByteBuffer packet = new ByteBuffer(buffer);
+                        try {
+                            packet.mark();
+                            IStep data = new Sapato(base);
+                            data.apply(packet);
+                            one = new DataOne();
+                            one.setBlockSize(blockSize);
+                            one.setDataSize(dataSize);
+                            one.setData(data);
+                            one.setBuffer(buffer);
+                            one.setOffset(offset);
+                        } finally {
+                            packet.release();
+                        }
+                        ++readCounter;
+                    }
+                }
+            }
+
+            if (one != null) {
+                addToCache(one);
+            }
+        }
+        return one;
+    }
+
+    private void addToCache(DataOne one) throws IOException {
+        synchronized (cache) {
+            if (!cache.containsKey(one.getOffset())) {
+                cache.put(one.getOffset(), one);
+                timing.add(one.getOffset());
+                cacheSize += one.getBlockSize();
+            } else {
+                cacheSize -= cache.get(one.getOffset()).getBlockSize();
+                cache.put(one.getOffset(), one);
+                timing.remove(one.getOffset());
+                timing.add(one.getOffset());
+                cacheSize += one.getBlockSize();
+            }
+
+            while (cacheSize > maxCacheSize) {
+                long topOffset = timing.poll();
+                one = cache.remove(topOffset);
+                cacheSize -= one.getBlockSize();
+                if (one.isChanged()) {
+                    one.saveBlock();
+                }
+            }
         }
     }
 
     public IStep get(long offset) throws Exception {
-        if (offset != currentOffset) {
-            if (changed) {
-                saveCurrentBlock();
-                changed = false;
-            }
 
-            data = null;
-            synchronized (cache) {
-                if (cache.containsKey(offset)) {
-                    DataOne one = cache.get(offset);
-                    blockSize = one.getBlockSize();
-                    dataSize = one.getDataSize();
-                    data = one.getData();
-                    buffer = one.getBuffer();
-                    currentOffset = offset;
-
-                    timing.remove(offset);
-                    timing.add(offset);
-
-                }
-            }
-
-            if (data == null) {
-                synchronized (locker) {
-
-                    if (offset < ras.length()) {
-
-                        ras.seek(offset);
-                        blockSize = ras.readLong();
-                        dataSize = ras.readLong();
-                        if (dataSize == 0) {
-                            data = null;
-                        } else {
-                            buffer = new byte[(int) dataSize];
-                            ras.read(buffer);
-                            ByteBuffer packet = new ByteBuffer(buffer);
-                            try {
-                                packet.mark();
-                                data = new Sapato(base);
-//                        data.setBase(this);
-                                data.apply(packet);
-                            } finally {
-                                packet.release();
-                            }
-
-//                    ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
-//                    ObjectInputStream ois = new ObjectInputStream(bis);
-//                    data = (IStep) ois.readObject();
-                            ++readCounter;
-                        }
-                        currentOffset = offset;
-                        addToCache();
-
-                    }
-                }
-            }
-        }
-
-        return data;
-    }
-
-    private void addToCache() {
-        DataOne one = new DataOne();
-        one.setBlockSize(blockSize);
-        one.setDataSize(dataSize);
-        one.setData(data);
-        one.setBuffer(buffer);
-        one.setOffset(currentOffset);
-
-        synchronized (cache) {
-            if (!cache.containsKey(currentOffset)) {
-                cache.put(currentOffset, one);
-                timing.add(currentOffset);
-                cacheSize += one.blockSize;
-                while (cacheSize > maxCacheSize) {
-                    long offset = timing.poll();
-                    one = cache.remove(offset);
-                    cacheSize -= one.blockSize;
-                }
-            }
+        DataOne one = getOne(offset);
+        if (one != null) {
+            return one.getData();
+        } else {
+            return null;
         }
     }
 
-
-    public long add(IStep o) throws IOException {
+    public long add(IStep o) throws Exception {
         return set(-1, o);
     }
 
-    public long set(long offset, IStep o) throws IOException {
-        if (changed) {
-            saveCurrentBlock();
-            changed = false;
+    public long set(long offset, IStep o) throws Exception {
+        DataOne one = cache.get(offset);
+        if (one == null) {
+            one = new DataOne();
         }
 
-//        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-//        ObjectOutputStream out = new ObjectOutputStream(bos);
-//        out.writeObject(o);
         byte[] tmp = o.pack().getBuffer();
 
-        if (offset != currentOffset || buffer == null || !Arrays.equals(tmp, buffer)) {
-            currentOffset = offset;
-            data = o;
-            buffer = tmp;
-            dataSize = buffer.length;
-            changed = true;
-            flush();
+        if (!Arrays.equals(tmp, one.getBuffer())) {
+            one.setOffset(offset);
+            one.setData(o);
+            one.setBuffer(tmp);
+            one.setDataSize(tmp.length);
+            one.setChanged(true);
+
+            if (offset == -1) {
+                one.saveBlock();
+            }
+
+            addToCache(one);
+
+            //flush();
         } else {
             synchronized (cache) {
-                if (cache.containsKey(currentOffset)) {
-                    timing.remove(currentOffset);
-                    timing.add(currentOffset);
+                if (cache.containsKey(offset)) {
+                    timing.remove(offset);
+                    timing.add(offset);
                 }
             }
         }
-        return currentOffset;
+        return one.getOffset();
     }
 
     public void remove(long offset) throws IOException {
-        synchronized (locker) {
-            try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
-                ras.seek(offset + 8);
-                if (ras.getFilePointer() == offset + 8) {
-                    long size = ras.readLong();
-                    if (size != 0) {
-                        ras.seek(offset + 8);
-                        ras.writeLong(0L);
-                    }
-
-                    synchronized (cache) {
-                        if (cache.containsKey(offset)) {
-                            timing.remove(offset);
-                            DataOne one = cache.remove(offset);
-                            cacheSize -= one.blockSize;
-                        }
-                    }
-                }
+        synchronized (cache) {
+            if (cache.containsKey(offset)) {
+                timing.remove(offset);
+                DataOne one = cache.remove(offset);
+                cacheSize -= one.blockSize;
             }
         }
-    }
 
-    private void saveCurrentBlock() throws IOException {
-        if (buffer != null && data != null) {
-            synchronized (locker) {
-                try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
-                    if (currentOffset != -1) {
-                        ras.seek(currentOffset);
-                        blockSize = ras.readLong();
-                        if (blockSize >= dataSize) {
-                            ras.writeLong(dataSize);
-                            ras.write(buffer);
-                        } else if (currentOffset + blockSize >= ras.length()) {
-                            blockSize = dataSize;
-                            ras.seek(currentOffset);
-                            ras.writeLong(blockSize);
-                            ras.writeLong(dataSize);
-                            ras.write(buffer);
-                        } else {
-                            ras.writeLong(0L);
-                            currentOffset = -1;
-                        }
+        synchronized (locker) {
+            try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
+                ras.seek(offset + Long.BYTES);
+                if (ras.getFilePointer() == offset + Long.BYTES) {
+                    long size = ras.readLong();
+                    if (size != 0) {
+                        ras.seek(offset + Long.BYTES);
+                        ras.writeLong(0L);
                     }
-                    if (currentOffset == -1) {
-                        ras.seek(ras.length());
-                        currentOffset = ras.getFilePointer();
-                        blockSize = dataSize;
-                        ras.writeLong(blockSize);
-                        ras.writeLong(dataSize);
-                        ras.write(buffer);
-                    }
-                    ++writeCounter;
                 }
             }
         }
@@ -274,22 +261,6 @@ public class Data implements Closeable, Iterable<IStep> {
 
     public int getVersion() {
         return version;
-    }
-
-    public boolean isChanged() {
-        return changed;
-    }
-
-    public long getDataSize() {
-        return dataSize;
-    }
-
-    public IStep getData() {
-        return data;
-    }
-
-    public byte[] getBuffer() {
-        return buffer;
     }
 
     public int getReadCounter() {
@@ -308,9 +279,9 @@ public class Data implements Closeable, Iterable<IStep> {
         writeCounter = 0;
     }
 
-    public long getCurrentOffset() {
-        return currentOffset;
-    }
+//    public long getCurrentOffset() {
+//        return currentOffset;
+//    }
 
     public boolean isClosed() {
         return ras == null;
@@ -332,7 +303,7 @@ public class Data implements Closeable, Iterable<IStep> {
     public Iterator<IStep> iterator() {
         try {
             flush();
-            currentOffset = -1;
+            currentOne = null;
         } catch (IOException e) {
             return null;
         }
@@ -347,7 +318,7 @@ public class Data implements Closeable, Iterable<IStep> {
             @Override
             public boolean hasNext() {
                 try {
-                    if (currentOffset == -1) {
+                    if (currentOne == null) {
                         synchronized (locker) {
                             if (ras.length() >= headerSize + Long.BYTES * 2) {
                                 ras.seek(headerSize);
@@ -358,9 +329,7 @@ public class Data implements Closeable, Iterable<IStep> {
                             }
                         }
                     } else {
-                        synchronized (locker) {
-                            return ras.length() >= currentOffset + Long.BYTES * 4 + blockSize;
-                        }
+                        return ras.length() >= currentOne.getOffset() + Long.BYTES * 4 + currentOne.getBlockSize();
                     }
                 } catch (IOException e) {
                     return false;
@@ -370,10 +339,12 @@ public class Data implements Closeable, Iterable<IStep> {
             @Override
             public IStep next() {
                 try {
-                    if (currentOffset == -1) {
-                        return get(headerSize);
+                    if (currentOne == null) {
+                        currentOne = getOne(headerSize);
+                        return currentOne.getData();
                     } else {
-                        return get(currentOffset + blockSize + Long.BYTES * 2);
+                        currentOne = getOne(currentOne.getOffset() + currentOne.getBlockSize() + Long.BYTES * 2);
+                        return currentOne.getData();
                     }
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
@@ -387,8 +358,10 @@ public class Data implements Closeable, Iterable<IStep> {
         private long offset = -1;
         private long blockSize = 0;
         private long dataSize = 0;
+        private boolean changed = false;
         private IStep data = null;
         private byte[] buffer = null;
+
 
         public long getOffset() {
             return offset;
@@ -428,6 +401,49 @@ public class Data implements Closeable, Iterable<IStep> {
 
         public void setBuffer(byte[] buffer) {
             this.buffer = buffer;
+        }
+
+        public boolean isChanged() {
+            return changed;
+        }
+
+        public void setChanged(boolean changed) {
+            this.changed = changed;
+        }
+
+        public void saveBlock() throws IOException {
+            if (buffer != null && data != null) {
+                synchronized (locker) {
+                    try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
+                        if (offset != -1) {
+                            ras.seek(offset);
+                            blockSize = ras.readLong();
+                            if (blockSize >= dataSize) {
+                                ras.writeLong(dataSize);
+                                ras.write(buffer);
+                            } else if (offset + blockSize >= ras.length()) {
+                                blockSize = dataSize;
+                                ras.seek(offset);
+                                ras.writeLong(blockSize);
+                                ras.writeLong(dataSize);
+                                ras.write(buffer);
+                            } else {
+                                ras.writeLong(0L);
+                                offset = -1;
+                            }
+                        }
+                        if (offset == -1) {
+                            ras.seek(ras.length());
+                            offset = ras.getFilePointer();
+                            blockSize = dataSize;
+                            ras.writeLong(blockSize);
+                            ras.writeLong(dataSize);
+                            ras.write(buffer);
+                        }
+                        ++writeCounter;
+                    }
+                }
+            }
         }
     }
 
