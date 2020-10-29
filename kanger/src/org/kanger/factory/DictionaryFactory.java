@@ -92,6 +92,8 @@ public class DictionaryFactory implements Iterable<Term> {
             }
         }
         cache.setRoot(base.cache.getRoot());
+//        pack();
+//        update();
         varIndex = Math.max(base.varIndex, varIndex);
 
     }
@@ -103,6 +105,7 @@ public class DictionaryFactory implements Iterable<Term> {
     public void update() throws Exception {
         if (cache.update()) {
 //            firstId = user.lastId(SCHEMA);
+//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 
@@ -263,4 +266,5 @@ public class DictionaryFactory implements Iterable<Term> {
     public void pack() throws IOException {
 //        update();
     }
+
 }

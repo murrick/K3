@@ -103,22 +103,20 @@ public class Base implements IBase {
 
     @Override
     public void update(IStep one) throws IOException {
-        synchronized (locker) {
-            index.store(Transaction.BOGUS, new ByteBuffer().putLong(one.getId()).getBuffer(), one.pack().getBuffer());
-        }
+        add(one);
     }
 
     @Override
     public IStep get(long id) throws Exception {
-        synchronized (cache) {
+
+        synchronized (locker) {
             if (cache.containsKey(id)) {
                 timing.remove(id);
                 timing.add(id);
                 return cache.get(id);
             }
-        }
-        IStep step = null;
-        synchronized (locker) {
+
+            IStep step = null;
             byte[] o = index.load(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer());
             if (o != null) {
                 ByteBuffer packet = new ByteBuffer(o);
@@ -156,25 +154,25 @@ public class Base implements IBase {
 ////                cache.remove(id);
 //                }
             }
+            return step;
         }
-        return step;
 
     }
 
     @Override
     public int size() throws IOException {
-        synchronized (locker) {
-            return (int) (index.count(null, null));
-        }
+//        synchronized (locker) {
+        return (int) (index.count(null, null));
+//        }
     }
 
     @Override
     public void clearCache() {
-        synchronized (cache) {
-            cache.clear();
-            timing.clear();
-            cacheSize = 0;
-        }
+//        synchronized (cache) {
+        cache.clear();
+        timing.clear();
+        cacheSize = 0;
+//        }
     }
 
     @Override
@@ -189,14 +187,14 @@ public class Base implements IBase {
 
     @Override
     public void delete(long id) throws IOException {
-        synchronized (cache) {
+        synchronized (locker) {
             if (cache.containsKey(id)) {
                 timing.remove(id);
                 IStep top = cache.remove(id);
                 cacheSize -= top.getSize();
             }
-        }
-        synchronized (locker) {
+//        }
+//        synchronized (locker) {
             Object one = index.load(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer());
             if (one != null) {
                 index.delete(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer());
@@ -215,16 +213,16 @@ public class Base implements IBase {
                 byte[] last = new ByteBuffer().putLong(new ByteBuffer(c.key()).getLong() + 1).getBuffer();
                 index.evict(Transaction.BOGUS, first, last, null, true);
             }
+            clearCache();
         }
-        clearCache();
         lastId = 0;
     }
 
     @Override
     public boolean containsKey(long id) throws IOException {
-        synchronized (locker) {
-            return index.load(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer()) != null;
-        }
+//        synchronized (locker) {
+        return index.load(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer()) != null;
+//        }
     }
 
     @Override
@@ -233,13 +231,13 @@ public class Base implements IBase {
             if (isEmpty()) {
                 return null;
             } else {
-                synchronized (locker) {
-                    Cursor c = index.newCursor(Transaction.BOGUS);
-                    c.last();
-                    long id = new ByteBuffer(c.key()).getLong();
-                    IStep step = get(id);
-                    return step;
-                }
+//                synchronized (locker) {
+                Cursor c = index.newCursor(Transaction.BOGUS);
+                c.last();
+                long id = new ByteBuffer(c.key()).getLong();
+                IStep step = get(id);
+                return step;
+//                }
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -253,13 +251,13 @@ public class Base implements IBase {
             if (isEmpty()) {
                 return null;
             } else {
-                synchronized (locker) {
-                    Cursor c = index.newCursor(Transaction.BOGUS);
-                    c.first();
-                    long id = new ByteBuffer(c.key()).getLong();
-                    IStep step = get(id);
-                    return step;
-                }
+//                synchronized (locker) {
+                Cursor c = index.newCursor(Transaction.BOGUS);
+                c.first();
+                long id = new ByteBuffer(c.key()).getLong();
+                IStep step = get(id);
+                return step;
+//                }
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -295,5 +293,10 @@ public class Base implements IBase {
     @Override
     public synchronized long nextId() {
         return lastId++;
+    }
+
+    @Override
+    public void flush() throws Exception {
+
     }
 }

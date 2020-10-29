@@ -343,5 +343,10 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
 //        return this;
 //    }
 
+    @Override
+    public boolean isLoaded() {
+        return true;
+    }
+
 
 }

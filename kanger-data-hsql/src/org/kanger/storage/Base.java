@@ -309,4 +309,9 @@ public class Base implements IBase {
     public synchronized long nextId() {
         return lastId++;
     }
+
+    @Override
+    public void flush() throws Exception {
+
+    }
 }

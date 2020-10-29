@@ -289,4 +289,10 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 //    public void setCVariable(boolean cVariable) {
 //        this.cVariable = cVariable;
 //    }
+
+    @Override
+    public boolean isLoaded() {
+        return value != null && valueId == value.getId();
+    }
+
 }

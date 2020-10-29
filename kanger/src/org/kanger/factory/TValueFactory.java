@@ -80,12 +80,15 @@ public class TValueFactory implements Iterable<TValue> {
                 }
             }
         }
+//        pack();
+//        update();
         action = base.isAction();
     }
 
     public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
+//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 

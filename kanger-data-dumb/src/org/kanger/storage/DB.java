@@ -49,7 +49,7 @@ public class DB implements IData {
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() throws Exception {
         for (IBase b : bases.values()) {
             ((Base) b).flush();
         }

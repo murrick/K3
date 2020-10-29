@@ -594,5 +594,11 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     public long getParentId() {
         return parentId;
     }
+
+    @Override
+    public boolean isLoaded() {
+        return true;
+    }
+
 }
 

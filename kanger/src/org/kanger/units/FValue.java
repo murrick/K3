@@ -349,4 +349,10 @@ public class FValue implements IUnit<FValue> {
     public long getFunctionId() {
         return functionId;
     }
+
+    @Override
+    public boolean isLoaded() {
+        return function != null && functionId == function.getId();
+    }
+
 }

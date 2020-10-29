@@ -50,6 +50,8 @@ public class Kanger {
 
         IUser user = new User();
 
+        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
+
 //        List<Object> params = new ArrayList<>();
 //        params.add(1);
 //        params.add(18);

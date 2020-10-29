@@ -73,12 +73,15 @@ public class FValueFactory implements Iterable<FValue> {
                 }
             }
         }
+//        pack();
+//        update();
         action = base.isAction();
     }
 
     public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
+//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 

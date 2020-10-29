@@ -308,4 +308,9 @@ public class Base implements IBase {
         return lastId++;
     }
 
+    @Override
+    public void flush() throws Exception {
+
+    }
+
 }

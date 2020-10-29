@@ -1,6 +1,7 @@
 package org.kanger.storage;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -22,14 +23,12 @@ public class Escalera implements ICache {
         this.mind = mind;
         this.schema = schema;
 
-        if (this.parent != null) {
-            root = this.parent.getRoot();
-        } else {
-            if (!mind.getUser().isClosed()) {
-                synchronized (mind.getUser().getStorage(schema)) {
-                    root = mind.getUser().getStorage(schema).getRoot();
-                }
+        if (this.parent == null && !mind.getUser().isClosed()) {
+            synchronized (mind.getUser().getStorage(schema)) {
+                root = mind.getUser().getStorage(schema).getRoot();
             }
+        } else if (this.parent != null) {
+            root = this.parent.getRoot();
         }
     }
 
@@ -56,14 +55,18 @@ public class Escalera implements ICache {
 
     @Override
     public Object get(long id) throws Exception {
-        if (root instanceof Sapato) {
-            IStep e = mind.getUser().getStorage(schema).get(root.getId());
-            root.setData(e.getData(mind));
-        }
+//        if (root instanceof Sapato) {
+//            IStep e = mind.getUser().getStorage(schema).get(root.getId());
+//            root.setData(e.getData(mind));
+//        }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getId() == id) {
 //                if(s.getData() != null && s.getData() instanceof IUnit && ((IUnit) s.getData()).getUser() == null) {
 //                    ((IUnit) s.getData()).setUser(user);
+//                }
+//                if (!((IUnit)s.getData()).isLoaded()) {
+//                    IStep e = mind.getUser().getStorage(schema).get(s.getId());
+//                    s.setData(e.getData(mind));
 //                }
                 return s.getData(mind);
             }
@@ -85,7 +88,7 @@ public class Escalera implements ICache {
                 }
             }
         }
-        if (!mind.getUser().isClosed()) {
+        if (parent == null && !mind.getUser().isClosed()) {
             synchronized (mind.getUser().getStorage(schema)) {
                 mind.getUser().getStorage(schema).delete(id);
             }
@@ -189,18 +192,28 @@ public class Escalera implements ICache {
     @Override
     public boolean update() throws Exception {
         // Это самый низ
+
         if (parent == null && !mind.getUser().isClosed()) {
-            synchronized (mind.getUser().getStorage(schema)) {
+            IBase base = mind.getUser().getStorage(schema);
+            synchronized (base) {
 
                 List<IStep> list = new ArrayList<>();
                 for (IStep s = root; s != null; s = s.getNext()) {
-                    if (s instanceof Step /*!mind.getUser().getStorage(schema).containsKey(s.getId())*/) {
-                        list.add(s);
+                    if (!base.containsKey(s.getId())/*s instanceof Step*/ /*&& !((IUnit)s.getData()).isDeleted()*//*!mind.getUser().getStorage(schema).containsKey(s.getId())*/) {
+                        list.add(0, s);
+//                    } else {
+//                        break;
                     }
                 }
+
                 for (IStep s : list) {
-                    Sapato p = new Sapato(mind.getUser().getStorage(schema), s);
+                    Sapato p = new Sapato(base, s);
                     p.append();
+                    IStep e = mind.getUser().getStorage(schema).get(s.getId());
+                    p.setData(e.getData(mind));
+
+//                    p.getData(mind);
+                    root = p;
                 }
 
 
@@ -217,7 +230,7 @@ public class Escalera implements ICache {
 //                s.append();
 //            }
 
-                root = mind.getUser().getStorage(schema).getRoot();
+//                root = base.getRoot();
                 stack.clear();
 
                 return true;

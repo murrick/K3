@@ -976,7 +976,7 @@ public class KangerTest {
     public void set_02_0E() throws Exception {
 
         mind.clear();
-        mind.query("?$x $y 18=x + 4, 19=x+5;");
+        mind.query("?$x 18=x + 4, 19=x+5;");
         showResult(true);
         if (!exists("x", 14.0)) {
             fail("Expected: x=14.0");
@@ -995,7 +995,7 @@ public class KangerTest {
                         "!@a @b @c @d xx(a,b,c,d) -> yy2((-b-sqrt(d))/(2*a));" +
                         "!@a @b @c @d xx(a,b,c,d) -> yy1((-b+sqrt(d))/(2*a));" +
                         "!@a @b @c k(a,b,c) -> xx(a,b,c,pow(b,2)-4*a*c);"
-//                "!k(1, -37, 27);"
+//                + "!k(1, -37, 27);"
         );
         mind.query("?$x $y k(1, -37, 27) -> solve(x,y);");
 //        mind.query("?$x $y solve(x,y);");
@@ -2297,7 +2297,9 @@ public class KangerTest {
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
                     }
-                    mind.commit(a);
+                    if (!mind.commit(a)) {
+                        System.out.println("PROCESS 1 ROLLED BACK");
+                    }
                     System.out.println("PROCESS 1 STOP: " + a.getRights().size() + "/" + mind.getRights().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
@@ -2319,7 +2321,9 @@ public class KangerTest {
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
                     }
-                    mind.commit(b);
+                    if (!mind.commit(b)) {
+                        System.out.println("PROCESS 2 ROLLED BACK");
+                    }
                     System.out.println("PROCESS 2 STOP: " + b.getRights().size() + "/" + mind.getRights().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
@@ -2341,7 +2345,9 @@ public class KangerTest {
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
                     }
-                    mind.commit(c);
+                    if (!mind.commit(c)) {
+                        System.out.println("PROCESS 3 ROLLED BACK");
+                    }
                     System.out.println("PROCESS 3 STOP: " + c.getRights().size() + "/" + mind.getRights().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
@@ -2400,7 +2406,7 @@ public class KangerTest {
         mind.clear();
         mind = new Mind(mind.getUser());
 
-        final int COUNT = 64;
+        final int COUNT = 164;
 
 //        Screen.session(mind.getUser());
 

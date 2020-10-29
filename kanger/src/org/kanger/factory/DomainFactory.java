@@ -76,12 +76,15 @@ public class DomainFactory implements Iterable<Domain> {
                 }
             }
         }
+//        pack();
+//        update();
         waiters.addAll(base.waiters);
     }
 
     public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
+//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 

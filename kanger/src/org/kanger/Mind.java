@@ -29,6 +29,11 @@ public class Mind {
 
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
 
+    //    private volatile boolean blockCommit = false;
+    private final Object locker = new Object();
+    private long id = 0;
+    private Mind next = null;
+
     private final Map<Long, Set<Right>> usedRights = new HashMap<>();
     private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
@@ -39,9 +44,6 @@ public class Mind {
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> rightSolves = new LinkedHashMap<>();
 
-    private long id = 0;
-    private Mind next = null;
-    private IUser user = null;
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
@@ -50,20 +52,19 @@ public class Mind {
     private TValueFactory tValues = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
-    private HypotesisStore hypotesis = null;                                // Список гипотез
+    private IUser user = null;
+
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
-
-    //    private final Set<Long> usedTrees = new HashSet<>();
-//    private final Set<Long> closedTrees = new HashSet<>();
     private LogStore log = null;                                        // Протокол вывода
+    private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
+    private HypotesisStore hypotesis = null;                                // Список гипотез
+
     private Calculator calculator = null;                             // Калькулятор
     private Analiser analiser = null;                                   // Анализатор
     private Compiler compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
-    private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
-    private HypotesisStore excluded = null;                                // Список исключенных гипотез
-    //    private ResultsStore results = null;
+
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
@@ -77,8 +78,7 @@ public class Mind {
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
-    private volatile boolean blockCommit = false;
-    private final Object locker = new Object();
+    private HypotesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private volatile boolean busyCommit = false;
 
@@ -100,28 +100,28 @@ public class Mind {
 //        predicates.transaction(root.getPredicates());
 //        library.transaction(root.getLibrary());
 
-        synchronized (locker) {
-            terms = root.getTerms();
-            predicates = root.getPredicates();
-            library = root.getLibrary();
+//        synchronized (locker) {
+        terms = root.getTerms();
+        predicates = root.getPredicates();
+        library = root.getLibrary();
 
 //            rightSolves.putAll(root.getRightSolves());
 
 
 //        functions = root.getFunctions();
 
-            domains.transaction(root.getDomains());
-            rights.transaction(root.getRights());
-            tVars.transaction(root.getTVars());
-            tValues.transaction(root.getTValues());
-            functions.transaction(root.getFunctions());
-            fValues.transaction(root.getFValues());
+        domains.transaction(root.getDomains());
+        rights.transaction(root.getRights());
+        tVars.transaction(root.getTVars());
+        tValues.transaction(root.getTValues());
+        functions.transaction(root.getFunctions());
+        fValues.transaction(root.getFValues());
 
-            debugLevel = root.getDebugLevel();
+        debugLevel = root.getDebugLevel();
 //        domainCauses.putAll(root.getDomainCauses());
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
-        }
+//        }
     }
 
     private void init() throws Exception {
@@ -158,9 +158,9 @@ public class Mind {
 
 
     public boolean commit(Mind m) throws Exception {
+        boolean result = true;
+//        pack();
         synchronized (locker) {
-
-            boolean result = true;
 
             boolean sequencedBy = rights.isSequencedBy(m.getRights());
             if (!sequencedBy) {
@@ -193,6 +193,11 @@ public class Mind {
                     rights.release();
                     result = false;
                 } else {
+
+//                    terms.update();
+//                    predicates.update();
+//                    library.update();
+
                     functions.commit();
                     fValues.commit();
                     tVars.commit();
@@ -200,6 +205,19 @@ public class Mind {
 
                     domains.commit();
                     rights.commit();
+
+//                    functions.update();
+//                    fValues.update();
+//                    tVars.update();
+//                    tValues.update();
+//
+//                    domains.update();
+//                    rights.update();
+//
+//                    if(next == null) {
+//                        user.flush();
+//                    }
+
                 }
             }
 
@@ -208,37 +226,71 @@ public class Mind {
 //                        addTSolve(t.getSolve());
 //                    }
 //                }
-
+//        }
             pack();
             update();
+
+//            terms.pack();
+//            predicates.pack();
+//            library.pack();
+//
+//            tValues.pack();
+//            tVars.pack();
+//            domains.pack();
+//            rights.pack();
+//            fValues.pack();
+//            functions.pack();
+//
+//
+//            if (next == null) {
+//                terms.update();
+//                predicates.update();
+//                library.update();
+//
+//                functions.update();
+//                fValues.update();
+//                tVars.update();
+//                tValues.update();
+//                domains.update();
+//                rights.update();
+//
+//                user.flush();
+//            }
 
             log.commit(m.getLog());
             queryResult = (Boolean) m.getQueryResult();
 
-            return result;
-//        }
         }
+
+//        pack();
+//        update();
+
+        return result;
+
+//        }
     }
 
     public void update() throws Exception {
-
 //        synchronized (locker) {
-        terms.update();
-        predicates.update();
-        library.update();
 
-        functions.update();
-        fValues.update();
-        tVars.update();
-        tValues.update();
-        domains.update();
-        rights.update();
+        if (next == null) {
+            terms.update();
+            predicates.update();
+            library.update();
 
-        user.flush();
+            functions.update();
+            fValues.update();
+            tVars.update();
+            tValues.update();
+            domains.update();
+            rights.update();
+
+            user.flush();
+        }
 //        }
     }
 
-    public synchronized void release(Mind m) throws Exception {
+    public void release(Mind m) throws Exception {
         synchronized (locker) {
 
             log.commit(m.getLog());
@@ -263,46 +315,42 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public synchronized void clear() throws Exception {
+    public void clear() throws Exception {
         synchronized (locker) {
-
             terms.clear();
             predicates.clear();
+            library.clear();
+
             domains.clear();
             tVars.clear();
             tValues.clear();
             rights.clear();
             functions.clear();
             fValues.clear();
-            library.clear();
-//        }
-
-            update();
 
             solves.clear();
             values.clear();
-//        results.clear();
             hypotesis.clear();
             excluded.clear();
 
             rightSolves.clear();
         }
+//        update();
     }
 
     public void pack() throws Exception {
-//        synchronized (locker) {
+        synchronized (locker) {
+            terms.pack();
+            predicates.pack();
+            library.pack();
 
-        terms.pack();
-        predicates.pack();
-//        tValues.pack();
-        tVars.pack();
-        domains.pack();
-        rights.pack();
-        fValues.pack();
-        functions.pack();
-        library.pack();
-
-//        }
+            tValues.pack();
+            tVars.pack();
+            domains.pack();
+            rights.pack();
+            fValues.pack();
+            functions.pack();
+        }
 //        tValues.update();
 
 //        update();
@@ -532,7 +580,7 @@ public class Mind {
                 getLog().add(LogMode.ANALIZER, "Compiled: " + ((Right) r).getOrig());
                 getLog().add(LogMode.ANALIZER, (Right) r);
                 for (Right rx : rights) {
-                    if (rx.getId() > ((Right) r).getId() && rx.isGenerated()) {
+                    if (rx.getId() > ((Right) r).getId() /*&& rx.isGenerated()*/) {
                         getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
                     }
                 }

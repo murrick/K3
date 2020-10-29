@@ -95,7 +95,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
 
-    public void flush() throws IOException {
+    public void flush() throws Exception {
         synchronized (locker) {
             index.flush();
             hash.flush();
@@ -177,7 +177,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     @Override
-    public void clear() throws IOException {
+    public void clear() throws Exception {
         synchronized (locker) {
             data.clear();
             index.clear();

@@ -33,5 +33,7 @@ public interface IUnit<T> {
 
     UnitType getUnitType();
 
+    boolean isLoaded();
+
 //    T commit(Mind m) throws Exception;
 }

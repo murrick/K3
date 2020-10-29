@@ -271,6 +271,11 @@ public class Predicate implements IUnit<Predicate> {
         this.mindId = mindId;
     }
 
+    @Override
+    public boolean isLoaded() {
+        return name != null && nameId == name.getId();
+    }
+
 //    public Predicate commit(Mind m) throws Exception {
 //        setName(name.commit(m));
 //        Predicate predicate = m.getPredicates().find(name, range);

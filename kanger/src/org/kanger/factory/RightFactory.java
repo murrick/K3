@@ -150,6 +150,8 @@ public class RightFactory implements Iterable<Right> {
 //            add(p);
 //        }
 
+//        pack();
+//        update();
         action = base.isAction();
         return list;
     }
@@ -157,6 +159,7 @@ public class RightFactory implements Iterable<Right> {
     public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
+//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 
@@ -212,6 +215,7 @@ public class RightFactory implements Iterable<Right> {
 
 
     public void expand(Right r) throws Exception {
+        //TODO: Удалять выделенные в правила домены ??
         for (List<Domain> tree : r.getTree()) {
             if (tree.size() == 1) {
                 if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {
@@ -219,11 +223,27 @@ public class RightFactory implements Iterable<Right> {
                 } else if (r.getTree().size() == 1) {
                     Right rx = tree.get(0).setStored(mind);
 //                    rx.setGenerated(false);
-                } else {
+//                    rx.setGenerated(false);
+                } else { //if(tree.get(0).getArguments().getCVariables(mind).isEmpty()){
+                    //TODO: Нужен список линков для обхода. Нафиг создавать целое правило
                     Right rx = tree.get(0).createStored(mind);
 //                    rx.setGenerated(false);
+//                    rx.setGenerated(false);
+//                    tree.remove(0);
                 }
             }
+
+//            boolean found;
+//            do {
+//                found = false;
+//                for(int i=0; i<r.getTree().size(); ++i) {
+//                    if(r.getTree().get(i).isEmpty()) {
+//                        r.getTree().remove(i);
+//                        found = true;
+//                        break;
+//                    }
+//                }
+//            } while (found);
 
             for (Domain d : tree) {
                 d.setMind(mind);
@@ -237,6 +257,8 @@ public class RightFactory implements Iterable<Right> {
             IStep s = mind.getUser().getStorage(SCHEMA).get(id);
             if (s != null) {
                 t = (Right) s.getData(mind);
+//                t.getTree();
+
 //                t.setMind(mind);
 //                t.setUser(user);
 //                t.linkExternal(user);

@@ -70,11 +70,14 @@ public class PredicateFactory implements Iterable<Predicate> {
                 }
             }
         }
+//        pack();
+//        update();
     }
 
     public void update() throws Exception {
         if (cache.update()) {
 //            firstId = lastId;
+//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 

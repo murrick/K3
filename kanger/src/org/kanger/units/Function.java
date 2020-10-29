@@ -483,4 +483,9 @@ public class Function implements IUnit<Function> {
         this.mindId = mindId;
     }
 
+    @Override
+    public boolean isLoaded() {
+        return name != null && nameId == name.getId();
+    }
+
 }

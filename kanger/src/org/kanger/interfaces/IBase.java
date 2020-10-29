@@ -33,4 +33,6 @@ public interface IBase {
     long lastId();
 
     long nextId();
+
+    void flush() throws Exception;
 }

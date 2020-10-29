@@ -33,6 +33,8 @@ public class Linker {
 
     public void link(Right right, boolean logging) throws Exception {
 
+//        right = null;
+
         mind.getExcludedDomains().clear();
         mind.getUsedDomains().clear();
         mind.getCalculatedDomains().clear();
@@ -87,6 +89,10 @@ public class Linker {
                 }
             }
 
+//            System.err.println("--------------");
+//            for(Right r : rightSet) {
+//                System.err.println(r);
+//            }
             List<Right> leftList = new ArrayList<>();
             List<Right> rightList = new ArrayList<>();
 
@@ -609,6 +615,7 @@ public class Linker {
 //                                    boolean masterComplete = master.isComplete(); // && master.isQuery();
 //                                    boolean slaveComplete = slave.isComplete(); // && slave.isQuery();
 
+//                                    System.err.println(blockLeft + " " +master + " <- " + blockLeft + " " + slave);
 
                                     for (int i = 0; i < slave.getRange(); ++i) {
 

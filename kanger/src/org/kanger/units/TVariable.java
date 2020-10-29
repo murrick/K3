@@ -380,4 +380,10 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     public long getRightId() {
         return rightId;
     }
+
+    @Override
+    public boolean isLoaded() {
+        return name != null && nameId == name.getId();
+    }
+
 }

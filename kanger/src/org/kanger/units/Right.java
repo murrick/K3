@@ -526,7 +526,7 @@ public class Right implements IUnit<Right> {
 //        return this;
 //    }
 
-//    public Right commit(Mind m) throws Exception {
+    //    public Right commit(Mind m) throws Exception {
 //        if (m.getRights().find(this) == null) {
 //            setOrig(orig.commit(m));
 //            predicates.clear();
@@ -555,13 +555,20 @@ public class Right implements IUnit<Right> {
 //        }
 //        return this;
 //    }
-public List<TVariable> getTVariables() {
-    List<TVariable> list = new ArrayList<>();
-    for (TVariable t : mind.getTVars()) {
-        if (t.getRightId() == id) {
-            list.add(t);
-        }
+
+
+    @Override
+    public boolean isLoaded() {
+        return orig != null && origId == orig.getId();
     }
-    return list;
-}
+
+    public List<TVariable> getTVariables() {
+        List<TVariable> list = new ArrayList<>();
+        for (TVariable t : mind.getTVars()) {
+            if (t.getRightId() == id) {
+                list.add(t);
+            }
+        }
+        return list;
+    }
 }

@@ -17,12 +17,10 @@ public class Base implements IBase {
     private final Map<Long, IStep> cache = new HashMap<>();
     private final Queue<Long> timing = new LinkedList<>();
     private final Object locker = new Object();
-    //    private RecordManager connection;
     private PrimaryTreeMap<Long, byte[]> index = null;
     private volatile long cacheSize = 0L;
     private long lastId = -1;
     private String name = "";
-//    private IUser user = null;
 
     public Base(RecordManager db, String name) throws Exception {
 //        this.user = user;
@@ -98,9 +96,8 @@ public class Base implements IBase {
 
     @Override
     public void update(IStep one) throws Exception {
-        synchronized (locker) {
-            index.put(one.getId(), one.pack().getBuffer());
-        }
+        add(one);
+
 //        try (PreparedStatement ps = connection.prepareStatement("UPDATE " + name + " SET " +
 //                "data = ? " +
 //                "WHERE id = ?")) {
@@ -112,19 +109,17 @@ public class Base implements IBase {
 
     @Override
     public IStep get(long id) throws Exception {
-        synchronized (cache) {
+        IStep step = null;
+        synchronized (locker) {
             if (cache.containsKey(id)) {
                 timing.remove(id);
                 timing.add(id);
                 return cache.get(id);
             }
-        }
-        IStep step = null;
 //        try (PreparedStatement ps = connection.prepareStatement("SELECT data FROM " + name + " WHERE id = ?")) {
 //            ps.setLong(1, id);
 //            ResultSet rs = ps.executeQuery();
 //            if (rs.next()) {
-//        synchronized (locker) {
             byte[] o = index.get(id); //rs.getBytes("data");
 
             if (o != null) {
@@ -143,16 +138,14 @@ public class Base implements IBase {
 //                    ((IUnit) step.getData()).setUser(user);
 //                }
 
-                synchronized (cache) {
-                    if (!cache.containsKey(id)) {
-                        cache.put(id, step);
-                        timing.add(id);
-                        cacheSize += step.getSize();
-                        while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
-                            long topId = timing.poll();
-                            IStep top = cache.remove(topId);
-                            cacheSize -= top.getSize();
-                        }
+                if (!cache.containsKey(id)) {
+                    cache.put(id, step);
+                    timing.add(id);
+                    cacheSize += step.getSize();
+                    while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
+                        long topId = timing.poll();
+                        IStep top = cache.remove(topId);
+                        cacheSize -= top.getSize();
                     }
                 }
 
@@ -167,6 +160,7 @@ public class Base implements IBase {
 //        }
 //            }
 //        }
+        }
         return step;
 
     }
@@ -174,7 +168,7 @@ public class Base implements IBase {
     @Override
     public int size() throws Exception {
 //        synchronized (locker) {
-            return index.size();
+        return index.size();
 //        }
 //        int count = 0;
 //        try (Statement st = connection.createStatement()) {
@@ -188,11 +182,9 @@ public class Base implements IBase {
 
     @Override
     public void clearCache() {
-        synchronized (cache) {
             cache.clear();
             timing.clear();
             cacheSize = 0;
-        }
     }
 
     @Override
@@ -207,14 +199,12 @@ public class Base implements IBase {
 
     @Override
     public void delete(long id) throws Exception {
-        synchronized (cache) {
+        synchronized (locker) {
             if (cache.containsKey(id)) {
                 timing.remove(id);
                 IStep top = cache.remove(id);
                 cacheSize -= top.getSize();
             }
-        }
-        synchronized (locker) {
             index.remove(id);
         }
 //        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM " + name + " WHERE id = ?;")) {
@@ -230,15 +220,15 @@ public class Base implements IBase {
 //        }
         synchronized (locker) {
             index.clear();
+            clearCache();
+            lastId = 0;
         }
-        clearCache();
-        lastId = 0;
     }
 
     @Override
     public boolean containsKey(long id) throws Exception {
 //        synchronized (locker) {
-            return index.containsKey(id);
+        return index.containsKey(id);
 //        }
 //        try (PreparedStatement ps = connection.prepareStatement("SELECT id FROM " + name + " WHERE id = ?;")) {
 //            ps.setLong(1, id);
@@ -342,5 +332,9 @@ public class Base implements IBase {
     @Override
     public synchronized long nextId() {
         return lastId++;
+    }
+
+    @Override
+    public void flush() throws Exception {
     }
 }

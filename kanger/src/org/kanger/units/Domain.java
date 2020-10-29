@@ -90,6 +90,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return UnitType.DOMAIN;
     }
 
+    @Override
+    public boolean isLoaded() {
+        return predicate != null && predicateId == predicate.getId();
+    }
+
     public Predicate getPredicate() throws Exception {
         return super.getPredicate(mind);
     }
