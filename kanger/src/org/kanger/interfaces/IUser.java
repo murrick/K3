@@ -12,6 +12,8 @@ public interface IUser {
 
     IBase getStorage(String schema);
 
+    IBase connect(String schema) throws Exception;
+
     void clear(Mind mind) throws Exception;
 
     String getStorageName();

@@ -260,6 +260,8 @@ public class Mind {
             log.commit(m.getLog());
             queryResult = (Boolean) m.getQueryResult();
 
+//            m.closeConnection();
+
         }
 
 //        pack();
@@ -268,6 +270,20 @@ public class Mind {
         return result;
 
 //        }
+    }
+
+    public void closeConnection() throws Exception {
+        if (next != null) {
+            terms.closeConnection();
+            predicates.closeConnection();
+            library.closeConnection();
+            functions.closeConnection();
+            fValues.closeConnection();
+            tVars.closeConnection();
+            tValues.closeConnection();
+            domains.closeConnection();
+            rights.closeConnection();
+        }
     }
 
     public void update() throws Exception {
@@ -311,6 +327,9 @@ public class Mind {
 //        library.unlink();
 
             queryResult = (Boolean) m.getQueryResult();
+
+//            m.closeConnection();
+
         }
 //        querySource = m.getQuerySource();
     }
@@ -1328,6 +1347,8 @@ public class Mind {
                                 } else {
                                     hypotesis.commit(m.getHypotesisStore());
                                     hypotesis.exclude(excluded);
+
+
                                     if (logging) {
                                         if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
                                             m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));

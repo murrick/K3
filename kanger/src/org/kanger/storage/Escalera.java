@@ -113,7 +113,7 @@ public class Escalera implements ICache {
     public Set<Long> find(int h) throws Exception {
         Set<Long> set = new HashSet<>();
         if (root instanceof Sapato) {
-            root.setData(((Sapato) mind.getUser().getStorage(schema).get(root.getId())).getData(mind));
+            root.setData((mind.getUser().getStorage(schema).get(root.getId())).getData(mind));
         }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getHash() == h) {

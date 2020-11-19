@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -27,6 +28,7 @@ public class TVariableFactory implements Iterable<TVariable> {
     private ICache cache;
     private IStep top = null;
     private Mind mind = null;
+    private IBase connection = null;
 
     public TVariableFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -34,6 +36,14 @@ public class TVariableFactory implements Iterable<TVariable> {
     }
 
     public void transaction(TVariableFactory base) throws Exception {
+        if (!mind.getUser().isClosed()) {
+//            if(mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
@@ -100,8 +110,8 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     public TVariable load(long id) throws Exception {
         TVariable t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (TVariable) s.getData(mind);
 //                t.setMind(mind);
@@ -200,5 +210,10 @@ public class TVariableFactory implements Iterable<TVariable> {
         return cache.iterator(-1);
     }
 
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
+        }
+    }
 
 }

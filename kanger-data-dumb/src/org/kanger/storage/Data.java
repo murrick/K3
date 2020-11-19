@@ -29,6 +29,7 @@ public class Data implements Closeable, Iterable<IStep> {
     private long maxCacheSize = MAX_CACHE_SIZE;
 //    private long currentOne = -1;
 
+    private boolean readonly = false;
     private int readCounter = 0;
     private int writeCounter = 0;
     private volatile long cacheSize = 0L;
@@ -40,11 +41,12 @@ public class Data implements Closeable, Iterable<IStep> {
         this.base = base;
     }
 
-    public void open(String fileName) throws IOException {
-        open(new File(fileName));
+    public void open(String fileName, boolean readonly) throws Exception {
+        open(new File(fileName), readonly);
     }
 
-    public void open(File file) throws IOException {
+    public void open(File file, boolean readonly) throws Exception {
+        this.readonly = readonly;
         this.file = file;
         try {
             ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
@@ -69,7 +71,10 @@ public class Data implements Closeable, Iterable<IStep> {
         ras = null;
     }
 
-    public void clear() throws IOException {
+    public void clear() throws Exception {
+        if (readonly) {
+            throw new RuntimeException("Database is readonly");
+        }
         String path = file.getAbsolutePath();
         path = path.substring(0, path.length() - file.getName().length());
         new File(path).mkdirs();
@@ -237,6 +242,9 @@ public class Data implements Closeable, Iterable<IStep> {
     }
 
     public void remove(long offset) throws IOException {
+        if (readonly) {
+            throw new RuntimeException("Database is readonly");
+        }
         synchronized (cache) {
             if (cache.containsKey(offset)) {
                 timing.remove(offset);
@@ -412,6 +420,9 @@ public class Data implements Closeable, Iterable<IStep> {
         }
 
         public void saveBlock() throws IOException {
+            if (readonly) {
+                throw new RuntimeException("Database is readonly");
+            }
             if (buffer != null && data != null) {
                 synchronized (locker) {
                     try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {

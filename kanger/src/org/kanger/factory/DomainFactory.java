@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -27,6 +28,7 @@ public class DomainFactory implements Iterable<Domain> {
     private IStep top = null;
     //    private Cache load = new Cache();
     private Mind mind = null;
+    private IBase connection = null;
 
     public DomainFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -34,6 +36,14 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void transaction(DomainFactory base) throws Exception {
+        if (!mind.getUser().isClosed()) {
+//            if(mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
         waiters.clear();
         if (base != null) {
 //            lastId = base.lastId;
@@ -148,8 +158,8 @@ public class DomainFactory implements Iterable<Domain> {
 
     public Domain load(long id) throws Exception {
         Domain t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (Domain) s.getData(mind);
 //                t.setMind(mind);
@@ -280,4 +290,9 @@ public class DomainFactory implements Iterable<Domain> {
         return cache.iterator();
     }
 
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
+        }
+    }
 }

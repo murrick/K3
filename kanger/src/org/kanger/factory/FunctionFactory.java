@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -25,6 +26,7 @@ public class FunctionFactory implements Iterable<Function> {
     private ICache cache;
     private IStep top = null;
     private Mind mind = null;
+    private IBase connection = null;
 
     public FunctionFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -32,6 +34,15 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
     public void transaction(FunctionFactory base) throws Exception {
+        if (!mind.getUser().isClosed()) {
+//            if(mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
+
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
@@ -108,8 +119,8 @@ public class FunctionFactory implements Iterable<Function> {
 
     public Function load(long id) throws Exception {
         Function t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (Function) s.getData(mind);
 //                t.setMind(mind);
@@ -187,6 +198,12 @@ public class FunctionFactory implements Iterable<Function> {
         FValue v = mind.getFValues().find(f);
         if (v != null) {
             mind.getFValues().delete(v);
+        }
+    }
+
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
         }
     }
 }

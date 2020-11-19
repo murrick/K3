@@ -2,6 +2,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -29,6 +30,7 @@ public class DictionaryFactory implements Iterable<Term> {
     private IStep top = null;
     //    private Cache load = new Cache();
     private Mind mind = null;
+    private IBase connection = null;
 
 //    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
 //    private Map<Long, Term> idCache = new HashMap<>();
@@ -43,6 +45,14 @@ public class DictionaryFactory implements Iterable<Term> {
     public void transaction(DictionaryFactory base) throws Exception {
 //        cache.clear();
 //        load.clear();
+        if (!mind.getUser().isClosed()) {
+//            if (mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
@@ -120,13 +130,13 @@ public class DictionaryFactory implements Iterable<Term> {
                 p = new Term(o, mind);
                 p.setId(mind.getUser().nextId(SCHEMA));
                 p.setMindId(mind.getId());
-                }
-                cache.add(p);
-                if (top == null) {
-                    top = cache.getRoot();
-                }
-                return p;
             }
+            cache.add(p);
+            if (top == null) {
+                top = cache.getRoot();
+            }
+            return p;
+        }
     }
 
 
@@ -179,8 +189,8 @@ public class DictionaryFactory implements Iterable<Term> {
 
     public Term load(long id) throws Exception {
         Term t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (Term) s.getData(mind);
 //                t.setMind(mind);
@@ -267,4 +277,9 @@ public class DictionaryFactory implements Iterable<Term> {
 //        update();
     }
 
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
+        }
+    }
 }

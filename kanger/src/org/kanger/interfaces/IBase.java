@@ -35,4 +35,6 @@ public interface IBase {
     long nextId();
 
     void flush() throws Exception;
+
+    void close() throws Exception;
 }

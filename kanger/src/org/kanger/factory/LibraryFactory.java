@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -23,6 +24,7 @@ public class LibraryFactory implements Iterable<SysOp> {
     private ICache cache;
     private IStep top = null;
     private Mind mind = null;
+    private IBase connection = null;
 
 
 //    private SysOp root = null;
@@ -36,6 +38,14 @@ public class LibraryFactory implements Iterable<SysOp> {
     }
 
     public void transaction(LibraryFactory base) throws Exception {
+        if (!mind.getUser().isClosed()) {
+//            if(mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
@@ -121,8 +131,8 @@ public class LibraryFactory implements Iterable<SysOp> {
 
     public SysOp load(long id) throws Exception {
         SysOp t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (SysOp) s.getData(mind);
 //                t.setMind(mind);
@@ -232,4 +242,9 @@ public class LibraryFactory implements Iterable<SysOp> {
         return cache.iterator();
     }
 
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
+        }
+    }
 }

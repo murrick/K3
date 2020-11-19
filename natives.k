@@ -48,16 +48,31 @@
  * 3) если женского то мать
  */
 
-!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> native(x,y);
+!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);
 // Если двое имеют общего предка, то
-// эти двое родственники.
+// эти двое родные.
 
-!@x @y ~(native(x,y), parent(x,y));
+!@x @y ~(sibling(x,y), parent(x,y));
 // Если двое имеют общего предка, то
 // эти двое не могут быть предками друг другу.
 
 !@x @y ~(parent(x,y), parent(y,x));
 // Никто не может быть предком своего предка.
+
+!@x @y sibling(x,y) -> sibling(y,x);
+// Родные симметричны
+
+!@x @y sibling(x,y) || parent(x,y) -> native(x,y);
+// Определение родственников
+
+!@x @y native(x,y) -> native(y,x);
+// Родственники симметричны
+
+!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);
+//!@x ~spouse(x,x);
+//!@x @y spouse(x,y) -> spouse(y,x);
+//!@x @y divorced(x,y) -> divorced(y,x);
+
 
 // **** База данных
 
@@ -65,6 +80,7 @@
 
 !father(John, Tom);
 !daughter(Sarah, John);
+!mother(Mary,Sarah);
 
 // Возраст
 

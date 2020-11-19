@@ -13,6 +13,7 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
@@ -80,8 +81,8 @@ public class Screen {
         }
 
         try {
-            Global.getData();
-            System.out.println("DB module loaded");
+            IData data = Global.getData();
+            System.out.println("DB module loaded: " + data.getDescription());
         } catch (RuntimeErrorException e) {
             System.err.println(e.toString());
         }

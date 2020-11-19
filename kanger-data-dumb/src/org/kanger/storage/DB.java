@@ -1,6 +1,5 @@
 package org.kanger.storage;
 
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
 
@@ -75,12 +74,28 @@ public class DB implements IData {
     }
 
     @Override
-    public IBase getBase(String context) throws IOException, RuntimeErrorException {
+    public IBase getBase(String context) throws Exception {
         if (!bases.containsKey(context)) {
-            IBase base = new Base(dbPath + context);
+            IBase base = new Base(dbPath + context, false);
             bases.put(context, base);
         }
         return bases.get(context);
+    }
+
+    @Override
+    public IBase connect(String context) throws Exception {
+        if (!isClosed()) {
+            return bases.get(context);
+//            IBase base = new Base(dbPath + context, true);
+//            return base;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String getDescription() {
+        return "DUMB data model";
     }
 
     private boolean deleteDirectory(File directoryToBeDeleted) {

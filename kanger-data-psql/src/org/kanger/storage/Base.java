@@ -313,4 +313,9 @@ public class Base implements IBase {
 
     }
 
+    @Override
+    public void close() throws Exception {
+
+    }
+
 }

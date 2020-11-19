@@ -314,4 +314,9 @@ public class Base implements IBase {
     public void flush() throws Exception {
 
     }
+
+    @Override
+    public void close() throws Exception {
+
+    }
 }

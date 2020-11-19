@@ -110,7 +110,7 @@ public class Base implements IBase {
     @Override
     public IStep get(long id) throws Exception {
         IStep step = null;
-        synchronized (locker) {
+//        synchronized (locker) {
             if (cache.containsKey(id)) {
                 timing.remove(id);
                 timing.add(id);
@@ -160,7 +160,7 @@ public class Base implements IBase {
 //        }
 //            }
 //        }
-        }
+//        }
         return step;
 
     }
@@ -336,5 +336,9 @@ public class Base implements IBase {
 
     @Override
     public void flush() throws Exception {
+    }
+
+    @Override
+    public void close() throws Exception {
     }
 }

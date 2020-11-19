@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -24,6 +25,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     private ICache cache;
     private IStep top = null;
     private Mind mind = null;
+    private IBase connection = null;
 
     public PredicateFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -31,6 +33,14 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public void transaction(PredicateFactory base) throws Exception {
+        if (!mind.getUser().isClosed()) {
+//            if(mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
         if (base != null) {
 //            lastId = base.lastId;
 //            firstId = base.lastId;
@@ -112,8 +122,8 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public Predicate load(long id) throws Exception {
         Predicate t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (Predicate) s.getData(mind);
 //                t.setMind(mind);
@@ -153,5 +163,11 @@ public class PredicateFactory implements Iterable<Predicate> {
 
     public void pack() throws IOException {
 //        update();
+    }
+
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
+        }
     }
 }

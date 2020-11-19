@@ -13,11 +13,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private static final int BLOCK_MARK = 0x10;
     private static final int BLOCK_SIZE = 1024;
 
-    private int version = Version.VERSION_CODE;
-
     private final Object locker = new Object();
+    private int version = Version.VERSION_CODE;
     private File file = null;
-    private RandomAccessFile ras = null;
+    private RandomAccessFile rasRead = null;
     private boolean changed;
     private NavigableMap<Long, IndexOne> baseIndex = new ConcurrentSkipListMap<>();
     private NavigableMap<Long, IndexOne> currentBlock = new ConcurrentSkipListMap<>();
@@ -25,10 +24,11 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private volatile int readCounter = 0;
     private volatile int writeCounter = 0;
     private int blockSize;
+    private boolean readonly = false;
 
     public Index() {
         file = null;
-        ras = null;
+        rasRead = null;
         changed = false;
         if (System.getProperties().containsKey("block.size")) {
             blockSize = Integer.parseInt(System.getProperty("block.size"));
@@ -37,63 +37,99 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    public void open(String fileName) throws IOException {
-        open(new File(fileName));
+    public void open(String fileName, boolean readonly) throws Exception {
+        open(new File(fileName), readonly);
     }
 
-    public void open(File file) throws IOException {
+    public void open(File file, boolean readonly) throws Exception {
+        this.readonly = readonly;
         this.file = file;
-        this.ras = null;
+        this.rasRead = null;
         this.baseIndex.clear();
         this.currentBlock.clear();
         changed = false;
 
         try {
-            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
-            version = ras.readShort();
-            blockSize = ras.readInt();
+            rasRead = new RandomAccessFile(file.getAbsoluteFile(), "r");
+            rasRead.seek(0);
+            version = rasRead.readShort();
+            blockSize = rasRead.readInt();
+            long top = rasRead.getFilePointer();
+
             do {
-                IndexOne one = new IndexOne().readFrom(ras);
+                IndexOne one = new IndexOne().readFrom(rasRead);
                 if (!one.isDeleted() && one.isBlockMark() && one.getSize() > 0) {
                     baseIndex.put(one.getId(), one);
-                    ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
-                } else if (ras.length() > ras.getFilePointer()) {
+                    rasRead.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
+                } else if (rasRead.length() > rasRead.getFilePointer()) {
                     if (one.isBlockMark()) {
-                        ras.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
+                        rasRead.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
                     } else {
-                        ras.seek(one.getData().get(0) + one.getSize() * Long.BYTES + one.getRecordSize());
+                        rasRead.seek(one.getData().get(0) + one.getSize() * Long.BYTES + one.getRecordSize());
                     }
                 } else {
                     break;
                 }
-            } while (ras.length() > ras.getFilePointer());
+            } while (rasRead.length() > rasRead.getFilePointer());
+
             if (baseIndex.isEmpty()) {
+//                if (readonly) {
+//                    initBaseIndex(top);
+//                } else {
+                rasRead.close();
                 clear();
-                ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
+                rasRead = new RandomAccessFile(file.getAbsoluteFile(), "r");
+//                }
             }
         } catch (FileNotFoundException ex) {
             clear();
-            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
+            rasRead = new RandomAccessFile(file.getAbsoluteFile(), "r");
         }
     }
 
     @Override
     public void close() throws IOException {
-        flush();
-        ras.close();
-        ras = null;
+        if (!readonly) {
+            try {
+                flush();
+            } catch (Exception e) {
+                throw new IOException(e.toString());
+            }
+        }
+        rasRead.close();
+        rasRead = null;
         baseIndex.clear();
         currentBlock.clear();
     }
 
-    public void flush() throws IOException {
+    public void flush() throws Exception {
         if (changed) {
             saveCurrentBlock();
             changed = false;
         }
     }
 
-    public void clear() throws IOException {
+//    private IndexOne initBaseIndex(long offset) {
+//        baseIndex.clear();
+//        currentBlock.clear();
+////        long offset = Short.BYTES + Integer.BYTES;
+//
+//        IndexOne one = new IndexOne();
+//        one.setBlockMark(true);
+//        one.setId(0);
+//        one.setSize(0);
+//        one.getData().add(offset);
+//        one.getData().add(0L);
+//        baseIndex.put(one.getId(), one);
+//        changed = true;
+//
+//        return one;
+//    }
+
+    public void clear() throws Exception {
+        if (readonly) {
+            throw new RuntimeException("Database is readonly");
+        }
         synchronized (locker) {
             String path = file.getAbsolutePath();
             path = path.substring(0, path.length() - file.getName().length());
@@ -114,12 +150,15 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 one.getData().add(0L);
                 one.writeTo(ras);
                 baseIndex.put(one.getId(), one);
-                changed = true;
+
+//                IndexOne one = initBaseIndex(ras.getFilePointer());
+//                one.writeTo(ras);
+                changed = false;
             }
         }
     }
 
-    private long getNext(long id, NavigableMap<Long, IndexOne> block) throws IOException {
+    private long getNext(long id, NavigableMap<Long, IndexOne> block) throws Exception {
         IndexOne head = getHead(id);
         loadBlock(head, block);
         Long next = block.higherKey(id);
@@ -134,7 +173,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    private long getPrevious(long id, NavigableMap<Long, IndexOne> block) throws IOException {
+    private long getPrevious(long id, NavigableMap<Long, IndexOne> block) throws Exception {
         IndexOne head = getTail(id);
         loadBlock(head, block);
         Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
@@ -157,7 +196,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             head = baseIndex.get(id);
         } else if (!baseIndex.headMap(id).isEmpty()) {
             head = baseIndex.get(baseIndex.headMap(id).lastKey());
-        } else {
+        } else if (!baseIndex.isEmpty()) {
             head = baseIndex.get(baseIndex.tailMap(id).firstKey());
         }
         return head;
@@ -171,18 +210,18 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             head = baseIndex.get(id);
         } else if (!baseIndex.tailMap(id).isEmpty()) {
             head = baseIndex.get(baseIndex.tailMap(id).firstKey());
-        } else {
+        } else if (!baseIndex.isEmpty()) {
             head = baseIndex.get(baseIndex.tailMap(id).lastKey());
         }
         return head;
     }
 
 
-    public IndexOne getOne(long id) throws IOException {
+    public IndexOne getOne(long id) throws Exception {
         return getOne(id, currentBlock);
     }
 
-    private IndexOne getOne(long id, NavigableMap<Long, IndexOne> block) throws IOException {
+    private IndexOne getOne(long id, NavigableMap<Long, IndexOne> block) throws Exception {
         if (block.containsKey(id)) {
             IndexOne io = block.get(id);
             if (io == null || io.isDeleted()) {
@@ -190,15 +229,21 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             } else {
                 return io;
             }
-        } else {
+        } else if (!currentBlock.isEmpty()) {
             IndexOne head = getHead(id);
-            loadBlock(head, block);
-            IndexOne io = block.get(id);
-            if (io == null || io.isDeleted()) {
-                return null;
+            if (head != null) {
+                loadBlock(head, block);
+                IndexOne io = block.get(id);
+                if (io == null || io.isDeleted()) {
+                    return null;
+                } else {
+                    return io;
+                }
             } else {
-                return io;
+                return null;
             }
+        } else {
+            return null;
         }
     }
 
@@ -210,7 +255,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         return size;
     }
 
-    private void saveCurrentBlock() throws IOException {
+    private void saveCurrentBlock() throws Exception {
+        if (readonly) {
+            throw new RuntimeException("Database is readonly");
+        }
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
         if (head != null) {
             synchronized (locker) {
@@ -312,7 +360,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    private void loadBlock(IndexOne head, NavigableMap<Long, IndexOne> block) throws IOException {
+    private void loadBlock(IndexOne head, NavigableMap<Long, IndexOne> block) throws Exception {
         if (block.isEmpty() || head.getId() != block.firstKey()) {
             if (block == currentBlock) {
                 flush();
@@ -320,9 +368,9 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             block.clear();
             boolean wasRead = false;
             synchronized (locker) {
-                ras.seek(head.getData().get(0) + head.getRecordSize());
+                rasRead.seek(head.getData().get(0) + head.getRecordSize());
                 for (int i = 0; i < head.getSize(); ++i) {
-                    IndexOne one = new IndexOne().readFrom(ras);
+                    IndexOne one = new IndexOne().readFrom(rasRead);
                     if (!one.isDeleted()) {
                         block.put(one.getId(), one);
                     }
@@ -339,7 +387,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     }
 
 
-    public void add(long id, long offset) throws IOException {
+    public void add(long id, long offset) throws Exception {
         IndexOne io = getOne(id, currentBlock);
         if (io == null) {
             set(id, offset);
@@ -352,13 +400,13 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    public void set(long id, long offset) throws IOException {
+    public void set(long id, long offset) throws Exception {
         List<Long> list = new ArrayList<>();
         list.add(offset);
         set(id, list);
     }
 
-    public void set(long id, List<Long> offset) throws IOException {
+    public void set(long id, List<Long> offset) throws Exception {
         IndexOne io = getOne(id, currentBlock);
         if (io == null) {
             IndexOne top = getHead(id);
@@ -384,23 +432,24 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    public void remove(long id) throws IOException {
-//        synchronized (locker) {
-        IndexOne head = getHead(id);
-        loadBlock(head, currentBlock);
-        if (currentBlock.containsKey(id)) {
-            currentBlock.remove(id);
-            head.setSize(head.getSize() - 1);
-            baseIndex.remove(head.getId());
-            head.setId(currentBlock.firstKey());
-            head.setSize(currentBlock.size());
-            baseIndex.put(head.getId(), head);
-            changed = true;
+    public void remove(long id) throws Exception {
+        synchronized (locker) {
+            IndexOne head = getHead(id);
+            loadBlock(head, currentBlock);
+            if (currentBlock.containsKey(id)) {
+                currentBlock.remove(id);
+                head.setSize(head.getSize() - 1);
+                baseIndex.remove(head.getId());
+                head.setId(currentBlock.firstKey());
+                head.setSize(currentBlock.size());
+                baseIndex.put(head.getId(), head);
+                changed = true;
+            }
         }
     }
 
     public boolean isClosed() {
-        return ras == null;
+        return rasRead == null;
     }
 
     public int getVersion() {
@@ -457,14 +506,18 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-    public long lastKey() throws IOException {
+    public long lastKey() throws Exception {
         if (baseIndex.lastKey() != null) {
             if (!currentBlock.isEmpty() && baseIndex.lastKey() == currentBlock.firstKey()) {
                 return currentBlock.lastKey();
             } else {
                 NavigableMap<Long, IndexOne> block = new TreeMap<>();
                 loadBlock(baseIndex.lastEntry().getValue(), block);
+//                if(block.lastEntry() != null && block.lastEntry().getValue().getSize() != 0) {
                 return block.lastKey();
+//                } else {
+//                    return -1;
+//                }
             }
         } else {
             return -1;
@@ -475,7 +528,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     public Iterator<IndexOne> iterator() {
         try {
             return new IndexIterator();
-        } catch (IOException e) {
+        } catch (Exception e) {
             return null;
         }
     }
@@ -483,7 +536,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     public Iterator<IndexOne> iterator(boolean backward) {
         try {
             return new IndexIterator(backward);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return null;
         }
     }
@@ -591,14 +644,14 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         private long blockId = 0;
         private boolean backward = false;
 
-        public IndexIterator() throws IOException {
+        public IndexIterator() throws Exception {
             flush();
             currentId = -1;
             blockId = backward ? baseIndex.lastKey() : baseIndex.firstKey();
             loadBlock(baseIndex.get(blockId), block);
         }
 
-        public IndexIterator(boolean backward) throws IOException {
+        public IndexIterator(boolean backward) throws Exception {
             this();
             this.backward = backward;
         }
@@ -619,7 +672,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 } else {
                     return getNext(currentId, block) != -1;
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return false;
             }
         }
@@ -637,7 +690,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 } else {
                     return null;
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return null;
             }
         }

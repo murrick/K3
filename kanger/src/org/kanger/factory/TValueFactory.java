@@ -1,10 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IReactor;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.*;
 import org.kanger.storage.Escalera;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -29,6 +26,7 @@ public class TValueFactory implements Iterable<TValue> {
     private ICache cache;
     private IStep top = null;
     private Mind mind = null;
+    private IBase connection = null;
 
     private transient boolean action = false;
 
@@ -39,6 +37,14 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
     public void transaction(TValueFactory base) throws Exception {
+        if (!mind.getUser().isClosed()) {
+//            if(mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
         current.clear();
         if (base != null) {
 //            lastId = base.lastId;
@@ -154,8 +160,8 @@ public class TValueFactory implements Iterable<TValue> {
 
     public TValue load(long id) throws Exception {
         TValue t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (TValue) s.getData(mind);
 //                t.setMind(mind);
@@ -368,4 +374,10 @@ public class TValueFactory implements Iterable<TValue> {
 //    }
 //
 
+
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
+        }
+    }
 }

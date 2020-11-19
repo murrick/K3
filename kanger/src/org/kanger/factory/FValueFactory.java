@@ -1,6 +1,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
@@ -22,6 +23,7 @@ public class FValueFactory implements Iterable<FValue> {
     private ICache cache;
     private IStep top = null;
     private Mind mind = null;
+    private IBase connection = null;
 
     private transient boolean action = false;
 
@@ -31,6 +33,15 @@ public class FValueFactory implements Iterable<FValue> {
     }
 
     public void transaction(FValueFactory base) throws Exception {
+        if (!mind.getUser().isClosed()) {
+//            if(mind.getNext() == null) {
+            connection = mind.getUser().getStorage(SCHEMA);
+//            } else {
+//                connection = mind.getUser().connect(SCHEMA);
+//            }
+        }
+
+
 //        cache.clear();
         if (base != null) {
 //            lastId = base.lastId;
@@ -117,8 +128,8 @@ public class FValueFactory implements Iterable<FValue> {
 
     public FValue load(long id) throws Exception {
         FValue t = get(id);
-        if (t == null && !mind.getUser().isClosed()) {
-            IStep s = mind.getUser().getStorage(SCHEMA).get(id);
+        if (t == null && connection != null) {
+            IStep s = connection.get(id);
             if (s != null) {
                 t = (FValue) s.getData(mind);
 //                t.setMind(mind);
@@ -207,5 +218,11 @@ public class FValueFactory implements Iterable<FValue> {
     @Override
     public Iterator iterator() {
         return cache.iterator();
+    }
+
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
+        }
     }
 }

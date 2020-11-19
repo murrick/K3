@@ -120,4 +120,14 @@ public class DB implements IData {
         }
     }
 
+    @Override
+    public IBase connect(String context) throws Exception {
+        return getBase(context);
+    }
+
+    @Override
+    public String getDescription() {
+        return "JDBM Based data model";
+    }
+
 }

@@ -78,6 +78,14 @@ public class User implements IUser {
         return storage.get(schema);
     }
 
+    public IBase connect(String schema) throws Exception {
+        if (data != null && !data.isClosed()) {
+            return data.connect(schema);
+        } else {
+            return null;
+        }
+    }
+
     public void clear(Mind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {

@@ -11,12 +11,13 @@ import java.util.List;
 
 public class Base implements IBase, Iterable<IStep> {
 
-    private static long MAX_CACHE_SIZE = 1; //1024L * 1024L;
+//    private static long MAX_CACHE_SIZE = 1024L * 1024L;
 
     private Index index = null;
     private Index hash = null;
     private Data data = null;
     private final Object locker = new Object();
+    private boolean readonly = false;
 
     private String name = "";
     //    private final Map<Long, IStep> cache = new HashMap<>();
@@ -24,17 +25,18 @@ public class Base implements IBase, Iterable<IStep> {
 //    private volatile long cacheSize = 0L;
     private long lastId = -1;
 
-    public Base(String name) throws IOException {
+    public Base(String name, boolean readonly) throws Exception {
         this.name = name;
+        this.readonly = readonly;
 
         index = new Index();
-        index.open(name + ".index");
+        index.open(name + ".index", readonly);
 
         hash = new Index();
-        hash.open(name + ".hash");
+        hash.open(name + ".hash", readonly);
 
         data = new Data(this);
-        data.open(name + ".data");
+        data.open(name + ".data", readonly);
 
         IStep root = getRoot();
         if (root != null) {
@@ -45,6 +47,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     }
 
+    @Override
     public void close() throws IOException {
         if (index != null && !index.isClosed()) {
             index.close();
@@ -113,32 +116,32 @@ public class Base implements IBase, Iterable<IStep> {
 //            }
 //        }
 
-        synchronized (locker) {
-            Index.IndexOne x = index.getOne(id);
-            if (x != null) {
-                IStep one = data.get(x.getData().get(0));
-                if (one != null) {
+//        synchronized (locker) {
+        Index.IndexOne x = index.getOne(id);
+        if (x != null) {
+            IStep one = data.get(x.getData().get(0));
+            if (one != null) {
 //                one.setSize(data.getDataSize());
 
-//                synchronized (cache) {
-//                    if (!cache.containsKey(id)) {
-//                        cache.put(id, one);
-//                        timing.add(id);
-//                        cacheSize += one.getSize();
-//                        while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
-//                            long topId = timing.poll();
-//                            IStep top = cache.remove(topId);
-//                            cacheSize -= top.getSize();
+//                    synchronized (cache) {
+//                        if (!cache.containsKey(id)) {
+//                            cache.put(id, one);
+//                            timing.add(id);
+//                            cacheSize += one.getSize();
+//                            while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
+//                                long topId = timing.poll();
+//                                IStep top = cache.remove(topId);
+//                                cacheSize -= top.getSize();
+//                            }
 //                        }
 //                    }
-//                }
-                }
-
-                return one;
-            } else {
-                return null;
             }
+
+            return one;
+        } else {
+            return null;
         }
+//        }
     }
 
     public List<IStep> find(long h) {
@@ -163,7 +166,7 @@ public class Base implements IBase, Iterable<IStep> {
         return index.firstKey();
     }
 
-    public long lastKey() throws IOException {
+    public long lastKey() throws Exception {
         return index.lastKey();
     }
 
@@ -190,7 +193,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     @Override
-    public boolean containsKey(long id) throws IOException {
+    public boolean containsKey(long id) throws Exception {
         return index.getOne(id) != null;
     }
 
@@ -230,7 +233,7 @@ public class Base implements IBase, Iterable<IStep> {
                     + data.getFile().length();
             File tempFile = new File(name + ".data.temp");
             Data tempData = new Data(this);
-            tempData.open(tempFile);
+            tempData.open(tempFile, false);
 
             index.clear();
             hash.clear();
@@ -247,7 +250,7 @@ public class Base implements IBase, Iterable<IStep> {
             data.close();
             data.getFile().getAbsoluteFile().delete();
             tempFile.renameTo(data.getFile().getAbsoluteFile());
-            data.open(data.getFile());
+            data.open(data.getFile(), false);
             flush();
 
             return index.getFile().length()
@@ -290,8 +293,10 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void delete(long id) throws Exception {
-//        cache.remove(id);
-//        timing.remove(id);
+//        synchronized (cache) {
+//            cache.remove(id);
+//            timing.remove(id);
+//        }
         synchronized (locker) {
             Index.IndexOne current = index.getOne(id);
             if (current != null) {
@@ -320,7 +325,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public long getMaxCacheSize() {
-        return MAX_CACHE_SIZE;
+        return 0; //MAX_CACHE_SIZE;
     }
 
     @Override

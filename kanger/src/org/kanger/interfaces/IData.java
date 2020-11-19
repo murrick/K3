@@ -16,4 +16,8 @@ public interface IData {
     String getStorageName();
 
     IBase getBase(String context) throws Exception;
+
+    IBase connect(String context) throws Exception;
+
+    String getDescription();
 }
