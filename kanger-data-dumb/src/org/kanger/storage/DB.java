@@ -5,14 +5,17 @@ import org.kanger.interfaces.IData;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DB implements IData {
 
     String dbPath = "";
+    private static final Object locker = new Object();
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<>();
+    String dbName = "";
 
     @Override
     public void init() {
@@ -32,6 +35,7 @@ public class DB implements IData {
         if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
             dbPath += File.separatorChar;
         }
+        dbName = dbPath + name;
         dbPath += name + File.separatorChar;
         storageName = name;
 
@@ -54,12 +58,41 @@ public class DB implements IData {
         }
     }
 
-    @Override
-    public void remove() throws IOException {
+//    @Override
+//    public void remove() throws IOException {
+//        if (!isClosed()) {
+//            String tmp = dbPath;
+//            close();
+//            deleteDirectory(new File(tmp));
+//        }
+//    }
+
+    public void remove() throws Exception {
         if (!isClosed()) {
-            String tmp = dbPath;
+
+            String tmp = storageName;
             close();
-            deleteDirectory(new File(tmp));
+
+            String dbPath = System.getProperty("database.dir");
+            if (dbPath == null || dbPath.isEmpty()) {
+                dbPath = System.getProperty("user.dir");
+            }
+            if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
+                dbPath += File.separatorChar;
+            }
+            dbPath += tmp;
+            String name = Paths.get(dbPath).getFileName().toString();
+            dbPath = dbPath.substring(0, dbPath.length() - name.length());
+
+
+            File[] allContents = new File(dbPath).listFiles();
+            if (allContents != null) {
+                for (File file : allContents) {
+                    if (file.getName().startsWith(name)) {
+                        file.delete();
+                    }
+                }
+            }
         }
     }
 
@@ -76,7 +109,7 @@ public class DB implements IData {
     @Override
     public IBase getBase(String context) throws Exception {
         if (!bases.containsKey(context)) {
-            IBase base = new Base(dbPath + context, false);
+            IBase base = new Base(/*dbPath + context*/dbName, bases.size() + 1, locker, false);
             bases.put(context, base);
         }
         return bases.get(context);

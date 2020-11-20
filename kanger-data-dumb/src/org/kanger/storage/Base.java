@@ -13,7 +13,6 @@ public class Base implements IBase, Iterable<IStep> {
     private Index index = null;
     private Data data = null;
     private final Object locker = new Object();
-    private boolean readonly = false;
 
     private String name = "";
     private final Map<Long, IStep> cache = new HashMap<>();
@@ -21,11 +20,14 @@ public class Base implements IBase, Iterable<IStep> {
     private volatile long cacheSize = 0L;
     private long lastId = -1;
 
-    public Base(String name, boolean readonly) throws Exception {
+    public Base(String name, int baseCode, Object locker, boolean readonly) throws Exception {
         this.name = name;
-        this.readonly = readonly;
 
-        index = new Index();
+        if (System.getProperties().containsKey("cache.size")) {
+            MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
+        }
+
+        index = new Index(baseCode, locker);
         index.open(name + ".index", readonly);
 
         data = new Data(this);
@@ -110,10 +112,10 @@ public class Base implements IBase, Iterable<IStep> {
                     }
                 }
 
-            return one;
-        } else {
-            return null;
-        }
+                return one;
+            } else {
+                return null;
+            }
         }
     }
 
@@ -129,12 +131,14 @@ public class Base implements IBase, Iterable<IStep> {
     @Override
     public void clear() throws Exception {
         synchronized (locker) {
-            data.clear();
-            index.clear();
-            flush();
+            if (!index.isEmpty()) {
+                data.clear();
+                index.clear();
+                flush();
 
-            clearCache();
-            lastId = 0;
+                clearCache();
+                lastId = 0;
+            }
         }
     }
 
@@ -235,8 +239,11 @@ public class Base implements IBase, Iterable<IStep> {
     @Override
     public void delete(long id) throws Exception {
         synchronized (cache) {
-            cache.remove(id);
-            timing.remove(id);
+            if (cache.containsKey(id)) {
+                timing.remove(id);
+                IStep top = cache.remove(id);
+                cacheSize -= top.getSize();
+            }
         }
         synchronized (locker) {
             Index.IndexOne current = index.getOne(id);
