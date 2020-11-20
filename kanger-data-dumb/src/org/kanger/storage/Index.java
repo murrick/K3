@@ -1,30 +1,34 @@
 package org.kanger.storage;
 
 
-import org.kanger.Version;
+import org.kanger.exception.DatabaseErrorException;
+import org.kanger.exception.OutOfBufferException;
 
 import java.io.*;
-import java.util.*;
+import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class Index implements Closeable, Iterable<Index.IndexOne> {
 
-    private static final int DELETED = 0x01;
-    private static final int BLOCK_MARK = 0x10;
     private static final int BLOCK_SIZE = 1024;
-
+    private static final int VERSION_CODE = 0x0101;
     private final Object locker = new Object();
-    private int version = Version.VERSION_CODE;
+
     private File file = null;
     private RandomAccessFile rasRead = null;
-    private boolean changed;
+    private int version = VERSION_CODE;
+
     private NavigableMap<Long, IndexOne> baseIndex = new ConcurrentSkipListMap<>();
     private NavigableMap<Long, IndexOne> currentBlock = new ConcurrentSkipListMap<>();
 
     private volatile int readCounter = 0;
     private volatile int writeCounter = 0;
-    private int blockSize;
+
     private boolean readonly = false;
+    private int blockSize = BLOCK_SIZE;
+    private boolean changed = false;
 
     public Index() {
         file = null;
@@ -50,36 +54,26 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         changed = false;
 
         try {
-            rasRead = new RandomAccessFile(file.getAbsoluteFile(), "r");
-            rasRead.seek(0);
-            version = rasRead.readShort();
-            blockSize = rasRead.readInt();
-            long top = rasRead.getFilePointer();
-
-            do {
-                IndexOne one = new IndexOne().readFrom(rasRead);
-                if (!one.isDeleted() && one.isBlockMark() && one.getSize() > 0) {
-                    baseIndex.put(one.getId(), one);
-                    rasRead.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
-                } else if (rasRead.length() > rasRead.getFilePointer()) {
-                    if (one.isBlockMark()) {
-                        rasRead.seek(one.getData().get(0) + one.getData().get(1) + one.getRecordSize());
-                    } else {
-                        rasRead.seek(one.getData().get(0) + one.getSize() * Long.BYTES + one.getRecordSize());
-                    }
-                } else {
-                    break;
-                }
-            } while (rasRead.length() > rasRead.getFilePointer());
-
-            if (baseIndex.isEmpty()) {
-//                if (readonly) {
-//                    initBaseIndex(top);
-//                } else {
-                rasRead.close();
-                clear();
+            synchronized (locker) {
                 rasRead = new RandomAccessFile(file.getAbsoluteFile(), "r");
-//                }
+                rasRead.seek(0);
+                version = rasRead.readShort();
+
+                if (version != VERSION_CODE) {
+                    throw new DatabaseErrorException("Incompatible DB version");
+                }
+
+                blockSize = rasRead.readInt();
+
+                while (rasRead.length() > rasRead.getFilePointer()) {
+                    IndexOne one = new IndexOne().readFrom(rasRead);
+                    baseIndex.put(one.getId(), one);
+                    rasRead.seek(rasRead.getFilePointer() + (blockSize - 1) * IndexOne.RECORD_SIZE);
+                }
+
+                if (!baseIndex.isEmpty()) {
+                    loadBlock(baseIndex.firstEntry().getValue(), currentBlock);
+                }
             }
         } catch (FileNotFoundException ex) {
             clear();
@@ -109,26 +103,9 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-//    private IndexOne initBaseIndex(long offset) {
-//        baseIndex.clear();
-//        currentBlock.clear();
-////        long offset = Short.BYTES + Integer.BYTES;
-//
-//        IndexOne one = new IndexOne();
-//        one.setBlockMark(true);
-//        one.setId(0);
-//        one.setSize(0);
-//        one.getData().add(offset);
-//        one.getData().add(0L);
-//        baseIndex.put(one.getId(), one);
-//        changed = true;
-//
-//        return one;
-//    }
-
     public void clear() throws Exception {
         if (readonly) {
-            throw new RuntimeException("Database is readonly");
+            throw new DatabaseErrorException("Database is readonly");
         }
         synchronized (locker) {
             String path = file.getAbsolutePath();
@@ -141,18 +118,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 ras.setLength(0);
                 ras.writeShort(version);
                 ras.writeInt(blockSize);
-
-                IndexOne one = new IndexOne();
-                one.setBlockMark(true);
-                one.setId(0);
-                one.setSize(0);
-                one.getData().add(ras.getFilePointer());
-                one.getData().add(0L);
-                one.writeTo(ras);
-                baseIndex.put(one.getId(), one);
-
-//                IndexOne one = initBaseIndex(ras.getFilePointer());
-//                one.writeTo(ras);
                 changed = false;
             }
         }
@@ -160,14 +125,18 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     private long getNext(long id, NavigableMap<Long, IndexOne> block) throws Exception {
         IndexOne head = getHead(id);
-        loadBlock(head, block);
-        Long next = block.higherKey(id);
-        if (next != null) {
-            return next;
-        } else if (baseIndex.higherKey(head.getId()) != null) {
-            head = baseIndex.higherEntry(head.getId()).getValue();
+        if (head != null) {
             loadBlock(head, block);
-            return block.firstKey();
+            Long next = block.higherKey(id);
+            if (next != null) {
+                return next;
+            } else if (baseIndex.higherKey(head.getId()) != null) {
+                head = baseIndex.higherEntry(head.getId()).getValue();
+                loadBlock(head, block);
+                return block.firstKey();
+            } else {
+                return -1;
+            }
         } else {
             return -1;
         }
@@ -175,14 +144,18 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     private long getPrevious(long id, NavigableMap<Long, IndexOne> block) throws Exception {
         IndexOne head = getTail(id);
-        loadBlock(head, block);
-        Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
-        if (next != null) {
-            return next;
-        } else if (baseIndex.lowerKey(head.getId()) != null) {
-            head = baseIndex.lowerEntry(head.getId()).getValue();
+        if (head != null) {
             loadBlock(head, block);
-            return block.lastKey();
+            Long next = id == -1 ? block.lastKey() : block.lowerKey(id);
+            if (next != null) {
+                return next;
+            } else if (baseIndex.lowerKey(head.getId()) != null) {
+                head = baseIndex.lowerEntry(head.getId()).getValue();
+                loadBlock(head, block);
+                return block.lastKey();
+            } else {
+                return -1;
+            }
         } else {
             return -1;
         }
@@ -221,137 +194,117 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         return getOne(id, currentBlock);
     }
 
-    private IndexOne getOne(long id, NavigableMap<Long, IndexOne> block) throws Exception {
-        if (block.containsKey(id)) {
-            IndexOne io = block.get(id);
-            if (io == null || io.isDeleted()) {
-                return null;
-            } else {
+    private IndexOne getOne(long id, NavigableMap<Long, IndexOne> currentBlock) throws Exception {
+        if (currentBlock.containsKey(id)) {
+            IndexOne io = currentBlock.get(id);
+            if (!io.isDeleted()) {
                 return io;
             }
-        } else if (!currentBlock.isEmpty()) {
+        } else {
             IndexOne head = getHead(id);
             if (head != null) {
-                loadBlock(head, block);
-                IndexOne io = block.get(id);
-                if (io == null || io.isDeleted()) {
-                    return null;
-                } else {
-                    return io;
+                loadBlock(head, currentBlock);
+                if (currentBlock.containsKey(id)) {
+                    IndexOne io = currentBlock.get(id);
+                    if (!io.isDeleted()) {
+                        return io;
+                    }
                 }
-            } else {
-                return null;
             }
-        } else {
-            return null;
         }
+        return null;
     }
 
-    private int getBlockLength(Collection<IndexOne> block) {
-        int size = 0;
-        for (IndexOne one : block) {
-            size += one.getRecordSize();
-        }
-        return size;
-    }
+//    private int getBlockLength(Collection<IndexOne> block) {
+//        int size = 0;
+//        for (IndexOne one : block) {
+//            size += one.getRecordSize();
+//        }
+//        return size;
+//    }
 
     private void saveCurrentBlock() throws Exception {
         if (readonly) {
-            throw new RuntimeException("Database is readonly");
+            throw new DatabaseErrorException("Database is readonly");
         }
+
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
         if (head != null) {
             synchronized (locker) {
                 try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
-                    boolean isLast = head.getData().get(1) == 0 || head.getData().get(0) + head.getRecordSize() + head.getData().get(1) >= ras.length();
-                    long blockLength = head.getData().get(1);
-                    if (currentBlock.size() > blockSize || (!isLast && blockLength > 0 && blockLength < getBlockLength(currentBlock.values()))) {
+                    if (head.isDeleted()) {
+                        currentBlock.clear();
+                        ras.seek(head.getOffset());
+                        for (int i = 0; i < blockSize; ++i) {
+                            new IndexOne()
+                                    .setDeleted(true)
+                                    .writeTo(ras);
+                        }
+                        baseIndex.remove(head.getId());
+                    } else if (currentBlock.size() > blockSize) {
                         TreeMap<Long, IndexOne> blockOne = new TreeMap<>();
                         TreeMap<Long, IndexOne> blockTwo = new TreeMap<>();
                         int current = 0;
-                        if (blockLength == 0) {
-                            blockLength = getBlockLength(currentBlock.values());
-                            head.getData().remove(1);
-                            head.getData().add(blockLength);
-                        }
                         for (IndexOne one : currentBlock.values()) {
-                            if (current < blockLength / 2) {
+                            if (current < currentBlock.size() / 2) {
                                 blockOne.put(one.getId(), one);
                             } else {
                                 blockTwo.put(one.getId(), one);
                             }
-                            current += one.getRecordSize();
-                        }
-                        while (getBlockLength(blockOne.values()) > blockLength) {
-                            IndexOne one = blockOne.lastEntry().getValue();
-                            blockOne.remove(one.getId());
-                            blockTwo.put(one.getId(), one);
+                            ++current;
                         }
 
-//                    head.getData().remove(1);
-//                    head.getData().add(blockLength);
-                        if (blockOne.size() > 0) {
-                            head.setSize(blockOne.size());
-                            head.setId(blockOne.firstKey());
-                            ras.seek(head.getData().get(0));
-                            head.writeTo(ras);
+                        if (!blockOne.isEmpty()) {
+                            ras.seek(head.getOffset());
                             for (IndexOne io : blockOne.values()) {
                                 io.writeTo(ras);
                             }
-                            if (blockLength > getBlockLength(blockOne.values())) {
-                                byte[] temp = new byte[(int) (blockLength - getBlockLength(blockOne.values()))];
-                                ras.write(temp);
+                            for (int i = 0; i < blockSize - blockOne.size(); ++i) {
+                                new IndexOne()
+                                        .setDeleted(true)
+                                        .writeTo(ras);
                             }
                             currentBlock.clear();
                             currentBlock.putAll(blockOne);
                         } else {
                             currentBlock.clear();
-                            head.setDeleted(true);
-                            head.setSize(0);
-                            ras.seek(head.getData().get(0));
-                            head.writeTo(ras);
+                            ras.seek(head.getOffset());
+                            for (int i = 0; i < blockSize; ++i) {
+                                new IndexOne()
+                                        .setDeleted(true)
+                                        .writeTo(ras);
+                            }
                             baseIndex.remove(head.getId());
                         }
 
-                        ras.seek(ras.length());
-                        if (blockLength < getBlockLength(blockTwo.values())) {
-                            blockLength = getBlockLength(blockTwo.values());
-                        }
-                        IndexOne tail = new IndexOne();
-                        tail.getData().add(ras.getFilePointer());
-                        tail.getData().add(blockLength);
-                        tail.setBlockMark(true);
-                        tail.setId(blockTwo.firstKey());
-                        tail.setSize(blockTwo.size());
-                        baseIndex.put(tail.getId(), tail);
+                        if (!blockTwo.isEmpty()) {
 
-                        tail.writeTo(ras);
-                        for (IndexOne io : blockTwo.values()) {
-                            io.writeTo(ras);
-                        }
-                        if (blockLength > getBlockLength(blockTwo.values())) {
-                            byte[] temp = new byte[(int) (blockLength - getBlockLength(blockTwo.values()))];
-                            ras.write(temp);
-                        }
-                        if (currentBlock.isEmpty()) {
-                            currentBlock.putAll(blockTwo);
+                            ras.seek(ras.length());
+                            for (IndexOne io : blockTwo.values()) {
+                                io.writeTo(ras);
+                            }
+                            IndexOne tail = blockTwo.firstEntry().getValue();
+                            baseIndex.put(tail.getId(), tail);
+
+                            for (int i = 0; i < blockSize - blockTwo.size(); ++i) {
+                                new IndexOne()
+                                        .setDeleted(true)
+                                        .writeTo(ras);
+                            }
+                            if (currentBlock.isEmpty()) {
+                                currentBlock.putAll(blockTwo);
+                            }
                         }
 
                     } else {
-                        if (blockLength == 0 || (isLast && blockLength < getBlockLength(currentBlock.values()))) {
-                            blockLength = getBlockLength(currentBlock.values());
-                        }
-                        head.getData().remove(1);
-                        head.getData().add(blockLength);
-                        head.setSize(currentBlock.size());
-                        ras.seek(head.getData().get(0));
-                        head.writeTo(ras);
+                        ras.seek(head.getOffset());
                         for (IndexOne io : currentBlock.values()) {
                             io.writeTo(ras);
                         }
-                        if (blockLength > getBlockLength(currentBlock.values())) {
-                            byte[] temp = new byte[(int) (blockLength - getBlockLength(currentBlock.values()))];
-                            ras.write(temp);
+                        for (int i = 0; i < blockSize - currentBlock.size(); ++i) {
+                            new IndexOne()
+                                    .setDeleted(true)
+                                    .writeTo(ras);
                         }
                     }
                     ++writeCounter;
@@ -368,17 +321,16 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             block.clear();
             boolean wasRead = false;
             synchronized (locker) {
-                rasRead.seek(head.getData().get(0) + head.getRecordSize());
-                for (int i = 0; i < head.getSize(); ++i) {
+                rasRead.seek(head.getOffset());
+                for (int i = 0; i < blockSize; ++i) {
                     IndexOne one = new IndexOne().readFrom(rasRead);
+                    wasRead = true;
                     if (!one.isDeleted()) {
                         block.put(one.getId(), one);
+                    } else {
+                        break;
                     }
-                    wasRead = true;
                 }
-            }
-            if (head.getSize() != block.size()) {
-                head.setSize(block.size());
             }
             if (wasRead) {
                 ++readCounter;
@@ -387,66 +339,70 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     }
 
 
-    public void add(long id, long offset) throws Exception {
-        IndexOne io = getOne(id, currentBlock);
-        if (io == null) {
-            set(id, offset);
-        } else if (!io.getData().contains(offset)) {
-            if (!io.getData().contains(offset)) {
-                io.getData().add(offset);
-                io.setSize(io.getData().size());
+//    public void add(long id, long data) throws Exception {
+//        IndexOne io = getOne(id, currentBlock);
+//        if (io == null) {
+//            set(id, data);
+//        } else if (io.getLong() != data) {
+//            io.setLong(data);
+//            changed = true;
+//        }
+//    }
+
+    public IndexOne set(long id, long data) throws Exception {
+        synchronized (locker) {
+            IndexOne io = getOne(id, currentBlock);
+            if (io == null) {
+
+                io = new IndexOne();
+                io.setId(id);
+                io.setLong(data);
+
+                IndexOne top = getHead(id);
+                if (top != null) {
+                    loadBlock(top, currentBlock);
+                    baseIndex.remove(top.getId());
+                    currentBlock.put(io.getId(), io);
+                    currentBlock.firstEntry().getValue().setOffset(top.getOffset());
+                    top = currentBlock.firstEntry().getValue();
+                    baseIndex.put(top.getId(), top);
+                } else {
+                    currentBlock.clear();
+                    currentBlock.put(io.getId(), io);
+                    io.setOffset(rasRead.length());
+                    baseIndex.put(io.getId(), io);
+                }
+                changed = true;
+                if (currentBlock.size() > blockSize) {
+                    flush();
+                }
+            } else if (io.getLong() != data) {
+                io.setLong(data);
                 changed = true;
             }
-        }
-    }
-
-    public void set(long id, long offset) throws Exception {
-        List<Long> list = new ArrayList<>();
-        list.add(offset);
-        set(id, list);
-    }
-
-    public void set(long id, List<Long> offset) throws Exception {
-        IndexOne io = getOne(id, currentBlock);
-        if (io == null) {
-            IndexOne top = getHead(id);
-            loadBlock(top, currentBlock);
-            io = new IndexOne();
-            io.setId(id);
-            io.getData().addAll(offset);
-            io.setSize(offset.size());
-            currentBlock.put(io.getId(), io);
-            baseIndex.remove(top.getId());
-            top.setId(currentBlock.firstKey());
-            top.setSize(currentBlock.size());
-            baseIndex.put(top.getId(), top);
-            changed = true;
-            if (currentBlock.size() > blockSize) {
-                flush();
-            }
-        } else if (!io.getData().equals(offset)) {
-            io.getData().clear();
-            io.getData().addAll(offset);
-            io.setSize(offset.size());
-            changed = true;
+            return io;
         }
     }
 
     public void remove(long id) throws Exception {
         synchronized (locker) {
             IndexOne head = getHead(id);
-            loadBlock(head, currentBlock);
-            if (currentBlock.containsKey(id)) {
+            if (head != null) {
+                loadBlock(head, currentBlock);
                 currentBlock.remove(id);
-                head.setSize(head.getSize() - 1);
-                baseIndex.remove(head.getId());
-                head.setId(currentBlock.firstKey());
-                head.setSize(currentBlock.size());
-                baseIndex.put(head.getId(), head);
+                if (!currentBlock.isEmpty()) {
+                    baseIndex.remove(head.getId());
+                    currentBlock.firstEntry().getValue().setOffset(head.getOffset());
+                    head = currentBlock.firstEntry().getValue();
+                    baseIndex.put(head.getId(), head);
+                } else {
+                    head.setDeleted(true);
+                }
                 changed = true;
             }
         }
     }
+
 
     public boolean isClosed() {
         return rasRead == null;
@@ -488,15 +444,17 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         writeCounter = 0;
     }
 
-    public int size() {
-        int size = 0;
-        if (!isClosed()) {
-            for (IndexOne one : baseIndex.values()) {
-                size += one.getSize();
-            }
-        }
-        return size;
-    }
+//    public int size() throws Exception {
+//        int size = 0;
+//        if (!isClosed()) {
+//            NavigableMap<Long, Index.IndexOne> block = new TreeMap<>();
+//            for (IndexOne one : baseIndex.values()) {
+//                loadBlock(one, block);
+//                size += block.size();
+//            }
+//        }
+//        return size;
+//    }
 
     public long firstKey() {
         if (baseIndex.firstKey() != null) {
@@ -541,94 +499,120 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
+    public boolean isEmpty() {
+        return baseIndex.isEmpty();
+    }
+
     public class IndexOne {
+        public static final int RECORD_SIZE = Byte.BYTES + Long.BYTES + Long.BYTES;
+        private static final int DELETED = 0x01;
+        private static final int REFERENCE = 0x02;
+        private static final int BLOCK_MARK = 0x10;
+
+
         private byte flags = 0;
         private long id = -1;
-        private int size = 0;
-        private List<Long> data = new ArrayList<>();
+        private byte[] data = null;
+
+        private long offset = -1;
+
 
         public long getId() {
             return id;
         }
 
-        public void setId(long id) {
+        public IndexOne setId(long id) {
             this.id = id;
+            return this;
         }
 
-        public byte getFlags() {
-            return flags;
-        }
-
-        public void setFlags(byte flags) {
-            this.flags = flags;
-        }
-
-        public int getSize() {
-            return size;
-        }
-
-        public void setSize(int size) {
-            this.size = size;
-        }
-
-        public List<Long> getData() {
+        public byte[] getBytes() {
             return data;
         }
 
-        public void setData(List<Long> data) {
+        public IndexOne setBytes(byte[] data) {
             this.data = data;
+            return this;
+        }
+
+        public long getLong() throws OutOfBufferException {
+            return new ByteBuffer(data).getLong();
+        }
+
+        public IndexOne setLong(long data) {
+            this.data = new ByteBuffer().putLong(data).getBuffer();
+            return this;
+        }
+
+        public long getOffset() {
+            return offset;
+        }
+
+        public IndexOne setOffset(long offset) {
+            this.offset = offset;
+            return this;
         }
 
         public boolean isDeleted() {
             return (flags & DELETED) != 0;
         }
 
-        public void setDeleted(boolean on) {
+        public IndexOne setDeleted(boolean on) {
             if (on) {
                 flags |= DELETED;
             } else {
                 flags &= ~DELETED;
             }
+            return this;
         }
+
+        public boolean isReference() {
+            return (flags & REFERENCE) != 0;
+        }
+
+        public IndexOne setReference(boolean on) {
+            if (on) {
+                flags |= REFERENCE;
+            } else {
+                flags &= ~REFERENCE;
+            }
+            return this;
+        }
+
 
         public boolean isBlockMark() {
             return (flags & BLOCK_MARK) != 0;
         }
 
-        public void setBlockMark(boolean on) {
+        public IndexOne setBlockMark(boolean on) {
             if (on) {
                 flags |= BLOCK_MARK;
             } else {
                 flags &= ~BLOCK_MARK;
             }
-        }
-
-        public void writeTo(RandomAccessFile out) throws IOException {
-            out.writeByte(flags);
-            out.writeInt(size);
-            out.writeLong(id);
-            for (long x : data) {
-                out.writeLong(x);
-            }
-        }
-
-        public IndexOne readFrom(RandomAccessFile in) throws IOException {
-            flags = in.readByte();
-            size = in.readInt();
-            id = in.readLong();
-            int cnt = isBlockMark() ? 2 : size;
-            data.clear();
-            while (cnt-- > 0) {
-                data.add(in.readLong());
-            }
             return this;
         }
 
-        public int getRecordSize() {
-            return Byte.BYTES
-                    + Integer.BYTES
-                    + Long.BYTES
-                    + Long.BYTES * data.size();
+        public IndexOne writeTo(RandomAccessFile out) throws IOException {
+            if (data == null) {
+                data = new byte[Long.BYTES];
+            }
+            offset = out.getFilePointer();
+            out.writeByte(flags);
+            out.writeLong(id);
+            out.write(data, 0, Long.BYTES);
+            return this;
+        }
+
+        public IndexOne readFrom(RandomAccessFile in) throws IOException {
+            if (data == null) {
+                data = new byte[Long.BYTES];
+            }
+            offset = in.getFilePointer();
+            flags = in.readByte();
+            id = in.readLong();
+            in.read(data, 0, Long.BYTES);
+            return this;
         }
 
         public String toString() {
@@ -658,15 +642,14 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         @Override
         public void remove() {
-
         }
 
         @Override
         public boolean hasNext() {
             try {
-                if (size() == 0) {
-                    return false;
-                }
+//            if (size() == 0) {
+//                return false;
+//            }
                 if (backward) {
                     return getPrevious(currentId, block) != -1;
                 } else {

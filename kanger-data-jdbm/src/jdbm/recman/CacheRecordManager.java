@@ -86,7 +86,7 @@ public class CacheRecordManager
      * using a given cache policy.
      *
      * @param recman Wrapped RecordManager
-     * @param cache  Cache policy
+    //     * @param cache  Cache policy
      */
     public CacheRecordManager(RecordManager recman, int maxRecords, boolean softCache) {
         if (recman == null) {
@@ -512,7 +512,7 @@ public class CacheRecordManager
             } catch (Throwable e) {
                 //this thread must keep spinning,
                 //otherwise SoftCacheEntries would not be disposed
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
 

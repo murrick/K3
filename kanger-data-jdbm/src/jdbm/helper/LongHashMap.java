@@ -69,8 +69,10 @@ ryType<aps("unchecked")
     /**
      * Constructs a new {@code HashMap} instance with the specified capacity.
      *
-     * @param capacity the initial capacity of this hash map.
-     * @throws IllegalArgumentException when the capacity is less than zero.
+     * @param capacity
+     *            the initial capacity of this hash map.
+     * @throws IllegalArgumentException
+     *                when the capacity is less than zero.
      * @since Android 1.0
      */
     public LongHashMap(int capacity) {
@@ -88,10 +90,13 @@ ryType<aps("unchecked")
      * Constructs a new {@code HashMap} instance with the specified capacity and
      * load factor.
      *
-     * @param capacity   the initial capacity of this hash map.
-     * @param loadFactor the initial load factor.
-     * @throws IllegalArgumentException when the capacity is less than zero or the load factor is
-     *                                  less or equal to zero.
+     * @param capacity
+     *            the initial capacity of this hash map.
+     * @param loadFactor
+     *            the initial load factor.
+     * @throws IllegalArgumentException
+     *                when the capacity is less than zero or the load factor is
+     *                less or equal to zero.
      * @since Android 1.0
      */
     public LongHashMap(int capacity, float loadFactor) {
@@ -106,8 +111,8 @@ ryType<aps("unchecked")
     }
 
 
-    // BEGIN android-changed
 
+    // BEGIN android-changed
     /**
      * Removes all mappings from this hash map, leaving it empty.
      *
@@ -140,9 +145,10 @@ ryType<aps("unchecked")
     /**
      * Returns whether this map contains the specified key.
      *
-     * @param key the key to search for.
+     * @param key
+     *            the key to search for.
      * @return {@code true} if this map contains the specified key,
-     * {@code false} otherwise.
+     *         {@code false} otherwise.
      * @since Android 1.0
      */
 
@@ -156,9 +162,10 @@ ryType<aps("unchecked")
     /**
      * Returns whether this map contains the specified value.
      *
-     * @param value the value to search for.
+     * @param value
+     *            the value to search for.
      * @return {@code true} if this map contains the specified value,
-     * {@code false} otherwise.
+     *         {@code false} otherwise.
      * @since Android 1.0
      */
 
@@ -191,9 +198,10 @@ ryType<aps("unchecked")
     /**
      * Returns the value of the mapping with the specified key.
      *
-     * @param key the key.
+     * @param key
+     *            the key.
      * @return the value of the mapping with the specified key, or {@code null}
-     * if no mapping for the specified key is found.
+     *         if no mapping for the specified key is found.
      * @since Android 1.0
      */
 
@@ -211,15 +219,15 @@ ryType<aps("unchecked")
 
     final Entry<V> findNonNullKeyEntry(long key, int index, int keyHash) {
         Entry<V> m = elementData[index];
-        while (m != null) {
+            while (m != null) {
 
-            if (key == m.key) {
-                return m;
+                if (key == m.key) {
+                    return m;
+                }
+
+                m = m.next;
+
             }
-
-            m = m.next;
-
-        }
         return null;
     }
 
@@ -228,7 +236,7 @@ ryType<aps("unchecked")
      * Returns whether this map is empty.
      *
      * @return {@code true} if this map has no elements, {@code false}
-     * otherwise.
+     *         otherwise.
      * @see #size()
      * @since Android 1.0
      */
@@ -254,10 +262,12 @@ ryType<aps("unchecked")
     /**
      * Maps the specified key to the specified value.
      *
-     * @param key   the key.
-     * @param value the value.
+     * @param key
+     *            the key.
+     * @param value
+     *            the value.
      * @return the value of any previous mapping with the specified key or
-     * {@code null} if there was no such mapping.
+     *         {@code null} if there was no such mapping.
      * @since Android 1.0
      */
 
@@ -338,9 +348,10 @@ ryType<aps("unchecked")
     /**
      * Removes the mapping with the specified key from this map.
      *
-     * @param key the key of the mapping to remove.
+     * @param key
+     *            the key of the mapping to remove.
      * @return the value of the removed mapping or {@code null} if no mapping
-     * for the specified key was found.
+     *         for the specified key was found.
      * @since Android 1.0
      */
 
@@ -400,52 +411,52 @@ ryType<aps("unchecked")
 
     /**
      * Returns t
-     * static final class Entry<V> {
-     * <p>
-     * Entry<V> next;
-     * <p>
-     * long key;
-     * V value;
-     * <p>
-     * Entry(long theKey) {
-     * this.key = theKey;
-     * this.value = null;
-     * }
-     * <p>
-     * <p>
-     * <p>
-     * Entry(long theKey, V theValue) {
-     * this.key = theKey;
-     * this.value = theValue;
-     * //origKeyHash = (int)(theKey ^ (theKey >>> 32));
-     * }
-     * <p>
-     * public boolean equals(Object object) {
-     * if (this == object) {
-     * return true;
-     * }
-     * if (object instanceof Entry) {
-     * Entry<?> entry = (Entry) object;
-     * return ( key == entry.key)
-     * && (value == null ? entry.value == null : value
-     * .equals(entry.value));
-     * }
-     * return false;
-     * }
-     * <p>
-     * public int hashCode() {
-     * return (int)(key)
-     * ^ (value == null ? 0 : value.hashCode());
-     * }
-     * <p>
-     * public String toString() {
-     * return key + "=" + value;
-     * }
-     * <p>
-     * }
-     * <p>
-     * <p>
-     * interface Enthe number of elements in this map.
+     static final class Entry<V> {
+
+     Entry<V> next;
+
+     long key;
+     V value;
+
+     Entry(long theKey) {
+     this.key = theKey;
+     this.value = null;
+     }
+
+
+
+     Entry(long theKey, V theValue) {
+     this.key = theKey;
+     this.value = theValue;
+     //origKeyHash = (int)(theKey ^ (theKey >>> 32));
+     }
+
+     public boolean equals(Object object) {
+     if (this == object) {
+     return true;
+     }
+     if (object instanceof Entry) {
+     Entry<?> entry = (Entry) object;
+     return ( key == entry.key)
+     && (value == null ? entry.value == null : value
+     .equals(entry.value));
+     }
+     return false;
+     }
+
+     public int hashCode() {
+     return (int)(key)
+     ^ (value == null ? 0 : value.hashCode());
+     }
+
+     public String toString() {
+     return key + "=" + value;
+     }
+
+     }
+
+
+     interface Enthe number of elements in this map.
      *
      * @return the number of elements in this map.
      * @since Android 1.0
@@ -457,113 +468,116 @@ ryType<aps("unchecked")
 
     /**
      * @returns Iterator<E, VT> implements Iterator<E> {
-     * private int posiE, VT> type;
-     * <p>
-     * boolean canRemdCp<VT> associatedMap;
-     * <p>
-     * HashMapIteratoe<ount;
-     * <p>
-     * final EntryTypove = false;
-     * <p>
-     * Entry<VT> entry;
-     * <p>
-     * Entry<VT> lastEntry;
-     * <p>
-     * final LongHashMation = 0;
-     * <p>
-     * int expectedMor(EntryType<E, VT> value, LongHashMap<VT> hm) {
-     * associatedMap = hm;
-     * type = value;
-     * expectedModCount = hm.modCount;
-     * }
-     * <p>
-     * public boolean hasNext() {
-     * if (entry != null) {
-     * return true;
-     * }
-     * // BEGIN android-changed
-     * Entry<VT>[] elementData = associatedMap.elementData;
-     * int length = elementData.length;
-     * int newPosition = position;
-     * boolean result = false;
-     * <p>
-     * while (newPosition < length) {
-     * if (elementData[newPosition] == null) {
-     * newPosition++;
-     * } else {
-     * result = true;
-     * break;
-     * }
-     * }
-     * <p>
-     * position = newPosition;
-     * return result;
-     * // END android-changed
-     * }
-     * <p>
-     * void checkConcurrentMod() throws ConcurrentModificationException {
-     * if (expectedModCount != associatedMap.modCount) {
-     * throw new ConcurrentModificationException();
-     * }
-     * }
-     * <p>
-     * public E next() {
-     * // BEGIN android-changed
-     * // inline checkConcurrentMod()
-     * if (expectedModCount != associatedMap.modCount) {
-     * throw new ConcurrentModificationException();
-     * }
-     * if (!hasNext()) {
-     * throw new NoSuchElementException();
-     * }
-     * <p>
-     * Entry<VT> result;
-     * Entry<VT> _entry  = entry;
-     * if (_entry == null) {
-     * result = lastEntry = associatedMap.elementData[position++];
-     * entry = lastEntry.next;
-     * } else {
-     * if (lastEntry.next != _entry) {
-     * lastEntry = lastEntry.next;
-     * }
-     * result = _entry;
-     * entry = _entry.next;
-     * }
-     * canRemove = true;
-     * return type.get(result);
-     * // END android-changed
-     * }
-     * <p>
-     * public void remove() {
-     * checkConcurrentMod();
-     * if (!canRemove) {
-     * throw new IllegalStateException();
-     * }
-     * <p>
-     * canRemove = false;
-     * associatedMap.modCount++;
-     * if (lastEntry.next == entry) {
-     * while (associatedMap.elementData[--position] == null) {
-     * // Do nothing
-     * }
-     * associatedMap.elementData[position] = associatedMap.elementData[position].next;
-     * entry = null;
-     * } else {
-     * lastEntry.next = entry;
-     * }
-     * if(lastEntry!=null){
-     * Entry<VT> reuse = lastEntry;
-     * lastEntry = null;
-     * reuse.key = Long.MIN_VALUE;
-     * reuse.value = null;
-     * associatedMap.reuseAfterDelete = reuse;
-     * }
-     * <p>
-     * associatedMap.elementCount--;
-     * expectedModCount++;
-     * }
-     * }
-     * @SuppressWarningiterator over values in map
+    private int posiE, VT> type;
+
+    boolean canRemdCp<VT> associatedMap;
+
+    HashMapIteratoe<ount;
+
+    final EntryTypove = false;
+
+    Entry<VT> entry;
+
+    Entry<VT> lastEntry;
+
+    final LongHashMation = 0;
+
+    int expectedMor(EntryType<E, VT> value, LongHashMap<VT> hm) {
+    associatedMap = hm;
+    type = value;
+    expectedModCount = hm.modCount;
+    }
+
+    public boolean hasNext() {
+    if (entry != null) {
+    return true;
+    }
+    // BEGIN android-changed
+    Entry<VT>[] elementData = associatedMap.elementData;
+    int length = elementData.length;
+    int newPosition = position;
+    boolean result = false;
+
+    while (newPosition < length) {
+    if (elementData[newPosition] == null) {
+    newPosition++;
+    } else {
+    result = true;
+    break;
+    }
+    }
+
+    position = newPosition;
+    return result;
+    // END android-changed
+    }
+
+    void checkConcurrentMod() throws ConcurrentModificationException {
+    if (expectedModCount != associatedMap.modCount) {
+    throw new ConcurrentModificationException();
+    }
+    }
+
+    public E next() {
+    // BEGIN android-changed
+    // inline checkConcurrentMod()
+    if (expectedModCount != associatedMap.modCount) {
+    throw new ConcurrentModificationException();
+    }
+    if (!hasNext()) {
+    throw new NoSuchElementException();
+    }
+
+    Entry<VT> result;
+    Entry<VT> _entry  = entry;
+    if (_entry == null) {
+    result = lastEntry = associatedMap.elementData[position++];
+    entry = lastEntry.next;
+    } else {
+    if (lastEntry.next != _entry) {
+    lastEntry = lastEntry.next;
+    }
+    result = _entry;
+    entry = _entry.next;
+    }
+    canRemove = true;
+    return type.get(result);
+    // END android-changed
+    }
+
+    public void remove() {
+    checkConcurrentMod();
+    if (!canRemove) {
+    throw new IllegalStateException();
+    }
+
+    canRemove = false;
+    associatedMap.modCount++;
+    if (lastEntry.next == entry) {
+    while (associatedMap.elementData[--position] == null) {
+    // Do nothing
+    }
+    associatedMap.elementData[position] = associatedMap.elementData[position].next;
+    entry = null;
+    } else {
+    lastEntry.next = entry;
+    }
+    if(lastEntry!=null){
+    Entry<VT> reuse = lastEntry;
+    lastEntry = null;
+    reuse.key = Long.MIN_VALUE;
+    reuse.value = null;
+    associatedMap.reuseAfterDelete = reuse;
+    }
+
+    associatedMap.elementCount--;
+    expectedModCount++;
+    }
+    }
+
+
+
+     @SuppressWarningiterator over values in map
      */
     public Iterator<V> valuesIterator() {
         return new HashMapIterator<V, V>(

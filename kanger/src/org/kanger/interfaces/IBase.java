@@ -8,7 +8,7 @@ public interface IBase {
 
     IStep get(long id) throws Exception;
 
-    int size() throws Exception;
+//    int size() throws Exception;
 
     void clearCache();
 

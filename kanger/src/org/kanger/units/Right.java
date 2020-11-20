@@ -30,7 +30,7 @@ public class Right implements IUnit<Right> {
     private boolean generated = false;                      // Правило добавлено в процессе выводс
     private boolean stored = false;                         // Правило добавлено в процессе выводс
     private boolean substitutable = false;                  // Правило содержит t-переменные
-    private boolean abstractable = false;                    // Правило содержит c-переменные
+    private boolean abstractive = false;                    // Правило содержит c-переменные
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<Cause> causes = new HashSet<>();
 
@@ -67,7 +67,7 @@ public class Right implements IUnit<Right> {
                 .putByte(generated ? 1 : 0)
                 .putByte(stored ? 1 : 0)
                 .putByte(substitutable ? 1 : 0)
-                .putByte(abstractable ? 1 : 0)
+                .putByte(abstractive ? 1 : 0)
                 .putInt(tree.size());
         for (List<Domain> branch : tree) {
             packet.putInt(branch.size());
@@ -92,7 +92,7 @@ public class Right implements IUnit<Right> {
         generated = packet.getByte() != 0;
         stored = packet.getByte() != 0;
         substitutable = packet.getByte() != 0;
-        abstractable = packet.getByte() != 0;
+        abstractive = packet.getByte() != 0;
         tree.clear();
         int width = packet.getInt();
         while (width-- > 0) {
@@ -425,12 +425,12 @@ public class Right implements IUnit<Right> {
         this.substitutable = substitutable;
     }
 
-    public boolean isAbstractable() {
-        return abstractable;
+    public boolean isAbstractive() {
+        return abstractive;
     }
 
-    public void setAbstractable(boolean abstractable) {
-        this.abstractable = abstractable;
+    public void setAbstractive(boolean abstractive) {
+        this.abstractive = abstractive;
     }
 
 //    public TSolve addTSolve(List<TValue> list) {

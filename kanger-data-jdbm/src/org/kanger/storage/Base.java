@@ -165,10 +165,10 @@ public class Base implements IBase {
 
     }
 
-    @Override
-    public int size() throws Exception {
+//    @Override
+//    public int size() throws Exception {
 //        synchronized (locker) {
-        return index.size();
+//        return index.size();
 //        }
 //        int count = 0;
 //        try (Statement st = connection.createStatement()) {
@@ -178,7 +178,7 @@ public class Base implements IBase {
 //            }
 //        }
 //        return count;
-    }
+//    }
 
     @Override
     public void clearCache() {
@@ -189,12 +189,7 @@ public class Base implements IBase {
 
     @Override
     public boolean isEmpty() {
-        try {
-            return size() == 0;
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            return true;
-        }
+        return index.isEmpty();
     }
 
     @Override

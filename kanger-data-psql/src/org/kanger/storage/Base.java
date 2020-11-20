@@ -170,7 +170,7 @@ public class Base implements IBase {
 
     }
 
-    @Override
+//    @Override
     public int size() throws Exception {
         int count = 0;
         try (Statement st = connection.createStatement()) {

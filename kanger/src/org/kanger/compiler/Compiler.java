@@ -194,7 +194,7 @@ public class Compiler {
             }
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName)));
-            r.setAbstractable(true);
+            r.setAbstractive(true);
         }
         replacements.put(varName, p);
         return antc;

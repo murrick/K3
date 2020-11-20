@@ -159,7 +159,7 @@ public class Base implements IBase {
 
     }
 
-    @Override
+//    @Override
     public int size() throws IOException {
 //        synchronized (locker) {
         return (int) (index.count(null, null));

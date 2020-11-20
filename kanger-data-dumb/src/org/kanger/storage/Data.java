@@ -1,6 +1,6 @@
 package org.kanger.storage;
 
-import org.kanger.Version;
+import org.kanger.exception.DatabaseErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
 
@@ -10,8 +10,9 @@ import java.util.*;
 public class Data implements Closeable, Iterable<IStep> {
 
     private static final long MAX_CACHE_SIZE = 1024L * 1024L;
+    private static final int VERSION_CODE = 0x0101;
 
-    private int version = Version.VERSION_CODE;
+    private int version = VERSION_CODE;
 
     private final Map<Long, DataOne> cache = new HashMap<>();
     private final Object locker = new Object();
@@ -52,6 +53,11 @@ public class Data implements Closeable, Iterable<IStep> {
             ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
             ras.seek(0);
             version = ras.readShort();
+
+            if (version != VERSION_CODE) {
+                throw new DatabaseErrorException("Incompatible DB version");
+            }
+
             headerSize = ras.readInt();
 //            changed = false;
 
