@@ -19,6 +19,7 @@
  ******************************************************************************/
 
 
+
 package jdbm.helper;
 
 import java.io.DataInput;
@@ -56,8 +57,8 @@ public final class LongPacker {
      *
      * [0|1|2|3|4|5|6|7]
      *  1 - - -	  nbytes = 8, clear high bit and interpret this plus the next 7 bytes as a long.
-     *  0 1 1 1	  nbytes = 7, clear high nibble and interpret this plus the next 6 bytes as a long.
-     *  0 1 1 0	  nbytes = 6, clear high nibble and interpret this plus the next 5 bytes as a long.
+     *  0 1 1 1	  nbytes = 7, clear high nibble and interpret this plus the next 6 bytes as a long. 
+     *  0 1 1 0	  nbytes = 6, clear high nibble and interpret this plus the next 5 bytes as a long. 
      *  0 1 0 1	  nbytes = 5, clear high nibble and interpret this plus the next 4 bytes as a long.
      *  0 1 0 0	  nbytes = 4, clear high nibble and interpret this plus the next 3 bytes as a long.
      *  0 0 1 1	  nbytes = 3, clear high nibble and interpret this plus the next 3 bytes as a long.
@@ -140,7 +141,9 @@ public final class LongPacker {
      * in the long value. A value of <code>0L</code> is considered to be one
      * nibble for our purposes.
      *
-     * @param v The long value.
+     * @param v
+     *            The long value.
+     *
      * @return The #of nibbles in [1:16].
      */
 

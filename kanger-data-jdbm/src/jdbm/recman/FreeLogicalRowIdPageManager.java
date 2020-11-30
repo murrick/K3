@@ -27,17 +27,17 @@ import java.util.List;
  * to free and allocate Logical rowids on a high level.
  */
 final class FreeLogicalRowIdPageManager {
-    final List<Long> freeBlocksInTransactionRowid = new ArrayList<Long>();
     // our record file
     private RecordFile file;
     // our page manager
     private PageManager pageman;
+    final List<Long> freeBlocksInTransactionRowid = new ArrayList<Long>();
     private int blockSize;
 
 
     /**
-     * Creates a new instance using the indicated record file and
-     * page manager.
+     *  Creates a new instance using the indicated record file and
+     *  page manager.
      */
     FreeLogicalRowIdPageManager(RecordFile file,
                                 PageManager pageman) throws IOException {
@@ -47,8 +47,8 @@ final class FreeLogicalRowIdPageManager {
     }
 
     /**
-     * Returns a free Logical rowid, or
-     * 0 if nothing was found.
+     *  Returns a free Logical rowid, or
+     *  0 if nothing was found.
      */
     long get() throws IOException {
         if (!freeBlocksInTransactionRowid.isEmpty()) {

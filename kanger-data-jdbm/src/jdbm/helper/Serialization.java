@@ -39,14 +39,10 @@ public final class Serialization {
 
 	public static final byte END_OF_NORMAL_SERIALIZATION = 111;
 
-	/**
-	 * print statistics to STDOUT
-	 */
+	/** print statistics to STDOUT */
 	public static final boolean DEBUG = false;
 
-	/**
-	 * if set to true, debug informations will be saved to store to make it more robust
-	 */
+	/** if set to true, debug informations will be saved to store to make it more robust */
 	public static final boolean DEBUGSTORE = false;
 	public final static int NULL = 0;
 	public final static int NORMAL = 1;
@@ -597,7 +593,7 @@ public final class Serialization {
 
 
 	private static void writeInteger(DataOutputStream da, final int val) throws IOException {
-		if (val == -1)
+		if(val == -1)
 			da.write(INTEGER_MINUS_1);
 		else if (val == 0)
 			da.write(INTEGER_0);
@@ -632,7 +628,7 @@ public final class Serialization {
 	}
 
 	private static void writeLong(DataOutputStream da, final long val) throws IOException {
-		if (val == -1)
+		if(val == -1)
 			da.write(LONG_MINUS_1);
 		else if (val == 0)
 			da.write(LONG_0);
@@ -669,7 +665,6 @@ public final class Serialization {
 
 	/**
 	 * Deserialize an object from a byte array
-	 *
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
@@ -1073,11 +1068,13 @@ public final class Serialization {
 	}
 
 
+
 	private static StoreReference deserializeStoreReference(DataInputStream is) throws IOException {
 		StoreReference r = new StoreReference();
 		r.readExternal(is);
 		return r;
 	}
+
 
 
 	private static byte[] deserializeArrayByteInt(DataInputStream is) throws IOException {
@@ -1213,7 +1210,7 @@ public final class Serialization {
 		b.readExternal(is);
 		return b;
 	}
-
+	
 	private static Object[] deserializeArrayObject(DataInputStream is) throws IOException, ClassNotFoundException {
 		int size = LongPacker.unpackInt(is);
 		Object[] s = new Object[size];

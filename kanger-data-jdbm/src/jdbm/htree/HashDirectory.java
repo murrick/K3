@@ -41,11 +41,11 @@ final class HashDirectory<K, V>
 
     /**
      * Maximum number of children in a directory.
-     * <p>
+     *
      * (Must be a power of 2 -- if you update this value, you must also
-     * update BIT_SIZE and MAX_DEPTH.)
-     * <p>
-     * !!!! do not change this, it affects storage format, there are also magic numbers which relies on 255 !!!
+     *  update BIT_SIZE and MAX_DEPTH.)
+     *
+     *  !!!! do not change this, it affects storage format, there are also magic numbers which relies on 255 !!!
      */
     static final int MAX_CHILDREN = 256;
 
@@ -58,9 +58,9 @@ final class HashDirectory<K, V>
 
     /**
      * Maximum number of levels (zero-based)
-     * <p>
+     *
      * (4 * 8 bits = 32 bits, which is the size of an "int", and as
-     * you know, hashcodes in Java are "ints")
+     *  you know, hashcodes in Java are "ints")
      */
     static final int MAX_DEPTH = 3; // 4 levels
 
@@ -113,7 +113,7 @@ final class HashDirectory<K, V>
      * persistence-related operation.
      *
      * @param recman RecordManager which stores this directory
-     * @param recid  Record id of this directory.
+     * @param recid Record id of this directory.
      */
     void setPersistenceContext(RecordManager recman, long recid) {
         this._recman = recman;
@@ -176,10 +176,10 @@ final class HashDirectory<K, V>
     /**
      * Associates the specified value with the specified key.
      *
-     * @param key   key with which the specified value is to be assocated.
+     * @param key key with which the specified value is to be assocated.
      * @param value value to be associated with the specified key.
      * @return object which was previously associated with the given key,
-     * or <code>null</code> if no association existed.
+     *          or <code>null</code> if no association existed.
      */
     Object put(Object key, Object value)
             throws IOException {
@@ -256,7 +256,7 @@ final class HashDirectory<K, V>
      *
      * @param key key whose associated value is to be removed
      * @return object which was associated with the given key, or
-     * <code>null</code> if no association existed with given key.
+     *          <code>null</code> if no association existed with given key.
      */
     Object remove(Object key) throws IOException {
         int hash = hashCode(key);
@@ -416,28 +416,33 @@ final class HashDirectory<K, V>
      */
     public class HDIterator<A> implements Iterator<A> {
 
-        A next;
         /**
          * True if we're iterating on keys, False if enumerating on values.
          */
         private boolean _iterateKeys;
+
         /**
          * Stacks of directories & last enumerated child position
          */
         private ArrayList _dirStack;
         private ArrayList _childStack;
+
         /**
          * Current HashDirectory in the hierarchy
          */
         private HashDirectory _dir;
+
         /**
          * Current child position
          */
         private int _child;
+
         /**
          * Current bucket iterator
          */
         private Iterator<A> _iter;
+
+        A next;
 
         /**
          * Construct an iterator on this directory.
@@ -481,7 +486,7 @@ final class HashDirectory<K, V>
 
         /**
          * Prepare internal state so we can answer <code>hasMoreElements</code>
-         * <p>
+         *
          * Actually, this code prepares an Enumeration on the next
          * Bucket to enumerate.   If no following bucket is found,
          * the next Enumeration is set to <code>null</code>.

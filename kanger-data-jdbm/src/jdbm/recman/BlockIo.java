@@ -34,9 +34,8 @@ import java.io.IOException;
  */
 public final class BlockIo {
 
-    static final int ThreeByteInt_MAX = 256 * 256 * 256 - 1;
-    static final int UNSIGNED_SHORT_MAX = 256 * 256 - 1;
     private long blockId;
+
     private byte[] data; // work area
     transient private BlockView view = null;
     private boolean dirty = false;
@@ -49,6 +48,9 @@ public final class BlockIo {
         // empty
     }
 
+    static final int ThreeByteInt_MAX = 256 * 256 * 256 - 1;
+    static final int UNSIGNED_SHORT_MAX = 256 * 256 - 1;
+
     /**
      * Constructs a new BlockIo instance working on the indicated
      * buffer.
@@ -59,21 +61,21 @@ public final class BlockIo {
     }
 
     /**
-     * Returns the underlying array
+     *  Returns the underlying array
      */
     byte[] getData() {
         return data;
     }
 
     /**
-     * Returns the block number.
+     *  Returns the block number.
      */
     long getBlockId() {
         return blockId;
     }
 
     /**
-     * Sets the block number. Should only be called by RecordFile.
+     *  Sets the block number. Should only be called by RecordFile.
      */
     void setBlockId(long id) {
         if (isInTransaction())
@@ -82,52 +84,52 @@ public final class BlockIo {
     }
 
     /**
-     * Returns the current view of the block.
+     *  Returns the current view of the block.
      */
     public BlockView getView() {
         return view;
     }
 
     /**
-     * Sets the current view of the block.
+     *  Sets the current view of the block.
      */
     public void setView(BlockView view) {
         this.view = view;
     }
 
     /**
-     * Sets the dirty flag
+     *  Sets the dirty flag
      */
     void setDirty() {
         dirty = true;
     }
 
     /**
-     * Clears the dirty flag
+     *  Clears the dirty flag
      */
     void setClean() {
         dirty = false;
     }
 
     /**
-     * Returns true if the dirty flag is set.
+     *  Returns true if the dirty flag is set.
      */
     boolean isDirty() {
         return dirty;
     }
 
     /**
-     * Returns true if the block is still dirty with respect to the
-     * transaction log.
+     *  Returns true if the block is still dirty with respect to the
+     *  transaction log.
      */
     boolean isInTransaction() {
         return transactionCount != 0;
     }
 
     /**
-     * Increments transaction count for this block, to signal that this
-     * block is in the log but not yet in the data file. The method also
-     * takes a snapshot so that the data may be modified in new transactions.
+     *  Increments transaction count for this block, to signal that this
+     *  block is in the log but not yet in the data file. The method also
+     *  takes a snapshot so that the data may be modified in new transactions.
      */
     synchronized void incrementTransactionCount() {
         transactionCount++;
@@ -136,8 +138,8 @@ public final class BlockIo {
     }
 
     /**
-     * Decrements transaction count for this block, to signal that this
-     * block has been written from the log to the data file.
+     *  Decrements transaction count for this block, to signal that this
+     *  block has been written from the log to the data file.
      */
     synchronized void decrementTransactionCount() {
         transactionCount--;
@@ -148,14 +150,14 @@ public final class BlockIo {
     }
 
     /**
-     * Reads a byte from the indicated position
+     *  Reads a byte from the indicated position
      */
     public byte readByte(int pos) {
         return data[pos];
     }
 
     /**
-     * Writes a byte to the indicated position
+     *  Writes a byte to the indicated position
      */
     public void writeByte(int pos, byte value) {
         data[pos] = value;
@@ -163,7 +165,7 @@ public final class BlockIo {
     }
 
     /**
-     * Reads a short from the indicated position
+     *  Reads a short from the indicated position
      */
     public short readShort(int pos) {
         return (short)
@@ -172,7 +174,7 @@ public final class BlockIo {
     }
 
     /**
-     * Writes a short to the indicated position
+     *  Writes a short to the indicated position
      */
     public void writeShort(int pos, short value) {
         data[pos + 0] = (byte) (0xff & (value >> 8));
@@ -203,7 +205,7 @@ public final class BlockIo {
     }
 
     /**
-     * Reads an int from the indicated position
+     *  Reads an int from the indicated position
      */
     public int readThreeByteInt(int pos) {
         return
@@ -214,10 +216,10 @@ public final class BlockIo {
     }
 
     /**
-     * Writes an int to the indicated position
+     *  Writes an int to the indicated position
      */
     public void writeThreeByteInt(int pos, int value) {
-        if (value < 0 || value > ThreeByteInt_MAX)
+    	if(value < 0 || value > ThreeByteInt_MAX)
             throw new IllegalArgumentException("out of range: " + value);
         data[pos + 0] = (byte) (0xff & (value >> 16));
         data[pos + 1] = (byte) (0xff & (value >> 8));
@@ -226,7 +228,7 @@ public final class BlockIo {
     }
 
     /**
-     * Reads a long from the indicated position
+     *  Reads a long from the indicated position
      */
     public long readLong(int pos) {
         return
@@ -242,7 +244,7 @@ public final class BlockIo {
     }
 
     /**
-     * Writes a long to the indicated position
+     *  Writes a long to the indicated position
      */
     public void writeLong(int pos, long value) {
         data[pos + 0] = (byte) (0xff & (value >> 56));
@@ -257,7 +259,7 @@ public final class BlockIo {
     }
 
     /**
-     * Reads a long from the indicated position
+     *  Reads a long from the indicated position
      */
     public long readSixByteLong(int pos) {
         return
@@ -274,7 +276,7 @@ public final class BlockIo {
     // overrides java.lang.Object
 
     /**
-     * Writes a long to the indicated position
+     *  Writes a long to the indicated position
      */
     public void writeSixByteLong(int pos, long value) {
 //    	if(value >> (6*8)!=0)

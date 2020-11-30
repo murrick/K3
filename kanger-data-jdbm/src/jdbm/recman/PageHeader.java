@@ -24,23 +24,26 @@ import java.io.IOException;
  * all different page views.
  */
 class PageHeader implements BlockView {
-    static final short PhysicalRowId_O_BLOCK = 0; // long block
-    static final short PhysicalRowId_O_OFFSET = Magic.SZ_SIX_BYTE_LONG; // short offset
-    static final int PhysicalRowId_SIZE = PhysicalRowId_O_OFFSET + Magic.SZ_SHORT;
     // offsets
     private static final short O_MAGIC = 0; // short magic
     private static final short O_NEXT = Magic.SZ_SHORT;  // long next
     private static final short O_PREV = O_NEXT + Magic.SZ_LONG; // long prev
     protected static final short SIZE = O_PREV + Magic.SZ_LONG;
+
+    static final short PhysicalRowId_O_BLOCK = 0; // long block
+    static final short PhysicalRowId_O_OFFSET = Magic.SZ_SIX_BYTE_LONG; // short offset
+    static final int PhysicalRowId_SIZE = PhysicalRowId_O_OFFSET + Magic.SZ_SHORT;
+
+
     // my block
     protected BlockIo block;
 
     /**
-     * Constructs a PageHeader object from a block
+     *  Constructs a PageHeader object from a block
      *
-     * @param block The block that contains the file header
-     * @throws IOException if the block is too short to keep the file
-     *                     header.
+     *  @param block The block that contains the file header
+     *  @throws IOException if the block is too short to keep the file
+     *          header.
      */
     protected PageHeader(BlockIo block) {
         initialize(block);

@@ -52,7 +52,57 @@ public final class BPage<K, V>
         implements Serializer<BPage<K, V>> {
 
     private static final boolean DEBUG = false;
+
+
     private static final int LEAF = Serialization.BPAGE_LEAF;
+
+
+    /**
+     * This BPage's record ID in the PageManager.
+     */
+    protected transient long _recid;
+
+
+    /**
+     * Flag indicating if this is a leaf BPage.
+     */
+    protected boolean _isLeaf;
+
+
+    /**
+     * Keys of children nodes
+     */
+    protected K[] _keys;
+
+
+    /**
+     * Values associated with keys.  (Only valid if leaf BPage)
+     */
+    protected V[] _values;
+
+
+    /**
+     * Children pages (recids) associated with keys.  (Only valid if non-leaf BPage)
+     */
+    protected long[] _children;
+
+
+    /**
+     * Index of first used item at the page
+     */
+    protected int _first;
+
+
+    /**
+     * Previous leaf BPage (only if this BPage is a leaf)
+     */
+    protected long _previous;
+
+
+    /**
+     * Next leaf BPage (only if this BPage is a leaf)
+     */
+    protected long _next;
     private static final int NOT_LEAF = Serialization.BPAGE_NONLEAF;
     private static final int ALL_NULL = 0;
     private static final int ALL_INTEGERS = 1 << 5;
@@ -61,38 +111,6 @@ public final class BPage<K, V>
     private static final int ALL_LONGS_NEGATIVE = 4 << 5;
     private static final int ALL_STRINGS = 5 << 5;
     private static final int ALL_OTHER = 6 << 5;
-    /**
-     * This BPage's record ID in the PageManager.
-     */
-    protected transient long _recid;
-    /**
-     * Flag indicating if this is a leaf BPage.
-     */
-    protected boolean _isLeaf;
-    /**
-     * Keys of children nodes
-     */
-    protected K[] _keys;
-    /**
-     * Values associated with keys.  (Only valid if leaf BPage)
-     */
-    protected V[] _values;
-    /**
-     * Children pages (recids) associated with keys.  (Only valid if non-leaf BPage)
-     */
-    protected long[] _children;
-    /**
-     * Index of first used item at the page
-     */
-    protected int _first;
-    /**
-     * Previous leaf BPage (only if this BPage is a leaf)
-     */
-    protected long _previous;
-    /**
-     * Next leaf BPage (only if this BPage is a leaf)
-     */
-    protected long _next;
     /**
      * Parent B+Tree.
      */
@@ -357,7 +375,7 @@ public final class BPage<K, V>
 
         height -= 1;
 
-        if (height == 0) {
+        if ( height == 0 ) {
             // leaf BPage
             return new Browser<K, V>(this, index);
         } else {
@@ -371,9 +389,9 @@ public final class BPage<K, V>
      * Find value associated with the given key.
      *
      * @param height Height of the current BPage (zero is leaf page)
-     * @param key    The key
+     * @param key The key
      * @return TupleBrowser positionned just before the given key, or before
-     * next greater key if key isn't found.
+     *                      next greater key if key isn't found.
      */
     V findValue(int height, K key)
             throws IOException {
@@ -388,7 +406,7 @@ public final class BPage<K, V>
 
         height -= 1;
 
-        if (height == 0) {
+        if (height == 0 ) {
 
             K key2 = _keys[index];
 //          // find returns the matching key or the next ordered key, so we must
@@ -504,12 +522,12 @@ public final class BPage<K, V>
      * Since the Btree does not support duplicate entries, the caller must
      * specify whether to replace the existing value.
      *
-     * @param height  Height of the current BPage (zero is leaf page)
-     * @param key     Insert key
-     * @param value   Insert value
+     * @param height Height of the current BPage (zero is leaf page)
+     * @param key Insert key
+     * @param value Insert value
      * @param replace Set to true to replace the existing value, if one exists.
      * @return Insertion result containing existing value OR a BPage if the key
-     * was inserted and provoked a BPage overflow.
+     *         was inserted and provoked a BPage overflow.
      */
     InsertResult<K, V> insert(int height, K key, V value, boolean replace)
             throws IOException {
@@ -770,9 +788,9 @@ public final class BPage<K, V>
                     }
                 } else {
                     // page "brother" is before "child"
-                    BPage<K, V> brother = childBPage(index - 1);
+                    BPage<K,V> brother = childBPage(index - 1);
                     int bfirst = brother._first;
-                    if (bfirst < half) {
+                    if ( bfirst < half) {
                         // steal entries from "brother" page
                         int steal = (half - bfirst + 1) / 2;
                         brother._first += steal;
@@ -952,6 +970,7 @@ public final class BPage<K, V>
      *
      * @param serialized Byte array representation of the object
      * @return deserialized object
+     *
      */
     @SuppressWarnings("unchecked")
     public BPage<K, V> deserialize(SerializerInput ois)
@@ -1010,6 +1029,7 @@ public final class BPage<K, V>
      *
      * @param obj Object to serialize
      * @return a byte array representing the object's state
+     *
      */
     public void serialize(SerializerOutput oos, BPage<K, V> obj)
             throws IOException {
@@ -1309,7 +1329,6 @@ public final class BPage<K, V>
     /**
      * Used for debugging and testing only.  Recursively obtains the recids of
      * all child BPages and adds them to the 'out' list.
-     *
      * @param out
      * @param height
      * @throws IOException
@@ -1363,8 +1382,7 @@ public final class BPage<K, V>
         V _value;
     }
 
-    /**
-     * PRIVATE INNER CLASS
+    /** PRIVATE INNER CLASS
      * Browser to traverse leaf BPages.
      */
     static class Browser<K, V>
@@ -1386,7 +1404,7 @@ public final class BPage<K, V>
         /**
          * Create a browser.
          *
-         * @param page  Current page
+         * @param page Current page
          * @param index Position of the next tuple to return.
          */
         Browser(BPage<K, V> page, int index) {

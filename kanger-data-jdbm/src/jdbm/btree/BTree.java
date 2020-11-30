@@ -61,32 +61,43 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class BTree<K, V>
         implements Externalizable, JdbmBase<K, V> {
 
+    private static final long serialVersionUID = 8883213742777032628L;
+
+    private static final boolean DEBUG = false;
+
+
     /**
      * Default page size (number of entries per node)
      */
     public static final int DEFAULT_SIZE = 32;
-    private static final long serialVersionUID = 8883213742777032628L;
-    private static final boolean DEBUG = false;
+
+
     /**
      * Page manager used to persist changes in BPages
      */
     protected transient RecordManager _recman;
     /**
+     * Number of entries in each BPage.
+     */
+    protected int _pageSize;
+
+
+    /**
      * Comparator used to index entries.
      */
     protected Comparator<K> _comparator;
+
+
     /**
      * Serializer used to serialize index keys (optional)
      */
     protected Serializer<K> keySerializer;
+
+
     /**
      * Serializer used to serialize index values (optional)
      */
     protected Serializer<V> valueSerializer;
-    /**
-     * Number of entries in each BPage.
-     */
-    protected int _pageSize;
     /**
      * Total number of entries in the BTree
      */
@@ -373,7 +384,7 @@ public class BTree<K, V>
             }
             if (remove._value != null)
                 for (RecordListener<K, V> l : recordListeners)
-                    l.recordRemoved(key, remove._value);
+                    l.recordRemoved(key,remove._value);
             return remove._value;
         } finally {
             lock.writeLock().unlock();
@@ -401,7 +412,7 @@ public class BTree<K, V>
 
             return rootPage.findValue(_height, key);
         } finally {
-            lock.readLock().unlock();
+        	lock.readLock().unlock();
         }
 //        Tuple<K,V> tuple = new Tuple<K,V>( null, null );
 //        TupleBrowser<K,V> browser = rootPage.find( _height, key );
@@ -470,8 +481,8 @@ public class BTree<K, V>
             TupleBrowser<K, V> browser = rootPage.findFirst();
             return browser;
         } finally {
-            lock.readLock().unlock();
-        }
+    		lock.readLock().unlock();
+    	}
     }
 
 
@@ -564,8 +575,8 @@ public class BTree<K, V>
 //        out.writeObject( _valueSerializer );
         out.writeInt(_height);
         out.writeLong(_root);
-        out.writeInt(_pageSize);
-        out.writeInt(_entries);
+        out.writeInt(_pageSize );
+        out.writeInt( _entries );
     }
 
 
@@ -614,10 +625,6 @@ public class BTree<K, V>
         return _recman;
     }
 
-    public Comparator<K> getComparator() {
-        return _comparator;
-    }
-
     /**
      * Deletes all BPages in this BTree, then deletes the tree from the record manager
      */
@@ -632,6 +639,11 @@ public class BTree<K, V>
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+
+    public Comparator<K> getComparator() {
+        return _comparator;
     }
 
     /**
@@ -670,5 +682,5 @@ public class BTree<K, V>
             return false;
         }
     }
-}
+ }
 

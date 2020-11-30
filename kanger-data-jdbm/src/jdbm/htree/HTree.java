@@ -52,7 +52,7 @@ public class HTree<K, V> implements JdbmBase<K, V> {
     final Serializer SERIALIZER = new Serializer<HashNode>() {
 
         public HashNode deserialize(SerializerInput ds) throws IOException {
-            try {
+            try{
                 int i = ds.read();
                 if (i == Serialization.HTREE_BUCKET) { //is HashBucket?
                     HashBucket ret = new HashBucket(HTree.this);
@@ -76,7 +76,7 @@ public class HTree<K, V> implements JdbmBase<K, V> {
         }
 
         public void serialize(SerializerOutput out, HashNode obj) throws IOException {
-            if (obj.getClass() == HashBucket.class) {
+            if(obj.getClass() == HashBucket.class) {
                 out.write(Serialization.HTREE_BUCKET);
                 HashBucket b = (HashBucket) obj;
                 b.writeExternal(out);
@@ -93,9 +93,6 @@ public class HTree<K, V> implements JdbmBase<K, V> {
      */
     private HashDirectory<K, V> _root;
 
-    HTree() {
-    }
-
     /**
      * Create a persistent hashtable.
      *
@@ -104,6 +101,10 @@ public class HTree<K, V> implements JdbmBase<K, V> {
     public static <K, V> HTree<K, V> createInstance(RecordManager recman)
             throws IOException {
         return createInstance(recman, null, null);
+    }
+
+
+    HTree() {
     }
 
     /**
@@ -132,7 +133,7 @@ public class HTree<K, V> implements JdbmBase<K, V> {
     /**
      * Load a persistent hashtable
      *
-     * @param recman     RecordManager used to store the persistent hashtable
+     * @param recman RecordManager used to store the persistent hashtable
      * @param root_recid Record id of the root directory of the HTree
      */
     public static <K, V> HTree<K, V> load(RecordManager recman,
@@ -144,7 +145,7 @@ public class HTree<K, V> implements JdbmBase<K, V> {
     /**
      * Load a persistent hashtable
      *
-     * @param recman     RecordManager used to store the persistent hashtable
+     * @param recman RecordManager used to store the persistent hashtable
      * @param root_recid Record id of the root directory of the HTree
      */
     public static <K, V> HTree<K, V> load(RecordManager recman,

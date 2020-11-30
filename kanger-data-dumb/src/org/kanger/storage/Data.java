@@ -9,7 +9,7 @@ import java.util.*;
 
 public class Data implements Closeable, Iterable<IStep> {
 
-    private static final long MAX_CACHE_SIZE = 1024L * 1024L;
+    private static long MAX_CACHE_SIZE = 1024L * 1024;
     private static final int VERSION_CODE = 0x0101;
 
     private int version = VERSION_CODE;
@@ -40,6 +40,9 @@ public class Data implements Closeable, Iterable<IStep> {
 
     public Data(IBase base) {
         this.base = base;
+        if (System.getProperties().containsKey("cache.data.size")) {
+            MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.data.size"));
+        }
     }
 
     public void open(String fileName, boolean readonly) throws Exception {

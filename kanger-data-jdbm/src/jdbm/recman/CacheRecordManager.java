@@ -37,17 +37,16 @@ import java.util.Iterator;
 public class CacheRecordManager
         extends RecordManagerImpl {
 
-    protected static int threadCounter = 0;
     /**
      * Wrapped RecordManager
      */
     protected RecordManager _recman;
-    /**
-     * Cached object hashtable
-     */
+
+
+    protected static int threadCounter = 0;
+    /** Cached object hashtable */
     protected LongHashMap<CacheEntry> _hash;
-    /**
-     * If Soft Cache is enabled, this contains softly referenced clean entries.
+    /** If Soft Cache is enabled, this contains softly referenced clean entries.
      * If entry became dirty, it is moved to _hash with limited size.
      * This map is accessed from SoftCache Disposer thread, so all access must be
      * synchronized
@@ -86,7 +85,7 @@ public class CacheRecordManager
      * using a given cache policy.
      *
      * @param recman Wrapped RecordManager
-    //     * @param cache  Cache policy
+     * @param cache Cache policy
      */
     public CacheRecordManager(RecordManager recman, int maxRecords, boolean softCache) {
         if (recman == null) {
@@ -114,7 +113,7 @@ public class CacheRecordManager
      * Get the underlying Record Manager.
      *
      * @return underlying RecordManager or null if CacheRecordManager has
-     * been closed.
+     *         been closed. 
      */
     public RecordManager getRecordManager() {
         return _recman;
@@ -316,7 +315,6 @@ public class CacheRecordManager
 
     /**
      * Place an object in the cache.
-     *
      * @throws IOException
      */
     protected void cachePut(long recid, Object value, Serializer serializer, boolean dirty) throws IOException {
@@ -475,6 +473,7 @@ public class CacheRecordManager
      * Runnable auto exists when CacheRecordManager is GCed
      *
      * @author Jan Kotek
+     *
      */
     protected static final class SoftRunnable implements Runnable {
 
@@ -512,7 +511,7 @@ public class CacheRecordManager
             } catch (Throwable e) {
                 //this thread must keep spinning,
                 //otherwise SoftCacheEntries would not be disposed
-                e.printStackTrace(System.err);
+                e.printStackTrace();
             }
         }
 

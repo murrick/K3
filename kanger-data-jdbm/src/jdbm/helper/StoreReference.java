@@ -102,5 +102,5 @@ public class StoreReference<E> {
 			throw new IOError(e);
 		}
 	}
-
+	
 }

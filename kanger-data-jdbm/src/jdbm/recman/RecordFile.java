@@ -36,28 +36,14 @@ import java.util.Iterator;
  * RecordFile is splited between more files, each with max size 1GB.
  */
 final class RecordFile {
-    static final int DEFAULT_BLOCK_SIZE = 4096;
-    //    /** maximal file size not rounded to block size */
-    private final static long _FILESIZE = 1000000000l;
     final TransactionManager txnMgr;
-    //    /** The length of a single block. */
-    final int BLOCK_SIZE;//= 8192;//4096;
-    /**
-     * A block of clean data to wipe clean pages.
-     */
-    final byte[] cleanData;
+
     // Todo: reorganize in hashes and fifos as necessary.
     // free -> inUse -> dirty -> inTxn -> free
     // free is a cache, thus a FIFO. The rest are hashes.
     private final LongHashMap<BlockIo> free = new LongHashMap<BlockIo>();
-    /**
-     * Blocks currently locked for read/update ops. When released the block goes
-     * to the dirty or clean list, depending on a flag.  The file header block is
-     * normally locked plus the block that is currently being read or modified.
-     *
-     * @see BlockIo#isDirty()
-     */
-    private final LongHashMap<BlockIo> inUse = new LongHashMap<BlockIo>();
+    static final int DEFAULT_BLOCK_SIZE = 4096;
+
     /**
      * Blocks whose state is dirty.
      */
@@ -67,24 +53,41 @@ final class RecordFile {
      * onto the log but which have not yet been committed to the database.
      */
     private final LongHashMap<BlockIo> inTxn = new LongHashMap<BlockIo>();
-    private final long MAX_FILE_SIZE;// = _FILESIZE - _FILESIZE%BLOCK_SIZE;
-    private final String fileName;
+
+
     // transactions disabled?
     private boolean transactionsDisabled = false;
+    //    /** maximal file size not rounded to block size */
+    private final static long _FILESIZE = 1000000000l;
+    //    /** The length of a single block. */
+    final int BLOCK_SIZE;//= 8192;//4096;
+    /** A block of clean data to wipe clean pages. */
+    final byte[] cleanData;
+    /**
+     * Blocks currently locked for read/update ops. When released the block goes
+     * to the dirty or clean list, depending on a flag.  The file header block is
+     * normally locked plus the block that is currently being read or modified.
+     *
+     * @see BlockIo#isDirty()
+     */
+    private final LongHashMap<BlockIo> inUse = new LongHashMap<BlockIo>();
+    private final long MAX_FILE_SIZE;// = _FILESIZE - _FILESIZE%BLOCK_SIZE;
+
     private ArrayList<RandomAccessFile> rafs = new ArrayList<RandomAccessFile>();
+    private final String fileName;
 
     RecordFile(String fileName) throws IOException {
         this(fileName, DEFAULT_BLOCK_SIZE);
     }
 
     /**
-     * Creates a new object on the indicated filename. The file is
-     * opened in read/write mode.
+     *  Creates a new object on the indicated filename. The file is
+     *  opened in read/write mode.
      *
-     * @param fileName the name of the file to open or create, without
-     *                 an extension.
-     * @throws IOException whenever the creation of the underlying
-     *                     RandomAccessFile throws it.
+     *  @param fileName the name of the file to open or create, without
+     *         an extension.
+     *  @throws IOException whenever the creation of the underlying
+     *          RandomAccessFile throws it.
      */
     RecordFile(String fileName, int blockSize) throws IOException {
         this.BLOCK_SIZE = blockSize;
@@ -137,12 +140,12 @@ final class RecordFile {
     }
 
     /**
-     * Gets a block from the file. The returned byte array is
-     * the in-memory copy of the record, and thus can be written
-     * (and subsequently released with a dirty flag in order to
-     * write the block back).
+     *  Gets a block from the file. The returned byte array is
+     *  the in-memory copy of the record, and thus can be written
+     *  (and subsequently released with a dirty flag in order to
+     *  write the block back).
      *
-     * @param blockid The record number to retrieve.
+     *  @param blockid The record number to retrieve.
      */
     BlockIo get(long blockid) throws IOException {
 
@@ -202,9 +205,9 @@ final class RecordFile {
     }
 
     /**
-     * Releases a block.
+     *  Releases a block.
      *
-     * @param block The block to release.
+     *  @param block The block to release.
      */
     void release(BlockIo block) {
         final long key = block.getBlockId();
@@ -222,9 +225,9 @@ final class RecordFile {
     }
 
     /**
-     * Discards a block (will not write the block even if it's dirty)
+     *  Discards a block (will not write the block even if it's dirty)
      *
-     * @param block The block to discard.
+     *  @param block The block to discard.
      */
     void discard(BlockIo block) {
         long key = block.getBlockId();
@@ -235,8 +238,8 @@ final class RecordFile {
     }
 
     /**
-     * Commits the current transaction by flushing all dirty buffers
-     * to disk.
+     *  Commits the current transaction by flushing all dirty buffers
+     *  to disk.
      */
     void commit() throws IOException {
         // debugging...
@@ -248,7 +251,7 @@ final class RecordFile {
 
         //  System.out.println("committing...");
 
-        if (dirty.size() == 0) {
+        if ( dirty.size() == 0) {
             // if no dirty blocks, skip commit process
             return;
         }
@@ -279,7 +282,7 @@ final class RecordFile {
     }
 
     /**
-     * Rollback the current transaction by discarding all dirty buffers
+     *  Rollback the current transaction by discarding all dirty buffers
      */
     void rollback() throws IOException {
         // debugging...
@@ -302,7 +305,7 @@ final class RecordFile {
     }
 
     /**
-     * Commits and closes file.
+     *  Commits and closes file.
      */
     void close() throws IOException {
         if (!dirty.isEmpty()) {
@@ -341,7 +344,7 @@ final class RecordFile {
      * Used for testing purposed only.
      */
     void forceClose() throws IOException {
-        txnMgr.forceClose();
+      txnMgr.forceClose();
         for (RandomAccessFile f : rafs) {
             if (f != null)
                 f.close();
@@ -350,7 +353,7 @@ final class RecordFile {
     }
 
     /**
-     * Prints contents of a list
+     *  Prints contents of a list
      */
     private void showList(Iterator<BlockIo> i) {
         int cnt = 0;
@@ -362,8 +365,8 @@ final class RecordFile {
 
 
     /**
-     * Returns a new node. The node is retrieved (and removed)
-     * from the released list or created new.
+     *  Returns a new node. The node is retrieved (and removed)
+     *  from the released list or created new.
      */
     private BlockIo getNewNode(long blockid)
             throws IOException {
@@ -383,8 +386,8 @@ final class RecordFile {
     }
 
     /**
-     * Synchs a node to disk. This is called by the transaction manager's
-     * synchronization code.
+     *  Synchs a node to disk. This is called by the transaction manager's
+     *  synchronization code.
      */
     void synch(BlockIo node) throws IOException {
         byte[] data = node.getData();
@@ -397,10 +400,10 @@ final class RecordFile {
     }
 
     /**
-     * Releases a node from the transaction list, if it was sitting
-     * there.
+     *  Releases a node from the transaction list, if it was sitting
+     *  there.
      *
-     * @param recycle true if block data can be reused
+     *  @param recycle true if block data can be reused
      */
     void releaseFromTransaction(BlockIo node, boolean recycle)
             throws IOException {
@@ -411,7 +414,7 @@ final class RecordFile {
     }
 
     /**
-     * Synchronizes the file.
+     *  Synchronizes the file.
      */
     void sync() throws IOException {
         for (RandomAccessFile file : rafs)

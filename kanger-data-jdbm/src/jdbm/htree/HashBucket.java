@@ -31,33 +31,36 @@ import java.util.ArrayList;
  * A bucket is a placeholder for multiple (key, value) pairs.  Buckets
  * are used to store collisions (same hash value) at all levels of an
  * H*tree.
- * <p>
+ *
  * There are two types of buckets: leaf and non-leaf.
- * <p>
+ *
  * Non-leaf buckets are buckets which hold collisions which happen
  * when the H*tree is not fully expanded.   Keys in a non-leaf buckets
  * can have different hash codes.  Non-leaf buckets are limited to an
  * arbitrary size.  When this limit is reached, the H*tree should create
  * a new Directory page and distribute keys of the non-leaf buckets into
  * the newly created Directory.
- * <p>
+ *
  * A leaf bucket is a bucket which contains keys which all have
  * the same <code>hashCode()</code>.  Leaf buckets stand at the
  * bottom of an H*tree because the hashing algorithm cannot further
  * discriminate between different keys based on their hash code.
  *
- * @author <a href="mailto:boisvert@intalio.com">Alex Boisvert</a>
- * @version $Id: HashBucket.java,v 1.2 2005/06/25 23:12:32 doomdark Exp $
+ *  @author <a href="mailto:boisvert@intalio.com">Alex Boisvert</a>
+ *  @version $Id: HashBucket.java,v 1.2 2005/06/25 23:12:32 doomdark Exp $
  */
 final class HashBucket<K, V>
         extends HashNode<K, V> {
+
+    final static long serialVersionUID = 1L;
 
     /**
      * The maximum number of elements (key, value) a non-leaf bucket
      * can contain.
      */
     public static final int OVERFLOW_SIZE = 8;
-    final static long serialVersionUID = 1L;
+
+
     /**
      * Depth of this bucket.
      */
@@ -159,6 +162,7 @@ final class HashBucket<K, V>
      * Remove an element, given a specific key.
      *
      * @param key Key of the element to remove
+     *
      * @return Removed element value, or <code>null</code> if not found
      */
     public V removeElement(K key) {
@@ -193,7 +197,7 @@ final class HashBucket<K, V>
     /**
      * Obtain keys contained in this buckets.  Keys are ordered to match
      * their values, which be be obtained by calling <code>getValues()</code>.
-     * <p>
+     *
      * As an optimization, the Vector returned is the instance member
      * of this class.  Please don't modify outside the scope of this class.
      */
@@ -205,7 +209,7 @@ final class HashBucket<K, V>
     /**
      * Obtain values contained in this buckets.  Values are ordered to match
      * their keys, which be be obtained by calling <code>getKeys()</code>.
-     * <p>
+     *
      * As an optimization, the Vector returned is the instance member
      * of this class.  Please don't modify outside the scope of this class.
      */

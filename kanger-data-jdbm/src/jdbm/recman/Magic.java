@@ -20,33 +20,25 @@ package jdbm.recman;
  * This interface contains magic cookies.
  */
 interface Magic {
-    /**
-     * Magic cookie at start of file
-     */
+    /** Magic cookie at start of file */
     public short FILE_HEADER = 0x1350;
 
-    /**
-     * Magic for blocks. They're offset by the block type magic codes.
-     */
+    /** Magic for blocks. They're offset by the block type magic codes. */
     public short BLOCK = 0x1351;
 
-    /**
-     * Magics for blocks in certain lists. Offset by baseBlockMagic
-     */
+    /** Magics for blocks in certain lists. Offset by baseBlockMagic */
     short FREE_PAGE = 0;
     short USED_PAGE = 1;
     short TRANSLATION_PAGE = 2;
     short FREELOGIDS_PAGE = 3;
     short FREEPHYSIDS_PAGE = 4;
 
-    /**
-     * Number of lists in a file
-     */
+    /** Number of lists in a file */
     public short NLISTS = 5;
 
     /**
-     * Maximum number of blocks in a file, leaving room for a 16 bit
-     * offset encoded within a long.
+     *  Maximum number of blocks in a file, leaving room for a 16 bit
+     *  offset encoded within a long.
      */
     long MAX_BLOCKS = 0x7FFFFFFFFFFFL;
 

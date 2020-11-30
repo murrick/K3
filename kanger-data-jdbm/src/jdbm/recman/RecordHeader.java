@@ -29,6 +29,11 @@ package jdbm.recman;
  * Current size is stored as two-byte-unsigned-short difference from Available Size.
  */
 final class RecordHeader {
+    // offsets
+    private static final short O_CURRENTSIZE = 0; // int currentSize
+    private static final short O_AVAILABLESIZE = Magic.SZ_UNSIGNED_SHORT; // int availableSize
+    static final int SIZE = O_AVAILABLESIZE + Magic.SZ_UNSIGNED_SHORT;
+
     /**
      * Maximal differnece between current and available size,
      * Maximal value is resorved for currentSize 0, so use -1
@@ -45,10 +50,6 @@ final class RecordHeader {
     static final int base3 = base2 + multi2 * ((1 << 14) - 2);
     static final int base4 = base3 + multi3 * (1 << 14) - 2;
     static final int MAX_RECORD_SIZE = roundAvailableSize(base4 - multi3 * 100);
-    // offsets
-    private static final short O_CURRENTSIZE = 0; // int currentSize
-    private static final short O_AVAILABLESIZE = Magic.SZ_UNSIGNED_SHORT; // int availableSize
-    static final int SIZE = O_AVAILABLESIZE + Magic.SZ_UNSIGNED_SHORT;
 
     /**
      * Returns the current size

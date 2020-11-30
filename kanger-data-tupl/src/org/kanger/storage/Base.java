@@ -16,6 +16,7 @@ import java.util.Queue;
 public class Base implements IBase {
 
     private static long MAX_CACHE_SIZE = 1024L * 1024L;
+    private static boolean CACHE_ENABLE = true;
 
     private final Index index;
     private final Map<Long, IStep> cache = new HashMap<>();
@@ -32,6 +33,9 @@ public class Base implements IBase {
         this.name = name;
         if (System.getProperties().containsKey("cache.size")) {
             MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
+        }
+        if (System.getProperties().containsKey("cache.enable")) {
+            CACHE_ENABLE = Boolean.parseBoolean(System.getProperty("cache.enable"));
         }
 
         this.index = db.openIndex(name + ".index");
@@ -108,14 +112,17 @@ public class Base implements IBase {
 
     @Override
     public IStep get(long id) throws Exception {
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                if (cache.containsKey(id)) {
+                    timing.remove(id);
+                    timing.add(id);
+                    return cache.get(id);
+                }
+            }
+        }
 
         synchronized (locker) {
-            if (cache.containsKey(id)) {
-                timing.remove(id);
-                timing.add(id);
-                return cache.get(id);
-            }
-
             IStep step = null;
             byte[] o = index.load(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer());
             if (o != null) {
@@ -132,16 +139,17 @@ public class Base implements IBase {
 //                if (step.getData() instanceof IUnit) {
 //                    ((IUnit) step.getData()).setUser(user);
 //                }
-                synchronized (cache) {
-
-                    if (!cache.containsKey(id)) {
-                        timing.add(id);
-                        cache.put(id, step);
-                        cacheSize += step.getSize();
-                        while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
-                            long topId = timing.poll();
-                            IStep top = cache.remove(topId);
-                            cacheSize -= top.getSize();
+                if (CACHE_ENABLE) {
+                    synchronized (cache) {
+                        if (!cache.containsKey(id)) {
+                            timing.add(id);
+                            cache.put(id, step);
+                            cacheSize += step.getSize();
+                            while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
+                                long topId = timing.poll();
+                                IStep top = cache.remove(topId);
+                                cacheSize -= top.getSize();
+                            }
                         }
                     }
                 }
@@ -159,7 +167,7 @@ public class Base implements IBase {
 
     }
 
-//    @Override
+    //    @Override
     public int size() throws IOException {
 //        synchronized (locker) {
         return (int) (index.count(null, null));
@@ -168,11 +176,13 @@ public class Base implements IBase {
 
     @Override
     public void clearCache() {
-//        synchronized (cache) {
-        cache.clear();
-        timing.clear();
-        cacheSize = 0;
-//        }
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                cache.clear();
+                timing.clear();
+                cacheSize = 0;
+            }
+        }
     }
 
     @Override
@@ -187,14 +197,16 @@ public class Base implements IBase {
 
     @Override
     public void delete(long id) throws IOException {
-        synchronized (locker) {
-            if (cache.containsKey(id)) {
-                timing.remove(id);
-                IStep top = cache.remove(id);
-                cacheSize -= top.getSize();
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                if (cache.containsKey(id)) {
+                    timing.remove(id);
+                    IStep top = cache.remove(id);
+                    cacheSize -= top.getSize();
+                }
             }
-//        }
-//        synchronized (locker) {
+        }
+        synchronized (locker) {
             Object one = index.load(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer());
             if (one != null) {
                 index.delete(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer());

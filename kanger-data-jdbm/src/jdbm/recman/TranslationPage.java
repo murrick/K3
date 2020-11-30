@@ -32,7 +32,7 @@ final class TranslationPage extends PageHeader {
 //    final PhysicalRowId[] slots = new PhysicalRowId[ELEMS_PER_PAGE];
 
     /**
-     * Constructs a data page view from the indicated block.
+     *  Constructs a data page view from the indicated block.
      */
     TranslationPage(BlockIo block, int blockSize) {
         super(block);
@@ -40,8 +40,8 @@ final class TranslationPage extends PageHeader {
     }
 
     /**
-     * Factory method to create or return a data page for the
-     * indicated block.
+     *  Factory method to create or return a data page for the
+     *  indicated block.
      */
     static TranslationPage getTranslationPageView(BlockIo block, int blockSize) {
         BlockView view = block.getView();

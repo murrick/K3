@@ -39,24 +39,20 @@ import java.util.TreeSet;
 // should start with lg9 instead of lg0!
 
 public final class TransactionManager {
+    private RecordFile owner;
+
+    // streams for transaction log.
+    private FileOutputStream fos;
+    private DataOutputStream oos;
+
     /**
      * By default, we keep 10 transactions in the log file before
      * synchronizing it with the main database file.
      */
     static final int DEFAULT_TXNS_IN_LOG = 1;
-    /**
-     * Extension of a log file.
-     */
+    /** Extension of a log file. */
     static final String extension = ".t";
-    private RecordFile owner;
-    // streams for transaction log.
-    private FileOutputStream fos;
-    private DataOutputStream oos;
-    /**
-     * Maximum number of transactions before the log file is
-     * synchronized with the main database file.
-     */
-    private int _maxTxns = DEFAULT_TXNS_IN_LOG;
+
     /**
      * In-core copy of transactions. We could read everything back from
      * the log file, but the RecordFile needs to keep the dirty blocks in
@@ -65,12 +61,17 @@ public final class TransactionManager {
      */
     private ArrayList<BlockIo>[] txns = new ArrayList[DEFAULT_TXNS_IN_LOG];
     private int curTxn = -1;
+    /**
+     * Maximum number of transactions before the log file is
+     * synchronized with the main database file.
+     */
+    private int _maxTxns = DEFAULT_TXNS_IN_LOG;
 
     /**
-     * Instantiates a transaction manager instance. If recovery
-     * needs to be performed, it is done.
+     *  Instantiates a transaction manager instance. If recovery
+     *  needs to be performed, it is done.
      *
-     * @param owner the RecordFile instance that owns this transaction mgr.
+     *  @param owner the RecordFile instance that owns this transaction mgr.
      */
     TransactionManager(RecordFile owner) throws IOException {
         this.owner = owner;
@@ -159,9 +160,7 @@ public final class TransactionManager {
     }
 
 
-    /**
-     * Opens the log file
-     */
+    /** Opens the log file */
     private void open() throws IOException {
         fos = new FileOutputStream(makeLogName());
         oos = new DataOutputStream(new BufferedOutputStream(fos));
@@ -170,9 +169,7 @@ public final class TransactionManager {
         curTxn = -1;
     }
 
-    /**
-     * Startup recovery on all files
-     */
+    /** Startup recovery on all files */
     private void recover() throws IOException {
         String logName = makeLogName();
         File logFile = new File(logName);
@@ -264,9 +261,9 @@ public final class TransactionManager {
     }
 
     /**
-     * Starts a transaction. This can block if all slots have been filled
-     * with full transactions, waiting for the synchronization thread to
-     * clean out slots.
+     *  Starts a transaction. This can block if all slots have been filled
+     *  with full transactions, waiting for the synchronization thread to
+     *  clean out slots.
      */
     void start() throws IOException {
         curTxn++;
@@ -278,7 +275,7 @@ public final class TransactionManager {
     }
 
     /**
-     * Indicates the block is part of the transaction.
+     *  Indicates the block is part of the transaction.
      */
     void add(BlockIo block) throws IOException {
         block.incrementTransactionCount();
@@ -286,7 +283,7 @@ public final class TransactionManager {
     }
 
     /**
-     * Commits the transaction to the log file.
+     *  Commits the transaction to the log file.
      */
     void commit() throws IOException {
         Serialization.writeObject(oos, txns[curTxn]);
@@ -300,9 +297,7 @@ public final class TransactionManager {
         oos = new DataOutputStream(new BufferedOutputStream(fos));
     }
 
-    /**
-     * Flushes and syncs
-     */
+    /** Flushes and syncs */
     private void sync() throws IOException {
         oos.flush();
         fos.flush();
@@ -310,8 +305,8 @@ public final class TransactionManager {
     }
 
     /**
-     * Shutdowns the transaction manager. Resynchronizes outstanding
-     * logs.
+     *  Shutdowns the transaction manager. Resynchronizes outstanding
+     *  logs.
      */
     void shutdown() throws IOException {
         synchronizeLogFromMemory();
@@ -319,7 +314,7 @@ public final class TransactionManager {
     }
 
     /**
-     * Closes open files.
+     *  Closes open files.
      */
     private void close() throws IOException {
         sync();

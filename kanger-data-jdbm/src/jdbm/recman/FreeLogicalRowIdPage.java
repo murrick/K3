@@ -35,7 +35,7 @@ final class FreeLogicalRowIdPage extends PageHeader {
     //final PhysicalRowId[] slots = new PhysicalRowId[ELEMS_PER_PAGE];
 
     /**
-     * Constructs a data page view from the indicated block.
+     *  Constructs a data page view from the indicated block.
      */
     FreeLogicalRowIdPage(BlockIo block, int blockSize) {
         super(block);
@@ -43,8 +43,8 @@ final class FreeLogicalRowIdPage extends PageHeader {
     }
 
     /**
-     * Factory method to create or return a data page for the
-     * indicated block.
+     *  Factory method to create or return a data page for the
+     *  indicated block.
      */
     static FreeLogicalRowIdPage getFreeLogicalRowIdPageView(BlockIo block, int blockSize) {
 
@@ -55,23 +55,17 @@ final class FreeLogicalRowIdPage extends PageHeader {
             return new FreeLogicalRowIdPage(block, blockSize);
     }
 
-    /**
-     * Returns the number of free rowids on this page.
-     */
+    /** Returns the number of free rowids on this page. */
     short getCount() {
         return block.readShort(O_COUNT);
     }
 
-    /**
-     * Sets the number of free rowids
-     */
+    /** Sets the number of free rowids */
     private void setCount(short i) {
         block.writeShort(O_COUNT, i);
     }
 
-    /**
-     * Frees a slot
-     */
+    /** Frees a slot */
     void free(int slot) {
         setLocationBlock(slotToOffset(slot), 0);
         //get(slot).setBlock(0);
@@ -82,9 +76,7 @@ final class FreeLogicalRowIdPage extends PageHeader {
             previousFoundFree = slot;
     }
 
-    /**
-     * Allocates a slot
-     */
+    /** Allocates a slot */
     short alloc(int slot) {
         setCount((short) (getCount() + 1));
         short pos = slotToOffset(slot);
@@ -98,17 +90,13 @@ final class FreeLogicalRowIdPage extends PageHeader {
         return pos;
     }
 
-    /**
-     * Returns true if a slot is allocated
-     */
+    /** Returns true if a slot is allocated */
     boolean isAllocated(int slot) {
         //return get(slot).getBlock() > 0;
         return getLocationBlock(slotToOffset(slot)) > 0;
     }
 
-    /**
-     * Returns true if a slot is free
-     */
+    /** Returns true if a slot is free */
     boolean isFree(int slot) {
         return !isAllocated(slot);
     }
@@ -122,16 +110,14 @@ final class FreeLogicalRowIdPage extends PageHeader {
 //    }
 //    
 
-    /**
-     * Converts slot to offset
-     */
+    /** Converts slot to offset */
     short slotToOffset(int slot) {
         return (short) (O_FREE +
                 (slot * PhysicalRowId_SIZE));
     }
 
     /**
-     * Returns first free slot, -1 if no slots are available
+     *  Returns first free slot, -1 if no slots are available
      */
     int getFirstFree() {
         for (; previousFoundFree < ELEMS_PER_PAGE; previousFoundFree++) {
@@ -142,7 +128,7 @@ final class FreeLogicalRowIdPage extends PageHeader {
     }
 
     /**
-     * Returns first allocated slot, -1 if no slots are available.
+     *  Returns first allocated slot, -1 if no slots are available.
      */
     int getFirstAllocated() {
         for (; previousFoundAllocated < ELEMS_PER_PAGE; previousFoundAllocated++) {

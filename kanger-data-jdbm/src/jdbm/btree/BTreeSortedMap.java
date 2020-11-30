@@ -184,6 +184,7 @@ public class BTreeSortedMap<K, V> extends AbstractPrimaryMap<K, V> implements Pr
 			}
 
 
+
 			@SuppressWarnings("unchecked")
 			public int size() {
 				if (fromKey == null && toKey == null)

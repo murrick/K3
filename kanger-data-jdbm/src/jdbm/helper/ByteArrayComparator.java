@@ -32,6 +32,7 @@ public final class ByteArrayComparator
      */
     final static long serialVersionUID = 1L;
 
+
     /**
      * Compare two byte arrays.
      */

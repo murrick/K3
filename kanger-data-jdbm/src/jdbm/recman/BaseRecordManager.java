@@ -80,9 +80,65 @@ public final class BaseRecordManager
      */
     static final long STORE_FORMAT_VERSION = 1L;
     private static final String IDR = ".idr";
+
+    /**
+     * Underlying file for store records.
+     */
+    private RecordFile _physFile;
+
+    /**
+     * Page manager for physical manager.
+     */
+    private PageManager _physPageman;
+
+    /**
+     * Physical row identifier manager.
+     */
+    private PhysicalRowIdManager _physMgr;
     private static final String IDF = ".idf";
     private static final String DBR = ".dbr";
     private static final String DBF = ".dbf";
+
+    /**
+     * Underlying file for store records.
+     * Traces free records
+     */
+    private RecordFile _physFileFree;
+
+    /**
+     * Page manager for physical manager.
+     * Traces free records
+     */
+    private PageManager _physPagemanFree;
+
+    /**
+     * Underlying file for logical records.
+     */
+    private RecordFile _logicFile;
+
+    /**
+     * Page manager for logical manager.
+     */
+    private PageManager _logicPageman;
+
+
+    /**
+     * Logigal to Physical row identifier manager.
+     */
+    private LogicalRowIdManager _logicMgr;
+
+    /**
+     * Underlying file for logical records.
+     * Traces free records
+     */
+    private RecordFile _logicFileFree;
+
+
+    /**
+     * Page manager for logical manager.
+     * Traces free records
+     */
+    private PageManager _logicPagemanFree;
     private static final int BUFFER_SIZE = 4096 * 2;
     private final byte[] _insertBuffer = new byte[BUFFER_SIZE];
     private final OpenByteArrayOutputStream _insertBAO = new OpenByteArrayOutputStream(_insertBuffer);
@@ -91,56 +147,12 @@ public final class BaseRecordManager
     private final SerializerInput _insertIn = new SerializerInput(_insertBAI);
     private final String _filename;
     /**
-     * Underlying file for store records.
-     */
-    private RecordFile _physFile;
-    /**
-     * Page manager for physical manager.
-     */
-    private PageManager _physPageman;
-    /**
-     * Physical row identifier manager.
-     */
-    private PhysicalRowIdManager _physMgr;
-    /**
      * if true, new records alwayes saved to end of file
      * and free space is not reclaimed.
      * This may speed up some operations which involves lot of
      * updates and inserts (batch creation);
      */
     private boolean appendToEnd = false;
-    /**
-     * Underlying file for store records.
-     * Traces free records
-     */
-    private RecordFile _physFileFree;
-    /**
-     * Page manager for physical manager.
-     * Traces free records
-     */
-    private PageManager _physPagemanFree;
-    /**
-     * Underlying file for logical records.
-     */
-    private RecordFile _logicFile;
-    /**
-     * Page manager for logical manager.
-     */
-    private PageManager _logicPageman;
-    /**
-     * Logigal to Physical row identifier manager.
-     */
-    private LogicalRowIdManager _logicMgr;
-    /**
-     * Underlying file for logical records.
-     * Traces free records
-     */
-    private RecordFile _logicFileFree;
-    /**
-     * Page manager for logical manager.
-     * Traces free records
-     */
-    private PageManager _logicPagemanFree;
     /**
      * Directory of named JDBMHashtables.  This directory is a persistent
      * directory, stored as a Hashtable.  It can be retrived by using
@@ -352,10 +364,10 @@ public final class BaseRecordManager
         long physRowId = _physMgr.insert(insertBAO.getBuf(), 0, insertBAO.size());
         long recid = _logicMgr.insert(physRowId);
         if (DEBUG) {
-            System.out.println("BaseRecordManager.insert() recid " + recid + " length " + insertBAO.size());
-        }
-        return compressRecid(recid);
-    }
+            System.out.println("BaseRecordManager.insert() recid " + recid + " length " + insertBAO.size() ) ;
+		}
+		return compressRecid(recid);
+	}
 
     private synchronized byte[] compress(byte[] data, int length) throws IOException {
         if (!compress)
@@ -556,7 +568,7 @@ public final class BaseRecordManager
             // remove from hashtable
             nameDirectory.remove(name);
         } else {
-            nameDirectory.put(name, new Long(recid));
+            nameDirectory.put(name, new Long(recid) );
         }
         saveNameDirectory(nameDirectory);
     }
@@ -740,8 +752,9 @@ public final class BaseRecordManager
      */
     private void forceInsert(long logicalRowId, byte[] data) throws IOException {
         long physLoc = _physMgr.insert(data, 0, data.length);
-        _logicMgr.forceInsert(logicalRowId, physLoc);
-    }
+		_logicMgr.forceInsert(logicalRowId, physLoc);
+	}
+
 
 
 }

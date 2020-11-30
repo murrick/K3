@@ -77,7 +77,7 @@ public class RecordManagerOptions {
 
 
     /**
-     * Compress pages in RecordManager with ZLIB.
+     * Compress pages in RecordManager with ZLIB. 
      * This may result in better space usage, but lower performance.
      * <br>Possible values: <u>false</u>|true.
      */

@@ -50,57 +50,58 @@ public interface RecordManager {
 
 
     /**
-     * Inserts a new record using standard java object serialization.
+     *  Inserts a new record using standard java object serialization.
      *
-     * @param obj the object for the new record.
-     * @return the rowid for the new record.
-     * @throws IOException when one of the underlying I/O operations fails.
+     *  @param obj the object for the new record.
+     *  @return the rowid for the new record.
+     *  @throws IOException when one of the underlying I/O operations fails.
      */
     public abstract long insert(Object obj)
             throws IOException;
 
 
     /**
-     * Inserts a new record using a custom serializer.
+     *  Inserts a new record using a custom serializer.
      *
-     * @param obj        the object for the new record.
-     * @param serializer a custom serializer
-     * @return the rowid for the new record.
-     * @throws IOException when one of the underlying I/O operations fails.
+     *  @param obj the object for the new record.
+     *  @param serializer a custom serializer
+     *  @return the rowid for the new record.
+     *  @throws IOException when one of the underlying I/O operations fails.
      */
     public abstract <A> long insert(A obj, Serializer<A> serializer)
             throws IOException;
 
 
     /**
-     * Deletes a record.
+     *  Deletes a record.
      *
-     * @param recid the rowid for the record that should be deleted.
-     * @throws IOException when one of the underlying I/O operations fails.
+     *  @param recid the rowid for the record that should be deleted.
+     *  @throws IOException when one of the underlying I/O operations fails.
      */
     public abstract void delete(long recid)
             throws IOException;
 
 
     /**
-     * Updates a record using standard java object serialization.
+     *  Updates a record using standard java object serialization.
      *
-     * @param recid the recid for the record that is to be updated.
-     * @param obj   the new object for the record.
-     * @throws IOException when one of the underlying I/O operations fails or given recid does not exists.
+     *  @param recid the recid for the record that is to be updated.
+     *  @param obj the new object for the record.
+     *  @throws IOException when one of the underlying I/O operations fails or given recid does not exists.
      */
     public abstract void update(long recid, Object obj)
             throws IOException;
 
 
     /**
-     * Updates a record using a custom serializer.
-     * If given recid does not exist, IOException will be thrown before/during commit (cache).
+     *  Updates a record using a custom serializer.
+     *  If given recid does not exist, IOException will be thrown before/during commit (cache).  
      *
-     * @param recid      the recid for the record that is to be updated.
-     * @param obj        the new object for the record.
-     * @param serializer a custom serializer
-     * @throws IOException when one of the underlying I/O operations fails
+     *
+     *  @param recid the recid for the record that is to be updated.
+     *  @param obj the new object for the record.
+     *  @param serializer a custom serializer
+     *  @throws IOException when one of the underlying I/O operations fails
      */
     public abstract <A> void update(long recid, A obj, Serializer<A> serializer)
             throws IOException;
@@ -119,33 +120,33 @@ public interface RecordManager {
 
 
     /**
-     * Fetches a record using a custom serializer.
+     *  Fetches a record using a custom serializer.
      *
-     * @param recid      the recid for the record that must be fetched.
-     * @param serializer a custom serializer
-     * @return the object contained in the record, null if given recid does not exist
-     * @throws IOException when one of the underlying I/O operations fails.
+     *  @param recid the recid for the record that must be fetched.
+     *  @param serializer a custom serializer
+     *  @return the object contained in the record, null if given recid does not exist
+     *  @throws IOException when one of the underlying I/O operations fails.
      */
     public abstract <A> A fetch(long recid, Serializer<A> serializer)
             throws IOException;
 
     /**
-     * Fetches a record using a custom serializer and optionaly disabled cache
+     *  Fetches a record using a custom serializer and optionaly disabled cache
      *
-     * @param recid        the recid for the record that must be fetched.
-     * @param serializer   a custom serializer
-     * @param disableCache true to disable any caching mechanism
-     * @return the object contained in the record, null if given recid does not exist
-     * @throws IOException when one of the underlying I/O operations fails.
+     *  @param recid the recid for the record that must be fetched.
+     *  @param serializer a custom serializer
+     *  @param disableCache true to disable any caching mechanism
+     *  @return the object contained in the record, null if given recid does not exist  
+     *  @throws IOException when one of the underlying I/O operations fails.
      */
     public abstract <A> A fetch(long recid, Serializer<A> serializer, boolean disableCache)
             throws IOException;
 
     /**
-     * Closes the record manager and release resources.
-     * Record manager can not be used after it was closed
+     *  Closes the record manager and release resources. 
+     *  Record manager can not be used after it was closed	
      *
-     * @throws IOException when one of the underlying I/O operations fails.
+     *  @throws IOException when one of the underlying I/O operations fails.
      */
     public abstract void close()
             throws IOException;
@@ -160,11 +161,12 @@ public interface RecordManager {
 
     /**
      * Defragments storage, so it consumes less space.
-     * This commits any uncommited data.
+     * This commits any uncommited data.  
      *
      * @throws IOException
      */
     public abstract void defrag() throws IOException;
+    
 
 
     /**
@@ -177,8 +179,8 @@ public interface RecordManager {
 
     /**
      * Rollback (cancel) all changes since beginning of transaction.
-     * JDBM supports only single transaction.
-     * This operations affects all maps created by this RecordManager.
+     * JDBM supports only single transaction. 
+     * This operations affects all maps created by this RecordManager. 	
      */
     public abstract void rollback()
             throws IOException;
@@ -216,9 +218,9 @@ public interface RecordManager {
      * Creates or load existing Primary Hash Map which persists data into DB.
      * This method uses custom serializer for keys.
      *
-     * @param <K>           Key type
-     * @param <V>           Value type
-     * @param name          record name
+     * @param <K> Key type
+     * @param <V> Value type
+     * @param name record name
      * @param keySerializer serializer to be used for Keys
      * @return
      */
@@ -230,10 +232,10 @@ public interface RecordManager {
      * Map will use custom serializers for Keys and Values.
      * Leave keySerializer null to use default serializer for keys
      *
-     * @param <K>             Key type
-     * @param <V>             Value type
-     * @param name            record name
-     * @param keySerializer   serializer to be used for Keys, leave null to use default serializer
+     * @param <K> Key type
+     * @param <V> Value type
+     * @param name record name
+     * @param keySerializer serializer to be used for Keys, leave null to use default serializer
      * @param valueSerializer serializer to be used for Values
      * @return
      */
@@ -242,8 +244,9 @@ public interface RecordManager {
     /**
      * Creates or load existing Primary TreeMap which persists data into DB.
      *
-     * @param <K>  Key type
-     * @param <V>  Value type
+     *
+     * @param <K> Key type
+     * @param <V> Value type
      * @param name record name
      * @return
      */
@@ -254,9 +257,9 @@ public interface RecordManager {
     /**
      * Creates or load existing TreeMap which persists data into DB.
      *
-     * @param <K>             Key type
-     * @param <V>             Value type
-     * @param name            record name
+     * @param <K> Key type
+     * @param <V> Value type
+     * @param name record name
      * @param valueSerializer Serializer used for values. This may reduce disk space usage.
      * @return
      */
@@ -335,6 +338,8 @@ public interface RecordManager {
      */
     public <V> PrimaryStoreMap<Long, V> storeMap(String name);
 
+
+	
 
 }
 

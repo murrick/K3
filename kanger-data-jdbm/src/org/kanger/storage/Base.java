@@ -13,6 +13,7 @@ import java.util.Queue;
 public class Base implements IBase {
 
     private static long MAX_CACHE_SIZE = 1024L * 1024L;
+    private static boolean CACHE_ENABLE = true;
 
     private final Map<Long, IStep> cache = new HashMap<>();
     private final Queue<Long> timing = new LinkedList<>();
@@ -27,6 +28,9 @@ public class Base implements IBase {
         this.name = name;
         if (System.getProperties().containsKey("cache.size")) {
             MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
+        }
+        if (System.getProperties().containsKey("cache.enable")) {
+            CACHE_ENABLE = Boolean.parseBoolean(System.getProperty("cache.enable"));
         }
 
         index = db.treeMap(name);
@@ -110,45 +114,51 @@ public class Base implements IBase {
     @Override
     public IStep get(long id) throws Exception {
         IStep step = null;
-//        synchronized (locker) {
-            if (cache.containsKey(id)) {
-                timing.remove(id);
-                timing.add(id);
-                return cache.get(id);
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                if (cache.containsKey(id)) {
+                    timing.remove(id);
+                    timing.add(id);
+                    return cache.get(id);
+                }
             }
+        }
 //        try (PreparedStatement ps = connection.prepareStatement("SELECT data FROM " + name + " WHERE id = ?")) {
 //            ps.setLong(1, id);
 //            ResultSet rs = ps.executeQuery();
 //            if (rs.next()) {
-            byte[] o = index.get(id); //rs.getBytes("data");
+        byte[] o = index.get(id); //rs.getBytes("data");
 
-            if (o != null) {
+        if (o != null) {
 
-                ByteBuffer packet = new ByteBuffer(o);
-                try {
+            ByteBuffer packet = new ByteBuffer(o);
+            try {
                     packet.mark();
                     step = new Sapato(this);
 //                    step.setBase(this);
-                    step.apply(packet);
-                } finally {
-                    packet.release();
-                }
-                step.setSize(o.length);
+                step.apply(packet);
+            } finally {
+                packet.release();
+            }
+            step.setSize(o.length);
 //                if (step.getData() instanceof IUnit) {
 //                    ((IUnit) step.getData()).setUser(user);
 //                }
 
-                if (!cache.containsKey(id)) {
-                    cache.put(id, step);
-                    timing.add(id);
-                    cacheSize += step.getSize();
-                    while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
-                        long topId = timing.poll();
-                        IStep top = cache.remove(topId);
-                        cacheSize -= top.getSize();
+            if (CACHE_ENABLE) {
+                synchronized (cache) {
+                    if (!cache.containsKey(id)) {
+                        cache.put(id, step);
+                        timing.add(id);
+                        cacheSize += step.getSize();
+                        while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
+                            long topId = timing.poll();
+                            IStep top = cache.remove(topId);
+                            cacheSize -= top.getSize();
+                        }
                     }
                 }
-
+            }
 //                    try {
 //                        ((Identifiable) step.getData()).linkExternal(user);
 //                    } catch (Exception e) {
@@ -156,7 +166,7 @@ public class Base implements IBase {
 //                    }
 ////                cache.remove(id);
 //                }
-            }
+        }
 //        }
 //            }
 //        }
@@ -182,9 +192,13 @@ public class Base implements IBase {
 
     @Override
     public void clearCache() {
-            cache.clear();
-            timing.clear();
-            cacheSize = 0;
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                cache.clear();
+                timing.clear();
+                cacheSize = 0;
+            }
+        }
     }
 
     @Override
@@ -194,12 +208,16 @@ public class Base implements IBase {
 
     @Override
     public void delete(long id) throws Exception {
-        synchronized (locker) {
-            if (cache.containsKey(id)) {
-                timing.remove(id);
-                IStep top = cache.remove(id);
-                cacheSize -= top.getSize();
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                if (cache.containsKey(id)) {
+                    timing.remove(id);
+                    IStep top = cache.remove(id);
+                    cacheSize -= top.getSize();
+                }
             }
+        }
+        synchronized (locker) {
             index.remove(id);
         }
 //        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM " + name + " WHERE id = ?;")) {

@@ -43,7 +43,7 @@ public interface TupleBrowser<K, V> {
      *
      * @param tuple Tuple into which values are copied.
      * @return True if values have been copied in tuple, or false if there is
-     * no previous tuple.
+     *         no previous tuple.
      */
     public abstract boolean getPrevious(Tuple<K, V> tuple)
             throws IOException;

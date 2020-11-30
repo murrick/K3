@@ -8,7 +8,8 @@ import java.util.*;
 
 public class Base implements IBase, Iterable<IStep> {
 
-    private static long MAX_CACHE_SIZE = 1024L * 1024L;
+    private static long MAX_CACHE_SIZE = 2048L * 2048L;
+    private static boolean CACHE_ENABLE = true;
 
     private Index index = null;
     private Data data = null;
@@ -18,6 +19,7 @@ public class Base implements IBase, Iterable<IStep> {
     private final Map<Long, IStep> cache = new HashMap<>();
     private final Queue<Long> timing = new LinkedList<>();
     private volatile long cacheSize = 0L;
+
     private long lastId = -1;
 
     public Base(String name, int baseCode, Object locker, boolean readonly) throws Exception {
@@ -25,6 +27,9 @@ public class Base implements IBase, Iterable<IStep> {
 
         if (System.getProperties().containsKey("cache.size")) {
             MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
+        }
+        if (System.getProperties().containsKey("cache.enable")) {
+            CACHE_ENABLE = Boolean.parseBoolean(System.getProperty("cache.enable"));
         }
 
         index = new Index(baseCode, locker);
@@ -84,11 +89,13 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public IStep get(long id) throws Exception {
-        synchronized (cache) {
-            if (cache.containsKey(id)) {
-                timing.remove(id);
-                timing.add(id);
-                return cache.get(id);
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                if (cache.containsKey(id)) {
+                    timing.remove(id);
+                    timing.add(id);
+                    return cache.get(id);
+                }
             }
         }
 
@@ -96,8 +103,7 @@ public class Base implements IBase, Iterable<IStep> {
             Index.IndexOne x = index.getOne(id);
             if (x != null) {
                 IStep one = data.get(x.getLong());
-                if (one != null) {
-
+                if (one != null && CACHE_ENABLE) {
                     synchronized (cache) {
                         if (!cache.containsKey(id)) {
                             cache.put(id, one);
@@ -224,10 +230,12 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void clearCache() {
-        synchronized (cache) {
-            cache.clear();
-            timing.clear();
-            cacheSize = 0;
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                cache.clear();
+                timing.clear();
+                cacheSize = 0;
+            }
         }
     }
 
@@ -238,11 +246,13 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void delete(long id) throws Exception {
-        synchronized (cache) {
-            if (cache.containsKey(id)) {
-                timing.remove(id);
-                IStep top = cache.remove(id);
-                cacheSize -= top.getSize();
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                if (cache.containsKey(id)) {
+                    timing.remove(id);
+                    IStep top = cache.remove(id);
+                    cacheSize -= top.getSize();
+                }
             }
         }
         synchronized (locker) {

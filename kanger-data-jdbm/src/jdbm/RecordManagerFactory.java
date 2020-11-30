@@ -37,11 +37,15 @@ public final class RecordManagerFactory {
     /**
      * Create a record manager.
      *
-     * @param name Name of the record file.
-     * @throws IOException                   if an I/O related exception occurs while creating or opening
-     *                                       the record manager.
-     * @throws UnsupportedOperationException if some options are not supported by the implementation.
-     * @throws IllegalArgumentException      if some options are invalid.
+     * @param name
+     *            Name of the record file.
+     * @throws IOException
+     *             if an I/O related exception occurs while creating or opening
+     *             the record manager.
+     * @throws UnsupportedOperationException
+     *             if some options are not supported by the implementation.
+     * @throws IllegalArgumentException
+     *             if some options are invalid.
      */
     public static RecordManager createRecordManager(String name)
             throws IOException {
@@ -51,12 +55,17 @@ public final class RecordManagerFactory {
     /**
      * Create a record manager.
      *
-     * @param name    Name of the record file.
-     * @param options Record manager options.
-     * @throws IOException                   if an I/O related exception occurs while creating or opening
-     *                                       the record manager.
-     * @throws UnsupportedOperationException if some options are not supported by the implementation.
-     * @throws IllegalArgumentException      if some options are invalid.
+     * @param name
+     *            Name of the record file.
+     * @param options
+     *            Record manager options.
+     * @throws IOException
+     *             if an I/O related exception occurs while creating or opening
+     *             the record manager.
+     * @throws UnsupportedOperationException
+     *             if some options are not supported by the implementation.
+     * @throws IllegalArgumentException
+     *             if some options are invalid.
      */
     @SuppressWarnings("unchecked")
     public static RecordManager createRecordManager(String name,

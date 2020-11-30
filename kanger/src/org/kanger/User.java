@@ -70,7 +70,7 @@ public class User implements IUser {
             return mind;
 
         } else {
-            throw new RuntimeErrorException("DB module doens't loaded");
+            throw new RuntimeErrorException("DB module doesn't loaded");
         }
     }
 

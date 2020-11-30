@@ -179,7 +179,7 @@ final class PageManager {
     }
 
     /**
-     * Returns the last page on the indicated list.
+     *  Returns the last page on the indicated list.
      */
     long getLast(short type) throws IOException {
         return header.getLastOf(type);
@@ -202,8 +202,8 @@ final class PageManager {
     }
 
     /**
-     * Flushes the page manager. This forces a flush of all outstanding
-     * blocks (this it's an implicit {@link RecordFile#commit} as well).
+     *  Flushes the page manager. This forces a flush of all outstanding
+     *  blocks (this it's an implicit {@link RecordFile#commit} as well).
      */
     void rollback() throws IOException {
         // release header
@@ -216,10 +216,10 @@ final class PageManager {
         else
             header = new FileHeader(headerBuf, false);
     }
-
+    
     /**
-     * Closes the page manager. This flushes the page manager and releases
-     * the lock on the header.
+     *  Closes the page manager. This flushes the page manager and releases
+     *  the lock on the header.
      */
     void close() throws IOException {
         file.release(headerBuf);
@@ -235,5 +235,5 @@ final class PageManager {
     FileHeader getFileHeader() {
         return header;
     }
-
+    
 }
