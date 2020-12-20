@@ -84,6 +84,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                             .putString((String) value);
                 }
                 break;
+            case PERIOD:
             case STRING:
                 packet.putString((String) value);
                 break;
@@ -137,6 +138,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                     value = packet.getString();
                 }
                 break;
+            case PERIOD:
             case STRING:
                 value = packet.getString();
                 break;
@@ -216,6 +218,9 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                         if (Tools.isInterval(token)) {
                             type = DataType.INTERVAL;
                             value = conatructInterval(token);
+                        } else if (Tools.isPeriod(token)) {
+                            type = DataType.PERIOD;
+                            value = token;
                         } else if ((d = Tools.parseDate(token)) != null) {
                             type = DataType.DATE;
                             value = d;
@@ -229,6 +234,9 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                     } else if (Tools.isInterval(token)) {
                         type = DataType.INTERVAL;
                         value = conatructInterval(token);
+                    } else if (Tools.isPeriod(token)) {
+                        type = DataType.PERIOD;
+                        value = token;
                     } else if ((d = Tools.parseDate(token)) != null) {
                         type = DataType.DATE;
                         value = d;

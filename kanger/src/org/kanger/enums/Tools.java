@@ -81,7 +81,27 @@ public abstract class Tools {
         if (ch.contains("..") && ch.charAt(0) != Enums.ANT && ch.charAt(0) != Enums.SUC) {
             return ch.split("\\.\\.").length == 2;
         } else {
-            String[] s = ch.split(" ");
+            return false;
+        }
+//        else {
+//            String[] s = ch.split(" ");
+//            for (int i = 0; i < s.length; ++i) {
+//                if (i + 1 < s.length && isInt(s[i]) && Enums.INTERVALS.keySet().contains(s[i + 1].toLowerCase())) {
+//                    ++i;
+//                } else {
+//                    return false;
+//                }
+//            }
+//        }
+//        return true;
+    }
+
+    public static boolean isPeriod(String ch) {
+//        if (ch.contains("..") && ch.charAt(0) != Enums.ANT && ch.charAt(0) != Enums.SUC) {
+//            return ch.split("\\.\\.").length == 2;
+//        } else {
+        String[] s = ch.split(" ");
+        if (s.length > 1) {
             for (int i = 0; i < s.length; ++i) {
                 if (i + 1 < s.length && isInt(s[i]) && Enums.INTERVALS.keySet().contains(s[i + 1].toLowerCase())) {
                     ++i;
@@ -89,8 +109,11 @@ public abstract class Tools {
                     return false;
                 }
             }
+//        }
+            return true;
+        } else {
+            return false;
         }
-        return true;
     }
 
     public static Date parseDate(String ch) {

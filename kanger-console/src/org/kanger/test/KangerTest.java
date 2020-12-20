@@ -2266,6 +2266,19 @@ public class KangerTest {
         System.out.println("====================================================");
     }
 
+    public void set_07_0C() throws Exception {
+
+        mind.clear();
+        mind.query("?$x x : 1..10, 3;");
+        showResult(true);
+        if (mind.getValues().size() != 4) {
+            fail("Expected 4 rows");
+        }
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+
     public void set_08_01() throws Exception {
 
         mind.clear();

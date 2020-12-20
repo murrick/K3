@@ -57,12 +57,10 @@ final class RecordFile {
 
     // transactions disabled?
     private boolean transactionsDisabled = false;
-    //    /** maximal file size not rounded to block size */
-    private final static long _FILESIZE = 1000000000l;
+//    /** maximal file size not rounded to block size */
+private final static long _FILESIZE = 1000000000l;
     //    /** The length of a single block. */
     final int BLOCK_SIZE;//= 8192;//4096;
-    /** A block of clean data to wipe clean pages. */
-    final byte[] cleanData;
     /**
      * Blocks currently locked for read/update ops. When released the block goes
      * to the dirty or clean list, depending on a flag.  The file header block is
@@ -72,6 +70,12 @@ final class RecordFile {
      */
     private final LongHashMap<BlockIo> inUse = new LongHashMap<BlockIo>();
     private final long MAX_FILE_SIZE;// = _FILESIZE - _FILESIZE%BLOCK_SIZE;
+
+
+    /**
+     * A block of clean data to wipe clean pages.
+     */
+    final byte[] cleanData;
 
     private ArrayList<RandomAccessFile> rafs = new ArrayList<RandomAccessFile>();
     private final String fileName;
@@ -140,12 +144,12 @@ final class RecordFile {
     }
 
     /**
-     *  Gets a block from the file. The returned byte array is
-     *  the in-memory copy of the record, and thus can be written
-     *  (and subsequently released with a dirty flag in order to
-     *  write the block back).
+     * Gets a block from the file. The returned byte array is
+     * the in-memory copy of the record, and thus can be written
+     * (and subsequently released with a dirty flag in order to
+     * write the block back).
      *
-     *  @param blockid The record number to retrieve.
+     * @param blockid The record number to retrieve.
      */
     BlockIo get(long blockid) throws IOException {
 
@@ -190,10 +194,10 @@ final class RecordFile {
 
 
     /**
-     * Releases a block.
+     *  Releases a block.
      *
-     * @param blockid The record number to release.
-     * @param isDirty If true, the block was modified since the get().
+     *  @param blockid The record number to release.
+     *  @param isDirty If true, the block was modified since the get().
      */
     void release(long blockid, boolean isDirty) throws IOException {
         BlockIo node = inUse.get(blockid);
@@ -251,7 +255,7 @@ final class RecordFile {
 
         //  System.out.println("committing...");
 
-        if ( dirty.size() == 0) {
+        if (dirty.size() == 0) {
             // if no dirty blocks, skip commit process
             return;
         }
@@ -344,7 +348,7 @@ final class RecordFile {
      * Used for testing purposed only.
      */
     void forceClose() throws IOException {
-      txnMgr.forceClose();
+        txnMgr.forceClose();
         for (RandomAccessFile f : rafs) {
             if (f != null)
                 f.close();
@@ -414,7 +418,7 @@ final class RecordFile {
     }
 
     /**
-     *  Synchronizes the file.
+     * Synchronizes the file.
      */
     void sync() throws IOException {
         for (RandomAccessFile file : rafs)

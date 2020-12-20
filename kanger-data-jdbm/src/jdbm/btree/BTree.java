@@ -76,6 +76,8 @@ public class BTree<K, V>
      * Page manager used to persist changes in BPages
      */
     protected transient RecordManager _recman;
+
+
     /**
      * Number of entries in each BPage.
      */
@@ -410,7 +412,7 @@ public class BTree<K, V>
                 return null;
             }
 
-            return rootPage.findValue(_height, key);
+            return rootPage.findValue( _height, key );
         } finally {
         	lock.readLock().unlock();
         }
@@ -625,6 +627,10 @@ public class BTree<K, V>
         return _recman;
     }
 
+    public Comparator<K> getComparator() {
+        return _comparator;
+    }
+
     /**
      * Deletes all BPages in this BTree, then deletes the tree from the record manager
      */
@@ -639,11 +645,6 @@ public class BTree<K, V>
         } finally {
             lock.writeLock().unlock();
         }
-    }
-
-
-    public Comparator<K> getComparator() {
-        return _comparator;
     }
 
     /**
@@ -678,7 +679,8 @@ public class BTree<K, V>
             return false;
         }
 
-        public boolean getPrevious(Tuple<K, V> tuple) {
+        public boolean getPrevious(Tuple<K, V> tuple )
+        {
             return false;
         }
     }

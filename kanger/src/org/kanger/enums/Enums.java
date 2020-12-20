@@ -142,6 +142,10 @@ public class Enums {
         }
 
         {
+            put("wk", INTERVAL_WEEK);
+        }
+
+        {
             put("wks", INTERVAL_WEEK);
         }
 
@@ -151,6 +155,10 @@ public class Enums {
 
         {
             put("weeks", INTERVAL_WEEK);
+        }
+
+        {
+            put("mn", INTERVAL_MONTH);
         }
 
         {
