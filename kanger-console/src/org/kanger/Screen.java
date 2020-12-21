@@ -1016,10 +1016,6 @@ public class Screen {
 //                }
             }
         }
-        Comment c = mind.getComments().get(-1L);
-        if (c != null) {
-            System.out.println(c.getComment());
-        }
     }
 //
 //

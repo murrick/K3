@@ -211,6 +211,8 @@ public class Sapato implements IStep {
                 return new Term();
             case RIGHT:
                 return new Right();
+            case COMMENT:
+                return new Comment();
             case DOMAIN:
                 return new Domain();
             case FVALUE:

@@ -36,7 +36,7 @@ public class Base implements IBase, Iterable<IStep> {
         index.open(name + ".index", readonly);
 
         data = new Data(this);
-        data.open(name + ".data", readonly);
+        data.open(name + ".store", readonly);
 
         IStep root = getRoot();
         if (root != null) {

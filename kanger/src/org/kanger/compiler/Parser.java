@@ -10,6 +10,11 @@ import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.units.SysOp;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
@@ -92,6 +97,27 @@ public class Parser {
 
     public static boolean isHex(int ch) {
         return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+
+    public static String[] extractComments(String text) {
+        List<String> list = new ArrayList<>();
+        Pattern commentsPattern = Pattern.compile("(//.*?$)|(/\\*.*?\\*/)", Pattern.MULTILINE | Pattern.DOTALL);
+        Matcher mt = commentsPattern.matcher(text);
+        while (mt.find()) {
+            for (int k = 0; k < mt.groupCount(); ++k) {
+                String s = mt.group(k + 1);
+                if (s != null) {
+                    list.add(s);
+                }
+            }
+        }
+        String[] ret = new String[list.size()];
+        for (int i = 0; i < list.size(); ++i) {
+            ret[i] = list.get(i);
+        }
+        return ret;
+
+        //"//.*|(\"(?:\\\\[^\"]|\\\\\"|.)*?\")|(?s)/\\*.*?\\*/"
     }
 
     public static Object[] getToken(String ln, int pos) throws ParseErrorException {

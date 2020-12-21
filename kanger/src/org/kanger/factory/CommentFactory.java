@@ -19,6 +19,9 @@ public class CommentFactory implements Iterable<Term> {
 
     public static final String SCHEMA = "comments";
 
+    public static final long HEADER_ID = -2L;
+    public static final long FOOTER_ID = -3L;
+
     private ICache cache;
     private IStep top = null;
     private Mind mind = null;
@@ -71,7 +74,7 @@ public class CommentFactory implements Iterable<Term> {
         Comment p = get(rightId);
         if (p != null) {
             if (!p.getComment().equals(comment)) {
-
+                p.setComment(comment);
             }
             return p;
         } else {
@@ -86,8 +89,9 @@ public class CommentFactory implements Iterable<Term> {
         }
     }
 
-    public Comment load(long id) throws Exception {
-        Comment t = get(id);
+    public Comment get(long id) throws Exception {
+//        Comment t = get(id);
+        Comment t = (Comment) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -97,10 +101,10 @@ public class CommentFactory implements Iterable<Term> {
         return t;
     }
 
-    public Comment get(long id) throws Exception {
-        Comment t = (Comment) cache.get(id);
-        return t;
-    }
+//    public Comment get(long id) throws Exception {
+//        Comment t = (Comment) cache.get(id);
+//        return t;
+//    }
 
 //    public Term load(long id) throws RuntimeErrorException {
 //        Term t = null;

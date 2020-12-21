@@ -31,6 +31,7 @@ public class Mind {
 
     //    private volatile boolean blockCommit = false;
     private final Object locker = new Object();
+
     private final Map<Long, Set<Right>> usedRights = new HashMap<>();
     private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
@@ -42,6 +43,7 @@ public class Mind {
     private final Map<TVariableSet, List<TSolve>> rightSolves = new LinkedHashMap<>();
     private long id = 0;
     private Mind next = null;
+
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
@@ -51,6 +53,8 @@ public class Mind {
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
     private CommentFactory comments = null;
+
+
     private IUser user = null;
 
     private SolutionsStore solves = null;                         // Список решений
@@ -530,16 +534,22 @@ public class Mind {
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.ACCEPT);
         int previousPos = 0;
-        Map<Long, String> comments = new HashMap<>();
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
             String comment = src.substring(previousPos, pos - ((String) t[0]).length()).trim();
+            if (previousPos == 0) {
+                String[] cc = Parser.extractComments(comment);
+                if (cc.length > 1 && !cc[0].isEmpty()) {
+                    m.getComments().add(CommentFactory.HEADER_ID, cc[0].trim());
+                    comment = comment.substring(cc[0].length()).trim();
+                }
+            }
             previousPos = pos;
 
             Object r = m.compileLine(line, false, null);
             if (!comment.isEmpty() && r instanceof Right) {
-                comments.put(((Right) r).getId(), comment);
+                m.getComments().add(((Right) r).getId(), comment);
             }
 
 //            Mind x = new Mind(m);
@@ -564,7 +574,7 @@ public class Mind {
         if (src.length() > pos) {
             String comment = src.substring(pos).trim();
             if (!comment.isEmpty()) {
-                comments.put(-1L, comment);
+                m.getComments().add(CommentFactory.FOOTER_ID, comment);
             }
         }
 
@@ -581,13 +591,11 @@ public class Mind {
             if (logging) {
                 m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
             }
+
             commit(m);
             excluded.clear();
             excluded.commit(m.getHypotesisStore());
 
-            for (Map.Entry<Long, String> e : comments.entrySet()) {
-                getComments().add(e.getKey(), e.getValue());
-            }
             return true;
         }
     }
@@ -1738,8 +1746,14 @@ public class Mind {
                 map.put(r.getId(), r);
             }
         }
+        Comment c = getComments().get(CommentFactory.HEADER_ID);
+        if (c != null) {
+            for (String s : c.getComment().split("\\R")) {
+                str += s + System.getProperty("line.separator");
+            }
+        }
         for (Right r : map.values()) {
-            Comment c = getComments().get(r.getId());
+            c = getComments().get(r.getId());
             if (c != null) {
                 str += System.getProperty("line.separator");
                 for (String s : c.getComment().split("\\R")) {
@@ -1750,7 +1764,7 @@ public class Mind {
                 str += s + System.getProperty("line.separator");
             }
         }
-        Comment c = getComments().get(-1L);
+        c = getComments().get(CommentFactory.FOOTER_ID);
         if (c != null) {
             str += System.getProperty("line.separator");
             for (String s : c.getComment().split("\\R")) {

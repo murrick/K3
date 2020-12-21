@@ -51,7 +51,7 @@ public class User implements IUser {
             storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
             storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
 
-            storage.put("comments", data.getBase("comments"));
+            storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
 
             while (mind.getNext() != null) {
                 mind = mind.getNext();
@@ -63,6 +63,7 @@ public class User implements IUser {
             mind.getFValues().transaction(null);
             mind.getPredicates().transaction(null);
             mind.getRights().transaction(null);
+            mind.getComments().transaction(null);
             mind.getTValues().transaction(null);
             mind.getTVars().transaction(null);
             mind.getLibrary().transaction(null);
