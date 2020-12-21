@@ -1752,6 +1752,7 @@ public class Mind {
         }
         Comment c = getComments().get(-1L);
         if (c != null) {
+            str += System.getProperty("line.separator");
             for (String s : c.getComment().split("\\R")) {
                 str += s + System.getProperty("line.separator");
             }

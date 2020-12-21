@@ -57,10 +57,15 @@ final class RecordFile {
 
     // transactions disabled?
     private boolean transactionsDisabled = false;
-//    /** maximal file size not rounded to block size */
-private final static long _FILESIZE = 1000000000l;
+    //    /** maximal file size not rounded to block size */
+    private final static long _FILESIZE = 1000000000l;
     //    /** The length of a single block. */
     final int BLOCK_SIZE;//= 8192;//4096;
+    /**
+     * A block of clean data to wipe clean pages.
+     */
+    final byte[] cleanData;
+    private final long MAX_FILE_SIZE;// = _FILESIZE - _FILESIZE%BLOCK_SIZE;
     /**
      * Blocks currently locked for read/update ops. When released the block goes
      * to the dirty or clean list, depending on a flag.  The file header block is
@@ -69,13 +74,6 @@ private final static long _FILESIZE = 1000000000l;
      * @see BlockIo#isDirty()
      */
     private final LongHashMap<BlockIo> inUse = new LongHashMap<BlockIo>();
-    private final long MAX_FILE_SIZE;// = _FILESIZE - _FILESIZE%BLOCK_SIZE;
-
-
-    /**
-     * A block of clean data to wipe clean pages.
-     */
-    final byte[] cleanData;
 
     private ArrayList<RandomAccessFile> rafs = new ArrayList<RandomAccessFile>();
     private final String fileName;

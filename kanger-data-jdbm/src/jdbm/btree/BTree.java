@@ -627,10 +627,6 @@ public class BTree<K, V>
         return _recman;
     }
 
-    public Comparator<K> getComparator() {
-        return _comparator;
-    }
-
     /**
      * Deletes all BPages in this BTree, then deletes the tree from the record manager
      */
@@ -645,6 +641,11 @@ public class BTree<K, V>
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+
+    public Comparator<K> getComparator() {
+        return _comparator;
     }
 
     /**
@@ -679,8 +680,7 @@ public class BTree<K, V>
             return false;
         }
 
-        public boolean getPrevious(Tuple<K, V> tuple )
-        {
+        public boolean getPrevious(Tuple<K, V> tuple) {
             return false;
         }
     }

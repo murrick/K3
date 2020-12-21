@@ -131,7 +131,26 @@ public final class BlockIo {
     }
 
     /**
-     *  Reads a byte from the indicated position
+     *  Returns the block number.
+     */
+    long getBlockId() {
+        return blockId;
+    }
+
+    /**
+     *  Decrements transaction count for this block, to signal that this
+     *  block has been written from the log to the data file.
+     */
+    synchronized void decrementTransactionCount() {
+        transactionCount--;
+        if (transactionCount < 0)
+            throw new Error("transaction count on block "
+                    + getBlockId() + " below zero!");
+
+    }
+
+    /**
+     * Reads a byte from the indicated position
      */
     public byte readByte(int pos) {
         return data[pos];
@@ -143,25 +162,6 @@ public final class BlockIo {
     public void writeByte(int pos, byte value) {
         data[pos] = value;
         setDirty();
-    }
-
-    /**
-     * Returns the block number.
-     */
-    long getBlockId() {
-        return blockId;
-    }
-
-    /**
-     * Decrements transaction count for this block, to signal that this
-     * block has been written from the log to the data file.
-     */
-    synchronized void decrementTransactionCount() {
-        transactionCount--;
-        if (transactionCount < 0)
-            throw new Error("transaction count on block "
-                    + getBlockId() + " below zero!");
-
     }
 
     /**

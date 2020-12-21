@@ -51,6 +51,7 @@ public class SerializerOutput extends DataOutputStream {
     /**
      * Reset counter inside DataOutputStream.
      * Workaround method if SerializerOutput instance is reused
+     *
      */
     public void __resetWrittenCounter() {
         written = 0;
