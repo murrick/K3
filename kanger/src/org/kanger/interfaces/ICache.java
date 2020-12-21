@@ -7,7 +7,7 @@ public interface ICache extends Iterable {
 
     void add(IUnit one) throws Exception;
 
-    void add(long id, Object one) throws Exception;
+//    void add(long id, Object one) throws Exception;
 
     Object get(long id) throws Exception;
 

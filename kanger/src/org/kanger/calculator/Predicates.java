@@ -203,7 +203,7 @@ public class Predicates {
                                 || arg.get(1).getValue(mind).getType() == DataType.STRING
                                 || arg.get(1).getValue(mind).getType() == DataType.BLOB) {
                             Term top = null;
-                            for (Term cur : expand(arg.get(1).getValue(mind), null)) {
+                            for (Term cur : expand(arg.get(1).getValue(mind), null, true)) {
                                 if (top == null) top = cur;
                                 arg.get(0).addValue(mind, cur);
                                 i = 1;
@@ -243,7 +243,7 @@ public class Predicates {
 //                                mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
 //                            }
                             Term top = null;
-                            for (Term cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind))) {
+                            for (Term cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind), true)) {
                                 if (top == null) top = cur;
                                 arg.get(0).addValue(mind, cur);
                                 i = 1;
@@ -321,7 +321,7 @@ public class Predicates {
 
             } else if (cur.getType() == DataType.SET) {
 
-                for (Term t : expand(cur, step)) {
+                for (Term t : expand(cur, step, false)) {
                     rcmin = t.compareTo(min);
                     rcmax = t.compareTo(max);
                     if (cmp(rc, rcmin, rcmax, min, cur, step)) {
@@ -339,7 +339,7 @@ public class Predicates {
             }
         } else if (interval.getType() == DataType.SET) {
 
-            for (Term c : expand(cur, step)) {
+            for (Term c : expand(cur, step, false)) {
                 res = false;
                 for (Term t : (Collection<Term>) interval.getValue()) {
                     if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
@@ -400,7 +400,7 @@ public class Predicates {
         return -1;
     }
 
-    public List<Term> expand(Term source, Term step) throws Exception {
+    public List<Term> expand(Term source, Term step, boolean expandString) throws Exception {
         List<Term> list = new ArrayList<>();
         Term top = null;
         if (source.getType() == DataType.INTERVAL) {
@@ -439,16 +439,20 @@ public class Predicates {
 
             for (Term t : (Collection<Term>) source.getValue()) {
                 if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
-                    list.addAll(expand(t, null));
+                    list.addAll(expand(t, null, expandString));
                 } else {
                     list.add(t);
                 }
             }
         } else if (source.getType() == DataType.STRING) {
             if (step == null) {
-                for (int k = 0; k < source.getValue().toString().length(); ++k) {
-                    Term x = mind.getTerms().add(source.getValue().toString().charAt(k) + "");
-                    list.add(x);
+                if (expandString) {
+                    for (int k = 0; k < source.getValue().toString().length(); ++k) {
+                        Term x = mind.getTerms().add(source.getValue().toString().charAt(k) + "");
+                        list.add(x);
+                    }
+                } else {
+                    list.add(source);
                 }
             } else {
                 Pattern pt = Pattern.compile(step.getValue().toString());
@@ -462,9 +466,13 @@ public class Predicates {
             }
         } else if (source.getType() == DataType.BLOB) {
             if (step == null) {
-                for (int k = 0; k < ((byte[]) source.getValue()).length; ++k) {
-                    Term x = mind.getTerms().add(new byte[]{((byte[]) source.getValue())[k]});
-                    list.add(x);
+                if (expandString) {
+                    for (int k = 0; k < ((byte[]) source.getValue()).length; ++k) {
+                        Term x = mind.getTerms().add(new byte[]{((byte[]) source.getValue())[k]});
+                        list.add(x);
+                    }
+                } else {
+                    list.add(source);
                 }
             } else {
                 int bytes = ((Double) step.getValue()).intValue();

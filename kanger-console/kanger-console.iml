@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="$project_name$" />
     <orderEntry type="module" module-name="kanger-udf" />
     <orderEntry type="module" module-name="kanger-data-dumb" />
+    <orderEntry type="module" module-name="kanger" />
   </component>
 </module>

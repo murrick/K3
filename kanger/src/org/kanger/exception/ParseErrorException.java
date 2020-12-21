@@ -90,6 +90,9 @@ public class ParseErrorException extends Exception {
             case EPARAM:
                 exceptionMessage += "External parameter expected";
                 break;
+            case ENEG:
+                exceptionMessage += "Misplaced unary minus";
+                break;
             default:
                 exceptionMessage += "Unknown error";
         }

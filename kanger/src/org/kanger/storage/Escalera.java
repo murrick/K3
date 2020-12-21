@@ -6,7 +6,6 @@ import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 
-import java.io.IOException;
 import java.util.*;
 
 public class Escalera implements ICache {
@@ -43,15 +42,15 @@ public class Escalera implements ICache {
         root = s;
     }
 
-    @Override
-    public void add(long id, Object one) throws IOException {
-        Step s = new Step();
-        s.setData(one);
-        s.setId(id);
-        s.setHash(one.hashCode());
-        s.setNext(root);
-        root = s;
-    }
+//    @Override
+//    public void add(long id, Object one) throws IOException {
+//        Step s = new Step();
+//        s.setData(one);
+//        s.setId(id);
+//        s.setHash(one.hashCode());
+//        s.setNext(root);
+//        root = s;
+//    }
 
     @Override
     public Object get(long id) throws Exception {

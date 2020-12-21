@@ -1,6 +1,7 @@
 package org.kanger.compiler;
 
 import org.kanger.Mind;
+import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.ParseError;
 import org.kanger.exception.ParseErrorException;
@@ -263,11 +264,23 @@ public class Compiler {
             if (level == 0) {
                 parseArgs(d, arg, root.getLeft(), level + 1, replacements, externals);
                 parseArgs(d, arg, root.getRight(), level + 1, replacements, externals);
+//            } else if (root.getName().equals("_neg")
+//                    && root.getRight() == null
+//                    && root.getLeft().getName().charAt(0) != Enums.LB
+//                    && new Term(root.getLeft().getName(), mind).getType() != DataType.NUMERIC) {
+//                throw new ParseErrorException(root.getPos(), ParseError.ENEG);
             } else {
                 // системная функция
                 ArgList arguments = new ArgList();
                 parseArgs(d, arguments, root.getLeft(), level + 1, replacements, externals);
                 parseArgs(d, arguments, root.getRight(), level + 1, replacements, externals);
+                if (root.getName().equals("_neg")
+                        && arguments.size() == 1
+                        && !arguments.get(0).isEmpty(mind)
+                        && arguments.get(0).getValue(mind).getType() != DataType.NUMERIC
+                        && !arguments.get(0).isFSet()) {
+                    throw new ParseErrorException(root.getPos(), ParseError.ENEG);
+                }
                 Function f = mind.getFunctions().add(mind.getTerms().add(root.getName()), arguments);
                 Argument t = new Argument(f);
                 arg.add(t);
@@ -282,6 +295,11 @@ public class Compiler {
             Function f = mind.getFunctions().add(mind.getTerms().add(root.getLeft().getName()), arguments);
             Argument t = new Argument(f);
             arg.add(t);
+//        } else if (root.getName().equals("_neg")
+//                && root.getRight() == null
+//                && root.getLeft().getName().charAt(0) != Enums.LB
+//                && new Term(root.getLeft().getName(), mind).getType() != DataType.NUMERIC) {
+//            throw new ParseErrorException(root.getPos(), ParseError.ENEG);
         } else if (root.getName().equals("..")) {
             Argument t = new Argument(mind.getTerms().add(root));
             arg.add(t);

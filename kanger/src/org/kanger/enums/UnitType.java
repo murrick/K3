@@ -17,5 +17,6 @@ public enum UnitType {
     ARGLIST,
     ARGUMENT,
     CAUSE,
-    HYPOTESE
+    HYPOTESE,
+    COMMENT
 }

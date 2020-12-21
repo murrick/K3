@@ -319,9 +319,7 @@ public class Screen {
                             }
                             break;
                         case 'M':
-//                            for (TSolve t : mind.getTSolves()) {
-//                                System.out.println(t + "\t" + t.getCauses().size());
-//                            }
+                            System.out.println(mind.getSourceCode());
                             break;
                         case 'P':
                             if (!user.isClosed()) {
@@ -1017,6 +1015,10 @@ public class Screen {
 //                    showTreeWithValues(mind, r, tset);
 //                }
             }
+        }
+        Comment c = mind.getComments().get(-1L);
+        if (c != null) {
+            System.out.println(c.getComment());
         }
     }
 //

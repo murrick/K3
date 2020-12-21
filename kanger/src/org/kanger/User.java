@@ -47,10 +47,11 @@ public class User implements IUser {
             storage.put(RightFactory.SCHEMA, data.getBase(RightFactory.SCHEMA));
             storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
             storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
-//            storage.put(TSolveFactory.SCHEMA, data.getBase(TSolveFactory.SCHEMA));
 
             storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
             storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
+
+            storage.put("comments", data.getBase("comments"));
 
             while (mind.getNext() != null) {
                 mind = mind.getNext();

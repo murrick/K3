@@ -114,6 +114,7 @@ public class RightFactory implements Iterable<Right> {
 
 //                    System.err.println(((IUnit) s.getData()).getMindId() + ": " + s.getData());
                     if (find((Right) s.getData()) != null) {
+                        //TODO: Непонятно как связать с комментарием
                         base.delete((Right) s.getData());
                     } else {
                         ((IUnit) s.getData()).setMind(mind);
@@ -183,6 +184,7 @@ public class RightFactory implements Iterable<Right> {
     public synchronized Right add(Right r) throws Exception {
         Right x = find(r);
         if (x != null) {
+            //TODO: Непонятно как связать с комментарием
             delete(r);
             return x;
         } else {
@@ -508,4 +510,5 @@ public class RightFactory implements Iterable<Right> {
             connection.close();
         }
     }
+
 }

@@ -31,9 +31,6 @@ public class Mind {
 
     //    private volatile boolean blockCommit = false;
     private final Object locker = new Object();
-    private long id = 0;
-    private Mind next = null;
-
     private final Map<Long, Set<Right>> usedRights = new HashMap<>();
     private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
@@ -43,7 +40,8 @@ public class Mind {
     private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> rightSolves = new LinkedHashMap<>();
-
+    private long id = 0;
+    private Mind next = null;
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
@@ -52,6 +50,7 @@ public class Mind {
     private TValueFactory tValues = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
+    private CommentFactory comments = null;
     private IUser user = null;
 
     private SolutionsStore solves = null;                         // Список решений
@@ -112,6 +111,7 @@ public class Mind {
 
         domains.transaction(root.getDomains());
         rights.transaction(root.getRights());
+        comments.transaction(root.getComments());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
         functions.transaction(root.getFunctions());
@@ -133,6 +133,7 @@ public class Mind {
 
         domains = new DomainFactory(this);                          // Список доменов
         rights = new RightFactory(this);                             // Список правил
+        comments = new CommentFactory(this);
 //        trees = new TreeFactory(user);                                // Список секвенций
 
         tVars = new TVariableFactory(this);                      // t-переменные
@@ -171,6 +172,7 @@ public class Mind {
 
                 domains.mark();
                 rights.mark();
+                comments.mark();
             }
 
             functions.commit(m.getFunctions());
@@ -180,6 +182,7 @@ public class Mind {
 
             domains.commit(m.getDomains());
             Set<Long> list = rights.commit(m.getRights());
+            comments.commit(m.getComments());
 
             if (!sequencedBy) {
                 Boolean res = analiser.checkDatabase(list, false);
@@ -191,6 +194,7 @@ public class Mind {
 
                     domains.release();
                     rights.release();
+                    comments.release();
                     result = false;
                 } else {
 
@@ -205,6 +209,7 @@ public class Mind {
 
                     domains.commit();
                     rights.commit();
+                    comments.commit();
 
 //                    functions.update();
 //                    fValues.update();
@@ -283,6 +288,7 @@ public class Mind {
             tValues.closeConnection();
             domains.closeConnection();
             rights.closeConnection();
+            comments.closeConnection();
         }
     }
 
@@ -300,6 +306,7 @@ public class Mind {
             tValues.update();
             domains.update();
             rights.update();
+            comments.update();
 
             user.flush();
         }
@@ -344,6 +351,7 @@ public class Mind {
             tVars.clear();
             tValues.clear();
             rights.clear();
+            comments.clear();
             functions.clear();
             fValues.clear();
 
@@ -367,6 +375,7 @@ public class Mind {
             tVars.pack();
             domains.pack();
             rights.pack();
+            comments.pack();
             fValues.pack();
             functions.pack();
         }
@@ -445,7 +454,11 @@ public class Mind {
         return rights;
     }
 
-//    public ResultsStore getResults() {
+    public CommentFactory getComments() {
+        return comments;
+    }
+
+    //    public ResultsStore getResults() {
 //        return results;
 //    }
 
@@ -516,11 +529,18 @@ public class Mind {
         Object[] t = null;
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.ACCEPT);
+        int previousPos = 0;
+        Map<Long, String> comments = new HashMap<>();
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
+            String comment = src.substring(previousPos, pos - ((String) t[0]).length()).trim();
+            previousPos = pos;
 
-            m.compileLine(line, false, null);
+            Object r = m.compileLine(line, false, null);
+            if (!comment.isEmpty() && r instanceof Right) {
+                comments.put(((Right) r).getId(), comment);
+            }
 
 //            Mind x = new Mind(m);
 //            setCompliedLine(line);
@@ -541,6 +561,13 @@ public class Mind {
 //            }
         }
 
+        if (src.length() > pos) {
+            String comment = src.substring(pos).trim();
+            if (!comment.isEmpty()) {
+                comments.put(-1L, comment);
+            }
+        }
+
         m.link(null, logging);
         Boolean ar = m.analise(null, logging);
 
@@ -557,6 +584,10 @@ public class Mind {
             commit(m);
             excluded.clear();
             excluded.commit(m.getHypotesisStore());
+
+            for (Map.Entry<Long, String> e : comments.entrySet()) {
+                getComments().add(e.getKey(), e.getValue());
+            }
             return true;
         }
     }
@@ -1006,6 +1037,7 @@ public class Mind {
                     } else {
                         appendResult(m, logging);
                         m.getRights().delete(r);
+                        m.getComments().delete(r.getId());
                         commit(m);
 
 //                        excluded.commit(m.getHypotesisStore());
@@ -1171,6 +1203,7 @@ public class Mind {
                                 getLog().add(LogMode.STORAGE, "Delete produced right: " + String.format("%03d: %s", rx.getId(), rx));
                             }
                             getRights().delete(rx);
+                            getComments().delete(rx.getId());
                             found = true;
                         }
                     }
@@ -1413,6 +1446,7 @@ public class Mind {
                     mind.getSolutions().add(rx);
                 } else {
                     getRights().delete(rx);
+                    getComments().delete(rx.getId());
                     needPack = true;
                 }
             } else {
@@ -1512,6 +1546,7 @@ public class Mind {
 
         for (Right rx : set) {
             rights.delete(rx);
+            comments.delete(rx.getId());
             if (logging) {
                 getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
             }
@@ -1545,6 +1580,7 @@ public class Mind {
                 }
                 for (Right r : set) {
                     rights.delete(r);
+                    comments.delete(r.getId());
                     if (logging) {
                         mind.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
                     }
@@ -1692,6 +1728,35 @@ public class Mind {
             getRightSolves().get(ts).add(tmp);
             return tmp;
         }
+    }
+
+    public String getSourceCode() throws Exception {
+        String str = "";
+        SortedMap<Long, Right> map = new TreeMap<>();
+        for (Right r : getRights()) {
+            if (!r.isGenerated()) {
+                map.put(r.getId(), r);
+            }
+        }
+        for (Right r : map.values()) {
+            Comment c = getComments().get(r.getId());
+            if (c != null) {
+                str += System.getProperty("line.separator");
+                for (String s : c.getComment().split("\\R")) {
+                    str += s + System.getProperty("line.separator");
+                }
+            }
+            for (String s : r.getOrig().toString().split("\\R")) {
+                str += s + System.getProperty("line.separator");
+            }
+        }
+        Comment c = getComments().get(-1L);
+        if (c != null) {
+            for (String s : c.getComment().split("\\R")) {
+                str += s + System.getProperty("line.separator");
+            }
+        }
+        return str;
     }
 
 //    public TSolve addTSolve(TValue vv) throws Exception {
