@@ -79,12 +79,11 @@ public final class TransactionManager {
         open();
     }
 
-
     /**
      * Synchronize log file data with the main database file.
      * <p>
-     * After this call, the main database file is guaranteed to be
-     * consistent and guaranteed to be the only file needed for
+     * After this call, the main database file is guaranteed to be 
+     * consistent and guaranteed to be the only file needed for 
      * backup purposes.
      */
     public void synchronizeLog()

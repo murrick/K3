@@ -43,9 +43,10 @@ public class CacheRecordManager
     protected RecordManager _recman;
 
 
-    protected static int threadCounter = 0;
     /** Cached object hashtable */
     protected LongHashMap<CacheEntry> _hash;
+
+    protected static int threadCounter = 0;
     /** If Soft Cache is enabled, this contains softly referenced clean entries.
      * If entry became dirty, it is moved to _hash with limited size.
      * This map is accessed from SoftCache Disposer thread, so all access must be

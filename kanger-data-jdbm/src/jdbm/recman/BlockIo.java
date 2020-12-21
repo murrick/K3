@@ -49,29 +49,12 @@ public final class BlockIo {
     }
 
     static final int ThreeByteInt_MAX = 256 * 256 * 256 - 1;
-    static final int UNSIGNED_SHORT_MAX = 256 * 256 - 1;
-
-    /**
-     * Constructs a new BlockIo instance working on the indicated
-     * buffer.
-     */
-    BlockIo(long blockId, byte[] data) {
-        this.blockId = blockId;
-        this.data = data;
-    }
 
     /**
      *  Returns the underlying array
      */
     byte[] getData() {
         return data;
-    }
-
-    /**
-     *  Returns the block number.
-     */
-    long getBlockId() {
-        return blockId;
     }
 
     /**
@@ -82,6 +65,7 @@ public final class BlockIo {
             throw new Error("BlockId assigned for transaction block");
         blockId = id;
     }
+    static final int UNSIGNED_SHORT_MAX = 256 * 256 - 1;
 
     /**
      *  Returns the current view of the block.
@@ -138,15 +122,12 @@ public final class BlockIo {
     }
 
     /**
-     *  Decrements transaction count for this block, to signal that this
-     *  block has been written from the log to the data file.
+     *  Constructs a new BlockIo instance working on the indicated
+     *  buffer.
      */
-    synchronized void decrementTransactionCount() {
-        transactionCount--;
-        if (transactionCount < 0)
-            throw new Error("transaction count on block "
-                    + getBlockId() + " below zero!");
-
+    BlockIo(long blockId, byte[] data) {
+        this.blockId = blockId;
+        this.data = data;
     }
 
     /**
@@ -157,7 +138,7 @@ public final class BlockIo {
     }
 
     /**
-     *  Writes a byte to the indicated position
+     * Writes a byte to the indicated position
      */
     public void writeByte(int pos, byte value) {
         data[pos] = value;
@@ -165,7 +146,26 @@ public final class BlockIo {
     }
 
     /**
-     *  Reads a short from the indicated position
+     * Returns the block number.
+     */
+    long getBlockId() {
+        return blockId;
+    }
+
+    /**
+     * Decrements transaction count for this block, to signal that this
+     * block has been written from the log to the data file.
+     */
+    synchronized void decrementTransactionCount() {
+        transactionCount--;
+        if (transactionCount < 0)
+            throw new Error("transaction count on block "
+                    + getBlockId() + " below zero!");
+
+    }
+
+    /**
+     * Reads a short from the indicated position
      */
     public short readShort(int pos) {
         return (short)
@@ -194,7 +194,7 @@ public final class BlockIo {
     }
 
     /**
-     * Writes an int to the indicated position
+     *  Writes an int to the indicated position
      */
     public void writeInt(int pos, int value) {
         data[pos + 0] = (byte) (0xff & (value >> 24));

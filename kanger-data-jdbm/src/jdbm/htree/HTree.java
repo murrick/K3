@@ -54,7 +54,7 @@ public class HTree<K, V> implements JdbmBase<K, V> {
         public HashNode deserialize(SerializerInput ds) throws IOException {
             try{
                 int i = ds.read();
-                if (i == Serialization.HTREE_BUCKET) { //is HashBucket?
+                if(i == Serialization.HTREE_BUCKET) { //is HashBucket?
                     HashBucket ret = new HashBucket(HTree.this);
                     ret.readExternal(ds);
                     if (ds.available() != 0 && ds.read() != -1) // -1 is fix for compression, not sure what is happening
@@ -93,6 +93,9 @@ public class HTree<K, V> implements JdbmBase<K, V> {
      */
     private HashDirectory<K, V> _root;
 
+    HTree() {
+    }
+
     /**
      * Create a persistent hashtable.
      *
@@ -101,10 +104,6 @@ public class HTree<K, V> implements JdbmBase<K, V> {
     public static <K, V> HTree<K, V> createInstance(RecordManager recman)
             throws IOException {
         return createInstance(recman, null, null);
-    }
-
-
-    HTree() {
     }
 
     /**

@@ -14,14 +14,15 @@ import org.kanger.units.SysOp;
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
 public class Parser {
-//    private static final int MODE_FUNCTION = 3;
-//    private static final int MODE_PREDICATE = 4;
 
     private static final int DIR_LEFT = 0;
     private static final int DIR_RIGHT = 1;
     private static final Operation[] ops = {
 
             /*  1 */
+            new Operation("..", "_iv", 1, 2, 0, false, false),
+            new Operation("[", "_is", 1, 0, 0, false, false),
+
             new Operation("++", "_inc", 1, 1, 1, false, false),
             new Operation("--", "_dec", 1, 1, 1, false, false),
             new Operation("-", "_neg", 1, 1, 1, false, false),
@@ -30,12 +31,11 @@ public class Parser {
 
             new Operation("~", "", 1, 1, 1, false, false),
 
+
             /*  2 */
             new Operation("*", "_mul", 2, 2, 0, false, false),
             new Operation("/", "_div", 2, 2, 0, false, false),
             new Operation("%", "_rem", 2, 2, 0, false, false),
-            new Operation("..", "_iv", 2, 2, 0, false, false),
-            new Operation("[", "_is", 2, 0, 0, false, false),
 
             /*  3 */
             new Operation("+", "_add", 3, 2, 0, false, false),
@@ -46,44 +46,36 @@ public class Parser {
             new Operation("^", "_bitxor", 3, 2, 0, false, false),
             new Operation("|", "_bitor", 3, 2, 0, false, false),
 
-            /*  10 */
-//            new Operation(",", "", 10, 2, 0, false, false),
+            /* 4 */
+            new Operation(":", "_in", 4, 2, 0, false, false),
+            new Operation(":", "_in", 4, 3, 0, false, false),
 
-            /* 11 */
-//            new Operation("~", "", 1, 1, 1, false, false),
+            new Operation("<=", "_le", 4, 2, 0, false, false),
+            new Operation("<", "_lr", 4, 2, 0, false, false),
+            new Operation(">=", "_ge", 4, 2, 0, false, false),
+            new Operation(">", "_gr", 4, 2, 0, false, false),
 
-            /* 12 */
-            new Operation(":", "_in", 12, 2, 0, false, false),
-            new Operation(":", "_in", 12, 3, 0, false, false),
+            /* 5 */
+            new Operation("==", "_eq", 5, 2, 0, false, false),
+            new Operation("=", "_eq", 5, 2, 0, false, false),
+            new Operation("!=", "_ne", 5, 2, 0, false, false),
+            new Operation("<>", "_ne", 5, 2, 0, false, false),
 
-            new Operation("<=", "_le", 12, 2, 0, false, false),
-            new Operation("<", "_lr", 12, 2, 0, false, false),
-            new Operation(">=", "_ge", 12, 2, 0, false, false),
-            new Operation(">", "_gr", 12, 2, 0, false, false),
-
-            /* 13 */
-            new Operation("==", "_eq", 13, 2, 0, false, false),
-            new Operation("=", "_eq", 13, 2, 0, false, false),
-            new Operation("!=", "_ne", 13, 2, 0, false, false),
-            new Operation("<>", "_ne", 13, 2, 0, false, false),
-
-            /* 14 */
+            /* 6 */
 //            new Operation("..", "", 11, 2, 0, false, false),
-            new Operation(",", "", 14, 2, 0, false, false),
-            new Operation("&&", "&", 14, 2, 0, false, true),
+            new Operation(",", "", 6, 2, 0, false, false),
+            new Operation("&&", "&", 6, 2, 0, false, true),
 
-            /* 15 */
-            new Operation("||", "|", 15, 2, 0, false, true),
+            /* 7 */
+            new Operation("||", "|", 7, 2, 0, false, true),
 
-            /* 16 */
-            new Operation("->", "}", 16, 2, 0, false, true),
+            /* 8 */
+            new Operation("->", "}", 8, 2, 0, false, true),
 
-            /* 17 */
-            new Operation("@", "", 17, 1, 1, true, false),
-            new Operation("$", "", 17, 1, 1, true, false)
+            /* 9 */
+            new Operation("@", "", 9, 1, 1, true, false),
+            new Operation("$", "", 9, 1, 1, true, false)
 
-            /* 0 */
-//            new Operation("", "", 0, 0, 0, false, false)
     };
 
     public static boolean isDelimiter(int ch) {
@@ -521,7 +513,7 @@ public class Parser {
                         && Tools.isInt(p.getLeft().getName())
                         && p.getRight() == null) {
                     p.setName(p.getLeft().getName() + " " + p.getName());
-                    if (p.getLeft().getLeft() != null && Tools.isInterval(p.getLeft().getLeft().getName())) {
+                    if (p.getLeft().getLeft() != null && Tools.isPeriod(p.getLeft().getLeft().getName())) {
                         p.setName(p.getLeft().getLeft().getName() + " " + p.getName());
                     }
                     p.setLeft(null);

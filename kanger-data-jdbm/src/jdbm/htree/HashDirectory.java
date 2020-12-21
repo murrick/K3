@@ -448,7 +448,7 @@ final class HashDirectory<K, V>
          * Construct an iterator on this directory.
          *
          * @param iterateKeys True if iteration supplies keys, False
-         *                    if iterateKeys supplies values.
+         *                  if iterateKeys supplies values.
          */
         HDIterator(boolean iterateKeys)
                 throws IOException {
