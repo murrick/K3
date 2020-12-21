@@ -5,7 +5,6 @@ import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.Tools;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
@@ -1898,78 +1897,25 @@ public class Functions {
         }
     }
 
-    private Term _min(Term a, Term b) {
-        if (a.compareTo(b) > 0) {
-            return b;
-        } else {
-            return a;
-        }
-    }
-
-    private Term _max(Term a, Term b) {
-        if (a.compareTo(b) > 0) {
-            return a;
-        } else {
-            return b;
-        }
-    }
-
     protected Term _add(Term a, Term b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() + (double) b.getValue();
-        } else if (a.getType() == DataType.DATE && b.getType() == DataType.PERIOD) {
+        } else if (a.getType() == DataType.DATE && b.getType() == DataType.INTERVAL) {
             res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), 1);
-        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.DATE) {
+        } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), 1);
-        } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
-            Term[] list = new Term[2];
-            List<Term> aa = (List<Term>) a.getValue();
-            List<Term> bb = (List<Term>) b.getValue();
-            boolean backward = aa.get(0).compareTo(aa.get(1)) > 0 && bb.get(0).compareTo(bb.get(1)) > 0;
-            list[0] = _min(_min(aa.get(0), aa.get(1)), _min(bb.get(0), bb.get(1)));
-            list[1] = _max(_max(aa.get(0), aa.get(1)), _max(bb.get(0), bb.get(1)));
-            if (backward) {
-                Term tmp = list[0];
-                list[0] = list[1];
-                list[1] = tmp;
-            }
-            res = list;
-        } else if (a.getType() == DataType.INTERVAL && b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
-            Term[] list = new Term[2];
-            List<Term> aa = (List<Term>) a.getValue();
-            list[0] = _min(_min(aa.get(0), aa.get(1)), b);
-            list[1] = _max(_max(aa.get(0), aa.get(1)), b);
-            boolean backward = aa.get(0).compareTo(aa.get(1)) > 0;
-            if (backward) {
-                Term tmp = list[0];
-                list[0] = list[1];
-                list[1] = tmp;
-            }
-            res = list;
-        } else if (b.getType() == DataType.INTERVAL && a.getType() == ((List<Term>) b.getValue()).get(0).getType()) {
-            Term[] list = new Term[2];
-            List<Term> bb = (List<Term>) b.getValue();
-            list[0] = _min(_min(bb.get(0), bb.get(1)), a);
-            list[1] = _max(_max(bb.get(0), bb.get(1)), a);
-            boolean backward = bb.get(0).compareTo(bb.get(1)) > 0;
-            if (backward) {
-                Term tmp = list[0];
-                list[0] = list[1];
-                list[1] = tmp;
-            }
-            res = list;
         } else if (a.getType() == DataType.SET) {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
                 for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (Term t : mind.getCalculator().getPredicates().expand(b, null)) {
-                if (!list.contains(mind, t)) {
+                if (!list.contains(t)) {
                     list.add(new Argument(t));
                 }
             }
@@ -1978,13 +1924,13 @@ public class Functions {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) b.getValue()) {
                 for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (Term t : mind.getCalculator().getPredicates().expand(a, null)) {
-                if (!list.contains(mind, t)) {
+                if (!list.contains(t)) {
                     list.add(new Argument(t));
                 }
             }
@@ -1994,10 +1940,8 @@ public class Functions {
             System.arraycopy(a.getValue(), 0, buffer, 0, ((byte[]) a.getValue()).length);
             System.arraycopy(b.getValue(), 0, buffer, ((byte[]) a.getValue()).length, ((byte[]) b.getValue()).length);
             res = buffer;
-        } else if (a.getType() == DataType.STRING || b.getType() == DataType.STRING) {
-            res = a.getValue().toString() + b.getValue().toString();
         } else {
-            throw new RuntimeErrorException("Incompatible types for addition: " + a.getType() + " + " + b.getType());
+            res = a.getValue().toString() + b.getValue().toString();
         }
         return mind.getTerms().add(res);
     }
@@ -2034,9 +1978,9 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() - (double) b.getValue();
-        } else if (a.getType() == DataType.DATE && b.getType() == DataType.PERIOD) {
+        } else if (a.getType() == DataType.DATE && b.getType() == DataType.INTERVAL) {
             res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), -1);
-        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.DATE) {
+        } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), -1);
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
             res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
@@ -2044,13 +1988,13 @@ public class Functions {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
                 for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (Term t : mind.getCalculator().getPredicates().expand(b, null)) {
-                list.remove(mind, t);
+                list.remove(t);
             }
             res = list;
         } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
@@ -2072,10 +2016,8 @@ public class Functions {
             } else {
                 res = a.getValue();
             }
-        } else if (a.getType() == DataType.STRING) {
-            res = a.getValue().toString().replace(b.getValue().toString(), "");
         } else {
-            throw new RuntimeErrorException("Incompatible types for subtraction: " + a.getType() + " - " + b.getType());
+            res = a.getValue().toString().replace(b.getValue().toString(), "");
         }
         return mind.getTerms().add(res);
     }
@@ -2084,38 +2026,35 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() * (double) b.getValue();
-        } else if (a.getType() == DataType.SET) {
-            ArgList list = new ArgList();
-            ArgList result = new ArgList();
+        } else if (a.getType() == DataType.SET && b.getType() == DataType.SET) {
+            ArgList list1 = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
                 for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
-                    if (!list.contains(mind, n)) {
-                        list.add(new Argument(n));
+                    if (!list1.contains(n)) {
+                        list1.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : mind.getCalculator().getPredicates().expand(b, null)) {
-                if (list.contains(mind, t)) {
-                    result.add(new Argument(t));
-                }
-            }
-            res = result;
-        } else if (b.getType() == DataType.SET) {
-            ArgList list = new ArgList();
-            ArgList result = new ArgList();
+            ArgList list2 = new ArgList();
             for (Term t : (Collection<Term>) b.getValue()) {
                 for (Term n : mind.getCalculator().getPredicates().expand(t, null)) {
-                    if (!list.contains(mind, n)) {
-                        list.add(new Argument(n));
+                    if (!list2.contains(n)) {
+                        list2.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : mind.getCalculator().getPredicates().expand(a, null)) {
-                if (list.contains(mind, t)) {
-                    result.add(new Argument(t));
+            ArgList list = new ArgList();
+            for (Argument ar : list1) {
+                if (list2.contains(ar.getValue(mind)) && !list.contains(ar.getValue(mind))) {
+                    list.add(ar);
                 }
             }
-            res = result;
+            for (Argument ar : list2) {
+                if (list1.contains(ar.getValue(mind)) && !list.contains(ar.getValue(mind))) {
+                    list.add(ar);
+                }
+            }
+            res = list;
         } else {
             res = (double) 0;
         }
@@ -2146,10 +2085,10 @@ public class Functions {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = -(double) a.getValue();
-        } else if (a.getType() == DataType.INTERVAL) {
-            Term[] list = new Term[2];
-            list[0] = ((List<Term>) a.getValue()).get(1);
-            list[1] = ((List<Term>) a.getValue()).get(0);
+        } else if (a.getType() == DataType.INTERVAL && a.getValue() instanceof Collection && ((Collection) a.getValue()).size() == 2) {
+            List<Term> list = new ArrayList<>();
+            list.add(_neg((Term) ((Collection) a.getValue()).toArray()[0]));
+            list.add((Term) ((Collection) a.getValue()).toArray()[0]);
             res = list;
         } else {
             res = (double) 0;
@@ -2509,14 +2448,6 @@ public class Functions {
                 res = new String((byte[]) a.getValue(), (String) param.getValue());
             } else {
                 res = new String((byte[]) a.getValue());
-            }
-        } else if (a.getType() == DataType.NUMERIC) {
-            if (param != null && param.getType() == DataType.NUMERIC) {
-                res = Long.toString(((Double) a.getValue()).longValue(), ((Double) param.getValue()).intValue());
-            } else if (((Double) a.getValue()).longValue() == (Double) a.getValue()) {
-                res = "\"" + ((Double) a.getValue()).longValue() + "\"";
-            } else {
-                res = "\"" + a.getValue().toString() + "\"";
             }
         } else {
             res = a.getValue().toString();
