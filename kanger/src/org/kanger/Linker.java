@@ -1,6 +1,7 @@
 
 package org.kanger;
 
+import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IReactor;
@@ -68,6 +69,25 @@ public class Linker {
 
             Set<Right> rightSet = new HashSet<>();
             if (right != null) {
+
+                for (List<Domain> list : right.getTree()) {
+                    for (Domain d : list) {
+                        if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).isTSet()) {
+                            for (Right r : mind.getRights()) {
+                                if (!r.isDeleted() && r.getId() < d.getRightId()) {
+                                    TValue s = null;
+                                    TVariable t = d.get(0).getT(mind);
+                                    Term tm = mind.getTerms().add(r.getId());
+                                    s = mind.getTValues().find(t, tm);
+                                    if (s == null) {
+                                        s = mind.getTValues().add(t, tm);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 rightSet.add(right);
                 rightSet.addAll(right.getNatives());
                 for (Right r : mind.getRights()) {
@@ -449,8 +469,13 @@ public class Linker {
 
 //                    System.err.println("\t" + right.getId() + ": " + right);
 
+
+//                                                        TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
+
+
                     for (List<Domain> treeMaster : right.getTree()) {
                         for (Domain master : treeMaster) {
+
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
 
                                 //TODO: Костыль
@@ -896,11 +921,11 @@ public class Linker {
         }
         for (TValue v : list) {
 //            if (!master.isExcluded(slave.getArguments())) {
-                r = v.getTVar().getRight();
+            r = v.getTVar().getRight();
             if (logging && result) {
                 mind.getLog().add(LogMode.ANALIZER, "Closed: " + v);
             }
-                occurrs = true;
+            occurrs = true;
 //            }
         }
 
@@ -1044,6 +1069,7 @@ public class Linker {
 //                    mind.getCalculator().calculate(f, logging);
 //                }
 
+
                 for (Domain master : mind.getDomains().getWaiters()) {
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
@@ -1071,7 +1097,12 @@ public class Linker {
 //                    continue;
 //                }
 
-                if (d.isCalculated(mind)) {
+                if ("rule(1)".equals(d.getPredicate().toString()) && !d.get(0).isEmpty(mind) && d.get(0).getValue(mind).getType() == DataType.NUMERIC) {
+                    d.setProduced(mind);
+                    mind.getLog().add(LogMode.STORAGE, "DB assumed record (r): " + d);
+                    occurs = true;
+//                    calculated.add(d);
+                } else if (d.isCalculated(mind)) {
                     calculated.add(d);
                 } else if (d.isSystem() || !d.isComplete()) {
                     excluded.clear();

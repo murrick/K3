@@ -1,5 +1,6 @@
 package org.kanger;
 
+import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypotese;
@@ -116,39 +117,56 @@ public class Analiser {
 //                    System.err.println("!!");
 //                }
 
-                if (q.isDeleted() || !q.isStored() || (list == null && q.getId() > p.getId()) || (list != null && list.contains(q.getId()))) {
+                if (q.isDeleted()) {
                     continue;
                 }
+
+                if ("rule(1)".equals(p.getDomain().getPredicate().toString()) && p.getDomain().get(0).getValue(mind).getType() == DataType.NUMERIC) {
+                    if (q.getId() == ((Double) p.getDomain().get(0).getValue(mind).getValue()).longValue()) {
+                        mind.getSolutions().add(q);
+                        if (logging) {
+                            mind.getLog().add(LogMode.ANALIZER, "Select by id: ");
+                            mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
+                            mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                        }
+                    }
+                    result = true;
+
+                } else {
+
+                    if (!q.isStored() || (list == null && q.getId() > p.getId()) || (list != null && list.contains(q.getId()))) {
+                        continue;
+                    }
 
 //                System.err.println(p.getId() + " --- " + q.getId());
 //                if(q.getId() == p.getId()) {
 //                    trigger = true;
 //                }
 
-                if (p.getDomain().equalsBase(q.getDomain())
-                        && p.getDomain().isAntc() != q.getDomain().isAntc()) {
+                    if (p.getDomain().equalsBase(q.getDomain())
+                            && p.getDomain().isAntc() != q.getDomain().isAntc()) {
                         //&& p.getDomain().getArguments().getCVariables(mind).size() != p.getDomain().getRange()) {
 
-                    //TODO: Костыль
-                    if (q.getMind() == null) {
-                        q.setMind(mind);
-                    }
-                    if (p.getDomain().isQuery(mind) && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
-                        mind.getSolutions().add(q);
-                        mind.getValues().add(p.getSolves());
-                    } else if (q.getDomain().isQuery(mind) && q.getDomain().getArguments().getCVariables(mind).isEmpty()) {
-                        mind.getSolutions().add(p);
-                        mind.getValues().add(q.getSolves());
-                    }
+                        //TODO: Костыль
+                        if (q.getMind() == null) {
+                            q.setMind(mind);
+                        }
+                        if (p.getDomain().isQuery(mind) && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                            mind.getSolutions().add(q);
+                            mind.getValues().add(p.getSolves());
+                        } else if (q.getDomain().isQuery(mind) && q.getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                            mind.getSolutions().add(p);
+                            mind.getValues().add(q.getSolves());
+                        }
 
-                    if (logging) {
-                        mind.getLog().add(LogMode.ANALIZER, "Database coincidence: ");
-                        mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                        mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
-                        mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                        if (logging) {
+                            mind.getLog().add(LogMode.ANALIZER, "Database coincidence: ");
+                            mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
+                            mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
+                            mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                        }
+                        result = true;
                     }
-                    result = true;
-
                 }
             }
 

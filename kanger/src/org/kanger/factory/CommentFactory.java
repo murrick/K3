@@ -45,12 +45,10 @@ public class CommentFactory implements Iterable<Term> {
     }
 
     public void commit(CommentFactory base) throws Exception {
-        if (base.top != null) {
-            if (cache.getRoot() == null) {
-                top = base.top;
-            } else {
-                base.top.setNext(cache.getRoot());
-            }
+        if (top == null) {
+            top = base.top;
+        } else if (base.top != null) {
+            base.top.setNext(cache.getRoot());
         }
         if (cache.getRoot() != null) {
             for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
@@ -75,6 +73,16 @@ public class CommentFactory implements Iterable<Term> {
         if (p != null) {
             if (!p.getComment().equals(comment)) {
                 p.setComment(comment);
+                if (connection != null) {
+                    IStep s = connection.get(p.getId());
+                    if (s != null) {
+                        s.setData(p);
+                        s.update();
+                    } else {
+                        System.err.println("!");
+                    }
+                }
+
             }
             return p;
         } else {

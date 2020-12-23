@@ -154,7 +154,7 @@ public class KangerTest {
             int i = 0;
             for (Right log : mind.getSolutions().getRoot()) {
                 if (!local || log.getMind().getId() == mind.getId()) {
-                    System.out.println(String.format("\tSolution %03d: %s", ++i, log.toString()));
+                    System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
                 }
             }
         }

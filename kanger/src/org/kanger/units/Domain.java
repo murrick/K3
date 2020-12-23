@@ -349,12 +349,12 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
             String s = super.toString(mind, arguments);
 
             String suffix = "";
-            if ((mind.getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
-                suffix += " " + id; // + " " + mindId + " " + mind.getId();
-            }
+//            if ((mind.getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
+//                suffix += " " + id; // + " " + mindId + " " + mind.getId();
+//            }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
                 try {
-                    suffix += /*isDest() ||*/ isQuery(arguments, mind) || isUsed(arguments, mind) || isExcluded(arguments, mind) || /*isProduced() ||*/ isStored(arguments, mind) || isCalculated(arguments, mind)
+                    suffix += " " + id + /*isDest() ||*/ (isQuery(arguments, mind) || isUsed(arguments, mind) || isExcluded(arguments, mind) || /*isProduced() ||*/ isStored(arguments, mind) || isCalculated(arguments, mind)
                             ? " " +
                             //(isDest() ? "A" : "") +
                             (isQuery(arguments, mind) ? "Q" : "") +
@@ -363,8 +363,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             //(isProduced() ? "P" : "") +
                             (isStored(arguments, mind) ? "B" : "") +
                             (isCalculated(arguments, mind) ? "S" : "") +
-                            " "
-                            : "";
+                            ""
+                            : "");
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }
@@ -431,7 +431,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                }
 //            }
 //        }
-        return cnt != arguments.size();
+        return true; //cnt != arguments.size();
     }
 
 //    public boolean equalsSolve(Domain slave) {

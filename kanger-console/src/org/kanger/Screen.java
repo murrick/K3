@@ -87,6 +87,7 @@ public class Screen {
             System.err.println(e.toString());
         }
 
+        Scanner sc = new Scanner(System.in);
         while (!stop) {
             String line = "";
             try {
@@ -99,7 +100,7 @@ public class Screen {
                         System.out.printf("%s\n", line);
                         again = false;
                     } else {
-                        line = new Scanner(System.in).nextLine();
+                        line = sc.nextLine();
                     }
                 }
                 if (line == null) {
@@ -163,7 +164,7 @@ public class Screen {
                                     int i = 0;
                                     for (Right log : mind.getSolutions().getRoot()) {
                                         if (++i == pos || pos == -1) {
-                                            System.out.println(String.format("\tSolution %03d: %s", i, log.toString()));
+                                            System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
                                             if (!log.getCauses().isEmpty()) {
                                                 showCauses(mind, log.getCauses(), 0);
                                                 System.out.println();
@@ -224,10 +225,10 @@ public class Screen {
                                     Right r = mind.getRights().load(id);
                                     if (r != null) {
                                         if (r.isGenerated()) {
-                                            System.out.printf("Right %03d: %s is production and can't be erased.\n", id, r);
+                                            System.out.printf("Right %03d: %s is production and can't be erased.\n", r.getId(), r);
                                         } else {
-                                            System.out.printf("Are you sure to erase right %03d: %s ? [y/N]? ", id, r);
-                                            String s = new Scanner(System.in).nextLine().toUpperCase();
+                                            System.out.printf("Are you sure to erase right %03d: %s ? [y/N]? ", r.getId(), r);
+                                            String s = sc.nextLine().toUpperCase();
                                             if (!s.isEmpty() && s.charAt(0) == 'Y') {
 
                                                 Boolean res = mind.delete(r, true);
@@ -252,7 +253,7 @@ public class Screen {
                                 }
                             } else {
                                 System.out.printf("Are you sure to erase workspace? [y/N]? ");
-                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                String s = sc.nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                     user.clear(mind);
 //                                mind.release();
@@ -263,7 +264,7 @@ public class Screen {
                         case 'C': {
                             if (!user.isClosed()) {
                                 System.out.printf("Are you sure to close database " + user.getStorageName() + "? [y/N]? ");
-                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                String s = sc.nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                     user.close();
                                     mind.clear();
@@ -303,7 +304,7 @@ public class Screen {
                         case 'D':
                             if (!user.isClosed()) {
                                 System.out.printf("Are you sure to drop database " + user.getStorageName() + "? [y/N]? ");
-                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                String s = sc.nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                     user.remove();
                                     System.out.println("Database files removed");
@@ -319,12 +320,42 @@ public class Screen {
                             }
                             break;
                         case 'M':
-                            System.out.println(mind.getSourceCode());
+                            if (line.length() == 1) {
+                                if (line.charAt(0) == 'M') {
+
+                                } else {
+                                    System.out.println(mind.getSourceCode());
+                                }
+                            } else {
+                                Long id = Long.parseLong(line.substring(1).trim());
+                                System.out.println(formatRightWithComments(mind, id));
+                                if (line.charAt(0) == 'M') {
+                                    System.out.println("Enter the new comment for ID " + id + ". Two ENTERs ends input:");
+
+                                    String out = "";
+                                    String text = null;
+                                    int counter = 0;
+                                    while (sc.hasNextLine()) {
+                                        text = sc.nextLine();
+                                        if (!text.isEmpty()) {
+                                            out += text + System.getProperty("line.separator");
+                                            counter = 0;
+                                        } else if (++counter < 2) {
+                                            out += System.getProperty("line.separator");
+                                        } else {
+                                            break;
+                                        }
+                                    }
+
+                                    mind.getComments().add(id, out.trim());
+                                    System.out.println(formatRightWithComments(mind, id));
+                                }
+                            }
                             break;
                         case 'P':
                             if (!user.isClosed()) {
                                 System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
-                                String s = new Scanner(System.in).nextLine().toUpperCase();
+                                String s = sc.nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                     user.reindex(new IReactor() {
                                         @Override
@@ -1266,6 +1297,26 @@ public class Screen {
             System.out.printf("ERROR: %s\n", ex);
         }
         return false;
+    }
+
+
+    public static String formatRightWithComments(Mind mind, long id) throws Exception {
+        String str = String.format(" -- Right %03d: ", id);
+        str += System.getProperty("line.separator");
+        Comment c = mind.getComments().get(id);
+        if (c != null) {
+            str += System.getProperty("line.separator");
+            for (String s : c.getComment().split("\\R")) {
+                str += s + System.getProperty("line.separator");
+            }
+        }
+        Right r = mind.getRights().load(id);
+        if (r != null) {
+            for (String s : r.getOrig().toString().split("\\R")) {
+                str += s + System.getProperty("line.separator");
+            }
+        }
+        return str;
     }
 
 }

@@ -66,12 +66,10 @@ public class FValueFactory implements Iterable<FValue> {
     }
 
     public void commit(FValueFactory base) throws Exception {
-        if (base.top != null) {
-            if (cache.getRoot() == null) {
-                top = base.top;
-            } else {
-                base.top.setNext(cache.getRoot());
-            }
+        if (top == null) {
+            top = base.top;
+        } else if (base.top != null) {
+            base.top.setNext(cache.getRoot());
         }
         cache.setRoot(base.cache.getRoot());
         if (cache.getRoot() != null) {

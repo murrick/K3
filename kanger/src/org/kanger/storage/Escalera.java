@@ -43,6 +43,23 @@ public class Escalera implements ICache {
     }
 
 //    @Override
+//    public void update(IUnit one) throws Exception {
+//        IStep s = mind.getUser().getStorage(schema).get(one.getId());
+//        if (s != null) {
+//            s.setData(one);
+//            s.update();
+//        }
+//
+////        for (IStep s = root; s != null; s = s.getNext()) {
+////            if (s.getId() == one.getId()) {
+////                s.setData(one);
+////                s.update();
+////                break;
+////            }
+////        }
+//    }
+
+//    @Override
 //    public void add(long id, Object one) throws IOException {
 //        Step s = new Step();
 //        s.setData(one);

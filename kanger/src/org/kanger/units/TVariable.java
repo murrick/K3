@@ -192,7 +192,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
             case Enums.DEBUG_LEVEL_INFO:
                 return getName().toString();
             case Enums.DEBUG_LEVEL_DEBUG:
-                return String.format("[%s]%c%d", getName().toString(), Enums.TVC, index);
+                return String.format("%c%d", Enums.TVC, index);
             default:
                 return getName().toString();
         }

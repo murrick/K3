@@ -5,6 +5,7 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
+import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
@@ -267,13 +268,14 @@ public class Right implements IUnit<Right> {
     public String toString() {
         try {
             return getOrig().toString()
-                    + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (isGenerated() || isQuery() || isStored())
-                    ? " " +
-                    (isGenerated() ? "G" : "") +
-                    (isStored() ? "B" : "") +
-                    (isStored() && getDomain().isUsed(mind) ? "U" : "") +
-                    (isQuery() ? "Q" : "")
-                    : "")
+                    + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
+                    ? " " + id + ((isGenerated() || isQuery() || isStored()) ?
+                    " " +
+                            (isGenerated() ? "G" : "") +
+                            (isStored() ? "B" : "") +
+                            (isStored() && getDomain().isUsed(mind) ? "U" : "") +
+                            (isQuery() ? "Q" : "")
+                    : "") : "")
                     ;
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -570,5 +572,15 @@ public class Right implements IUnit<Right> {
             }
         }
         return list;
+    }
+
+    public void primitivize() {
+        for (List<Domain> a : tree) {
+            for (Domain d : a) {
+                ArgList list = d.getArguments().convertBase(mind);
+                d.getArguments().clear();
+                d.getArguments().addAll(list);
+            }
+        }
     }
 }

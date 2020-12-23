@@ -77,7 +77,7 @@ public class Mind {
     private String compiledFileName = "mind.e";
     private boolean logging = true;
 
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_STATUS | Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (/*Enums.DEBUG_OPTION_STATUS |*/ Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
@@ -957,6 +957,20 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
+    public List<Right> getProductions(Right r) {
+        List<Right> productions = new ArrayList<>();
+        for (Right pr : getRights()) {
+            if (pr.getId() > r.getId()) {
+                if (pr.isGenerated()) {
+                    productions.add(pr);
+                }
+            } else {
+                break;
+            }
+        }
+        return productions;
+    }
+
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
 //        querySource = line;
 //        queryPass = QueryPass.SILENCE;
@@ -1043,15 +1057,31 @@ public class Mind {
                         release(m);
                         res = null;
                     } else {
-                        appendResult(m, logging);
+
+                        List<Right> productions = m.getProductions(r);
+                        if (!productions.isEmpty()) {
+                            int counter = 0;
+                            if (logging) {
+                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: Solves to append (" + productions.size() + "):");
+                            }
+                            for (Right pr : productions) {
+                                pr.setQuery(false);
+                                pr.setGenerated(false);
+                                pr.primitivize();
+                                if (logging) {
+                                    m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
+                                }
+                            }
+                        } else if (logging) {
+                            m.getLog().add(LogMode.ANALIZER, String.format("WARNING: No candidates to append"));
+                        }
+
                         m.getRights().delete(r);
                         m.getComments().delete(r.getId());
+
                         commit(m);
-
-//                        excluded.commit(m.getHypotesisStore());
+                        excluded.commit(m.getHypotesisStore());
                         setChanged(true);
-
-//                        link(null, logging);
                         res = true;
                     }
                     queryContext = m;
@@ -1108,7 +1138,14 @@ public class Mind {
                             res = null;
                         } else {
                             if (logging) {
-                                m.getLog().add(LogMode.SOLVES, String.format("\tSolution 000:\t%s", line));
+                                m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
+                                List<Right> productions = m.getProductions(r);
+                                if (!productions.isEmpty()) {
+                                    int counter = 0;
+                                    for (Right pr : productions) {
+                                        m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
+                                    }
+                                }
                                 m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
                             }
 //                                m.link(null, logging);
@@ -1116,8 +1153,6 @@ public class Mind {
                             commit(m);
                             excluded.commit(m.getHypotesisStore());
                             setChanged(true);
-
-
                             res = true;
                         }
                     }
@@ -1171,7 +1206,7 @@ public class Mind {
                         res = true;
                     } else {
                         if (logging) {
-                            m.getLog().add(LogMode.ANALIZER, "Result: No candidates to delete");
+                            m.getLog().add(LogMode.ANALIZER, "WARNING: No candidates to delete");
                         }
                     }
                     queryContext = m;
@@ -1445,53 +1480,61 @@ public class Mind {
         return res;
     }
 
-    private void appendResult(Mind mind, boolean logging) throws Exception {
-
-        boolean needPack = false;
-        for (Right rx : mind.getRights()) {
-            if (rx.getMindId() == mind.getId()) {
-                if (!rx.isDeleted() /*&& !rx.isQuery()*/ && rx.getDomain().getArguments().getCVariables(this).isEmpty()) {
-                    mind.getSolutions().add(rx);
-                } else {
-                    getRights().delete(rx);
-                    getComments().delete(rx.getId());
-                    needPack = true;
-                }
-            } else {
-                break;
-            }
-        }
-
-        if (mind.getSolutions().size() > 0) {
-            if (logging) {
-                mind.getLog().add(LogMode.SOLVES, "Solves to append (" + mind.getSolutions().size() + "):");
-            }
-            int i = 0;
-            for (Right r : mind.getSolutions().getRoot()) {
-                if (r.isGenerated() && !r.isDeleted()) {
-                    ArgList arg = r.getDomain().getArguments().convertBase(this);
-                    r.getDomain().getArguments().clear();
-                    r.getDomain().getArguments().addAll(arg);
-                    r.setGenerated(false);
-                    r.setQuery(false);
-                    if (logging) {
-                        mind.getLog().add(LogMode.SOLVES, String.format("\tAppended %03d: %s", ++i, r.toString()));
-                    }
-                } else if (!r.isDeleted()) {
-                    if (logging) {
-                        mind.getLog().add(LogMode.SOLVES, String.format("\t Skiped %03d: %s", ++i, r.toString()));
-                    }
-                }
-            }
-        } else {
-            if (logging) {
-                mind.getLog().add(LogMode.ANALIZER, String.format("Result: No candidates to append"));
-            }
-        }
-        if (needPack) {
-            pack();
-        }
-    }
+//    private void appendResult(Right right, boolean logging) throws Exception {
+//
+//        boolean needPack = false;
+////        for (Right rx : mind.getRights()) {
+////            if (rx.getMindId() == mind.getId()) {
+////                if (!rx.isDeleted() /*&& !rx.isQuery()*/ && rx.getDomain().getArguments().getCVariables(this).isEmpty()) {
+////                    mind.getSolutions().add(rx);
+////                } else {
+////                    getRights().delete(rx);
+////                    getComments().delete(rx.getId());
+////                    needPack = true;
+////                }
+////            } else {
+////                break;
+////            }
+////        }
+//
+//        if (logging) {
+//            List<Right> productions = getProductions(right);
+//            if (!productions.isEmpty()) {
+//                getLog().add(LogMode.ANALIZER, "Result: Solves to append (" + productions.size() + "):");
+//                int counter = 0;
+//                for (Right pr : productions) {
+//                    getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", ++counter, pr.toString()));
+//                }
+//            } else {
+//                getLog().add(LogMode.ANALIZER, String.format("Result: No candidates to append"));
+//            }
+//        }
+////            int i = 0;
+////            for (Right r : mind.getSolutions().getRoot()) {
+////                if (r.isGenerated() && !r.isDeleted()) {
+////                    ArgList arg = r.getDomain().getArguments().convertBase(this);
+////                    r.getDomain().getArguments().clear();
+////                    r.getDomain().getArguments().addAll(arg);
+////                    r.setGenerated(false);
+////                    r.setQuery(false);
+////                    if (logging) {
+////                        mind.getLog().add(LogMode.SOLVES, String.format("\tAppended %03d: %s", ++i, r.toString()));
+////                    }
+////                } else if (!r.isDeleted()) {
+////                    if (logging) {
+////                        mind.getLog().add(LogMode.SOLVES, String.format("\t Skiped %03d: %s", ++i, r.toString()));
+////                    }
+////                }
+////            }
+////        if (needPack) {
+//
+//        getRights().delete(right);
+//        getComments().delete(right.getId());
+//        needPack = true;
+//
+//        pack();
+////        }
+//    }
 
 //    private int resurseCount(Right r) throws Exception {
 //        int i = 1;
@@ -1508,37 +1551,37 @@ public class Mind {
 //        return i;
 //    }
 
-    private boolean isInherited(Set<Cause> rx, Right r) throws Exception {
-        if (r.isStored()) {
-            for (Cause c : rx) {
-                if (c.getDonor().equals(r.getDomain())) {
-                    return true;
-                }
-            }
-        }
-        for (Cause c : rx) {
-            if (!c.getDonor().equals(r.getDomain())) {
-                Right x = getRights().find(c.getDonor());
-                if (x != null) {
-                    if (isInherited(x.getCauses(), r)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
+//    private boolean isInherited(Set<Cause> rx, Right r) throws Exception {
+//        if (r.isStored()) {
+//            for (Cause c : rx) {
+//                if (c.getDonor().equals(r.getDomain())) {
+//                    return true;
+//                }
+//            }
+//        }
+//        for (Cause c : rx) {
+//            if (!c.getDonor().equals(r.getDomain())) {
+//                Right x = getRights().find(c.getDonor());
+//                if (x != null) {
+//                    if (isInherited(x.getCauses(), r)) {
+//                        return true;
+//                    }
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
-    private Set<Right> getDeleteCandidates(Right r) throws Exception {
-        Set<Right> set = new HashSet<>();
-        set.add(r);
-        for (Right rx : rights) {
-            if (rx.getId() != r.getId() && rx.isGenerated() && isInherited(rx.getCauses(), r)) {
-                set.add(rx);
-            }
-        }
-        return set;
-    }
+//    private Set<Right> getDeleteCandidates(Right r) throws Exception {
+//        Set<Right> set = new HashSet<>();
+//        set.add(r);
+//        for (Right rx : rights) {
+//            if (rx.getId() != r.getId() && rx.isGenerated() && isInherited(rx.getCauses(), r)) {
+//                set.add(rx);
+//            }
+//        }
+//        return set;
+//    }
 
     public Boolean delete(Right r, boolean logging) throws Exception {
         this.logging = logging;
@@ -1547,17 +1590,17 @@ public class Mind {
         values.clear();
         getLog().clear();
 
-        Set<Right> set = getDeleteCandidates(r);
-        if (logging) {
-            getLog().add(LogMode.SOLVES, "Rights to delete (" + set.size() + "):");
+        Set<Right> set = new HashSet<>();
+        set.add(r);
+        for (Right rg : getRights()) {
+            if (rg.isGenerated()) {
+                set.add(rg);
+            }
         }
 
         for (Right rx : set) {
             rights.delete(rx);
             comments.delete(rx.getId());
-            if (logging) {
-                getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
-            }
         }
 
         pack();
@@ -1565,45 +1608,71 @@ public class Mind {
         link(null, logging);
         Boolean ar = analise(null, logging);
 
+        Set<Right> success = new HashSet<>();
+        for (Right rx : set) {
+            if (getRights().find(rx) == null) {
+                success.add(rx);
+            }
+        }
+
         if (logging) {
             if (ar) {
                 getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+            } else if (success.isEmpty()) {
+                getLog().add(LogMode.ANALIZER, "WARNING: No rights have been deleted");
             } else {
-                getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+                getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rights");
+                for (Right rx : success) {
+                    getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
+                }
             }
         }
         return ar;
     }
 
 
-    private void removeResult(Mind mind, boolean logging) throws Exception {
-        if (mind.getSolutions().size() > 0) {
+    private void removeResult(Mind m, boolean logging) throws Exception {
+        if (m.getSolutions().size() > 0) {
             Set<Right> set = new HashSet<>();
-            for (Right r : mind.getSolutions().getRoot()) {
-                set.addAll(getDeleteCandidates(r));
+            for (Right r : m.getSolutions().getRoot()) {
+                set.add(r);
             }
+
             if (!set.isEmpty()) {
-                if (logging) {
-                    mind.getLog().add(LogMode.SOLVES, "Rights to delete (" + set.size() + "):");
-                }
-                for (Right r : set) {
-                    rights.delete(r);
-                    comments.delete(r.getId());
-                    if (logging) {
-                        mind.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
+
+                for (Right r : getRights()) {
+                    if (r.isGenerated()) {
+                        set.add(r);
                     }
                 }
 
+                for (Right r : set) {
+                    getRights().delete(r);
+                    getComments().delete(r.getId());
+                }
+
                 pack();
-                tValues.clear();
+                getTValues().clear();
                 link(null, logging);
                 Boolean ar = analise(null, logging);
 
+                Set<Right> success = new HashSet<>();
+                for (Right r : set) {
+                    if (getRights().find(r) == null) {
+                        success.add(r);
+                    }
+                }
+
                 if (logging) {
                     if (ar) {
-                        mind.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+                        m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+                    } else if (success.isEmpty()) {
+                        m.getLog().add(LogMode.ANALIZER, "WARNING: No rights have been deleted");
                     } else {
-                        mind.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+                        m.getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rights");
+                        for (Right r : success) {
+                            m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
+                        }
                     }
                 }
             }
@@ -1616,7 +1685,7 @@ public class Mind {
             mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
             for (Right log : mind.getSolutions().getRoot()) {
-                mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", ++i, log.toString()));
+                mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", log.getId(), log.toString()));
             }
         }
         if (mind.getValues().size() > 0) {
@@ -1760,6 +1829,7 @@ public class Mind {
                     str += s + System.getProperty("line.separator");
                 }
             }
+//            str += "// Right ID " + r.getId() + System.getProperty("line.separator");
             for (String s : r.getOrig().toString().split("\\R")) {
                 str += s + System.getProperty("line.separator");
             }
