@@ -228,7 +228,7 @@ public class Sapato implements IStep {
             case SYSOP:
                 return Global.getUdf();
 
-            case HYPOTESE:
+            case HYPOTHESE:
             case ARGUMENT:
             case ARGLIST:
             case CAUSE:

@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * @author murray
  */
-public class Hypotese implements Comparable<Hypotese> {
+public class Hypothesis implements Comparable<Hypothesis> {
 
     private Predicate predicate = null;
     private boolean antc = true;
@@ -34,7 +34,7 @@ public class Hypotese implements Comparable<Hypotese> {
     private transient Set<Long> rightsIds = new HashSet<>();
 //    private transient Mind mind = null;
 
-    public Hypotese() {
+    public Hypothesis() {
     }
 
 //    public Hypotese(IUser user) {
@@ -56,7 +56,7 @@ public class Hypotese implements Comparable<Hypotese> {
         return packet.createMarked();
     }
 
-    public Hypotese apply(ByteBuffer packet) throws OutOfBufferException {
+    public Hypothesis apply(ByteBuffer packet) throws OutOfBufferException {
         predicateId = packet.getLong();
         antc = packet.getByte() != 0;
         int cnt = packet.getInt();
@@ -252,7 +252,7 @@ public class Hypotese implements Comparable<Hypotese> {
 //    }
 
     @Override
-    public int compareTo(Hypotese o) {
+    public int compareTo(Hypothesis o) {
         try {
             return getPredicate().getName().compareTo(o.getPredicate().getName());
         } catch (Exception e) {
@@ -262,7 +262,7 @@ public class Hypotese implements Comparable<Hypotese> {
     }
 
     public UnitType getUnitType() {
-        return UnitType.HYPOTESE;
+        return UnitType.HYPOTHESE;
     }
 
 }

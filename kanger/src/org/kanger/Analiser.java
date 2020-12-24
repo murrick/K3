@@ -3,7 +3,7 @@ package org.kanger;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
 import org.kanger.primitives.Argument;
-import org.kanger.primitives.Hypotese;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Domain;
 import org.kanger.units.Right;
 import org.kanger.units.TValue;
@@ -57,11 +57,11 @@ public class Analiser {
                         }
                     }
                     if (d != null && !d.isQuery(mind)
-                            && mind.getHypotesisStore().find(null, /*!d.isAntc(),*/ d.getPredicate(), d.getArguments()) == null) {
-                        Hypotese h = mind.getHypotesisStore().add(true, /*!d.isAntc(),*/ d.isQuery(mind), d.getPredicate(), d.getArguments());
+                            && mind.getHypothesisStore().find(null, /*!d.isAntc(),*/ d.getPredicate(), d.getArguments()) == null) {
+                        Hypothesis h = mind.getHypothesisStore().add(true, /*!d.isAntc(),*/ d.isQuery(mind), d.getPredicate(), d.getArguments());
                         occurs = true;
                         if (logging) {
-                            mind.getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
+                            mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + d.toString());
                         }
                     }
                 }

@@ -2,7 +2,7 @@ package org.kanger.stores;
 
 import org.kanger.Mind;
 import org.kanger.primitives.ArgList;
-import org.kanger.primitives.Hypotese;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
 
 import java.util.ArrayList;
@@ -13,17 +13,17 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
-public class HypotesisStore implements Comparable<HypotesisStore> {
+public class HypothesisStore implements Comparable<HypothesisStore> {
 
-    private List<Hypotese> root = null;
-    private boolean enableStore = true;
     private final Mind mind;
+    private List<Hypothesis> root = null;
+    private boolean enableStore = true;
 
-    public HypotesisStore(Mind mind) {
+    public HypothesisStore(Mind mind) {
         this.mind = mind;
     }
 
-    public void commit(HypotesisStore base) throws Exception {
+    public void commit(HypothesisStore base) throws Exception {
         if (!enableStore) {
             return;
         }
@@ -31,20 +31,20 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             if (root == null) {
                 root = new ArrayList<>();
             }
-            for (Hypotese h : base.getRoot()) {
+            for (Hypothesis h : base.getRoot()) {
                 add(h);
             }
         }
     }
 
-    public Hypotese add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws Exception {
+    public Hypothesis add(boolean antc, boolean isQuery, Predicate pred, ArgList arg) throws Exception {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
             root = new ArrayList<>();
         }
-        Hypotese h = find(antc, pred, arg);
+        Hypothesis h = find(antc, pred, arg);
         if (h != null) {
             if (isQuery) {
                 h.setQuery(isQuery);
@@ -52,7 +52,7 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
             return h;
         } else {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? antc : !antc;
-            h = new Hypotese();
+            h = new Hypothesis();
             h.setAntc(antc);
             h.setPredicate(pred);
             h.addParams(mind, arg);
@@ -64,14 +64,14 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public Hypotese add(Hypotese hypotese) throws Exception {
+    public Hypothesis add(Hypothesis hypotese) throws Exception {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
             root = new ArrayList<>();
         }
-        Hypotese h = find(hypotese);
+        Hypothesis h = find(hypotese);
         if (h == null /*|| h.isAntc() != hypotese.isAntc()*/) {
             h = hypotese;
             root.add(h);
@@ -98,16 +98,16 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return enableStore;
     }
 
-    public Hypotese get(int index) {
-        return root.toArray(new Hypotese[]{})[index];
+    public Hypothesis get(int index) {
+        return root.toArray(new Hypothesis[]{})[index];
     }
 
 
-    public Hypotese find(Boolean antc, Predicate pred, ArgList arg) throws Exception {
+    public Hypothesis find(Boolean antc, Predicate pred, ArgList arg) throws Exception {
         if (root == null) {
             return null;
         }
-        for (Hypotese h : root) {
+        for (Hypothesis h : root) {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? h.isAntc() : !h.isAntc();
             if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == antc)) {
 
@@ -127,11 +127,11 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
         return null;
     }
 
-    public Hypotese find(Hypotese hy) throws Exception {
+    public Hypothesis find(Hypothesis hy) throws Exception {
         if (root == null) {
             return null;
         }
-        for (Hypotese h : root) {
+        for (Hypothesis h : root) {
             if (h.getPredicate().getId() == hy.getPredicate().getId() && h.isAntc() == hy.isAntc() && hy.getSolve().size() == h.getSolve().size()) {
                 int i = 0;
                 for (; i < h.getSolve().size(); ++i) {
@@ -150,11 +150,11 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
     }
 
 
-    public boolean contains(Hypotese h) throws Exception {
+    public boolean contains(Hypothesis h) throws Exception {
         return find(h) != null;
     }
 
-    public List<Hypotese> getRoot() {
+    public List<Hypothesis> getRoot() {
         return root;
     }
 
@@ -174,21 +174,21 @@ public class HypotesisStore implements Comparable<HypotesisStore> {
 
 
     @Override
-    public int compareTo(HypotesisStore o) {
+    public int compareTo(HypothesisStore o) {
         return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
     }
 
-    public void exclude(HypotesisStore exclude) throws Exception {
+    public void exclude(HypothesisStore exclude) throws Exception {
         if (!isEmpty() && !exclude.isEmpty()) {
-            Set<Hypotese> toDelete = new HashSet<>();
-            for (Hypotese h : root) {
+            Set<Hypothesis> toDelete = new HashSet<>();
+            for (Hypothesis h : root) {
                 if (exclude.find(h) != null) {
                     toDelete.add(h);
                 }
             }
             //Если не остается гипотез кроме базовых - оставляем базовые
             if (toDelete.size() < root.size()) {
-                for (Hypotese h : toDelete) {
+                for (Hypothesis h : toDelete) {
                     if (!h.isQuery()) {
                         root.remove(h);
                     }

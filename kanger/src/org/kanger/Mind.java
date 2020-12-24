@@ -12,9 +12,9 @@ import org.kanger.factory.*;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
-import org.kanger.primitives.Hypotese;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.TVariableSet;
-import org.kanger.stores.HypotesisStore;
+import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
 import org.kanger.stores.SolutionsStore;
 import org.kanger.stores.ValuesStore;
@@ -61,7 +61,7 @@ public class Mind {
     private ValuesStore values = null;                               // Список значений
     private LogStore log = null;                                        // Протокол вывода
     private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
-    private HypotesisStore hypotesis = null;                                // Список гипотез
+    private HypothesisStore hypothesis = null;                                // Список гипотез
 
     private Calculator calculator = null;                             // Калькулятор
     private Analiser analiser = null;                                   // Анализатор
@@ -81,7 +81,7 @@ public class Mind {
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
-    private HypotesisStore excluded = null;                                // Список исключенных гипотез
+    private HypothesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private volatile boolean busyCommit = false;
 
@@ -146,8 +146,8 @@ public class Mind {
         fValues = new FValueFactory(this);                          // Решения функций
 
 
-        hypotesis = new HypotesisStore(this);                                // Список гипотез
-        excluded = new HypotesisStore(this);                                // Список исключенных гипотез
+        hypothesis = new HypothesisStore(this);                                // Список гипотез
+        excluded = new HypothesisStore(this);                                // Список исключенных гипотез
         solves = new SolutionsStore(this);                         // Список решений
         values = new ValuesStore(this);                               // Список значений
 //        results = new ResultsStore(user);                               // Список значений
@@ -361,7 +361,7 @@ public class Mind {
 
             solves.clear();
             values.clear();
-            hypotesis.clear();
+            hypothesis.clear();
             excluded.clear();
 
             rightSolves.clear();
@@ -482,11 +482,11 @@ public class Mind {
         return library;
     }
 
-    public HypotesisStore getHypotesisStore() {
-        return hypotesis;
+    public HypothesisStore getHypothesisStore() {
+        return hypothesis;
     }
 
-    public HypotesisStore getExcludedHypotesis() {
+    public HypothesisStore getExcludedHypothesis() {
         return excluded;
     }
 
@@ -594,7 +594,7 @@ public class Mind {
 
             commit(m);
             excluded.clear();
-            excluded.commit(m.getHypotesisStore());
+            excluded.commit(m.getHypothesisStore());
 
             return true;
         }
@@ -982,7 +982,7 @@ public class Mind {
         getLog().clear();
         getSolutions().clear();
         getValues().clear();
-        getHypotesisStore().clear();
+        getHypothesisStore().clear();
 
         long queryStart = System.currentTimeMillis();
 
@@ -1012,8 +1012,8 @@ public class Mind {
 
         if (logging) {
             if (!excluded.isEmpty()) {
-                for (Hypotese h : excluded.getRoot()) {
-                    getLog().add(LogMode.ANALIZER, "Hypotesis excluded: " + h.toString());
+                for (Hypothesis h : excluded.getRoot()) {
+                    getLog().add(LogMode.ANALIZER, "Hypothesis excluded: " + h.toString());
                 }
                 getLog().add(LogMode.ANALIZER, "------------------------------------------");
             }
@@ -1080,7 +1080,7 @@ public class Mind {
                         m.getComments().delete(r.getId());
 
                         commit(m);
-                        excluded.commit(m.getHypotesisStore());
+                        excluded.commit(m.getHypothesisStore());
                         setChanged(true);
                         res = true;
                     }
@@ -1151,7 +1151,7 @@ public class Mind {
 //                                m.link(null, logging);
 
                             commit(m);
-                            excluded.commit(m.getHypotesisStore());
+                            excluded.commit(m.getHypothesisStore());
                             setChanged(true);
                             res = true;
                         }
@@ -1232,7 +1232,7 @@ public class Mind {
 
             case Enums.SUC: {
 
-                hypotesis.clear();
+                hypothesis.clear();
 
                 if (line.length() == 1) {
 
@@ -1374,7 +1374,7 @@ public class Mind {
                                     res = false;
                                     queryContext = m;
                                 } else {
-                                    hypotesis.commit(m.getHypotesisStore());
+                                    hypothesis.commit(m.getHypothesisStore());
                                 }
                             }
                         } else if (logging && r != null && r.isDeleted()) {
@@ -1421,13 +1421,13 @@ public class Mind {
                                     }
                                     res = true;
                                 } else {
-                                    hypotesis.commit(m.getHypotesisStore());
-                                    hypotesis.exclude(excluded);
+                                    hypothesis.commit(m.getHypothesisStore());
+                                    hypothesis.exclude(excluded);
 
 
                                     if (logging) {
-                                        if (hypotesis.getRoot() != null && hypotesis.size() > 0) {
-                                            m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypotesis.size()));
+                                        if (hypothesis.getRoot() != null && hypothesis.size() > 0) {
+                                            m.getLog().add(LogMode.ANALIZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypothesis.size()));
                                         } else {
                                             m.getLog().add(LogMode.ANALIZER, "Result: WHO KNOWS? No Hypothesis.");
                                         }

@@ -17,7 +17,7 @@ import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
-import org.kanger.primitives.Hypotese;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
 import org.kanger.stores.LogStore;
 import org.kanger.test.KangerTest;
@@ -435,7 +435,7 @@ public class Screen {
                                         System.out.println("TValues: " + mind.getTValues().size());
                                         System.out.println("TVariables: " + mind.getTValues().size());
                                         System.out.println();
-                                        System.out.println("Hypotesis: " + mind.getHypotesisStore().size());
+                                        System.out.println("Hypothesis: " + mind.getHypothesisStore().size());
                                         System.out.println("Solutions: " + mind.getSolutions().size());
                                         System.out.println("Values: " + mind.getValues().size());
                                         break;
@@ -974,13 +974,13 @@ public class Screen {
     //
     public static void showHypo(Mind mind) {
         int i;
-        List<Hypotese> list = mind.getHypotesisStore().getRoot();
+        List<Hypothesis> list = mind.getHypothesisStore().getRoot();
         if (list != null && list.size() > 0) {
             System.out.printf("Hypothesis list:\n");
             for (i = 0; i < list.size(); ++i) {
-                System.out.printf("\t%3d:\t%s\n", i + 1, list.toArray(new Hypotese[]{})[i].toString());
+                System.out.printf("\t%3d:\t%s\n", i + 1, list.toArray(new Hypothesis[]{})[i].toString());
             }
-            System.out.printf("Use INSERT command for select Hypotesis\n");
+            System.out.printf("Use INSERT command for select Hypothesis\n");
         }
     }
 
@@ -1147,11 +1147,11 @@ public class Screen {
 
         System.out.printf("Enter Hypothesis Number: ");
         int i = Integer.parseInt(new Scanner(System.in).nextLine());
-        if (--i >= mind.getHypotesisStore().size()) {
+        if (--i >= mind.getHypothesisStore().size()) {
             System.out.printf("ERROR: Wrong number\n");
             return null;
         }
-        String temp = mind.getHypotesisStore().get(i).toString();
+        String temp = mind.getHypothesisStore().get(i).toString();
         return String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
     }
 
