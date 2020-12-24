@@ -57,8 +57,8 @@ public class Analiser {
                         }
                     }
                     if (d != null && !d.isQuery(mind)
-                            && mind.getHypotesisStore().find(!d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-                        Hypotese h = mind.getHypotesisStore().add(!d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
+                            && mind.getHypotesisStore().find(null, /*!d.isAntc(),*/ d.getPredicate(), d.getArguments()) == null) {
+                        Hypotese h = mind.getHypotesisStore().add(true, /*!d.isAntc(),*/ d.isQuery(mind), d.getPredicate(), d.getArguments());
                         occurs = true;
                         if (logging) {
                             mind.getLog().add(LogMode.ANALIZER, "Hypotesis assumed: " + d.toString());
