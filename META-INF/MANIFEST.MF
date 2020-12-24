@@ -1,4 +1,7 @@
 Manifest-Version: 1.0
-Class-Path: modules/kanger-console.jar modules/kanger-udf.jar modules/kanger-data-tupl.jar modules/kanger.jar
+Class-Path: kanger.jar kanger-console.jar modules/kanger.jar modules/kan
+ ger-console.jar modules/kanger-udf.jar modules/kanger-data-hsql.jar mod
+ ules/kanger-data-jdbm.jar modules/kanger-data-psql.jar modules/kanger-d
+ ata-tupl.jar modules/kanger-data-dumb.jar
 Main-Class: org.kanger.Kanger
 

@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -11,6 +12,6 @@
     <orderEntry type="module" module-name="$project_name$" />
     <orderEntry type="module" module-name="kanger-udf" />
     <orderEntry type="module" module-name="kanger-data-dumb" />
-    <orderEntry type="module" module-name="kanger" />
+    <orderEntry type="module" module-name="$project_name$" />
   </component>
 </module>

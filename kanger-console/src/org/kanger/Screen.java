@@ -24,6 +24,8 @@ import org.kanger.test.KangerTest;
 import org.kanger.units.*;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -41,6 +43,7 @@ public class Screen {
                     && System.getProperties().getProperty("line.editor").equals("true");
 
     private static String lastLogFile = "analizer.log";
+//    private static ResourceBundle msg = Utf8ResourceBundle.getBundle("messages");
 
     public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
@@ -62,6 +65,16 @@ public class Screen {
                         .build();
             } catch (IOException e) {
                 e.printStackTrace(System.err);
+            }
+        }
+
+        String sourcesDir = System.getProperty("sources.dir");
+        if (sourcesDir == null) {
+            sourcesDir = "";
+        } else {
+            if (!sourcesDir.endsWith("/") && !sourcesDir.endsWith("\\")) {
+                sourcesDir += File.separatorChar;
+                Files.createDirectories(Paths.get(sourcesDir));
             }
         }
 
@@ -278,7 +291,7 @@ public class Screen {
 //                            saveSource(mind);
 //                            break;
                         case 'G':
-                            loadSource(mind);
+                            loadSource(mind, sourcesDir);
                             break;
 //                        case 'Z':
 //                            saveCompiled(mind);
@@ -322,7 +335,7 @@ public class Screen {
                         case 'M':
                             if (line.length() == 1) {
                                 if (line.charAt(0) == 'M') {
-
+                                    //TODO: Save file
                                 } else {
                                     System.out.println(mind.getSourceCode());
                                 }
@@ -1211,11 +1224,11 @@ public class Screen {
 //        }
 //    }
 //
-    public static boolean loadSource(Mind mind) throws Exception {
+    public static boolean loadSource(Mind mind, String sourceDir) throws Exception {
         Scanner scanner = new Scanner(System.in);
 //        if (checkChg(mind)) {
         List<File> list = new ArrayList<>();
-        File[] dir = new File(System.getProperty("user.dir")).listFiles();
+        File[] dir = new File(sourceDir).listFiles();
         if (dir != null) {
             for (File f : dir) {
                 if (!f.isDirectory() && f.getName().contains(".k")) {
@@ -1257,7 +1270,7 @@ public class Screen {
         }
 
         if (f == null) {
-            f = new File(System.getProperty("user.dir") + File.separatorChar + mind.getSourceFileName());
+            f = new File(sourceDir + mind.getSourceFileName());
         }
         return loadSourceFile(mind, f);
 //        }

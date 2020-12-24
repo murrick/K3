@@ -31,20 +31,20 @@ import java.io.InputStream;
 public class SerializerInput extends DataInputStream {
 
 
-    public SerializerInput(InputStream in) {
-        super(in);
-    }
+	public SerializerInput(InputStream in) {
+		super(in);
+	}
 
-    @SuppressWarnings("unchecked")
-    public <V> V readObject() throws ClassNotFoundException, IOException {
-        return (V) Serialization.readObject(this);
-    }
+	@SuppressWarnings("unchecked")
+	public <V> V readObject() throws ClassNotFoundException, IOException {
+		return (V) Serialization.readObject(this);
+	}
 
-    public long readPackedLong() throws IOException {
-        return LongPacker.unpackLong(this);
-    }
+	public long readPackedLong() throws IOException {
+		return LongPacker.unpackLong(this);
+	}
 
-    public int readPackedInt() throws IOException {
-        return LongPacker.unpackInt(this);
-    }
+	public int readPackedInt() throws IOException {
+		return LongPacker.unpackInt(this);
+	}
 }

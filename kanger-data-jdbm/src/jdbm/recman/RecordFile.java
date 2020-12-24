@@ -65,7 +65,6 @@ final class RecordFile {
      * A block of clean data to wipe clean pages.
      */
     final byte[] cleanData;
-    private final long MAX_FILE_SIZE;// = _FILESIZE - _FILESIZE%BLOCK_SIZE;
     /**
      * Blocks currently locked for read/update ops. When released the block goes
      * to the dirty or clean list, depending on a flag.  The file header block is
@@ -74,6 +73,7 @@ final class RecordFile {
      * @see BlockIo#isDirty()
      */
     private final LongHashMap<BlockIo> inUse = new LongHashMap<BlockIo>();
+    private final long MAX_FILE_SIZE;// = _FILESIZE - _FILESIZE%BLOCK_SIZE;
 
     private ArrayList<RandomAccessFile> rafs = new ArrayList<RandomAccessFile>();
     private final String fileName;

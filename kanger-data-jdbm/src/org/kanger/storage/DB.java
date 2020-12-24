@@ -2,22 +2,25 @@ package org.kanger.storage;
 
 import jdbm.RecordManager;
 import jdbm.RecordManagerFactory;
-import org.hsqldb.lib.FileUtil;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 public class DB implements IData {
 
     RecordManager connection = null;
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<>();
+
+    private static ResourceBundle msg = ResourceBundle.getBundle("messages");
 
     @Override
     public void init() {
@@ -41,7 +44,7 @@ public class DB implements IData {
         String[] tmp = dbPath.split(String.format("\\%s", File.separatorChar));
         if (tmp.length > 1) {
             String path = dbPath.substring(0, dbPath.length() - tmp[tmp.length - 1].length());
-            FileUtil.makeDirectories(path);
+            Files.createDirectories(Paths.get(path));
         }
 
         connection = RecordManagerFactory.createRecordManager(dbPath);
