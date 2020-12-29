@@ -93,6 +93,9 @@ public class HTree<K, V> implements JdbmBase<K, V> {
      */
     private HashDirectory<K, V> _root;
 
+    HTree() {
+    }
+
     /**
      * Create a persistent hashtable.
      *
@@ -101,10 +104,6 @@ public class HTree<K, V> implements JdbmBase<K, V> {
     public static <K, V> HTree<K, V> createInstance(RecordManager recman)
             throws IOException {
         return createInstance(recman, null, null);
-    }
-
-
-    HTree() {
     }
 
     /**

@@ -131,7 +131,22 @@ public final class BlockIo {
     }
 
     /**
-     *  Returns the block number.
+     * Reads a byte from the indicated position
+     */
+    public byte readByte(int pos) {
+        return data[pos];
+    }
+
+    /**
+     * Writes a byte to the indicated position
+     */
+    public void writeByte(int pos, byte value) {
+        data[pos] = value;
+        setDirty();
+    }
+
+    /**
+     * Returns the block number.
      */
     long getBlockId() {
         return blockId;
@@ -147,21 +162,6 @@ public final class BlockIo {
             throw new Error("transaction count on block "
                     + getBlockId() + " below zero!");
 
-    }
-
-    /**
-     *  Reads a byte from the indicated position
-     */
-    public byte readByte(int pos) {
-        return data[pos];
-    }
-
-    /**
-     *  Writes a byte to the indicated position
-     */
-    public void writeByte(int pos, byte value) {
-        data[pos] = value;
-        setDirty();
     }
 
     /**
@@ -219,7 +219,7 @@ public final class BlockIo {
      *  Writes an int to the indicated position
      */
     public void writeThreeByteInt(int pos, int value) {
-        if (value < 0 || value > ThreeByteInt_MAX)
+    	if(value < 0 || value > ThreeByteInt_MAX)
             throw new IllegalArgumentException("out of range: " + value);
         data[pos + 0] = (byte) (0xff & (value >> 16));
         data[pos + 1] = (byte) (0xff & (value >> 8));
