@@ -32,29 +32,28 @@ import java.io.OutputStream;
 public class SerializerOutput extends DataOutputStream {
 
 
-	public SerializerOutput(OutputStream out) {
-		super(out);
-	}
+    public SerializerOutput(OutputStream out) {
+        super(out);
+    }
 
-	public void writeObject(Object obj) throws IOException {
-		Serialization.writeObject(this, obj);
-	}
+    public void writeObject(Object obj) throws IOException {
+        Serialization.writeObject(this, obj);
+    }
 
-	public void writePackedLong(long i) throws IOException {
-		LongPacker.packLong(this, i);
-	}
+    public void writePackedLong(long i) throws IOException {
+        LongPacker.packLong(this, i);
+    }
 
-	public void writePackedInt(int i) throws IOException {
-		LongPacker.packInt(this, i);
-	}
+    public void writePackedInt(int i) throws IOException {
+        LongPacker.packInt(this, i);
+    }
 
-	/**
-	 * Reset counter inside DataOutputStream.
-	 * Workaround method if SerializerOutput instance is reused
-	 *
-	 */
-	public void __resetWrittenCounter() {
-		written = 0;
-	}
+    /**
+     * Reset counter inside DataOutputStream.
+     * Workaround method if SerializerOutput instance is reused
+     */
+    public void __resetWrittenCounter() {
+        written = 0;
+    }
 
 }

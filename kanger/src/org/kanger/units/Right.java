@@ -7,6 +7,7 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
@@ -357,6 +358,17 @@ public class Right implements IUnit<Right> {
             }
         }
         return this;
+    }
+
+    public boolean equalsTo(Hypothesis x) throws Exception {
+        if (isStored()
+                && x.getPredicate().getId() == getDomain().getPredicateId()
+                && x.getPredicate().getRange() == getDomain().getRange()
+                && x.getArguments().equalsBase(mind, getDomain().getArguments())) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public boolean equalsTo(Solve x) throws Exception {

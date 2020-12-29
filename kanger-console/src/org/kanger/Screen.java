@@ -24,6 +24,8 @@ import org.kanger.test.KangerTest;
 import org.kanger.units.*;
 
 import java.io.*;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -43,7 +45,132 @@ public class Screen {
                     && System.getProperties().getProperty("line.editor").equals("true");
 
     private static String lastLogFile = "analizer.log";
+    private static LineReader reader = null;
+    private static Scanner sc = null;
+    private static String currentLine = "";
+    private static CircularBuffer<String> lastQuery = new CircularBuffer(100);
+
 //    private static ResourceBundle msg = Utf8ResourceBundle.getBundle("messages");
+
+    public static String accept() {
+        boolean repeat = false;
+        String line = "";
+        do {
+            if (repeat) {
+                currentLine = line + System.getProperty("line.separator");
+            }
+            line = "";
+            String prefix = currentLine.isEmpty() ? "\n: " : "";
+            if (reader != null) {
+                line = reader.readLine(prefix);
+            } else {
+                System.out.printf(prefix);
+                line = sc.nextLine();
+            }
+            String lineStart = "";
+            String lineStop = "";
+
+            if (currentLine.trim().length() > 1) {
+                if (currentLine.trim().substring(0, 2) == "//" || currentLine.trim().substring(0, 2) == "/*") {
+                    lineStart = currentLine.trim().substring(0, 2);
+                } else {
+                    lineStart = currentLine.trim().substring(0, 1);
+                }
+            } else if (currentLine.trim().length() > 0) {
+                lineStart = currentLine.trim().substring(0, 1);
+            } else if (line.trim().length() > 1) {
+                if (line.trim().substring(0, 2) == "//" || line.trim().substring(0, 2) == "/*") {
+                    lineStart = line.trim().substring(0, 2);
+                } else {
+                    lineStart = line.trim().substring(0, 1);
+                }
+            } else if (line.trim().length() > 0) {
+                lineStart = line.trim().substring(0, 1);
+            }
+
+            if (line.trim().length() > 1) {
+                if (line.trim().substring(line.trim().length() - 2) == "*/") {
+                    lineStop = line.trim().substring(line.trim().length() - 2);
+                } else {
+                    lineStop = line.trim().substring(line.trim().length() - 1);
+                }
+            } else if (line.trim().length() > 0) {
+                lineStop = line.trim().substring(line.trim().length() - 1);
+            } else if (currentLine.trim().length() > 1) {
+                if (currentLine.trim().substring(0, 2) == "/*") {
+                    lineStop = currentLine.trim().substring(currentLine.trim().length() - 2);
+                } else {
+                    lineStop = currentLine.trim().substring(currentLine.trim().length() - 1);
+                }
+            } else if (currentLine.trim().length() > 0) {
+                lineStop = currentLine.trim().substring(currentLine.trim().length() - 1);
+            }
+
+            if ("/*".equals(lineStart)) {
+                repeat = !"*/".equals(lineStop);
+            } else if (!lineStart.isEmpty() && !line.equals("?") && "!?+-=".contains(lineStart.toUpperCase().substring(0, 1))) {
+                repeat = !";".equals(lineStop);
+            }
+
+        } while (repeat);
+        line = currentLine + line;
+        currentLine = "";
+        return line;
+    }
+
+    public static boolean commandProcessor(IUser user, String line) throws Exception {
+        Mind mind = new Mind(user);
+        CircularBuffer<String> lastQuery = new CircularBuffer(100);
+
+        boolean resume = false;
+
+        switch (line.toUpperCase().charAt(0)) {
+            case Enums.SUC:
+                lastQuery.add(line);
+            case Enums.ANT:
+            case Enums.INS:
+            case Enums.DEL:
+
+                int pos = 0;
+                Object[] t = null;
+                while ((t = Tools.extractLine(line, pos)) != null) {
+                    pos = (int) t[1];
+                    String ln = (String) t[0];
+
+                    Boolean res = mind.query(ln);
+                    if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                        System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                        if (res != null) {
+                            showLog(mind, LogMode.SOLVES, false);
+                            showLog(mind, LogMode.VALUES, false);
+                        }
+                        if (res == null) {
+                            showHypo(mind);
+                        }
+                    }
+                }
+                break;
+
+            case Enums.FOO:
+                mind.setCompliedLine(line);
+                SysOp op = (SysOp) mind.compileLine(line, false, null);
+                System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
+                break;
+
+            default:
+                resume = true;
+        }
+
+        return resume;
+    }
+
+    private static boolean processAgain(CircularBuffer<String> lastQuery) {
+        if (lastQuery.buffer.length > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
@@ -51,7 +178,7 @@ public class Screen {
         Mind mind = new Mind(user);
         String lastQuery = "";
 
-        LineReader reader = null;
+//        LineReader reader = null;
         if (LINE_EDITOR_ENABLE) {
             try {
                 //new DumbTerminal;
@@ -84,6 +211,7 @@ public class Screen {
             System.out.println("Line editor loaded");
         } else {
             System.err.println("Line editor doesn't loaded");
+            sc = new Scanner(System.in);
         }
 
         try {
@@ -100,22 +228,25 @@ public class Screen {
             System.err.println(e.toString());
         }
 
-        Scanner sc = new Scanner(System.in);
+        //Scanner sc = new Scanner(System.in);
         while (!stop) {
             String line = "";
             try {
-                if (LINE_EDITOR_ENABLE && reader != null) {
-                    line = reader.readLine("\n: ");
-                } else {
-                    System.out.printf("\n: ");
-                    if (again) {
-                        line = lastQuery;
-                        System.out.printf("%s\n", line);
-                        again = false;
-                    } else {
-                        line = sc.nextLine();
-                    }
-                }
+                line = accept();
+
+//                if (LINE_EDITOR_ENABLE && reader != null) {
+//                    line = reader.readLine("\n: ");
+//                } else {
+//                    System.out.printf("\n: ");
+//                    if (again) {
+//                        line = lastQuery;
+//                        System.out.printf("%s\n", line);
+//                        again = false;
+//                    } else {
+//                        line = sc.nextLine();
+//                    }
+//                }
+
                 if (line == null) {
                     line = "";
                 }
@@ -1332,4 +1463,44 @@ public class Screen {
         return str;
     }
 
+    public static class CircularBuffer<T> {
+
+        private T[] buffer;
+
+        private int tail;
+
+        private int head;
+
+        @SuppressWarnings("unchecked")
+        public CircularBuffer(int n) {
+            buffer = (T[]) new Object[n];
+            tail = 0;
+            head = 0;
+        }
+
+        public void add(T toAdd) {
+            if (head != (tail - 1)) {
+                buffer[head++] = toAdd;
+            } else {
+                throw new BufferOverflowException();
+            }
+            head = head % buffer.length;
+        }
+
+        public T get() {
+            T t = null;
+            int adjTail = tail > head ? tail - buffer.length : tail;
+            if (adjTail < head) {
+                t = (T) buffer[tail++];
+                tail = tail % buffer.length;
+            } else {
+                throw new BufferUnderflowException();
+            }
+            return t;
+        }
+
+        public String toString() {
+            return "CircularBuffer(size=" + buffer.length + ", head=" + head + ", tail=" + tail + ")";
+        }
+    }
 }
