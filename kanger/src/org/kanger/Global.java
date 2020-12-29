@@ -18,7 +18,7 @@ public class Global {
                 throw new RuntimeErrorException(e.toString());
             }
         } else {
-            throw new RuntimeErrorException("UDF module doens't loaded");
+            throw new RuntimeErrorException("UDF module doesn't loaded");
         }
     }
 
@@ -30,7 +30,7 @@ public class Global {
         if (data != null) {
             return data;
         } else {
-            throw new RuntimeErrorException("DB module doens't loaded");
+            throw new RuntimeErrorException("DB module doesn't loaded");
         }
     }
 

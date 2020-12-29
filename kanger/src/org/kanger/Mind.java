@@ -1252,7 +1252,7 @@ public class Mind {
                     }
                     if (found) {
                         pack();
-                        getTValues().clear();
+//                        getTValues().clear();
                         if (logging) {
                             getLog().add(LogMode.STORAGE, "-------------------------------------------");
                         }
