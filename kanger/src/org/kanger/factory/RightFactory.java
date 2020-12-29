@@ -7,6 +7,7 @@ import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.Escalera;
 import org.kanger.units.*;
@@ -405,7 +406,6 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right find(Solve domain) throws Exception {
-//        domain.setUser(user);
         for (long id : cache.find(domain.getHash(mind))) {
             Right one = load(id);
             if (one.equalsTo(domain)) {
@@ -425,6 +425,25 @@ public class RightFactory implements Iterable<Right> {
         return null;
     }
 
+    public Right find(Hypothesis h) throws Exception {
+//        boolean antc = h.isAntc();
+        for (long id : cache.find(h.getHash(mind))) {
+            Right one = load(id);
+            if (one.equalsTo(h)) {
+                return one;
+            }
+        }
+//        h.setAntc(!h.isAntc());
+//        for (long id : cache.find(h.getHash(mind))) {
+//            Right one = load(id);
+//            if (one.equalsTo(h)) {
+//                h.setAntc(antc);
+//                return one;
+//            }
+//        }
+//        h.setAntc(antc);
+        return null;
+    }
 
     //    public void unlink() throws Exception {
 //        cache.unlink();

@@ -6,9 +6,7 @@ import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
@@ -55,10 +53,15 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
             h = new Hypothesis();
             h.setAntc(antc);
             h.setPredicate(pred);
-            h.addParams(mind, arg);
+            h.getArguments().addAll(arg.convertBase(mind));
             h.setQuery(isQuery);
-            root.add(h);
-            return h;
+
+            if (mind.getRights().find(h) == null) {
+                root.add(h);
+                return h;
+            } else {
+                return null;
+            }
         }
 
     }
@@ -109,19 +112,10 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
         }
         for (Hypothesis h : root) {
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? h.isAntc() : !h.isAntc();
-            if (h.getPredicate().getId() == pred.getId() && (antc == null || h.isAntc() == antc)) {
-
-                int i = 0;
-                if (arg.size() == h.getSolve().size()) {
-                    for (; i < h.getSolve().size(); ++i) {
-                        if (h.getSolve().get(i) != null && arg.get(i) != null && !h.getSolve().get(i).equals(arg.get(i).getValue(mind))) {
-                            break;
-                        }
-                    }
-                }
-                if (i == h.getSolve().size()) {
-                    return h;
-                }
+            if (h.getPredicate().getId() == pred.getId()
+                    && (antc == null || h.isAntc() == antc)
+                    && h.getArguments().equalsBase(mind, arg)) {
+                return h;
             }
         }
         return null;
@@ -132,18 +126,10 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
             return null;
         }
         for (Hypothesis h : root) {
-            if (h.getPredicate().getId() == hy.getPredicate().getId() && h.isAntc() == hy.isAntc() && hy.getSolve().size() == h.getSolve().size()) {
-                int i = 0;
-                for (; i < h.getSolve().size(); ++i) {
-                    if (!h.getSolve().get(i).isEmpty()
-                            && !hy.getSolve().get(i).isEmpty()
-                            && !h.getSolve().get(i).equalsTo(hy.getSolve().get(i))) {
-                        break;
-                    }
-                }
-                if (i == h.getSolve().size()) {
-                    return h;
-                }
+            if (h.getPredicate().getId() == hy.getPredicate().getId()
+                    && h.isAntc() == hy.isAntc()
+                    && hy.getArguments().equalsBase(mind, h.getArguments())) {
+                return h;
             }
         }
         return null;
@@ -178,26 +164,26 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
         return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
     }
 
-    public void exclude(HypothesisStore exclude) throws Exception {
-        if (!isEmpty() && !exclude.isEmpty()) {
-            Set<Hypothesis> toDelete = new HashSet<>();
-            for (Hypothesis h : root) {
-                if (exclude.find(h) != null) {
-                    toDelete.add(h);
-                }
-            }
-            //Если не остается гипотез кроме базовых - оставляем базовые
-            if (toDelete.size() < root.size()) {
-                for (Hypothesis h : toDelete) {
-                    if (!h.isQuery()) {
-                        root.remove(h);
-                    }
-                }
-            }
-//        } else if (isEmpty() && !exclude.isEmpty()) {
-//            for (Hypotese h : exclude.getRoot()) {
-//                add(h);
+//    public void exclude(HypothesisStore exclude) throws Exception {
+//        if (!isEmpty() && !exclude.isEmpty()) {
+//            Set<Hypothesis> toDelete = new HashSet<>();
+//            for (Hypothesis h : root) {
+//                if (exclude.find(h) != null) {
+//                    toDelete.add(h);
+//                }
 //            }
-        }
-    }
+//            //Если не остается гипотез кроме базовых - оставляем базовые
+//            if (toDelete.size() < root.size()) {
+//                for (Hypothesis h : toDelete) {
+//                    if (!h.isQuery()) {
+//                        root.remove(h);
+//                    }
+//                }
+//            }
+////        } else if (isEmpty() && !exclude.isEmpty()) {
+////            for (Hypotese h : exclude.getRoot()) {
+////                add(h);
+////            }
+//        }
+//    }
 }

@@ -9,13 +9,7 @@ package org.kanger.primitives;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
-import org.kanger.exception.OutOfBufferException;
-import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
-import org.kanger.units.Right;
-import org.kanger.units.Term;
-
-import java.util.*;
 
 /**
  * @author murray
@@ -26,12 +20,13 @@ public class Hypothesis implements Comparable<Hypothesis> {
     private boolean antc = true;
     //    private boolean deleted = false;
     private boolean query = false;
-    private List<Term> solve = new ArrayList<>();
-    private Set<Right> rights = new HashSet<>();
+    private ArgList arguments = new ArgList();
+//    private List<Term> solve = new ArrayList<>();
+//    private Set<Right> rights = new HashSet<>();
 
-    private transient long predicateId = -1;
-    private transient List<Long> solveIds = new ArrayList<>();
-    private transient Set<Long> rightsIds = new HashSet<>();
+//    private transient long predicateId = -1;
+//    private transient List<Long> solveIds = new ArrayList<>();
+//    private transient Set<Long> rightsIds = new HashSet<>();
 //    private transient Mind mind = null;
 
     public Hypothesis() {
@@ -41,34 +36,34 @@ public class Hypothesis implements Comparable<Hypothesis> {
 //        this.user = user;
 //    }
 
-    public ByteBuffer pack() {
-        ByteBuffer packet = new ByteBuffer()
-                .putLong(predicateId)
-                .putByte(antc ? 1 : 0)
-                .putInt(solve.size());
-        for (Term t : solve) {
-            packet.putLong(t.getId());
-        }
-        packet.putInt(rights.size());
-        for (Right r : rights) {
-            packet.putLong(r.getId());
-        }
-        return packet.createMarked();
-    }
-
-    public Hypothesis apply(ByteBuffer packet) throws OutOfBufferException {
-        predicateId = packet.getLong();
-        antc = packet.getByte() != 0;
-        int cnt = packet.getInt();
-        for (int i = 0; i < cnt; ++i) {
-            solveIds.add(packet.getLong());
-        }
-        cnt = packet.getInt();
-        for (int i = 0; i < cnt; ++i) {
-            rightsIds.add(packet.getLong());
-        }
-        return this;
-    }
+//    public ByteBuffer pack() {
+//        ByteBuffer packet = new ByteBuffer()
+//                .putLong(predicateId)
+//                .putByte(antc ? 1 : 0)
+//                .putInt(solve.size());
+//        for (Term t : solve) {
+//            packet.putLong(t.getId());
+//        }
+//        packet.putInt(rights.size());
+//        for (Right r : rights) {
+//            packet.putLong(r.getId());
+//        }
+//        return packet.createMarked();
+//    }
+//
+//    public Hypothesis apply(ByteBuffer packet) throws OutOfBufferException {
+//        predicateId = packet.getLong();
+//        antc = packet.getByte() != 0;
+//        int cnt = packet.getInt();
+//        for (int i = 0; i < cnt; ++i) {
+//            solveIds.add(packet.getLong());
+//        }
+//        cnt = packet.getInt();
+//        for (int i = 0; i < cnt; ++i) {
+//            rightsIds.add(packet.getLong());
+//        }
+//        return this;
+//    }
 
 //    public void linkExternal(User user) throws Exception {
 //        this.user = user;
@@ -102,28 +97,33 @@ public class Hypothesis implements Comparable<Hypothesis> {
 
     public void setPredicate(Predicate predicate) {
         this.predicate = predicate;
-        this.predicateId = predicate.getId();
+//        this.predicateId = predicate.getId();
     }
 
-    public List<Term> getSolve() throws Exception {
+//    public List<Term> getSolve() throws Exception {
 //        if (solve.isEmpty() && !solveIds.isEmpty()) {
 //            for (long id : solveIds) {
 //                Term t = user.getMind().getTerms().load(id);
 //                solve.add(t);
 //            }
 //        }
-        return solve;
+//        return solve;
+//    }
+
+    public ArgList getArguments() {
+        return arguments;
     }
 
-    public Set<Right> getRights() throws Exception {
-//        if (rights.isEmpty() && !rightsIds.isEmpty()) {
-//            for (long id : rightsIds) {
-//                Right right = user.getMind().getRights().load(id);
-//                rights.add(right);
-//            }
-//        }
-        return rights;
-    }
+
+//    public Set<Right> getRights() throws Exception {
+////        if (rights.isEmpty() && !rightsIds.isEmpty()) {
+////            for (long id : rightsIds) {
+////                Right right = user.getMind().getRights().load(id);
+////                rights.add(right);
+////            }
+////        }
+//        return rights;
+//    }
 
     public boolean isAntc() {
         return antc;
@@ -141,17 +141,17 @@ public class Hypothesis implements Comparable<Hypothesis> {
         this.query = query;
     }
 
-    public void addParams(Mind mind, Collection params) throws Exception {
-        for (Object p : params) {
-            if (p instanceof Argument) {
-                solve.add(((Argument) p).getValue(mind));
-            } else if (p instanceof Term) {
-                solve.add((Term) p);
-            } else {
-                solve.add(mind.getTerms().add(p));
-            }
-        }
-    }
+//    public void addParams(Mind mind, Collection params) throws Exception {
+//        for (Object p : params) {
+//            if (p instanceof Argument) {
+//                solve.add(((Argument) p).getValue(mind));
+//            } else if (p instanceof Term) {
+//                solve.add((Term) p);
+//            } else {
+//                solve.add(mind.getTerms().add(p));
+//            }
+//        }
+//    }
 
 
     @Override
@@ -167,9 +167,9 @@ public class Hypothesis implements Comparable<Hypothesis> {
             line += (antc ? "" : String.format("%c", Enums.NOT));
             String tmp = getPredicate().getName() + "(";
             for (i = 0; i < getPredicate().getRange(); ++i) {
-                if (getSolve().get(i) != null && getSolve().get(i).isCVariable()) {
+                if (!getArguments().get(i).isEmpty(null) && getArguments().get(i).getValue(null).isCVariable()) {
                     String qnt = "";
-                    int id = Integer.parseInt(getSolve().get(i).toString().substring(1));
+                    int id = Integer.parseInt(getArguments().get(i).getValue(null).toString().substring(1));
                     for (j = 0; j < ccnt; ++j) {
                         if (cnum[j] == id) {
                             break;
@@ -185,8 +185,8 @@ public class Hypothesis implements Comparable<Hypothesis> {
                         qnt = String.format("?%s", cVarName(id));
                     }
                     tmp += qnt.substring(1);
-                } else if (getSolve().get(i) != null) {
-                    tmp += getSolve().get(i).toString();
+                } else if (!getArguments().get(i).isEmpty(null)) {
+                    tmp += getArguments().get(i).getValue(null).toString();
                 }
                 if (i + 1 < getPredicate().getRange()) {
                     tmp += ",";
@@ -263,6 +263,16 @@ public class Hypothesis implements Comparable<Hypothesis> {
 
     public UnitType getUnitType() {
         return UnitType.HYPOTHESE;
+    }
+
+    public int getHash(Mind mind) {
+        int hash = 3;
+        hash = 47 * hash + (antc ? 1 : 0);
+        hash = 47 * hash + (int) (predicate.getId() ^ (predicate.getId() >>> 32));
+        //TODO: ---
+        hash = 47 * hash + arguments.getHash(mind);
+//        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
+        return hash;
     }
 
 }

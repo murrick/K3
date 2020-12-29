@@ -11,7 +11,10 @@ import org.kanger.units.Right;
 import org.kanger.units.Term;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 
 public class KangerTest {
@@ -213,11 +216,15 @@ public class KangerTest {
             h.setPredicate(mind.getPredicates().add(mind.getTerms().add(predicate.toString()), params.length));
         }
 
-        if (params[0] instanceof Collection) {
-            h.addParams(mind, (Collection) params[0]);
-        } else {
-            h.addParams(mind, Arrays.asList(params));
+        for (Object o : params) {
+            Term t = mind.getTerms().add(o);
+            h.getArguments().add(new Argument(t));
         }
+//        if (params[0] instanceof Collection) {
+//            h.addParams(mind, (Collection) params[0]);
+//        } else {
+//            h.addParams(mind, Arrays.asList(params));
+//        }
         return h;
     }
 

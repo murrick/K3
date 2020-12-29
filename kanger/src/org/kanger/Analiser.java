@@ -56,12 +56,22 @@ public class Analiser {
                             break;
                         }
                     }
-                    if (d != null && !d.isQuery(mind)
-                            && mind.getHypothesisStore().find(null, /*!d.isAntc(),*/ d.getPredicate(), d.getArguments()) == null) {
-                        Hypothesis h = mind.getHypothesisStore().add(true, /*!d.isAntc(),*/ d.isQuery(mind), d.getPredicate(), d.getArguments());
-                        occurs = true;
-                        if (logging) {
-                            mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + d.toString());
+                    if (d != null && !d.isQuery(mind)) {
+                        Hypothesis tmp = new Hypothesis();
+                        tmp.setAntc(!d.isAntc());
+                        tmp.setPredicate(d.getPredicate());
+                        tmp.getArguments().addAll(d.getArguments().convertBase(mind));
+                        tmp.setQuery(d.isQuery(mind));
+
+                        if (mind.getHypothesisStore().find(tmp) == null && mind.getRights().find(tmp) == null) {
+//                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+//                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
+                            tmp.setAntc(true);
+                            mind.getHypothesisStore().add(tmp);
+                            occurs = true;
+                            if (logging) {
+                                mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + d.toString());
+                            }
                         }
                     }
                 }

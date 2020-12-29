@@ -12,7 +12,6 @@ import org.kanger.factory.*;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
-import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.TVariableSet;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
@@ -81,7 +80,7 @@ public class Mind {
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
-    private HypothesisStore excluded = null;                                // Список исключенных гипотез
+//    private HypothesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private volatile boolean busyCommit = false;
 
@@ -147,7 +146,7 @@ public class Mind {
 
 
         hypothesis = new HypothesisStore(this);                                // Список гипотез
-        excluded = new HypothesisStore(this);                                // Список исключенных гипотез
+//        excluded = new HypothesisStore(this);                                // Список исключенных гипотез
         solves = new SolutionsStore(this);                         // Список решений
         values = new ValuesStore(this);                               // Список значений
 //        results = new ResultsStore(user);                               // Список значений
@@ -362,7 +361,7 @@ public class Mind {
             solves.clear();
             values.clear();
             hypothesis.clear();
-            excluded.clear();
+//            excluded.clear();
 
             rightSolves.clear();
         }
@@ -486,9 +485,9 @@ public class Mind {
         return hypothesis;
     }
 
-    public HypothesisStore getExcludedHypothesis() {
-        return excluded;
-    }
+//    public HypothesisStore getExcludedHypothesis() {
+//        return excluded;
+//    }
 
     public LogStore getLog() {
         return log;
@@ -593,8 +592,8 @@ public class Mind {
             }
 
             commit(m);
-            excluded.clear();
-            excluded.commit(m.getHypothesisStore());
+//            excluded.clear();
+//            excluded.commit(m.getHypothesisStore());
 
             return true;
         }
@@ -1010,14 +1009,15 @@ public class Mind {
 //            res = null;
 //        } else {
 
-        if (logging) {
-            if (!excluded.isEmpty()) {
-                for (Hypothesis h : excluded.getRoot()) {
-                    getLog().add(LogMode.ANALIZER, "Hypothesis excluded: " + h.toString());
-                }
-                getLog().add(LogMode.ANALIZER, "------------------------------------------");
-            }
-        }
+
+//        if (logging) {
+//            if (!excluded.isEmpty()) {
+//                for (Hypothesis h : excluded.getRoot()) {
+//                    getLog().add(LogMode.ANALIZER, "Hypothesis excluded: " + h.toString());
+//                }
+//                getLog().add(LogMode.ANALIZER, "------------------------------------------");
+//            }
+//        }
 
         int key = line.charAt(0);
         switch (key) {
@@ -1080,7 +1080,7 @@ public class Mind {
                         m.getComments().delete(r.getId());
 
                         commit(m);
-                        excluded.commit(m.getHypothesisStore());
+//                        excluded.commit(m.getHypothesisStore());
                         setChanged(true);
                         res = true;
                     }
@@ -1151,7 +1151,7 @@ public class Mind {
 //                                m.link(null, logging);
 
                             commit(m);
-                            excluded.commit(m.getHypothesisStore());
+//                            excluded.commit(m.getHypothesisStore());
                             setChanged(true);
                             res = true;
                         }
@@ -1422,7 +1422,7 @@ public class Mind {
                                     res = true;
                                 } else {
                                     hypothesis.commit(m.getHypothesisStore());
-                                    hypothesis.exclude(excluded);
+//                                    hypothesis.exclude(excluded);
 
 
                                     if (logging) {
