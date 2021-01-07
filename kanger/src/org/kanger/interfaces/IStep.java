@@ -10,7 +10,7 @@ public interface IStep {
 
     ByteBuffer pack();
 
-    IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException;
+    IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException, Exception;
 
     Object getData(Mind mind) throws Exception;
 

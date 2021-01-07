@@ -32,6 +32,12 @@ public class Hypothesis implements Comparable<Hypothesis> {
     public Hypothesis() {
     }
 
+    public Hypothesis(Solve s, Mind mind) throws Exception {
+        antc = !s.isAntc();
+        predicate = s.getPredicate(mind);
+        arguments.addAll(s.getArguments().convertBase(mind));
+    }
+
 //    public Hypotese(IUser user) {
 //        this.user = user;
 //    }
@@ -274,5 +280,6 @@ public class Hypothesis implements Comparable<Hypothesis> {
 //        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
     }
+
 
 }

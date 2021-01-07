@@ -3,7 +3,6 @@ package org.kanger.storage;
 import org.kanger.Global;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
@@ -61,7 +60,7 @@ public class Sapato implements IStep {
     }
 
     @Override
-    public IStep apply(ByteBuffer packet) throws OutOfBufferException, RuntimeErrorException {
+    public IStep apply(ByteBuffer packet) throws Exception {
         id = packet.getLong();
         hash = packet.getInt();
         next = packet.getLong();

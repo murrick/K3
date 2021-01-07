@@ -56,12 +56,12 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
             h.getArguments().addAll(arg.convertBase(mind));
             h.setQuery(isQuery);
 
-            if (mind.getRights().find(h) == null) {
-                root.add(h);
-                return h;
-            } else {
-                return null;
-            }
+//            if (mind.getRights().find(antc, pred, arg) == null) {
+            root.add(h);
+            return h;
+//            } else {
+//                return null;
+//            }
         }
 
     }
@@ -77,6 +77,7 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
         Hypothesis h = find(hypotese);
         if (h == null /*|| h.isAntc() != hypotese.isAntc()*/) {
             h = hypotese;
+            h.setAntc(true);
             root.add(h);
             return h;
         }
@@ -127,7 +128,7 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
         }
         for (Hypothesis h : root) {
             if (h.getPredicate().getId() == hy.getPredicate().getId()
-                    && h.isAntc() == hy.isAntc()
+//                    && h.isAntc() == hy.isAntc()
                     && hy.getArguments().equalsBase(mind, h.getArguments())) {
                 return h;
             }

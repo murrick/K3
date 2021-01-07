@@ -176,6 +176,10 @@ public class Screen {
         boolean stop = false;
         boolean again = false;
         Mind mind = new Mind(user);
+
+        //TODO: Волшебство
+        mind.query("?a;");
+
         String lastQuery = "";
 
 //        LineReader reader = null;
@@ -564,6 +568,11 @@ public class Screen {
                                     case 'M':
                                         System.out.println("Memory status:");
                                         System.out.println();
+
+                                        System.out.println("Total memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + " mb");
+                                        System.out.println("Used memory: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024) + " mb");
+                                        System.out.println();
+
                                         if (!user.isClosed()) {
                                             System.out.println("Cache size: " + user.getMaxCacheSize());
                                             System.out.println("Cache used: " + user.getUsedCacheSize());

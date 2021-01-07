@@ -29,7 +29,7 @@ public interface IUnit<T> {
 
     ByteBuffer pack();
 
-    T apply(ByteBuffer packet) throws OutOfBufferException;
+    T apply(ByteBuffer packet) throws OutOfBufferException, Exception;
 
     UnitType getUnitType();
 

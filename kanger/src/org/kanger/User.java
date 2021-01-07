@@ -13,14 +13,12 @@ import java.util.Map;
 
 public class User implements IUser {
 
+    private static IData data = null;
+    private final Object locker = new Object();
     //    private Mind mind = null;
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
-
-    private final Object locker = new Object();
-
-    private static IData data = null;
 
     public User() throws RuntimeErrorException {
 //        if (mind == null) {
@@ -67,7 +65,20 @@ public class User implements IUser {
             mind.getTValues().transaction(null);
             mind.getTVars().transaction(null);
             mind.getLibrary().transaction(null);
-//            mind.getTSolves().transaction(null);
+
+//            Mind m = new Mind(mind);
+//            m.link(null, true);
+//            Boolean ar = m.analise(null, true);
+//
+//            if (ar) {
+//                m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+//                mind.release(m);
+//                close();
+//                throw new RuntimeErrorException("Collisions in Program");
+//            } else {
+//                m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+//                mind.commit(m);
+//            }
 
             return mind;
 

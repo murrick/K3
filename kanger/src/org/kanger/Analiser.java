@@ -4,7 +4,6 @@ import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypothesis;
-import org.kanger.units.Domain;
 import org.kanger.units.Right;
 import org.kanger.units.TValue;
 
@@ -49,28 +48,23 @@ public class Analiser {
                     if (r.getMindId() != mind.getId()) {
                         break;
                     }
-                    Domain d = r.getDomain();
-                    for (Argument a : d.getArguments()) {
-                        if (a.isEmpty(mind) || (a.getValue(mind).isCVariable() && a.getValue(mind).getMindId() != mind.getId())) {
-                            d = null;
+//                    Domain d = r.getDomain();
+                    for (Argument a : r.getDomain().getArguments()) {
+                        if (a.isEmpty(mind) || (a.getValue(mind).isCVariable() /*&& a.getValue(mind).getMindId() != mind.getId()*/)) {
+                            r = null;
                             break;
                         }
                     }
-                    if (d != null && !d.isQuery(mind)) {
-                        Hypothesis tmp = new Hypothesis();
-                        tmp.setAntc(!d.isAntc());
-                        tmp.setPredicate(d.getPredicate());
-                        tmp.getArguments().addAll(d.getArguments().convertBase(mind));
-                        tmp.setQuery(d.isQuery(mind));
-
+                    if (r != null && !r.isQuery()) { //d.isQuery(mind)) {
+                        Hypothesis tmp = new Hypothesis(r.getDomain(), mind);
                         if (mind.getHypothesisStore().find(tmp) == null && mind.getRights().find(tmp) == null) {
 //                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
 //                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
-                            tmp.setAntc(true);
+//                            tmp.setAntc(true);
                             mind.getHypothesisStore().add(tmp);
                             occurs = true;
                             if (logging) {
-                                mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + d.toString());
+                                mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + tmp.toString());
                             }
                         }
                     }

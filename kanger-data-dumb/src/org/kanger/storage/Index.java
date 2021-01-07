@@ -409,7 +409,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     baseIndex.put(head.getId(), head);
                 } else {
                     head.setDeleted(true);
-                    baseIndex.remove(head);
+                    baseIndex.remove(head.getId());
                     emptyIndex.put(head.getId(), head);
                 }
                 changed = true;
@@ -528,7 +528,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 //        }
 //    }
 
-    public class IndexOne {
+    public class IndexOne implements Comparable<IndexOne> {
         public static final int RECORD_SIZE = Byte.BYTES + Long.BYTES + Long.BYTES;
         private static final int DELETED = 0x01;
 
@@ -618,6 +618,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             return this;
         }
 
+        @Override
+        public int compareTo(IndexOne indexOne) {
+            return (int) (id - indexOne.getId());
+        }
     }
 
     public class IndexIterator implements Iterator<Index.IndexOne> {

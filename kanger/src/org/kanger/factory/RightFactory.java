@@ -426,24 +426,35 @@ public class RightFactory implements Iterable<Right> {
     }
 
     public Right find(Hypothesis h) throws Exception {
-//        boolean antc = h.isAntc();
-        for (long id : cache.find(h.getHash(mind))) {
-            Right one = load(id);
-            if (one.equalsTo(h)) {
-                return one;
-            }
-        }
+        Solve p = new Solve(h.getPredicate(), h.isAntc(), h.getArguments());
+        Right r = find(p);
+//        if(r == null) {
+//            p.setAntc(!p.isAntc());
+//            r = find(p);
+//        }
+        return r;
+    }
+
+//    public Right find(Hypothesis h) throws Exception {
+////        boolean antc = h.isAntc();
+//        for (long id : cache.find(h.getHash(mind))) {
+//            Right one = load(id);
+//            if (one.equalsTo(h)) {
+//                return one;
+//            }
+//        }
+//
 //        h.setAntc(!h.isAntc());
 //        for (long id : cache.find(h.getHash(mind))) {
 //            Right one = load(id);
 //            if (one.equalsTo(h)) {
-//                h.setAntc(antc);
+////                h.setAntc(antc);
 //                return one;
 //            }
 //        }
-//        h.setAntc(antc);
-        return null;
-    }
+////        h.setAntc(antc);
+//        return null;
+//    }
 
     //    public void unlink() throws Exception {
 //        cache.unlink();
