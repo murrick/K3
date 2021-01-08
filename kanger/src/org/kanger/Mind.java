@@ -80,6 +80,7 @@ public class Mind {
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
+    private Right acceptedRight = null;
 //    private HypothesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private volatile boolean busyCommit = false;
@@ -977,6 +978,7 @@ public class Mind {
         this.logging = logging;
 
         Boolean res = null;
+        acceptedRight = null;
 
         getLog().clear();
         getSolutions().clear();
@@ -1153,6 +1155,7 @@ public class Mind {
                             commit(m);
 //                            excluded.commit(m.getHypothesisStore());
                             setChanged(true);
+                            acceptedRight = r;
                             res = true;
                         }
                     }
@@ -1864,6 +1867,11 @@ public class Mind {
 //    public List<Right> getResults() throws Exception {
 //        return rights.getResults();
 //    }
+
+
+    public Right getAcceptedRight() {
+        return acceptedRight;
+    }
 }
 
 

@@ -1,13 +1,5 @@
 package org.kanger;
 
-//import jline.ConsoleReader;
-
-//import org.jline.reader.LineReader;
-//import org.jline.reader.LineReaderBuilder;
-//import org.jline.terminal.Terminal;
-//import org.jline.terminal.TerminalBuilder;
-
-import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
@@ -29,49 +21,43 @@ import java.nio.BufferUnderflowException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
-
-//import java.awt.*;
-//import java.awt.datatransfer.Clipboard;
-//import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15. $Author: murray $
  */
 public class Screen {
 
-//    public static boolean LINE_EDITOR_ENABLE =
-//	System.getProperties().containsKey("line.editor")
-//	&& System.getProperties().getProperty("line.editor").equals("true");
-
     private static String lastLogFile = "analizer.log";
-    //    private static LineReader reader = null;
     private static Scanner sc = null;
     private static String currentLine = "";
+    private static String lastComments = "";
     private static CircularBuffer<String> lastQuery = new CircularBuffer(100);
-
-//    private static ResourceBundle msg = Utf8ResourceBundle.getBundle("messages");
 
     public static String accept() {
         boolean repeat = false;
         String line = "";
         do {
+            String prefix;
             if (repeat) {
-                currentLine = line + Enums.LINE_SEPARATOR;
+                if (!currentLine.isEmpty()) {
+                    currentLine += Enums.LINE_SEPARATOR;
+                }
+                currentLine += line;
+                prefix = "  ";
+            } else {
+                prefix = "\n: ";
             }
-            line = "";
-            String prefix = currentLine.isEmpty() ? "\n: " : "";
-//            if (reader != null) {
-//                line = reader.readLine(prefix);
-//            } else {
             System.out.printf(prefix);
             line = sc.nextLine();
-//            }
             String lineStart = "";
             String lineStop = "";
 
             if (currentLine.trim().length() > 1) {
-                if (currentLine.trim().substring(0, 2) == "//" || currentLine.trim().substring(0, 2) == "/*") {
+                if (currentLine.trim().substring(0, 2).equals("//") || currentLine.trim().substring(0, 2).equals("/*")) {
                     lineStart = currentLine.trim().substring(0, 2);
                 } else {
                     lineStart = currentLine.trim().substring(0, 1);
@@ -79,7 +65,7 @@ public class Screen {
             } else if (currentLine.trim().length() > 0) {
                 lineStart = currentLine.trim().substring(0, 1);
             } else if (line.trim().length() > 1) {
-                if (line.trim().substring(0, 2) == "//" || line.trim().substring(0, 2) == "/*") {
+                if (line.trim().substring(0, 2).equals("//") || line.trim().substring(0, 2).equals("/*")) {
                     lineStart = line.trim().substring(0, 2);
                 } else {
                     lineStart = line.trim().substring(0, 1);
@@ -89,7 +75,7 @@ public class Screen {
             }
 
             if (line.trim().length() > 1) {
-                if (line.trim().substring(line.trim().length() - 2) == "*/") {
+                if (line.trim().substring(line.trim().length() - 2).equals("*/")) {
                     lineStop = line.trim().substring(line.trim().length() - 2);
                 } else {
                     lineStop = line.trim().substring(line.trim().length() - 1);
@@ -97,7 +83,7 @@ public class Screen {
             } else if (line.trim().length() > 0) {
                 lineStop = line.trim().substring(line.trim().length() - 1);
             } else if (currentLine.trim().length() > 1) {
-                if (currentLine.trim().substring(0, 2) == "/*") {
+                if (currentLine.trim().substring(0, 2).equals("/*")) {
                     lineStop = currentLine.trim().substring(currentLine.trim().length() - 2);
                 } else {
                     lineStop = currentLine.trim().substring(currentLine.trim().length() - 1);
@@ -118,87 +104,15 @@ public class Screen {
         return line;
     }
 
-    public static boolean commandProcessor(IUser user, String line) throws Exception {
-        Mind mind = new Mind(user);
-        CircularBuffer<String> lastQuery = new CircularBuffer(100);
-
-        boolean resume = false;
-
-        switch (line.toUpperCase().charAt(0)) {
-            case Enums.SUC:
-                lastQuery.add(line);
-            case Enums.ANT:
-            case Enums.INS:
-            case Enums.DEL:
-
-                int pos = 0;
-                Object[] t = null;
-                while ((t = Tools.extractLine(line, pos)) != null) {
-                    pos = (int) t[1];
-                    String ln = (String) t[0];
-
-                    Boolean res = mind.query(ln);
-                    if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                        System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
-                        if (res != null) {
-                            showLog(mind, LogMode.SOLVES, false);
-                            showLog(mind, LogMode.VALUES, false);
-                        }
-                        if (res == null) {
-                            showHypo(mind);
-                        }
-                    }
-                }
-                break;
-
-            case Enums.FOO:
-                mind.setCompliedLine(line);
-                SysOp op = (SysOp) mind.compileLine(line, false, null);
-                System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
-                break;
-
-            default:
-                resume = true;
-        }
-
-        return resume;
-    }
-
-    private static boolean processAgain(CircularBuffer<String> lastQuery) {
-        if (lastQuery.buffer.length > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
-        boolean again = false;
         Mind mind = new Mind(user);
 
         //TODO: Волшебство
         mind.query("?a;");
 
         String lastQuery = "";
-
-//        LineReader reader = null;
-//        if (LINE_EDITOR_ENABLE) {
-//            try {
-//                //new DumbTerminal;
-//                Terminal terminal = TerminalBuilder
-//                        .builder()
-//                        .build();
-//                terminal.echo(false);
-//                reader = LineReaderBuilder
-//                        .builder()
-//                        .terminal(terminal)
-//                        .build();
-//            } catch (IOException e) {
-//                e.printStackTrace(System.err);
-//            }
-//        }
-
 
         String sourcesDir = user.getProperty("user.dir") + Enums.FILE_SEPARATOR + "SRC";
         if (user.containsKey("sources.dir")) {
@@ -211,18 +125,12 @@ public class Screen {
 
         showCopyrigt(user);
 
-//        if (reader != null) {
-//            System.out.println("Line editor loaded");
-//        } else {
-//            System.err.println("Line editor doesn't loaded");
         sc = new Scanner(System.in);
-//        }
 
         try {
             Global.getUdf();
             System.out.println("UDF module loaded");
         } catch (RuntimeErrorException e) {
-//            System.err.println(e.toString());
         }
 
         try {
@@ -231,69 +139,42 @@ public class Screen {
         } catch (RuntimeErrorException e) {
         }
 
-        //Scanner sc = new Scanner(System.in);
         while (!stop) {
             String line = "";
             try {
                 line = accept();
 
-//                if (LINE_EDITOR_ENABLE && reader != null) {
-//                    line = reader.readLine("\n: ");
-//                } else {
-//                    System.out.printf("\n: ");
-//                    if (again) {
-//                        line = lastQuery;
-//                        System.out.printf("%s\n", line);
-//                        again = false;
-//                    } else {
-//                        line = sc.nextLine();
-//                    }
-//                }
-
                 if (line == null) {
                     line = "";
+                } else if (line.length() > 1 && (line.trim().substring(0, 2).equals("//") || line.trim().substring(0, 2).equals("/*"))) {
+                    if (!lastComments.isEmpty()) {
+                        lastComments += Enums.LINE_SEPARATOR;
+                    }
+                    lastComments += line;
+                    continue;
+                } else if (line.toUpperCase().charAt(0) == 'A') {
+                    if (!lastQuery.isEmpty()) {
+                        line = lastQuery;
+                        System.out.println("\n: " + line);
+                    } else {
+                        continue;
+                    }
                 }
+
                 if (line.length() > 0) {
                     switch (line.toUpperCase().charAt(0)) {
-                        case 'A':
-                            again = true;
-                            break;
                         case 'Q':
-//                            if (checkChg(mind)) {
                             stop = true;
-//                            }
                             break;
                         case 'H':
                             showCommonHelp();
                             break;
-                        case 'R': {
-                            Mind m = mind;
-//                            int pos = 0;
-//                            while (line.substring(pos).contains("..")) {
-//                                int ps = line.indexOf("..");
-//                                line = line.substring(0, ps) + line.substring(ps + 2);
-//                                if (m.getParent() != null) {
-//                                    m = m.getParent();
-//                                }
-//                            }
-//                            line.replace("/", "");
-                            showRights(m, line.charAt(0) != 'r');
-                        }
-                        break;
-                        case 'B': {
-                            Mind m = mind;
-//                            int pos = 0;
-//                            while (line.substring(pos).contains("..")) {
-//                                int ps = line.indexOf("..");
-//                                line = line.substring(0, ps) + line.substring(ps + 2);
-//                                if (m.getParent() != null) {
-//                                    m = m.getParent();
-//                                }
-//                            }
-//                            line.replace("/", "");
-                            showBase(m, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
-                        }
-                        break;
+                        case 'R':
+                            showRights(mind, line.charAt(0) != 'r');
+                            break;
+                        case 'B':
+                            showBase(mind, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
+                            break;
                         case 'F':
                             showFunctions(mind, line.charAt(0) != 'f');
                             break;
@@ -304,344 +185,47 @@ public class Screen {
                             showLog(mind, LogMode.VALUES, false);
                             break;
                         case 'S':
-                            if (line.charAt(0) != 's') {
-                                if (!mind.getSolutions().isEmpty()) {
-                                    String posStr = line.trim().contains(" ") ? line.split(" ")[1] : null;
-                                    int pos = posStr == null ? -1 : Integer.parseInt(posStr);
-                                    int i = 0;
-                                    for (Right log : mind.getSolutions().getRoot()) {
-                                        if (++i == pos || pos == -1) {
-                                            System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
-                                            if (!log.getCauses().isEmpty()) {
-                                                showCauses(mind, log.getCauses(), 0);
-                                                System.out.println();
-                                            }
-                                            if (pos != -1) {
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                showLog(mind, LogMode.SOLVES, false);
-                            }
+                            showSolutions(mind, line);
                             break;
                         case 'X':
                             showLog(mind, LogMode.ALL, line.charAt(0) != 'x');
                             break;
-
-                        case 'N':
-                            SortedSet<String> set = new TreeSet<>();
-                            for (Term t : mind.getTerms()) {
-                                set.add(String.format("%s (%d)", t.toString(), t.getHash()));
-                            }
-                            for (String s : set) {
-                                System.out.println(s);
-                            }
-                            break;
-//                        case 'T':
-//                            showTValues(mind);
-//                            break;
-//                    case 'A':
-//                        lastQuery = savedQuery;
-//                        break;
-//                        case 'K':
-//                            killRight(mind);
-//                            break;
-//                        case 'T':
-//                            showText(mind);
-//                            break;
                         case 'I':
-                            String h = makeHypo(mind);
-                            if (h != null) {
-//                                System.out.println(": " + h);
-                                System.out.println();
-                                Boolean res = mind.query(h);
-                                if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                    showLog(mind, LogMode.SOLVES, false);
-                                    showLog(mind, LogMode.VALUES, false);
-                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
-                                }
-//                            lastQuery = savedQuery;
-                            }
+                            makeHypo(mind, sc);
                             break;
-                        case 'E': {
-                            if (line.split(" ").length == 2) {
-                                try {
-                                    long id = Long.parseLong(line.split(" ")[1]);
-                                    Right r = mind.getRights().load(id);
-                                    if (r != null) {
-                                        if (r.isGenerated()) {
-                                            System.out.printf("Right %03d: %s is production and can't be erased.\n", r.getId(), r);
-                                        } else {
-                                            System.out.printf("Are you sure to erase right %03d: %s ? [y/N]? ", r.getId(), r);
-                                            String s = sc.nextLine().toUpperCase();
-                                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
-
-                                                Boolean res = mind.delete(r, true);
-                                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
-                                                    if (res != null) {
-                                                        showLog(mind, LogMode.SOLVES, false);
-                                                        showLog(mind, LogMode.VALUES, false);
-                                                    }
-                                                    if (res == null) {
-                                                        showHypo(mind);
-                                                    }
-                                                }
-
-                                            }
-                                        }
-                                    } else {
-                                        System.out.printf("Right %03d not found\n", id);
-                                    }
-                                } catch (Exception ex) {
-                                    System.out.printf("ERROR: Right id expected\n");
-                                }
-                            } else {
-                                System.out.printf("Are you sure to erase workspace? [y/N]? ");
-                                String s = sc.nextLine().toUpperCase();
-                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                    user.clear(mind);
-//                                mind.release();
-                                }
-                            }
-                        }
-                        break;
-                        case 'C': {
-                            if (!user.isClosed()) {
-                                System.out.printf("Are you sure to close database " + user.getStorageName() + "? [y/N]? ");
-                                String s = sc.nextLine().toUpperCase();
-                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                    user.close();
-                                    mind.clear();
-                                }
-                            } else {
-                                System.out.println("No database used");
-                            }
-                        }
-                        break;
-//                        case 'P':
-//                            saveSource(mind);
-//                            break;
+                        case 'E':
+                            clearWorkspace(user, mind, sc);
+                            break;
+                        case 'C':
+                            closeDatabase(user, mind, sc);
+                            break;
                         case 'G':
                             loadSource(mind, sourcesDir);
                             break;
-//                        case 'Z':
-//                            saveCompiled(mind);
-//                            break;
                         case 'U':
-                            if (line.split(" ").length == 2) {
-                                String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
-                                user.use(mind, name);
-                                if (!user.isClosed()) {
-                                    System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-                                } else {
-                                    System.out.println("No database used");
-                                }
-                            } else if (!user.isClosed()) {
-                                System.out.println("Used database " +
-                                        user.getStorageName()
-                                                .replace("/", ".")
-                                                .replace("\\", "."));
-                            } else {
-                                System.out.println("No database used");
-                            }
+                            useDatabase(line, user, mind, sc);
                             break;
                         case 'D':
-                            if (!user.isClosed()) {
-                                System.out.printf("Are you sure to drop database " + user.getStorageName() + "? [y/N]? ");
-                                String s = sc.nextLine().toUpperCase();
-                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                    user.remove();
-                                    System.out.println("Database files removed");
-                                }
-                            } else {
-                                System.out.println("No database used");
-                            }
-                            break;
-
-                        case 'T':
-                            for (TVariable t : mind.getTVars()) {
-                                System.out.println(t);
-                            }
+                            dropDatabase(user, mind, sc);
                             break;
                         case 'M':
-                            if (line.length() == 1) {
-                                if (line.charAt(0) == 'M') {
-                                    //TODO: Save file
-                                } else {
-                                    System.out.println(mind.getSourceCode());
-                                }
-                            } else {
-                                Long id = Long.parseLong(line.substring(1).trim());
-                                System.out.println(formatRightWithComments(mind, id));
-                                if (line.charAt(0) == 'M') {
-                                    System.out.println("Enter the new comment for ID " + id + ". Two ENTERs ends input:");
-
-                                    String out = "";
-                                    String text = null;
-                                    int counter = 0;
-                                    while (sc.hasNextLine()) {
-                                        text = sc.nextLine();
-                                        if (!text.isEmpty()) {
-                                            out += text + Enums.LINE_SEPARATOR;
-                                            counter = 0;
-                                        } else if (++counter < 2) {
-                                            out += Enums.LINE_SEPARATOR;
-                                        } else {
-                                            break;
-                                        }
-                                    }
-
-                                    mind.getComments().add(id, out.trim());
-                                    System.out.println(formatRightWithComments(mind, id));
-                                }
-                            }
+                            saveSource(line, user, mind, sc);
                             break;
                         case 'P':
-                            if (!user.isClosed()) {
-                                System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
-                                String s = sc.nextLine().toUpperCase();
-                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                                    user.reindex(new IReactor() {
-                                        @Override
-                                        public Object run(Object o) {
-                                            System.out.println("Processing " + o);
-                                            return null;
-                                        }
-                                    });
-                                    System.out.println("Database packed and reindexed");
-                                }
-                            } else {
-                                System.out.println("No database used");
-                            }
+                            packDatabase(user, mind, sc);
                             break;
-
                         case 'O':
-                            if (line.length() == 1) {
-                                showOptions(mind);
-                            } else {
-                                switch (line.charAt(1)) {
-                                    case 'h':
-                                    case 'H':
-                                        showOptionsHelp();
-                                        break;
-                                    case 'R':
-                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RIGHTS);
-                                        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 'r':
-                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RIGHTS);
-                                        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 'V':
-                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES);
-                                        System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 'v':
-                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
-                                        System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 'S':
-                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS);
-                                        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 's':
-                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
-                                        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 'L':
-                                        mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS);
-                                        System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 'l':
-                                        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
-                                        System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
-                                        break;
-                                    case 't':
-                                    case 'T':
-                                        KangerTest.test(mind, "set_" + (line.length() > 3 ? line.substring(3) : ""));
-                                        break;
-                                    case 'm':
-                                    case 'M':
-                                        System.out.println("Memory status:");
-                                        System.out.println();
-
-                                        System.out.println("Total memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + " mb");
-                                        System.out.println("Used memory: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024) + " mb");
-                                        System.out.println();
-
-                                        if (!user.isClosed()) {
-                                            System.out.println("Cache size: " + user.getMaxCacheSize());
-                                            System.out.println("Cache used: " + user.getUsedCacheSize());
-                                            System.out.println();
-                                        }
-//                                        System.out.println("Database: " + mind.getRights().storedSize());
-                                        System.out.println("Dictionary: " + mind.getTerms().size());
-                                        System.out.println("Domains: " + mind.getDomains().size());
-                                        System.out.println("Functions: " + mind.getFunctions().size());
-                                        System.out.println("FValues: " + mind.getFValues().size());
-                                        System.out.println("Predicates: " + mind.getPredicates().size());
-                                        System.out.println("Rights: " + mind.getRights().size());
-                                        System.out.println("TValues: " + mind.getTValues().size());
-                                        System.out.println("TVariables: " + mind.getTValues().size());
-                                        System.out.println();
-                                        System.out.println("Hypothesis: " + mind.getHypothesisStore().size());
-                                        System.out.println("Solutions: " + mind.getSolutions().size());
-                                        System.out.println("Values: " + mind.getValues().size());
-                                        break;
-                                }
-                            }
+                            options(line, user, mind, sc);
                             break;
                         case Enums.SUC:
                             lastQuery = line;
                         case Enums.ANT:
                         case Enums.INS:
                         case Enums.DEL:
-//                        case Enums.WIPE:
-//                            if (!Tools.isComplete(line, 0)) {
-//                                incomplete = line;
-//                                line = "";
-//                            } else {
-//                            if (LINE_EDITOR_ENABLE) {
-//                                reader.getHistory().getHistoryList().remove(0);
-//                                reader.getHistory().addToHistory(line);
-//                            } else {
-                            // StringSelection selec = new StringSelection(line);
-                            // Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                            // clipboard.setContents(selec, selec);
-//                            }
-
-                            int pos = 0;
-                            Object[] t = null;
-                            while ((t = Tools.extractLine(line, pos)) != null) {
-                                pos = (int) t[1];
-                                String ln = (String) t[0];
-
-                                Boolean res = mind.query(ln);
-                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
-                                    if (res != null) {
-                                        showLog(mind, LogMode.SOLVES, false);
-                                        showLog(mind, LogMode.VALUES, false);
-                                    }
-                                    if (res == null) {
-                                        showHypo(mind);
-                                    }
-                                }
-                            }
-//                            }
+                            processQuery(line, mind);
                             break;
                         case Enums.FOO:
-//                            if (!Tools.isComplete(line, 0)) {
-//                                incomplete = line;
-//                                line = "";
-//                            } else {
-                            mind.setCompliedLine(line);
-                            SysOp op = (SysOp) mind.compileLine(line, false, null);
-                            System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
-//                            }
+                            processFunction(line, mind);
                             break;
                         default:
                             System.out.printf("ERROR: Unknown Instruction\n");
@@ -660,8 +244,6 @@ public class Screen {
                     System.out.print(" ");
                 }
                 System.out.println("^");
-                line = "";
-//                incomplete = "";
             } catch (RuntimeErrorException ex) {
                 System.err.println(ex.toString());
             } catch (Exception e) {
@@ -676,6 +258,245 @@ public class Screen {
         }
         System.out.println("KANGER III Session closed");
 
+    }
+
+    private static void processFunction(String line, Mind mind) throws Exception {
+        mind.setCompliedLine(line);
+        SysOp op = (SysOp) mind.compileLine(line, false, null);
+        System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
+    }
+
+    private static void processQuery(String line, Mind mind) throws Exception {
+        int pos = 0;
+        Object[] t = null;
+        while ((t = Tools.extractLine(line, pos)) != null) {
+            pos = (int) t[1];
+            String ln = (String) t[0];
+
+            Boolean res = mind.query(ln);
+            if (!lastComments.isEmpty() && mind.getAcceptedRight() != null) {
+                mind.getComments().add(mind.getAcceptedRight().getId(), lastComments);
+                lastComments = "";
+            }
+            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                if (res != null) {
+                    showLog(mind, LogMode.SOLVES, false);
+                    showLog(mind, LogMode.VALUES, false);
+                }
+                if (res == null) {
+                    showHypo(mind);
+                }
+            }
+        }
+    }
+
+    private static void options(String line, IUser user, Mind mind, Scanner sc) throws Exception {
+        if (line.length() == 1) {
+            showOptions(mind);
+        } else {
+            switch (line.charAt(1)) {
+                case 'h':
+                case 'H':
+                    showOptionsHelp();
+                    break;
+                case 'R':
+                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RIGHTS);
+                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                    break;
+                case 'r':
+                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RIGHTS);
+                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                    break;
+                case 'V':
+                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES);
+                    System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+                    break;
+                case 'v':
+                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
+                    System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
+                    break;
+                case 'S':
+                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS);
+                    System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+                    break;
+                case 's':
+                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
+                    System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
+                    break;
+                case 'L':
+                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS);
+                    System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
+                    break;
+                case 'l':
+                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
+                    System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
+                    break;
+                case 't':
+                case 'T':
+                    KangerTest.test(mind, "set_" + (line.length() > 3 ? line.substring(3) : ""));
+                    break;
+                case 'm':
+                case 'M':
+                    System.out.println("Memory status:");
+                    System.out.println();
+
+                    System.out.println("Total memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + " mb");
+                    System.out.println("Used memory: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024) + " mb");
+                    System.out.println();
+
+                    if (!user.isClosed()) {
+                        System.out.println("Cache size: " + user.getMaxCacheSize());
+                        System.out.println("Cache used: " + user.getUsedCacheSize());
+                        System.out.println();
+                    }
+//                                        System.out.println("Database: " + mind.getRights().storedSize());
+                    System.out.println("Dictionary: " + mind.getTerms().size());
+                    System.out.println("Domains: " + mind.getDomains().size());
+                    System.out.println("Functions: " + mind.getFunctions().size());
+                    System.out.println("FValues: " + mind.getFValues().size());
+                    System.out.println("Predicates: " + mind.getPredicates().size());
+                    System.out.println("Rights: " + mind.getRights().size());
+                    System.out.println("TValues: " + mind.getTValues().size());
+                    System.out.println("TVariables: " + mind.getTValues().size());
+                    System.out.println();
+                    System.out.println("Hypothesis: " + mind.getHypothesisStore().size());
+                    System.out.println("Solutions: " + mind.getSolutions().size());
+                    System.out.println("Values: " + mind.getValues().size());
+                    break;
+            }
+        }
+    }
+
+    private static void packDatabase(IUser user, Mind mind, Scanner sc) throws Exception {
+        if (!user.isClosed()) {
+            System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
+            String s = sc.nextLine().toUpperCase();
+            if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                user.reindex(new IReactor() {
+                    @Override
+                    public Object run(Object o) {
+                        System.out.println("Processing " + o);
+                        return null;
+                    }
+                });
+                System.out.println("Database packed and reindexed");
+            }
+        } else {
+            System.out.println("No database used");
+        }
+    }
+
+    private static void saveSource(String line, IUser user, Mind mind, Scanner sc) throws Exception {
+        if (line.length() == 1) {
+            if (line.charAt(0) == 'M') {
+                //TODO: Save file
+            } else {
+                System.out.println(mind.getSourceCode());
+            }
+        } else {
+            Long id = Long.parseLong(line.substring(1).trim());
+            System.out.println(formatRightWithComments(mind, id));
+            if (line.charAt(0) == 'M') {
+                System.out.println("Enter the new comment for ID " + id + ". Two ENTERs ends input:");
+
+                String out = "";
+                String text = null;
+                int counter = 0;
+                while (sc.hasNextLine()) {
+                    text = sc.nextLine();
+                    if (!text.isEmpty()) {
+                        out += text + Enums.LINE_SEPARATOR;
+                        counter = 0;
+                    } else if (++counter < 2) {
+                        out += Enums.LINE_SEPARATOR;
+                    } else {
+                        break;
+                    }
+                }
+
+                mind.getComments().add(id, out.trim());
+                System.out.println(formatRightWithComments(mind, id));
+            }
+        }
+    }
+
+    private static void dropDatabase(IUser user, Mind mind, Scanner sc) throws Exception {
+        if (!user.isClosed()) {
+            System.out.printf("Are you sure to drop database " + user.getStorageName() + "? [y/N]? ");
+            String s = sc.nextLine().toUpperCase();
+            if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                user.remove();
+                System.out.println("Database files removed");
+            }
+        } else {
+            System.out.println("No database used");
+        }
+    }
+
+    private static void useDatabase(String line, IUser user, Mind mind, Scanner sc) throws Exception {
+        if (line.split(" ").length == 2) {
+            String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
+            user.use(mind, name);
+            if (!user.isClosed()) {
+                System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+            } else {
+                System.out.println("No database used");
+            }
+        } else if (!user.isClosed()) {
+            System.out.println("Used database " +
+                    user.getStorageName()
+                            .replace("/", ".")
+                            .replace("\\", "."));
+        } else {
+            System.out.println("No database used");
+        }
+    }
+
+    private static void closeDatabase(IUser user, Mind mind, Scanner sc) throws Exception {
+        if (!user.isClosed()) {
+            System.out.printf("Are you sure to close database " + user.getStorageName() + "? [y/N]? ");
+            String s = sc.nextLine().toUpperCase();
+            if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                user.close();
+                mind.clear();
+            }
+        } else {
+            System.out.println("No database used");
+        }
+    }
+
+    private static void clearWorkspace(IUser user, Mind mind, Scanner sc) throws Exception {
+        System.out.printf("Are you sure to erase workspace? [y/N]? ");
+        String s = sc.nextLine().toUpperCase();
+        if (!s.isEmpty() && s.charAt(0) == 'Y') {
+            user.clear(mind);
+//                                mind.release();
+        }
+    }
+
+    private static void showSolutions(Mind mind, String line) throws Exception {
+        if (line.charAt(0) != 's') {
+            if (!mind.getSolutions().isEmpty()) {
+                String posStr = line.trim().contains(" ") ? line.split(" ")[1] : null;
+                int pos = posStr == null ? -1 : Integer.parseInt(posStr);
+                int i = 0;
+                for (Right log : mind.getSolutions().getRoot()) {
+                    if (++i == pos || pos == -1) {
+                        System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
+                        if (!log.getCauses().isEmpty()) {
+                            showCauses(mind, log.getCauses(), 0);
+                            System.out.println();
+                        }
+                        if (pos != -1) {
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            showLog(mind, LogMode.SOLVES, false);
+        }
     }
 
     private static void showOptions(Mind mind) {
@@ -744,107 +565,16 @@ public class Screen {
                 } catch (IOException e) {
                 }
             }
-//            System.out.println();
         }
 
     }
 
-    //    public static void showSolves(Mind context) {
-//        if (context.getSolutions().size() > 0) {
-//            System.out.println("Solves:");
-//            int i = 0;
-//            for (String log : (List<String>) context.getSolutions().getRoot()) {
-//                System.out.println(String.format("\tSolve %03d: %s", ++i, log));
-//            }
-//            System.out.println();
-//        }
-//    }
-//
-//    public static void showValues(Mind context) {
-//        if (context.getValues().size() > 0) {
-//            System.out.println("Values:");
-//            int i = 0;
-//            for (String log : (List<String>) context.getValues().getRoot()) {
-//                System.out.println(String.format("\tSolve %03d: %s", ++i, log));
-//
-//            }
-//            System.out.println();
-//        }
-//    }
     public static void showCopyrigt(IUser user) {
         System.out.printf("KANGER III, Version %s\n"
                 + "Copyright (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
                 + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
-//        System.out.printf("Context ID: %s\n", mind.getContextIdString());
     }
 
-    //    public static int fixInsertion(contextAbstract context) {
-//        int i = 0;
-//        List<String> list = (List<String>) context.getHypotesisStore().getRoot();
-//        if (list.size() > 0) {
-//            System.out.printf("Predicated added:\n");
-//            for (i = 0; i < list.size(); ++i) {
-//                context.getText().append(context.getHypotesisStore().createCVar(i));
-//                context.getText().append("\r");
-//                context.setChanged(true);
-//                System.out.printf("  %3d:\t%s\n", i, context.getHypotesisStore().createCVar(i));
-//            }
-//        }
-//        return i;
-//    }
-    public static int showLine(StringBuffer c, int pos) {
-        pos = Parser.skipSpaces(c.toString(), pos);
-        while (pos < c.length() && c.charAt(pos) != Enums.EOLN) {
-            if (c.charAt(pos) == '\t') {
-                System.out.print("    ");
-            } else {
-                System.out.printf("%c", c.charAt(pos));
-            }
-            ++pos;
-        }
-        if (c.charAt(pos) == Enums.EOLN) {
-            System.out.print(";");
-            ++pos;
-        }
-        System.out.print("\n");
-        return pos;
-    }
-
-    public static int skipLine(StringBuffer line, int pos) {
-        while (pos < line.length() && line.charAt(pos) != '\n' && line.charAt(pos) != '\r') {
-            ++pos;
-        }
-        return Parser.skipSpaces(line.toString(), pos);
-    }
-
-    //    public static void showText(Mind context) {
-//        StringBuffer c = context.getText();
-//        int pos = 0;
-//        int i = 0;
-//        while (pos < c.length()) {
-//            int p = Parser.skipSpaces(c.toString(), pos);
-//            if (p < c.length() && c.charAt(p) != Enums.REM) {
-//                System.out.printf("%3d: ", ++i);
-//                pos = showLine(c, pos);
-////                if (i > 0 && i % 19 == 0) {
-////                    System.out.printf("\nPress ENTER to continue\n\n");
-////                    new Scanner(System.in).next();
-////                }
-//            } else {
-//                pos = skipLine(c, pos);
-//            }
-//        }
-//    }
-//
-//    public static boolean checkChg(Mind context) {
-//        if (context.isChanged()) {
-//            System.out.printf("WARNING: Program text was changed. Are you sure [y/N] ? ");
-//            String s = new Scanner(System.in).nextLine();
-//            return s.toLowerCase().contains("y");
-//        } else {
-//            return true;
-//        }
-//    }
     public static void showOptionsHelp() {
         System.out.printf(
                 "Available OPTIONS:\n\n"
@@ -887,27 +617,6 @@ public class Screen {
         );
     }
 
-    //    public static void showFunc(FArg f) {
-//        System.out.printf(formatFunc(f));
-//    }
-
-//    public static void showTValues(Mind mind) {
-//        for (Right r : mind.getRights()) {
-//            List<TVariable> tvs = r.getTVariables(true);
-//            if (!tvs.isEmpty()) {
-//                System.out.printf("Right %03d: %s;\n", r.getId(), r.getOrig());
-//                for (TVariable tv : tvs) {
-//                    Iterator<TValue> iterator = mind.getTValues().iterator(tv);
-//                    if (iterator.hasNext()) {
-//                        do {
-//                            System.out.println("\t" + tv.getVarName() + "=" + iterator.next().getValue());
-//                        } while (iterator.hasNext());
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     public static void showFunctions(Mind mind, boolean showSys) {
 
         if (!mind.getLibrary().isEmpty()) {
@@ -925,70 +634,21 @@ public class Screen {
                 }
             }
         }
-//        if (mind.getFunctions().getRoot() != null) {
-//            System.out.printf("Defined functions:\n");
-//            for (FunctionDescriptor f = (FunctionDescriptor) mind.getFunctions().getRoot(); f != null; f = f.getNext()) {
-//                System.out.printf("\t%s(%d);\n", f.getName(), f.getRange());
-//            }
-//        }
-    }
-
-    //    public static void showDomain(Domain d) {
-//        System.out.printf(formatDomain(d));
-//    }
-    //    puts_subs(DOMAIN*d) {
-//        char s[ MAXLINE];
-//
-//        sputs_subs(d, s);
-//        printf("\t%s\n", s);
-//    }
-//
-//    /*
-//     * Returns 0 if all parameters defined
-//     * or count of undefined
-//     */
-//    public static String formatPred(Predicate p, Solution s) {
-//        String str = String.format("%c%s(", s.isAntc() ? Enums.ANT : Enums.SUC, p.getName());
-//        for (int i = 0; i < p.getRange(); ++i) {
-//            if (s.createCVar(i) != null && s.createCVar(i).getTerm().getType() == Enums.T_STRING) {
-//                str += "\"";
-//            }
-//            str += String.format("%s", s.createCVar(i) != null ? s.createCVar(i).getTerm().getName() : "_");
-//            if (s.createCVar(i) != null && s.createCVar(i).getTerm().getType() == Enums.T_STRING) {
-//                str += "\"";
-//            }
-//
-//            if (i + 1 < p.getRange()) {
-//                str += String.format("%c", Enums.COMMA);
-//            }
-//        }
-//        str += ");";
-//        return str;
-//    }
-    //
-
-    public static void showCauses(Mind mind, Cause c, int level) {
-        //ПРЕДОХРАНИТЕЛЬ
-        if (level > 50) {
-            return;
-        }
-
-        String indent = "";
-        for (int i = 0; i < level; ++i) {
-            indent += "\t";
-        }
     }
 
     public static void showCauses(Mind mind, Set<Cause> causes, int level) throws Exception {
-        //ПРЕДОХРАНИТЕЛЬ
-        if (level > 50) {
-            return;
-        }
 
         String indent = "";
         for (int i = 0; i < level; ++i) {
             indent += "\t";
         }
+
+        //ПРЕДОХРАНИТЕЛЬ
+        if (level > 50) {
+            System.out.printf("\t\t%s...\n", indent);
+            return;
+        }
+
         boolean rightShowed = false;
         for (Cause c : causes) {
             if (!rightShowed) {
@@ -1002,36 +662,8 @@ public class Screen {
         }
     }
 
-//    public static void showCauses(Mind mind, Domain d, int level) throws Exception {
-//        //ПРЕДОХРАНИТЕЛЬ
-//        if (level > 50) {
-//            return;
-//        }
-//
-//        String indent = "";
-//        for (int i = 0; i < level; ++i) {
-//            indent += "\t";
-//        }
-//
-//        Right dest = mind.getRights().find(d);
-//        if (dest != null && !dest.getCauses().isEmpty()) {
-//
-//            boolean rightShowed = false;
-//            for (Cause c : dest.getCauses()) {
-//                if (!rightShowed) {
-//                    System.out.printf("\t\t%sRight: %s\n", indent, c.getRight(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
-//                }
-//                System.out.printf("\t\t%sCause: %s\n", indent, c.getSrc(mind).toString()); //c.getArguments()));
-//                showCauses(mind, c.getSrc(mind), level + 1);
-//            }
-//        }
-//    }
-
-
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws Exception {
-//        if (tIndex >= tvars.size()) {
         if (d.isStored(mind)) {
-//                d.recalculate();
             Right dest = mind.getRights().find(d);
             if (dest != null) {
                 if (showCauses) {
@@ -1043,22 +675,6 @@ public class Screen {
                 }
             }
         }
-//        } else {
-//            TVariable t = tvars.get(tIndex);
-//            TValue v = t.rewind();
-//            if (v != null) {
-//                do {
-////                    if (t.getSrcSolve() != null && t.getSrcSolve().getPredicate().getId() != d.getPredicate().getId()) {
-////                        mind.getSubstituted().createTVar(t);
-////                    if (!d.isDest()) {
-//                    mind.getTValues().set(t, v);
-//                    showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
-////                    }
-//                } while ((v = t.next(v)) != null);
-//            } else {
-//                showPredRecurse(mind, tvars, tIndex + 1, d, showCauses);
-//            }
-//        }
     }
 
     public static void showPred(Mind mind, Predicate p, boolean showCauses) throws Exception {
@@ -1066,54 +682,11 @@ public class Screen {
         if (!set.isEmpty()) {
             System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
             for (Domain s : set) {
-//                if (!s.isDestFor()) {
-//                    mind.getSubstituted().reset();
                 showPredRecurse(mind, s.getArguments().getTVariables(mind), 0, s, showCauses);
-//                }
             }
         }
     }
 
-    //
-//
-//    puts_loged_preds() {
-//        PRED * p;
-//        SOLVE * s;
-//
-//        for (p = Preds; p; p = p -> next)
-//            for (s = p -> solve; s; s = s -> next)
-//                if (s -> loged)
-//                    puts_pred(p, s);
-//    }
-//
-//
-//    puts_loged() {
-//        printf("Got from predicates:\n");
-//        puts_loged_preds();
-//        printf("Using right:\n");
-//        view_line(Curr_right -> line);
-//        printf("--- STEP ----------------------------------\n");
-//        if (getch() == 27) {
-//            printf("Explanation mode now is %s\n", "OFF");
-//            Puts_log = 0;
-//        }
-//    }
-//
-//
-//    puts_hone(PRED*p, int*cnt) {
-//        SOLVE * s;
-//        char line[ MAXLINE];
-//
-//        printf("Predicat %s(%d) :\n", p -> name, p -> range);
-//        for (s = p -> hypo; s; s = s -> next) {
-//            if (s -> cuted) continue;
-//            make_hone(1, p, s, line);
-//            printf("  %3d:\t.%s\n", * cnt, line + 1);
-//            ++( * cnt);
-//        }
-//    }
-//
-//
     public static void showBase(Mind mind, boolean showCauses, String param) throws Exception {
         for (Predicate p : mind.getPredicates()) {
             if (!mind.isSystem(p) && (param == null || param.equals(p.getName()))) {
@@ -1123,7 +696,6 @@ public class Screen {
         }
     }
 
-    //
     public static void showHypo(Mind mind) {
         int i;
         List<Hypothesis> list = mind.getHypothesisStore().getRoot();
@@ -1136,8 +708,6 @@ public class Screen {
         }
     }
 
-    //
-//
     public static void showTree(Mind mind, Right r) throws Exception {
         List<List<String>> net = LogStore.formatTree(mind, r);
         if (net.size() > 0 && net.get(0).size() > 0) {
@@ -1153,26 +723,7 @@ public class Screen {
         }
     }
 
-//    public static void showTreeWithValues(Mind mind, Right r, SortedSet<TVariable> tset) throws Exception {
-//        if (tset.isEmpty()) {
-//            showTree(mind, r);
-//        } else {
-//            TVariable t = tset.last(); //.get(tIndex);
-//            Iterator<TValue> iterator = mind.getTValues().iterator(t);
-//            if (iterator.hasNext()) {
-//                do {
-//                    TValue v = iterator.next();
-//                    mind.getTValues().set(t, v);
-//                    showTreeWithValues(mind, r, tset.headSet(t));
-//                } while (iterator.hasNext());
-//            } else {
-//                showTreeWithValues(mind, r, tset.headSet(t));
-//            }
-//        }
-//    }
-
     public static void showRights(Mind mind, boolean showTree) throws Exception {
-//        int i = 0;
         for (Right r : mind.getRights()) {
 
             System.out.printf("%sRight %03d%s: %s\n",
@@ -1187,185 +738,40 @@ public class Screen {
                             : "",
                     r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
-//                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
                 int save = mind.getDebugLevel();
                 mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
                 showTree(mind, r);
                 mind.setDebugLevel(save);
-//                } else {
-//                    SortedSet<TVariable> tset = new TreeSet<>();
-//                    tset.addAll(r.getTVariables(true));
-//                    showTreeWithValues(mind, r, tset);
-//                }
             }
         }
     }
-//
-//
-//    puts_ptr(pos)
-//
-//    int pos;
-//
-//    {
-//        while (pos) {
-//            putchar(' ');
-//            --pos;
-//        }
-//        printf("^\n");
-//    }
-//
-//
-//    puts_err(line)
-//
-//    char*line;
-//
-//    {
-//        char*s;
-//
-//        printf("\n");
-//        for (s = line;*s &&*s != EOLN;
-//        ++s)
-//        putchar( * s);
-//        if (*s == EOLN)
-//        putchar(';');
-//        printf("\n");
-//        puts_ptr(_err_pos - line);
-//        switch (_err_code) {
-//            case 0:
-//                s = "Success";
-//                break;
-//            case 1:
-//                s = "Right brackets mismatch";
-//                break;
-//            case 2:
-//                s = "Must be ! or ? symbol";
-//                break;
-//            case 3:
-//                s = "Semicolon required";
-//                break;
-//            case 4:
-//                s = "Misplaced ~ symbol";
-//                break;
-//            case 5:
-//                s = "Misplaced left bracket";
-//                break;
-//            case 6:
-//                s = "Misplaced quantor symbol";
-//                break;
-//            case 7:
-//                s = "Misplaced infix symbol";
-//                break;
-//            case 8:
-//                s = "Empty term";
-//                break;
-//            case 9:
-//                s = "Quantor variable mismatch";
-//                break;
-//            case 10:
-//                s = "Symbol inside predicat";
-//                break;
-//            case 11:
-//                s = "Misplaced comma";
-//                break;
-//            case 12:
-//                s = "Misplaced term";
-//                break;
-//            case 13:
-//                s = "Ivalid predicat name";
-//                break;
-//            default:
-//                s = "System error";
-//        }
-//        printf("Syntax ERROR %d : %s\n", _err_code, s);
-//    }
-
-//    public static int skipSpaces(StringBuffer line, int pos) {
-//        if (pos < line.length()) {
-//            while (pos < line.length() && line.charAt(pos) <= ' ') {
-//                ++pos;
-//            }
-//        }
-//        return pos;
-//    }
 
     /* Формирует в line строку гипотезы в качестве правила
      */
-    public static String makeHypo(Mind mind) {
-//        PRED *p;
-//        SOLVE *s;
-//        int antc;
-//        int i;
-//        char temp[MAXLINE];
+    public static void makeHypo(Mind mind, Scanner sc) throws Exception {
 
         System.out.printf("Enter Hypothesis Number: ");
-        int i = Integer.parseInt(new Scanner(System.in).nextLine());
+        int i = Integer.parseInt(sc.nextLine());
         if (--i >= mind.getHypothesisStore().size()) {
             System.out.printf("ERROR: Wrong number\n");
-            return null;
         }
         String temp = mind.getHypothesisStore().get(i).toString();
-        return String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
+        String h = String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
+
+        if (h != null) {
+            System.out.println();
+            Boolean res = mind.query(h);
+            if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                showLog(mind, LogMode.SOLVES, false);
+                showLog(mind, LogMode.VALUES, false);
+                System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+            }
+        }
+
     }
 
-    //    public static void killRight(Mind mind) {
-//        System.out.printf("Enter Right Number: ");
-//        int id = Integer.parseInt(new Scanner(System.in).nextLine());
-//        Right r = mind.getRights().get(id);
-//        if (r == null) {
-//            System.out.printf("ERROR: Wrong number\n");
-//            return;
-//        }
-//        System.out.println(r.getOrig());
-//        System.out.printf("Are you sure to remove right " + id + " [y/N]? ");
-//        String s = new Scanner(System.in).nextLine();
-//        if (s.charAt(0) == 'Y' || s.charAt(0) == 'y') {
-////TODO: Нужно реализовать удаление правила
-////            mind.removeInsertionRight(r);
-//            mind.setChanged(true);
-//        }
-//    }
-//
-//    public static boolean saveSource(Mind context) {
-//        Scanner scanner = new Scanner(System.in);
-//        if (context.getSourceFileName().isEmpty()) {
-//            context.setSourceFileName("context.k");
-//        }
-//
-//
-//        System.out.printf("Enter file name for save (%s): ", context.getSourceFileName());
-//        String line = scanner.nextLine();
-//        if (!line.isEmpty()) {
-//            context.setSourceFileName(line);
-//        } else {
-//            line = context.getSourceFileName();
-//        }
-//
-//        if (new File(line).exists()) {
-//            System.out.print("WARNING: File already exists. Overwrite [y/N] ? ");
-//            String ch = scanner.nextLine();
-//            if (!(ch.startsWith("y") || ch.startsWith("Y"))) {
-//                return false;
-//            }
-//        }
-//
-//        try {
-//            BufferedWriter f = new BufferedWriter(new FileWriter(new File(line)));
-//            f.write("test");
-//            f.flush();
-//            f.close();
-//            context.setChanged(false);
-//
-//            System.out.printf("File %s saved\n", line);
-//            return true;
-//        } catch (IOException ex) {
-//            System.out.printf("ERROR: %s\n", ex);
-//            return false;
-//        }
-//    }
-//
     public static boolean loadSource(Mind mind, String sourceDir) throws Exception {
         Scanner scanner = new Scanner(System.in);
-//        if (checkChg(mind)) {
         List<File> list = new ArrayList<>();
         File[] dir = new File(sourceDir).listFiles();
         if (dir != null) {
@@ -1391,11 +797,6 @@ public class Screen {
             }
         }
 
-//                if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-//                    Runtime.getRuntime().exec("dir /p *.k");
-//                } else {
-//                    Runtime.getRuntime().exec("ls *.k");
-//                }
         System.out.printf("\nEnter file name %s%s: ", list.isEmpty() ? "" : "or file number", mind.getSourceFileName().isEmpty() ? "" : " (" + mind.getSourceFileName() + ")");
         String line = scanner.nextLine();
         File f = null;
@@ -1412,8 +813,6 @@ public class Screen {
             f = new File(sourceDir + mind.getSourceFileName());
         }
         return loadSourceFile(mind, f);
-//        }
-//        return false;
     }
 
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
