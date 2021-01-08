@@ -3,6 +3,7 @@ package org.kanger.storage;
 
 import org.kanger.exception.DatabaseErrorException;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IUser;
 
 import java.io.*;
 import java.util.Iterator;
@@ -37,15 +38,15 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private int blockSize = BLOCK_SIZE;
     private boolean changed = false;
 
-    public Index(int baseCode, Object locker) {
+    public Index(int baseCode, Object locker, IUser user) {
         this.file = null;
         this.rasRead = null;
         this.changed = false;
 
         this.baseCode = baseCode;
         this.locker = locker;
-        if (System.getProperties().containsKey("cache.index.size")) {
-            blockSize = Integer.parseInt(System.getProperty("cache.index.size"));
+        if (user.containsKey("cache.index.size")) {
+            blockSize = Integer.parseInt(user.getProperty("cache.index.size"));
         } else {
             blockSize = BLOCK_SIZE;
         }

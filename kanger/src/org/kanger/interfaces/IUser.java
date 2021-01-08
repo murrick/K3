@@ -1,6 +1,7 @@
 package org.kanger.interfaces;
 
 import org.kanger.Mind;
+import org.kanger.exception.RuntimeErrorException;
 
 public interface IUser {
 
@@ -45,4 +46,14 @@ public interface IUser {
     void flush() throws Exception;
 
     Object getLocker();
+
+    String getProperty(String key);
+
+    void setProperty(String key, String value);
+
+    boolean containsKey(String s);
+
+    IData getData() throws RuntimeErrorException;
+
+    void setData(IData db);
 }

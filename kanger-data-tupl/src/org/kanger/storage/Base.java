@@ -6,6 +6,7 @@ import org.cojen.tupl.Index;
 import org.cojen.tupl.Transaction;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
+import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,14 +29,14 @@ public class Base implements IBase {
     private String name = "";
 //    private IUser user = null;
 
-    public Base(Database db, String name) throws IOException {
+    public Base(Database db, String name, IUser user) throws IOException {
 //        this.user = user;
         this.name = name;
-        if (System.getProperties().containsKey("cache.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
+        if (user.containsKey("cache.size")) {
+            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size"));
         }
-        if (System.getProperties().containsKey("cache.enable")) {
-            CACHE_ENABLE = Boolean.parseBoolean(System.getProperty("cache.enable"));
+        if (user.containsKey("cache.enable")) {
+            CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable"));
         }
 
         this.index = db.openIndex(name + ".index");

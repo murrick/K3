@@ -1,7 +1,7 @@
 package org.kanger.interfaces;
 
 public interface IData {
-    void init();
+    void init(IUser user);
 
     void use(String name) throws Exception;
 

@@ -1,8 +1,10 @@
 package org.kanger.storage;
 
+import org.kanger.enums.Enums;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
+import org.kanger.interfaces.IUser;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,9 +20,12 @@ public class DB implements IData {
     Connection connection = null;
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<>();
+    private IUser user = null;
 
     @Override
-    public void init() {
+    public void init(IUser user) {
+        this.user = user;
+        user.setData(this);
     }
 
     @Override
@@ -29,12 +34,12 @@ public class DB implements IData {
             close();
         }
 
-        String dbPath = System.getProperty("database.dir");
+        String dbPath = user.getProperty("database.dir");
         if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = System.getProperty("user.dir");
+            dbPath = user.getProperty("user.dir");
         }
         if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-            dbPath += File.separatorChar;
+            dbPath += Enums.FILE_SEPARATOR;
         }
         dbPath += name;
 
@@ -64,12 +69,12 @@ public class DB implements IData {
             String tmp = storageName;
             close();
 
-            String dbPath = System.getProperty("database.dir");
+            String dbPath = user.getProperty("database.dir");
             if (dbPath == null || dbPath.isEmpty()) {
-                dbPath = System.getProperty("user.dir");
+                dbPath = user.getProperty("user.dir");
             }
             if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-                dbPath += File.separatorChar;
+                dbPath += Enums.FILE_SEPARATOR;
             }
             dbPath += tmp;
             String name = Paths.get(dbPath).getFileName().toString();
@@ -106,7 +111,7 @@ public class DB implements IData {
     public IBase getBase(String context) throws Exception {
         if (!isClosed()) {
             if (!bases.containsKey(context)) {
-                IBase base = new Base(connection, context);
+                IBase base = new Base(connection, context, user);
                 bases.put(context, base);
             }
             return bases.get(context);

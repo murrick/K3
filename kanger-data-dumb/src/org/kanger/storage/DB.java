@@ -1,7 +1,9 @@
 package org.kanger.storage;
 
+import org.kanger.enums.Enums;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
+import org.kanger.interfaces.IUser;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,23 +17,24 @@ public class DB implements IData {
     private static final Object locker = new Object();
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<>();
-//    String dbName = "";
+    private IUser user = null;
 
     @Override
-    public void init() {
-
+    public void init(IUser user) {
+        this.user = user;
+        user.setData(this);
     }
 
 	private String getDbPath() {
-		String dbPath = System.getProperty("database.dir");
+        String dbPath = user.getProperty("database.dir");
         if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = System.getProperty("user.home");
+            dbPath = user.getProperty("user.dir") + Enums.FILE_SEPARATOR + "DB";
         }
         if (!dbPath.isEmpty() && !dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-            dbPath += File.separatorChar;
+            dbPath += Enums.FILE_SEPARATOR;
         }
-		return dbPath;
-	}
+        return dbPath;
+    }
 	
     @Override
     public void use(String name) throws IOException {
@@ -102,7 +105,7 @@ public class DB implements IData {
     @Override
     public IBase getBase(String context) throws Exception {
         if (!bases.containsKey(context)) {
-            IBase base = new Base(getDbPath() + storageName, bases.size() + 1, locker, false);
+            IBase base = new Base(getDbPath() + storageName, bases.size() + 1, locker, false, user);
             bases.put(context, base);
         }
         return bases.get(context);

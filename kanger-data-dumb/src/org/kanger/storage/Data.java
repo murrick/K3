@@ -3,6 +3,7 @@ package org.kanger.storage;
 import org.kanger.exception.DatabaseErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
+import org.kanger.interfaces.IUser;
 
 import java.io.*;
 import java.util.*;
@@ -38,10 +39,10 @@ public class Data implements Closeable, Iterable<IStep> {
     private IBase base = null;
 
 
-    public Data(IBase base) {
+    public Data(IBase base, IUser user) {
         this.base = base;
-        if (System.getProperties().containsKey("cache.data.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.data.size"));
+        if (user.containsKey("cache.data.size")) {
+            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.data.size"));
         }
     }
 

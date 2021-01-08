@@ -5,10 +5,6 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -21,34 +17,30 @@ public class Kanger {
         IData db = null;
         Class udf = null;
 
-        String confName = System.getProperty("user.home") + "K3.conf";
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2) {
-                        System.setProperty(sCurrentLine.split("\\=")[0], sCurrentLine.split("\\=")[1]);
-                    }
-                }
-            }
-        }
+//        String confName = System.getProperty("user.home") + "K3.conf";
+//        if (new File(confName).exists()) {
+//            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+//                String sCurrentLine;
+//                while ((sCurrentLine = br.readLine()) != null) {
+//                    if (sCurrentLine.split("\\=").length == 2) {
+//                        System.setProperty(sCurrentLine.split("\\=")[0], sCurrentLine.split("\\=")[1]);
+//                    }
+//                }
+//            }
+//        }
 
-
-        try {
-            db = new DB();
-            db.init();
-        } catch (NoClassDefFoundError ex) {
-        }
-
-        try {
-            udf = UDF.class;
-        } catch (NoClassDefFoundError ex) {
-        }
-
-        Global.setData(db);
-        Global.setUdf(udf);
 
         IUser user = new User();
+        try {
+            udf = UDF.class;
+            Global.setUdf(udf);
+        } catch (NoClassDefFoundError ex) {
+        }
+        try {
+            db = new DB();
+            db.init(user);
+        } catch (NoClassDefFoundError ex) {
+        }
 
         Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
 

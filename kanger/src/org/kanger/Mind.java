@@ -1818,27 +1818,27 @@ public class Mind {
         Comment c = getComments().get(CommentFactory.HEADER_ID);
         if (c != null) {
             for (String s : c.getComment().split("\\R")) {
-                str += s + System.getProperty("line.separator");
+                str += s + Enums.LINE_SEPARATOR;
             }
         }
         for (Right r : map.values()) {
             c = getComments().get(r.getId());
             if (c != null) {
-                str += System.getProperty("line.separator");
+                str += Enums.LINE_SEPARATOR;
                 for (String s : c.getComment().split("\\R")) {
-                    str += s + System.getProperty("line.separator");
+                    str += s + Enums.LINE_SEPARATOR;
                 }
             }
-//            str += "// Right ID " + r.getId() + System.getProperty("line.separator");
+//            str += "// Right ID " + r.getId() + Enums.LINE_SEPARATOR;
             for (String s : r.getOrig().toString().split("\\R")) {
-                str += s + System.getProperty("line.separator");
+                str += s + Enums.LINE_SEPARATOR;
             }
         }
         c = getComments().get(CommentFactory.FOOTER_ID);
         if (c != null) {
-            str += System.getProperty("line.separator");
+            str += Enums.LINE_SEPARATOR;
             for (String s : c.getComment().split("\\R")) {
-                str += s + System.getProperty("line.separator");
+                str += s + Enums.LINE_SEPARATOR;
             }
         }
         return str;

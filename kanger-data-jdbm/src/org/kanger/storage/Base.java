@@ -4,6 +4,7 @@ import jdbm.PrimaryTreeMap;
 import jdbm.RecordManager;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
+import org.kanger.interfaces.IUser;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,14 +24,14 @@ public class Base implements IBase {
     private long lastId = -1;
     private String name = "";
 
-    public Base(RecordManager db, String name) throws Exception {
+    public Base(RecordManager db, String name, IUser user) throws Exception {
 //        this.user = user;
         this.name = name;
-        if (System.getProperties().containsKey("cache.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
+        if (user.containsKey("cache.size")) {
+            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size"));
         }
-        if (System.getProperties().containsKey("cache.enable")) {
-            CACHE_ENABLE = Boolean.parseBoolean(System.getProperty("cache.enable"));
+        if (user.containsKey("cache.enable")) {
+            CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable"));
         }
 
         index = db.treeMap(name);

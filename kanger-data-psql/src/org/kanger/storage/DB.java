@@ -3,6 +3,7 @@ package org.kanger.storage;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
+import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
 import java.sql.*;
@@ -14,9 +15,12 @@ public class DB implements IData {
     Connection connection = null;
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<>();
+    private IUser user = null;
 
     @Override
-    public void init() {
+    public void init(IUser user) {
+        this.user = user;
+        user.setData(this);
     }
 
     @Override
@@ -28,19 +32,19 @@ public class DB implements IData {
             close();
         }
 
-        String dbName = System.getProperty("database.name");
+        String dbName = user.getProperty("database.name");
         if (dbName == null || dbName.isEmpty()) {
             dbName = "kanger";
         }
-        String dbHost = System.getProperty("database.host");
+        String dbHost = user.getProperty("database.host");
         if (dbHost == null || dbHost.isEmpty()) {
             dbHost = "localhost";
         }
-        String dbUsername = System.getProperty("database.username");
+        String dbUsername = user.getProperty("database.username");
         if (dbUsername == null || dbUsername.isEmpty()) {
             dbUsername = "kanger";
         }
-        String dbPassword = System.getProperty("database.password");
+        String dbPassword = user.getProperty("database.password");
         if (dbPassword == null || dbPassword.isEmpty()) {
             dbPassword = "kanger";
         }
@@ -102,7 +106,7 @@ public class DB implements IData {
     public IBase getBase(String context) throws Exception {
         if (!isClosed()) {
             if (!bases.containsKey(context)) {
-                IBase base = new Base(connection, context);
+                IBase base = new Base(connection, context, user);
                 bases.put(context, base);
             }
             return bases.get(context);

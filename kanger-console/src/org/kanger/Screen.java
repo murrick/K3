@@ -6,6 +6,7 @@ package org.kanger;
 //import org.jline.reader.LineReaderBuilder;
 //import org.jline.terminal.Terminal;
 //import org.jline.terminal.TerminalBuilder;
+
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
@@ -13,7 +14,6 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
@@ -45,7 +45,7 @@ public class Screen {
 //	&& System.getProperties().getProperty("line.editor").equals("true");
 
     private static String lastLogFile = "analizer.log";
-//    private static LineReader reader = null;
+    //    private static LineReader reader = null;
     private static Scanner sc = null;
     private static String currentLine = "";
     private static CircularBuffer<String> lastQuery = new CircularBuffer(100);
@@ -57,15 +57,15 @@ public class Screen {
         String line = "";
         do {
             if (repeat) {
-                currentLine = line + System.getProperty("line.separator");
+                currentLine = line + Enums.LINE_SEPARATOR;
             }
             line = "";
             String prefix = currentLine.isEmpty() ? "\n: " : "";
 //            if (reader != null) {
 //                line = reader.readLine(prefix);
 //            } else {
-			System.out.printf(prefix);
-			line = sc.nextLine();
+            System.out.printf(prefix);
+            line = sc.nextLine();
 //            }
             String lineStart = "";
             String lineStop = "";
@@ -199,14 +199,15 @@ public class Screen {
 //            }
 //        }
 
-        String sourcesDir = System.getProperty("sources.dir");
-        if (sourcesDir == null) {
-            sourcesDir = System.getProperty("user.home");
-        } 
-		if (!sourcesDir.isEmpty() && !sourcesDir.endsWith("/") && !sourcesDir.endsWith("\\")) {
-			sourcesDir += File.separatorChar;
-			Files.createDirectories(Paths.get(sourcesDir));
-		}
+
+        String sourcesDir = user.getProperty("user.dir") + Enums.FILE_SEPARATOR + "SRC";
+        if (user.containsKey("sources.dir")) {
+            sourcesDir = user.getProperty("sources.dir");
+        }
+        if (!sourcesDir.isEmpty() && !sourcesDir.endsWith("/") && !sourcesDir.endsWith("\\")) {
+            sourcesDir += Enums.FILE_SEPARATOR;
+            Files.createDirectories(Paths.get(sourcesDir));
+        }
 
         showCopyrigt(user);
 
@@ -214,21 +215,20 @@ public class Screen {
 //            System.out.println("Line editor loaded");
 //        } else {
 //            System.err.println("Line editor doesn't loaded");
-		sc = new Scanner(System.in);
+        sc = new Scanner(System.in);
 //        }
 
         try {
             Global.getUdf();
             System.out.println("UDF module loaded");
         } catch (RuntimeErrorException e) {
-            System.err.println(e.toString());
+//            System.err.println(e.toString());
         }
 
         try {
-            IData data = Global.getData();
-            System.out.println("DB module loaded: " + data.getDescription());
+            user.getData();
+            System.out.println("DB module loaded: " + user.getData().getDescription());
         } catch (RuntimeErrorException e) {
-            System.err.println(e.toString());
         }
 
         //Scanner sc = new Scanner(System.in);
@@ -267,7 +267,7 @@ public class Screen {
                             showCommonHelp();
                             break;
                         case 'R': {
-								Mind m = mind;
+                            Mind m = mind;
 //                            int pos = 0;
 //                            while (line.substring(pos).contains("..")) {
 //                                int ps = line.indexOf("..");
@@ -277,11 +277,11 @@ public class Screen {
 //                                }
 //                            }
 //                            line.replace("/", "");
-								showRights(m, line.charAt(0) != 'r');
-							}
-							break;
+                            showRights(m, line.charAt(0) != 'r');
+                        }
+                        break;
                         case 'B': {
-								Mind m = mind;
+                            Mind m = mind;
 //                            int pos = 0;
 //                            while (line.substring(pos).contains("..")) {
 //                                int ps = line.indexOf("..");
@@ -291,9 +291,9 @@ public class Screen {
 //                                }
 //                            }
 //                            line.replace("/", "");
-								showBase(m, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
-							}
-							break;
+                            showBase(m, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
+                        }
+                        break;
                         case 'F':
                             showFunctions(mind, line.charAt(0) != 'f');
                             break;
@@ -366,61 +366,61 @@ public class Screen {
                             }
                             break;
                         case 'E': {
-								if (line.split(" ").length == 2) {
-									try {
-										long id = Long.parseLong(line.split(" ")[1]);
-										Right r = mind.getRights().load(id);
-										if (r != null) {
-											if (r.isGenerated()) {
-												System.out.printf("Right %03d: %s is production and can't be erased.\n", r.getId(), r);
-											} else {
-												System.out.printf("Are you sure to erase right %03d: %s ? [y/N]? ", r.getId(), r);
-												String s = sc.nextLine().toUpperCase();
-												if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                            if (line.split(" ").length == 2) {
+                                try {
+                                    long id = Long.parseLong(line.split(" ")[1]);
+                                    Right r = mind.getRights().load(id);
+                                    if (r != null) {
+                                        if (r.isGenerated()) {
+                                            System.out.printf("Right %03d: %s is production and can't be erased.\n", r.getId(), r);
+                                        } else {
+                                            System.out.printf("Are you sure to erase right %03d: %s ? [y/N]? ", r.getId(), r);
+                                            String s = sc.nextLine().toUpperCase();
+                                            if (!s.isEmpty() && s.charAt(0) == 'Y') {
 
-													Boolean res = mind.delete(r, true);
-													if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-														System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
-														if (res != null) {
-															showLog(mind, LogMode.SOLVES, false);
-															showLog(mind, LogMode.VALUES, false);
-														}
-														if (res == null) {
-															showHypo(mind);
-														}
-													}
+                                                Boolean res = mind.delete(r, true);
+                                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                                                    if (res != null) {
+                                                        showLog(mind, LogMode.SOLVES, false);
+                                                        showLog(mind, LogMode.VALUES, false);
+                                                    }
+                                                    if (res == null) {
+                                                        showHypo(mind);
+                                                    }
+                                                }
 
-												}
-											}
-										} else {
-											System.out.printf("Right %03d not found\n", id);
-										}
-									} catch (Exception ex) {
-										System.out.printf("ERROR: Right id expected\n");
-									}
-								} else {
-									System.out.printf("Are you sure to erase workspace? [y/N]? ");
-									String s = sc.nextLine().toUpperCase();
-									if (!s.isEmpty() && s.charAt(0) == 'Y') {
-										user.clear(mind);
+                                            }
+                                        }
+                                    } else {
+                                        System.out.printf("Right %03d not found\n", id);
+                                    }
+                                } catch (Exception ex) {
+                                    System.out.printf("ERROR: Right id expected\n");
+                                }
+                            } else {
+                                System.out.printf("Are you sure to erase workspace? [y/N]? ");
+                                String s = sc.nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    user.clear(mind);
 //                                mind.release();
-									}
-								}
-							}
-							break;
+                                }
+                            }
+                        }
+                        break;
                         case 'C': {
-								if (!user.isClosed()) {
-									System.out.printf("Are you sure to close database " + user.getStorageName() + "? [y/N]? ");
-									String s = sc.nextLine().toUpperCase();
-									if (!s.isEmpty() && s.charAt(0) == 'Y') {
-										user.close();
-										mind.clear();
-									}
-								} else {
-									System.out.println("No database used");
-								}
-							}
-							break;
+                            if (!user.isClosed()) {
+                                System.out.printf("Are you sure to close database " + user.getStorageName() + "? [y/N]? ");
+                                String s = sc.nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    user.close();
+                                    mind.clear();
+                                }
+                            } else {
+                                System.out.println("No database used");
+                            }
+                        }
+                        break;
 //                        case 'P':
 //                            saveSource(mind);
 //                            break;
@@ -432,18 +432,18 @@ public class Screen {
 //                            break;
                         case 'U':
                             if (line.split(" ").length == 2) {
-                                String name = line.split("\\ ")[1].replace(".", File.separatorChar + "");
+                                String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR + "");
                                 user.use(mind, name);
                                 if (!user.isClosed()) {
-                                    System.out.println("Database used: " + user.getStorageName().replace(File.separatorChar + "", "."));
+                                    System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR + "", "."));
                                 } else {
                                     System.out.println("No database used");
                                 }
                             } else if (!user.isClosed()) {
                                 System.out.println("Used database " +
-												   user.getStorageName()
-												   .replace("/", ".")
-												   .replace("\\", "."));
+                                        user.getStorageName()
+                                                .replace("/", ".")
+                                                .replace("\\", "."));
                             } else {
                                 System.out.println("No database used");
                             }
@@ -485,10 +485,10 @@ public class Screen {
                                     while (sc.hasNextLine()) {
                                         text = sc.nextLine();
                                         if (!text.isEmpty()) {
-                                            out += text + System.getProperty("line.separator");
+                                            out += text + Enums.LINE_SEPARATOR;
                                             counter = 0;
                                         } else if (++counter < 2) {
-                                            out += System.getProperty("line.separator");
+                                            out += Enums.LINE_SEPARATOR;
                                         } else {
                                             break;
                                         }
@@ -505,12 +505,12 @@ public class Screen {
                                 String s = sc.nextLine().toUpperCase();
                                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
                                     user.reindex(new IReactor() {
-											@Override
-											public Object run(Object o) {
-												System.out.println("Processing " + o);
-												return null;
-											}
-										});
+                                        @Override
+                                        public Object run(Object o) {
+                                            System.out.println("Processing " + o);
+                                            return null;
+                                        }
+                                    });
                                     System.out.println("Database packed and reindexed");
                                 }
                             } else {
@@ -722,9 +722,9 @@ public class Screen {
                     if (file) {
                         try {
                             String line = String.format("%s [%8s] %s",
-														new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(log.getTime()),
-														log.getType(),
-														log.getRecord());
+                                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(log.getTime()),
+                                    log.getType(),
+                                    log.getRecord());
                             f.write(line + "\n");
                         } catch (IOException ex) {
                             System.out.printf("ERROR: %s\n", ex);
@@ -773,8 +773,8 @@ public class Screen {
 //    }
     public static void showCopyrigt(IUser user) {
         System.out.printf("KANGER III, Version %s\n"
-						  + "Copyright (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
-						  + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
+                + "Copyright (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
+                + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
 //        System.out.printf("Context ID: %s\n", mind.getContextIdString());
     }
 
@@ -847,43 +847,43 @@ public class Screen {
 //    }
     public static void showOptionsHelp() {
         System.out.printf(
-			"Available OPTIONS:\n\n"
-			+ "   H[ELP]    - Get this message\n"
-			+ "\n"
-			+ "   R[IGHTS]  - Rights showed in logs\n"
-			+ "   V[ALUES]  - Values of vars and funcs showed in logs\n"
-			+ "   S[TATUS]  - Status of domains and trees showed in logs\n"
-			+ "\n"
-			+ "Use UPPERCASE letter for ON and LOWER for OFF.\n"
+                "Available OPTIONS:\n\n"
+                        + "   H[ELP]    - Get this message\n"
+                        + "\n"
+                        + "   R[IGHTS]  - Rights showed in logs\n"
+                        + "   V[ALUES]  - Values of vars and funcs showed in logs\n"
+                        + "   S[TATUS]  - Status of domains and trees showed in logs\n"
+                        + "\n"
+                        + "Use UPPERCASE letter for ON and LOWER for OFF.\n"
         );
     }
 
     public static void showCommonHelp() {
         System.out.printf(
-			"Available KEYWORDS:\n\n"
-			+ "   H[ELP]    - Get this message\n"
-			+ "\n"
-			+ "   ?            - Check for Rights Collisions\n"
-			+ "   B[ASE]       - View DataBase contents\n"
-			+ "   R[IGHTS]     - View compiled-structured Rights list\n"
-			+ "   F[UNCS]      - View defined Functions list\n"
-			+ "   L[IST]       - View Hypothesis list after last work\n"
-			+ "   I[NSERT]     - Insert Hypothesis as right\n"
-			+ "   X[PLAIN]     - Show explanation log\n"
-			+ "   S[OLVES]     - Show solves list\n"
-			+ "   V[ALUES]     - Show values list\n"
-			+ "   U[SE] <name> - Create or open existing database\n"
-			+ "   C[LOSE]      - Close currently opened database\n"
-			+ "   D[ROP]       - Drop currently opened database\n"
-			+ "   P[ACK]       - Pack and reindex currently opened database\n"
-			+ "   W[IPE]       - Clear workspace and currently opened database\n"
-			+ "   O[PTIONS]    - Set workspace options\n"
-			+ "\n"
-			+ "   G[ET]     - Load Source file from disk\n"
-			+ "\n"
-			+ "   Q[UIT]    - Quit KANGER\n"
-			+ "\n"
-			+ "You can use just FIRST letter of keywords.\n"
+                "Available KEYWORDS:\n\n"
+                        + "   H[ELP]    - Get this message\n"
+                        + "\n"
+                        + "   ?            - Check for Rights Collisions\n"
+                        + "   B[ASE]       - View DataBase contents\n"
+                        + "   R[IGHTS]     - View compiled-structured Rights list\n"
+                        + "   F[UNCS]      - View defined Functions list\n"
+                        + "   L[IST]       - View Hypothesis list after last work\n"
+                        + "   I[NSERT]     - Insert Hypothesis as right\n"
+                        + "   X[PLAIN]     - Show explanation log\n"
+                        + "   S[OLVES]     - Show solves list\n"
+                        + "   V[ALUES]     - Show values list\n"
+                        + "   U[SE] <name> - Create or open existing database\n"
+                        + "   C[LOSE]      - Close currently opened database\n"
+                        + "   D[ROP]       - Drop currently opened database\n"
+                        + "   P[ACK]       - Pack and reindex currently opened database\n"
+                        + "   W[IPE]       - Clear workspace and currently opened database\n"
+                        + "   O[PTIONS]    - Set workspace options\n"
+                        + "\n"
+                        + "   G[ET]     - Load Source file from disk\n"
+                        + "\n"
+                        + "   Q[UIT]    - Quit KANGER\n"
+                        + "\n"
+                        + "You can use just FIRST letter of keywords.\n"
         );
     }
 
@@ -1176,16 +1176,16 @@ public class Screen {
         for (Right r : mind.getRights()) {
 
             System.out.printf("%sRight %03d%s: %s\n",
-							  showTree ? "\n --- " : "",
-							  r.getId(),
-							  (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
-							  ? " " +
-							  (r.isGenerated() ? "G" : "") +
-							  (r.isStored() ? "B" : "") +
-							  (r.isQuery() ? "Q" : "") +
-							  (r.isDeleted() ? "D" : "")
-							  : "",
-							  r.getOrig());
+                    showTree ? "\n --- " : "",
+                    r.getId(),
+                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
+                            ? " " +
+                            (r.isGenerated() ? "G" : "") +
+                            (r.isStored() ? "B" : "") +
+                            (r.isQuery() ? "Q" : "") +
+                            (r.isDeleted() ? "D" : "")
+                            : "",
+                    r.getOrig());
             if (showTree || r.getOrig().isEmpty()) {
 //                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RVALUES) == 0) {
                 int save = mind.getDebugLevel();
@@ -1454,18 +1454,18 @@ public class Screen {
 
     public static String formatRightWithComments(Mind mind, long id) throws Exception {
         String str = String.format(" -- Right %03d: ", id);
-        str += System.getProperty("line.separator");
+        str += Enums.LINE_SEPARATOR;
         Comment c = mind.getComments().get(id);
         if (c != null) {
-            str += System.getProperty("line.separator");
+            str += Enums.LINE_SEPARATOR;
             for (String s : c.getComment().split("\\R")) {
-                str += s + System.getProperty("line.separator");
+                str += s + Enums.LINE_SEPARATOR;
             }
         }
         Right r = mind.getRights().load(id);
         if (r != null) {
             for (String s : r.getOrig().toString().split("\\R")) {
-                str += s + System.getProperty("line.separator");
+                str += s + Enums.LINE_SEPARATOR;
             }
         }
         return str;

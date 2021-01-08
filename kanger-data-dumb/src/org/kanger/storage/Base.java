@@ -2,6 +2,7 @@ package org.kanger.storage;
 
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IStep;
+import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
 import java.util.*;
@@ -22,20 +23,20 @@ public class Base implements IBase, Iterable<IStep> {
 
     private long lastId = -1;
 
-    public Base(String name, int baseCode, Object locker, boolean readonly) throws Exception {
+    public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
         this.name = name;
 
-        if (System.getProperties().containsKey("cache.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(System.getProperty("cache.size"));
+        if (user.containsKey("cache.size")) {
+            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size"));
         }
-        if (System.getProperties().containsKey("cache.enable")) {
-            CACHE_ENABLE = Boolean.parseBoolean(System.getProperty("cache.enable"));
+        if (user.containsKey("cache.enable")) {
+            CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable"));
         }
 
-        index = new Index(baseCode, locker);
+        index = new Index(baseCode, locker, user);
         index.open(name + ".index", readonly);
 
-        data = new Data(this);
+        data = new Data(this, user);
         data.open(name + ".store", readonly);
 
         IStep root = getRoot();

@@ -1,5 +1,6 @@
 package org.kanger.enums;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -200,4 +201,6 @@ public class Enums {
     public static final int DEBUG_OPTION_RTLOGS = 0x800;
     public static final int DEBUG_OPTION_RVALUES = 0x1000;
 
+    public static final char FILE_SEPARATOR = File.separatorChar;
+    public static final String LINE_SEPARATOR = System.lineSeparator();
 }

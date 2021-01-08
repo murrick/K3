@@ -1,5 +1,6 @@
 package org.kanger;
 
+import org.kanger.enums.Enums;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IBase;
@@ -7,26 +8,65 @@ import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class User implements IUser {
 
-    private static IData data = null;
     private final Object locker = new Object();
-    //    private Mind mind = null;
+    Properties userSettings = new Properties();
+    private IData data = null;
+    private Class udf = null;
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
 
-    public User() throws RuntimeErrorException {
+    public User() throws Exception {
 //        if (mind == null) {
 //            this.mind = new Mind(this);
 //        } else {
 //            this.mind = mind;
 //        }
-        data = Global.getData();
+
+        userSettings.put("user.home", getHome());
+
+        String confName = getDir("K3.conf");
+        if (new File(confName).exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    if (sCurrentLine.split("\\=").length == 2) {
+                        userSettings.setProperty(sCurrentLine.split("\\=")[0], sCurrentLine.split("\\=")[1]);
+                    }
+                }
+            }
+        }
+
+        if (!userSettings.containsKey("user.dir")) {
+            userSettings.put("user.dir", getDir("KANGER"));
+        }
+
+    }
+
+    public String getHome() {
+        String home = System.getProperty("user.home");
+        if (home.isEmpty()) {
+            home = new File("").getAbsolutePath();
+        }
+        return home;
+    }
+
+    public String getDir(String subDir) {
+        String home = getHome();
+        if (!home.isEmpty()) {
+            home += Enums.FILE_SEPARATOR;
+        }
+        return home + subDir;
     }
 
     public Mind use(Mind mind, String name) throws Exception {
@@ -234,5 +274,34 @@ public class User implements IUser {
     @Override
     public Object getLocker() {
         return locker;
+    }
+
+    @Override
+    public String getProperty(String key) {
+        return userSettings.getProperty(key);
+    }
+
+    @Override
+    public void setProperty(String key, String value) {
+        userSettings.setProperty(key, value);
+    }
+
+    @Override
+    public boolean containsKey(String s) {
+        return userSettings.containsKey(s);
+    }
+
+    @Override
+    public IData getData() throws RuntimeErrorException {
+        if (data != null) {
+            return data;
+        } else {
+            throw new RuntimeErrorException("DB module doesn't loaded");
+        }
+    }
+
+    @Override
+    public void setData(IData db) {
+        data = db;
     }
 }
