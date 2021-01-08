@@ -66,7 +66,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         try {
             synchronized (locker) {
-                rasRead = new RandomAccessFile(file.getAbsoluteFile(), "r");
+                rasRead = new RandomAccessFile(file, "r");
                 rasRead.seek(0);
                 version = rasRead.readShort();
 
@@ -92,7 +92,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             }
         } catch (FileNotFoundException ex) {
             clear();
-            rasRead = new RandomAccessFile(file.getAbsoluteFile(), "r");
+            rasRead = new RandomAccessFile(file, "r");
         }
     }
 
@@ -123,11 +123,11 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         if (readonly) {
             throw new DatabaseErrorException("Database is readonly");
         }
-        String path = file.getAbsolutePath();
+        String path = file.getPath();
         path = path.substring(0, path.length() - file.getName().length());
         new File(path).mkdirs();
         synchronized (locker) {
-            try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
+            try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 baseIndex.clear();
                 emptyIndex.clear();
                 currentBlock.clear();
@@ -258,7 +258,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
         if (head != null) {
             synchronized (locker) {
-                try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
+                try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
 
                     if (head.getOffset() == 0) {
                         head.setOffset(ras.length());

@@ -53,7 +53,7 @@ public class Data implements Closeable, Iterable<IStep> {
         this.readonly = readonly;
         this.file = file;
         try {
-            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
+            ras = new RandomAccessFile(file, "r");
             ras.seek(0);
             version = ras.readShort();
 
@@ -69,7 +69,7 @@ public class Data implements Closeable, Iterable<IStep> {
             cacheSize = 0L;
         } catch (FileNotFoundException ex) {
             clear();
-            ras = new RandomAccessFile(file.getAbsoluteFile(), "r");
+            ras = new RandomAccessFile(file, "r");
         }
     }
 
@@ -84,11 +84,11 @@ public class Data implements Closeable, Iterable<IStep> {
         if (readonly) {
             throw new RuntimeException("Database is readonly");
         }
-        String path = file.getAbsolutePath();
+        String path = file.getPath();
         path = path.substring(0, path.length() - file.getName().length());
         new File(path).mkdirs();
         synchronized (locker) {
-            try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
+            try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 ras.seek(0);
                 ras.setLength(0);
                 ras.writeShort(version);
@@ -263,7 +263,7 @@ public class Data implements Closeable, Iterable<IStep> {
         }
 
         synchronized (locker) {
-            try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
+            try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                 ras.seek(offset + Long.BYTES);
                 if (ras.getFilePointer() == offset + Long.BYTES) {
                     long size = ras.readLong();
@@ -434,7 +434,7 @@ public class Data implements Closeable, Iterable<IStep> {
             }
             if (buffer != null && data != null) {
                 synchronized (locker) {
-                    try (RandomAccessFile ras = new RandomAccessFile(file.getAbsoluteFile(), "rw")) {
+                    try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
                         if (offset != -1) {
                             ras.seek(offset);
                             blockSize = ras.readLong();

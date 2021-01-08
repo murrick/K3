@@ -21,9 +21,9 @@ public class Kanger {
         IData db = null;
         Class udf = null;
 
-        String confName = System.getProperty("user.dir") + File.separatorChar + "K3.conf";
+        String confName = System.getProperty("user.home") + "K3.conf";
         if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.dir") + File.separatorChar + "K3.conf"))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
                 String sCurrentLine;
                 while ((sCurrentLine = br.readLine()) != null) {
                     if (sCurrentLine.split("\\=").length == 2) {
