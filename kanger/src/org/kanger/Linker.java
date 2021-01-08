@@ -158,7 +158,7 @@ public class Linker {
 //        }
     }
 
-    private boolean rotator(Collection<Right> rightList, Map<Right, Set<Cause>> causes, boolean logging) throws Exception {
+    private boolean rotator(final Collection<Right> rightList, final Map<Right, Set<Cause>> causes, final boolean logging) throws Exception {
 
         boolean used = false;
 
@@ -343,7 +343,7 @@ public class Linker {
 //
 //    }
 
-    private boolean rotateVariables(SortedSet<TVariable> tvars, SortedSet<TVariable> base, IReactor runnable) throws Exception {
+    private boolean rotateVariables(final SortedSet<TVariable> tvars, final SortedSet<TVariable> base, final IReactor runnable) throws Exception {
         final boolean[] result = new boolean[]{false, false};
         if (tvars.isEmpty()) {
             result[0] = (boolean) runnable.run(tvars);

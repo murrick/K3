@@ -125,8 +125,8 @@ public class TValueFactory implements Iterable<TValue> {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
-    public TValue getXValue(TVariable tv, Term parent) throws Exception {
-        TValue[] result = new TValue[]{null};
+    public TValue getXValue(TVariable tv, final Term parent) throws Exception {
+        final TValue[] result = new TValue[]{null};
         mind.getTValues().forEach(tv, new IReactor<TValue>() {
             @Override
             public Object run(TValue o) throws Exception {

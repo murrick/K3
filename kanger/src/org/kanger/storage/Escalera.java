@@ -256,7 +256,15 @@ public class Escalera implements ICache {
         }
     }
 
-    public class WalkIterator implements Iterator {
+    public class WalkIterator implements Iterator
+	{
+
+		@Override
+		public void remove()
+		{
+			// TODO: Implement this method
+		}
+
         private IStep step;
 
         public WalkIterator(long fromId) {

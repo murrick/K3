@@ -2,10 +2,10 @@ package org.kanger;
 
 //import jline.ConsoleReader;
 
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
+//import org.jline.reader.LineReader;
+//import org.jline.reader.LineReaderBuilder;
+//import org.jline.terminal.Terminal;
+//import org.jline.terminal.TerminalBuilder;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
@@ -45,7 +45,7 @@ public class Screen {
                     && System.getProperties().getProperty("line.editor").equals("true");
 
     private static String lastLogFile = "analizer.log";
-    private static LineReader reader = null;
+//    private static LineReader reader = null;
     private static Scanner sc = null;
     private static String currentLine = "";
     private static CircularBuffer<String> lastQuery = new CircularBuffer(100);
@@ -61,12 +61,12 @@ public class Screen {
             }
             line = "";
             String prefix = currentLine.isEmpty() ? "\n: " : "";
-            if (reader != null) {
-                line = reader.readLine(prefix);
-            } else {
+//            if (reader != null) {
+//                line = reader.readLine(prefix);
+//            } else {
                 System.out.printf(prefix);
                 line = sc.nextLine();
-            }
+//            }
             String lineStart = "";
             String lineStop = "";
 
@@ -183,21 +183,21 @@ public class Screen {
         String lastQuery = "";
 
 //        LineReader reader = null;
-        if (LINE_EDITOR_ENABLE) {
-            try {
-                //new DumbTerminal;
-                Terminal terminal = TerminalBuilder
-                        .builder()
-                        .build();
-                terminal.echo(false);
-                reader = LineReaderBuilder
-                        .builder()
-                        .terminal(terminal)
-                        .build();
-            } catch (IOException e) {
-                e.printStackTrace(System.err);
-            }
-        }
+//        if (LINE_EDITOR_ENABLE) {
+//            try {
+//                //new DumbTerminal;
+//                Terminal terminal = TerminalBuilder
+//                        .builder()
+//                        .build();
+//                terminal.echo(false);
+//                reader = LineReaderBuilder
+//                        .builder()
+//                        .terminal(terminal)
+//                        .build();
+//            } catch (IOException e) {
+//                e.printStackTrace(System.err);
+//            }
+//        }
 
         String sourcesDir = System.getProperty("sources.dir");
         if (sourcesDir == null) {
@@ -211,12 +211,12 @@ public class Screen {
 
         showCopyrigt(user);
 
-        if (reader != null) {
-            System.out.println("Line editor loaded");
-        } else {
-            System.err.println("Line editor doesn't loaded");
-            sc = new Scanner(System.in);
-        }
+//        if (reader != null) {
+//            System.out.println("Line editor loaded");
+//        } else {
+//            System.err.println("Line editor doesn't loaded");
+//            sc = new Scanner(System.in);
+//        }
 
         try {
             Global.getUdf();

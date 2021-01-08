@@ -2297,12 +2297,12 @@ public class KangerTest {
 
 //        mind.query("!value(1, 7, 7);");
 
-        Mind a = new Mind(mind);
-        Mind b = new Mind(mind);
-        Mind c = new Mind(mind);
+        final Mind a = new Mind(mind);
+        final Mind b = new Mind(mind);
+        final Mind c = new Mind(mind);
 
-        CountDownLatch latchEnd = new CountDownLatch(3);
-        CountDownLatch latchStart = new CountDownLatch(3);
+        final CountDownLatch latchEnd = new CountDownLatch(3);
+        final CountDownLatch latchStart = new CountDownLatch(3);
         final Object locker = new Object();
 
         Thread t1 = new Thread(new Runnable() {
@@ -2433,13 +2433,13 @@ public class KangerTest {
 //        mind.query("!value(1, 7, 7);");
 
 
-        Mind m1 = new Mind(mind);
-        Mind m2 = new Mind(mind);
-        Mind m3 = new Mind(mind);
-        Mind m4 = new Mind(mind);
+        final Mind m1 = new Mind(mind);
+        final Mind m2 = new Mind(mind);
+        final Mind m3 = new Mind(mind);
+        final Mind m4 = new Mind(mind);
 
-        CountDownLatch latchEnd = new CountDownLatch(4);
-        CountDownLatch latchStart = new CountDownLatch(4);
+        final CountDownLatch latchEnd = new CountDownLatch(4);
+        final CountDownLatch latchStart = new CountDownLatch(4);
         final Object locker = new Object();
 //
 //        System.out.println("PROCESS 1 STRT: " + mind.getRights().size() + "/" + mind.getRights().size());
