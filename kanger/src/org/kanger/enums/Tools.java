@@ -1,8 +1,14 @@
 package org.kanger.enums;
 
+import org.kanger.Mind;
 import org.kanger.compiler.Parser;
 import org.kanger.exception.ParseErrorException;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -361,5 +367,19 @@ public abstract class Tools {
 //        }
 //        return list;
 //    }
+
+    public static String getModuleWorkingDir() {
+        URL location = Mind.class.getProtectionDomain().getCodeSource().getLocation();
+        try {
+            String sub = location.getFile().substring(2, 3).equals(":") && location.getFile().substring(0, 1).equals("/") ? location.getFile().substring(1) : location.getFile();
+            String classLocation = URLDecoder.decode(sub.replace('/', File.separatorChar), Charset.defaultCharset().name());
+            int pos = classLocation.indexOf(".jar");
+            if (pos != -1) {
+                return classLocation.substring(0, classLocation.lastIndexOf(File.separatorChar));
+            }
+        } catch (UnsupportedEncodingException e) {
+        }
+        return new File("").getAbsolutePath();
+    }
 
 }
