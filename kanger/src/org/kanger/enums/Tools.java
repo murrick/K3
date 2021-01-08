@@ -368,18 +368,18 @@ public abstract class Tools {
 //        return list;
 //    }
 
-    public static String getModuleWorkingDir() {
-        URL location = Mind.class.getProtectionDomain().getCodeSource().getLocation();
-        try {
-            String sub = location.getFile().substring(2, 3).equals(":") && location.getFile().substring(0, 1).equals("/") ? location.getFile().substring(1) : location.getFile();
-            String classLocation = URLDecoder.decode(sub.replace('/', File.separatorChar), Charset.defaultCharset().name());
-            int pos = classLocation.indexOf(".jar");
-            if (pos != -1) {
-                return classLocation.substring(0, classLocation.lastIndexOf(File.separatorChar));
-            }
-        } catch (UnsupportedEncodingException e) {
-        }
-        return new File("").getAbsolutePath();
-    }
+//    public static String getModuleWorkingDir(Object o) {
+//        URL location = o.getClass().getProtectionDomain().getCodeSource().getLocation();
+//        try {
+//            String sub = location.getFile().substring(2, 3).equals(":") && location.getFile().substring(0, 1).equals("/") ? location.getFile().substring(1) : location.getFile();
+//            String classLocation = URLDecoder.decode(sub.replace('/', File.separatorChar), Charset.defaultCharset().name());
+//            int pos = classLocation.indexOf(".jar");
+//            if (pos != -1) {
+//                return classLocation.substring(0, classLocation.lastIndexOf(File.separatorChar));
+//            }
+//        } catch (UnsupportedEncodingException e) {
+//        }
+//        return new File("").getAbsolutePath();
+//    }
 
 }
