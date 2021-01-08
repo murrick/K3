@@ -432,10 +432,10 @@ public class Screen {
 //                            break;
                         case 'U':
                             if (line.split(" ").length == 2) {
-                                String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR + "");
+                                String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
                                 user.use(mind, name);
                                 if (!user.isClosed()) {
-                                    System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR + "", "."));
+                                    System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
                                 } else {
                                     System.out.println("No database used");
                                 }

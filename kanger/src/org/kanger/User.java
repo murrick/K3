@@ -1,12 +1,22 @@
 package org.kanger;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-import org.kanger.enums.*;
-import org.kanger.exception.*;
+import org.kanger.enums.Enums;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
-import org.kanger.interfaces.*;
+import org.kanger.interfaces.IBase;
+import org.kanger.interfaces.IData;
+import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public class User implements IUser {
 
@@ -28,6 +38,9 @@ public class User implements IUser {
         userSettings.put("user.home", getHome());
 
         String confName = getDir("K3.conf");
+        if (!new File(confName).exists()) {
+            confName = getDir("KANGER") + Enums.FILE_SEPARATOR + "K3.conf";
+        }
         if (new File(confName).exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
                 String sCurrentLine;
@@ -49,14 +62,14 @@ public class User implements IUser {
         String home = System.getProperty("user.home");
         if (home.isEmpty()) {
             home = new File("").getAbsolutePath();
-			if(home.isEmpty() || home.equals(Enums.FILE_SEPARATOR + "")) {
-				String tmp = "/storage/emulated/0";
-				if(Files.exists(Paths.get(tmp))) {
-					return tmp;
-				} else {
-					return home;
-				}
-			}
+            if (home.isEmpty() || home.equals(Enums.FILE_SEPARATOR)) {
+                String tmp = "/storage/emulated/0";
+                if (Files.exists(Paths.get(tmp))) {
+                    return tmp;
+                } else {
+                    return home;
+                }
+            }
         }
         return home;
     }
