@@ -215,7 +215,7 @@ public class Screen {
 //            System.out.println("Line editor loaded");
 //        } else {
 //            System.err.println("Line editor doesn't loaded");
-//            sc = new Scanner(System.in);
+            sc = new Scanner(System.in);
 //        }
 
         try {
