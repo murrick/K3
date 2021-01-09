@@ -152,7 +152,7 @@ public class Screen {
                     }
                     lastComments += line;
                     continue;
-                } else if (line.toUpperCase().charAt(0) == 'A') {
+                } else if (line.length() > 1 && line.toUpperCase().charAt(0) == 'A') {
                     if (!lastQuery.isEmpty()) {
                         line = lastQuery;
                         System.out.println("\n: " + line);
