@@ -70,7 +70,7 @@ public class Mind {
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
-    private Mind queryContext = null;
+//    private Mind queryContext = null;
     private QueryPass queryPass = QueryPass.SILENCE;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
@@ -767,7 +767,7 @@ public class Mind {
     public Boolean query(String line, Object[] ext) throws Exception {
         querySource = line;
         queryPass = QueryPass.SILENCE;
-        queryContext = null;
+//        queryContext = null;
         queryResult = query(line, ext, true);
         return queryResult;
     }
@@ -1089,13 +1089,15 @@ public class Mind {
                         setChanged(true);
                         res = true;
                     }
-                    queryContext = m;
+//                    queryContext = m;
                 } else {
                     if (logging && r != null && r.isDeleted()) {
                         m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                     }
                     release(m);
                 }
+
+                hypothesis.clear();
             }
             break;
 
@@ -1162,13 +1164,15 @@ public class Mind {
                             res = true;
                         }
                     }
-                    queryContext = m;
+//                    queryContext = m;
                 } else {
                     if (logging && r != null && r.isDeleted()) {
                         m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                     }
                     release(m);
                 }
+
+                hypothesis.clear();
             }
             break;
 
@@ -1215,7 +1219,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, "WARNING: No candidates to delete");
                         }
                     }
-                    queryContext = m;
+//                    queryContext = m;
                 } else if (logging && r != null && r.isDeleted()) {
                     m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                 }
@@ -1233,6 +1237,7 @@ public class Mind {
 //                        }
 //                    }
 //                }
+                hypothesis.clear();
             }
             break;
 
@@ -1281,8 +1286,9 @@ public class Mind {
 //                        excluded.commit(m.getHypotesisStore());
                         res = true;
                     }
-                    queryContext = this;
+//                    queryContext = this;
 
+                    hypothesis.clear();
                 } else {
 
 //                    if (!DEBUG_DISABLE_FALSE_CHECK) {
@@ -1368,7 +1374,8 @@ public class Mind {
                                     logResult(m);
                                 }
                                 res = false;
-                                queryContext = m;
+//                                queryContext = m;
+                                hypothesis.clear();
                             } else {
                                 m.link(r, logging);
                                 ar = m.analise(r, logging);
@@ -1378,7 +1385,8 @@ public class Mind {
                                         logResult(m);
                                     }
                                     res = false;
-                                    queryContext = m;
+//                                    queryContext = m;
+                                    hypothesis.clear();
                                 } else {
                                     hypothesis.commit(m.getHypothesisStore());
                                 }
@@ -1417,6 +1425,7 @@ public class Mind {
                                     logResult(m);
                                 }
                                 res = true;
+                                hypothesis.clear();
                             } else {
                                 m.link(r, logging);
                                 ar = m.analise(r, logging);
@@ -1426,6 +1435,7 @@ public class Mind {
                                         logResult(m);
                                     }
                                     res = true;
+                                    hypothesis.clear();
                                 } else {
                                     hypothesis.commit(m.getHypothesisStore());
 //                                    hypothesis.exclude(excluded);
@@ -1440,7 +1450,7 @@ public class Mind {
                                     }
                                 }
                             }
-                            queryContext = m;
+//                            queryContext = m;
                         } else if (logging && r != null && r.isDeleted()) {
                             m.getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
                         }
