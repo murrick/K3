@@ -5,17 +5,17 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
-import org.kanger.units.Right;
+import org.kanger.units.Rule;
 
 public class Cause /*implements Comparable<Cause>*/ {
     //    private Solve result = null;
 //    private Solve acceptor = null;
     private Solve donor = null;
-    private Right right = null;
+    private Rule rule = null;
 
 //    private Right next = null;
 
-    private transient long rightId = -1;
+    private transient long ruleId = -1;
 //    private transient long nextId = -1;
 
 
@@ -24,10 +24,10 @@ public class Cause /*implements Comparable<Cause>*/ {
 
     public Cause(Mind mind, Domain dst, Domain src) throws Exception {
         this.donor = new Solve(dst.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
-        this.right = dst.getRight();
+        this.rule = dst.getRight();
 //        this.next = mind.getRights().find(src);
 
-        rightId = dst.getRightId();
+        ruleId = dst.getRuleId();
 //        nextId = next == null ? -1 : next.getId();
 
 //        if(src.getCauses() != null) {
@@ -54,7 +54,7 @@ public class Cause /*implements Comparable<Cause>*/ {
 
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
-                .putLong(rightId)
+                .putLong(ruleId)
 //                .putLong(nextId)
                 .append(donor.pack());
 //                .append(acceptor.pack());
@@ -66,7 +66,7 @@ public class Cause /*implements Comparable<Cause>*/ {
 
     public Cause apply(ByteBuffer packet) throws OutOfBufferException {
 //        index = packet.getInt();
-        rightId = packet.getLong();
+        ruleId = packet.getLong();
 //        nextId = packet.getLong();
         try {
             packet.mark();
@@ -94,7 +94,7 @@ public class Cause /*implements Comparable<Cause>*/ {
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 47 * hash + (int) (rightId ^ (rightId >>> 32));
+        hash = 47 * hash + (int) (ruleId ^ (ruleId >>> 32));
         hash = 47 * hash + donor.hashCode();
 //        hash = 47 * hash + acceptor.hashCode();
 //        if(result != null) {
@@ -126,7 +126,7 @@ public class Cause /*implements Comparable<Cause>*/ {
         try {
             return o != null
                     && o instanceof Cause
-                    && ((Cause) o).getRightId() == rightId
+                    && ((Cause) o).getRuleId() == ruleId
                     && donor.equals(((Cause) o).getDonor());
 //                    && acceptor.equals(((Cause) o).getAcceptor())
 //                    && ((result == null && ((Cause) o).getResult() == null) || (result.equals(((Cause) o).getResult())));
@@ -191,16 +191,16 @@ public class Cause /*implements Comparable<Cause>*/ {
         this.donor = donor;
     }
 
-    public Right getRight(Mind mind) throws Exception {
-        if (right == null) {
-            right = mind.getRights().load(rightId);
+    public Rule getRight(Mind mind) throws Exception {
+        if (rule == null) {
+            rule = mind.getRules().load(ruleId);
         }
-        return right;
+        return rule;
     }
 
-    public void setRight(Right right) {
-        this.right = right;
-        this.rightId = right.getId();
+    public void setRight(Rule rule) {
+        this.rule = rule;
+        this.ruleId = rule.getId();
     }
 
 //    public Right getNext() {
@@ -211,12 +211,12 @@ public class Cause /*implements Comparable<Cause>*/ {
 //        this.next = next;
 //    }
 
-    public long getRightId() {
-        return rightId;
+    public long getRuleId() {
+        return ruleId;
     }
 
-    public void setRightId(long rightId) {
-        this.rightId = rightId;
+    public void setRuleId(long ruleId) {
+        this.ruleId = ruleId;
     }
 
 //    public boolean isStored() throws Exception {

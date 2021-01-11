@@ -20,10 +20,10 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     private long mindId = -1;                                   // id транзакции
     private Term name = null;               // Оригинальное подкванторное имя
     private int index = 0;                  // Сквозной индекс переменной
-    private Right right = null;             // Ссылка на правило
+    private Rule rule = null;             // Ссылка на правило
 
     private transient long nameId = -1;
-    private transient long rightId = -1;
+    private transient long ruleId = -1;
     private transient Mind mind = null;
 
     private transient boolean deleted = false;
@@ -42,7 +42,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
                 .putByte(deleted ? 1 : 0)
                 .putLong(nameId)
                 .putInt(index)
-                .putLong(rightId);
+                .putLong(ruleId);
         return packet.createMarked();
     }
 
@@ -52,7 +52,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         deleted = packet.getByte() != 0;
         nameId = packet.getLong();
         index = packet.getInt();
-        rightId = packet.getLong();
+        ruleId = packet.getLong();
         return this;
     }
 
@@ -175,16 +175,16 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //        mind.getTValues().createCVar(this).setLevel(owner);
 //
 //    }
-    public Right getRight() throws Exception {
-        if (right == null && rightId != -1) {
-            right = mind.getRights().load(rightId);
+    public Rule getRule() throws Exception {
+        if (rule == null && ruleId != -1) {
+            rule = mind.getRules().load(ruleId);
         }
-        return right;
+        return rule;
     }
 
-    public void setRight(Right right) {
-        this.right = right;
-        this.rightId = right.getId();
+    public void setRule(Rule rule) {
+        this.rule = rule;
+        this.ruleId = rule.getId();
     }
 
     public String getVarName() throws Exception {
@@ -211,7 +211,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     @Override
     public int getHash() {
         int hash = 3;
-        hash = 47 * hash + (int) (rightId ^ (rightId >>> 32));
+        hash = 47 * hash + (int) (ruleId ^ (ruleId >>> 32));
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + index;
         return hash;
@@ -377,8 +377,8 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.mindId = mindId;
     }
 
-    public long getRightId() {
-        return rightId;
+    public long getRuleId() {
+        return ruleId;
     }
 
     @Override

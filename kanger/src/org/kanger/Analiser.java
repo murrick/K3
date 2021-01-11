@@ -4,7 +4,7 @@ import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypothesis;
-import org.kanger.units.Right;
+import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 
 import java.util.HashSet;
@@ -25,7 +25,7 @@ public class Analiser {
     }
 
 
-    public boolean analise(Right right, boolean logging) throws Exception {
+    public boolean analise(Rule rule, boolean logging) throws Exception {
         boolean result = false;
         int counter = 0;
 
@@ -43,7 +43,7 @@ public class Analiser {
         if (!result) {
 
             boolean occurs = false;
-            for (Right r : mind.getRights()) {
+            for (Rule r : mind.getRules()) {
                 if (r.isStored() && !r.isDeleted()) {
                     if (r.getMindId() != mind.getId()) {
                         break;
@@ -57,7 +57,7 @@ public class Analiser {
                     }
                     if (r != null && !r.isQuery()) { //d.isQuery(mind)) {
                         Hypothesis tmp = new Hypothesis(r.getDomain(), mind);
-                        if (mind.getHypothesisStore().find(tmp) == null && mind.getRights().find(tmp) == null) {
+                        if (mind.getHypothesisStore().find(tmp) == null && mind.getRules().find(tmp) == null) {
 //                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
 //                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
 //                            tmp.setAntc(true);
@@ -97,7 +97,7 @@ public class Analiser {
     }
 
 
-    private boolean checkRight(Right p, Set<Right> orfans, Set<Long> list, boolean logging) throws Exception {
+    private boolean checkRight(Rule p, Set<Rule> orfans, Set<Long> list, boolean logging) throws Exception {
         boolean result = false;
         if (p.getDomain().isCalculated(mind)) {
 
@@ -128,7 +128,7 @@ public class Analiser {
 //            }
 
 //            boolean trigger = false;
-            for (Right q : mind.getRights()) {
+            for (Rule q : mind.getRules()) {
 
 //                if (p.getDomain().equalsBase(q.getDomain())
 //                        && p.getDomain().isAntc() != q.getDomain().isAntc()) {
@@ -212,9 +212,9 @@ public class Analiser {
         boolean result = false;
         boolean calculated = false;
 
-        Set<Right> orfans = new HashSet<>();
+        Set<Rule> orfans = new HashSet<>();
 
-        for (Right p : mind.getRights()) {
+        for (Rule p : mind.getRules()) {
             if (!p.isDeleted() && p.isStored() && (list == null || list.contains(p.getId())) && checkRight(p, orfans, list, logging)) {
                 if (p.getDomain().isCalculated(mind)) {
                     calculated = true;
@@ -242,7 +242,7 @@ public class Analiser {
 //                }
 //            }
             if (logging) {
-                for (Right r : orfans) {
+                for (Rule r : orfans) {
                     mind.getLog().add(LogMode.ANALIZER, "Unresolved: \t" + r.getDomain().toString());
                 }
                 mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");

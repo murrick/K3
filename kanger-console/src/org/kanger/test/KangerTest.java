@@ -7,7 +7,7 @@ import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
-import org.kanger.units.Right;
+import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.lang.reflect.Method;
@@ -145,7 +145,7 @@ public class KangerTest {
         int size = mind.getSolutions().size();
         if (local) {
             size = 0;
-            for (Right log : mind.getSolutions().getRoot()) {
+            for (Rule log : mind.getSolutions().getRoot()) {
                 if (log.getMind().getId() == mind.getId()) {
                     ++size;
                 }
@@ -155,7 +155,7 @@ public class KangerTest {
         if (size > 0) {
             System.out.println("Solves (" + size + "):");
             int i = 0;
-            for (Right log : mind.getSolutions().getRoot()) {
+            for (Rule log : mind.getSolutions().getRoot()) {
                 if (!local || log.getMind().getId() == mind.getId()) {
                     System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
                 }
@@ -2313,14 +2313,14 @@ public class KangerTest {
                         latchStart.countDown();
                         locker.wait();
                     }
-                    System.out.println("PROCESS 1 STRT: " + a.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 1 STRT: " + a.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = a.query("!value(1, " + i + ", " + (1000 + i) + ");");
                     }
                     if (!mind.commit(a)) {
                         System.out.println("PROCESS 1 ROLLED BACK");
                     }
-                    System.out.println("PROCESS 1 STOP: " + a.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 1 STOP: " + a.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2337,14 +2337,14 @@ public class KangerTest {
                         latchStart.countDown();
                         locker.wait();
                     }
-                    System.out.println("PROCESS 2 STRT: " + b.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 2 STRT: " + b.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = b.query("!value(1, " + i + ", " + (2000 + i) + ");");
                     }
                     if (!mind.commit(b)) {
                         System.out.println("PROCESS 2 ROLLED BACK");
                     }
-                    System.out.println("PROCESS 2 STOP: " + b.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 2 STOP: " + b.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2361,14 +2361,14 @@ public class KangerTest {
                         latchStart.countDown();
                         locker.wait();
                     }
-                    System.out.println("PROCESS 3 STRT: " + c.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 3 STRT: " + c.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = c.query("!value(1, " + i + ", " + (3000 + i) + ");");
                     }
                     if (!mind.commit(c)) {
                         System.out.println("PROCESS 3 ROLLED BACK");
                     }
-                    System.out.println("PROCESS 3 STOP: " + c.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 3 STOP: " + c.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2392,7 +2392,7 @@ public class KangerTest {
 //        latch.countDown();
         latchEnd.await();
 
-        System.out.println("PROCESSES STOP: " + mind.getRights().size());
+        System.out.println("PROCESSES STOP: " + mind.getRules().size());
 
 //        mind.commit(a);
 //        mind.commit(b);
@@ -2456,7 +2456,7 @@ public class KangerTest {
                         latchStart.countDown();
                         locker.wait();
                     }
-                    System.out.println("PROCESS 1 STRT: " + m1.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 1 STRT: " + m1.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = m1.query("!value(1, " + i + ", " + (1000 + i) + ");");
                     }
@@ -2464,7 +2464,7 @@ public class KangerTest {
                     if (!mind.commit(m1)) {
                         System.out.println("PROCESS 1 ROLLED BACK");
                     }
-                    System.out.println("PROCESS 1 STOP: " + m1.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 1 STOP: " + m1.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2481,7 +2481,7 @@ public class KangerTest {
                         latchStart.countDown();
                         locker.wait();
                     }
-                    System.out.println("PROCESS 2 STRT: " + m2.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 2 STRT: " + m2.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = m2.query("!value(1, " + i + ", " + (2000 + i) + ");");
                     }
@@ -2489,7 +2489,7 @@ public class KangerTest {
                     if (!mind.commit(m2)) {
                         System.out.println("PROCESS 2 ROLLED BACK");
                     }
-                    System.out.println("PROCESS 2 STOP: " + m2.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 2 STOP: " + m2.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2506,7 +2506,7 @@ public class KangerTest {
                         latchStart.countDown();
                         locker.wait();
                     }
-                    System.out.println("PROCESS 3 STRT: " + m3.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 3 STRT: " + m3.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = m3.query("!value(1, " + i + ", " + (3000 + i) + ");");
                     }
@@ -2514,7 +2514,7 @@ public class KangerTest {
                     if (!mind.commit(m3)) {
                         System.out.println("PROCESS 3 ROLLED BACK");
                     }
-                    System.out.println("PROCESS 3 STOP: " + m3.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 3 STOP: " + m3.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2531,14 +2531,14 @@ public class KangerTest {
                         latchStart.countDown();
                         locker.wait();
                     }
-                    System.out.println("PROCESS 4 STRT: " + m4.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 4 STRT: " + m4.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
                         Boolean res = m4.query("!value(1, " + i + ", " + (4000 + i) + ");");
                     }
                     if (!mind.commit(m4)) {
                         System.out.println("PROCESS 4 ROLLED BACK");
                     }
-                    System.out.println("PROCESS 4 STOP: " + m4.getRights().size() + "/" + mind.getRights().size());
+                    System.out.println("PROCESS 4 STOP: " + m4.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 } finally {
@@ -2562,7 +2562,7 @@ public class KangerTest {
 //        latch.countDown();
         latchEnd.await();
 
-        System.out.println("PROCESSES STOP: " + mind.getRights().size());
+        System.out.println("PROCESSES STOP: " + mind.getRules().size());
 
 //        mind.commit(a);
 //        mind.commit(b);

@@ -33,7 +33,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     private int index = 0;              // Индекс c-переменной
     private Term name = null;             // Оригинальное имя c-переменной
-    private Right right = null;          // Ссылка на правило
+    private Rule rule = null;          // Ссылка на правило
     private final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
     private Term parent = null;
@@ -43,7 +43,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     private transient boolean deleted = false;
     private transient long nameId = -1;
-    private transient long rightId = -1;
+    private transient long ruleId = -1;
     private transient long parentId = -1;
 
     public Term() {
@@ -98,7 +98,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         packet.putInt(index);
         if (index > 0) {
             packet.putLong(nameId);
-            packet.putLong(rightId);
+            packet.putLong(ruleId);
             packet.putLong(parentId);
             packet.putWord(slaves.size());
             for (long sid : slaves) {
@@ -158,7 +158,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         index = packet.getInt();
         if (index > 0) {
             nameId = packet.getLong();
-            rightId = packet.getLong();
+            ruleId = packet.getLong();
             parentId = packet.getLong();
             slaves.clear();
             int cnt = packet.getWord();
@@ -318,16 +318,16 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.id = id;
     }
 
-    public Right getRight() throws Exception {
-        if (right == null) {
-            right = mind.getRights().load(rightId);
+    public Rule getRight() throws Exception {
+        if (rule == null) {
+            rule = mind.getRules().load(ruleId);
         }
-        return right;
+        return rule;
     }
 
-    public void setRight(Right r) {
-        this.right = r;
-        this.rightId = r.getId();
+    public void setRight(Rule r) {
+        this.rule = r;
+        this.ruleId = r.getId();
     }
 
     public boolean isCVariable() {
@@ -575,8 +575,8 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 //    }
 
 
-    public long getRightId() {
-        return rightId;
+    public long getRuleId() {
+        return ruleId;
     }
 
     public Set<Long> getSlaves() {

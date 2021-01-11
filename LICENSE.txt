@@ -44,7 +44,7 @@ Mozilla Public License Version 2.0
     means this document.
 
 1.9. "Licensable"
-    means having the right to grant, to the maximum extent possible,
+    means having the rule to grant, to the maximum extent possible,
     whether at the time of the initial grant or subsequently, any and
     all of the rights conveyed by this License.
 
@@ -328,7 +328,7 @@ shall not be used to construe this License against a Contributor.
 10.1. New Versions
 
 Mozilla Foundation is the license steward. Except as provided in Section
-10.3, no one other than the license steward has the right to modify or
+10.3, no one other than the license steward has the rule to modify or
 publish new versions of this License. Each version will be given a
 distinguishing version number.
 

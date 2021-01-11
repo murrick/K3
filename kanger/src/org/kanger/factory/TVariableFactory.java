@@ -6,7 +6,7 @@ import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.Escalera;
-import org.kanger.units.Right;
+import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 import org.kanger.units.Term;
@@ -92,12 +92,12 @@ public class TVariableFactory implements Iterable<TVariable> {
         }
     }
 
-    public synchronized TVariable createTVar(Right r, Term name) throws Exception {
+    public synchronized TVariable createTVar(Rule r, Term name) throws Exception {
         TVariable p = new TVariable(mind);
         p.setId(mind.getUser().nextId(SCHEMA));
         r.setMindId(mind.getId());
         p.setIndex(mind.getTerms().nextVarIndex());
-        p.setRight(r);
+        p.setRule(r);
         p.setName(name);
         cache.add(p);
         if (top == null) {

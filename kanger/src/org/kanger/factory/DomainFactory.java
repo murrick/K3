@@ -110,7 +110,7 @@ public class DomainFactory implements Iterable<Domain> {
 //    }
 
 
-    public synchronized Domain add(Predicate pred, boolean antc, ArgList arg, Right r) throws Exception {
+    public synchronized Domain add(Predicate pred, boolean antc, ArgList arg, Rule r) throws Exception {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             return p;
@@ -138,7 +138,7 @@ public class DomainFactory implements Iterable<Domain> {
         return p;
     }
 
-    public Domain find(Predicate pred, boolean antc, ArgList arg, Right r) throws Exception {
+    public Domain find(Predicate pred, boolean antc, ArgList arg, Rule r) throws Exception {
         Domain temp = new Domain(pred, antc, arg, r);
         return find(temp);
 //        temp.setUser(user);

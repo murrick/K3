@@ -68,8 +68,8 @@ public class CommentFactory implements Iterable<Term> {
         }
     }
 
-    public synchronized Comment add(long rightId, String comment) throws Exception {
-        Comment p = get(rightId);
+    public synchronized Comment add(long ruleId, String comment) throws Exception {
+        Comment p = get(ruleId);
         if (p != null) {
             if (!p.getComment().equals(comment)) {
                 p.setComment(comment);
@@ -86,8 +86,8 @@ public class CommentFactory implements Iterable<Term> {
             }
             return p;
         } else {
-            p = new Comment(rightId, comment, mind);
-            p.setId(rightId);
+            p = new Comment(ruleId, comment, mind);
+            p.setId(ruleId);
             p.setMindId(mind.getId());
             cache.add(p);
             if (top == null) {

@@ -308,12 +308,12 @@ public class Screen {
                     showOptionsHelp();
                     break;
                 case 'R':
-                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RIGHTS);
-                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RULES);
+                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
                     break;
                 case 'r':
-                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RIGHTS);
-                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RULES);
+                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
                     break;
                 case 'V':
                     mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES);
@@ -363,7 +363,7 @@ public class Screen {
                     System.out.println("Functions: " + mind.getFunctions().size());
                     System.out.println("FValues: " + mind.getFValues().size());
                     System.out.println("Predicates: " + mind.getPredicates().size());
-                    System.out.println("Rights: " + mind.getRights().size());
+                    System.out.println("Rights: " + mind.getRules().size());
                     System.out.println("TValues: " + mind.getTValues().size());
                     System.out.println("TVariables: " + mind.getTValues().size());
                     System.out.println();
@@ -520,7 +520,7 @@ public class Screen {
                 String posStr = line.trim().contains(" ") ? line.split(" ")[1] : null;
                 int pos = posStr == null ? -1 : Integer.parseInt(posStr);
                 int i = 0;
-                for (Right log : mind.getSolutions().getRoot()) {
+                for (Rule log : mind.getSolutions().getRoot()) {
                     if (++i == pos || pos == -1) {
                         System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
                         if (!log.getCauses().isEmpty()) {
@@ -551,7 +551,7 @@ public class Screen {
                 System.out.println("INFO");
                 break;
         }
-        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RIGHTS) == 0 ? "OFF" : "ON"));
+        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
         System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
         System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
@@ -714,7 +714,7 @@ public class Screen {
                 System.out.printf("\t\t%sRight: %s\n", indent, c.getRight(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
             }
             System.out.printf("\t\t%sCause: %s\n", indent, c.getDonor().toString(mind)); //c.getArguments()));
-            Right r = mind.getRights().find(c.getDonor());
+            Rule r = mind.getRules().find(c.getDonor());
             if (r != null) {
                 showCauses(mind, r.getCauses(), level + 1);
             }
@@ -723,7 +723,7 @@ public class Screen {
 
     private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws Exception {
         if (d.isStored(mind)) {
-            Right dest = mind.getRights().find(d);
+            Rule dest = mind.getRules().find(d);
             if (dest != null) {
                 if (showCauses) {
                     System.out.println("\t-------------------------------------------");
@@ -772,7 +772,7 @@ public class Screen {
         }
     }
 
-    public static void showTree(Mind mind, Right r) throws Exception {
+    public static void showTree(Mind mind, Rule r) throws Exception {
         List<List<String>> net = LogStore.formatTree(mind, r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
@@ -789,7 +789,7 @@ public class Screen {
 
     public static void showRights(Mind mind, boolean showTree) throws Exception {
         boolean found = false;
-        for (Right r : mind.getRights()) {
+        for (Rule r : mind.getRules()) {
             found = true;
             System.out.printf("%sRight %03d%s: %s\n",
                     showTree ? " --- " : "",
@@ -935,7 +935,7 @@ public class Screen {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }
-        Right r = mind.getRights().load(id);
+        Rule r = mind.getRules().load(id);
         if (r != null) {
             for (String s : r.getOrig().toString().split("\\R")) {
                 str += s + Enums.LINE_SEPARATOR;

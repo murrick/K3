@@ -2,7 +2,7 @@ package org.kanger.stores;
 
 import org.kanger.Mind;
 import org.kanger.units.Domain;
-import org.kanger.units.Right;
+import org.kanger.units.Rule;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.Set;
  */
 public class SolutionsStore {
 
-    private Set<Right> root = null;
+    private Set<Rule> root = null;
     private boolean enableStore = true;
 
     private final Mind mind;
@@ -34,7 +34,7 @@ public class SolutionsStore {
         }
     }
 
-    public Right add(Right d) {
+    public Rule add(Rule d) {
         if (!enableStore) {
             return null;
         }
@@ -53,7 +53,7 @@ public class SolutionsStore {
 
     public boolean contains(Domain d) throws Exception {
         if (!isEmpty()) {
-            for (Right r : root) {
+            for (Rule r : root) {
                 if (!r.isDeleted() && r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
                     return true;
                 }
@@ -81,15 +81,15 @@ public class SolutionsStore {
         return enableStore;
     }
 
-    public Right get(int index) {
-        return root.toArray(new Right[]{})[index];
+    public Rule get(int index) {
+        return root.toArray(new Rule[]{})[index];
     }
 
 //    public int find(Solution o) {
 //        return root.indexOf(o);
 //    }
 
-    public Set<Right> getRoot() {
+    public Set<Rule> getRoot() {
         return root;
     }
 

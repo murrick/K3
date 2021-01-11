@@ -93,7 +93,7 @@ public class Predicate implements IUnit<Predicate> {
 
     public Set<Domain> getSolves() throws Exception {
         Set<Domain> set = new HashSet<>();
-        for (Right r : mind.getRights()) {
+        for (Rule r : mind.getRules()) {
             if (r.isStored() && !r.isDeleted() && getId() == r.getDomain().getPredicateId()) {
                 set.add(r.getDomain());
             }

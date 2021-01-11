@@ -22,7 +22,7 @@ public class Compiler {
         this.mind = mind;
     }
 
-    public Right compileLine(PTree root, boolean antc, String orig, boolean query, Object[] ext) throws Exception {
+    public Rule compileLine(PTree root, boolean antc, String orig, boolean query, Object[] ext) throws Exception {
 
         Queue<Term> externals = new LinkedList<>();
         if (ext != null) {
@@ -32,8 +32,8 @@ public class Compiler {
             }
         }
 
-        Right r = new Right(mind);
-        mind.getRights().register(r);
+        Rule r = new Rule(mind);
+        mind.getRules().register(r);
         r.setOrig(mind.getTerms().add(orig));
         construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
 
@@ -46,11 +46,11 @@ public class Compiler {
 //            }
 //        }
 
-        Right x = mind.getRights().add(r);
+        Rule x = mind.getRules().add(r);
 
         if (!r.isDeleted()) {
             r.setQuery(query);
-            mind.getRights().expand(r);
+            mind.getRules().expand(r);
         } else {
 //            r = x;
         }
@@ -67,7 +67,7 @@ public class Compiler {
 //        return replacements;
 //    }
 
-    private void construct(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<Term> externals) throws Exception {
+    private void construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<Term> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
         if (root == null) {
@@ -169,7 +169,7 @@ public class Compiler {
         clones.addAll(list);
     }
 
-    private boolean compileQuantor(Right r, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
+    private boolean compileQuantor(Rule r, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
         String varName = root.getLeft().getName();
 
         if (replacements.containsKey(varName)) {
@@ -201,7 +201,7 @@ public class Compiler {
         return antc;
     }
 
-    private void compilePredicate(Right r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<Term> externals) throws Exception {
+    private void compilePredicate(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<Term> externals) throws Exception {
 //        Domain d = mind.getDomains().add(mind.getRights().getRoot());
 
         Domain d = new Domain(mind);

@@ -20,7 +20,7 @@ import java.util.Set;
  * <p>
  * Список правил
  */
-public class Right implements IUnit<Right> {
+public class Rule implements IUnit<Rule> {
 
     private static final long serialVersionUID = 196402070007L;
 
@@ -48,10 +48,10 @@ public class Right implements IUnit<Right> {
 
     private transient boolean deleted = false;
 
-    public Right() {
+    public Rule() {
     }
 
-    public Right(Mind mind) {
+    public Rule(Mind mind) {
         this.mind = mind;
         List<Domain> t = new ArrayList<>();
         tree.add(t);
@@ -83,7 +83,7 @@ public class Right implements IUnit<Right> {
         return packet.createMarked();
     }
 
-    public Right apply(ByteBuffer packet) throws Exception {
+    public Rule apply(ByteBuffer packet) throws Exception {
         id = packet.getLong();
         mindId = packet.getLong();
         deleted = packet.getByte() != 0;
@@ -181,21 +181,21 @@ public class Right implements IUnit<Right> {
     }
 
     public boolean isUsed(Mind mind) {
-        return mind.getUsedRights().containsKey(0L) && mind.getUsedRights().get(0L).contains(this);
+        return mind.getUsedRules().containsKey(0L) && mind.getUsedRules().get(0L).contains(this);
     }
 
     public void setUsed(Mind mind) {
-        if (!mind.getUsedRights().containsKey(0L)) {
-            mind.getUsedRights().put(0L, new HashSet<>());
+        if (!mind.getUsedRules().containsKey(0L)) {
+            mind.getUsedRules().put(0L, new HashSet<>());
         }
-        mind.getUsedRights().get(0L).add(this);
+        mind.getUsedRules().get(0L).add(this);
     }
 
-    public Set<Right> getNatives() throws Exception {
-        Set<Right> list = new HashSet<>();
+    public Set<Rule> getNatives() throws Exception {
+        Set<Rule> list = new HashSet<>();
         for (List<Domain> t : getTree()) {
             for (Domain d : t) {
-                for (Right r : mind.getRights()) {
+                for (Rule r : mind.getRules()) {
                     if (r != null) {
                         if (!r.isDeleted() && r.getPredicates().contains(d.getPredicateId())) {
                             list.add(r);
@@ -318,7 +318,7 @@ public class Right implements IUnit<Right> {
     }
 
     @Override
-    public boolean equalsTo(Right to) throws Exception {
+    public boolean equalsTo(Rule to) throws Exception {
 //        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
 //            return equalsTo(to.getDomain());
 //        } else
@@ -345,7 +345,7 @@ public class Right implements IUnit<Right> {
     }
 
     @Override
-    public Right setMind(Mind mind) throws Exception {
+    public Rule setMind(Mind mind) throws Exception {
         this.mind = mind;
 //        for (Cause c : getCauses()) {
 //            c.setUser(user);
@@ -411,7 +411,7 @@ public class Right implements IUnit<Right> {
 
     @Override
     public boolean equals(Object t) {
-        return !(t == null || !(t instanceof Right)) && ((Right) t).id == id;
+        return !(t == null || !(t instanceof Rule)) && ((Rule) t).id == id;
     }
 
     public int getVarIndex() {
@@ -578,7 +578,7 @@ public class Right implements IUnit<Right> {
     public List<TVariable> getTVariables() {
         List<TVariable> list = new ArrayList<>();
         for (TVariable t : mind.getTVars()) {
-            if (t.getRightId() == id) {
+            if (t.getRuleId() == id) {
                 list.add(t);
             }
         }

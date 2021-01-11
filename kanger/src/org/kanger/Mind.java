@@ -31,7 +31,7 @@ public class Mind {
     //    private volatile boolean blockCommit = false;
     private final Object locker = new Object();
 
-    private final Map<Long, Set<Right>> usedRights = new HashMap<>();
+    private final Map<Long, Set<Rule>> usedRules = new HashMap<>();
     private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
     private final Map<Domain, List<List<Term>>> calculatedDomains = new HashMap<>();
@@ -39,14 +39,14 @@ public class Mind {
     private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
     private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
-    private final Map<TVariableSet, List<TSolve>> rightSolves = new LinkedHashMap<>();
+    private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
     private long id = 0;
     private Mind next = null;
 
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
-    private RightFactory rights = null;                             // Список правил
+    private RuleFactory rules = null;                             // Список правил
     private TVariableFactory tVars = null;                      // t-переменные
     private TValueFactory tValues = null;                          // Подставленные значения
     private FunctionFactory functions = null;                    // Функции
@@ -76,11 +76,11 @@ public class Mind {
     private String compiledFileName = "mind.e";
     private boolean logging = true;
 
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (/*Enums.DEBUG_OPTION_STATUS |*/ Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RIGHTS /*| Enums.DEBUG_OPTION_RTLOGS*/);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (/*Enums.DEBUG_OPTION_STATUS |*/ Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RULES /*| Enums.DEBUG_OPTION_RTLOGS*/);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
-    private Right acceptedRight = null;
+    private Rule acceptedRule = null;
 //    private HypothesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private volatile boolean busyCommit = false;
@@ -114,7 +114,7 @@ public class Mind {
 //        functions = root.getFunctions();
 
         domains.transaction(root.getDomains());
-        rights.transaction(root.getRights());
+        rules.transaction(root.getRules());
         comments.transaction(root.getComments());
         tVars.transaction(root.getTVars());
         tValues.transaction(root.getTValues());
@@ -136,7 +136,7 @@ public class Mind {
         library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов
 
         domains = new DomainFactory(this);                          // Список доменов
-        rights = new RightFactory(this);                             // Список правил
+        rules = new RuleFactory(this);                             // Список правил
         comments = new CommentFactory(this);
 //        trees = new TreeFactory(user);                                // Список секвенций
 
@@ -167,7 +167,7 @@ public class Mind {
 //        pack();
         synchronized (locker) {
 
-            boolean sequencedBy = rights.isSequencedBy(m.getRights());
+            boolean sequencedBy = rules.isSequencedBy(m.getRules());
             if (!sequencedBy) {
                 functions.mark();
                 fValues.mark();
@@ -175,7 +175,7 @@ public class Mind {
                 tValues.mark();
 
                 domains.mark();
-                rights.mark();
+                rules.mark();
                 comments.mark();
             }
 
@@ -185,7 +185,7 @@ public class Mind {
             tValues.commit(m.getTValues());
 
             domains.commit(m.getDomains());
-            Set<Long> list = rights.commit(m.getRights());
+            Set<Long> list = rules.commit(m.getRules());
             comments.commit(m.getComments());
 
             if (!sequencedBy) {
@@ -197,7 +197,7 @@ public class Mind {
                     tValues.release();
 
                     domains.release();
-                    rights.release();
+                    rules.release();
                     comments.release();
                     result = false;
                 } else {
@@ -212,7 +212,7 @@ public class Mind {
                     tValues.commit();
 
                     domains.commit();
-                    rights.commit();
+                    rules.commit();
                     comments.commit();
 
 //                    functions.update();
@@ -291,7 +291,7 @@ public class Mind {
             tVars.closeConnection();
             tValues.closeConnection();
             domains.closeConnection();
-            rights.closeConnection();
+            rules.closeConnection();
             comments.closeConnection();
         }
     }
@@ -309,7 +309,7 @@ public class Mind {
             tVars.update();
             tValues.update();
             domains.update();
-            rights.update();
+            rules.update();
             comments.update();
 
             user.flush();
@@ -354,7 +354,7 @@ public class Mind {
             domains.clear();
             tVars.clear();
             tValues.clear();
-            rights.clear();
+            rules.clear();
             comments.clear();
             functions.clear();
             fValues.clear();
@@ -364,7 +364,7 @@ public class Mind {
             hypothesis.clear();
 //            excluded.clear();
 
-            rightSolves.clear();
+            ruleSolves.clear();
         }
 //        update();
     }
@@ -378,7 +378,7 @@ public class Mind {
             tValues.pack();
             tVars.pack();
             domains.pack();
-            rights.pack();
+            rules.pack();
             comments.pack();
             fValues.pack();
             functions.pack();
@@ -454,8 +454,8 @@ public class Mind {
         return values;
     }
 
-    public RightFactory getRights() {
-        return rights;
+    public RuleFactory getRules() {
+        return rules;
     }
 
     public CommentFactory getComments() {
@@ -514,12 +514,12 @@ public class Mind {
         changed = b;
     }
 
-    public void link(Right r, boolean logging) throws Exception {
+    public void link(Rule r, boolean logging) throws Exception {
         linker.link(r, logging);
     }
 
-    public Boolean analise(Right right, boolean logging) throws Exception {
-        return analiser.analise(right, logging);
+    public Boolean analise(Rule rule, boolean logging) throws Exception {
+        return analiser.analise(rule, logging);
     }
 
     public boolean compile(String src) throws Exception {
@@ -548,8 +548,8 @@ public class Mind {
             previousPos = pos;
 
             Object r = m.compileLine(line, false, null);
-            if (!comment.isEmpty() && r instanceof Right) {
-                m.getComments().add(((Right) r).getId(), comment);
+            if (!comment.isEmpty() && r instanceof Rule) {
+                m.getComments().add(((Rule) r).getId(), comment);
             }
 
 //            Mind x = new Mind(m);
@@ -632,16 +632,16 @@ public class Mind {
             PTree p = Parser.parser(line.substring(1));
             r = x.compiler.compileLine(p, suc, orig, query, ext);
             x.setCompliedLine(line);
-            if (r instanceof Right && ((Right) r).isDeleted()) {
+            if (r instanceof Rule && ((Rule) r).isDeleted()) {
                 release(x);
-                getLog().add(LogMode.ANALIZER, "WARNING: Right is duplicated: " + r);
+                getLog().add(LogMode.ANALIZER, "WARNING: Rule is duplicated: " + r);
                 r = null;
-            } else if (r instanceof Right) {
+            } else if (r instanceof Rule) {
                 commit(x);
-                getLog().add(LogMode.ANALIZER, "Compiled: " + ((Right) r).getOrig());
-                getLog().add(LogMode.ANALIZER, (Right) r);
-                for (Right rx : rights) {
-                    if (rx.getId() > ((Right) r).getId() /*&& rx.isGenerated()*/) {
+                getLog().add(LogMode.ANALIZER, "Compiled: " + ((Rule) r).getOrig());
+                getLog().add(LogMode.ANALIZER, (Rule) r);
+                for (Rule rx : rules) {
+                    if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
                         getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
                     }
                 }
@@ -808,12 +808,12 @@ public class Mind {
         return domainSolves;
     }
 
-    public Map<Long, Set<Right>> getUsedRights() {
-        return usedRights;
+    public Map<Long, Set<Rule>> getUsedRules() {
+        return usedRules;
     }
 
-    public Map<TVariableSet, List<TSolve>> getRightSolves() {
-        return rightSolves;
+    public Map<TVariableSet, List<TSolve>> getRuleSolves() {
+        return ruleSolves;
     }
 
     //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
@@ -960,9 +960,9 @@ public class Mind {
         return String.format("%c%s", sign, line.substring(1));
     }
 
-    public List<Right> getProductions(Right r) {
-        List<Right> productions = new ArrayList<>();
-        for (Right pr : getRights()) {
+    public List<Rule> getProductions(Rule r) {
+        List<Rule> productions = new ArrayList<>();
+        for (Rule pr : getRules()) {
             if (pr.getId() > r.getId()) {
                 if (pr.isGenerated()) {
                     productions.add(pr);
@@ -981,7 +981,7 @@ public class Mind {
         this.logging = logging;
 
         Boolean res = null;
-        acceptedRight = null;
+        acceptedRule = null;
 
         getLog().clear();
         getSolutions().clear();
@@ -1039,7 +1039,7 @@ public class Mind {
                 line = invert(line);
 
                 setCompliedLine(line);
-                Right r = (Right) m.compileLine(line, true, ext);
+                Rule r = (Rule) m.compileLine(line, true, ext);
                 if (r != null/* && !r.isDeleted()*/) {
 //                    r.setQuery(true);
 
@@ -1063,13 +1063,13 @@ public class Mind {
                         res = null;
                     } else {
 
-                        List<Right> productions = m.getProductions(r);
+                        List<Rule> productions = m.getProductions(r);
                         if (!productions.isEmpty()) {
                             int counter = 0;
                             if (logging) {
                                 m.getLog().add(LogMode.ANALIZER, "SUCCESS: Solves to append (" + productions.size() + "):");
                             }
-                            for (Right pr : productions) {
+                            for (Rule pr : productions) {
                                 pr.setQuery(false);
                                 pr.setGenerated(false);
                                 pr.primitivize();
@@ -1081,7 +1081,7 @@ public class Mind {
                             m.getLog().add(LogMode.ANALIZER, String.format("WARNING: No candidates to append"));
                         }
 
-                        m.getRights().delete(r);
+                        m.getRules().delete(r);
                         m.getComments().delete(r.getId());
 
                         commit(m);
@@ -1110,7 +1110,7 @@ public class Mind {
                 m.setQueryPass(QueryPass.ACCEPT);
 
                 setCompliedLine(line);
-                Right r = (Right) m.compileLine(line, false, ext);
+                Rule r = (Rule) m.compileLine(line, false, ext);
                 if (r != null /*&& !r.isDeleted()*/) {
 //                    r.setQuery(true);
 //                        if (logging) {
@@ -1144,10 +1144,10 @@ public class Mind {
                         } else {
                             if (logging) {
                                 m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
-                                List<Right> productions = m.getProductions(r);
+                                List<Rule> productions = m.getProductions(r);
                                 if (!productions.isEmpty()) {
                                     int counter = 0;
-                                    for (Right pr : productions) {
+                                    for (Rule pr : productions) {
                                         m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
                                     }
                                 }
@@ -1158,7 +1158,7 @@ public class Mind {
                             commit(m);
 //                            excluded.commit(m.getHypothesisStore());
                             setChanged(true);
-                            acceptedRight = r;
+                            acceptedRule = r;
                             res = true;
                         }
                     }
@@ -1193,7 +1193,7 @@ public class Mind {
                 }
                 line = invert(line);
                 setCompliedLine(line);
-                Right r = (Right) m.compileLine(line, true, ext);
+                Rule r = (Rule) m.compileLine(line, true, ext);
                 if (r != null /*&& !r.isDeleted()*/) {
 //                    r.setQuery(true);
 //                    if (logging) {
@@ -1246,12 +1246,12 @@ public class Mind {
                     setQueryPass(QueryPass.CHECK);
 
                     boolean found = false;
-                    for (Right rx : getRights()) {
+                    for (Rule rx : getRules()) {
                         if (!rx.isDeleted() && rx.isGenerated()) {
                             if (logging) {
                                 getLog().add(LogMode.STORAGE, "Delete produced right: " + String.format("%03d: %s", rx.getId(), rx));
                             }
-                            getRights().delete(rx);
+                            getRules().delete(rx);
                             getComments().delete(rx.getId());
                             found = true;
                         }
@@ -1348,7 +1348,7 @@ public class Mind {
                         }
 
                         setCompliedLine(line);
-                        Right r = (Right) m.compileLine(invert(line), true, ext);
+                        Rule r = (Rule) m.compileLine(invert(line), true, ext);
                         if (r != null /*&& !r.isDeleted()*/) {
 //                            r.setQuery(true);
 //                            if (logging) {
@@ -1398,7 +1398,7 @@ public class Mind {
                         }
 
                         setCompliedLine(line);
-                        Right r = (Right) m.compileLine(line, true, ext);
+                        Rule r = (Rule) m.compileLine(line, true, ext);
                         if (r != null /*&& !r.isDeleted()*/) {
 //                            r.setQuery(true);
 //                            if (logging) {
@@ -1589,23 +1589,23 @@ public class Mind {
 //        return set;
 //    }
 
-    public Boolean delete(Right r, boolean logging) throws Exception {
+    public Boolean delete(Rule r, boolean logging) throws Exception {
         this.logging = logging;
 
         solves.clear();
         values.clear();
         getLog().clear();
 
-        Set<Right> set = new HashSet<>();
+        Set<Rule> set = new HashSet<>();
         set.add(r);
-        for (Right rg : getRights()) {
+        for (Rule rg : getRules()) {
             if (rg.isGenerated()) {
                 set.add(rg);
             }
         }
 
-        for (Right rx : set) {
-            rights.delete(rx);
+        for (Rule rx : set) {
+            rules.delete(rx);
             comments.delete(rx.getId());
         }
 
@@ -1614,9 +1614,9 @@ public class Mind {
         link(null, logging);
         Boolean ar = analise(null, logging);
 
-        Set<Right> success = new HashSet<>();
-        for (Right rx : set) {
-            if (getRights().find(rx) == null) {
+        Set<Rule> success = new HashSet<>();
+        for (Rule rx : set) {
+            if (getRules().find(rx) == null) {
                 success.add(rx);
             }
         }
@@ -1628,7 +1628,7 @@ public class Mind {
                 getLog().add(LogMode.ANALIZER, "WARNING: No rights have been deleted");
             } else {
                 getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rights");
-                for (Right rx : success) {
+                for (Rule rx : success) {
                     getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
                 }
             }
@@ -1639,21 +1639,21 @@ public class Mind {
 
     private void removeResult(Mind m, boolean logging) throws Exception {
         if (m.getSolutions().size() > 0) {
-            Set<Right> set = new HashSet<>();
-            for (Right r : m.getSolutions().getRoot()) {
+            Set<Rule> set = new HashSet<>();
+            for (Rule r : m.getSolutions().getRoot()) {
                 set.add(r);
             }
 
             if (!set.isEmpty()) {
 
-                for (Right r : getRights()) {
+                for (Rule r : getRules()) {
                     if (r.isGenerated()) {
                         set.add(r);
                     }
                 }
 
-                for (Right r : set) {
-                    getRights().delete(r);
+                for (Rule r : set) {
+                    getRules().delete(r);
                     getComments().delete(r.getId());
                 }
 
@@ -1662,9 +1662,9 @@ public class Mind {
                 link(null, logging);
                 Boolean ar = analise(null, logging);
 
-                Set<Right> success = new HashSet<>();
-                for (Right r : set) {
-                    if (getRights().find(r) == null) {
+                Set<Rule> success = new HashSet<>();
+                for (Rule r : set) {
+                    if (getRules().find(r) == null) {
                         success.add(r);
                     }
                 }
@@ -1676,7 +1676,7 @@ public class Mind {
                         m.getLog().add(LogMode.ANALIZER, "WARNING: No rights have been deleted");
                     } else {
                         m.getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rights");
-                        for (Right r : success) {
+                        for (Rule r : success) {
                             m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
                         }
                     }
@@ -1690,7 +1690,7 @@ public class Mind {
         if (mind.getSolutions().size() > 0) {
             mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
             int i = 0;
-            for (Right log : mind.getSolutions().getRoot()) {
+            for (Rule log : mind.getSolutions().getRoot()) {
                 mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", log.getId(), log.toString()));
             }
         }
@@ -1787,9 +1787,9 @@ public class Mind {
 
     public TSolve findTSolve(List<TValue> list) throws Exception {
         TVariableSet ts = new TVariableSet(list);
-        if (getRightSolves().containsKey(ts)) {
+        if (getRuleSolves().containsKey(ts)) {
             TSolve tmp = new TSolve(list, this);
-            for (TSolve t : getRightSolves().get(ts)) {
+            for (TSolve t : getRuleSolves().get(ts)) {
                 if (tmp.equalsTo(t)) {
                     return t;
                 }
@@ -1805,18 +1805,18 @@ public class Mind {
         } else {
             tmp = new TSolve(list, this);
             TVariableSet ts = new TVariableSet(tmp);
-            if (!getRightSolves().containsKey(ts)) {
-                getRightSolves().put(ts, new ArrayList<>());
+            if (!getRuleSolves().containsKey(ts)) {
+                getRuleSolves().put(ts, new ArrayList<>());
             }
-            getRightSolves().get(ts).add(tmp);
+            getRuleSolves().get(ts).add(tmp);
             return tmp;
         }
     }
 
     public String getSourceCode() throws Exception {
         String str = "";
-        SortedMap<Long, Right> map = new TreeMap<>();
-        for (Right r : getRights()) {
+        SortedMap<Long, Rule> map = new TreeMap<>();
+        for (Rule r : getRules()) {
             if (!r.isGenerated()) {
                 map.put(r.getId(), r);
             }
@@ -1827,7 +1827,7 @@ public class Mind {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }
-        for (Right r : map.values()) {
+        for (Rule r : map.values()) {
             c = getComments().get(r.getId());
             if (c != null) {
                 str += Enums.LINE_SEPARATOR;
@@ -1872,8 +1872,8 @@ public class Mind {
 //    }
 
 
-    public Right getAcceptedRight() {
-        return acceptedRight;
+    public Rule getAcceptedRight() {
+        return acceptedRule;
     }
 }
 

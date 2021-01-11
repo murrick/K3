@@ -93,7 +93,7 @@ public class User implements IUser {
             storage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
             storage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
             storage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
-            storage.put(RightFactory.SCHEMA, data.getBase(RightFactory.SCHEMA));
+            storage.put(RuleFactory.SCHEMA, data.getBase(RuleFactory.SCHEMA));
             storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
             storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
 
@@ -111,7 +111,7 @@ public class User implements IUser {
             mind.getFunctions().transaction(null);
             mind.getFValues().transaction(null);
             mind.getPredicates().transaction(null);
-            mind.getRights().transaction(null);
+            mind.getRules().transaction(null);
             mind.getComments().transaction(null);
             mind.getTValues().transaction(null);
             mind.getTVars().transaction(null);

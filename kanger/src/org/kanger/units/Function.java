@@ -386,7 +386,7 @@ public class Function implements IUnit<Function> {
 //        return ("" + id).hashCode();
     }
 
-    public int getHashStruct(Right r) throws Exception {
+    public int getHashStruct(Rule r) throws Exception {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
@@ -408,14 +408,14 @@ public class Function implements IUnit<Function> {
         return hash;
     }
 
-    public boolean equalsToStruct(Function f, Right left, Right right) throws Exception {
+    public boolean equalsToStruct(Function f, Rule left, Rule rule) throws Exception {
         if (nameId == f.nameId && range == f.getRange()) {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
                             if ((arguments.get(i).getT(mind).getIndex() - left.getVarIndex())
-                                    != (f.getArguments().get(i).getT(mind).getIndex() - right.getVarIndex())) {
+                                    != (f.getArguments().get(i).getT(mind).getIndex() - rule.getVarIndex())) {
                                 return false;
                             }
                             break;
@@ -425,7 +425,7 @@ public class Function implements IUnit<Function> {
                             }
                             break;
                         case FUNCTION:
-                            if (!arguments.get(i).getF(mind).equalsToStruct(f.getArguments().get(i).getF(mind), left, right)) {
+                            if (!arguments.get(i).getF(mind).equalsToStruct(f.getArguments().get(i).getF(mind), left, rule)) {
                                 return false;
                             }
                             break;

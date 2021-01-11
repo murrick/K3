@@ -7,7 +7,7 @@ import org.kanger.interfaces.ICache;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.Escalera;
-import org.kanger.units.Right;
+import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.io.IOException;
@@ -154,7 +154,7 @@ public class DictionaryFactory implements Iterable<Term> {
         return null;
     }
 
-    public Term createCVar(Right r, Term name) throws Exception {
+    public Term createCVar(Rule r, Term name) throws Exception {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);

@@ -26,10 +26,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     private long id = -1;                                       // id домена
     private long mindId = -1;                                   // id транзакции
-    //    private boolean antc = true;                                // ! или ?
-//    private Predicate predicate = null;                         // Ссылка на описатель предиката
-//    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
-    private Right right = null;                                        // Ссылка на правило
+    protected transient long ruleId = -1;
 //    private int range = 0;
 //    private Domain next = null;                                 // Следующий элемент
 
@@ -40,15 +37,17 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    private transient long rightId = -1;
 
     private transient Mind mind = null;
-
-    protected transient long rightId = -1;
+    //    private boolean antc = true;                                // ! или ?
+//    private Predicate predicate = null;                         // Ссылка на описатель предиката
+//    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
+    private Rule rule = null;                                        // Ссылка на правило
 
     private transient boolean deleted = false;
 
     public Domain() {
     }
 
-    public Domain(Predicate pred, boolean antc, ArgList args, Right r) {
+    public Domain(Predicate pred, boolean antc, ArgList args, Rule r) {
         this(pred, antc, args);
         setRight(r);
     }
@@ -66,7 +65,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 .putLong(id)
                 .putLong(mindId)
                 .putByte(deleted ? 1 : 0)
-                .putLong(rightId)
+                .putLong(ruleId)
                 .append(super.pack());
         return packet.createMarked();
     }
@@ -75,7 +74,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         id = packet.getLong();
         mindId = packet.getLong();
         deleted = packet.getByte() != 0;
-        rightId = packet.getLong();
+        ruleId = packet.getLong();
         try {
             packet.mark();
             super.apply(packet);
@@ -103,16 +102,16 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return super.getRight(mind);
 //    }
 
-    public Right getRight() throws Exception {
-        if (right == null) {
-            right = mind.getRights().load(rightId);
+    public Rule getRight() throws Exception {
+        if (rule == null) {
+            rule = mind.getRules().load(ruleId);
         }
-        return right;
+        return rule;
     }
 
-    public void setRight(Right r) {
-        this.rightId = r.getId();
-        right = r;
+    public void setRight(Rule r) {
+        this.ruleId = r.getId();
+        rule = r;
     }
 
 
@@ -741,21 +740,21 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public boolean isStored(Mind mind) throws Exception {
-        return mind.getRights().find(this) != null;
+        return mind.getRules().find(this) != null;
     }
 
     public boolean isStored(ArgList args, Mind mind) throws Exception {
         Domain d = new Domain(getPredicate(), antc, args);
-        return mind.getRights().find(d) != null;
+        return mind.getRules().find(d) != null;
     }
 
-    public Right setStored(Mind mind) throws Exception {
-        Right r = mind.getRights().store(this);
+    public Rule setStored(Mind mind) throws Exception {
+        Rule r = mind.getRules().store(this);
         return r;
     }
 
-    public Right createStored(Mind mind) throws Exception {
-        Right r = mind.getRights().add(this);
+    public Rule createStored(Mind mind) throws Exception {
+        Rule r = mind.getRules().add(this);
         return r;
     }
 
@@ -812,7 +811,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public boolean isQuery(ArgList arguments, Mind mind) throws Exception {
-        if (rightId == -1) {
+        if (ruleId == -1) {
             return false;
         }
         if (getRight().isQuery()) {
@@ -915,7 +914,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     @Override
     public int getHash() {
-        return 47 * getHashBase() + (int) (rightId ^ (rightId >>> 32));
+        return 47 * getHashBase() + (int) (ruleId ^ (ruleId >>> 32));
     }
 
     public int getHashBase() {
@@ -1112,7 +1111,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     @Override
     public int compareTo(Domain domain) {
-        return (int) (rightId == domain.rightId ? id - domain.id : rightId - domain.rightId);
+        return (int) (ruleId == domain.ruleId ? id - domain.id : ruleId - domain.ruleId);
     }
 
 //    public int compareVars(Domain slave, int pos) throws Exception {
@@ -1145,7 +1144,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                } else if (arguments.get(i).getValue(mind).isXVariable() && arguments.get(i).getValue(mind).getParent().getRightId() == rightId) {
 //                    ix = arguments.get(i).getValue(mind).getParent().getIndex();
 //                    ++plains;
-                } else if (!arguments.get(i).isEmpty(mind) && arguments.get(i).getValue(mind).isCVariable() && arguments.get(i).getValue(mind).getRightId() == rightId) {
+                } else if (!arguments.get(i).isEmpty(mind) && arguments.get(i).getValue(mind).isCVariable() && arguments.get(i).getValue(mind).getRuleId() == ruleId) {
                     ix = arguments.get(i).getValue(mind).getIndex();
                 } else {
                     ++plains;
@@ -1172,7 +1171,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         try {
             if (to.isAntc() == antc
                     && to.getPredicateId() == predicateId
-                    && (rightId == -1 || to.getRightId() == rightId)) {
+                    && (ruleId == -1 || to.getRuleId() == ruleId)) {
                 int i = 0;
                 for (; i < getRange(); ++i) {
                     try {
@@ -1199,8 +1198,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public long getRightId() {
-        return rightId;
+    public long getRuleId() {
+        return ruleId;
     }
 
 
