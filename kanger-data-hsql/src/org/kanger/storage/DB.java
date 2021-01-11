@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -128,6 +130,12 @@ public class DB implements IData {
     @Override
     public String getDescription() {
         return "HSQL Based data model";
+    }
+
+    @Override
+    public Collection<String> list() {
+        //TODO: Список доступных баз
+        return new ArrayList<>();
     }
 
 }

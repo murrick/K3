@@ -610,6 +610,9 @@ public class Mind {
             case Enums.FOO:
                 r = Parser.implement(line, this);
                 if (r != null) {
+                    if (((SysOp) r).getScripts().isEmpty()) {
+                        library.delete((SysOp) r);
+                    }
                     library.add((SysOp) r);
                 }
                 break;

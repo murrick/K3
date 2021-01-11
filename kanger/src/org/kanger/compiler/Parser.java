@@ -604,6 +604,7 @@ public class Parser {
             }
 
         } while (pos < ln.length());
+
         f.setMode(LibMode.FUNCTION);
         f.setRange(f.getParams().size());
         f.getParams().add(f.getName());

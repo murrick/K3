@@ -3,6 +3,8 @@ package org.kanger.interfaces;
 import org.kanger.Mind;
 import org.kanger.exception.RuntimeErrorException;
 
+import java.util.Collection;
+
 public interface IUser {
 
 //    Mind getMind();
@@ -18,6 +20,8 @@ public interface IUser {
     void clear(Mind mind) throws Exception;
 
     String getStorageName();
+
+    Collection<String> getStoragesList();
 
     void close() throws Exception;
 

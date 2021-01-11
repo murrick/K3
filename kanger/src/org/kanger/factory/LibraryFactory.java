@@ -100,6 +100,9 @@ public class LibraryFactory implements Iterable<SysOp> {
         if (x != null) {
             x.setMode(s.getMode());
             x.setProc(s.getProc());
+            if (s.isDeleted()) {
+                x.setDeleted();
+            }
             x.getScripts().clear();
             x.getScripts().addAll(s.getScripts());
             x.getParams().clear();
@@ -120,7 +123,7 @@ public class LibraryFactory implements Iterable<SysOp> {
     public SysOp find(String title) throws Exception {
         for (long id : cache.find((title).hashCode())) {
             IUnit one = load(id);
-            if (one.toString().equals(title)) {
+            if (!one.isDeleted() && one.toString().equals(title)) {
                 return (SysOp) one;
             }
         }

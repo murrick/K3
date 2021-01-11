@@ -11,6 +11,8 @@ import org.kanger.interfaces.IUser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -117,6 +119,12 @@ public class DB implements IData {
     @Override
     public String getDescription() {
         return "Cojen Tupl based data model";
+    }
+
+    @Override
+    public Collection<String> list() {
+        //TODO: Список доступных баз
+        return new ArrayList<>();
     }
 
 }

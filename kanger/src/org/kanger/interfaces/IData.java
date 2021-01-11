@@ -1,5 +1,7 @@
 package org.kanger.interfaces;
 
+import java.util.Collection;
+
 public interface IData {
     void init(IUser user);
 
@@ -20,4 +22,6 @@ public interface IData {
     IBase connect(String context) throws Exception;
 
     String getDescription();
+
+    Collection<String> list();
 }

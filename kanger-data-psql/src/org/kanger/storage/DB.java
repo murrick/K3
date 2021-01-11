@@ -7,6 +7,8 @@ import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -123,6 +125,12 @@ public class DB implements IData {
     @Override
     public String getDescription() {
         return "PostgreSQL based data model";
+    }
+
+    @Override
+    public Collection<String> list() {
+        //TODO: Список доступных баз
+        return new ArrayList<>();
     }
 
 }

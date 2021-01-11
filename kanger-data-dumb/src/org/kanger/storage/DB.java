@@ -8,8 +8,7 @@ import org.kanger.interfaces.IUser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class DB implements IData {
 
@@ -125,6 +124,20 @@ public class DB implements IData {
     @Override
     public String getDescription() {
         return "DUMB data model";
+    }
+
+    @Override
+    public Collection<String> list() {
+        List<String> list = new ArrayList<>();
+        File[] dir = new File(getDbPath()).listFiles();
+        if (dir != null) {
+            for (File f : dir) {
+                if (!f.isDirectory() && f.getName().contains(".store")) {
+                    list.add(f.getName().replaceAll(".store", ""));
+                }
+            }
+        }
+        return list;
     }
 
     private boolean deleteDirectory(File directoryToBeDeleted) {

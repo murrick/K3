@@ -14,9 +14,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class User implements IUser {
 
@@ -275,6 +273,15 @@ public class User implements IUser {
 
     public String getStorageName() {
         return data == null ? "" : data.getStorageName();
+    }
+
+    @Override
+    public Collection<String> getStoragesList() {
+        if (data != null) {
+            return data.list();
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     @Override

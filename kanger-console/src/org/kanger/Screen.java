@@ -105,15 +105,7 @@ public class Screen {
     }
 
 
-    public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
-        boolean stop = false;
-        Mind mind = new Mind(user);
-
-        //TODO: Волшебство
-        mind.query("?a;");
-
-        String lastQuery = "";
-
+    public static String getSourceDir(IUser user) throws IOException {
         String sourcesDir = user.getProperty("user.dir") + Enums.FILE_SEPARATOR + "SRC";
         if (user.containsKey("sources.dir")) {
             sourcesDir = user.getProperty("sources.dir");
@@ -122,6 +114,17 @@ public class Screen {
             sourcesDir += Enums.FILE_SEPARATOR;
             Files.createDirectories(Paths.get(sourcesDir));
         }
+        return sourcesDir;
+    }
+
+    public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
+        boolean stop = false;
+        Mind mind = new Mind(user);
+
+        //TODO: Волшебство
+        mind.query("?a;");
+
+        String lastQuery = "";
 
         showCopyrigt(user);
 
@@ -167,7 +170,7 @@ public class Screen {
                             stop = true;
                             break;
                         case 'H':   // HELP
-                            showCommonHelp();
+                            showCommonHelp(line.charAt(0) == 'H');
                             break;
                         case 'R':   // RIGHTS
                             showRights(mind, line.charAt(0) != 'r');
@@ -178,43 +181,43 @@ public class Screen {
                         case 'F':   // FUNCTIONS
                             showFunctions(mind, line.charAt(0) != 'f');
                             break;
-                        case 'L':
+                        case 'L':   // LIST
                             showHypo(mind);
                             break;
-                        case 'V':
-                            showLog(mind, LogMode.VALUES, false);
-                            break;
-                        case 'S':
-                            showSolutions(mind, line);
-                            break;
-                        case 'X':
-                            showLog(mind, LogMode.ALL, line.charAt(0) != 'x');
-                            break;
-                        case 'I':
+                        case 'A':   // append
                             makeHypo(mind, sc);
                             break;
-                        case 'E':
+                        case 'V':   // VALUES
+                            showLog(mind, LogMode.VALUES, false);
+                            break;
+                        case 'S':   // SOLUTIONS
+                            showSolutions(mind, line);
+                            break;
+                        case 'X':   // XPLAIN
+                            showLog(mind, LogMode.ALL, line.charAt(0) != 'x');
+                            break;
+                        case 'E':   // ERASE
                             clearWorkspace(user, mind, sc);
                             break;
-                        case 'C':
-                            closeDatabase(user, mind, sc);
+                        case 'G':   // GET
+                            loadSourceFile(mind, loadSource(mind, sc));
                             break;
-                        case 'G':
-                            loadSource(mind, sourcesDir);
-                            break;
-                        case 'U':
-                            useDatabase(line, user, mind, sc);
-                            break;
-                        case 'D':
-                            dropDatabase(user, mind, sc);
-                            break;
-                        case 'M':
+                        case 'P':   // PUT
                             saveSource(line, user, mind, sc);
                             break;
-                        case 'P':
+                        case 'C':   // CLOSE
+                            closeDatabase(user, mind, sc);
+                            break;
+                        case 'U':   // USE
+                            useDatabase(line, user, mind, sc);
+                            break;
+                        case 'D':   // DROP
+                            dropDatabase(user, mind, sc);
+                            break;
+                        case 'I':   // INDEX
                             packDatabase(user, mind, sc);
                             break;
-                        case 'O':
+                        case 'O':   // OPTIONS
                             options(line, user, mind, sc);
                             break;
                         case Enums.SUC:
@@ -263,7 +266,11 @@ public class Screen {
     private static void processFunction(String line, Mind mind) throws Exception {
         mind.setCompliedLine(line);
         SysOp op = (SysOp) mind.compileLine(line, false, null);
-        System.out.printf("SUCCESS: Library updated: =%s;\n", op.toString());
+        if (!op.isDeleted()) {
+            System.out.printf("SUCCESS: Updated function: %s;\n", op.toString());
+        } else {
+            System.out.printf("SUCCESS: Deleted function: %s;\n", op.toString());
+        }
     }
 
     private static void processQuery(String line, Mind mind) throws Exception {
@@ -449,7 +456,39 @@ public class Screen {
                             .replace("/", ".")
                             .replace("\\", "."));
         } else {
-            System.out.println("No database used");
+            List<String> list = (List<String>) user.getStoragesList();
+            if (list.size() > 0) {
+                System.out.println("DBs available:");
+                int i = 0;
+                int n = 1;
+                int cnt = 4;
+                for (String s : list) {
+                    System.out.printf("\t%d: %s", n, s);
+                    if (++i >= cnt) {
+                        System.out.println();
+                        i = 0;
+                    }
+                    ++n;
+                }
+                System.out.printf("\nEnter DB name %s: ", list.isEmpty() ? "" : "or file number");
+                line = sc.nextLine();
+                try {
+                    int ps = Integer.parseInt(line);
+                    ps -= 1;
+                    if (ps < list.size()) {
+                        line = list.get(ps);
+                    }
+                } catch (Exception ex) {
+                }
+                user.use(mind, line);
+                if (!user.isClosed()) {
+                    System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                } else {
+                    System.out.println("No database used");
+                }
+            } else {
+                System.out.println("No database used");
+            }
         }
     }
 
@@ -588,32 +627,35 @@ public class Screen {
         );
     }
 
-    public static void showCommonHelp() {
+    public static void showCommonHelp(boolean details) {
         System.out.printf(
                 "Available KEYWORDS:\n\n"
-                        + "   H[ELP]    - Get this message\n"
+                        + "   help         - Get this message\n"
+                        + "   rights       - View Rights list\n"
+                        + "   base         - View Statements list\n"
+                        + "   functions    - View user defined Functions\n"
                         + "\n"
-                        + "   ?            - Check for Rights Collisions\n"
-                        + "   B[ASE]       - View DataBase contents\n"
-                        + "   R[IGHTS]     - View compiled-structured Rights list\n"
-                        + "   F[UNCS]      - View defined Functions list\n"
-                        + "   L[IST]       - View Hypothesis list after last work\n"
-                        + "   I[NSERT]     - Insert Hypothesis as right\n"
-                        + "   X[PLAIN]     - Show explanation log\n"
-                        + "   S[OLVES]     - Show solves list\n"
-                        + "   V[ALUES]     - Show values list\n"
-                        + "   U[SE] <name> - Create or open existing database\n"
-                        + "   C[LOSE]      - Close currently opened database\n"
-                        + "   D[ROP]       - Drop currently opened database\n"
-                        + "   P[ACK]       - Pack and reindex currently opened database\n"
-                        + "   W[IPE]       - Clear workspace and currently opened database\n"
-                        + "   O[PTIONS]    - Set workspace options\n"
+                        + "   values       - Show values list\n"
+                        + "   solutions    - Show solutions list\n"
+                        + "   xplain       - Show explanation log\n"
+                        + "   list         - View last Hypothesis list\n"
+                        + "   append       - Append Hypothesis as right\n"
                         + "\n"
-                        + "   G[ET]     - Load Source file from disk\n"
+                        + "   get          - Load Source file from disk\n"
+                        + "   put          - Save Source file to disk\n"
                         + "\n"
-                        + "   Q[UIT]    - Quit KANGER\n"
+                        + "   use          - Create or open existing database\n"
+                        + "   close        - Close currently opened database\n"
+                        + "   drop         - Drop currently opened database\n"
+                        + "   index        - Pack and reindex currently opened database\n"
+                        + "\n"
+                        + "   ?            - Check for collisions\n"
+                        + "   options      - Set workspace options\n"
+                        + "   erase        - Erase workspace\n"
+                        + "   quit         - Quit KANGER console\n"
                         + "\n"
                         + "You can use just FIRST letter of keywords.\n"
+                        + (details ? "" : "Use HELP command with capitals for details.\n")
         );
     }
 
@@ -623,7 +665,7 @@ public class Screen {
             System.out.printf("Defined functions (%d):\n", mind.getLibrary().size());
             int i = 0;
             for (SysOp op : mind.getLibrary()) {
-                if (op.getMode() == LibMode.FUNCTION) {
+                if (!op.isDeleted() && op.getMode() == LibMode.FUNCTION) {
                     System.out.printf("Function %03d: %s;\n", op.getId(), op.toString());
                     if (showSys && !op.getScripts().isEmpty()) {
                         for (String s : op.asString().split("\n")) {
@@ -678,21 +720,26 @@ public class Screen {
     }
 
     public static void showPred(Mind mind, Predicate p, boolean showCauses) throws Exception {
-        Set<Domain> set = p.getSolves();
-        if (!set.isEmpty()) {
-            System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
-            for (Domain s : set) {
-                showPredRecurse(mind, s.getArguments().getTVariables(mind), 0, s, showCauses);
-            }
+//        Set<Domain> set = p.getSolves();
+//        if (!set.isEmpty()) {
+        System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
+        for (Domain s : p.getSolves()) {
+            showPredRecurse(mind, s.getArguments().getTVariables(mind), 0, s, showCauses);
         }
+//        }
     }
 
     public static void showBase(Mind mind, boolean showCauses, String param) throws Exception {
+        boolean found = false;
         for (Predicate p : mind.getPredicates()) {
-            if (!mind.isSystem(p) && (param == null || param.equals(p.getName()))) {
+            if (!mind.isSystem(p) && !p.getSolves().isEmpty() && (param == null || param.equals(p.getName()))) {
+                found = true;
                 showPred(mind, p, showCauses);
                 System.out.printf("\n");
             }
+        }
+        if (!found) {
+            System.out.printf("No statements defined\n");
         }
     }
 
@@ -704,7 +751,7 @@ public class Screen {
             for (i = 0; i < list.size(); ++i) {
                 System.out.printf("\t%3d:\t%s\n", i + 1, list.toArray(new Hypothesis[]{})[i].toString());
             }
-            System.out.printf("Use INSERT command for select Hypothesis\n");
+            System.out.printf("Use APPEND command for select Hypothesis\n");
         }
     }
 
@@ -724,10 +771,11 @@ public class Screen {
     }
 
     public static void showRights(Mind mind, boolean showTree) throws Exception {
+        boolean found = false;
         for (Right r : mind.getRights()) {
-
+            found = true;
             System.out.printf("%sRight %03d%s: %s\n",
-                    showTree ? "\n --- " : "",
+                    showTree ? " --- " : "",
                     r.getId(),
                     (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
                             ? " " +
@@ -742,7 +790,11 @@ public class Screen {
                 mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
                 showTree(mind, r);
                 mind.setDebugLevel(save);
+                System.out.printf("\n");
             }
+        }
+        if (!found) {
+            System.out.printf("No rights defined\n");
         }
     }
 
@@ -770,10 +822,9 @@ public class Screen {
 
     }
 
-    public static boolean loadSource(Mind mind, String sourceDir) throws Exception {
-        Scanner scanner = new Scanner(System.in);
+    public static File loadSource(Mind mind, Scanner sc) throws Exception {
         List<File> list = new ArrayList<>();
-        File[] dir = new File(sourceDir).listFiles();
+        File[] dir = new File(getSourceDir(mind.getUser())).listFiles();
         if (dir != null) {
             for (File f : dir) {
                 if (!f.isDirectory() && f.getName().contains(".k")) {
@@ -798,7 +849,7 @@ public class Screen {
         }
 
         System.out.printf("\nEnter file name %s%s: ", list.isEmpty() ? "" : "or file number", mind.getSourceFileName().isEmpty() ? "" : " (" + mind.getSourceFileName() + ")");
-        String line = scanner.nextLine();
+        String line = sc.nextLine();
         File f = null;
         try {
             int ps = Integer.parseInt(line);
@@ -809,15 +860,17 @@ public class Screen {
         } catch (Exception ex) {
         }
 
-        if (f == null) {
-            f = new File(sourceDir + mind.getSourceFileName());
-        }
-        return loadSourceFile(mind, f);
+        return f;
     }
 
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
     public static boolean loadSourceFile(Mind mind, File f) throws Exception {
         try {
+
+            if (f == null) {
+                f = new File(getSourceDir(mind.getUser()) + mind.getSourceFileName());
+            }
+
             if (f.exists()) {
                 final int length = (int) f.length();
                 if (length != 0) {

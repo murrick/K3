@@ -12,9 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class DB implements IData {
 
@@ -136,6 +134,12 @@ public class DB implements IData {
     @Override
     public String getDescription() {
         return "JDBM Based data model";
+    }
+
+    @Override
+    public Collection<String> list() {
+        //TODO: Список доступных баз
+        return new ArrayList<>();
     }
 
 }
