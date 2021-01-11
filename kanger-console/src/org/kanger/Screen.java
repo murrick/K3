@@ -170,7 +170,7 @@ public class Screen {
                             stop = true;
                             break;
                         case 'H':   // HELP
-                            showCommonHelp(line.charAt(0) == 'H');
+                            showCommonHelp();
                             break;
                         case 'R':   // RIGHTS
                             showRights(mind, line.charAt(0) != 'r');
@@ -188,19 +188,19 @@ public class Screen {
                             makeHypo(mind, sc);
                             break;
                         case 'V':   // VALUES
-                            showLog(mind, LogMode.VALUES, false);
+                            showLog(mind, LogMode.VALUES, false, sc);
                             break;
                         case 'S':   // SOLUTIONS
                             showSolutions(mind, line);
                             break;
                         case 'X':   // XPLAIN
-                            showLog(mind, LogMode.ALL, line.charAt(0) != 'x');
+                            showLog(mind, LogMode.ALL, line.charAt(0) != 'x', sc);
                             break;
                         case 'E':   // ERASE
                             clearWorkspace(user, mind, sc);
                             break;
                         case 'G':   // GET
-                            loadSourceFile(mind, loadSource(mind, sc));
+                            loadSourceFile(mind, loadSource(line, mind, sc));
                             break;
                         case 'P':   // PUT
                             saveSource(line, user, mind, sc);
@@ -288,8 +288,8 @@ public class Screen {
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                 System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                 if (res != null) {
-                    showLog(mind, LogMode.SOLVES, false);
-                    showLog(mind, LogMode.VALUES, false);
+                    showLog(mind, LogMode.SOLVES, false, null);
+                    showLog(mind, LogMode.VALUES, false, null);
                 }
                 if (res == null) {
                     showHypo(mind);
@@ -299,10 +299,10 @@ public class Screen {
     }
 
     private static void options(String line, IUser user, Mind mind, Scanner sc) throws Exception {
-        if (line.length() == 1) {
+        if (line.split(" ").length == 1) {
             showOptions(mind);
-        } else {
-            switch (line.charAt(1)) {
+        } else if (line.split(" ").length > 1) {
+            switch (line.split(" ")[1].charAt(0)) {
                 case 'h':
                 case 'H':
                     showOptionsHelp();
@@ -395,7 +395,7 @@ public class Screen {
     }
 
     private static void saveSource(String line, IUser user, Mind mind, Scanner sc) throws Exception {
-        if (line.length() == 1) {
+        if (line.split(" ").length == 1) {
             if (line.charAt(0) == 'M') {
                 //TODO: Save file
             } else {
@@ -534,7 +534,7 @@ public class Screen {
                 }
             }
         } else {
-            showLog(mind, LogMode.SOLVES, false);
+            showLog(mind, LogMode.SOLVES, false, null);
         }
     }
 
@@ -557,7 +557,7 @@ public class Screen {
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
     }
 
-    public static void showLog(Mind mind, LogMode type, boolean file) {
+    public static void showLog(Mind mind, LogMode type, boolean file, Scanner sc) {
 
         if (mind.getLog().size() > 0) {
 
@@ -565,7 +565,7 @@ public class Screen {
 
             if (file) {
                 System.out.print("Save analizer log to file [" + lastLogFile + "]: ");
-                String s = new Scanner(System.in).nextLine().toUpperCase();
+                String s = sc.nextLine().toUpperCase();
                 if (!s.isEmpty()) {
                     lastLogFile = s;
                 }
@@ -616,47 +616,64 @@ public class Screen {
 
     public static void showOptionsHelp() {
         System.out.printf(
-                "Available OPTIONS:\n\n"
-                        + "   H[ELP]    - Get this message\n"
+                "Available options:\n\n"
+                        + "   help                      - Get this message\n"
                         + "\n"
-                        + "   R[IGHTS]  - Rights showed in logs\n"
-                        + "   V[ALUES]  - Values of vars and funcs showed in logs\n"
-                        + "   S[TATUS]  - Status of domains and trees showed in logs\n"
+                        + "   rights [yes|no]           - Rights showed in logs\n"
+                        + "   values [yes|no]           - Values of vars and funcs showed in logs\n"
+                        + "   status [yes|no]           - Status of domains and trees showed in logs\n"
+                        + "   log [yes|no]              - Show runtime log during analysis\n"
+                        + "   memory                    - Show memory status\n"
                         + "\n"
-                        + "Use UPPERCASE letter for ON and LOWER for OFF.\n"
-        );
+                        + "You can use just first letters of keywords.\n");
     }
 
-    public static void showCommonHelp(boolean details) {
+    public static void showCommonHelp() {
         System.out.printf(
-                "Available KEYWORDS:\n\n"
-                        + "   help         - Get this message\n"
-                        + "   rights       - View Rights list\n"
-                        + "   base         - View Statements list\n"
-                        + "   functions    - View user defined Functions\n"
+                "Available keywords:\n\n"
+                        + "INFORMATION:\n"
+                        + "   help                      - Get this message\n"
+                        + "   rights [n] [tree]         - View rules list or selected rule\n"
+                        + "      n                      - Show rule with ID = n\n"
+                        + "      tree                   - Show compiled tree\n"
+                        + "   base [preds] [n] [tree]   - Show statements list for all or selected predicate\n"
+                        + "      preds                  - Show predicates only with IDs\n"
+                        + "      n                      - Show statements for predicate with ID = n\n"
+                        + "      tree                   - Show statements with inference tree\n"
+                        + "   functions [n] [source]    - Show user defined functions list with IDs\n"
+                        + "      n                      - Show function with ID = n\n"
+                        + "      source                 - Show functions source\n"
                         + "\n"
-                        + "   values       - Show values list\n"
-                        + "   solutions    - Show solutions list\n"
-                        + "   xplain       - Show explanation log\n"
-                        + "   list         - View last Hypothesis list\n"
-                        + "   append       - Append Hypothesis as right\n"
+                        + "QUERY RESULTS:\n"
+                        + "   values                    - Show values list\n"
+                        + "   solutions [tree]          - Show solutions list\n"
+                        + "      tree                   - Show solutions list with inference tree\n"
+                        + "   xplain [<file-name>]      - Show explanation log or write it to text file\n"
+                        + "      <file-name>            - File name for write log text\n"
+                        + "   list                      - View last hypothesis list\n"
+                        + "   append                    - Append hypothesis as right\n"
                         + "\n"
-                        + "   get          - Load Source file from disk\n"
-                        + "   put          - Save Source file to disk\n"
+                        + "SOURCE FILES:\n"
+                        + "   get [<file-name>]         - Load source file from disk\n"
+                        + "      <file-name>            - Existing source file name\n"
+                        + "   put [<file-name>]         - Save source file to disk\n"
+                        + "      <file-name>            - File name for write source text\n"
                         + "\n"
-                        + "   use          - Create or open existing database\n"
-                        + "   close        - Close currently opened database\n"
-                        + "   drop         - Drop currently opened database\n"
-                        + "   index        - Pack and reindex currently opened database\n"
+                        + "DATABASE:\n"
+                        + "   use [<base-name>]         - Create or open existing database\n"
+                        + "      <base-name>            - Name of database to be opened or created\n"
+                        + "   close                     - Close currently opened database\n"
+                        + "   drop                      - Drop currently opened database\n"
+                        + "   index                     - Pack and reindex currently opened database\n"
                         + "\n"
-                        + "   ?            - Check for collisions\n"
-                        + "   options      - Set workspace options\n"
-                        + "   erase        - Erase workspace\n"
-                        + "   quit         - Quit KANGER console\n"
+                        + "SYSTEM:\n"
+                        + "   ?                         - Check for collisions\n"
+                        + "   options [<options>]       - Show or change workspace options\n"
+                        + "      <options>              - Use \"help\" option for details\n"
+                        + "   erase                     - Erase workspace\n"
+                        + "   quit                      - Quit KANGER console\n"
                         + "\n"
-                        + "You can use just FIRST letter of keywords.\n"
-                        + (details ? "" : "Use HELP command with capitals for details.\n")
-        );
+                        + "You can use just first letters of keywords.\n");
     }
 
     public static void showFunctions(Mind mind, boolean showSys) {
@@ -814,50 +831,54 @@ public class Screen {
             System.out.println();
             Boolean res = mind.query(h);
             if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                showLog(mind, LogMode.SOLVES, false);
-                showLog(mind, LogMode.VALUES, false);
+                showLog(mind, LogMode.SOLVES, false, null);
+                showLog(mind, LogMode.VALUES, false, null);
                 System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
             }
         }
 
     }
 
-    public static File loadSource(Mind mind, Scanner sc) throws Exception {
-        List<File> list = new ArrayList<>();
-        File[] dir = new File(getSourceDir(mind.getUser())).listFiles();
-        if (dir != null) {
-            for (File f : dir) {
-                if (!f.isDirectory() && f.getName().contains(".k")) {
-                    list.add(f);
-                }
-            }
-        }
-
-        if (list.size() > 0) {
-            System.out.println("Files available:");
-            int i = 0;
-            int n = 1;
-            int cnt = 4;
-            for (File f : list) {
-                System.out.printf("\t%d: %s", n, f.getName());
-                if (++i >= cnt) {
-                    System.out.println();
-                    i = 0;
-                }
-                ++n;
-            }
-        }
-
-        System.out.printf("\nEnter file name %s%s: ", list.isEmpty() ? "" : "or file number", mind.getSourceFileName().isEmpty() ? "" : " (" + mind.getSourceFileName() + ")");
-        String line = sc.nextLine();
+    public static File loadSource(String line, Mind mind, Scanner sc) throws Exception {
         File f = null;
-        try {
-            int ps = Integer.parseInt(line);
-            ps -= 1;
-            if (ps < list.size()) {
-                f = list.get(ps);
+        if (line.split(" ").length == 1) {
+            List<File> list = new ArrayList<>();
+            File[] dir = new File(getSourceDir(mind.getUser())).listFiles();
+            if (dir != null) {
+                for (File fl : dir) {
+                    if (!fl.isDirectory() && fl.getName().contains(".k")) {
+                        list.add(fl);
+                    }
+                }
             }
-        } catch (Exception ex) {
+
+            if (list.size() > 0) {
+                System.out.println("Files available:");
+                int i = 0;
+                int n = 1;
+                int cnt = 4;
+                for (File fl : list) {
+                    System.out.printf("\t%d: %s", n, fl.getName());
+                    if (++i >= cnt) {
+                        System.out.println();
+                        i = 0;
+                    }
+                    ++n;
+                }
+            }
+
+            System.out.printf("\nEnter file name %s%s: ", list.isEmpty() ? "" : "or file number", mind.getSourceFileName().isEmpty() ? "" : " (" + mind.getSourceFileName() + ")");
+            String fn = sc.nextLine();
+            try {
+                int ps = Integer.parseInt(fn);
+                ps -= 1;
+                if (ps < list.size()) {
+                    f = list.get(ps);
+                }
+            } catch (Exception ex) {
+            }
+        } else {
+            f = new File(getSourceDir(mind.getUser()) + line.split(" ")[1]);
         }
 
         return f;
