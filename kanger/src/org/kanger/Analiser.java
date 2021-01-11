@@ -68,6 +68,20 @@ public class Analiser {
                             }
                         }
                     }
+//                } else if (!r.isDeleted() && r.getTree().size() == 1) {
+//                    for(Domain d : r.getTree().get(0)) {
+//                        Hypothesis tmp = new Hypothesis(d, mind);
+//                        if (mind.getHypothesisStore().find(tmp) == null && mind.getRights().find(tmp) == null) {
+////                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+////                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
+////                            tmp.setAntc(true);
+//                            mind.getHypothesisStore().add(tmp);
+//                            occurs = true;
+//                            if (logging) {
+//                                mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + tmp.toString());
+//                            }
+//                        }
+//                    }
                 }
             }
 
@@ -212,6 +226,21 @@ public class Analiser {
         // Контроль закрытия всех веток запроса
         if (!orfans.isEmpty() && !calculated) {
             result = false;
+//            for(Right r : orfans) {
+//                if(r.isStored()) {
+//                    Hypothesis tmp = new Hypothesis(r.getDomain(), mind);
+//                    tmp.setAntc(!tmp.isAntc());
+//                    if (mind.getHypothesisStore().find(tmp) == null /*&& mind.getRights().find(tmp) == null*/) {
+////                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
+////                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
+////                            tmp.setAntc(true);
+//                        mind.getHypothesisStore().add(tmp);
+//                        if (logging) {
+//                            mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + tmp.toString());
+//                        }
+//                    }
+//                }
+//            }
             if (logging) {
                 for (Right r : orfans) {
                     mind.getLog().add(LogMode.ANALIZER, "Unresolved: \t" + r.getDomain().toString());

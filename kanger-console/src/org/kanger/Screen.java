@@ -163,19 +163,19 @@ public class Screen {
 
                 if (line.length() > 0) {
                     switch (line.toUpperCase().charAt(0)) {
-                        case 'Q':
+                        case 'Q':   // QUIT
                             stop = true;
                             break;
-                        case 'H':
+                        case 'H':   // HELP
                             showCommonHelp();
                             break;
-                        case 'R':
+                        case 'R':   // RIGHTS
                             showRights(mind, line.charAt(0) != 'r');
                             break;
-                        case 'B':
+                        case 'B':   // BASES
                             showBase(mind, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
                             break;
-                        case 'F':
+                        case 'F':   // FUNCTIONS
                             showFunctions(mind, line.charAt(0) != 'f');
                             break;
                         case 'L':
@@ -571,8 +571,8 @@ public class Screen {
 
     public static void showCopyrigt(IUser user) {
         System.out.printf("KANGER III, Version %s\n"
-                + "Copyright (C) 1986-%d, Gunn A. Qusnetsov, Dmitry G. Qusnetsov, All rights reserved!\n"
-                + "Written by Dmitry G. Qusnetsov. Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
+                + "Copyright (C) 1986-%d, Dmitry G. Qusnetsov, All rights reserved!\n"
+                + "Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
     }
 
     public static void showOptionsHelp() {
