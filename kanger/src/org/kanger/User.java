@@ -8,16 +8,14 @@ import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
 public class User implements IUser {
 
+    private long id = -1L;
     private final Object locker = new Object();
     Properties userSettings = new Properties();
     private IData data = null;
@@ -26,19 +24,40 @@ public class User implements IUser {
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
 
-    public User() throws Exception {
+    public User(String login, String password) throws Exception {
 //        if (mind == null) {
 //            this.mind = new Mind(this);
 //        } else {
 //            this.mind = mind;
 //        }
 
+        String token = token(login, password);
         userSettings.put("user.home", getHome());
 
-        String confName = getDir("K3.conf");
+        String confName = getDir("users.conf");
         if (!new File(confName).exists()) {
-            confName = getDir("KANGER") + Enums.FILE_SEPARATOR + "K3.conf";
+            confName = getDir("KANGER") + Enums.FILE_SEPARATOR + "users.conf";
         }
+        if (new File(confName).exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
+                        id = Long.parseLong(sCurrentLine.split("\\=")[1]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(id == -1L) {
+            throw new RuntimeErrorException("Authentication error");
+        }
+
+        userSettings.put("user.dir", getDir("KANGER" + Enums.FILE_SEPARATOR + id + Enums.FILE_SEPARATOR));
+        Files.createDirectories(Paths.get(userSettings.getProperty("user.dir")));
+
+        confName = userSettings.getProperty("user.dir") + Enums.FILE_SEPARATOR + "kanger.conf";
         if (new File(confName).exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
                 String sCurrentLine;
@@ -49,14 +68,9 @@ public class User implements IUser {
                 }
             }
         }
-
-        if (!userSettings.containsKey("user.dir")) {
-            userSettings.put("user.dir", getDir("KANGER"));
-        }
-
     }
 
-    public String getHome() {
+    public static String getHome() {
         String home = System.getProperty("user.home");
         if (home.isEmpty()) {
             home = new File("").getAbsolutePath();
@@ -72,7 +86,7 @@ public class User implements IUser {
         return home;
     }
 
-    public String getDir(String subDir) {
+    public static String getDir(String subDir) {
         String home = getHome();
         if (!home.isEmpty()) {
             home += Enums.FILE_SEPARATOR;
@@ -323,5 +337,40 @@ public class User implements IUser {
     @Override
     public void setData(IData db) {
         data = db;
+    }
+
+    private static String token(String login, String password) {
+        return String.format("%04x%04x", login.hashCode(), password.hashCode());
+    }
+
+    public static IUser createUser(String login, String password) throws Exception {
+        String token = token(login, password);
+        String confName = getDir("users.conf");
+        if (!new File(confName).exists()) {
+            confName = getDir("KANGER") + Enums.FILE_SEPARATOR + "users.conf";
+        }
+        long id = 0;
+        if (new File(confName).exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
+                        throw new RuntimeErrorException("User already exists");
+                    }
+                    long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
+                    if(idx > id) {
+                        id = idx;
+                    }
+                }
+            }
+        } else {
+            new File(confName).createNewFile();
+        }
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName, true))) {
+            bw.write(token + "=" + (++id));
+            bw.newLine();
+        }
+
+        return new User(login, password);
     }
 }

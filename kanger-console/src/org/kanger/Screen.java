@@ -6,13 +6,16 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
+import org.kanger.storage.DB;
 import org.kanger.stores.LogStore;
 import org.kanger.test.KangerTest;
+import org.kanger.udf.UDF;
 import org.kanger.units.*;
 
 import java.io.*;
@@ -119,28 +122,54 @@ public class Screen {
 
     public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
-        Mind mind = new Mind(user);
 
-        //TODO: Волшебство
-        mind.query("?a;");
+
+        IData db = null;
+        Class udf = null;
+
 
         String lastQuery = "";
 
-        showCopyrigt(user);
-
         sc = new Scanner(System.in);
 
-        try {
-            Global.getUdf();
-            System.out.println("UDF module loaded");
-        } catch (RuntimeErrorException e) {
-        }
+//        try {
+//            Global.getUdf();
+//            System.out.println("UDF module loaded");
+//        } catch (RuntimeErrorException e) {
+//        }
+//
+//        try {
+//            user.getData();
+//            System.out.println("DB module loaded: " + user.getData().getDescription());
+//        } catch (RuntimeErrorException e) {
+//        }
+
+//        showCopyrigt();
+//        System.out.print("login: ");
+//        String login = sc.nextLine();
+//        String password = new String(System.console().readPassword("password: "));
+//
+//        IUser user = new User(login, password);
+
+        Mind mind = new Mind(user);
 
         try {
-            user.getData();
-            System.out.println("DB module loaded: " + user.getData().getDescription());
-        } catch (RuntimeErrorException e) {
+            udf = UDF.class;
+            Global.setUdf(udf);
+            System.out.println("UDF module loaded");
+        } catch (NoClassDefFoundError ex) {
         }
+        try {
+            db = new DB();
+            db.init(user);
+            System.out.println("DB module loaded: " + user.getData().getDescription());
+        } catch (NoClassDefFoundError ex) {
+        }
+
+        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
+
+        //TODO: Волшебство
+        mind.query("?a;");
 
         while (!stop) {
             String line = "";
@@ -235,7 +264,7 @@ public class Screen {
                     }
 
                 } else if (line.isEmpty()) {
-                    showCopyrigt(user);
+                    showCopyrigt();
                 }
             } catch (ParseErrorException ex) {
                 String x = ex.toString();
@@ -608,7 +637,7 @@ public class Screen {
 
     }
 
-    public static void showCopyrigt(IUser user) {
+    public static void showCopyrigt() {
         System.out.printf("KANGER III, Version %s\n"
                 + "Copyright (C) 1986-%d, Dmitry G. Qusnetsov, All rights reserved!\n"
                 + "Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);

@@ -14,8 +14,8 @@ public class Kanger {
 
     public static void main(String[] args) throws Exception {
 
-        IData db = null;
-        Class udf = null;
+//        IData db = null;
+//        Class udf = null;
 
 //        String confName = System.getProperty("user.home") + "K3.conf";
 //        if (new File(confName).exists()) {
@@ -30,19 +30,18 @@ public class Kanger {
 //        }
 
 
-        IUser user = new User();
-        try {
-            udf = UDF.class;
-            Global.setUdf(udf);
-        } catch (NoClassDefFoundError ex) {
-        }
-        try {
-            db = new DB();
-            db.init(user);
-        } catch (NoClassDefFoundError ex) {
-        }
-
-        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
+//        try {
+//            udf = UDF.class;
+//            Global.setUdf(udf);
+//        } catch (NoClassDefFoundError ex) {
+//        }
+//        try {
+//            db = new DB();
+//            db.init(user);
+//        } catch (NoClassDefFoundError ex) {
+//        }
+//
+//        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
 
 //        List<Object> params = new ArrayList<>();
 //        params.add(1);
@@ -57,6 +56,11 @@ public class Kanger {
 //            }
 //        }
 
+        Screen.showCopyrigt();
+        String login = System.console().readLine("login: ");
+        String password = new String(System.console().readPassword("password: "));
+
+        IUser user = new User(login, password);
 
         Screen.session(user);
     }
