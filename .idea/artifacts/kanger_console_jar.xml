@@ -2,7 +2,6 @@
   <artifact type="jar" name="kanger-console:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/dist/modules</output-path>
     <root id="archive" name="kanger-console.jar">
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jline-3.13.0.jar" path-in-jar="/" />
       <element id="module-output" name="kanger-console" />
     </root>
   </artifact>
