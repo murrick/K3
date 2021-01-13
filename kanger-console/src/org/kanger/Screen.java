@@ -146,8 +146,6 @@ public class Screen {
 //        IUser user = new User(login, password);
 
 
-
-
         while (!stop) {
             String line = "";
             try {
@@ -161,7 +159,7 @@ public class Screen {
                     }
                     lastComments += line;
                     continue;
-                } else if (line.trim().length() > 1 && line.trim().toUpperCase().charAt(0) == 'A') {
+                } else if (line.trim().length() > 0 && line.trim().toUpperCase().charAt(0) == 'Z') {
                     if (!lastQuery.isEmpty()) {
                         line = lastQuery;
                         System.out.println("\n: " + line);
@@ -191,16 +189,16 @@ public class Screen {
                             showHypo(mind);
                             break;
                         case 'A':   // append
-                            makeHypo(mind, sc);
+                            makeHypo(mind, line, sc);
                             break;
                         case 'V':   // VALUES
-                            showLog(mind, LogMode.VALUES, false, sc);
+                            showLog(mind, LogMode.VALUES, null, sc);
                             break;
                         case 'S':   // SOLUTIONS
                             showSolutions(mind, line);
                             break;
                         case 'X':   // XPLAIN
-                            showLog(mind, LogMode.ALL, line.charAt(0) != 'x', sc);
+                            showExplanation(mind, LogMode.ALL, line, sc);
                             break;
                         case 'E':   // ERASE
                             clearWorkspace(mind, sc);
@@ -253,6 +251,8 @@ public class Screen {
                     System.out.print(" ");
                 }
                 System.out.println("^");
+            } catch (CommandErrorException ex) {
+                System.err.println(ex.toString());
             } catch (RuntimeErrorException ex) {
                 System.err.println(ex.toString());
             } catch (Exception e) {
@@ -294,8 +294,8 @@ public class Screen {
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                 System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
                 if (res != null) {
-                    showLog(mind, LogMode.SOLVES, false, null);
-                    showLog(mind, LogMode.VALUES, false, null);
+                    showLog(mind, LogMode.SOLVES, null, null);
+                    showLog(mind, LogMode.VALUES, null, null);
                 }
                 if (res == null) {
                     showHypo(mind);
@@ -458,10 +458,7 @@ public class Screen {
                 System.out.println("No database used");
             }
         } else if (!mind.getUser().isClosed()) {
-            System.out.println("Used database " +
-                    mind.getUser().getStorageName()
-                            .replace("/", ".")
-                            .replace("\\", "."));
+            System.out.println("Used database " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
             System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
         } else {
             List<String> list = (List<String>) mind.getUser().getStoragesList();
@@ -489,6 +486,7 @@ public class Screen {
                 } catch (Exception ex) {
                 }
                 if (!line.isEmpty()) {
+                    line = line.replace(".", Enums.FILE_SEPARATOR);
                     mind.getUser().use(mind, line);
                     if (!mind.getUser().isClosed()) {
                         System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
@@ -564,14 +562,14 @@ public class Screen {
                         }
                     }
                 }
-                if(!found) {
+                if (!found) {
                     System.out.println("No solutions selected");
                 }
             } else {
                 System.out.println("No solutions found");
             }
         } else {
-            showLog(mind, LogMode.SOLVES, false, null);
+            showLog(mind, LogMode.SOLVES, null, null);
         }
     }
 
@@ -594,53 +592,86 @@ public class Screen {
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
     }
 
-    public static void showLog(Mind mind, LogMode type, boolean file, Scanner sc) {
+    public static void showLog(Mind mind, LogMode type, File fi, Scanner sc) throws IOException {
 
         if (mind.getLog().size() > 0) {
-
             BufferedWriter f = null;
 
-            if (file) {
-                System.out.print("Save analizer log to file [" + lastLogFile + "]: ");
-                String s = sc.nextLine().toUpperCase();
-                if (!s.isEmpty()) {
-                    lastLogFile = s;
+            try {
+                if (fi != null) {
+                    f = new BufferedWriter(new FileWriter(fi));
                 }
-                try {
-                    f = new BufferedWriter(new FileWriter(new File(lastLogFile)));
-                } catch (IOException ex) {
-                    System.out.printf("ERROR: %s\n", ex);
-                    file = false;
-                }
-            }
 
-            for (LogEntry log : mind.getLog().getRoot()) {
-                if (type == LogMode.ALL || log.getType() == type) {
-                    if (file) {
-                        try {
+                for (LogEntry log : mind.getLog().getRoot()) {
+                    if (type == LogMode.ALL || log.getType() == type) {
+                        if (f != null) {
                             String line = String.format("%s [%8s] %s",
                                     new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(log.getTime()),
                                     log.getType(),
                                     log.getRecord());
                             f.write(line + "\n");
-                        } catch (IOException ex) {
-                            System.out.printf("ERROR: %s\n", ex);
-                            file = false;
+                        } else {
                             System.out.println(log.getRecord());
                         }
-                    } else {
-                        System.out.println(log.getRecord());
+                    }
+                }
+
+            } finally {
+                if (f != null) {
+                    try {
+                        f.close();
+                        System.out.println("Log to file " + fi.getName() + " saved.");
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+
+    }
+
+    public static void showExplanation(Mind mind, LogMode type, String line, Scanner sc) throws IOException {
+
+        if (mind.getLog().size() > 0) {
+            File f = null;
+            String fname = null;
+            boolean write = false;
+            for (String s : line.split(" ")) {
+                if (!s.trim().isEmpty()) {
+                    switch (s.trim().toUpperCase().charAt(0)) {
+                        case 'X':
+                            break;
+                        case 'W':
+                            write = true;
+                            break;
+                        default:
+                            fname = s.trim();
                     }
                 }
             }
 
-            if (file) {
-                try {
-                    f.close();
-                    System.out.println("Log to file " + lastLogFile + " saved.");
-                } catch (IOException e) {
+
+            if (write && fname == null) {
+                System.out.print("Save analizer log to file (" + lastLogFile + "): ");
+                String s = sc.nextLine().toUpperCase();
+                if (!s.isEmpty()) {
+                    fname = s;
                 }
             }
+
+            if (fname != null) {
+                try {
+                    f = new File(mind.getUser().getProperty("user.dir") + fname);
+                    f.createNewFile();
+                    lastLogFile = fname;
+                } catch (IOException ex) {
+                    System.out.printf("ERROR: %s\n", ex);
+                }
+            }
+
+            showLog(mind, type, f, sc);
+
+        } else {
+            System.out.printf("Explanation log is empty");
         }
 
     }
@@ -656,7 +687,7 @@ public class Screen {
                 "Available options:\n\n"
                         + "   help                      - Get this message\n"
                         + "\n"
-                        + "   riles [yes|no]            - Rules showed in logs\n"
+                        + "   rules [yes|no]            - Rules showed in logs\n"
                         + "   values [yes|no]           - Values of vars and funcs showed in logs\n"
                         + "   status [yes|no]           - Status of domains and trees showed in logs\n"
                         + "   log [yes|no]              - Show runtime log during analysis\n"
@@ -686,30 +717,29 @@ public class Screen {
                         + "\n"
                         + "QUERY RESULTS:\n"
                         + "   values                    - Show values list\n"
-                        + "   solutions [tree]          - Show solutions list\n"
-                        + "      tree                   - Show solutions list with inference tree\n"
-                        + "   xplain [<file-name>]      - Show explanation log or write it to text file\n"
-                        + "      <file-name>            - File name for write log text\n"
+                        + "   solutions                 - Show solutions list\n"
+                        + "      solution <n>             solution with ID = n\n"
+                        + "      solutions tree           solutions list with inference tree\n"
+                        + "      solutions tree <n>       inference tree for solution with ID = n\n"
+                        + "   xplain                    - Show explanation log\n"
+                        + "      xplain write [<fn>]      write explanation log to file with name fn\n"
+                        + "      xplain <fn>              write explanation log to file with name fn\n"
                         + "   list                      - View last hypothesis list\n"
-                        + "   append                    - Append hypothesis as rule\n"
+                        + "   append [<n>]              - Append hypothesis with index = n as a rule\n"
                         + "\n"
                         + "SOURCE FILES:\n"
-                        + "   get [<file-name>]         - Load source file from disk\n"
-                        + "      <file-name>            - Existing source file name\n"
-                        + "   put [<file-name>]         - Save source file to disk\n"
-                        + "      <file-name>            - File name for write source text\n"
+                        + "   get [<fn>]                - Load source file with name fn from disk\n"
+                        + "   put [<fn>]                - Save source file to disk with name fn\n"
                         + "\n"
                         + "DATABASE:\n"
-                        + "   use [<base-name>]         - Create or open existing database\n"
-                        + "      <base-name>            - Name of database to be opened or created\n"
+                        + "   use [<bn>]                - Create, open database with name bn or show name of currently opened\n"
                         + "   close                     - Close currently opened database\n"
                         + "   drop                      - Drop currently opened database\n"
                         + "   index                     - Pack and reindex currently opened database\n"
                         + "\n"
                         + "SYSTEM:\n"
-                        + "   ?                         - Check for collisions\n"
-                        + "   options [<options>]       - Show or change workspace options\n"
-                        + "      <options>              - Use \"help\" option for details\n"
+                        + "   ?                         - Check program for collisions\n"
+                        + "   options [<options>]       - Show or change workspace options. Use \"options help\" for details\n"
                         + "   erase                     - Erase workspace\n"
                         + "   quit                      - Quit KANGER console\n"
                         + "\n"
@@ -738,7 +768,7 @@ public class Screen {
         }
 
         if (!mind.getLibrary().isEmpty()) {
-            if(id == -1) {
+            if (id == -1) {
                 System.out.printf("Defined functions (%d):\n", mind.getLibrary().size());
             }
             boolean found = false;
@@ -759,7 +789,7 @@ public class Screen {
 
                 }
             }
-            if(!found) {
+            if (!found) {
                 System.out.printf("No functions selected\n");
             }
         } else {
@@ -843,7 +873,7 @@ public class Screen {
             }
         }
         if (id != -1) {
-            if(!tree) {
+            if (!tree) {
                 Predicate p = mind.getPredicates().load(id);
                 if (preds) {
                     System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
@@ -887,7 +917,9 @@ public class Screen {
             for (i = 0; i < list.size(); ++i) {
                 System.out.printf("\t%03d:\t%s\n", i + 1, list.toArray(new Hypothesis[]{})[i].toString());
             }
-            System.out.printf("Use APPEND command for select Hypothesis\n");
+//            System.out.printf("Use APPEND command for select Hypothesis\n");
+        } else {
+            System.out.printf("No hypothesis found\n");
         }
     }
 
@@ -930,7 +962,7 @@ public class Screen {
 
         boolean found = false;
         for (Rule r : mind.getRules()) {
-            if(!r.isDeleted() && (id == -1 || r.getId() == id)) {
+            if (!r.isDeleted() && (id == -1 || r.getId() == id)) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
                         tree ? " --- " : "",
@@ -963,26 +995,42 @@ public class Screen {
 
     /* Формирует в line строку гипотезы в качестве правила
      */
-    public static void makeHypo(Mind mind, Scanner sc) throws Exception {
-
-        System.out.printf("Enter Hypothesis Number: ");
-        int i = Integer.parseInt(sc.nextLine());
-        if (--i >= mind.getHypothesisStore().size()) {
-            System.out.printf("ERROR: Wrong number\n");
-        }
-        String temp = mind.getHypothesisStore().get(i).toString();
-        String h = String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
-
-        if (h != null) {
-            System.out.println();
-            Boolean res = mind.query(h);
-            if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                showLog(mind, LogMode.SOLVES, false, null);
-                showLog(mind, LogMode.VALUES, false, null);
-                System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+    public static void makeHypo(Mind mind, String line, Scanner sc) throws Exception {
+        int i = -1;
+        if(line.split(" ").length == 2) {
+            try {
+                i = Integer.parseInt(line.split(" ")[1]);
+            } catch (Exception e) {
+                throw new CommandErrorException();
             }
         }
 
+        if(i == -1) {
+            System.out.printf("Enter Hypothesis Number: ");
+            String n = sc.nextLine();
+            try {
+                i = Integer.parseInt(n);
+            } catch (Exception e) {
+                throw new CommandErrorException();
+            }
+        }
+        --i;
+        try {
+            String temp = mind.getHypothesisStore().get(i).toString();
+            String h = String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
+
+            if (h != null) {
+                System.out.println("Statement: " + h);
+                Boolean res = mind.query(h);
+                if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                    showLog(mind, LogMode.SOLVES, null, null);
+                    showLog(mind, LogMode.VALUES, null, null);
+                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                }
+            }
+        } catch (Exception e) {
+            throw new CommandErrorException();
+        }
     }
 
     public static File loadSource(String line, Mind mind, Scanner sc) throws Exception {

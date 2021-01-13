@@ -103,7 +103,7 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
     }
 
     public Hypothesis get(int index) {
-        return root.toArray(new Hypothesis[]{})[index];
+        return root.get(index);
     }
 
 
