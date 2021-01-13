@@ -158,7 +158,7 @@ public class DictionaryFactory implements Iterable<Term> {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
         Term t = add(temp);
-        t.setRight(r);
+        t.setRule(r);
         t.setIndex(i);
         t.setName(name);
         return t;
@@ -176,7 +176,7 @@ public class DictionaryFactory implements Iterable<Term> {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.XVC, i);
         t = add(temp);
-        t.setRight(c.getRight());
+        t.setRule(c.getRule());
         t.setIndex(i);
         t.setName(c.getName());
 //            c.getChilds().add(t.getId());

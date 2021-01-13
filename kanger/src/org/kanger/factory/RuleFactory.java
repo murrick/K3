@@ -212,7 +212,7 @@ public class RuleFactory implements Iterable<Rule> {
             for (List<Domain> list : r.getTree()) {
                 for (Domain d : list) {
                     r.getPredicates().add(d.getPredicateId());
-                    d.setRight(r);
+                    d.setRule(r);
 //                    d.setMind(mind);
                     for (TVariable t : d.getArguments().getTVariables(mind)) {
                         t.setRule(r);
@@ -400,9 +400,9 @@ public class RuleFactory implements Iterable<Rule> {
     }
 
     public Rule store(Domain d) throws Exception {
-        d.getRight().setStored();
+        d.getRule().setStored();
 //        stored.add(d.getRight().getId(), d.getRight().getId());
-        return d.getRight();
+        return d.getRule();
     }
 
     public Rule find(Solve domain) throws Exception {

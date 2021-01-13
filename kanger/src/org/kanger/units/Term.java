@@ -186,7 +186,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
             if ("..".equals(((PTree) o).getName())) {
                 List<Term> list = new ArrayList<>();
                 list.add(mind.getTerms().add(((PTree) o).getLeft().getName()));
-                list.add(mind.getTerms().add(((PTree) o).getRight().getName()));
+                list.add(mind.getTerms().add(((PTree) o).getRule().getName()));
                 type = DataType.INTERVAL;
                 value = list;
             }
@@ -318,14 +318,14 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.id = id;
     }
 
-    public Rule getRight() throws Exception {
+    public Rule getRule() throws Exception {
         if (rule == null) {
             rule = mind.getRules().load(ruleId);
         }
         return rule;
     }
 
-    public void setRight(Rule r) {
+    public void setRule(Rule r) {
         this.rule = r;
         this.ruleId = r.getId();
     }

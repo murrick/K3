@@ -27,7 +27,7 @@ public class DB implements IData {
 	private String getDbPath() {
         String dbPath = user.getProperty("database.dir");
         if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = user.getProperty("user.dir") + Enums.FILE_SEPARATOR + "DB";
+            dbPath = user.getProperty("user.dir") + "DB";
         }
         if (!dbPath.isEmpty() && !dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
             dbPath += Enums.FILE_SEPARATOR;
@@ -76,18 +76,21 @@ public class DB implements IData {
 
             String dbPath = getDbPath(); 
             dbPath += tmp;
-            String name = Paths.get(dbPath).getFileName().toString();
-            dbPath = dbPath.substring(0, dbPath.length() - name.length());
+//            String name = Paths.get(dbPath).getFileName().toString();
+//            dbPath = dbPath.substring(0, dbPath.length() - name.length());
 
 
-            File[] allContents = new File(dbPath).listFiles();
-            if (allContents != null) {
-                for (File file : allContents) {
-                    if (file.getName().startsWith(name)) {
-                        file.delete();
-                    }
-                }
-            }
+            new File(dbPath + ".index").delete();
+            new File(dbPath + ".store").delete();
+
+//            File[] allContents = new File(dbPath).listFiles();
+//            if (allContents != null) {
+//                for (File file : allContents) {
+//                    if (file.getName().startsWith(name)) {
+//                        file.delete();
+//                    }
+//                }
+//            }
         }
     }
 

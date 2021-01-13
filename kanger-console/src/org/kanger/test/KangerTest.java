@@ -153,7 +153,7 @@ public class KangerTest {
         }
 
         if (size > 0) {
-            System.out.println("Solves (" + size + "):");
+            System.out.println("Solutions (" + size + "):");
             int i = 0;
             for (Rule log : mind.getSolutions().getRoot()) {
                 if (!local || log.getMind().getId() == mind.getId()) {

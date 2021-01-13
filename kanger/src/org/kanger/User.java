@@ -1,6 +1,7 @@
 package org.kanger;
 
 import org.kanger.enums.Enums;
+import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IBase;
@@ -51,13 +52,13 @@ public class User implements IUser {
         }
 
         if(id == -1L) {
-            throw new RuntimeErrorException("Authentication error");
+            throw new AuthenticationErrorException();
         }
 
         userSettings.put("user.dir", getDir("KANGER" + Enums.FILE_SEPARATOR + id + Enums.FILE_SEPARATOR));
         Files.createDirectories(Paths.get(userSettings.getProperty("user.dir")));
 
-        confName = userSettings.getProperty("user.dir") + Enums.FILE_SEPARATOR + "kanger.conf";
+        confName = userSettings.getProperty("user.dir") + "kanger.conf";
         if (new File(confName).exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
                 String sCurrentLine;
@@ -355,7 +356,7 @@ public class User implements IUser {
                 String sCurrentLine;
                 while ((sCurrentLine = br.readLine()) != null) {
                     if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
-                        throw new RuntimeErrorException("User already exists");
+                        throw new AuthenticationErrorException("User already exists");
                     }
                     long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
                     if(idx > id) {

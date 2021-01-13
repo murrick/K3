@@ -4,18 +4,16 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
+import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
-import org.kanger.storage.DB;
 import org.kanger.stores.LogStore;
 import org.kanger.test.KangerTest;
-import org.kanger.udf.UDF;
 import org.kanger.units.*;
 
 import java.io.*;
@@ -109,7 +107,7 @@ public class Screen {
 
 
     public static String getSourceDir(IUser user) throws IOException {
-        String sourcesDir = user.getProperty("user.dir") + Enums.FILE_SEPARATOR + "SRC";
+        String sourcesDir = user.getProperty("user.dir") + "SRC";
         if (user.containsKey("sources.dir")) {
             sourcesDir = user.getProperty("sources.dir");
         }
@@ -120,12 +118,8 @@ public class Screen {
         return sourcesDir;
     }
 
-    public static void session(IUser user) throws Exception, ClassNotFoundException, RuntimeErrorException {
+    public static void session(Mind mind) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
-
-
-        IData db = null;
-        Class udf = null;
 
 
         String lastQuery = "";
@@ -151,25 +145,8 @@ public class Screen {
 //
 //        IUser user = new User(login, password);
 
-        Mind mind = new Mind(user);
 
-        try {
-            udf = UDF.class;
-            Global.setUdf(udf);
-            System.out.println("UDF module loaded");
-        } catch (NoClassDefFoundError ex) {
-        }
-        try {
-            db = new DB();
-            db.init(user);
-            System.out.println("DB module loaded: " + user.getData().getDescription());
-        } catch (NoClassDefFoundError ex) {
-        }
 
-        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
-
-        //TODO: Волшебство
-        mind.query("?a;");
 
         while (!stop) {
             String line = "";
@@ -178,13 +155,13 @@ public class Screen {
 
                 if (line == null) {
                     line = "";
-                } else if (line.length() > 1 && (line.trim().substring(0, 2).equals("//") || line.trim().substring(0, 2).equals("/*"))) {
+                } else if (line.trim().length() > 1 && (line.trim().substring(0, 2).equals("//") || line.trim().substring(0, 2).equals("/*"))) {
                     if (!lastComments.isEmpty()) {
                         lastComments += Enums.LINE_SEPARATOR;
                     }
                     lastComments += line;
                     continue;
-                } else if (line.length() > 1 && line.toUpperCase().charAt(0) == 'A') {
+                } else if (line.trim().length() > 1 && line.trim().toUpperCase().charAt(0) == 'A') {
                     if (!lastQuery.isEmpty()) {
                         line = lastQuery;
                         System.out.println("\n: " + line);
@@ -201,14 +178,14 @@ public class Screen {
                         case 'H':   // HELP
                             showCommonHelp();
                             break;
-                        case 'R':   // RIGHTS
-                            showRights(mind, line.charAt(0) != 'r');
+                        case 'R':   // RULES
+                            showRules(mind, line);
                             break;
                         case 'B':   // BASES
-                            showBase(mind, line.charAt(0) != 'b', line.trim().contains(" ") ? line.split(" ")[1] : null);
+                            showBase(mind, line);
                             break;
                         case 'F':   // FUNCTIONS
-                            showFunctions(mind, line.charAt(0) != 'f');
+                            showFunctions(mind, line);
                             break;
                         case 'L':   // LIST
                             showHypo(mind);
@@ -226,28 +203,28 @@ public class Screen {
                             showLog(mind, LogMode.ALL, line.charAt(0) != 'x', sc);
                             break;
                         case 'E':   // ERASE
-                            clearWorkspace(user, mind, sc);
+                            clearWorkspace(mind, sc);
                             break;
                         case 'G':   // GET
                             loadSourceFile(mind, loadSource(line, mind, sc));
                             break;
                         case 'P':   // PUT
-                            saveSource(line, user, mind, sc);
+                            saveSource(line, mind, sc);
                             break;
                         case 'C':   // CLOSE
-                            closeDatabase(user, mind, sc);
+                            closeDatabase(mind, sc);
                             break;
                         case 'U':   // USE
-                            useDatabase(line, user, mind, sc);
+                            useDatabase(line, mind, sc);
                             break;
                         case 'D':   // DROP
-                            dropDatabase(user, mind, sc);
+                            dropDatabase(mind, sc);
                             break;
                         case 'I':   // INDEX
-                            packDatabase(user, mind, sc);
+                            packDatabase(mind, sc);
                             break;
                         case 'O':   // OPTIONS
-                            options(line, user, mind, sc);
+                            options(line, mind, sc);
                             break;
                         case Enums.SUC:
                             lastQuery = line;
@@ -284,7 +261,7 @@ public class Screen {
 
         }
         try {
-            user.close();
+            mind.getUser().close();
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
@@ -310,8 +287,8 @@ public class Screen {
             String ln = (String) t[0];
 
             Boolean res = mind.query(ln);
-            if (!lastComments.isEmpty() && mind.getAcceptedRight() != null) {
-                mind.getComments().add(mind.getAcceptedRight().getId(), lastComments);
+            if (!lastComments.isEmpty() && mind.getAcceptedRule() != null) {
+                mind.getComments().add(mind.getAcceptedRule().getId(), lastComments);
                 lastComments = "";
             }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
@@ -327,7 +304,7 @@ public class Screen {
         }
     }
 
-    private static void options(String line, IUser user, Mind mind, Scanner sc) throws Exception {
+    private static void options(String line, Mind mind, Scanner sc) throws Exception {
         if (line.split(" ").length == 1) {
             showOptions(mind);
         } else if (line.split(" ").length > 1) {
@@ -338,11 +315,11 @@ public class Screen {
                     break;
                 case 'R':
                     mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RULES);
-                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
+                    System.out.println("Rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
                     break;
                 case 'r':
                     mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RULES);
-                    System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
+                    System.out.println("Rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
                     break;
                 case 'V':
                     mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES);
@@ -381,9 +358,9 @@ public class Screen {
                     System.out.println("Used memory: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024) + " mb");
                     System.out.println();
 
-                    if (!user.isClosed()) {
-                        System.out.println("Cache size: " + user.getMaxCacheSize());
-                        System.out.println("Cache used: " + user.getUsedCacheSize());
+                    if (!mind.getUser().isClosed()) {
+                        System.out.println("Cache size: " + mind.getUser().getMaxCacheSize());
+                        System.out.println("Cache used: " + mind.getUser().getUsedCacheSize());
                         System.out.println();
                     }
 //                                        System.out.println("Database: " + mind.getRights().storedSize());
@@ -392,7 +369,7 @@ public class Screen {
                     System.out.println("Functions: " + mind.getFunctions().size());
                     System.out.println("FValues: " + mind.getFValues().size());
                     System.out.println("Predicates: " + mind.getPredicates().size());
-                    System.out.println("Rights: " + mind.getRules().size());
+                    System.out.println("Rules: " + mind.getRules().size());
                     System.out.println("TValues: " + mind.getTValues().size());
                     System.out.println("TVariables: " + mind.getTValues().size());
                     System.out.println();
@@ -404,26 +381,7 @@ public class Screen {
         }
     }
 
-    private static void packDatabase(IUser user, Mind mind, Scanner sc) throws Exception {
-        if (!user.isClosed()) {
-            System.out.printf("Are you sure to pack database " + user.getStorageName() + "? [y/N]? ");
-            String s = sc.nextLine().toUpperCase();
-            if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                user.reindex(new IReactor() {
-                    @Override
-                    public Object run(Object o) {
-                        System.out.println("Processing " + o);
-                        return null;
-                    }
-                });
-                System.out.println("Database packed and reindexed");
-            }
-        } else {
-            System.out.println("No database used");
-        }
-    }
-
-    private static void saveSource(String line, IUser user, Mind mind, Scanner sc) throws Exception {
+    private static void saveSource(String line, Mind mind, Scanner sc) throws Exception {
         if (line.split(" ").length == 1) {
             if (line.charAt(0) == 'M') {
                 //TODO: Save file
@@ -457,12 +415,31 @@ public class Screen {
         }
     }
 
-    private static void dropDatabase(IUser user, Mind mind, Scanner sc) throws Exception {
-        if (!user.isClosed()) {
-            System.out.printf("Are you sure to drop database " + user.getStorageName() + "? [y/N]? ");
+    private static void packDatabase(Mind mind, Scanner sc) throws Exception {
+        if (!mind.getUser().isClosed()) {
+            System.out.printf("Are you sure to pack database " + mind.getUser().getStorageName() + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                user.remove();
+                mind.getUser().reindex(new IReactor() {
+                    @Override
+                    public Object run(Object o) {
+                        System.out.println("Processing " + o);
+                        return null;
+                    }
+                });
+                System.out.println("Database packed and reindexed");
+            }
+        } else {
+            System.out.println("No database used");
+        }
+    }
+
+    private static void dropDatabase(Mind mind, Scanner sc) throws Exception {
+        if (!mind.getUser().isClosed()) {
+            System.out.printf("Are you sure to drop database " + mind.getUser().getStorageName() + "? [y/N]? ");
+            String s = sc.nextLine().toUpperCase();
+            if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                mind.getUser().remove();
                 System.out.println("Database files removed");
             }
         } else {
@@ -470,22 +447,24 @@ public class Screen {
         }
     }
 
-    private static void useDatabase(String line, IUser user, Mind mind, Scanner sc) throws Exception {
+    private static void useDatabase(String line, Mind mind, Scanner sc) throws Exception {
         if (line.split(" ").length == 2) {
             String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
-            user.use(mind, name);
-            if (!user.isClosed()) {
-                System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+            mind.getUser().use(mind, name);
+            if (!mind.getUser().isClosed()) {
+                System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
             } else {
                 System.out.println("No database used");
             }
-        } else if (!user.isClosed()) {
+        } else if (!mind.getUser().isClosed()) {
             System.out.println("Used database " +
-                    user.getStorageName()
+                    mind.getUser().getStorageName()
                             .replace("/", ".")
                             .replace("\\", "."));
+            System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
         } else {
-            List<String> list = (List<String>) user.getStoragesList();
+            List<String> list = (List<String>) mind.getUser().getStoragesList();
             if (list.size() > 0) {
                 System.out.println("DBs available:");
                 int i = 0;
@@ -509,9 +488,14 @@ public class Screen {
                     }
                 } catch (Exception ex) {
                 }
-                user.use(mind, line);
-                if (!user.isClosed()) {
-                    System.out.println("Database used: " + user.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                if (!line.isEmpty()) {
+                    mind.getUser().use(mind, line);
+                    if (!mind.getUser().isClosed()) {
+                        System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                        System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
+                    } else {
+                        System.out.println("No database used");
+                    }
                 } else {
                     System.out.println("No database used");
                 }
@@ -521,12 +505,12 @@ public class Screen {
         }
     }
 
-    private static void closeDatabase(IUser user, Mind mind, Scanner sc) throws Exception {
-        if (!user.isClosed()) {
-            System.out.printf("Are you sure to close database " + user.getStorageName() + "? [y/N]? ");
+    private static void closeDatabase(Mind mind, Scanner sc) throws Exception {
+        if (!mind.getUser().isClosed()) {
+            System.out.printf("Are you sure to close database " + mind.getUser().getStorageName() + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                user.close();
+                mind.getUser().close();
                 mind.clear();
             }
         } else {
@@ -534,33 +518,57 @@ public class Screen {
         }
     }
 
-    private static void clearWorkspace(IUser user, Mind mind, Scanner sc) throws Exception {
+    private static void clearWorkspace(Mind mind, Scanner sc) throws Exception {
         System.out.printf("Are you sure to erase workspace? [y/N]? ");
         String s = sc.nextLine().toUpperCase();
         if (!s.isEmpty() && s.charAt(0) == 'Y') {
-            user.clear(mind);
+            mind.getUser().clear(mind);
 //                                mind.release();
         }
     }
 
     private static void showSolutions(Mind mind, String line) throws Exception {
-        if (line.charAt(0) != 's') {
+        long id = -1;
+        boolean tree = false;
+        for (String s : line.split(" ")) {
+            if (!s.trim().isEmpty()) {
+                switch (s.trim().toUpperCase().charAt(0)) {
+                    case 'S':
+                        break;
+                    case 'T':
+                        tree = true;
+                        break;
+                    default:
+                        try {
+                            id = Long.parseLong(s);
+                        } catch (Exception ex) {
+                            throw new CommandErrorException();
+                        }
+                }
+            }
+        }
+
+        if (tree || id != -1) {
             if (!mind.getSolutions().isEmpty()) {
-                String posStr = line.trim().contains(" ") ? line.split(" ")[1] : null;
-                int pos = posStr == null ? -1 : Integer.parseInt(posStr);
-                int i = 0;
+                boolean found = false;
                 for (Rule log : mind.getSolutions().getRoot()) {
-                    if (++i == pos || pos == -1) {
+                    if (id == -1 || id == log.getId()) {
+                        found = true;
                         System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
-                        if (!log.getCauses().isEmpty()) {
+                        if (tree && !log.getCauses().isEmpty()) {
                             showCauses(mind, log.getCauses(), 0);
                             System.out.println();
                         }
-                        if (pos != -1) {
+                        if (id != -1) {
                             break;
                         }
                     }
                 }
+                if(!found) {
+                    System.out.println("No solutions selected");
+                }
+            } else {
+                System.out.println("No solutions found");
             }
         } else {
             showLog(mind, LogMode.SOLVES, false, null);
@@ -580,7 +588,7 @@ public class Screen {
                 System.out.println("INFO");
                 break;
         }
-        System.out.println("Rights showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
+        System.out.println("Rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
         System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
         System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
@@ -648,7 +656,7 @@ public class Screen {
                 "Available options:\n\n"
                         + "   help                      - Get this message\n"
                         + "\n"
-                        + "   rights [yes|no]           - Rights showed in logs\n"
+                        + "   riles [yes|no]            - Rules showed in logs\n"
                         + "   values [yes|no]           - Values of vars and funcs showed in logs\n"
                         + "   status [yes|no]           - Status of domains and trees showed in logs\n"
                         + "   log [yes|no]              - Show runtime log during analysis\n"
@@ -662,16 +670,19 @@ public class Screen {
                 "Available keywords:\n\n"
                         + "INFORMATION:\n"
                         + "   help                      - Get this message\n"
-                        + "   rights [n] [tree]         - View rules list or selected rule\n"
-                        + "      n                      - Show rule with ID = n\n"
-                        + "      tree                   - Show compiled tree\n"
-                        + "   base [preds] [n] [tree]   - Show statements list for all or selected predicate\n"
-                        + "      preds                  - Show predicates only with IDs\n"
-                        + "      n                      - Show statements for predicate with ID = n\n"
-                        + "      tree                   - Show statements with inference tree\n"
-                        + "   functions [n] [source]    - Show user defined functions list with IDs\n"
-                        + "      n                      - Show function with ID = n\n"
-                        + "      source                 - Show functions source\n"
+                        + "   rules                     - View rules list\n"
+                        + "      rile <n>                 rule with ID = n\n"
+                        + "      rules tree               rules list with compiled trees\n"
+                        + "      rule tree <n>            rule with compiled tree for rule with ID = n\n"
+                        + "   base                      - Show predicate-split statements list\n"
+                        + "      base predicates          predicates only list with IDs\n"
+                        + "      base <n>                 statements list for predicate with ID = n\n"
+                        + "      base tree                statements list with inference tree\n"
+                        + "      base tree <n>            inference tree for statement with ID = n\n"
+                        + "   functions                 - Show user defined functions list\n"
+                        + "      function <n>             function with ID = n\n"
+                        + "      functions source         functions list with sources\n"
+                        + "      functions source <n>     source for function with ID = n\n"
                         + "\n"
                         + "QUERY RESULTS:\n"
                         + "   values                    - Show values list\n"
@@ -680,7 +691,7 @@ public class Screen {
                         + "   xplain [<file-name>]      - Show explanation log or write it to text file\n"
                         + "      <file-name>            - File name for write log text\n"
                         + "   list                      - View last hypothesis list\n"
-                        + "   append                    - Append hypothesis as right\n"
+                        + "   append                    - Append hypothesis as rule\n"
                         + "\n"
                         + "SOURCE FILES:\n"
                         + "   get [<file-name>]         - Load source file from disk\n"
@@ -705,44 +716,76 @@ public class Screen {
                         + "You can use just first letters of keywords.\n");
     }
 
-    public static void showFunctions(Mind mind, boolean showSys) {
+    public static void showFunctions(Mind mind, String line) throws CommandErrorException {
+        long id = -1;
+        boolean source = false;
+        for (String s : line.split(" ")) {
+            if (!s.trim().isEmpty()) {
+                switch (s.trim().toUpperCase().charAt(0)) {
+                    case 'F':
+                        break;
+                    case 'S':
+                        source = true;
+                        break;
+                    default:
+                        try {
+                            id = Long.parseLong(s);
+                        } catch (Exception ex) {
+                            throw new CommandErrorException();
+                        }
+                }
+            }
+        }
 
         if (!mind.getLibrary().isEmpty()) {
-            System.out.printf("Defined functions (%d):\n", mind.getLibrary().size());
-            int i = 0;
+            if(id == -1) {
+                System.out.printf("Defined functions (%d):\n", mind.getLibrary().size());
+            }
+            boolean found = false;
             for (SysOp op : mind.getLibrary()) {
-                if (!op.isDeleted() && op.getMode() == LibMode.FUNCTION) {
+                if (!op.isDeleted() && op.getMode() == LibMode.FUNCTION && (id == -1 || id == op.getId())) {
+                    found = true;
                     System.out.printf("Function %03d: %s;\n", op.getId(), op.toString());
-                    if (showSys && !op.getScripts().isEmpty()) {
+                    if (source && !op.getScripts().isEmpty()) {
                         for (String s : op.asString().split("\n")) {
                             System.out.printf("\t%s\n", s);
                         }
                         System.out.printf("\n");
                     }
+
+                    if (id != -1) {
+                        break;
+                    }
+
                 }
             }
+            if(!found) {
+                System.out.printf("No functions selected\n");
+            }
+        } else {
+            System.out.printf("No functions defined\n");
         }
     }
 
     public static void showCauses(Mind mind, Set<Cause> causes, int level) throws Exception {
 
         String indent = "";
-        for (int i = 0; i < level; ++i) {
+        for (int i = 0; i <= level; ++i) {
             indent += "\t";
         }
 
         //ПРЕДОХРАНИТЕЛЬ
         if (level > 50) {
-            System.out.printf("\t\t%s...\n", indent);
+            System.out.printf("\t%s...\n", indent);
             return;
         }
 
-        boolean rightShowed = false;
+        boolean ruleShowed = false;
         for (Cause c : causes) {
-            if (!rightShowed) {
-                System.out.printf("\t\t%sRight: %s\n", indent, c.getRight(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
+            if (!ruleShowed) {
+                System.out.printf("\t%sRule:  %s\n", indent, c.getRule(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
             }
-            System.out.printf("\t\t%sCause: %s\n", indent, c.getDonor().toString(mind)); //c.getArguments()));
+            System.out.printf("\t%sCause: %s\n", indent, c.getDonor().toString(mind)); //c.getArguments()));
             Rule r = mind.getRules().find(c.getDonor());
             if (r != null) {
                 showCauses(mind, r.getCauses(), level + 1);
@@ -750,14 +793,14 @@ public class Screen {
         }
     }
 
-    private static void showPredRecurse(Mind mind, List<TVariable> tvars, int tIndex, Domain d, boolean showCauses) throws Exception {
+    private static void showPredRecurse(Mind mind, Domain d, boolean showCauses) throws Exception {
         if (d.isStored(mind)) {
             Rule dest = mind.getRules().find(d);
             if (dest != null) {
                 if (showCauses) {
                     System.out.println("\t-------------------------------------------");
                 }
-                System.out.printf("\t%s\n", d.toString());
+                System.out.printf("\t%03d: %s\n", dest.getId(), dest.toString());
                 if (showCauses && !dest.getCauses().isEmpty()) {
                     showCauses(mind, dest.getCauses(), 0);
                 }
@@ -770,22 +813,69 @@ public class Screen {
 //        if (!set.isEmpty()) {
         System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
         for (Domain s : p.getSolves()) {
-            showPredRecurse(mind, s.getArguments().getTVariables(mind), 0, s, showCauses);
+            showPredRecurse(mind, s, showCauses);
         }
 //        }
     }
 
-    public static void showBase(Mind mind, boolean showCauses, String param) throws Exception {
-        boolean found = false;
-        for (Predicate p : mind.getPredicates()) {
-            if (!mind.isSystem(p) && !p.getSolves().isEmpty() && (param == null || param.equals(p.getName()))) {
-                found = true;
-                showPred(mind, p, showCauses);
-                System.out.printf("\n");
+    public static void showBase(Mind mind, String line) throws Exception {
+        long id = -1;
+        boolean preds = false;
+        boolean tree = false;
+        for (String s : line.split(" ")) {
+            if (!s.trim().isEmpty()) {
+                switch (s.trim().toUpperCase().charAt(0)) {
+                    case 'B':
+                        break;
+                    case 'P':
+                        preds = true;
+                        break;
+                    case 'T':
+                        tree = true;
+                        break;
+                    default:
+                        try {
+                            id = Long.parseLong(s);
+                        } catch (Exception ex) {
+                            throw new CommandErrorException();
+                        }
+                }
             }
         }
-        if (!found) {
-            System.out.printf("No statements defined\n");
+        if (id != -1) {
+            if(!tree) {
+                Predicate p = mind.getPredicates().load(id);
+                if (preds) {
+                    System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
+                } else {
+                    showPred(mind, p, tree);
+                }
+            } else {
+                Rule dest = mind.getRules().load(id);
+                System.out.printf("Statement %03d: %s\n", dest.getId(), dest.toString());
+                if (!dest.getCauses().isEmpty()) {
+                    showCauses(mind, dest.getCauses(), -1);
+                } else {
+                    System.out.printf("Have not solutions variants\n");
+                }
+            }
+        } else {
+            boolean found = false;
+            for (Predicate p : mind.getPredicates()) {
+                if (!p.isDeleted() && !mind.isSystem(p) && !p.getSolves().isEmpty()) {
+                    if (preds) {
+                        found = true;
+                        System.out.printf("Predicate %03d: %s;\n", p.getId(), p.toString());
+                    } else {
+                        found = true;
+                        showPred(mind, p, tree);
+                        System.out.printf("\n");
+                    }
+                }
+            }
+            if (!found) {
+                System.out.printf("No statements selected\n");
+            }
         }
     }
 
@@ -795,7 +885,7 @@ public class Screen {
         if (list != null && list.size() > 0) {
             System.out.printf("Hypothesis list:\n");
             for (i = 0; i < list.size(); ++i) {
-                System.out.printf("\t%3d:\t%s\n", i + 1, list.toArray(new Hypothesis[]{})[i].toString());
+                System.out.printf("\t%03d:\t%s\n", i + 1, list.toArray(new Hypothesis[]{})[i].toString());
             }
             System.out.printf("Use APPEND command for select Hypothesis\n");
         }
@@ -816,31 +906,58 @@ public class Screen {
         }
     }
 
-    public static void showRights(Mind mind, boolean showTree) throws Exception {
+    public static void showRules(Mind mind, String line) throws Exception {
+
+        long id = -1;
+        boolean tree = false;
+        for (String s : line.split(" ")) {
+            if (!s.trim().isEmpty()) {
+                switch (s.trim().toUpperCase().charAt(0)) {
+                    case 'R':
+                        break;
+                    case 'T':
+                        tree = true;
+                        break;
+                    default:
+                        try {
+                            id = Long.parseLong(s);
+                        } catch (Exception ex) {
+                            throw new CommandErrorException();
+                        }
+                }
+            }
+        }
+
         boolean found = false;
         for (Rule r : mind.getRules()) {
-            found = true;
-            System.out.printf("%sRight %03d%s: %s\n",
-                    showTree ? " --- " : "",
-                    r.getId(),
-                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
-                            ? " " +
-                            (r.isGenerated() ? "G" : "") +
-                            (r.isStored() ? "B" : "") +
-                            (r.isQuery() ? "Q" : "") +
-                            (r.isDeleted() ? "D" : "")
-                            : "",
-                    r.getOrig());
-            if (showTree || r.getOrig().isEmpty()) {
-                int save = mind.getDebugLevel();
-                mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
-                showTree(mind, r);
-                mind.setDebugLevel(save);
-                System.out.printf("\n");
+            if(!r.isDeleted() && (id == -1 || r.getId() == id)) {
+                found = true;
+                System.out.printf("%sRule %03d%s: %s\n",
+                        tree ? " --- " : "",
+                        r.getId(),
+                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
+                                ? " " +
+                                (r.isGenerated() ? "G" : "") +
+                                (r.isStored() ? "B" : "") +
+                                (r.isQuery() ? "Q" : "") +
+                                (r.isDeleted() ? "D" : "")
+                                : "",
+                        r.getOrig());
+                if (tree || r.getOrig().isEmpty()) {
+                    int save = mind.getDebugLevel();
+                    mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
+                    showTree(mind, r);
+                    mind.setDebugLevel(save);
+                    System.out.printf("\n");
+                }
+
+                if (id != -1) {
+                    break;
+                }
             }
         }
         if (!found) {
-            System.out.printf("No rights defined\n");
+            System.out.printf("No rules selected\n");
         }
     }
 

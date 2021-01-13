@@ -673,7 +673,7 @@ public class Linker {
                                                     }
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
-                                                        usedRules.add(master.getRight());
+                                                        usedRules.add(master.getRule());
 //                                                s.setParentId(parentId);
                                                         result = true;
                                                     }
@@ -727,7 +727,7 @@ public class Linker {
 //                                                        TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
-                                                        usedRules.add(slave.getRight());
+                                                        usedRules.add(slave.getRule());
 //                                                s.setParentId(parentId);
                                                         result = true;
                                                     }
@@ -831,8 +831,8 @@ public class Linker {
                                     markExcluded(result, substMaster, master, slave, causes, variants, logging);
                                     markExcluded(result, substSlave, slave, master, causes, variants, logging);
 
-                                    master.getRight().setUsed(mind);
-                                    slave.getRight().setUsed(mind);
+                                    master.getRule().setUsed(mind);
+                                    slave.getRule().setUsed(mind);
 //                                    for(Right r : usedRights) {
 //                                        r.setUsed();
 //                                    }
@@ -1138,7 +1138,7 @@ public class Linker {
             if (candidates.size() == 1) {
                 Domain d = candidates.toArray(new Domain[]{})[0];
                 occurs = true;
-                if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRight()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
+                if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
 
 //                    System.err.println();
 //                    System.err.println(d);
@@ -1168,7 +1168,7 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
-                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRight()), mind)) {
+                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
                         if (isValid(d)) {
                             result = true;
                             d.setProduced(mind);
@@ -1194,7 +1194,7 @@ public class Linker {
                             result = true;
                             d.setProduced(mind);
 //                            d.setTag(tag = mind.getTValues().incTag());
-                            d.setCauses(causes.get(d.getRight()), mind);
+                            d.setCauses(causes.get(d.getRule()), mind);
                             d.setSolves(solve, mind);
                             if (logging) {
                                 logBranch(tree, logging);
@@ -1221,7 +1221,7 @@ public class Linker {
                 if (candidates.size() == 1 && !excluded.isEmpty()) {
                     Domain d = candidates.toArray(new Domain[]{})[0];
 //                    d.setCauses(causes.get(d.getRight()));
-                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRight()), mind)) {
+                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
                         if (isValid(d)) {
                             result = true;
                             d.setProduced(mind);
@@ -1249,12 +1249,12 @@ public class Linker {
     }
 
     private void logCauses(LogMode mode, Domain d) throws Exception {
-        boolean rightShowed = false;
+        boolean ruleShowed = false;
         if (d.getCauses(mind) != null) {
             for (Cause c : d.getCauses(mind)) {
-                if (!rightShowed) {
-                    mind.getLog().add(mode, "\tFrom right: " + c.getRight(mind));
-                    rightShowed = true;
+                if (!ruleShowed) {
+                    mind.getLog().add(mode, "\tFrom rule: " + c.getRule(mind));
+                    ruleShowed = true;
                 }
 
 

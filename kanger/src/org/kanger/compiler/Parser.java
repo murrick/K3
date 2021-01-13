@@ -430,9 +430,9 @@ public class Parser {
                 }
 
                 //if(term)
-                p.setRight(parse(ln, pos /*, term + mode*/));
-                if (p.getRight() != null) {
-                    pos = p.getRight().getPos();
+                p.setRule(parse(ln, pos /*, term + mode*/));
+                if (p.getRule() != null) {
+                    pos = p.getRule().getPos();
                 } else {
                     ++pos;
                 }
@@ -482,7 +482,7 @@ public class Parser {
 
                 /* Find point for insertion.
                  */
-                for (r = q = root; q != null; q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRight()) {
+                for (r = q = root; q != null; q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRule()) {
                     if (q.getPrior() <= p.getPrior()) {
                         break;
                     }
@@ -491,7 +491,7 @@ public class Parser {
                 if (p.getDir() != 0) {
                     while (q != null && q.getPrior() == p.getPrior()) {
                         r = q;
-                        q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRight();
+                        q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRule();
                     }
                 }
 
@@ -502,7 +502,7 @@ public class Parser {
 //                    if (p.getNext() == DIR_LEFT) {
                         p.setLeft(root);
                     } else {
-                        p.setRight(root);
+                        p.setRule(root);
                     }
                     root = p;
                 } else {
@@ -511,13 +511,13 @@ public class Parser {
 //                    if (p.getNext() == DIR_LEFT) {
                             p.setLeft(q);
                         } else {
-                            p.setRight(q);
+                            p.setRule(q);
                         }
                     }
                     if (r.getNext() == DIR_LEFT) {
                         r.setLeft(p);
                     } else {
-                        r.setRight(p);
+                        r.setRule(p);
                     }
                 }
 
@@ -537,7 +537,7 @@ public class Parser {
                         && p.getLeft() != null
                         && !p.getLeft().getName().isEmpty()
                         && Tools.isInt(p.getLeft().getName())
-                        && p.getRight() == null) {
+                        && p.getRule() == null) {
                     p.setName(p.getLeft().getName() + " " + p.getName());
                     if (p.getLeft().getLeft() != null && Tools.isPeriod(p.getLeft().getLeft().getName())) {
                         p.setName(p.getLeft().getLeft().getName() + " " + p.getName());
@@ -616,9 +616,9 @@ public class Parser {
             return null;
         }
         t.setLeft(squeeze(t.getLeft()));
-        t.setRight(squeeze(t.getRight()));
+        t.setRule(squeeze(t.getRule()));
         if (t.getName().charAt(0) == Enums.LB && t.getLeft() == null) {
-            return squeeze(t.getRight());
+            return squeeze(t.getRule());
         } else {
             return t;
         }

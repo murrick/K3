@@ -1635,9 +1635,9 @@ public class Mind {
             if (ar) {
                 getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
             } else if (success.isEmpty()) {
-                getLog().add(LogMode.ANALIZER, "WARNING: No rights have been deleted");
+                getLog().add(LogMode.ANALIZER, "WARNING: No rules have been deleted");
             } else {
-                getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rights");
+                getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rules");
                 for (Rule rx : success) {
                     getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
                 }
@@ -1683,9 +1683,9 @@ public class Mind {
                     if (ar) {
                         m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
                     } else if (success.isEmpty()) {
-                        m.getLog().add(LogMode.ANALIZER, "WARNING: No rights have been deleted");
+                        m.getLog().add(LogMode.ANALIZER, "WARNING: No rules have been deleted");
                     } else {
-                        m.getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rights");
+                        m.getLog().add(LogMode.ANALIZER, "SUCCESS: Deleted " + success.size() + " rules");
                         for (Rule r : success) {
                             m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
                         }
@@ -1698,7 +1698,7 @@ public class Mind {
     private void logResult(Mind mind) {
         boolean status = (debugLevel & Enums.DEBUG_OPTION_STATUS) != 0;
         if (mind.getSolutions().size() > 0) {
-            mind.getLog().add(LogMode.SOLVES, "Solves (" + mind.getSolutions().size() + "):");
+            mind.getLog().add(LogMode.SOLVES, "Solutions (" + mind.getSolutions().size() + "):");
             int i = 0;
             for (Rule log : mind.getSolutions().getRoot()) {
                 mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", log.getId(), log.toString()));
@@ -1882,7 +1882,7 @@ public class Mind {
 //    }
 
 
-    public Rule getAcceptedRight() {
+    public Rule getAcceptedRule() {
         return acceptedRule;
     }
 }

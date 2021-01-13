@@ -1,6 +1,11 @@
 package org.kanger;
 
+import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IUser;
+import org.kanger.storage.DB;
+import org.kanger.udf.UDF;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,26 +20,44 @@ public class Kanger {
 
     public static void main(String[] args) throws Exception {
 
+        String newlogin = null;
         String login = null;
         String password = null;
+        boolean singleUser = false;
 
         for (int i = 0; i < args.length; ++i) {
-            if ((args[i].equals("--user") || args[i].equals("-U")) && args.length > i + 1) {
+            if ((args[i].equals("--adduser") || args[i].equals("-A")) && args.length > i + 1) {
+                newlogin = args[++i];
+            } else if ((args[i].equals("--user") || args[i].equals("-U")) && args.length > i + 1) {
                 login = args[++i];
             } else if ((args[i].equals("--password") || args[i].equals("-P")) && args.length > i + 1) {
                 password = args[++i];
+            } else if (args[i].equals("--singleuser") || args[i].equals("-S")) {
+                singleUser = true;
             }
         }
 
-        if (login != null) {
+        if (newlogin != null) {
             try {
-                User.createUser(login, password);
+                if(password == null) {
+                    throw new AuthenticationErrorException("Password must be defined");
+                }
+                User.createUser(newlogin, password);
                 System.exit(1);
             } catch (Exception ex) {
-
+                ex.printStackTrace(System.err);
             }
         }
 
+        if(singleUser) {
+            login = "singleuser";
+            password = "singleuser";
+            try {
+                User.createUser(login, password);
+            } catch (Exception ex) {
+                //
+            }
+        }
 //        IData db = null;
 //        Class udf = null;
 
@@ -77,14 +100,42 @@ public class Kanger {
 //            }
 //        }
 
-        Kanger k = new Kanger();
-        Screen.showCopyrigt();
-        login = k.readLine("login: ");
-        password = new String(k.readPassword("password: "));
+        if(login == null) {
+            Kanger k = new Kanger();
+            Screen.showCopyrigt();
+            login = k.readLine("login: ");
+            password = new String(k.readPassword("password: "));
+        }
 
         IUser user = new User(login, password);
 
-        Screen.session(user);
+        Screen.showCopyrigt();
+
+        IData db = null;
+        Class udf = null;
+        try {
+            udf = UDF.class;
+            Global.setUdf(udf);
+            System.out.println("UDF module loaded");
+        } catch (NoClassDefFoundError ex) {
+        }
+        try {
+            db = new DB();
+            db.init(user);
+            System.out.println("DB module loaded: " + user.getData().getDescription());
+        } catch (NoClassDefFoundError ex) {
+        }
+
+        System.out.println("Current user: " + login);
+
+        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
+
+        Mind mind = new Mind(user);
+        //TODO: Волшебство
+        mind.query("?a;");
+        mind.clear();
+
+        Screen.session(mind);
     }
 
     private String readLine(String format, Object... args) throws IOException {

@@ -24,7 +24,7 @@ public class Cause /*implements Comparable<Cause>*/ {
 
     public Cause(Mind mind, Domain dst, Domain src) throws Exception {
         this.donor = new Solve(dst.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
-        this.rule = dst.getRight();
+        this.rule = dst.getRule();
 //        this.next = mind.getRights().find(src);
 
         ruleId = dst.getRuleId();
@@ -191,14 +191,14 @@ public class Cause /*implements Comparable<Cause>*/ {
         this.donor = donor;
     }
 
-    public Rule getRight(Mind mind) throws Exception {
+    public Rule getRule(Mind mind) throws Exception {
         if (rule == null) {
             rule = mind.getRules().load(ruleId);
         }
         return rule;
     }
 
-    public void setRight(Rule rule) {
+    public void setRule(Rule rule) {
         this.rule = rule;
         this.ruleId = rule.getId();
     }

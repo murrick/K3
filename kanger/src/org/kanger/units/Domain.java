@@ -49,7 +49,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     public Domain(Predicate pred, boolean antc, ArgList args, Rule r) {
         this(pred, antc, args);
-        setRight(r);
+        setRule(r);
     }
 
     public Domain(Predicate pred, boolean antc, ArgList args) {
@@ -102,14 +102,14 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return super.getRight(mind);
 //    }
 
-    public Rule getRight() throws Exception {
+    public Rule getRule() throws Exception {
         if (rule == null) {
             rule = mind.getRules().load(ruleId);
         }
         return rule;
     }
 
-    public void setRight(Rule r) {
+    public void setRule(Rule r) {
         this.ruleId = r.getId();
         rule = r;
     }
@@ -814,7 +814,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         if (ruleId == -1) {
             return false;
         }
-        if (getRight().isQuery()) {
+        if (getRule().isQuery()) {
             return true;
         } else {
             for (TVariable t : arguments.getTVariables(mind)) {
@@ -1047,7 +1047,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(getRight());
+                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(getRule());
                     break;
             }
         }
@@ -1074,7 +1074,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             }
                             break;
                         case FUNCTION:
-                            if (!arguments.get(i).getF(mind).equalsToStruct(to.getArguments().get(i).getF(mind), getRight(), to.getRight())) {
+                            if (!arguments.get(i).getF(mind).equalsToStruct(to.getArguments().get(i).getF(mind), getRule(), to.getRule())) {
                                 return false;
                             }
                             break;
