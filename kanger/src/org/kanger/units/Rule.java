@@ -269,14 +269,12 @@ public class Rule implements IUnit<Rule> {
         try {
             return getOrig().toString()
                     + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
-                    ? " " + id + ((isGenerated() || isQuery() || isStored()) ?
-                    " " +
-                            (isGenerated() ? "G" : "") +
-                            (isStored() ? "B" : "") +
-                            (isStored() && getDomain().isUsed(mind) ? "U" : "") +
-                            (isQuery() ? "Q" : "")
-                    : "") : "")
-                    ;
+                    ? " " + id +
+                    (isGenerated() ? "G" : "") +
+                    (isStored() ? "B" : "") +
+                    (isStored() && getDomain().isUsed(mind) ? "U" : "") +
+                    (isQuery() ? "Q" : "")
+                    : "");
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";

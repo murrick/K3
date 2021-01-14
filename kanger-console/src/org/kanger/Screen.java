@@ -304,52 +304,30 @@ public class Screen {
         }
     }
 
+    private static void showOptions(Mind mind) {
+        System.out.print("Debug level: ");
+        switch (mind.getDebugLevel() & 0xFF) {
+            case Enums.DEBUG_LEVEL_QUIET:
+                System.out.println("QUIET");
+                break;
+            case Enums.DEBUG_LEVEL_DEBUG:
+                System.out.println("DEBUG");
+                break;
+        }
+        System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "NO" : "YES"));
+        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
+        System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
+    }
+
+
     private static void options(String line, Mind mind, Scanner sc) throws Exception {
         if (line.split(" ").length == 1) {
             showOptions(mind);
         } else if (line.split(" ").length > 1) {
-            switch (line.split(" ")[1].charAt(0)) {
-                case 'h':
+            switch (line.split(" ")[1].toUpperCase().charAt(0)) {
                 case 'H':
                     showOptionsHelp();
                     break;
-                case 'R':
-                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RULES);
-                    System.out.println("Rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
-                    break;
-                case 'r':
-                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RULES);
-                    System.out.println("Rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
-                    break;
-                case 'V':
-                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES);
-                    System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
-                    break;
-                case 'v':
-                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
-                    System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
-                    break;
-                case 'S':
-                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS);
-                    System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
-                    break;
-                case 's':
-                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
-                    System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
-                    break;
-                case 'L':
-                    mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS);
-                    System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
-                    break;
-                case 'l':
-                    mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
-                    System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
-                    break;
-                case 't':
-                case 'T':
-                    KangerTest.test(mind, "set_" + (line.length() > 3 ? line.substring(3) : ""));
-                    break;
-                case 'm':
                 case 'M':
                     System.out.println("Memory status:");
                     System.out.println();
@@ -377,42 +355,116 @@ public class Screen {
                     System.out.println("Solutions: " + mind.getSolutions().size());
                     System.out.println("Values: " + mind.getValues().size());
                     break;
+                case 'D':
+                    if (line.split(" ").length > 2) {
+                        mind.setDebugLevel(mind.getDebugLevel() & ~0xFF);
+                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                                ? mind.getDebugLevel() | Enums.DEBUG_LEVEL_DEBUG
+                                : mind.getDebugLevel() | Enums.DEBUG_LEVEL_QUIET);
+                    }
+                    System.out.print("Debug level: ");
+                    switch (mind.getDebugLevel() & 0xFF) {
+                        case Enums.DEBUG_LEVEL_QUIET:
+                            System.out.println("QUIET");
+                            break;
+                        case Enums.DEBUG_LEVEL_DEBUG:
+                            System.out.println("DEBUG");
+                            break;
+                    }
+                    break;
+                case 'V':
+                    if (line.split(" ").length > 2) {
+                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                                ? mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES
+                                : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
+                    }
+                    System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "NO" : "YES"));
+                    break;
+                case 'S':
+                    if (line.split(" ").length > 2) {
+                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                                ? mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS
+                                : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
+                    }
+                    System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
+                    break;
+                case 'L':
+                    if (line.split(" ").length > 2) {
+                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                                ? mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS
+                                : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
+                    }
+                    System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
+                    break;
+                case 'T':
+                    KangerTest.test(mind, "set_" + (line.length() > 3 ? line.substring(3) : ""));
+                    break;
             }
         }
     }
 
     private static void saveSource(String line, Mind mind, Scanner sc) throws Exception {
+        String fname = null;
         if (line.split(" ").length == 1) {
-            if (line.charAt(0) == 'M') {
-                //TODO: Save file
-            } else {
-                System.out.println(mind.getSourceCode());
+            System.out.println(mind.getSourceCode());
+
+            System.out.printf("Save source code to file? [Y/n]? ");
+            String s = sc.nextLine().toUpperCase();
+            if (s.isEmpty() || s.charAt(0) == 'Y') {
+                fname = mind.getSourceFileName();
+                System.out.print("Enter file name (" + mind.getSourceFileName() + "): ");
+                s = sc.nextLine();
+                if (!s.isEmpty()) {
+                    fname = s;
+                }
             }
         } else {
-            Long id = Long.parseLong(line.substring(1).trim());
-            System.out.println(formatRightWithComments(mind, id));
-            if (line.charAt(0) == 'M') {
-                System.out.println("Enter the new comment for ID " + id + ". Two ENTERs ends input:");
-
-                String out = "";
-                String text = null;
-                int counter = 0;
-                while (sc.hasNextLine()) {
-                    text = sc.nextLine();
-                    if (!text.isEmpty()) {
-                        out += text + Enums.LINE_SEPARATOR;
-                        counter = 0;
-                    } else if (++counter < 2) {
-                        out += Enums.LINE_SEPARATOR;
-                    } else {
-                        break;
-                    }
-                }
-
-                mind.getComments().add(id, out.trim());
+            try {
+                Long id = Long.parseLong(line.split(" ")[1].trim());
                 System.out.println(formatRightWithComments(mind, id));
+
+                System.out.printf("Change comments for rule? [y/N]? ");
+                String s = sc.nextLine().toUpperCase();
+                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                    System.out.println("Enter new comment for rule ID " + id + ". Two ENTERs ends input:");
+
+                    String out = "";
+                    String text = null;
+                    int counter = 0;
+                    while (sc.hasNextLine()) {
+                        text = sc.nextLine();
+                        if (!text.isEmpty()) {
+                            out += text + Enums.LINE_SEPARATOR;
+                            counter = 0;
+                        } else if (++counter < 2) {
+                            out += Enums.LINE_SEPARATOR;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if (out.replaceAll(Enums.LINE_SEPARATOR, "").trim().isEmpty()) {
+                        out = "";
+                    }
+                    mind.getComments().add(id, out.trim());
+                    System.out.println(formatRightWithComments(mind, id));
+                }
+            } catch (Exception ex) {
+                fname = line.split(" ")[1].trim();
             }
         }
+
+        if (fname != null && !fname.isEmpty()) {
+            File f = new File(getSourceDir(mind.getUser()) + fname);
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
+                bw.write(mind.getSourceCode());
+                mind.setSourceFileName(fname);
+                System.out.println("Source file " + fname + " saved.");
+            } catch (IOException ex) {
+                System.out.printf("ERROR: %s\n", ex);
+            }
+        }
+
     }
 
     private static void packDatabase(Mind mind, Scanner sc) throws Exception {
@@ -573,25 +625,6 @@ public class Screen {
         }
     }
 
-    private static void showOptions(Mind mind) {
-        System.out.print("Debug level: ");
-        switch (mind.getDebugLevel() & 0xFF) {
-            case Enums.DEBUG_LEVEL_QUIET:
-                System.out.println("QUIET");
-                break;
-            case Enums.DEBUG_LEVEL_DEBUG:
-                System.out.println("DEBUG");
-                break;
-            case Enums.DEBUG_LEVEL_INFO:
-                System.out.println("INFO");
-                break;
-        }
-        System.out.println("Rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RULES) == 0 ? "OFF" : "ON"));
-        System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "OFF" : "ON"));
-        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "OFF" : "ON"));
-        System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "OFF" : "ON"));
-    }
-
     public static void showLog(Mind mind, LogMode type, File fi, Scanner sc) throws IOException {
 
         if (mind.getLog().size() > 0) {
@@ -652,7 +685,7 @@ public class Screen {
 
             if (write && fname == null) {
                 System.out.print("Save analizer log to file (" + lastLogFile + "): ");
-                String s = sc.nextLine().toUpperCase();
+                String s = sc.nextLine();
                 if (!s.isEmpty()) {
                     fname = s;
                 }
@@ -685,13 +718,13 @@ public class Screen {
     public static void showOptionsHelp() {
         System.out.printf(
                 "Available options:\n\n"
-                        + "   help                      - Get this message\n"
+                        + "   options help             - Get this message\n"
                         + "\n"
-                        + "   rules [yes|no]            - Rules showed in logs\n"
-                        + "   values [yes|no]           - Values of vars and funcs showed in logs\n"
-                        + "   status [yes|no]           - Status of domains and trees showed in logs\n"
-                        + "   log [yes|no]              - Show runtime log during analysis\n"
-                        + "   memory                    - Show memory status\n"
+                        + "   options debug [yes|no]   - Show debug information in logs\n"
+                        + "   options values [yes|no]  - Values of vars and funcs showed in logs\n"
+                        + "   options status [yes|no]  - Status of domains and trees showed in logs\n"
+                        + "   options log [yes|no]     - Show runtime log during analysis\n"
+                        + "   options memory           - Show memory status\n"
                         + "\n"
                         + "You can use just first letters of keywords.\n");
     }
@@ -700,48 +733,50 @@ public class Screen {
         System.out.printf(
                 "Available keywords:\n\n"
                         + "INFORMATION:\n"
-                        + "   help                      - Get this message\n"
-                        + "   rules                     - View rules list\n"
-                        + "      rile <n>                 rule with ID = n\n"
-                        + "      rules tree               rules list with compiled trees\n"
-                        + "      rule tree <n>            rule with compiled tree for rule with ID = n\n"
-                        + "   base                      - Show predicate-split statements list\n"
-                        + "      base predicates          predicates only list with IDs\n"
-                        + "      base <n>                 statements list for predicate with ID = n\n"
-                        + "      base tree                statements list with inference tree\n"
-                        + "      base tree <n>            inference tree for statement with ID = n\n"
-                        + "   functions                 - Show user defined functions list\n"
-                        + "      function <n>             function with ID = n\n"
-                        + "      functions source         functions list with sources\n"
-                        + "      functions source <n>     source for function with ID = n\n"
+                        + "   help                    - Get this message\n"
+                        + "   rules                   - View rules list\n"
+                        + "      rile <n>               rule with ID = n\n"
+                        + "      rules tree             rules list with compiled trees\n"
+                        + "      rule tree <n>          rule with compiled tree for rule with ID = n\n"
+                        + "   base                    - Show predicate-split statements list\n"
+                        + "      base predicates        predicates only list with IDs\n"
+                        + "      base <n>               statements list for predicate with ID = n\n"
+                        + "      base tree              statements list with inference tree\n"
+                        + "      base tree <n>          inference tree for statement with ID = n\n"
+                        + "   functions               - Show user defined functions list\n"
+                        + "      function <n>           function with ID = n\n"
+                        + "      functions source       functions list with sources\n"
+                        + "      functions source <n>   source for function with ID = n\n"
                         + "\n"
                         + "QUERY RESULTS:\n"
-                        + "   values                    - Show values list\n"
-                        + "   solutions                 - Show solutions list\n"
-                        + "      solution <n>             solution with ID = n\n"
-                        + "      solutions tree           solutions list with inference tree\n"
-                        + "      solutions tree <n>       inference tree for solution with ID = n\n"
-                        + "   xplain                    - Show explanation log\n"
-                        + "      xplain write [<fn>]      write explanation log to file with name fn\n"
-                        + "      xplain <fn>              write explanation log to file with name fn\n"
-                        + "   list                      - View last hypothesis list\n"
-                        + "   append [<n>]              - Append hypothesis with index = n as a rule\n"
+                        + "   values                  - Show values list\n"
+                        + "   solutions               - Show solutions list\n"
+                        + "      solution <n>           solution with ID = n\n"
+                        + "      solutions tree         solutions list with inference tree\n"
+                        + "      solutions tree <n>     inference tree for solution with ID = n\n"
+                        + "   xplain                  - Show explanation log\n"
+                        + "      xplain write [<fn>]    write explanation log to file with name fn\n"
+                        + "      xplain <fn>            write explanation log to file with name fn\n"
+                        + "   list                    - View last hypothesis list\n"
+                        + "   append [<n>]            - Append hypothesis with index = n as a rule\n"
                         + "\n"
                         + "SOURCE FILES:\n"
-                        + "   get [<fn>]                - Load source file with name fn from disk\n"
-                        + "   put [<fn>]                - Save source file to disk with name fn\n"
+                        + "   get [<fn>]              - Load source file with name fn from disk\n"
+                        + "   put                     - Show and save source file to disk\n"
+                        + "      put <n>                set comment for rule with ID = n\n"
+                        + "      put <fn>               save source file with name fn\n"
                         + "\n"
                         + "DATABASE:\n"
-                        + "   use [<bn>]                - Create, open database with name bn or show name of currently opened\n"
-                        + "   close                     - Close currently opened database\n"
-                        + "   drop                      - Drop currently opened database\n"
-                        + "   index                     - Pack and reindex currently opened database\n"
+                        + "   use [<bn>]              - Create, open database with name bn or show name of currently opened\n"
+                        + "   close                   - Close currently opened database\n"
+                        + "   drop                    - Drop currently opened database\n"
+                        + "   index                   - Pack and reindex currently opened database\n"
                         + "\n"
                         + "SYSTEM:\n"
-                        + "   ?                         - Check program for collisions\n"
-                        + "   options [<options>]       - Show or change workspace options. Use \"options help\" for details\n"
-                        + "   erase                     - Erase workspace\n"
-                        + "   quit                      - Quit KANGER console\n"
+                        + "   ?                       - Check program for collisions\n"
+                        + "   options [<options>]     - Show or change workspace options. Use \"options help\" for details\n"
+                        + "   erase                   - Erase workspace\n"
+                        + "   quit                    - Quit KANGER console\n"
                         + "\n"
                         + "You can use just first letters of keywords.\n");
     }
@@ -1123,8 +1158,7 @@ public class Screen {
         String str = String.format(" -- Right %03d: ", id);
         str += Enums.LINE_SEPARATOR;
         Comment c = mind.getComments().get(id);
-        if (c != null) {
-            str += Enums.LINE_SEPARATOR;
+        if (c != null && !c.getComment().isEmpty()) {
             for (String s : c.getComment().split("\\R")) {
                 str += s + Enums.LINE_SEPARATOR;
             }

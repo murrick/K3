@@ -353,17 +353,15 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //            }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
                 try {
-                    suffix += " " + id + /*isDest() ||*/ (isQuery(arguments, mind) || isUsed(arguments, mind) || isExcluded(arguments, mind) || /*isProduced() ||*/ isStored(arguments, mind) || isCalculated(arguments, mind)
-                            ? " " +
+                    suffix += " " + id +
                             //(isDest() ? "A" : "") +
                             (isQuery(arguments, mind) ? "Q" : "") +
                             (isUsed(arguments, mind) ? "U" : "") +
                             (isExcluded(arguments, mind) ? "X" : "") +
-                            //(isProduced() ? "P" : "") +
+//                            (isProduced() ? "P" : "") +
                             (isStored(arguments, mind) ? "B" : "") +
                             (isCalculated(arguments, mind) ? "S" : "") +
-                            ""
-                            : "");
+                            "";
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }

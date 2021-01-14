@@ -1,7 +1,6 @@
 package org.kanger;
 
 import org.kanger.exception.AuthenticationErrorException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
@@ -10,6 +9,7 @@ import org.kanger.udf.UDF;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 
 
 /**
@@ -23,37 +23,52 @@ public class Kanger {
         String newlogin = null;
         String login = null;
         String password = null;
+        String rootDir = "KANGER";
         boolean singleUser = false;
 
-        for (int i = 0; i < args.length; ++i) {
-            if ((args[i].equals("--adduser") || args[i].equals("-A")) && args.length > i + 1) {
-                newlogin = args[++i];
-            } else if ((args[i].equals("--user") || args[i].equals("-U")) && args.length > i + 1) {
-                login = args[++i];
-            } else if ((args[i].equals("--password") || args[i].equals("-P")) && args.length > i + 1) {
-                password = args[++i];
-            } else if (args[i].equals("--singleuser") || args[i].equals("-S")) {
+        if (System.getenv().containsKey("KANGER_HOME")) {
+            rootDir = System.getenv().get("KANGER_HOME");
+        }
+
+        String envs[] = new String[]{};
+        if (System.getenv().containsKey("KANGER_OPTIONS")) {
+            envs = System.getenv().get("KANGER_OPTIONS").split(" ");
+        }
+
+        String[] params = concatenate(args, envs);
+
+        for (int i = 0; i < params.length; ++i) {
+            if ((params[i].equals("--adduser") || params[i].equals("-A")) && params.length > i + 1) {
+                newlogin = params[++i];
+            } else if ((params[i].equals("--user") || params[i].equals("-U")) && params.length > i + 1) {
+                login = params[++i];
+            } else if ((params[i].equals("--password") || params[i].equals("-P")) && params.length > i + 1) {
+                password = params[++i];
+            } else if (params[i].equals("--singleuser") || params[i].equals("-S")) {
                 singleUser = true;
+            } else if ((params[i].equals("--rootdir") || params[i].equals("-R")) && params.length > i + 1) {
+                rootDir = params[++i];
             }
         }
 
         if (newlogin != null) {
             try {
-                if(password == null) {
+                if (password == null) {
                     throw new AuthenticationErrorException("Password must be defined");
                 }
-                User.createUser(newlogin, password);
+                User.createUser(newlogin, password, rootDir);
+                System.out.println("New user created: " + newlogin);
                 System.exit(1);
             } catch (Exception ex) {
                 ex.printStackTrace(System.err);
             }
         }
 
-        if(singleUser) {
+        if (singleUser) {
             login = "singleuser";
             password = "singleuser";
             try {
-                User.createUser(login, password);
+                User.createUser(login, password, rootDir);
             } catch (Exception ex) {
                 //
             }
@@ -100,14 +115,14 @@ public class Kanger {
 //            }
 //        }
 
-        if(login == null) {
+        if (login == null) {
             Kanger k = new Kanger();
             Screen.showCopyrigt();
             login = k.readLine("login: ");
             password = new String(k.readPassword("password: "));
         }
 
-        IUser user = new User(login, password);
+        IUser user = new User(login, password, rootDir);
 
         Screen.showCopyrigt();
 
@@ -153,5 +168,17 @@ public class Kanger {
         if (System.console() != null)
             return System.console().readPassword(format, args);
         return this.readLine(format, args).toCharArray();
+    }
+
+    private static <T> T[] concatenate(T[] a, T[] b) {
+        int aLen = a.length;
+        int bLen = b.length;
+
+        @SuppressWarnings("unchecked")
+        T[] c = (T[]) Array.newInstance(a.getClass().getComponentType(), aLen + bLen);
+        System.arraycopy(a, 0, c, 0, aLen);
+        System.arraycopy(b, 0, c, aLen, bLen);
+
+        return c;
     }
 }

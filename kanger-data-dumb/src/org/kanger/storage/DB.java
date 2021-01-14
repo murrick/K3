@@ -7,12 +7,11 @@ import org.kanger.interfaces.IUser;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class DB implements IData {
 
-//    String dbPath = "";
+    //    String dbPath = "";
     private static final Object locker = new Object();
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<>();
@@ -24,7 +23,7 @@ public class DB implements IData {
         user.setData(this);
     }
 
-	private String getDbPath() {
+    private String getDbPath() {
         String dbPath = user.getProperty("database.dir");
         if (dbPath == null || dbPath.isEmpty()) {
             dbPath = user.getProperty("user.dir") + "DB";
@@ -34,7 +33,7 @@ public class DB implements IData {
         }
         return dbPath;
     }
-	
+
     @Override
     public void use(String name) throws IOException {
         if (!isClosed()) {
@@ -74,7 +73,7 @@ public class DB implements IData {
             String tmp = storageName;
             close();
 
-            String dbPath = getDbPath(); 
+            String dbPath = getDbPath();
             dbPath += tmp;
 //            String name = Paths.get(dbPath).getFileName().toString();
 //            dbPath = dbPath.substring(0, dbPath.length() - name.length());
@@ -132,15 +131,23 @@ public class DB implements IData {
     @Override
     public Collection<String> list() {
         List<String> list = new ArrayList<>();
-        File[] dir = new File(getDbPath()).listFiles();
+        recurseList(getDbPath(), "", list);
+        return list;
+    }
+
+    private void recurseList(String path, String prefix, Collection list) {
+        File[] dir = new File(path).listFiles();
         if (dir != null) {
             for (File f : dir) {
-                if (!f.isDirectory() && f.getName().contains(".store")) {
-                    list.add(f.getName().replaceAll(".store", ""));
+                if (!f.isDirectory()) {
+                    if (f.getName().contains(".store")) {
+                        list.add(prefix + f.getName().replaceAll(".store", ""));
+                    }
+                } else {
+                    recurseList(path + Enums.FILE_SEPARATOR + f.getName(), prefix + (prefix.isEmpty() ? "" : ".") + f.getName() + ".", list);
                 }
             }
         }
-        return list;
     }
 
     private boolean deleteDirectory(File directoryToBeDeleted) {

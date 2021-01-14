@@ -5,14 +5,12 @@ package org.kanger.exception;
  */
 public class AuthenticationErrorException extends Exception {
     String exceptionMessage = "Authentication error";
-    String error = "";
-    Object object = null;
 
     public AuthenticationErrorException() {
     }
 
     public AuthenticationErrorException(String msg) {
-        exceptionMessage = msg;
+        exceptionMessage += ": " + msg;
     }
 
     @Override

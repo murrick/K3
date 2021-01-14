@@ -76,7 +76,7 @@ public class Mind {
     private String compiledFileName = "mind.e";
     private boolean logging = true;
 
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (/*Enums.DEBUG_OPTION_STATUS |*/ Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_RULES /*| Enums.DEBUG_OPTION_RTLOGS*/);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES);
     private Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
@@ -1696,7 +1696,6 @@ public class Mind {
     }
 
     private void logResult(Mind mind) {
-        boolean status = (debugLevel & Enums.DEBUG_OPTION_STATUS) != 0;
         if (mind.getSolutions().size() > 0) {
             mind.getLog().add(LogMode.SOLVES, "Solutions (" + mind.getSolutions().size() + "):");
             int i = 0;

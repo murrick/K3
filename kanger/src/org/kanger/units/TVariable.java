@@ -189,8 +189,6 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     public String getVarName() throws Exception {
         switch (mind.getDebugLevel() & 0x00FF) {
-            case Enums.DEBUG_LEVEL_INFO:
-                return getName().toString();
             case Enums.DEBUG_LEVEL_DEBUG:
                 return String.format("%c%d", Enums.TVC, index);
             default:

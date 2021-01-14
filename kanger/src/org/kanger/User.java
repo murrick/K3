@@ -25,7 +25,7 @@ public class User implements IUser {
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
 
-    public User(String login, String password) throws Exception {
+    public User(String login, String password, String rootDir) throws Exception {
 //        if (mind == null) {
 //            this.mind = new Mind(this);
 //        } else {
@@ -37,7 +37,7 @@ public class User implements IUser {
 
         String confName = getDir("users.conf");
         if (!new File(confName).exists()) {
-            confName = getDir("KANGER") + Enums.FILE_SEPARATOR + "users.conf";
+            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
         }
         if (new File(confName).exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
@@ -52,10 +52,10 @@ public class User implements IUser {
         }
 
         if(id == -1L) {
-            throw new AuthenticationErrorException();
+            throw new AuthenticationErrorException(login);
         }
 
-        userSettings.put("user.dir", getDir("KANGER" + Enums.FILE_SEPARATOR + id + Enums.FILE_SEPARATOR));
+        userSettings.put("user.dir", getDir(rootDir + Enums.FILE_SEPARATOR + id + Enums.FILE_SEPARATOR));
         Files.createDirectories(Paths.get(userSettings.getProperty("user.dir")));
 
         confName = userSettings.getProperty("user.dir") + "kanger.conf";
@@ -344,11 +344,12 @@ public class User implements IUser {
         return String.format("%04x%04x", login.hashCode(), password.hashCode());
     }
 
-    public static IUser createUser(String login, String password) throws Exception {
+    public static IUser createUser(String login, String password, String rootDir) throws Exception {
         String token = token(login, password);
         String confName = getDir("users.conf");
         if (!new File(confName).exists()) {
-            confName = getDir("KANGER") + Enums.FILE_SEPARATOR + "users.conf";
+            Files.createDirectories(Paths.get(getDir(rootDir)));
+            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
         }
         long id = 0;
         if (new File(confName).exists()) {
@@ -372,6 +373,6 @@ public class User implements IUser {
             bw.newLine();
         }
 
-        return new User(login, password);
+        return new User(login, password, rootDir);
     }
 }

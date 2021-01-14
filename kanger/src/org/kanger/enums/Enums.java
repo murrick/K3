@@ -191,14 +191,12 @@ public class Enums {
     };
 
     public static final int DEBUG_LEVEL_QUIET = 0;
-    public static final int DEBUG_LEVEL_INFO = 1;
-    public static final int DEBUG_LEVEL_DEBUG = 2;
+    public static final int DEBUG_LEVEL_DEBUG = 1;
 
     public static final int DEBUG_OPTION_VALUES = 0x100;
     public static final int DEBUG_OPTION_STATUS = 0x200;
-    public static final int DEBUG_OPTION_RULES = 0x400;
+    //    public static final int DEBUG_OPTION_RULES = 0x400;
     public static final int DEBUG_OPTION_RTLOGS = 0x800;
-    public static final int DEBUG_OPTION_RVALUES = 0x1000;
 
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");
     public static final String LINE_SEPARATOR = System.getProperty("line.separator");
