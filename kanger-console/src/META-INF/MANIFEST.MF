@@ -1,3 +1,5 @@
 Manifest-Version: 1.0
 Main-Class: org.kanger.Kanger
+Class-Path: kanger.jar kanger-udf.jar kanger-data-hsql.jar kanger-data-j
+ dbm.jar kanger-data-psql.jar kanger-data-tupl.jar kanger-data-dumb.jar
 

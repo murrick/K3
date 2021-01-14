@@ -4,16 +4,10 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.interfaces.IUnit;
-import org.kanger.primitives.ArgList;
-import org.kanger.primitives.Cause;
-import org.kanger.primitives.Hypothesis;
-import org.kanger.primitives.Solve;
+import org.kanger.primitives.*;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -589,6 +583,39 @@ public class Rule implements IUnit<Rule> {
                 ArgList list = d.getArguments().convertBase(mind);
                 d.getArguments().clear();
                 d.getArguments().addAll(list);
+            }
+        }
+    }
+
+    public void washCauses() throws Exception {
+        if (isStored()) {
+            SortedMap<Integer, Set<Cause>> map = new TreeMap<>();
+            for (Cause c : causes) {
+                int weight = 0;
+                for (Argument a : getDomain().getArguments()) {
+                    for (Argument b : c.getDonor().getArguments()) {
+                        if (a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                            ++weight;
+                            break;
+                        }
+                    }
+                }
+
+//                if(weight == getDomain().getRange() && getDomain().getPredicateId() == c.getDonor().getPredicateId()) {
+//                    weight = 0;
+//                }
+
+                if (!map.containsKey(weight)) {
+                    map.put(weight, new HashSet<>());
+                }
+                map.get(weight).add(c);
+            }
+            if (map.size() > 1) {
+                int weight = map.firstKey();
+                for (Cause c : map.get(weight)) {
+                    causes.remove(c);
+                }
+                map.remove(weight);
             }
         }
     }

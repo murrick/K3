@@ -1410,6 +1410,7 @@ public class Linker {
                     if (d.getCauses(mind) != null) {
                         x.getCauses().clear();
                         x.getCauses().addAll(d.getCauses(mind));
+                        x.washCauses();
 
                         //TODO: XPRMNT
 //                        x.getDomain().setCauses(d.getCauses());

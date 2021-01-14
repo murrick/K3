@@ -7,6 +7,7 @@ import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
@@ -44,10 +45,27 @@ public class Kanger {
                 login = params[++i];
             } else if ((params[i].equals("--password") || params[i].equals("-P")) && params.length > i + 1) {
                 password = params[++i];
-            } else if (params[i].equals("--singleuser") || params[i].equals("-S")) {
-                singleUser = true;
             } else if ((params[i].equals("--rootdir") || params[i].equals("-R")) && params.length > i + 1) {
                 rootDir = params[++i];
+            } else if (params[i].equals("--singleuser") || params[i].equals("-S")) {
+                singleUser = true;
+            } else if (params[i].equals("--help") || params[i].equals("-H")) {
+                String jarName = new File(Kanger.class.getProtectionDomain()
+                        .getCodeSource()
+                        .getLocation()
+                        .toURI()).getName();
+                Screen.showCopyrigt();
+                System.out.printf("Usage: java -jar %s [options]\n" +
+                                "Options:\n" +
+                                "\t--adduser or -A\t-Create new user. Password required.\n" +
+                                "\t--user or -U\t-Login with selected user login.\n" +
+                                "\t--password or -P\t-Select password.\n" +
+                                "\t--rootdir or -R\t-Select home KANGER directory.\n" +
+                                "\t--singleuser or -S\t-Local single user mode.\n" +
+                                "\t--help or -H\t-Show this message.\n",
+                        jarName
+                );
+                System.exit(0);
             }
         }
 
@@ -58,7 +76,7 @@ public class Kanger {
                 }
                 User.createUser(newlogin, password, rootDir);
                 System.out.println("New user created: " + newlogin);
-                System.exit(1);
+                System.exit(0);
             } catch (Exception ex) {
                 ex.printStackTrace(System.err);
             }
