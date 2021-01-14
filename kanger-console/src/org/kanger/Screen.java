@@ -460,8 +460,6 @@ public class Screen {
                 bw.write(mind.getSourceCode());
                 mind.setSourceFileName(fname);
                 System.out.println("Source file " + fname + " saved.");
-            } catch (IOException ex) {
-                System.out.printf("ERROR: %s\n", ex);
             }
         }
 
