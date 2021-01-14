@@ -1057,7 +1057,7 @@ public class Mind {
                     boolean ar = m.analise(r, logging);
                     if (ar) {
                         if (logging) {
-                            m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
+                            m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new rule");
                         }
                         release(m);
                         res = null;
@@ -1127,7 +1127,7 @@ public class Mind {
                     boolean ar = m.analise(r, logging);
                     if (ar) {
                         if (logging) {
-                            m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
+                            m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new rule");
                         }
                         release(m);
                         res = null;
@@ -1139,7 +1139,7 @@ public class Mind {
 //                        ar = m.analise(null, logging);
                         if (ar) {
                             if (logging) {
-                                m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new Right");
+                                m.getLog().add(LogMode.ANALIZER, "ERROR: Conflict in new rule");
                             }
                             release(m);
                             res = null;
@@ -1153,7 +1153,7 @@ public class Mind {
                                         m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
                                     }
                                 }
-                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New Right Accepted");
+                                m.getLog().add(LogMode.ANALIZER, "SUCCESS: New rule accepted");
                             }
 //                                m.link(null, logging);
 

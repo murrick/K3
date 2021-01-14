@@ -52,6 +52,7 @@ public class Screen {
             } else {
                 prefix = "\n: ";
             }
+            repeat = false;
             System.out.printf(prefix);
             line = sc.nextLine();
             String lineStart = "";
@@ -412,10 +413,14 @@ public class Screen {
             String s = sc.nextLine().toUpperCase();
             if (s.isEmpty() || s.charAt(0) == 'Y') {
                 fname = mind.getSourceFileName();
-                System.out.print("Enter file name (" + mind.getSourceFileName() + "): ");
+                System.out.print("Enter file name. Space for cancel (" + mind.getSourceFileName() + "): ");
                 s = sc.nextLine();
                 if (!s.isEmpty()) {
-                    fname = s;
+                    if (s.trim().isEmpty()) {
+                        fname = null;
+                    } else {
+                        fname = s;
+                    }
                 }
             }
         } else {

@@ -69,6 +69,14 @@ public class Kanger {
             }
         }
 
+        if (singleUser) {
+            try {
+                User.createUser("singleuser", "singleuser", rootDir);
+            } catch (Exception ex) {
+                //
+            }
+        }
+
         if (newlogin != null) {
             try {
                 if (password == null) {
@@ -85,11 +93,6 @@ public class Kanger {
         if (singleUser) {
             login = "singleuser";
             password = "singleuser";
-            try {
-                User.createUser(login, password, rootDir);
-            } catch (Exception ex) {
-                //
-            }
         }
 //        IData db = null;
 //        Class udf = null;
@@ -181,13 +184,6 @@ public class Kanger {
         return reader.readLine();
     }
 
-    private char[] readPassword(String format, Object... args)
-            throws IOException {
-        if (System.console() != null)
-            return System.console().readPassword(format, args);
-        return this.readLine(format, args).toCharArray();
-    }
-
     private static <T> T[] concatenate(T[] a, T[] b) {
         int aLen = a.length;
         int bLen = b.length;
@@ -198,5 +194,12 @@ public class Kanger {
         System.arraycopy(b, 0, c, aLen, bLen);
 
         return c;
+    }
+
+    private char[] readPassword(String format, Object... args)
+            throws IOException {
+        if (System.console() != null)
+            return System.console().readPassword(format, args);
+        return this.readLine(format, args).toCharArray();
     }
 }
