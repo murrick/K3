@@ -594,7 +594,7 @@ public class Rule implements IUnit<Rule> {
                 int weight = 0;
                 for (Argument a : getDomain().getArguments()) {
                     for (Argument b : c.getDonor().getArguments()) {
-                        if (a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                        if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
                             ++weight;
                             break;
                         }

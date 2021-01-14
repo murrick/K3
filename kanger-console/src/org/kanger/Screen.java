@@ -19,8 +19,6 @@ import org.kanger.units.*;
 import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,15 +106,16 @@ public class Screen {
 
 
     public static String getSourceDir(IUser user) throws IOException {
-        String sourcesDir = user.getProperty("user.dir") + "SRC";
-        if (user.containsKey("sources.dir")) {
-            sourcesDir = user.getProperty("sources.dir");
-        }
-        if (!sourcesDir.isEmpty() && !sourcesDir.endsWith("/") && !sourcesDir.endsWith("\\")) {
-            sourcesDir += Enums.FILE_SEPARATOR;
-            Files.createDirectories(Paths.get(sourcesDir));
-        }
-        return sourcesDir;
+        return user.getProperty("sources.dir");
+//        String sourcesDir = user.getProperty("user.dir") + "SRC";
+//        if (user.containsKey("sources.dir")) {
+//            sourcesDir = user.getProperty("sources.dir");
+//        }
+//        if (!sourcesDir.isEmpty() && !sourcesDir.endsWith("/") && !sourcesDir.endsWith("\\")) {
+//            sourcesDir += Enums.FILE_SEPARATOR;
+//            Files.createDirectories(Paths.get(sourcesDir));
+//        }
+//        return sourcesDir;
     }
 
     public static void session(Mind mind) throws Exception, ClassNotFoundException, RuntimeErrorException {

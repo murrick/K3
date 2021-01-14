@@ -24,14 +24,15 @@ public class DB implements IData {
     }
 
     private String getDbPath() {
-        String dbPath = user.getProperty("database.dir");
-        if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = user.getProperty("user.dir") + "DB";
-        }
-        if (!dbPath.isEmpty() && !dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-            dbPath += Enums.FILE_SEPARATOR;
-        }
-        return dbPath;
+        return user.getProperty("database.dir");
+//        String dbPath = user.getProperty("database.dir");
+//        if (dbPath == null || dbPath.isEmpty()) {
+//            dbPath = user.getProperty("user.dir") + "DB";
+//        }
+//        if (!dbPath.isEmpty() && !dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
+//            dbPath += Enums.FILE_SEPARATOR;
+//        }
+//        return dbPath;
     }
 
     @Override

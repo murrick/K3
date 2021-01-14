@@ -136,16 +136,16 @@ public class Kanger {
 //            }
 //        }
 
+        Screen.showCopyrigt();
+
         if (login == null) {
             Kanger k = new Kanger();
-            Screen.showCopyrigt();
             login = k.readLine("login: ");
             password = new String(k.readPassword("password: "));
+            System.out.println();
         }
 
         IUser user = new User(login, password, rootDir);
-
-        Screen.showCopyrigt();
 
         IData db = null;
         Class udf = null;
@@ -163,6 +163,9 @@ public class Kanger {
         }
 
         System.out.println("Current user: " + login);
+        System.out.println("User directory: " + user.getProperty("user.dir"));
+        System.out.println("Path to source files: " + user.getProperty("sources.dir"));
+        System.out.println("Path to databases: " + user.getProperty("database.dir"));
 
         Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
 

@@ -69,6 +69,18 @@ public class User implements IUser {
                 }
             }
         }
+
+        if (!userSettings.containsKey("sources.dir")) {
+            String sourcesDir = userSettings.getProperty("user.dir") + "SRC" + Enums.FILE_SEPARATOR;
+            userSettings.put("sources.dir", sourcesDir);
+            Files.createDirectories(Paths.get(userSettings.getProperty("sources.dir")));
+        }
+
+        if (!userSettings.containsKey("database.dir")) {
+            String sourcesDir = userSettings.getProperty("user.dir") + "SRC" + Enums.FILE_SEPARATOR;
+            userSettings.put("database.dir", sourcesDir);
+            Files.createDirectories(Paths.get(userSettings.getProperty("database.dir")));
+        }
     }
 
     public static String getHome() {
