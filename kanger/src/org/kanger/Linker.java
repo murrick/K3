@@ -1016,15 +1016,15 @@ public class Linker {
     }
 
 
-    private void logBranch(List<Domain> tree, boolean logging) {
-        if (!tree.isEmpty() && logging) {
-            mind.getLog().add(LogMode.ANALIZER, "With branch:");
-
-            for (Domain d : tree) {
-                mind.getLog().add(LogMode.ANALIZER, "\t" + d.toString());
-            }
-        }
-    }
+//    private void logBranch(List<Domain> tree, boolean logging) {
+//        if (!tree.isEmpty() && logging) {
+//            mind.getLog().add(LogMode.ANALIZER, "With branch:");
+//
+//            for (Domain d : tree) {
+//                mind.getLog().add(LogMode.ANALIZER, "\t" + d.toString());
+//            }
+//        }
+//    }
 
     private boolean linkDatabase(List<Domain> tree, Map<Rule, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
 
@@ -1159,7 +1159,7 @@ public class Linker {
 //                    d.setCauses(causes.get(d.getRight()));
                         d.setSolves(solve, mind);
                         if (logging) {
-                            logBranch(tree, logging);
+//                            logBranch(tree, logging);
                             mind.getLog().add(LogMode.STORAGE, "DB assumed record: " + d);
                             logCauses(LogMode.STORAGE, d);
                         }
@@ -1176,7 +1176,7 @@ public class Linker {
 //                        d.setCauses(causes.get(d.getRight()));
                             d.setSolves(solve, mind);
                             if (logging) {
-                                logBranch(tree, logging);
+//                                logBranch(tree, logging);
                                 mind.getLog().add(LogMode.STORAGE, "DB assumed record (x): " + d);
                                 logCauses(LogMode.STORAGE, d);
                             }
@@ -1197,7 +1197,7 @@ public class Linker {
                             d.setCauses(causes.get(d.getRule()), mind);
                             d.setSolves(solve, mind);
                             if (logging) {
-                                logBranch(tree, logging);
+//                                logBranch(tree, logging);
                                 mind.getLog().add(LogMode.STORAGE, "DB assumed record (c): " + d);
                                 logCauses(LogMode.STORAGE, d);
                             }
@@ -1229,7 +1229,7 @@ public class Linker {
 //                        d.setCauses(causes.get(d.getRight()));
                             d.setSolves(solve, mind);
                             if (logging) {
-                                logBranch(tree, logging);
+//                                logBranch(tree, logging);
                                 mind.getLog().add(LogMode.STORAGE, "DB assumed record (a): " + d);
                                 logCauses(LogMode.STORAGE, d);
                             }
@@ -1511,9 +1511,10 @@ public class Linker {
                     }
                 }
 
-                if (block && logging) {
-                    mind.getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
-                }
+//                if (block && logging) {
+//                    mind.getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
+//                }
+
                 if (!block & d.isComplete()) {
                     List<TValue> list = new ArrayList<>();
                     for (TVariable t : d.getArguments().getTVariables(mind)) {

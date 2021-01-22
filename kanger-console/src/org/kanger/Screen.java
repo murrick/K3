@@ -297,7 +297,7 @@ public class Screen {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
                 }
-                if (res == null) {
+                if (res == null && line.trim().charAt(0) == Enums.SUC) {
                     showHypo(mind);
                 }
             }
@@ -358,7 +358,7 @@ public class Screen {
                 case 'D':
                     if (line.split(" ").length > 2) {
                         mind.setDebugLevel(mind.getDebugLevel() & ~0xFF);
-                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                        mind.setDebugLevel(line.split(" ")[2].toUpperCase().charAt(0) == 'Y'
                                 ? mind.getDebugLevel() | Enums.DEBUG_LEVEL_DEBUG
                                 : mind.getDebugLevel() | Enums.DEBUG_LEVEL_QUIET);
                     }
@@ -374,7 +374,7 @@ public class Screen {
                     break;
                 case 'V':
                     if (line.split(" ").length > 2) {
-                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                        mind.setDebugLevel(line.split(" ")[2].toUpperCase().charAt(0) == 'Y'
                                 ? mind.getDebugLevel() | Enums.DEBUG_OPTION_VALUES
                                 : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
                     }
@@ -382,7 +382,7 @@ public class Screen {
                     break;
                 case 'S':
                     if (line.split(" ").length > 2) {
-                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                        mind.setDebugLevel(line.split(" ")[2].toUpperCase().charAt(0) == 'Y'
                                 ? mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS
                                 : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
                     }
@@ -390,7 +390,7 @@ public class Screen {
                     break;
                 case 'L':
                     if (line.split(" ").length > 2) {
-                        mind.setDebugLevel(line.split(" ")[1].toUpperCase().charAt(0) == 'Y'
+                        mind.setDebugLevel(line.split(" ")[2].toUpperCase().charAt(0) == 'Y'
                                 ? mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS
                                 : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
                     }
@@ -912,18 +912,22 @@ public class Screen {
         if (id != -1) {
             if (!tree) {
                 Predicate p = mind.getPredicates().load(id);
-                if (preds) {
-                    System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
-                } else {
-                    showPred(mind, p, tree);
+                if (p != null) {
+                    if (preds) {
+                        System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
+                    } else {
+                        showPred(mind, p, tree);
+                    }
                 }
             } else {
                 Rule dest = mind.getRules().load(id);
-                System.out.printf("Statement %03d: %s\n", dest.getId(), dest.toString());
-                if (!dest.getCauses().isEmpty()) {
-                    showCauses(mind, dest.getCauses(), -1);
-                } else {
-                    System.out.printf("Have not solutions variants\n");
+                if (dest != null) {
+                    System.out.printf("Statement %03d: %s\n", dest.getId(), dest.toString());
+                    if (!dest.getCauses().isEmpty()) {
+                        showCauses(mind, dest.getCauses(), -1);
+                    } else {
+                        System.out.printf("Have not solutions variants\n");
+                    }
                 }
             }
         } else {

@@ -179,8 +179,8 @@ public class Analiser {
 
                         if (logging) {
                             mind.getLog().add(LogMode.ANALIZER, "Database coincidence: ");
-                            mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                            mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
+                            mind.getLog().add(LogMode.ANALIZER, String.format("\t%03d: %s", p.getId(), p.toString()));
+                            mind.getLog().add(LogMode.ANALIZER, String.format("\t%03d: %s", q.getId(), q.toString()));
                             mind.getLog().add(LogMode.ANALIZER, "===========================================");
                         }
                         result = true;

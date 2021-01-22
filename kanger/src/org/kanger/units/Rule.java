@@ -263,7 +263,7 @@ public class Rule implements IUnit<Rule> {
         try {
             return getOrig().toString()
                     + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
-                    ? " " + id +
+                    ? " " + id + " " +
                     (isGenerated() ? "G" : "") +
                     (isStored() ? "B" : "") +
                     (isStored() && getDomain().isUsed(mind) ? "U" : "") +

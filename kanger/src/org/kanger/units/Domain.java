@@ -169,31 +169,73 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return list;
 //    }
 
-
     public Set<Cause> getCauses(Mind mind) throws Exception {
+        Set<Cause> causes = new HashSet<>();
+
         ArgList args = arguments.convertBase(mind);
-        return getCauses(args, mind);
-    }
-
-    public Set<Cause> getCauses(ArgList args, Mind mind) {
-//        Set<Cause> set =  new HashSet<>();
-//        for(TVariable t : arguments.getTVariables(true)) {
-//            if(!t.isEmpty()) {
-//                for(Cause c : t.getCurrent().getCauses()) {
-//                    if(c.getSrc().getRight().isStored() && c.getDst().getRightId() == getRightId()) {
-//                        set.add(c);
-//                    }
-//                }
-//            }
-//        }
-//        return set;
-
         if (mind.getDomainCauses().containsKey(this) && mind.getDomainCauses().get(this).containsKey(args)) {
-            return mind.getDomainCauses().get(this).get(args);
-        } else {
-            return null;
+            Set<Cause> tmp = mind.getDomainCauses().get(this).get(args.convertBase(mind));
+            if (tmp != null) {
+                causes.addAll(tmp);
+                SortedMap<Integer, Set<Cause>> map = new TreeMap<>();
+                for (Cause c : causes) {
+                    int weight = 0;
+                    for (Argument a : getArguments()) {
+                        for (Argument b : c.getDonor().getArguments()) {
+                            if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                                ++weight;
+                                break;
+                            }
+                        }
+                    }
+
+//                if(weight == getDomain().getRange() && getDomain().getPredicateId() == c.getDonor().getPredicateId()) {
+//                    weight = 0;
+//                }
+
+                    if (!map.containsKey(weight)) {
+                        map.put(weight, new HashSet<>());
+                    }
+                    map.get(weight).add(c);
+                }
+                if (map.size() > 1) {
+                    int weight = map.firstKey();
+                    for (Cause c : map.get(weight)) {
+                        causes.remove(c);
+                    }
+                    map.remove(weight);
+                }
+            }
         }
+
+        return causes;
     }
+
+
+//    private Set<Cause> getCauses(Mind mind) throws Exception {
+//        ArgList args = arguments.convertBase(mind);
+//        return getCauses(args, mind);
+//    }
+//
+//    private Set<Cause> getCauses(ArgList args, Mind mind) {
+////        Set<Cause> set =  new HashSet<>();
+////        for(TVariable t : arguments.getTVariables(true)) {
+////            if(!t.isEmpty()) {
+////                for(Cause c : t.getCurrent().getCauses()) {
+////                    if(c.getSrc().getRight().isStored() && c.getDst().getRightId() == getRightId()) {
+////                        set.add(c);
+////                    }
+////                }
+////            }
+////        }
+////        return set;
+//
+//        if (mind.getDomainCauses().containsKey(this) && mind.getDomainCauses().get(this).containsKey(args)) {
+//            return mind.getDomainCauses().get(this).get(args.convertBase(mind));
+//        } else {
+//            return null;
+//        }
+//    }
 
     public boolean setCauses(Collection<Cause> causes, Mind mind) throws Exception {
         boolean result = false;
@@ -353,7 +395,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //            }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0) {
                 try {
-                    suffix += " " + id +
+                    suffix += " " + id + " " +
                             //(isDest() ? "A" : "") +
                             (isQuery(arguments, mind) ? "Q" : "") +
                             (isUsed(arguments, mind) ? "U" : "") +
