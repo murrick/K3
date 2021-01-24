@@ -1053,8 +1053,11 @@ public class Mind {
 //                        }
 //                    }
 
-                    m.link(r, logging);
-                    boolean ar = m.analyze(r, logging);
+//                    m.link(r, logging);
+//                    boolean ar = m.analyze(r, logging);
+
+                    m.link(null, logging);
+                    boolean ar = m.analyze(null, logging);
                     if (ar) {
                         if (logging) {
                             m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
@@ -1134,10 +1137,11 @@ public class Mind {
                     } else {
                         //TODO: При повторном добавлении не генерируются все продукции
                         //TODO: Нет продукций после добавления гирпотезы с отрицанием.
-                        m.link(r, logging);
-                        ar = m.analyze(r, logging);
-//                        m.link(null, logging);
-//                        ar = m.analise(null, logging);
+//                        m.link(r, logging);
+//                        ar = m.analyze(r, logging);
+
+                        m.link(null, logging);
+                        ar = m.analyze(null, logging);
                         if (ar) {
                             if (logging) {
                                 m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");

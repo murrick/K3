@@ -761,8 +761,8 @@ public class Screen {
                         + "      xplain <fn>            write explanation log to file with name fn\n"
                         + "   list                    - View last hypothesis list\n"
                         + "   append                  - Append hypothesis as a rule\n"
-                        + "      append <n> [yes]       hypothesis with index = n into antecedent\n"
-                        + "      append <n> no          hypothesis with index = n into succedent\n"
+                        + "      append <n> [true]      hypothesis with index = n into antecedent\n"
+                        + "      append <n> false       hypothesis with index = n into succedent\n"
                         + "\n"
                         + "SOURCE FILES:\n"
                         + "   get [<fn>]              - Load source file with name fn from disk\n"
@@ -1060,10 +1060,9 @@ public class Screen {
             } catch (Exception e) {
                 throw new CommandErrorException();
             }
-            System.out.printf("Statement is true or false [yes/no]? ");
+            System.out.printf("Statement is true or false [true/false]? ");
             n = sc.nextLine();
-            antc = n.trim().toUpperCase().charAt(0) == 'Y';
-
+            antc = n.trim().toUpperCase().charAt(0) == 'Y' || n.trim().toUpperCase().charAt(0) == 'F';
         }
         --i;
         try {
