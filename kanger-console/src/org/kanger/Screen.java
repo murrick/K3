@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class Screen {
 
-    private static String lastLogFile = "analizer.log";
+    private static String lastLogFile = "analyzer.log";
     private static Scanner sc = null;
     private static String currentLine = "";
     private static String lastComments = "";
@@ -292,7 +292,7 @@ public class Screen {
                 lastComments = "";
             }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
                 if (res != null) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
@@ -686,7 +686,7 @@ public class Screen {
 
 
             if (write && fname == null) {
-                System.out.print("Save analizer log to file (" + lastLogFile + "): ");
+                System.out.print("Save analyzer log to file (" + lastLogFile + "): ");
                 String s = sc.nextLine();
                 if (!s.isEmpty()) {
                     fname = s;
@@ -760,7 +760,9 @@ public class Screen {
                         + "      xplain write [<fn>]    write explanation log to file with name fn\n"
                         + "      xplain <fn>            write explanation log to file with name fn\n"
                         + "   list                    - View last hypothesis list\n"
-                        + "   append [<n>]            - Append hypothesis with index = n as a rule\n"
+                        + "   append                  - Append hypothesis as a rule\n"
+                        + "      append <n> [yes]       hypothesis with index = n into antecedent\n"
+                        + "      append <n> no          hypothesis with index = n into succedent\n"
                         + "\n"
                         + "SOURCE FILES:\n"
                         + "   get [<fn>]              - Load source file with name fn from disk\n"
@@ -1038,9 +1040,13 @@ public class Screen {
      */
     public static void makeHypo(Mind mind, String line, Scanner sc) throws Exception {
         int i = -1;
-        if(line.split(" ").length == 2) {
+        boolean antc = true;
+        if (line.split(" ").length >= 2) {
             try {
                 i = Integer.parseInt(line.split(" ")[1]);
+                if (line.split(" ").length > 2) {
+                    antc = line.split(" ")[2].trim().toUpperCase().charAt(0) == 'Y';
+                }
             } catch (Exception e) {
                 throw new CommandErrorException();
             }
@@ -1054,9 +1060,14 @@ public class Screen {
             } catch (Exception e) {
                 throw new CommandErrorException();
             }
+            System.out.printf("Statement is true or false [yes/no]? ");
+            n = sc.nextLine();
+            antc = n.trim().toUpperCase().charAt(0) == 'Y';
+
         }
         --i;
         try {
+            mind.getHypothesisStore().get(i).setAntc(antc);
             String temp = mind.getHypothesisStore().get(i).toString();
             String h = String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
 
@@ -1066,7 +1077,7 @@ public class Screen {
                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
-                    System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                    System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
                 }
             }
         } catch (Exception e) {
@@ -1139,7 +1150,7 @@ public class Screen {
                     mind.setSourceFileName(f.getName());
                     boolean res = mind.compile(buf.toString());
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                        System.out.println(mind.getLog().getCurrent(LogMode.ANALIZER).getRecord());
+                        System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
                     }
                     if (res) {
                         System.out.printf("File %s loaded\n", f.getName());

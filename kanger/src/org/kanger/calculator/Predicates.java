@@ -72,17 +72,17 @@ public class Predicates {
                             if (arg.get(0).isTSet() && !arg.get(1).isEmpty(mind)) {
                                 TValue v = arg.get(0).addValue(mind, arg.get(1).getValue(mind));
                                 if (mind.isLogging() && v != null) {
-                                    mind.getLog().add(LogMode.ANALIZER, "Added: " + v);
-                                    mind.getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
-                                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                    mind.getLog().add(LogMode.ANALYZER, "Added: " + v);
+                                    mind.getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
+                                    mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
                                 }
                             }
                             if (arg.get(1).isTSet() && !arg.get(0).isEmpty(mind)) {
                                 TValue v = arg.get(1).addValue(mind, arg.get(0).getValue(mind));
                                 if (mind.isLogging() && v != null) {
-                                    mind.getLog().add(LogMode.ANALIZER, "Added: " + v);
-                                    mind.getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
-                                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                                    mind.getLog().add(LogMode.ANALYZER, "Added: " + v);
+                                    mind.getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
+                                    mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
                                 }
                             }
 

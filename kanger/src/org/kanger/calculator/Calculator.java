@@ -52,8 +52,8 @@ public class Calculator {
                     mind.getFValues().add(fu);
                     result = true;
                     if (logging) {
-                        mind.getLog().add(LogMode.ANALIZER, "Calculated function:");
-                        mind.getLog().add(LogMode.ANALIZER, String.format("\t%s", fu.toString()));
+                        mind.getLog().add(LogMode.ANALYZER, "Calculated function:");
+                        mind.getLog().add(LogMode.ANALYZER, String.format("\t%s", fu.toString()));
 //                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                     }
                 }

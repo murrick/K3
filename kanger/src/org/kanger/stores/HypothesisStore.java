@@ -67,16 +67,16 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
     }
 
 
-    public Hypothesis add(Hypothesis hypotese) throws Exception {
+    public Hypothesis add(Hypothesis hypothesis) throws Exception {
         if (!enableStore) {
             return null;
         }
         if (root == null) {
             root = new ArrayList<>();
         }
-        Hypothesis h = find(hypotese);
-        if (h == null /*|| h.isAntc() != hypotese.isAntc()*/) {
-            h = hypotese;
+        Hypothesis h = find(hypothesis);
+        if (h == null || h.isAntc() != hypothesis.isAntc()) {
+            h = hypothesis;
             h.setAntc(true);
             root.add(h);
             return h;
@@ -128,7 +128,7 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
         }
         for (Hypothesis h : root) {
             if (h.getPredicate().getId() == hy.getPredicate().getId()
-//                    && h.isAntc() == hy.isAntc()
+                    && h.isAntc() == hy.isAntc()
                     && hy.getArguments().equalsBase(mind, h.getArguments())) {
                 return h;
             }

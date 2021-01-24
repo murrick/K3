@@ -75,7 +75,7 @@ public class LogStore {
             }
             if (base.getRoot() != null) {
                 root.addAll(base.getRoot());
-                root.add(new LogEntry(LogMode.TIMING, "* LOG COMMITED AT " + new Date(System.currentTimeMillis()) + " --"));
+                root.add(new LogEntry(LogMode.TIMING, "* LOG COMMITTED AT " + new Date(System.currentTimeMillis()) + " --"));
             }
         }
     }

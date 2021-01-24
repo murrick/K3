@@ -22,7 +22,7 @@ public class Linker {
 
     private int solvedPasses = 0;
     private int dumpedPasses = 0;
-    private int skipedPasses = 0;
+    private int skippedPasses = 0;
 
     //TODO: ПРИБИТЬ
 //    int cccc = 0;
@@ -47,7 +47,7 @@ public class Linker {
 
         solvedPasses = 0;
         dumpedPasses = 0;
-        skipedPasses = 0;
+        skippedPasses = 0;
 
         final Map<Rule, Set<Cause>> causes = new HashMap<>();
 
@@ -58,7 +58,7 @@ public class Linker {
         do {
 
             if (logging) {
-                mind.getLog().add(LogMode.ANALIZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
+                mind.getLog().add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
 
 //            sz = mind.getRightSolves().size();
@@ -145,7 +145,7 @@ public class Linker {
         if (logging) {
             mind.getLog().add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
             mind.getLog().add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
-            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Skiped passes: %03d", skipedPasses));
+            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Skipped passes: %03d", skippedPasses));
         }
 
 //        if (logging) {
@@ -837,7 +837,7 @@ public class Linker {
 //                                        r.setUsed();
 //                                    }
                                 } else {
-                                    ++skipedPasses;
+                                    ++skippedPasses;
 
 //                                    System.err.println("--- " + master);
 //                                    System.err.println("--- " + slave);
@@ -923,7 +923,7 @@ public class Linker {
 //            if (!master.isExcluded(slave.getArguments())) {
             r = v.getTVar().getRule();
             if (logging && result) {
-                mind.getLog().add(LogMode.ANALIZER, "Closed: " + v);
+                mind.getLog().add(LogMode.ANALYZER, "Closed: " + v);
             }
             occurrs = true;
 //            }
@@ -1005,11 +1005,11 @@ public class Linker {
             if (occurrs && result && logging) {
                 mind.pushDebugLevel();
                 mind.setDebugLevel(mind.getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
-                mind.getLog().add(LogMode.ANALIZER, "From right: " + r); //master.getRight());
-                mind.getLog().add(LogMode.ANALIZER, "\tAcceptor: " + master);
+                mind.getLog().add(LogMode.ANALYZER, "From right: " + r); //master.getRight());
+                mind.getLog().add(LogMode.ANALYZER, "\tAcceptor: " + master);
                 mind.popDebugLevel();
-                mind.getLog().add(LogMode.ANALIZER, "\tDonor   : " + slave);
-                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                mind.getLog().add(LogMode.ANALYZER, "\tDonor   : " + slave);
+                mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
             }
         }
         return r != null;
@@ -1364,7 +1364,7 @@ public class Linker {
                         mind.getCalculator().calculate(d.getArguments().get(i).getF(mind), logging);
                     }
                 }
-                if (d.isComplete()) {
+                if (d.isComplete() /*&& !d.isCalculated(mind)*/) {
 
 //                for(Function f : d.getArguments().getFunctions()) {
 //                    f.clear();
@@ -1410,7 +1410,7 @@ public class Linker {
                     if (d.getCauses(mind) != null) {
                         x.getCauses().clear();
                         x.getCauses().addAll(d.getCauses(mind));
-                        x.washCauses();
+//                        x.washCauses();
 
                         //TODO: XPRMNT
 //                        x.getDomain().setCauses(d.getCauses());
@@ -1435,7 +1435,7 @@ public class Linker {
         }
 
         if (result && logging) {
-            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
         }
         return result;
     }
@@ -1468,7 +1468,7 @@ public class Linker {
 //        }
 
         if (result && logging) {
-            mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
         }
         return result;
     }

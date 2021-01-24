@@ -15,24 +15,24 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
  */
-public class Analiser {
+public class Analyzer {
 
 
     private final Mind mind;
 
-    public Analiser(Mind mind) {
+    public Analyzer(Mind mind) {
         this.mind = mind;
     }
 
 
-    public boolean analise(Rule rule, boolean logging) throws Exception {
+    public boolean analyze(Rule rule, boolean logging) throws Exception {
         boolean result = false;
         int counter = 0;
 
         long start = System.currentTimeMillis();
 
         if (logging) {
-            mind.getLog().add(LogMode.ANALIZER, "============= ANALISER ====================");
+            mind.getLog().add(LogMode.ANALYZER, "============= ANALYZER ====================");
         }
 
         mind.getSolutions().clear();
@@ -64,7 +64,7 @@ public class Analiser {
                             mind.getHypothesisStore().add(tmp);
                             occurs = true;
                             if (logging) {
-                                mind.getLog().add(LogMode.ANALIZER, "Hypothesis assumed: " + tmp.toString());
+                                mind.getLog().add(LogMode.ANALYZER, "Hypothesis assumed: " + tmp.toString());
                             }
                         }
                     }
@@ -86,12 +86,12 @@ public class Analiser {
             }
 
             if (occurs && logging) {
-                mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                mind.getLog().add(LogMode.ANALYZER, "===========================================");
             }
         }
 
         if (logging) {
-            mind.getLog().add(LogMode.TIMING, "* Analising time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
+            mind.getLog().add(LogMode.TIMING, "* Analyzing time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
         }
         return result;
     }
@@ -116,9 +116,9 @@ public class Analiser {
             }
 
             if (logging) {
-                mind.getLog().add(LogMode.ANALIZER, "Calculated coincidence: ");
-                mind.getLog().add(LogMode.ANALIZER, "\t" + p.toString());
-                mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                mind.getLog().add(LogMode.ANALYZER, "Calculated coincidence: ");
+                mind.getLog().add(LogMode.ANALYZER, "\t" + p.toString());
+                mind.getLog().add(LogMode.ANALYZER, "===========================================");
             }
             result = true;
         } else {
@@ -143,9 +143,9 @@ public class Analiser {
                     if (q.getId() == ((Double) p.getDomain().get(0).getValue(mind).getValue()).longValue()) {
                         mind.getSolutions().add(q);
                         if (logging) {
-                            mind.getLog().add(LogMode.ANALIZER, "Select by id: ");
-                            mind.getLog().add(LogMode.ANALIZER, "\t" + q.toString());
-                            mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                            mind.getLog().add(LogMode.ANALYZER, "Select by id: ");
+                            mind.getLog().add(LogMode.ANALYZER, "\t" + q.toString());
+                            mind.getLog().add(LogMode.ANALYZER, "===========================================");
                         }
                     }
                     result = true;
@@ -178,10 +178,10 @@ public class Analiser {
                         }
 
                         if (logging) {
-                            mind.getLog().add(LogMode.ANALIZER, "Database coincidence: ");
-                            mind.getLog().add(LogMode.ANALIZER, String.format("\t%03d: %s", p.getId(), p.toString()));
-                            mind.getLog().add(LogMode.ANALIZER, String.format("\t%03d: %s", q.getId(), q.toString()));
-                            mind.getLog().add(LogMode.ANALIZER, "===========================================");
+                            mind.getLog().add(LogMode.ANALYZER, "Database coincidence: ");
+                            mind.getLog().add(LogMode.ANALYZER, String.format("\t%03d: %s", p.getId(), p.toString()));
+                            mind.getLog().add(LogMode.ANALYZER, String.format("\t%03d: %s", q.getId(), q.toString()));
+                            mind.getLog().add(LogMode.ANALYZER, "===========================================");
                         }
                         result = true;
                     }
@@ -243,9 +243,9 @@ public class Analiser {
 //            }
             if (logging) {
                 for (Rule r : orfans) {
-                    mind.getLog().add(LogMode.ANALIZER, "Unresolved: \t" + r.getDomain().toString());
+                    mind.getLog().add(LogMode.ANALYZER, "Unresolved: \t" + r.getDomain().toString());
                 }
-                mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+                mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
             }
         }
         return result;

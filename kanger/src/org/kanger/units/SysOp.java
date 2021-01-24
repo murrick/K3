@@ -49,9 +49,9 @@ public class SysOp implements IUnit<SysOp> {
 
     public static void showLog(IUnit o, TValue v) {
         if (o.getMind().isLogging() && v != null) {
-            o.getMind().getLog().add(LogMode.ANALIZER, "Added: " + v);
-            o.getMind().getLog().add(LogMode.ANALIZER, "\tFrom: " + o);
-            o.getMind().getLog().add(LogMode.ANALIZER, "-------------------------------------------");
+            o.getMind().getLog().add(LogMode.ANALYZER, "Added: " + v);
+            o.getMind().getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
+            o.getMind().getLog().add(LogMode.ANALYZER, "-------------------------------------------");
         }
     }
 
