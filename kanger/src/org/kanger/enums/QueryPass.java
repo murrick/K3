@@ -4,6 +4,8 @@ public enum QueryPass {
     SILENCE,
     COMPILE,
     ACCEPT,
+    INSERT,
+    DELETE,
     CHECKFALSE,
     CHECKTRUE,
     CHECK,

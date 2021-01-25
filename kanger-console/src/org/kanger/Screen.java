@@ -397,7 +397,11 @@ public class Screen {
                     System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
                     break;
                 case 'T':
-                    KangerTest.test(mind, "set_" + (line.length() > 3 ? line.substring(3) : ""));
+                    String prefix = "";
+                    if (line.split(" ").length > 2) {
+                        prefix = line.split(" ")[2];
+                    }
+                    KangerTest.test(mind, "set_" + prefix);
                     break;
             }
         }
@@ -761,8 +765,7 @@ public class Screen {
                         + "      xplain <fn>            write explanation log to file with name fn\n"
                         + "   list                    - View last hypothesis list\n"
                         + "   append                  - Append hypothesis as a rule\n"
-                        + "      append <n> [true]      hypothesis with index = n into antecedent\n"
-                        + "      append <n> false       hypothesis with index = n into succedent\n"
+                        + "      append <n>             hypothesis with index = n\n"
                         + "\n"
                         + "SOURCE FILES:\n"
                         + "   get [<fn>]              - Load source file with name fn from disk\n"
@@ -1040,13 +1043,13 @@ public class Screen {
      */
     public static void makeHypo(Mind mind, String line, Scanner sc) throws Exception {
         int i = -1;
-        boolean antc = true;
+//        boolean antc = true;
         if (line.split(" ").length >= 2) {
             try {
                 i = Integer.parseInt(line.split(" ")[1]);
-                if (line.split(" ").length > 2) {
-                    antc = line.split(" ")[2].trim().toUpperCase().charAt(0) == 'Y';
-                }
+//                if (line.split(" ").length > 2) {
+//                    antc = line.split(" ")[2].trim().toUpperCase().charAt(0) == 'Y';
+//                }
             } catch (Exception e) {
                 throw new CommandErrorException();
             }
@@ -1060,19 +1063,19 @@ public class Screen {
             } catch (Exception e) {
                 throw new CommandErrorException();
             }
-            System.out.printf("Statement is true or false [true/false]? ");
-            n = sc.nextLine();
-            antc = n.trim().toUpperCase().charAt(0) == 'Y' || n.trim().toUpperCase().charAt(0) == 'F';
+//            System.out.printf("Statement is true or false [true/false]? ");
+//            n = sc.nextLine();
+//            antc = n.trim().toUpperCase().charAt(0) == 'Y' || n.trim().toUpperCase().charAt(0) == 'F';
         }
         --i;
         try {
-            mind.getHypothesisStore().get(i).setAntc(antc);
+//            mind.getHypothesisStore().get(i).setAntc(antc);
             String temp = mind.getHypothesisStore().get(i).toString();
-            String h = String.format("!%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
+            String h = String.format("%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
 
             if (h != null) {
                 System.out.println("Statement: " + h);
-                Boolean res = mind.query(h);
+                Boolean res = mind.queryAccept(h, null, true);
                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);

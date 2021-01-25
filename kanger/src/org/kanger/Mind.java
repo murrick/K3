@@ -70,7 +70,7 @@ public class Mind {
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
-//    private Mind queryContext = null;
+    //    private Mind queryContext = null;
     private QueryPass queryPass = QueryPass.SILENCE;
     private String sourceFileName = "mind.k";
     private String compiledFileName = "mind.e";
@@ -974,10 +974,281 @@ public class Mind {
         return productions;
     }
 
+    public Boolean queryInsert(String line, Object[] ext, boolean logging) throws Exception {
+        Boolean res = null;
+        Mind m = new Mind(this);
+        m.setQueryPass(QueryPass.INSERT);
+        if (logging) {
+            getLog().add(LogMode.ANALYZER, "============= INSERT ======================");
+        }
+
+        line = invert(line);
+        line = invert(line);
+
+        setCompliedLine(line);
+        Rule r = (Rule) m.compileLine(line, true, ext);
+        if (r != null) {
+
+            m.link(r, logging);
+            boolean ar = m.analyze(r, logging);
+            if (ar) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                }
+                release(m);
+                res = null;
+            } else {
+
+                List<Rule> productions = m.getProductions(r);
+                if (!productions.isEmpty()) {
+                    if (logging) {
+                        m.getLog().add(LogMode.ANALYZER, "SUCCESS: Solves to append (" + productions.size() + "):");
+                    }
+                    for (Rule pr : productions) {
+                        pr.setQuery(false);
+                        pr.setGenerated(false);
+                        pr.primitivize();
+                        if (logging) {
+                            m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
+                        }
+                    }
+                } else if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, String.format("WARNING: No candidates to append"));
+                }
+
+                m.getRules().delete(r);
+                m.getComments().delete(r.getId());
+
+                commit(m);
+                setChanged(true);
+                res = true;
+            }
+        } else {
+            if (logging && r != null && r.isDeleted()) {
+                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+            }
+            release(m);
+        }
+
+        hypothesis.clear();
+        return res;
+    }
+
+    public Boolean queryAccept(String line, Object[] ext, boolean logging) throws Exception {
+        Boolean res = null;
+        Mind m = new Mind(this);
+        m.setQueryPass(QueryPass.ACCEPT);
+        if (logging) {
+            getLog().add(LogMode.ANALYZER, "============= ACCEPTING ===================");
+        }
+
+        setCompliedLine(line);
+        Rule r = (Rule) m.compileLine(line, false, ext);
+        if (r != null) {
+            boolean ar = m.analyze(r, logging);
+            if (ar) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                }
+                release(m);
+                res = null;
+            } else {
+                release(m);
+                m.link(r, logging);
+                ar = m.analyze(r, logging);
+                if (ar) {
+                    if (logging) {
+                        m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                    }
+                    release(m);
+                    res = null;
+                } else {
+                    if (logging) {
+                        m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
+                        List<Rule> productions = m.getProductions(r);
+                        if (!productions.isEmpty()) {
+                            for (Rule pr : productions) {
+                                m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
+                            }
+                        }
+                        m.getLog().add(LogMode.ANALYZER, "SUCCESS: New rule accepted");
+                    }
+                    commit(m);
+                    setChanged(true);
+                    acceptedRule = r;
+                    res = true;
+                }
+            }
+        } else {
+            if (logging && r != null && r.isDeleted()) {
+                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+            }
+            release(m);
+        }
+
+        hypothesis.clear();
+        return res;
+    }
+
+    public Boolean queryDelete(String line, Object[] ext, boolean logging) throws Exception {
+        Boolean res = null;
+        Mind m = new Mind(this);
+        m.setQueryPass(QueryPass.DELETE);
+        if (logging) {
+            getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
+        }
+
+        line = invert(line);
+        setCompliedLine(line);
+        Rule r = (Rule) m.compileLine(line, true, ext);
+        if (r != null) {
+            m.link(r, logging);
+            boolean ar = m.analyze(r, logging);
+            if (ar) {
+                removeResult(m, logging);
+                res = true;
+            } else {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+                }
+            }
+        } else if (logging && r != null && r.isDeleted()) {
+            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+        }
+        release(m);
+        hypothesis.clear();
+        return res;
+    }
+
+    public Boolean queryCheck(boolean logging) throws Exception {
+        Boolean res = null;
+
+        setQueryPass(QueryPass.CHECK);
+
+        boolean found = false;
+        for (Rule rx : getRules()) {
+            if (!rx.isDeleted() && rx.isGenerated()) {
+                if (logging) {
+                    getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
+                }
+                getRules().delete(rx);
+                getComments().delete(rx.getId());
+                found = true;
+            }
+        }
+        if (found) {
+            pack();
+            if (logging) {
+                getLog().add(LogMode.STORAGE, "-------------------------------------------");
+            }
+        }
+
+        link(null, logging);
+        Boolean ar = analyze(null, logging);
+
+        if (ar) {
+            if (logging) {
+                getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+            }
+            res = false;
+        } else {
+            if (logging) {
+                getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+            }
+            res = true;
+        }
+        hypothesis.clear();
+        return res;
+    }
+
+    public Boolean queryCheckFalse(String line, Object[] ext, boolean logging) throws Exception {
+        Boolean res = null;
+        Mind m = new Mind(this);
+        m.setQueryPass(QueryPass.CHECKFALSE);
+        if (logging) {
+            m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
+        }
+
+        setCompliedLine(line);
+        Rule r = (Rule) m.compileLine(invert(line), true, ext);
+        if (r != null) {
+            boolean ar = m.analyze(r, logging);
+            if (ar) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
+                    logResult(m);
+                }
+                res = false;
+                hypothesis.clear();
+            } else {
+                m.link(r, logging);
+                ar = m.analyze(r, logging);
+                if (ar) {
+                    if (logging) {
+                        m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
+                        logResult(m);
+                    }
+                    res = false;
+                    hypothesis.clear();
+                } else {
+                    hypothesis.commit(m.getHypothesisStore());
+                }
+            }
+        } else if (logging && r != null && r.isDeleted()) {
+            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+        }
+        release(m);
+        return res;
+    }
+
+    public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
+        Boolean res = null;
+        Mind m = new Mind(this);
+        m.setQueryPass(QueryPass.CHECKTRUE);
+        if (logging) {
+            m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
+        }
+
+        setCompliedLine(line);
+        Rule r = (Rule) m.compileLine(line, true, ext);
+        if (r != null) {
+            boolean ar = m.analyze(r, logging);
+            if (ar) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
+                    logResult(m);
+                }
+                res = true;
+                hypothesis.clear();
+            } else {
+                m.link(r, logging);
+                ar = m.analyze(r, logging);
+                if (ar) {
+                    if (logging) {
+                        m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
+                        logResult(m);
+                    }
+                    res = true;
+                    hypothesis.clear();
+                } else {
+                    hypothesis.commit(m.getHypothesisStore());
+                    if (logging) {
+                        if (hypothesis.getRoot() != null && hypothesis.size() > 0) {
+                            m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypothesis.size()));
+                        } else {
+                            m.getLog().add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
+                        }
+                    }
+                }
+            }
+        } else if (logging && r != null && r.isDeleted()) {
+            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+        }
+        release(m);
+        return res;
+    }
+
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
-//        querySource = line;
-//        queryPass = QueryPass.SILENCE;
-//        queryContext = null;
         this.logging = logging;
 
         Boolean res = null;
@@ -990,513 +1261,39 @@ public class Mind {
 
         long queryStart = System.currentTimeMillis();
 
-        if (logging) {
-            getLog().add(LogMode.ANALYZER, "============= CHECKING ===================");
-        }
-
-//        Mind m = new Mind(this);
-//        excluded.reset();
-//        m.link(true);
-//        Boolean ar = m.analise(true);
-//        release();
-//        excluded.commit(m.getHypotesisStore());
-
-//        if (ar) {
-//            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-//            res = null;
-//        } else {
-
-        //TODO: Непонятно почему продукции не формируются или не коммитятся
-//        link(null, logging);
-//        Boolean arx = analise(null, true);
-//        if (arx) {
-//            getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-//            res = null;
-//        } else {
-
-
-//        if (logging) {
-//            if (!excluded.isEmpty()) {
-//                for (Hypothesis h : excluded.getRoot()) {
-//                    getLog().add(LogMode.ANALIZER, "Hypothesis excluded: " + h.toString());
-//                }
-//                getLog().add(LogMode.ANALIZER, "------------------------------------------");
-//            }
-//        }
-
         int key = line.charAt(0);
         switch (key) {
 
-            case Enums.INS: {
-                if (logging) {
-                    getLog().add(LogMode.ANALYZER, "============= INSERT ======================");
-                }
-
-                Mind m = new Mind(this);
-                m.setQueryPass(QueryPass.ACCEPT);
-
-                line = invert(line);
-                line = invert(line);
-
-                setCompliedLine(line);
-                Rule r = (Rule) m.compileLine(line, true, ext);
-                if (r != null/* && !r.isDeleted()*/) {
-//                    r.setQuery(true);
-
-//                    if (logging) {
-//                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-//                        m.getLog().add(LogMode.ANALIZER, r);
-//                        for (Right rx : m.rights) {
-//                            if (rx.getId() > r.getId() && rx.isGenerated()) {
-//                                m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
-//                            }
-//                        }
-//                    }
-
-//                    m.link(r, logging);
-//                    boolean ar = m.analyze(r, logging);
-
-                    m.link(null, logging);
-                    boolean ar = m.analyze(null, logging);
-                    if (ar) {
-                        if (logging) {
-                            m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
-                        }
-                        release(m);
-                        res = null;
-                    } else {
-
-                        List<Rule> productions = m.getProductions(r);
-                        if (!productions.isEmpty()) {
-                            int counter = 0;
-                            if (logging) {
-                                m.getLog().add(LogMode.ANALYZER, "SUCCESS: Solves to append (" + productions.size() + "):");
-                            }
-                            for (Rule pr : productions) {
-                                pr.setQuery(false);
-                                pr.setGenerated(false);
-                                pr.primitivize();
-                                if (logging) {
-                                    m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
-                                }
-                            }
-                        } else if (logging) {
-                            m.getLog().add(LogMode.ANALYZER, String.format("WARNING: No candidates to append"));
-                        }
-
-                        m.getRules().delete(r);
-                        m.getComments().delete(r.getId());
-
-                        commit(m);
-//                        excluded.commit(m.getHypothesisStore());
-                        setChanged(true);
-                        res = true;
-                    }
-//                    queryContext = m;
-                } else {
-                    if (logging && r != null && r.isDeleted()) {
-                        m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
-                    }
-                    release(m);
-                }
-
-                hypothesis.clear();
-            }
-            break;
-
-            case Enums.ANT: {
-                if (logging) {
-                    getLog().add(LogMode.ANALYZER, "============= ACCEPTING ===================");
-                }
-
-//                res = compile(line, logging);
-
-                Mind m = new Mind(this);
-                m.setQueryPass(QueryPass.ACCEPT);
-
-                setCompliedLine(line);
-                Rule r = (Rule) m.compileLine(line, false, ext);
-                if (r != null /*&& !r.isDeleted()*/) {
-//                    r.setQuery(true);
-//                        if (logging) {
-//                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-//                            m.getLog().add(LogMode.ANALIZER, r);
-//                            for(Right rx : m.rights) {
-//                                if(rx.getId() > r.getId() && rx.isGenerated()) {
-//                                    m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
-//                                }
-//                            }
-//                        }
-                    boolean ar = m.analyze(r, logging);
-                    if (ar) {
-                        if (logging) {
-                            m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
-                        }
-                        release(m);
-                        res = null;
-                    } else {
-                        //TODO: При повторном добавлении не генерируются все продукции
-                        //TODO: Нет продукций после добавления гирпотезы с отрицанием.
-//                        m.link(r, logging);
-//                        ar = m.analyze(r, logging);
-
-                        m.link(null, logging);
-                        ar = m.analyze(null, logging);
-                        if (ar) {
-                            if (logging) {
-                                m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
-                            }
-                            release(m);
-                            res = null;
-                        } else {
-                            if (logging) {
-                                m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
-                                List<Rule> productions = m.getProductions(r);
-                                if (!productions.isEmpty()) {
-                                    int counter = 0;
-                                    for (Rule pr : productions) {
-                                        m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
-                                    }
-                                }
-                                m.getLog().add(LogMode.ANALYZER, "SUCCESS: New rule accepted");
-                            }
-//                                m.link(null, logging);
-
-                            commit(m);
-//                            excluded.commit(m.getHypothesisStore());
-                            setChanged(true);
-                            acceptedRule = r;
-                            res = true;
-                        }
-                    }
-//                    queryContext = m;
-                } else {
-                    if (logging && r != null && r.isDeleted()) {
-                        m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
-                    }
-                    release(m);
-                }
-
-                hypothesis.clear();
-            }
-            break;
-
-//            case Enums.DEL:
-//            case Enums.WIPE:
-//                SysOp op = calculator.find(line);
-//                if (op != null) {
-//                    if (getLibrary().remove(op.toString())) {
-//                        getLog().add(LogMode.ANALIZER, "SUCCESS: Function removed: " + op.toString());
-//                    } else {
-//                        getLog().add(LogMode.ANALIZER, "WARNING: Unable to remove function: " + op.toString());
-//                    }
-//                }
-//                break;
-
-            case Enums.DEL: {
-
-                Mind m = new Mind(this);
-                m.setQueryPass(QueryPass.CHECKTRUE);
-                if (logging) {
-                    m.getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
-                }
-                line = invert(line);
-                setCompliedLine(line);
-                Rule r = (Rule) m.compileLine(line, true, ext);
-                if (r != null /*&& !r.isDeleted()*/) {
-//                    r.setQuery(true);
-//                    if (logging) {
-//                        m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-//                        m.getLog().add(LogMode.ANALIZER, r);
-//                        for (Right rx : m.rights) {
-//                            if (rx.getId() > r.getId() && rx.isGenerated()) {
-//                                m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
-//                            }
-//                        }
-//                    }
-                    m.link(r, logging);
-                    boolean ar = m.analyze(r, logging);
-                    if (ar) {
-                        removeResult(m, logging);
-                        res = true;
-                    } else {
-                        if (logging) {
-                            m.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
-                        }
-                    }
-//                    queryContext = m;
-                } else if (logging && r != null && r.isDeleted()) {
-                    m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
-                }
-                release(m);
-//                if (res) {
-//                    pack();
-//                    tValues.clear();
-//                    link(null, logging);
-//                    boolean ar = analise(null, logging);
-//                    if (logging) {
-//                        if (ar) {
-//                            log.add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-//                        } else {
-//                            log.add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
-//                        }
-//                    }
-//                }
-                hypothesis.clear();
-            }
-            break;
-
-            case Enums.SUC: {
-
-                hypothesis.clear();
-
-                if (line.length() == 1) {
-
-//                    Mind m = new Mind(this);
-                    setQueryPass(QueryPass.CHECK);
-
-                    boolean found = false;
-                    for (Rule rx : getRules()) {
-                        if (!rx.isDeleted() && rx.isGenerated()) {
-                            if (logging) {
-                                getLog().add(LogMode.STORAGE, "Delete produced right: " + String.format("%03d: %s", rx.getId(), rx));
-                            }
-                            getRules().delete(rx);
-                            getComments().delete(rx.getId());
-                            found = true;
-                        }
-                    }
-                    if (found) {
-                        pack();
-//                        getTValues().clear();
-                        if (logging) {
-                            getLog().add(LogMode.STORAGE, "-------------------------------------------");
-                        }
-                    }
-
-                    link(null, logging);
-                    Boolean ar = analyze(null, logging);
-
-                    if (ar) {
-                        if (logging) {
-                            getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
-                        }
-                        res = false;
-                    } else {
-                        if (logging) {
-                            getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
-                        }
-//                        commit(m);
-//                        excluded.clear();
-//                        excluded.commit(m.getHypotesisStore());
-                        res = true;
-                    }
-//                    queryContext = this;
-
-                    hypothesis.clear();
-                } else {
-
-//                    if (!DEBUG_DISABLE_FALSE_CHECK) {
-//
-//                        Mind m = new Mind(this);
-//                        m.setQueryPass(QueryPass.CHECKFALSE);
-//                        m.getLog().add(LogMode.ANALIZER, "============= FALSE CHECKING (QUICK) ======");
-//
-//                        Right r = (Right) m.compileLine(invert(line));
-//                        if (r != null) {
-//                            r.setQuery(true);
-//
-//                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-//                            m.getLog().add(LogMode.ANALIZER, r);
-//
-//                            m.link(r, true);
-//                            boolean ar = m.analise(true);
-//                            if (ar) {
-//                                m.getLog().add(LogMode.ANALIZER, "Result: FALSE");
-//                                logResult(m);
-//                                res = false;
-//                            } else {
-////                                hypotesis.commit(m.getHypotesisStore());
-//                            }
-//                        }
-//                        release(m);
-//
-//                    }
-//
-//                    if (res == null) {
-//
-//                        Mind m = new Mind(this);
-//                        m.setQueryPass(QueryPass.CHECKTRUE);
-//                        m.getLog().add(LogMode.ANALIZER, "============= TRUE CHECKING (QUICK) =======");
-//
-//                        Right r = (Right) m.compileLine(line);
-//                        if (r != null) {
-//
-//                            r.setQuery(true);
-//                            m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-//                            m.getLog().add(LogMode.ANALIZER, r);
-//                            m.link(r, true);
-//                            boolean ar = m.analise(true);
-//                            if (ar) {
-//                                m.getLog().add(LogMode.ANALIZER, "Result: TRUE");
-//                                logResult(m);
-//                                res = true;
-//                            } else {
-////                                hypotesis.commit(m.getHypotesisStore());
-//                            }
-//                        }
-//                        release(m);
-//                    }
-//
-//
-//                    if (res == null) {
-                    if (!DEBUG_DISABLE_FALSE_CHECK) {
-
-                        Mind m = new Mind(this);
-                        m.setQueryPass(QueryPass.CHECKFALSE);
-                        if (logging) {
-                            m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
-                        }
-
-                        setCompliedLine(line);
-                        Rule r = (Rule) m.compileLine(invert(line), true, ext);
-                        if (r != null /*&& !r.isDeleted()*/) {
-//                            r.setQuery(true);
-//                            if (logging) {
-//                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-//                                m.getLog().add(LogMode.ANALIZER, r);
-//                                for (Right rx : m.rights) {
-//                                    if (rx.getId() > r.getId() && rx.isGenerated()) {
-//                                        m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
-//                                    }
-//                                }
-//                            }
-
-                            boolean ar = m.analyze(r, logging);
-                            if (ar) {
-                                if (logging) {
-                                    m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
-                                    logResult(m);
-                                }
-                                res = false;
-//                                queryContext = m;
-                                hypothesis.clear();
-                            } else {
-                                m.link(r, logging);
-                                ar = m.analyze(r, logging);
-                                if (ar) {
-                                    if (logging) {
-                                        m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
-                                        logResult(m);
-                                    }
-                                    res = false;
-//                                    queryContext = m;
-                                    hypothesis.clear();
-                                } else {
-                                    hypothesis.commit(m.getHypothesisStore());
-                                }
-                            }
-                        } else if (logging && r != null && r.isDeleted()) {
-                            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
-                        }
-                        release(m);
-                    }
-
-                    if (res == null) {
-
-                        Mind m = new Mind(this);
-                        m.setQueryPass(QueryPass.CHECKTRUE);
-                        if (logging) {
-                            m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
-                        }
-
-                        setCompliedLine(line);
-                        Rule r = (Rule) m.compileLine(line, true, ext);
-                        if (r != null /*&& !r.isDeleted()*/) {
-//                            r.setQuery(true);
-//                            if (logging) {
-//                                m.getLog().add(LogMode.ANALIZER, "Compiled: " + r.getOrig());
-//                                m.getLog().add(LogMode.ANALIZER, r);
-//                                for (Right rx : m.rights) {
-//                                    if (rx.getId() > r.getId() && rx.isGenerated()) {
-//                                        m.getLog().add(LogMode.ANALIZER, "Extracted: " + rx.getOrig());
-//                                    }
-//                                }
-//                            }
-                            boolean ar = m.analyze(r, logging);
-                            if (ar) {
-                                if (logging) {
-                                    m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
-                                    logResult(m);
-                                }
-                                res = true;
-                                hypothesis.clear();
-                            } else {
-                                m.link(r, logging);
-                                ar = m.analyze(r, logging);
-                                if (ar) {
-                                    if (logging) {
-                                        m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
-                                        logResult(m);
-                                    }
-                                    res = true;
-                                    hypothesis.clear();
-                                } else {
-                                    hypothesis.commit(m.getHypothesisStore());
-//                                    hypothesis.exclude(excluded);
-
-
-                                    if (logging) {
-                                        if (hypothesis.getRoot() != null && hypothesis.size() > 0) {
-                                            m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypothesis.size()));
-                                        } else {
-                                            m.getLog().add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
-                                        }
-                                    }
-                                }
-                            }
-//                            queryContext = m;
-                        } else if (logging && r != null && r.isDeleted()) {
-                            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
-                        }
-                        release(m);
-
-                    }
-//                    }
-                }
-
+            case Enums.INS:
+                res = queryInsert(line, ext, logging);
                 break;
-            }
+
+            case Enums.ANT:
+                res = queryAccept(line, ext, logging);
+                break;
+
+            case Enums.DEL:
+                res = queryDelete(line, ext, logging);
+                break;
+
+            case Enums.SUC:
+                hypothesis.clear();
+                if (line.length() == 1) {
+                    res = queryCheck(logging);
+                } else {
+                    if (!DEBUG_DISABLE_FALSE_CHECK) {
+                        res = queryCheckFalse(line, ext, logging);
+                    }
+                    if (res == null) {
+                        res = queryCheckTrue(line, ext, logging);
+                    }
+                }
+                break;
         }
-//        }
 
         if (logging) {
             getLog().add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
         }
-
-
-//        if(queryContext != null) {
-//            for(Right solve : queryContext.getRights().getSolves()) {
-//                Cause cause = null;
-//                Iterator<Cause> iterator = solve.getCauses().iterator();
-//                if(iterator.hasNext()) {
-//                    cause = iterator.next();
-//                }
-//
-//                System.out.println("--- " + solve + (cause == null ? "" : " - " + cause.getDst().getRight()));
-//
-//            }
-//            for(List<TValue> row: queryContext.getRights().getValues()) {
-//                String s = "";
-//                for(TValue v : row) {
-//                    if(!s.isEmpty()) {
-//                        s += " ";
-//                    }
-//                    s += v;
-//                }
-//                System.out.println("... " + s);
-//            }
-//        }
 
         return res;
     }
@@ -1626,8 +1423,8 @@ public class Mind {
 
         pack();
         tValues.clear();
-        link(null, logging);
-        Boolean ar = analyze(null, logging);
+        link(r, logging);
+        Boolean ar = analyze(r, logging);
 
         Set<Rule> success = new HashSet<>();
         for (Rule rx : set) {

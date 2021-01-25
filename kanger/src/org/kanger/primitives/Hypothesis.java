@@ -170,7 +170,8 @@ public class Hypothesis implements Comparable<Hypothesis> {
             int cptr[] = new int[getPredicate().getRange()];
 
             int ccnt = 0;
-            line += (antc ? "" : String.format("%c", Enums.NOT));
+            //line += (antc ? "" : String.format("%c", Enums.NOT));
+            line += String.format("%c", antc ? Enums.ANT : Enums.SUC);
             String tmp = getPredicate().getName() + "(";
             for (i = 0; i < getPredicate().getRange(); ++i) {
                 if (!getArguments().get(i).isEmpty(null) && getArguments().get(i).getValue(null).isCVariable()) {

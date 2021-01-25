@@ -34,7 +34,8 @@ public class Linker {
 
     public void link(Rule rule, boolean logging) throws Exception {
 
-//        right = null;
+        //TODO: XPR-менты
+//        rule = null;
 
         mind.getExcludedDomains().clear();
         mind.getUsedDomains().clear();
@@ -74,7 +75,7 @@ public class Linker {
                     for (Domain d : list) {
                         if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).isTSet()) {
                             for (Rule r : mind.getRules()) {
-                                if (!r.isDeleted() && r.getId() < d.getRuleId()) {
+                                if (!r.isDeleted() /*&& r.getId() < d.getRuleId()*/) {
                                     TValue s = null;
                                     TVariable t = d.get(0).getT(mind);
                                     Term tm = mind.getTerms().add(r.getId());
@@ -87,27 +88,28 @@ public class Linker {
                         }
                     }
                 }
-
-                ruleSet.add(rule);
-                ruleSet.addAll(rule.getNatives());
-                for (Rule r : mind.getRules()) {
-                    if (!r.isDeleted()) {
-                        if (r.isUsed(mind)) {
-                            ruleSet.add(r);
-                            ruleSet.addAll(r.getNatives());
-                        } else if (r.isGenerated() && r.getId() > topId) {
-                            ruleSet.add(r);
-                            ruleSet.addAll(r.getNatives());
-                        }
-                    }
-                }
-            } else {
-                for (Rule r : mind.getRules()) {
-                    if (!r.isDeleted()) {
-                        ruleSet.add(r);
-                    }
+            }
+//
+//                ruleSet.add(rule);
+//                ruleSet.addAll(rule.getNatives());
+//                for (Rule r : mind.getRules()) {
+//                    if (!r.isDeleted()) {
+//                        if (r.isUsed(mind)) {
+//                            ruleSet.add(r);
+//                            ruleSet.addAll(r.getNatives());
+//                        } else if (r.isGenerated() && r.getId() > topId) {
+//                            ruleSet.add(r);
+//                            ruleSet.addAll(r.getNatives());
+//                        }
+//                    }
+//                }
+//            } else {
+            for (Rule r : mind.getRules()) {
+                if (!r.isDeleted()) {
+                    ruleSet.add(r);
                 }
             }
+//            }
 
 //            System.err.println("--------------");
 //            for(Right r : rightSet) {

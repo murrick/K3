@@ -75,14 +75,14 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
             root = new ArrayList<>();
         }
         Hypothesis h = find(hypothesis);
-        if (h == null || h.isAntc() != hypothesis.isAntc()) {
-            h = hypothesis;
-            h.setAntc(true);
-            root.add(h);
+        if (h == null /*|| h.isAntc() != hypothesis.isAntc()*/) {
+//            h = hypothesis;
+//            h.setAntc(true);
+            root.add(hypothesis);
+            return hypothesis;
+        } else {
             return h;
         }
-        return h;
-
     }
 
 //    public void addAll(Collection<Hypotese> list) {
