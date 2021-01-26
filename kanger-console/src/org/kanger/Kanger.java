@@ -31,7 +31,7 @@ public class Kanger {
             rootDir = System.getenv().get("KANGER_HOME");
         }
 
-        String envs[] = new String[]{};
+        String[] envs = new String[]{};
         if (System.getenv().containsKey("KANGER_OPTIONS")) {
             envs = System.getenv().get("KANGER_OPTIONS").split(" ");
         }
@@ -163,9 +163,9 @@ public class Kanger {
         }
 
         System.out.println("Current user: " + login);
-        System.out.println("User directory: " + user.getProperty("user.dir"));
-        System.out.println("Path to source files: " + user.getProperty("sources.dir"));
-        System.out.println("Path to databases: " + user.getProperty("database.dir"));
+        System.out.println("User directory: " + user.getUserDir());
+        System.out.println("Path to source files: " + user.getSourceDir());
+        System.out.println("Path to databases: " + user.getDatabaseDir());
 
         Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
 

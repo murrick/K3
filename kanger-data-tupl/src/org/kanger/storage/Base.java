@@ -32,12 +32,9 @@ public class Base implements IBase {
     public Base(Database db, String name, IUser user) throws IOException {
 //        this.user = user;
         this.name = name;
-        if (user.containsKey("cache.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size"));
-        }
-        if (user.containsKey("cache.enable")) {
-            CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable"));
-        }
+
+        MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (1024L * 1024L) + ""));
+        CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
 
         this.index = db.openIndex(name + ".index");
         IStep root = getRoot();

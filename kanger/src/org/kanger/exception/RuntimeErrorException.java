@@ -14,7 +14,7 @@ public class RuntimeErrorException extends Exception {
     }
 
     public RuntimeErrorException(String msg) {
-        exceptionMessage = msg;
+        exceptionMessage += ": " + msg;
     }
 
     public RuntimeErrorException(Object object, String msg) {

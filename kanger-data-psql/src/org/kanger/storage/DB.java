@@ -34,22 +34,10 @@ public class DB implements IData {
             close();
         }
 
-        String dbName = user.getProperty("database.name");
-        if (dbName == null || dbName.isEmpty()) {
-            dbName = "kanger";
-        }
-        String dbHost = user.getProperty("database.host");
-        if (dbHost == null || dbHost.isEmpty()) {
-            dbHost = "localhost";
-        }
-        String dbUsername = user.getProperty("database.username");
-        if (dbUsername == null || dbUsername.isEmpty()) {
-            dbUsername = "kanger";
-        }
-        String dbPassword = user.getProperty("database.password");
-        if (dbPassword == null || dbPassword.isEmpty()) {
-            dbPassword = "kanger";
-        }
+        String dbName = user.getProperty("database.name", "kanger");
+        String dbHost = user.getProperty("database.host", "localhost");
+        String dbUsername = user.getProperty("database.username", "kanger");
+        String dbPassword = user.getProperty("database.password", "kanger");
 
         connection = DriverManager.getConnection("jdbc:postgresql://" + dbHost + "/" + dbName,
                 dbUsername,

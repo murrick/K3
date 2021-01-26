@@ -24,7 +24,7 @@ public class DB implements IData {
     }
 
     private String getDbPath() {
-        return user.getProperty("database.dir");
+        return user.getDatabaseDir();
 //        String dbPath = user.getProperty("database.dir");
 //        if (dbPath == null || dbPath.isEmpty()) {
 //            dbPath = user.getProperty("user.dir") + "DB";

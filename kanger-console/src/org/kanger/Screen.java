@@ -106,7 +106,7 @@ public class Screen {
 
 
     public static String getSourceDir(IUser user) throws IOException {
-        return user.getProperty("sources.dir");
+        return user.getSourceDir();
 //        String sourcesDir = user.getProperty("user.dir") + "SRC";
 //        if (user.containsKey("sources.dir")) {
 //            sourcesDir = user.getProperty("sources.dir");
@@ -699,7 +699,7 @@ public class Screen {
 
             if (fname != null) {
                 try {
-                    f = new File(mind.getUser().getProperty("user.dir") + fname);
+                    f = new File(mind.getUser().getUserDir() + fname);
                     f.createNewFile();
                     lastLogFile = fname;
                 } catch (IOException ex) {

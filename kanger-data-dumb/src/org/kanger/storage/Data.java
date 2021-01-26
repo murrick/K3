@@ -41,9 +41,7 @@ public class Data implements Closeable, Iterable<IStep> {
 
     public Data(IBase base, IUser user) {
         this.base = base;
-        if (user.containsKey("cache.data.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.data.size"));
-        }
+        MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.data.size", (1024L * 1024) + ""));
     }
 
     public void open(String fileName, boolean readonly) throws Exception {

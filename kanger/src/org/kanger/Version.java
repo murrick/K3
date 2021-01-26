@@ -15,8 +15,8 @@ public abstract class Version {
 
     public static final int VERSION = 3;
     public static final int RELEASE = 2;
-    public static final String REVISION = "5315";
-    public static final String DATE = "2021-01-25_16:25:11";
+    public static final String REVISION = "5332";
+    public static final String DATE = "2021-01-26_13:34:03";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
     public static final String VERSION_S = String.format("%d.%d.%s", VERSION, RELEASE, REVISION);

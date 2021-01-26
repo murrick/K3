@@ -45,11 +45,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         this.baseCode = baseCode;
         this.locker = locker;
-        if (user.containsKey("cache.index.size")) {
-            blockSize = Integer.parseInt(user.getProperty("cache.index.size"));
-        } else {
-            blockSize = BLOCK_SIZE;
-        }
+        this.blockSize = Integer.parseInt(user.getProperty("cache.index.size", BLOCK_SIZE + ""));
     }
 
     public void open(String fileName, boolean readonly) throws Exception {

@@ -12,7 +12,7 @@ public class CommandErrorException extends Exception {
     }
 
     public CommandErrorException(String msg) {
-        exceptionMessage = msg;
+        exceptionMessage += ": " + msg;
     }
 
     @Override

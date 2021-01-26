@@ -4,6 +4,7 @@ package org.kanger;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
@@ -41,6 +42,7 @@ public class Linker {
         mind.getUsedDomains().clear();
         mind.getCalculatedDomains().clear();
         mind.getUsedRules().clear();
+        mind.getFloodControl().clear();
 
         mind.getRuleSolves().clear();
 
@@ -351,6 +353,10 @@ public class Linker {
             result[0] = (boolean) runnable.run(tvars);
         } else {
             final TVariable t = tvars.last();
+
+            if (t.getFloodCounter() > mind.getFloodControlLimit()) {
+                throw new RuntimeErrorException("Flood limit exceeded");
+            }
 //            result[1] = true;
 
 //            t.setCurrent(null);
@@ -358,9 +364,20 @@ public class Linker {
 //                result[0] = true;
 //            }
 
+//            final Object[] top = new Object[2];
+//            top[0] = mind.getTValues().getRoot(t);
+//            top[1] = 0;
             mind.getTValues().forEach(t, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
+//                    if(((TValue)top[0]).getId() < mind.getTValues().getRoot(t).getId()) {
+//                        top[0] = mind.getTValues().getRoot(t);
+//                        top[1] = ((int) top[1]) + 1;
+//
+//                        if((int) top[1] > 100) {
+//                            throw new RuntimeErrorException("Looks like never-ending recursion");
+//                        }
+//                    }
 //                    if (!((TValue) o).getValue().isCVariable() || !((TValue) o).getValue().getSlaves().isEmpty()) {
                     result[1] = true;
                     t.setCurrent((TValue) o);

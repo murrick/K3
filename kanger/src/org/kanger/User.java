@@ -51,7 +51,7 @@ public class User implements IUser {
             }
         }
 
-        if(id == -1L) {
+        if (id == -1L) {
             throw new AuthenticationErrorException(login);
         }
 
@@ -107,62 +107,36 @@ public class User implements IUser {
         return home + subDir;
     }
 
-    public Mind use(Mind mind, String name) throws Exception {
-
-        if (data != null) {
-
-            if (mind == null) {
-                mind = new Mind(this);
-            }
-            data.use(name);
-
-            storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
-            storage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
-            storage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
-            storage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
-            storage.put(RuleFactory.SCHEMA, data.getBase(RuleFactory.SCHEMA));
-            storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
-            storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
-
-            storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
-            storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
-
-            storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
-
-            while (mind.getNext() != null) {;
-                mind = mind.getNext();
-            }
-
-            mind.getTerms().transaction(null);
-            mind.getDomains().transaction(null);
-            mind.getFunctions().transaction(null);
-            mind.getFValues().transaction(null);
-            mind.getPredicates().transaction(null);
-            mind.getRules().transaction(null);
-            mind.getComments().transaction(null);
-            mind.getTValues().transaction(null);
-            mind.getTVars().transaction(null);
-            mind.getLibrary().transaction(null);
-
-//            Mind m = new Mind(mind);
-//            m.link(null, true);
-//            Boolean ar = m.analise(null, true);
-//
-//            if (ar) {
-//                m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
-//                mind.release(m);
-//                close();
-//                throw new RuntimeErrorException("Collisions in Program");
-//            } else {
-//                m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
-//                mind.commit(m);
-//            }
-
-            return mind;
-
-        } else {
-            throw new RuntimeErrorException("DB module doesn't loaded");
+    public static IUser createUser(String login, String password, String rootDir) throws Exception {
+        String token = token(login, password);
+        String confName = getDir("users.conf");
+        if (!new File(confName).exists()) {
+            Files.createDirectories(Paths.get(getDir(rootDir)));
+            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
         }
+        long id = 0;
+        if (new File(confName).exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
+                        throw new AuthenticationErrorException("User already exists");
+                    }
+                    long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
+                    if (idx > id) {
+                        id = idx;
+                    }
+                }
+            }
+        } else {
+            new File(confName).createNewFile();
+        }
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName, true))) {
+            bw.write(token + "=" + (++id));
+            bw.newLine();
+        }
+
+        return new User(login, password, rootDir);
     }
 
     public IBase getStorage(String schema) {
@@ -323,14 +297,63 @@ public class User implements IUser {
         return locker;
     }
 
-    @Override
-    public String getProperty(String key) {
-        return userSettings.getProperty(key);
-    }
+    public Mind use(Mind mind, String name) throws Exception {
 
-    @Override
-    public void setProperty(String key, String value) {
-        userSettings.setProperty(key, value);
+        if (data != null) {
+
+            if (mind == null) {
+                mind = new Mind(this);
+            }
+            data.use(name);
+
+            storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
+            storage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
+            storage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
+            storage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
+            storage.put(RuleFactory.SCHEMA, data.getBase(RuleFactory.SCHEMA));
+            storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
+            storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
+
+            storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
+            storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
+
+            storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
+
+            while (mind.getNext() != null) {
+                ;
+                mind = mind.getNext();
+            }
+
+            mind.getTerms().transaction(null);
+            mind.getDomains().transaction(null);
+            mind.getFunctions().transaction(null);
+            mind.getFValues().transaction(null);
+            mind.getPredicates().transaction(null);
+            mind.getRules().transaction(null);
+            mind.getComments().transaction(null);
+            mind.getTValues().transaction(null);
+            mind.getTVars().transaction(null);
+            mind.getLibrary().transaction(null);
+
+//            Mind m = new Mind(mind);
+//            m.link(null, true);
+//            Boolean ar = m.analise(null, true);
+//
+//            if (ar) {
+//                m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+//                mind.release(m);
+//                close();
+//                throw new RuntimeErrorException("Collisions in Program");
+//            } else {
+//                m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+//                mind.commit(m);
+//            }
+
+            return mind;
+
+        } else {
+            throw new RuntimeErrorException("DB module doesn't loaded");
+        }
     }
 
     @Override
@@ -352,39 +375,38 @@ public class User implements IUser {
         data = db;
     }
 
+    @Override
+    public String getProperty(String key, String val) {
+        if (userSettings.containsKey(key)) {
+            return userSettings.getProperty(key);
+        } else {
+            userSettings.setProperty(key, val);
+            String confName = userSettings.getProperty("user.dir") + "kanger.conf";
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName))) {
+                userSettings.store(bw, new Date().toString());
+            } catch (IOException e) {
+                e.printStackTrace(System.err);
+            }
+        }
+        return val;
+    }
+
+    @Override
+    public String getUserDir() {
+        return userSettings.getProperty("user.dir");
+    }
+
+    @Override
+    public String getDatabaseDir() {
+        return userSettings.getProperty("database.dir");
+    }
+
     private static String token(String login, String password) {
         return String.format("%04x%04x", login.hashCode(), password.hashCode());
     }
 
-    public static IUser createUser(String login, String password, String rootDir) throws Exception {
-        String token = token(login, password);
-        String confName = getDir("users.conf");
-        if (!new File(confName).exists()) {
-            Files.createDirectories(Paths.get(getDir(rootDir)));
-            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
-        }
-        long id = 0;
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
-                        throw new AuthenticationErrorException("User already exists");
-                    }
-                    long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
-                    if(idx > id) {
-                        id = idx;
-                    }
-                }
-            }
-        } else {
-            new File(confName).createNewFile();
-        }
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName, true))) {
-            bw.write(token + "=" + (++id));
-            bw.newLine();
-        }
-
-        return new User(login, password, rootDir);
+    @Override
+    public String getSourceDir() {
+        return userSettings.getProperty("sources.dir");
     }
 }

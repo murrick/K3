@@ -108,6 +108,8 @@ public class TValueFactory implements Iterable<TValue> {
                 top = cache.getRoot();
             }
             action = true; //!o.isCVariable() || !o.getSlaves().isEmpty();
+
+            tv.incFloodControl(o);
         }
 
         return t;

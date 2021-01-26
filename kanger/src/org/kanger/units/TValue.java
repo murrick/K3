@@ -32,6 +32,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     private transient Mind mind = null;
 
     private transient boolean deleted = false;
+    private transient boolean calculated = false;
 
     public TValue() {
     }
@@ -293,6 +294,14 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     @Override
     public boolean isLoaded() {
         return value != null && valueId == value.getId();
+    }
+
+    public boolean isCalculated() {
+        return calculated;
+    }
+
+    public void setCalculated(boolean calculated) {
+        this.calculated = calculated;
     }
 
 }

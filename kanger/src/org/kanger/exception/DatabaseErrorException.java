@@ -12,7 +12,7 @@ public class DatabaseErrorException extends Exception {
     }
 
     public DatabaseErrorException(String msg) {
-        exceptionMessage = msg;
+        exceptionMessage += ": " + msg;
     }
 
     @Override

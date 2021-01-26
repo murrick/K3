@@ -27,6 +27,7 @@ import java.util.*;
 public class Mind {
 
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
+    private static final int FLOOD_CONTROL_LIMIT = 1000;
 
     //    private volatile boolean blockCommit = false;
     private final Object locker = new Object();
@@ -40,6 +41,8 @@ public class Mind {
     private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
+    private final Map<TVariable, long[]> floodControl = new HashMap<>();
+
     private long id = 0;
     private Mind next = null;
 
@@ -81,6 +84,7 @@ public class Mind {
 
     private String compliedLine = "";
     private Rule acceptedRule = null;
+    private int floodControlLimit = FLOOD_CONTROL_LIMIT;
 //    private HypothesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private volatile boolean busyCommit = false;
@@ -158,6 +162,8 @@ public class Mind {
         compiler = new Compiler(this);                                   // Компилятор
         analyzer = new Analyzer(this);                                   // Анализатор
         linker = new Linker(this);                                         // Линкер
+
+        floodControlLimit = Integer.parseInt(user.getProperty("flood.limit", FLOOD_CONTROL_LIMIT + ""));
 //        }
     }
 
@@ -814,6 +820,10 @@ public class Mind {
 
     public Map<TVariableSet, List<TSolve>> getRuleSolves() {
         return ruleSolves;
+    }
+
+    public Map<TVariable, long[]> getFloodControl() {
+        return floodControl;
     }
 
     //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
@@ -1685,6 +1695,14 @@ public class Mind {
 
     public Rule getAcceptedRule() {
         return acceptedRule;
+    }
+
+    public int getFloodControlLimit() {
+        return floodControlLimit;
+    }
+
+    public void setFloodControlLimit(int floodControlLimit) {
+        this.floodControlLimit = floodControlLimit;
     }
 }
 

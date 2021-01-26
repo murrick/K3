@@ -384,4 +384,26 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return name != null && nameId == name.getId();
     }
 
+    public void incFloodControl(Term t) throws Exception {
+        if (!mind.getFloodControl().containsKey(this)) {
+            Term r = mind.getTerms().getRoot();
+            long[] val = new long[]{r == null ? 0 : r.getId(), 0L};
+            mind.getFloodControl().put(this, val);
+        } else {
+            long lastTermId = mind.getFloodControl().get(this)[0];
+            if (t.getId() > lastTermId) {
+                long counter = mind.getFloodControl().get(this)[1];
+                ++counter;
+                mind.getFloodControl().get(this)[1] = counter;
+            }
+        }
+    }
+
+    public int getFloodCounter() {
+        if (mind.getFloodControl().containsKey(this)) {
+            return (int) mind.getFloodControl().get(this)[1];
+        } else {
+            return 0;
+        }
+    }
 }

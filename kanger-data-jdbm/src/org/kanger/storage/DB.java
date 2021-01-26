@@ -35,9 +35,9 @@ public class DB implements IData {
             close();
         }
 
-        String dbPath = user.getProperty("database.dir");
+        String dbPath = user.getDatabaseDir();
         if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = user.getProperty("user.dir");
+            dbPath = user.getUserDir();
         }
         if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
             dbPath += Enums.FILE_SEPARATOR;
@@ -79,9 +79,9 @@ public class DB implements IData {
             String tmp = storageName;
             close();
 
-            String dbPath = user.getProperty("database.dir");
+            String dbPath = user.getDatabaseDir();
             if (dbPath == null || dbPath.isEmpty()) {
-                dbPath = user.getProperty("user.dir");
+                dbPath = user.getUserDir();
             }
             if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
                 dbPath += Enums.FILE_SEPARATOR;

@@ -27,12 +27,9 @@ public class Base implements IBase {
     public Base(RecordManager db, String name, IUser user) throws Exception {
 //        this.user = user;
         this.name = name;
-        if (user.containsKey("cache.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size"));
-        }
-        if (user.containsKey("cache.enable")) {
-            CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable"));
-        }
+
+        MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (1024L * 1024L) + ""));
+        CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
 
         index = db.treeMap(name);
 
@@ -134,8 +131,8 @@ public class Base implements IBase {
 
             ByteBuffer packet = new ByteBuffer(o);
             try {
-                    packet.mark();
-                    step = new Sapato(this);
+                packet.mark();
+                step = new Sapato(this);
 //                    step.setBase(this);
                 step.apply(packet);
             } finally {

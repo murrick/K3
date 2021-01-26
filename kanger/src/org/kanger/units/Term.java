@@ -42,6 +42,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     private Mind mind = null;
 
     private transient boolean deleted = false;
+
     private transient long nameId = -1;
     private transient long ruleId = -1;
     private transient long parentId = -1;

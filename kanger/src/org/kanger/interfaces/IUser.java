@@ -51,13 +51,17 @@ public interface IUser {
 
     Object getLocker();
 
-    String getProperty(String key);
-
-    void setProperty(String key, String value);
+    String getProperty(String key, String defaultValue);
 
     boolean containsKey(String s);
 
     IData getData() throws RuntimeErrorException;
 
     void setData(IData db);
+
+    String getUserDir();
+
+    String getDatabaseDir();
+
+    String getSourceDir();
 }

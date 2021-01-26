@@ -30,12 +30,9 @@ public class Base implements IBase {
     public Base(Connection db, String name, IUser user) throws Exception {
 //        this.user = user;
         this.name = name;
-        if (user.containsKey("cache.size")) {
-            MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size"));
-        }
-        if (user.containsKey("cache.enable")) {
-            CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable"));
-        }
+
+        MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (1024L * 1024L) + ""));
+        CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
 
         this.connection = db;
         try (Statement st = connection.createStatement()) {
@@ -180,7 +177,7 @@ public class Base implements IBase {
 
     }
 
-//    @Override
+    //    @Override
     public int size() throws Exception {
         int count = 0;
         try (Statement st = connection.createStatement()) {

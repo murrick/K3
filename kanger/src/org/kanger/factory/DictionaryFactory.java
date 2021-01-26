@@ -280,4 +280,13 @@ public class DictionaryFactory implements Iterable<Term> {
             connection.close();
         }
     }
+
+    public Term getRoot() throws Exception {
+        IStep one = cache.getRoot();
+        if (one != null) {
+            return (Term) cache.getRoot().getData(mind);
+        } else {
+            return null;
+        }
+    }
 }
