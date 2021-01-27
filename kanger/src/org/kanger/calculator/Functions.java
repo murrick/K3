@@ -1926,6 +1926,12 @@ public class Functions {
             res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), 1);
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), 1);
+        } else if (a.getType() == DataType.DATE && b.getType() == DataType.NUMERIC) {
+            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue() * 1000L), 1);
+        } else if (a.getType() == DataType.NUMERIC && b.getType() == DataType.DATE) {
+            res = Tools.dateAdd((Date) b.getValue(), Tools.timeToInterval(((Double) a.getValue()).longValue() * 1000L), 1);
+        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
+            res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) + Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
             Term[] list = new Term[2];
             List<Term> aa = (List<Term>) a.getValue();
@@ -2042,6 +2048,8 @@ public class Functions {
             res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), -1);
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), -1);
+        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
+            res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
             res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
         } else if (a.getType() == DataType.SET) {
@@ -2475,6 +2483,8 @@ public class Functions {
                         res = ((Date) a.getValue()).getTime();
                 }
             }
+        } else if (a.getType() == DataType.PERIOD) {
+            res = Tools.intervalToTime((String) a.getValue());
         } else {
             res = (double) 0;
         }

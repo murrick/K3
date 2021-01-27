@@ -1,14 +1,8 @@
 package org.kanger.enums;
 
-import org.kanger.Mind;
 import org.kanger.compiler.Parser;
 import org.kanger.exception.ParseErrorException;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -208,6 +202,72 @@ public abstract class Tools {
         return c.get(Calendar.MILLISECOND);
     }
 
+    public static long intervalToTime(String interval) {
+        Date d = new Date();
+        Date a = dateAdd(d, interval, 1);
+        return a.getTime() - d.getTime();
+    }
+
+    public static String timeToInterval(long time) {
+        Date d = new Date();
+        Date a = new Date(d.getTime() + time);
+        return dateDiff(d, a);
+    }
+
+//    public static long intervalToTime(String interval) {
+//        String[] s = interval.split(" ");
+//        for (int i = 0; i < s.length; ++i) {
+//            if (i + 1 < s.length && isInt(s[i]) && Enums.INTERVALS.keySet().contains(s[i + 1].toLowerCase())) {
+//                long val = Long.parseLong(s[i]) * invertor;
+//                long inv = Enums.INTERVALS.get(s[i + 1].toLowerCase());
+//                if (inv > 0) {
+//                    c.add(Calendar.MILLISECOND, (int) (inv * val));
+//                } else if (inv == Enums.INTERVAL_MONTH) {
+//                    c.add(Calendar.MONTH, (int) val);
+//                } else if (inv == Enums.INTERVAL_YEAR) {
+//                    c.add(Calendar.YEAR, (int) val);
+//                }
+//            }
+//        }
+//    }
+
+//    public static String timeToInterval(long diff) {
+//        int days = 0;
+//        int hours = 0;
+//        int minutes = 0;
+//        int seconds = 0;
+//        int ms = 0;
+//
+//        days = (int) (diff / Enums.INTERVALS.get("days"));
+//        diff -= days * Enums.INTERVALS.get("days");
+//        hours = (int) (diff / Enums.INTERVALS.get("hours"));
+//        diff -= hours * Enums.INTERVALS.get("hours");
+//        minutes = (int) (diff / Enums.INTERVALS.get("minutes"));
+//        diff -= minutes * Enums.INTERVALS.get("minutes");
+//        seconds = (int) (diff / Enums.INTERVALS.get("seconds"));
+//        diff -= seconds * Enums.INTERVALS.get("seconds");
+//        ms = (int) diff;
+//
+//        String ret = "";
+//        if (days > 0) {
+//            ret += "" + days + (days > 1 ? " days " : " day ");
+//        }
+//        if (hours > 0) {
+//            ret += "" + hours + (hours > 1 ? " hours " : " hour ");
+//        }
+//        if (minutes > 0) {
+//            ret += "" + minutes + (minutes > 1 ? " minutes " : " minute ");
+//        }
+//        if (seconds > 0) {
+//            ret += "" + seconds + (seconds > 1 ? " seconds " : " second ");
+//        }
+//        if (ms > 0) {
+//            ret += "" + ms + " ms";
+//        }
+//
+//        return ret.trim();
+//    }
+
     public static String dateDiff(Date a, Date b) {
         int months = 0;
         int years = 0;
@@ -284,7 +344,7 @@ public abstract class Tools {
             ret += "" + ms + " ms";
         }
 
-        return ret.trim();
+        return ret;
     }
 
     public static Object[] extractLine(String line, int pos) throws ParseErrorException {
