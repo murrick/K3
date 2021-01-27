@@ -4,15 +4,15 @@ import org.kanger.Mind;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
 public class SolutionsStore {
 
-    private Set<Rule> root = null;
+    private List<Rule> root = null;
     private boolean enableStore = true;
 
     private final Mind mind;
@@ -28,7 +28,7 @@ public class SolutionsStore {
         clear();
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new HashSet<>();
+                root = new ArrayList<>();
             }
             root.addAll(base.getRoot());
         }
@@ -39,7 +39,7 @@ public class SolutionsStore {
             return null;
         }
         if (root == null) {
-            root = new HashSet<>();
+            root = new ArrayList<>();
         }
 //        Solution s = new Solution(d);
         if (!root.contains(d)) {
@@ -89,7 +89,7 @@ public class SolutionsStore {
 //        return root.indexOf(o);
 //    }
 
-    public Set<Rule> getRoot() {
+    public List<Rule> getRoot() {
         return root;
     }
 

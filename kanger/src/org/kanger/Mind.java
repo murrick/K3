@@ -126,6 +126,10 @@ public class Mind {
         fValues.transaction(root.getFValues());
 
         debugLevel = root.getDebugLevel();
+
+        values.setOrder(root.getValues().getOrder());
+        values.setAscending(root.getValues().isAscending());
+
 //        domainCauses.putAll(root.getDomainCauses());
 
 //        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов

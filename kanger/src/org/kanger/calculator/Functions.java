@@ -1845,7 +1845,11 @@ public class Functions {
 
     protected Object _substring(Object src, int start, int length) {
         if (src instanceof String) {
-            return ((String) src).substring(start, start + length);
+            if (length > 0) {
+                return ((String) src).substring(start, start + length);
+            } else {
+                return ((String) src).substring(start);
+            }
         } else if (src instanceof byte[]) {
             int len = length > 0 ? length : ((byte[]) src).length - start;
             if (len > 0) {

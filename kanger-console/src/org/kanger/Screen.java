@@ -396,6 +396,20 @@ public class Screen {
                     }
                     System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
                     break;
+                case 'O':
+                    if (line.split(" ").length > 2) {
+                        String order = line.split(" ")[2];
+                        boolean ascend = true;
+                        if (line.split(" ").length > 3) {
+                            ascend = line.split(" ")[3].trim().toUpperCase().charAt(0) != 'D';
+                        }
+                        mind.getValues().clear();
+                        mind.getValues().setOrder("-".equals(order) ? "" : order);
+                        mind.getValues().setAscending(ascend);
+                    }
+                    System.out.println("Values sort order: " +
+                            (mind.getValues().getOrder().isEmpty() ? "natural" : (mind.getValues().getOrder() + " " + (mind.getValues().isAscending() ? "ASCEND" : "DESCEND"))));
+                    break;
                 case 'T':
                     String prefix = "";
                     if (line.split(" ").length > 2) {
@@ -724,13 +738,16 @@ public class Screen {
     public static void showOptionsHelp() {
         System.out.printf(
                 "Available options:\n\n"
-                        + "   options help             - Get this message\n"
+                        + "   options help                     - Get this message\n"
                         + "\n"
-                        + "   options debug [yes|no]   - Show debug information in logs\n"
-                        + "   options values [yes|no]  - Values of vars and funcs showed in logs\n"
-                        + "   options status [yes|no]  - Status of domains and trees showed in logs\n"
-                        + "   options log [yes|no]     - Show runtime log during analysis\n"
-                        + "   options memory           - Show memory status\n"
+                        + "   options order <var> [asc|desc] - Set sort order for results to column\n"
+                        + "                                    with name using ASCEND or DESCEND order\n"
+                        + "   options order -                - Set sort order to natural order\n"
+                        + "   options debug [yes|no]         - Show debug information in logs\n"
+                        + "   options values [yes|no]        - Values of vars and funcs showed in logs\n"
+                        + "   options status [yes|no]        - Status of domains and trees showed in logs\n"
+                        + "   options log [yes|no]           - Show runtime log during analysis\n"
+                        + "   options memory                 - Show memory status\n"
                         + "\n"
                         + "You can use just first letters of keywords.\n");
     }

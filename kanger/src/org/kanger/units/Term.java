@@ -211,6 +211,9 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         if (value == null) {
             if (o instanceof String) {
                 String token = ((String) o).trim();
+                if (token.isEmpty()) {
+                    token = (String) o;
+                }
                 try {
                     Date d;
                     if ((token.startsWith("\"") && token.endsWith("\"")) || (token.startsWith("\'") && token.endsWith("\'"))) {
@@ -218,7 +221,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                         token = token.substring(0, token.length() - 1);
                         if (Tools.isInterval(token)) {
                             type = DataType.INTERVAL;
-                            value = conatructInterval(token);
+                            value = constructInterval(token);
                         } else if (Tools.isPeriod(token)) {
                             type = DataType.PERIOD;
                             value = token;
@@ -234,7 +237,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                         value = constructBlob(token);
                     } else if (Tools.isInterval(token)) {
                         type = DataType.INTERVAL;
-                        value = conatructInterval(token);
+                        value = constructInterval(token);
                     } else if (Tools.isPeriod(token)) {
                         type = DataType.PERIOD;
                         value = token;
@@ -287,7 +290,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         return buffer;
     }
 
-    private Object conatructInterval(String ch) throws Exception {
+    private Object constructInterval(String ch) throws Exception {
         if (ch.contains("..")) {
             if (ch.startsWith("{") && ch.endsWith("}")) {
                 ch = ch.substring(1, ch.length() - 1);
@@ -349,10 +352,9 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {
-                return "("
-                        + ((Collection) value).toArray()[0].toString()
+                return ((Collection) value).toArray()[0].toString()
                         + ".."
-                        + ((Collection) value).toArray()[1].toString() + ")";
+                        + ((Collection) value).toArray()[1].toString();
             } else {
                 return value.toString();
             }
@@ -371,6 +373,15 @@ public class Term implements Comparable<Object>, IUnit<Term> {
                 s += String.format("%02X", x & 0xFF);
             }
             return s;
+//        } else if (type == DataType.STRING) {
+//            if( ((String) value).contains(" ") || ((String) value).contains("\t") || ((String) value).contains("\n") || ((String) value).contains("\r")) {
+//                return "\"" + value + "\"";
+//            } else
+//            if (value.toString().trim().isEmpty()) {
+//                return "\"" + value + "\"";
+//            } else {
+//                return value.toString();
+//            }
         } else {
             return value.toString();
         }
