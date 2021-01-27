@@ -1927,11 +1927,15 @@ public class Functions {
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), 1);
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.NUMERIC) {
-            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue() * 1000L), 1);
+            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue()), 1);
         } else if (a.getType() == DataType.NUMERIC && b.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) b.getValue(), Tools.timeToInterval(((Double) a.getValue()).longValue() * 1000L), 1);
+            res = Tools.dateAdd((Date) b.getValue(), Tools.timeToInterval(((Double) a.getValue()).longValue()), 1);
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) + Tools.intervalToTime((String) b.getValue()));
+        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.NUMERIC) {
+            res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) + ((Double) b.getValue()).longValue());
+        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
+            res = Tools.timeToInterval(((Double) a.getValue()).longValue() + Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
             Term[] list = new Term[2];
             List<Term> aa = (List<Term>) a.getValue();
@@ -2018,6 +2022,8 @@ public class Functions {
             res = (double) a.getValue() + 1;
         } else if (a.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) a.getValue(), "1 day", 1);
+        } else if (a.getType() == DataType.PERIOD) {
+            res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) + Tools.intervalToTime("1 day"));
         } else if (a.getType() == DataType.STRING && a.getValue().toString().length() == 1) {
             res = String.format("%c", a.getValue().toString().charAt(0) + 1);
         } else {
@@ -2032,6 +2038,8 @@ public class Functions {
             res = (double) a.getValue() - 1;
         } else if (a.getType() == DataType.DATE) {
             res = Tools.dateAdd((Date) a.getValue(), "1 day", -1);
+        } else if (a.getType() == DataType.PERIOD) {
+            res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - Tools.intervalToTime("1 day"));
         } else if (a.getType() == DataType.STRING && a.getValue().toString().length() == 1) {
             res = String.format("%c", a.getValue().toString().charAt(0) - 1);
         } else {
@@ -2046,8 +2054,12 @@ public class Functions {
             res = (double) a.getValue() - (double) b.getValue();
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.PERIOD) {
             res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), -1);
-        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), -1);
+        } else if (a.getType() == DataType.DATE && b.getType() == DataType.NUMERIC) {
+            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue()), -1);
+        } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.NUMERIC) {
+            res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - ((Double) b.getValue()).longValue());
+        } else if (a.getType() == DataType.NUMERIC && b.getType() == DataType.PERIOD) {
+            res = ((Double) b.getValue()).longValue() - Tools.intervalToTime((String) a.getValue());
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
