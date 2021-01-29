@@ -117,20 +117,27 @@ public abstract class Tools {
     }
 
     public static Date parseDate(String ch) {
+        SimpleDateFormat f = new SimpleDateFormat();
+        f.setLenient(true);
         try {
-            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").parse(ch);
+            f.applyPattern("yyyy-MM-dd HH:mm:ss.SSS Z");
+            return f.parse(ch);
         } catch (ParseException ex) {
             try {
-                return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(ch);
+                f.applyPattern("yyyy-MM-dd HH:mm:ss.SSS");
+                return f.parse(ch);
             } catch (ParseException e1) {
                 try {
-                    return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(ch);
+                    f.applyPattern("yyyy-MM-dd HH:mm:ss");
+                    return f.parse(ch);
                 } catch (ParseException e2) {
                     try {
-                        return new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(ch);
+                        f.applyPattern("yyyy-MM-dd HH:mm");
+                        return f.parse(ch);
                     } catch (ParseException e3) {
                         try {
-                            return new SimpleDateFormat("yyyy-MM-dd").parse(ch);
+                            f.applyPattern("yyyy-MM-dd");
+                            return f.parse(ch);
                         } catch (ParseException e4) {
                             return null;
                         }

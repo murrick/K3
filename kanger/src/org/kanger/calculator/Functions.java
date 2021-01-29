@@ -1717,6 +1717,19 @@ public class Functions {
             }));
         }
 
+        {
+            put("tz(0)", new SysOp(LibMode.FUNCTION, "tz", 0, new IReactor() {
+                @Override
+                public Object run(Object o) throws Exception {
+                    int ret = 1;
+                    if (!((Function) o).setParameter(0, _tz())) {
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
         ////////// разное
         {
             put("type(1)", new SysOp(LibMode.FUNCTION, "type", 1, new IReactor() {
@@ -2448,7 +2461,12 @@ public class Functions {
             } else if (param != null && param.getType() == DataType.NUMERIC) {
                 res = Long.valueOf((String) a.getValue(), ((Double) param.getValue()).intValue());
             } else {
-                res = Long.valueOf((String) a.getValue());
+                try {
+                    res = Long.valueOf((String) a.getValue());
+                } catch (Exception ex) {
+                    TimeZone tz = TimeZone.getTimeZone((String) a.getValue());
+                    res = tz.getOffset(System.currentTimeMillis());
+                }
             }
         } else if (a.getType() == DataType.BLOB) {
             long val = 0;
@@ -2509,7 +2527,7 @@ public class Functions {
             byte[] buffer = new byte[Long.BYTES];
             long val = a.getType() == DataType.NUMERIC ? ((Double) a.getValue()).longValue() : ((Date) a.getValue()).getTime();
             for (int pos = 0; pos < Long.BYTES; ++pos) {
-                if (param == null || ((Double) param.getValue()).intValue() == 0) {
+                if (param == null || ((Double) param.getValue()).longValue() == 0) {
                     buffer[pos] = (byte) ((val >> (pos * Byte.SIZE)) & 0xFF);
                 } else {
                     buffer[Long.BYTES - pos - 1] = (byte) ((val >> (pos * Byte.SIZE)) & 0xFF);
@@ -2614,6 +2632,11 @@ public class Functions {
 
     private Term _now() throws Exception {
         Object res = new Date(System.currentTimeMillis());
+        return mind.getTerms().add(res);
+    }
+
+    private Term _tz() throws Exception {
+        Object res = TimeZone.getDefault().getID();
         return mind.getTerms().add(res);
     }
 

@@ -92,7 +92,7 @@ public class Parser {
     }
 
     public static boolean isNumeric(int ch) {
-        return (ch >= '0' && ch <= '9') /*|| ch == '-' || ch == '+'*/ || ch == '.';
+        return (ch >= '0' && ch <= '9') /*|| ch == '-' || ch == '+'*/ || ch == '.' || ch == 'E' || ch == 'e';
     }
 
     public static boolean isHex(int ch) {

@@ -23,18 +23,6 @@ public class DB implements IData {
         user.setData(this);
     }
 
-    private String getDbPath() {
-        return user.getDatabaseDir();
-//        String dbPath = user.getProperty("database.dir");
-//        if (dbPath == null || dbPath.isEmpty()) {
-//            dbPath = user.getProperty("user.dir") + "DB";
-//        }
-//        if (!dbPath.isEmpty() && !dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-//            dbPath += Enums.FILE_SEPARATOR;
-//        }
-//        return dbPath;
-    }
-
     @Override
     public void use(String name) throws IOException {
         if (!isClosed()) {
@@ -55,18 +43,9 @@ public class DB implements IData {
     @Override
     public void flush() throws Exception {
         for (IBase b : bases.values()) {
-            ((Base) b).flush();
+            b.flush();
         }
     }
-
-//    @Override
-//    public void remove() throws IOException {
-//        if (!isClosed()) {
-//            String tmp = dbPath;
-//            close();
-//            deleteDirectory(new File(tmp));
-//        }
-//    }
 
     public void remove() throws Exception {
         if (!isClosed()) {
@@ -74,23 +53,11 @@ public class DB implements IData {
             String tmp = storageName;
             close();
 
-            String dbPath = getDbPath();
-            dbPath += tmp;
-//            String name = Paths.get(dbPath).getFileName().toString();
-//            dbPath = dbPath.substring(0, dbPath.length() - name.length());
-
+            String dbPath = user.getDatabaseDir() + tmp;
 
             new File(dbPath + ".index").delete();
             new File(dbPath + ".store").delete();
 
-//            File[] allContents = new File(dbPath).listFiles();
-//            if (allContents != null) {
-//                for (File file : allContents) {
-//                    if (file.getName().startsWith(name)) {
-//                        file.delete();
-//                    }
-//                }
-//            }
         }
     }
 
@@ -107,7 +74,7 @@ public class DB implements IData {
     @Override
     public IBase getBase(String context) throws Exception {
         if (!bases.containsKey(context)) {
-            IBase base = new Base(getDbPath() + storageName, bases.size() + 1, locker, false, user);
+            IBase base = new Base(user.getDatabaseDir() + storageName, bases.size() + 1, locker, false, user);
             bases.put(context, base);
         }
         return bases.get(context);
@@ -132,7 +99,7 @@ public class DB implements IData {
     @Override
     public Collection<String> list() {
         List<String> list = new ArrayList<>();
-        recurseList(getDbPath(), "", list);
+        recurseList(user.getDatabaseDir(), "", list);
         return list;
     }
 

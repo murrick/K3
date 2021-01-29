@@ -758,14 +758,17 @@ public class Screen {
                         + "INFORMATION:\n"
                         + "   help                    - Get this message\n"
                         + "   rules                   - View rules list\n"
+                        + "      riles produced         only produced statement\n"
                         + "      rile <n>               rule with ID = n\n"
                         + "      rules tree             rules list with compiled trees\n"
                         + "      rule tree <n>          rule with compiled tree for rule with ID = n\n"
                         + "   base                    - Show predicate-split statements list\n"
                         + "      base predicates        predicates only list with IDs\n"
+                        + "      base <name>            statements list for predicate with name = nane\n"
                         + "      base <n>               statements list for predicate with ID = n\n"
                         + "      base tree              statements list with inference tree\n"
                         + "      base tree <n>          inference tree for statement with ID = n\n"
+                        + "      base tree <name>       inference tree for statements with predicate name = name\n"
                         + "   functions               - Show user defined functions list\n"
                         + "      function <n>           function with ID = n\n"
                         + "      functions source       functions list with sources\n"
@@ -909,6 +912,7 @@ public class Screen {
 
     public static void showBase(Mind mind, String line) throws Exception {
         long id = -1;
+        String name = "";
         boolean preds = false;
         boolean tree = false;
         for (String s : line.split(" ")) {
@@ -926,7 +930,7 @@ public class Screen {
                         try {
                             id = Long.parseLong(s);
                         } catch (Exception ex) {
-                            throw new CommandErrorException();
+                            name = s.trim();
                         }
                 }
             }
@@ -934,7 +938,7 @@ public class Screen {
         if (id != -1) {
             if (!tree) {
                 Predicate p = mind.getPredicates().load(id);
-                if (p != null) {
+                if (p != null && (name.isEmpty() || p.getName().toString().toLowerCase().equals(name.toLowerCase()))) {
                     if (preds) {
                         System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
                     } else {
@@ -955,7 +959,8 @@ public class Screen {
         } else {
             boolean found = false;
             for (Predicate p : mind.getPredicates()) {
-                if (!p.isDeleted() && !mind.isSystem(p) && !p.getSolves().isEmpty()) {
+                if (!p.isDeleted() && !mind.isSystem(p) && !p.getSolves().isEmpty()
+                        && (name.isEmpty() || p.getName().toString().toLowerCase().equals(name.toLowerCase()))) {
                     if (preds) {
                         found = true;
                         System.out.printf("Predicate %03d: %s;\n", p.getId(), p.toString());
@@ -1005,6 +1010,7 @@ public class Screen {
 
         long id = -1;
         boolean tree = false;
+        boolean prods = false;
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
                 switch (s.trim().toUpperCase().charAt(0)) {
@@ -1012,6 +1018,9 @@ public class Screen {
                         break;
                     case 'T':
                         tree = true;
+                        break;
+                    case 'P':
+                        prods = true;
                         break;
                     default:
                         try {
@@ -1025,7 +1034,7 @@ public class Screen {
 
         boolean found = false;
         for (Rule r : mind.getRules()) {
-            if (!r.isDeleted() && (id == -1 || r.getId() == id)) {
+            if (!r.isDeleted() && (id == -1 || r.getId() == id) && prods == r.isGenerated()) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
                         tree ? " --- " : "",

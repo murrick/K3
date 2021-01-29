@@ -77,7 +77,7 @@ public class User implements IUser {
         }
 
         if (!userSettings.containsKey("database.dir")) {
-            String sourcesDir = userSettings.getProperty("user.dir") + "SRC" + Enums.FILE_SEPARATOR;
+            String sourcesDir = userSettings.getProperty("user.dir") + "DB" + Enums.FILE_SEPARATOR;
             userSettings.put("database.dir", sourcesDir);
             Files.createDirectories(Paths.get(userSettings.getProperty("database.dir")));
         }
