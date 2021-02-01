@@ -33,7 +33,7 @@ public class CommentFactory implements Iterable<Term> {
     }
 
     public void transaction(CommentFactory base) throws Exception {
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
             connection = mind.getUser().getStorage(SCHEMA);
         }
 

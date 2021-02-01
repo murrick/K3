@@ -144,7 +144,7 @@ public class Escalera implements ICache {
     public void clear() throws Exception {
         root = null;
         if (parent == null) {
-            if (!mind.getUser().isClosed()) {
+            if (parent == null && !mind.getUser().isClosed()) {
                 synchronized (mind.getUser().getStorage(schema)) {
                     mind.getUser().getStorage(schema).clear();
                 }

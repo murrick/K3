@@ -61,12 +61,13 @@ public class User implements IUser {
         confName = userSettings.getProperty("user.dir") + "kanger.conf";
         if (new File(confName).exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2) {
-                        userSettings.setProperty(sCurrentLine.split("\\=")[0], sCurrentLine.split("\\=")[1]);
-                    }
-                }
+                userSettings.load(br);
+//                String sCurrentLine;
+//                while ((sCurrentLine = br.readLine()) != null) {
+//                    if (sCurrentLine.split("\\=").length == 2) {
+//                        userSettings.setProperty(sCurrentLine.split("\\=")[0], sCurrentLine.split("\\=")[1]);
+//                    }
+//                }
             }
         }
 
@@ -320,7 +321,6 @@ public class User implements IUser {
             storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
 
             while (mind.getNext() != null) {
-                ;
                 mind = mind.getNext();
             }
 

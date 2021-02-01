@@ -41,7 +41,7 @@ public class RuleFactory implements Iterable<Rule> {
     }
 
     public void transaction(RuleFactory base) throws Exception {
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
             connection = mind.getUser().getStorage(SCHEMA);
 //            } else {

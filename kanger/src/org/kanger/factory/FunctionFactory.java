@@ -34,7 +34,7 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
     public void transaction(FunctionFactory base) throws Exception {
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
             connection = mind.getUser().getStorage(SCHEMA);
 //            } else {

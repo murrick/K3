@@ -36,7 +36,7 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void transaction(DomainFactory base) throws Exception {
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
             connection = mind.getUser().getStorage(SCHEMA);
 //            } else {

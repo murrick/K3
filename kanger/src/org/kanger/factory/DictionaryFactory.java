@@ -45,7 +45,7 @@ public class DictionaryFactory implements Iterable<Term> {
     public void transaction(DictionaryFactory base) throws Exception {
 //        cache.clear();
 //        load.clear();
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if (mind.getNext() == null) {
             connection = mind.getUser().getStorage(SCHEMA);
 //            } else {

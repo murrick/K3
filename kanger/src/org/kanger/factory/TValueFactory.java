@@ -37,7 +37,7 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
     public void transaction(TValueFactory base) throws Exception {
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
             connection = mind.getUser().getStorage(SCHEMA);
 //            } else {

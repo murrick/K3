@@ -36,7 +36,7 @@ public class TVariableFactory implements Iterable<TVariable> {
     }
 
     public void transaction(TVariableFactory base) throws Exception {
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
             connection = mind.getUser().getStorage(SCHEMA);
 //            } else {

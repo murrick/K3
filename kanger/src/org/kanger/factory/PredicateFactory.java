@@ -33,7 +33,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public void transaction(PredicateFactory base) throws Exception {
-        if (!mind.getUser().isClosed()) {
+        if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
             connection = mind.getUser().getStorage(SCHEMA);
 //            } else {

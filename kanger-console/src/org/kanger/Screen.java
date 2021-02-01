@@ -8,7 +8,6 @@ import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
-import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
@@ -105,8 +104,8 @@ public class Screen {
     }
 
 
-    public static String getSourceDir(IUser user) throws IOException {
-        return user.getSourceDir();
+//    public static String getSourceDir(IUser user) throws IOException {
+//        return user.getSourceDir();
 //        String sourcesDir = user.getProperty("user.dir") + "SRC";
 //        if (user.containsKey("sources.dir")) {
 //            sourcesDir = user.getProperty("sources.dir");
@@ -116,7 +115,7 @@ public class Screen {
 //            Files.createDirectories(Paths.get(sourcesDir));
 //        }
 //        return sourcesDir;
-    }
+//    }
 
     public static void session(Mind mind) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
@@ -224,6 +223,9 @@ public class Screen {
                         case 'O':   // OPTIONS
                             options(line, mind, sc);
                             break;
+                        case 'T':   // TRANSACTION
+                            mind = manageTransaction(line, mind, sc);
+                            break;
                         case Enums.SUC:
                             lastQuery = line;
                         case Enums.ANT:
@@ -267,6 +269,44 @@ public class Screen {
         }
         System.out.println("KANGER III Session closed");
 
+    }
+
+    private static Mind manageTransaction(String line, Mind mind, Scanner sc) throws Exception {
+        Mind m = null;
+        for (String s : line.split(" ")) {
+            if (!s.trim().isEmpty()) {
+                switch (s.trim().toUpperCase().charAt(0)) {
+                    case 'T':
+                        break;
+                    case 'S':
+                        m = new Mind(mind);
+                        break;
+                    case 'C':
+                        m = mind.getNext();
+                        if (m != null) {
+                            if (m.commit(mind)) {
+                                System.out.printf("SUCCESS: Transaction commited\n");
+                            } else {
+                                System.out.printf("WARNING: Commit rejected. See xplanation log for details\n");
+                            }
+                        }
+                        break;
+                    case 'R':
+                        m = mind.getNext();
+                        if (m != null) {
+                            m.release(mind);
+                            System.out.printf("SUCCESS: Transaction rolled back\n");
+                        }
+                        break;
+                }
+            }
+        }
+        int level = 0;
+        for (Mind x = m == null ? mind : m; x.getNext() != null; x = x.getNext()) {
+            ++level;
+        }
+        System.out.printf("Transaction level %d\n", level);
+        return m == null ? mind : m;
     }
 
     private static void processFunction(String line, Mind mind) throws Exception {
@@ -477,7 +517,7 @@ public class Screen {
         }
 
         if (fname != null && !fname.isEmpty()) {
-            File f = new File(getSourceDir(mind.getUser()) + fname);
+            File f = new File(mind.getUser().getSourceDir() + fname);
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
                 bw.write(mind.getSourceCode());
                 mind.setSourceFileName(fname);
@@ -1117,7 +1157,7 @@ public class Screen {
         File f = null;
         if (line.split(" ").length == 1) {
             List<File> list = new ArrayList<>();
-            File[] dir = new File(getSourceDir(mind.getUser())).listFiles();
+            File[] dir = new File(mind.getUser().getSourceDir()).listFiles();
             if (dir != null) {
                 for (File fl : dir) {
                     if (!fl.isDirectory() && fl.getName().contains(".k")) {
@@ -1152,7 +1192,7 @@ public class Screen {
             } catch (Exception ex) {
             }
         } else {
-            f = new File(getSourceDir(mind.getUser()) + line.split(" ")[1]);
+            f = new File(mind.getUser().getSourceDir() + line.split(" ")[1]);
         }
 
         return f;
@@ -1163,7 +1203,7 @@ public class Screen {
         try {
 
             if (f == null) {
-                f = new File(getSourceDir(mind.getUser()) + mind.getSourceFileName());
+                f = new File(mind.getUser().getSourceDir() + mind.getSourceFileName());
             }
 
             if (f.exists()) {
