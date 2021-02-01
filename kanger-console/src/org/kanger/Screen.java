@@ -224,7 +224,7 @@ public class Screen {
                             options(line, mind, sc);
                             break;
                         case 'T':   // TRANSACTION
-                            mind = manageTransaction(line, mind, sc);
+                            mind = processTransaction(line, mind, sc);
                             break;
                         case Enums.SUC:
                             lastQuery = line;
@@ -271,7 +271,7 @@ public class Screen {
 
     }
 
-    private static Mind manageTransaction(String line, Mind mind, Scanner sc) throws Exception {
+    private static Mind processTransaction(String line, Mind mind, Scanner sc) throws Exception {
         Mind m = null;
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
