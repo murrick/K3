@@ -35,9 +35,9 @@ public class KangerTest {
         String dbName = mind.getUser().getStorageName();
         try {
             if (!mind.getUser().isClosed()) {
-                mind.getUser().close();
-                mind.getUser().use(mind, "data/auto-test");
-                mind.getUser().clear(mind);
+                mind = mind.getUser().close(mind);
+                mind = mind.getUser().use(mind, "data/auto-test");
+                mind = mind.getUser().clear(mind);
             }
 
             mind.clear();
@@ -96,7 +96,7 @@ public class KangerTest {
 //                mind.getUser().close();
                 mind.getUser().remove();
                 try {
-                    mind.getUser().use(mind, dbName);
+                    mind = mind.getUser().use(mind, dbName);
                 } catch (RuntimeErrorException e) {
                     e.printStackTrace(System.err);
                 }

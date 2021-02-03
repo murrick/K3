@@ -17,13 +17,13 @@ public interface IUser {
 
     IBase connect(String schema) throws Exception;
 
-    void clear(Mind mind) throws Exception;
+    Mind clear(Mind mind) throws Exception;
 
     String getStorageName();
 
     Collection<String> getStoragesList();
 
-    void close() throws Exception;
+    Mind close(Mind mind) throws Exception;
 
     Mind use(Mind mind, String name) throws Exception;
 
