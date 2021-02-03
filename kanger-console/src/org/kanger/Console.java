@@ -170,7 +170,16 @@ public class Console {
                 if (line.length() > 0) {
                     switch (line.toUpperCase().charAt(0)) {
                         case 'Q':   // QUIT
-                            stop = true;
+                            if (!mind.getUser().isClosed() && mind.getTransactionLevel() > 0 && !mind.isEmpty()) {
+                                System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
+                                System.out.printf("Are you sure to quit ? [y/N]? ");
+                                String s = sc.nextLine().toUpperCase();
+                                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                                    stop = true;
+                                }
+                            } else {
+                                stop = true;
+                            }
                             break;
                         case 'H':   // HELP
                             showCommonHelp();
@@ -203,7 +212,7 @@ public class Console {
                             mind = clearWorkspace(mind, sc);
                             break;
                         case 'G':   // GET
-                            loadSourceFile(mind, loadSource(line, mind, sc));
+                            mind = loadSourceFile(mind, loadSource(line, mind, sc));
                             break;
                         case 'P':   // PUT
                             saveSource(line, mind, sc);
@@ -304,7 +313,7 @@ public class Console {
                 }
             }
         }
-        System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+        System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
         return mind;
     }
 
@@ -568,8 +577,12 @@ public class Console {
                 if (!backup.isEmpty()) {
                     Mind m = new Mind(mind);
                     if (m.compile(backup)) {
-                        mind = m;
-                        System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+                        if (!m.isEmpty()) {
+                            mind = m;
+                            System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
+                        } else {
+                            mind.release(m);
+                        }
                         System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
                         System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
                     } else {
@@ -625,8 +638,12 @@ public class Console {
                         if (!backup.isEmpty()) {
                             Mind m = new Mind(mind);
                             if (m.compile(backup)) {
-                                mind = m;
-                                System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+                                if (!m.isEmpty()) {
+                                    mind = m;
+                                    System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
+                                } else {
+                                    mind.release(m);
+                                }
                                 System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
                                 System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
                             } else {
@@ -659,8 +676,8 @@ public class Console {
 
     private static Mind closeDatabase(Mind mind, Scanner sc) throws Exception {
         if (!mind.getUser().isClosed()) {
-            if (mind.getTransactionLevel() > 0) {
-                System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+            if (mind.getTransactionLevel() > 0 && !mind.isEmpty()) {
+                System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
                 System.out.printf("Are you sure to close database " + mind.getUser().getStorageName() + "? [y/N]? ");
                 String s = sc.nextLine().toUpperCase();
                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
@@ -981,7 +998,10 @@ public class Console {
                 if (showCauses) {
                     System.out.println("\t-------------------------------------------");
                 }
-                System.out.printf("\t%03d: %s\n", dest.getId(), dest.toString());
+                System.out.printf("\t%s%03d: %s\n",
+                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", dest.getMindId()) : "",
+                        dest.getId(),
+                        dest.toString());
                 if (showCauses && !dest.getCauses().isEmpty()) {
                     showCauses(mind, dest.getCauses(), 0);
                 }
@@ -1126,7 +1146,7 @@ public class Console {
             if (!r.isDeleted() && (id == -1 || r.getId() == id) && prods == r.isGenerated()) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
-                        tree ? " --- " : "",
+                        (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
                         r.getId(),
                         (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
                                 ? " " +
@@ -1248,7 +1268,7 @@ public class Console {
     }
 
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
-    public static boolean loadSourceFile(Mind mind, File f) throws Exception {
+    public static Mind loadSourceFile(Mind mind, File f) throws Exception {
         boolean res = false;
         try {
 
@@ -1265,6 +1285,10 @@ public class Console {
                     StringBuffer buf = new StringBuffer(new String(cbuf).replace("\r\n", "\r"));
                     isr.close();
 
+                    if (!mind.getUser().isClosed()) {
+                        mind = new Mind(mind);
+                    }
+
                     mind.setSourceFileName(f.getName());
                     res = mind.compile(buf.toString());
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
@@ -1275,6 +1299,14 @@ public class Console {
                     } else {
                         System.out.printf("Use XPLAIN command for analisys\n");
                     }
+                    if (!mind.getUser().isClosed() && mind.isEmpty()) {
+                        Mind m = mind.getNext();
+                        m.release(mind);
+                        mind = m;
+                    }
+                    if (mind.getTransactionLevel() > 0) {
+                        System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
+                    }
                 } else {
                     System.out.printf("WARNING: File %s is empty\n", f.getName());
                 }
@@ -1284,7 +1316,7 @@ public class Console {
         } catch (IOException ex) {
             System.out.printf("ERROR: %s\n", ex);
         }
-        return res;
+        return mind;
     }
 
 

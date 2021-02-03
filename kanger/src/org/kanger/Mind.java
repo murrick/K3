@@ -1716,6 +1716,15 @@ public class Mind {
         }
         return level;
     }
+
+    public boolean isEmpty() {
+        for (Rule r : rules) {
+            if (!r.isDeleted() && r.getMindId() == id) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 
