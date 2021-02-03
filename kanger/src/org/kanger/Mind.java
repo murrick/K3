@@ -1709,6 +1709,13 @@ public class Mind {
         this.floodControlLimit = floodControlLimit;
     }
 
+    public int getTransactionLevel() {
+        int level = 0;
+        for (Mind m = this; m.next != null; m = m.next) {
+            ++level;
+        }
+        return level;
+    }
 }
 
 

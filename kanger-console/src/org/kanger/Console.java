@@ -272,41 +272,40 @@ public class Console {
     }
 
     private static Mind processTransaction(String line, Mind mind, Scanner sc) throws Exception {
-        Mind m = null;
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
                 switch (s.trim().toUpperCase().charAt(0)) {
                     case 'T':
                         break;
                     case 'S':
-                        m = new Mind(mind);
+                        mind = new Mind(mind);
                         break;
-                    case 'C':
-                        m = mind.getNext();
+                    case 'C': {
+                        Mind m = mind.getNext();
                         if (m != null) {
                             if (m.commit(mind)) {
                                 System.out.printf("SUCCESS: Transaction commited\n");
+                                mind = m;
                             } else {
                                 System.out.printf("WARNING: Commit rejected. See xplanation log for details\n");
                             }
                         }
-                        break;
-                    case 'R':
-                        m = mind.getNext();
+                    }
+                    break;
+                    case 'R': {
+                        Mind m = mind.getNext();
                         if (m != null) {
                             m.release(mind);
                             System.out.printf("SUCCESS: Transaction rolled back\n");
+                            mind = m;
                         }
-                        break;
+                    }
+                    break;
                 }
             }
         }
-        int level = 0;
-        for (Mind x = m == null ? mind : m; x.getNext() != null; x = x.getNext()) {
-            ++level;
-        }
-        System.out.printf("Transaction level %d\n", level);
-        return m == null ? mind : m;
+        System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+        return mind;
     }
 
     private static void processFunction(String line, Mind mind) throws Exception {
@@ -570,15 +569,24 @@ public class Console {
                     Mind m = new Mind(mind);
                     if (m.compile(backup)) {
                         mind = m;
-                        System.out.printf("Transaction level %d\n", mind.getLevel());
+                        System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+                        System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                        System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
                     } else {
-                        System.out.println("WARNING! Current workspace confilcted with DB content. Clear workspace before opening DB");
                         mind = mind.getUser().close(mind);
                         mind.compile(backup);
+                        mind.getLog().clear();
+                        mind.release(m);
+                        if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                            System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                        }
+                        System.out.println("Use XPLAIN command for analisys");
+                        System.out.println("No database used");
                     }
+                } else {
+                    System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                    System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
                 }
-                System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-                System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
             } else {
                 System.out.println("No database used");
             }
@@ -614,17 +622,28 @@ public class Console {
                     line = line.replace(".", Enums.FILE_SEPARATOR);
                     mind = mind.getUser().use(mind, line);
                     if (!mind.getUser().isClosed()) {
-                        Mind m = new Mind(mind);
-                        if (m.compile(backup)) {
-                            mind = m;
-                            System.out.printf("Transaction level %d\n", mind.getLevel());
+                        if (!backup.isEmpty()) {
+                            Mind m = new Mind(mind);
+                            if (m.compile(backup)) {
+                                mind = m;
+                                System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+                                System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                                System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
+                            } else {
+                                mind = mind.getUser().close(mind);
+                                mind.compile(backup);
+                                mind.getLog().clear();
+                                mind.release(m);
+                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                                }
+                                System.out.println("Use XPLAIN command for analisys");
+                                System.out.println("No database used");
+                            }
                         } else {
-                            System.out.println("WARNING! Current workspace confilcted with DB content. Clear workspace before opening DB");
-                            mind = mind.getUser().close(mind);
-                            mind.compile(backup);
+                            System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+                            System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
                         }
-                        System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-                        System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
                     } else {
                         System.out.println("No database used");
                     }
@@ -640,10 +659,17 @@ public class Console {
 
     private static Mind closeDatabase(Mind mind, Scanner sc) throws Exception {
         if (!mind.getUser().isClosed()) {
-            System.out.printf("Are you sure to close database " + mind.getUser().getStorageName() + "? [y/N]? ");
-            String s = sc.nextLine().toUpperCase();
-            if (!s.isEmpty() && s.charAt(0) == 'Y') {
+            if (mind.getTransactionLevel() > 0) {
+                System.out.printf("Transaction level %d\n", mind.getTransactionLevel());
+                System.out.printf("Are you sure to close database " + mind.getUser().getStorageName() + "? [y/N]? ");
+                String s = sc.nextLine().toUpperCase();
+                if (!s.isEmpty() && s.charAt(0) == 'Y') {
+                    mind = mind.getUser().close(mind);
+                    System.out.println("No database used");
+                }
+            } else {
                 mind = mind.getUser().close(mind);
+                System.out.println("No database used");
             }
         } else {
             System.out.println("No database used");
@@ -1223,6 +1249,7 @@ public class Console {
 
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
     public static boolean loadSourceFile(Mind mind, File f) throws Exception {
+        boolean res = false;
         try {
 
             if (f == null) {
@@ -1239,7 +1266,7 @@ public class Console {
                     isr.close();
 
                     mind.setSourceFileName(f.getName());
-                    boolean res = mind.compile(buf.toString());
+                    res = mind.compile(buf.toString());
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                         System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
                     }
@@ -1248,7 +1275,6 @@ public class Console {
                     } else {
                         System.out.printf("Use XPLAIN command for analisys\n");
                     }
-                    return res;
                 } else {
                     System.out.printf("WARNING: File %s is empty\n", f.getName());
                 }
@@ -1258,7 +1284,7 @@ public class Console {
         } catch (IOException ex) {
             System.out.printf("ERROR: %s\n", ex);
         }
-        return false;
+        return res;
     }
 
 

@@ -15,7 +15,7 @@ public class ShutdownHook extends Thread {
         try {
             if (user != null && !user.isClosed()) {
                 user.flush();
-                user.close();
+                user.close(null);
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);

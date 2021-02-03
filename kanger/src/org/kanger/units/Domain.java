@@ -1083,8 +1083,13 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
                     break;
                 case TERM:
-                    long id = arguments.get(i).getValue(mind).getId();
-                    hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
+                    Term a = arguments.get(i).getValue(mind);
+                    if (a.isCVariable()) {
+                        hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
+                    } else {
+                        long id = arguments.get(i).getValue(mind).getId();
+                        hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
+                    }
                     break;
                 case FUNCTION:
                     hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(getRule());
@@ -1109,7 +1114,13 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             break;
                         case TVALUE:
                         case TERM:
-                            if (arguments.get(i).getValue(mind).getId() != to.getArguments().get(i).getValue(mind).getId()) {
+                            Term a = arguments.get(i).getValue(mind);
+                            Term b = to.getArguments().get(i).getValue(mind);
+                            if (a.isCVariable() && b.isCVariable()) {
+                                if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
+                                    return false;
+                                }
+                            } else if (a.getId() != b.getId()) {
                                 return false;
                             }
                             break;

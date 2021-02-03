@@ -267,7 +267,13 @@ public class User implements IUser {
             }
             data.close();
         }
-        return clear(mind);
+
+//        return mind;
+        if (mind != null) {
+            return clear(mind);
+        } else {
+            return null;
+        }
     }
 
 
@@ -304,6 +310,14 @@ public class User implements IUser {
 
         if (data != null) {
 
+            for (Mind m = mind; m != null; m = m.getNext()) {
+                m.clear();
+                mind = m;
+            }
+            if (mind == null) {
+                mind = new Mind(this);
+            }
+
             data.use(name);
 
             storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
@@ -318,14 +332,6 @@ public class User implements IUser {
             storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
 
             storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
-
-            for (Mind m = mind; m != null; m = m.getNext()) {
-                m.clear();
-                mind = m;
-            }
-            if (mind == null) {
-                mind = new Mind(this);
-            }
 
             mind.getTerms().transaction(null);
             mind.getDomains().transaction(null);

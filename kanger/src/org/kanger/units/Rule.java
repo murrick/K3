@@ -287,7 +287,7 @@ public class Rule implements IUnit<Rule> {
     public int getHash() throws Exception {
         //TODO: 4
         if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
-            return getDomain().getHashBase();
+            return getDomain().getHashStruct();
         } else {
             int hash = 0;
             for (List<Domain> list : tree) {
