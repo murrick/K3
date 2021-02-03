@@ -286,8 +286,10 @@ public class Rule implements IUnit<Rule> {
     @Override
     public int getHash() throws Exception {
         //TODO: 4
-        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
-            return getDomain().getHashStruct();
+        if (stored) {
+            return getDomain().getHashBase();
+        } else if (tree.size() == 1 && tree.get(0).size() == 1) {
+            return getDomain().getHashBase();
         } else {
             int hash = 0;
             for (List<Domain> list : tree) {
