@@ -363,8 +363,10 @@ public class Console {
                 break;
         }
         System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "NO" : "YES"));
-        System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
+        System.out.println("Status of statements and rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
+        System.out.println("Order for sorting values: " +
+                (mind.getValues().getOrder().isEmpty() ? "natural" : (mind.getValues().getOrder() + " " + (mind.getValues().isAscending() ? "ASCEND" : "DESCEND"))));
     }
 
 
@@ -434,7 +436,7 @@ public class Console {
                                 ? mind.getDebugLevel() | Enums.DEBUG_OPTION_STATUS
                                 : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_STATUS);
                     }
-                    System.out.println("Status of domains and trees showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
+                    System.out.println("Status of statements and rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
                     break;
                 case 'L':
                     if (line.split(" ").length > 2) {
@@ -455,7 +457,7 @@ public class Console {
                         mind.getValues().setOrder("-".equals(order) ? "" : order);
                         mind.getValues().setAscending(ascend);
                     }
-                    System.out.println("Values sort order: " +
+                    System.out.println("Order for sorting values: " +
                             (mind.getValues().getOrder().isEmpty() ? "natural" : (mind.getValues().getOrder() + " " + (mind.getValues().isAscending() ? "ASCEND" : "DESCEND"))));
                     break;
                 case 'T':
@@ -851,7 +853,7 @@ public class Console {
                         + "   options order -                - Set sort order to natural order\n"
                         + "   options debug [yes|no]         - Show debug information in logs\n"
                         + "   options values [yes|no]        - Values of vars and funcs showed in logs\n"
-                        + "   options status [yes|no]        - Status of domains and trees showed in logs\n"
+                        + "   options status [yes|no]        - Status of statements and rules showed in logs\n"
                         + "   options log [yes|no]           - Show runtime log during analysis\n"
                         + "   options memory                 - Show memory status\n"
                         + "\n"
