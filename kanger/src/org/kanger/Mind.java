@@ -962,17 +962,17 @@ public class Mind {
         }
     }
 
-    private String antc(String line) {
-        return String.format("%c%s", Enums.ANT, line);
-    }
-
-    private String succ(String line) {
-        return String.format("%c%s", Enums.SUC, line);
-    }
-
-    private String resign(int sign, String line) {
-        return String.format("%c%s", sign, line.substring(1));
-    }
+//    private String antc(String line) {
+//        return String.format("%c%s", Enums.ANT, line);
+//    }
+//
+//    private String succ(String line) {
+//        return String.format("%c%s", Enums.SUC, line);
+//    }
+//
+//    private String resign(int sign, String line) {
+//        return String.format("%c%s", sign, line.substring(1));
+//    }
 
     public List<Rule> getProductions(Rule r) {
         List<Rule> productions = new ArrayList<>();

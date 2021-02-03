@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15. $Author: murray $
  */
-public class Screen {
+public class Console {
 
     private static String lastLogFile = "analyzer.log";
     private static Scanner sc = null;
@@ -200,7 +200,7 @@ public class Screen {
                             showExplanation(mind, LogMode.ALL, line, sc);
                             break;
                         case 'E':   // ERASE
-                            clearWorkspace(mind, sc);
+                            mind = clearWorkspace(mind, sc);
                             break;
                         case 'G':   // GET
                             loadSourceFile(mind, loadSource(line, mind, sc));
@@ -209,10 +209,10 @@ public class Screen {
                             saveSource(line, mind, sc);
                             break;
                         case 'C':   // CLOSE
-                            closeDatabase(mind, sc);
+                            mind = closeDatabase(mind, sc);
                             break;
                         case 'U':   // USE
-                            useDatabase(line, mind, sc);
+                            mind = useDatabase(line, mind, sc);
                             break;
                         case 'D':   // DROP
                             dropDatabase(mind, sc);
@@ -263,7 +263,7 @@ public class Screen {
 
         }
         try {
-            mind.getUser().close();
+            mind = mind.getUser().close(mind);
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
@@ -559,11 +559,24 @@ public class Screen {
         }
     }
 
-    private static void useDatabase(String line, Mind mind, Scanner sc) throws Exception {
+    private static Mind useDatabase(String line, Mind mind, Scanner sc) throws Exception {
+        String backup = mind.getSourceCode();
+
         if (line.split(" ").length == 2) {
             String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
-            mind.getUser().use(mind, name);
+            mind = mind.getUser().use(mind, name);
             if (!mind.getUser().isClosed()) {
+                if (!backup.isEmpty()) {
+                    Mind m = new Mind(mind);
+                    if (m.compile(backup)) {
+                        mind = m;
+                        System.out.printf("Transaction level %d\n", mind.getLevel());
+                    } else {
+                        System.out.println("WARNING! Current workspace confilcted with DB content. Clear workspace before opening DB");
+                        mind = mind.getUser().close(mind);
+                        mind.compile(backup);
+                    }
+                }
                 System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
                 System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
             } else {
@@ -599,8 +612,17 @@ public class Screen {
                 }
                 if (!line.isEmpty()) {
                     line = line.replace(".", Enums.FILE_SEPARATOR);
-                    mind.getUser().use(mind, line);
+                    mind = mind.getUser().use(mind, line);
                     if (!mind.getUser().isClosed()) {
+                        Mind m = new Mind(mind);
+                        if (m.compile(backup)) {
+                            mind = m;
+                            System.out.printf("Transaction level %d\n", mind.getLevel());
+                        } else {
+                            System.out.println("WARNING! Current workspace confilcted with DB content. Clear workspace before opening DB");
+                            mind = mind.getUser().close(mind);
+                            mind.compile(backup);
+                        }
                         System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
                         System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
                     } else {
@@ -613,28 +635,29 @@ public class Screen {
                 System.out.println("No database used");
             }
         }
+        return mind;
     }
 
-    private static void closeDatabase(Mind mind, Scanner sc) throws Exception {
+    private static Mind closeDatabase(Mind mind, Scanner sc) throws Exception {
         if (!mind.getUser().isClosed()) {
             System.out.printf("Are you sure to close database " + mind.getUser().getStorageName() + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                mind.getUser().close();
-                mind.clear();
+                mind = mind.getUser().close(mind);
             }
         } else {
             System.out.println("No database used");
         }
+        return mind;
     }
 
-    private static void clearWorkspace(Mind mind, Scanner sc) throws Exception {
+    private static Mind clearWorkspace(Mind mind, Scanner sc) throws Exception {
         System.out.printf("Are you sure to erase workspace? [y/N]? ");
         String s = sc.nextLine().toUpperCase();
         if (!s.isEmpty() && s.charAt(0) == 'Y') {
-            mind.getUser().clear(mind);
-//                                mind.release();
+            mind = mind.getUser().clear(mind);
         }
+        return mind;
     }
 
     private static void showSolutions(Mind mind, String line) throws Exception {
@@ -1121,7 +1144,7 @@ public class Screen {
             }
         }
 
-        if(i == -1) {
+        if (i == -1) {
             System.out.printf("Enter Hypothesis Number: ");
             String n = sc.nextLine();
             try {

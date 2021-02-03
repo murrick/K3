@@ -17,8 +17,8 @@ import java.util.List;
 public class ArgList extends ArrayList<Argument> {
 
     private Mind mind = null;
-    private List<TVariable> tVariables = null;
-    private List<Long> tVariablesIds = new ArrayList<>();
+//    private List<TVariable> tVariables = null;
+//    private List<Long> tVariablesIds = new ArrayList<>();
 
     public ArgList() {
         super();
@@ -418,15 +418,15 @@ public class ArgList extends ArrayList<Argument> {
         return UnitType.ARGLIST;
     }
 
-    @Override
-    public boolean add(Argument argument) {
-        if (argument.isTSet()) {
-            if (!tVariablesIds.contains(argument.getId())) {
-                tVariablesIds.add(argument.getId());
-            }
-        }
-        return super.add(argument);
-    }
+//    @Override
+//    public boolean add(Argument argument) {
+//        if (argument.isTSet()) {
+//            if (!tVariablesIds.contains(argument.getId())) {
+//                tVariablesIds.add(argument.getId());
+//            }
+//        }
+//        return super.add(argument);
+//    }
 
     public boolean isOverlaps(ArgList arg) throws Exception {
 

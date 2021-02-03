@@ -152,7 +152,7 @@ public class User implements IUser {
         }
     }
 
-    public void clear(Mind mind) throws Exception {
+    public Mind clear(Mind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
@@ -164,6 +164,7 @@ public class User implements IUser {
             m.clear();
             mind = m;
         }
+        return mind;
     }
 
     public void remove() throws Exception {
@@ -259,13 +260,14 @@ public class User implements IUser {
     }
 
     @Override
-    public void close() throws Exception {
+    public Mind close(Mind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clearCache();
             }
             data.close();
         }
+        return clear(mind);
     }
 
 
@@ -302,9 +304,6 @@ public class User implements IUser {
 
         if (data != null) {
 
-            if (mind == null) {
-                mind = new Mind(this);
-            }
             data.use(name);
 
             storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
@@ -320,8 +319,12 @@ public class User implements IUser {
 
             storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
 
-            while (mind.getNext() != null) {
-                mind = mind.getNext();
+            for (Mind m = mind; m != null; m = m.getNext()) {
+                m.clear();
+                mind = m;
+            }
+            if (mind == null) {
+                mind = new Mind(this);
             }
 
             mind.getTerms().transaction(null);

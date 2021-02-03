@@ -54,7 +54,7 @@ public class Kanger {
                         .getCodeSource()
                         .getLocation()
                         .toURI()).getName();
-                Screen.showCopyrigt();
+                Console.showCopyrigt();
                 System.out.printf("Usage: java -jar %s [options]\n" +
                                 "Options:\n" +
                                 "\t--adduser or -A\t-Create new user. Password required.\n" +
@@ -136,7 +136,7 @@ public class Kanger {
 //            }
 //        }
 
-        Screen.showCopyrigt();
+        Console.showCopyrigt();
 
         if (login == null) {
             Kanger k = new Kanger();
@@ -174,7 +174,7 @@ public class Kanger {
         mind.query("?a;");
         mind.clear();
 
-        Screen.session(mind);
+        Console.session(mind);
     }
 
     private String readLine(String format, Object... args) throws IOException {
