@@ -64,10 +64,10 @@
 !@x @y sibling(x,y) -> sibling(y,x);
 
 // Определение родственников
-!@x @y sibling(x,y) || parent(x,y) -> native(x,y);
+// !@x @y sibling(x,y) || parent(x,y) -> native(x,y);
 
 // Родственники симметричны
-!@x @y native(x,y) -> native(y,x);
+// !@x @y native(x,y) -> native(y,x);
 
 !@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);
 //!@x ~spouse(x,x);

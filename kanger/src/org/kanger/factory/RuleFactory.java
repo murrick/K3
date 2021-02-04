@@ -418,7 +418,7 @@ public class RuleFactory implements Iterable<Rule> {
     public Rule find(Rule rule) throws Exception {
         for (long id : cache.find(rule.getHash())) {
             Rule one = load(id);
-            if (one.equalsTo(rule)) {
+            if (!one.isDeleted() && one.equalsTo(rule)) {
                 return one;
             }
         }
@@ -497,7 +497,7 @@ public class RuleFactory implements Iterable<Rule> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted() && ((IUnit) o).getMindId() == mind.getId()) {
                 toDelete.add(o);
             }
         }

@@ -193,8 +193,16 @@ public class Mind {
             comments.commit(m.getComments());
 
             Map<UnitType, Set<Long>> saveDeleted = new HashMap<>();
-            saveDeleted.putAll(deleted);
-            deleted.putAll(m.getDeleted());
+            for (Map.Entry<UnitType, Set<Long>> e : deleted.entrySet()) {
+                saveDeleted.put(e.getKey(), new HashSet<>());
+                saveDeleted.get(e.getKey()).addAll(e.getValue());
+            }
+            for (Map.Entry<UnitType, Set<Long>> e : m.getDeleted().entrySet()) {
+                if (!deleted.containsKey(e.getKey())) {
+                    deleted.put(e.getKey(), new HashSet<>());
+                }
+                deleted.get(e.getKey()).addAll(e.getValue());
+            }
 
             if (!sequencedBy) {
                 Boolean res = analyzer.checkDatabase(list, false);
@@ -384,7 +392,7 @@ public class Mind {
     }
 
     public void pack() throws Exception {
-//        if(next == null) {
+//        if (next == null) {
         synchronized (locker) {
             terms.pack();
             predicates.pack();
@@ -1495,7 +1503,7 @@ public class Mind {
                     getComments().delete(r.getId());
                 }
 
-                pack();
+//                pack();
                 getTValues().clear();
                 link(null, logging);
                 Boolean ar = analyze(null, logging);

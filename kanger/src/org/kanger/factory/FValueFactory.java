@@ -181,7 +181,7 @@ public class FValueFactory implements Iterable<FValue> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted() && ((IUnit) o).getMindId() == mind.getId()) {
                 toDelete.add(o);
             }
         }
