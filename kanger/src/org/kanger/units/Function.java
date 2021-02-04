@@ -12,6 +12,7 @@ import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -33,7 +34,7 @@ public class Function implements IUnit<Function> {
 
     private transient long nameId = -1;
 
-    private transient boolean deleted = false;
+//    private transient boolean deleted = false;
 
     public Function() {
 
@@ -47,7 +48,7 @@ public class Function implements IUnit<Function> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putLong(nameId)
                 .putInt(range)
                 .append(arguments.pack());
@@ -57,7 +58,9 @@ public class Function implements IUnit<Function> {
     public Function apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         nameId = packet.getLong();
         range = packet.getInt();
         try {
@@ -440,17 +443,25 @@ public class Function implements IUnit<Function> {
         }
     }
 
+    @Override
     public boolean isDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void setDeleted() {
-        deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     @Override

@@ -41,7 +41,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     //    private Term next = null;      // Следующая запись
     private Mind mind = null;
 
-    private transient boolean deleted = false;
+//    private transient boolean deleted = false;
 
     private transient long nameId = -1;
     private transient long ruleId = -1;
@@ -63,7 +63,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putInt(type.ordinal());
         switch (type) {
             case DATE:
@@ -112,7 +112,9 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     public Term apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         type = DataType.values()[packet.getInt()];
         switch (type) {
             case DATE:
@@ -557,12 +559,23 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 
     @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void setDeleted() {
-        deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     @Override

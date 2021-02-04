@@ -687,8 +687,9 @@ public class Console {
                     System.out.println("No database used");
                 }
             } else {
+                String tmp = mind.getUser().getStorageName();
                 mind = mind.getUser().close(mind);
-                System.out.println("No database used");
+                System.out.printf("Database " + tmp + " closed\n");
             }
         } else {
             System.out.println("No database used");
@@ -1145,7 +1146,7 @@ public class Console {
 
         boolean found = false;
         for (Rule r : mind.getRules()) {
-            if (!r.isDeleted() && (id == -1 || r.getId() == id) && prods == r.isGenerated()) {
+            if (!r.isDeleted() && (id == -1 || r.getId() == id) && (id != -1 || prods == r.isGenerated())) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
                         (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),

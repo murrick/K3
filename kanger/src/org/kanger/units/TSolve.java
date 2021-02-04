@@ -29,7 +29,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     private transient List<Long> solveIds = new ArrayList<>();
     private transient Mind mind = null;
 
-    private transient boolean deleted = false;
+//    private transient boolean deleted = false;
 
     public TSolve() {
     }
@@ -68,7 +68,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0);
+                .putByte(isDeleted() ? 1 : 0);
         packet.putInt(solve.size());
         for (TValue v : solve) {
             packet.putLong(v.getId());
@@ -84,7 +84,9 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         solveIds.clear();
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         int count = packet.getInt();
         while (count-- > 0) {
             solveIds.add(packet.getLong());
@@ -223,12 +225,25 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         return (int) (id - o.getId());
     }
 
+    @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    @Override
     public void setDeleted() {
-        deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     @Override

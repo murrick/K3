@@ -27,6 +27,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     private long id = -1;                                       // id домена
     private long mindId = -1;                                   // id транзакции
     protected transient long ruleId = -1;
+    private boolean substitutable = false;                  // Правило содержит t-переменные
+    private boolean abstractive = false;                    // Правило содержит c-переменные
 //    private int range = 0;
 //    private Domain next = null;                                 // Следующий элемент
 
@@ -42,7 +44,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
     private Rule rule = null;                                        // Ссылка на правило
 
-    private transient boolean deleted = false;
+//    private transient boolean deleted = false;
 
     public Domain() {
     }
@@ -64,8 +66,10 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putLong(ruleId)
+                .putByte(substitutable ? 1 : 0)
+                .putByte(abstractive ? 1 : 0)
                 .append(super.pack());
         return packet.createMarked();
     }
@@ -73,8 +77,12 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     public Domain apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         ruleId = packet.getLong();
+        substitutable = packet.getByte() != 0;
+        abstractive = packet.getByte() != 0;
         try {
             packet.mark();
             super.apply(packet);
@@ -1142,12 +1150,23 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void setDeleted() {
-        this.deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     @Override
@@ -1253,6 +1272,20 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return ruleId;
     }
 
+    public boolean isSubstitutable() {
+        return substitutable;
+    }
 
+    public void setSubstitutable() {
+        this.substitutable = true;
+    }
+
+    public boolean isAbstractive() {
+        return abstractive;
+    }
+
+    public void setAbstractive() {
+        this.abstractive = true;
+    }
 }
 

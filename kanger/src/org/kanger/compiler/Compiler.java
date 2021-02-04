@@ -332,6 +332,12 @@ public class Compiler {
 //                if(t.isCVar()) {
 //                    t = new Argument(mind.getTerms().createCVar(d.getRight(), t.getValue(mind).getName().toString()));
 //                }
+//            } else {
+//                if (t.isTSet()) {
+//                    d.setSubstitutable();
+//                } else if (t.getValue(mind).isCVariable()) {
+//                    d.setAbstractive();
+//                }
             }
             arg.add(t);
         }

@@ -121,6 +121,13 @@ public class DomainFactory implements Iterable<Domain> {
             p.setRule(r);
             p.setId(mind.getUser().nextId(SCHEMA));
             p.setMindId(mind.getId());
+
+            if (!arg.getTVariables(mind).isEmpty()) {
+                p.setSubstitutable();
+            }
+            if (!arg.getCVariables(mind).isEmpty()) {
+                p.setAbstractive();
+            }
             if (arg != null) {
                 for (Argument t : arg) {
                     p.add(t);

@@ -9,7 +9,7 @@ public enum UnitType {
     FUNCTION,
     FVALUE,
     PREDICATE,
-    RIGHT,
+    RULE,
     SYSOP,
     TERM,
     TVALUE,

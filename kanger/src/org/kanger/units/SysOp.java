@@ -10,6 +10,7 @@ import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 
@@ -26,7 +27,7 @@ public class SysOp implements IUnit<SysOp> {
     protected int range = 0;
     protected SysOp next = null;
     protected transient Mind mind = null;
-    protected transient boolean deleted = false;
+    //    protected transient boolean deleted = false;
     protected long id = -1;                                       // id домена
     private long mindId = -1;                                   // id транзакции
 
@@ -128,7 +129,7 @@ public class SysOp implements IUnit<SysOp> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putInt(mode.ordinal())
                 .putString(name)
                 .putInt(scripts.size());
@@ -145,7 +146,9 @@ public class SysOp implements IUnit<SysOp> {
     public SysOp apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         mode = LibMode.values()[packet.getInt()];
         name = packet.getString();
         int cnt = packet.getInt();
@@ -207,12 +210,23 @@ public class SysOp implements IUnit<SysOp> {
 
     @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void setDeleted() {
-        deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     public List<String> getScripts() {

@@ -12,6 +12,7 @@ import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class FValue implements IUnit<FValue> {
@@ -31,7 +32,7 @@ public class FValue implements IUnit<FValue> {
     private transient long functionId = -1;
     private transient long valueId = -1;
 
-    private transient boolean deleted = false;
+//    private transient boolean deleted = false;
 
     public FValue() {
     }
@@ -71,7 +72,7 @@ public class FValue implements IUnit<FValue> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putLong(functionId)
                 .putLong(valueId);
 
@@ -86,7 +87,9 @@ public class FValue implements IUnit<FValue> {
     public FValue apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         functionId = packet.getLong();
         valueId = packet.getLong();
         int cnt = packet.getInt();
@@ -239,12 +242,23 @@ public class FValue implements IUnit<FValue> {
 
     @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void setDeleted() {
-        deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     @Override

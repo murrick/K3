@@ -31,7 +31,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     private transient long tVarId = -1;
     private transient Mind mind = null;
 
-    private transient boolean deleted = false;
+//    private transient boolean deleted = false;
     private transient boolean calculated = false;
 
     public TValue() {
@@ -62,7 +62,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putLong(valueId)
                 .putLong(tVarId);
 //                .putByte(cVariable ? 1 : 0);
@@ -78,7 +78,9 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     public TValue apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         valueId = packet.getLong();
         tVarId = packet.getLong();
 //        cVariable = packet.getByte() != 0;
@@ -242,12 +244,25 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return tVarId;
     }
 
+    @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    @Override
     public void setDeleted() {
-        deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     @Override

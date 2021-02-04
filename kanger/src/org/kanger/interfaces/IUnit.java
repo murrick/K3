@@ -2,7 +2,6 @@ package org.kanger.interfaces;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.storage.ByteBuffer;
 
 public interface IUnit<T> {
@@ -29,7 +28,7 @@ public interface IUnit<T> {
 
     ByteBuffer pack();
 
-    T apply(ByteBuffer packet) throws OutOfBufferException, Exception;
+    T apply(ByteBuffer packet) throws Exception;
 
     UnitType getUnitType();
 

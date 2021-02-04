@@ -6,13 +6,15 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
 
+import java.util.HashSet;
+
 public class Comment implements IUnit<Comment> {
 
     private long id = -1;
     private String comment = "";
     private long mindId = -1;
     private Mind mind;
-    private boolean deleted = false;
+//    private boolean deleted = false;
 
     public Comment() {
     }
@@ -67,12 +69,23 @@ public class Comment implements IUnit<Comment> {
 
     @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void setDeleted() {
-        deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     @Override
@@ -80,7 +93,7 @@ public class Comment implements IUnit<Comment> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putString(comment);
         return packet.createMarked();
     }
@@ -89,7 +102,9 @@ public class Comment implements IUnit<Comment> {
     public Comment apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         comment = packet.getString();
         return this;
     }

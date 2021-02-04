@@ -4,10 +4,7 @@ import org.kanger.calculator.Calculator;
 import org.kanger.compiler.Compiler;
 import org.kanger.compiler.PTree;
 import org.kanger.compiler.Parser;
-import org.kanger.enums.Enums;
-import org.kanger.enums.LogMode;
-import org.kanger.enums.QueryPass;
-import org.kanger.enums.Tools;
+import org.kanger.enums.*;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
@@ -42,6 +39,7 @@ public class Mind {
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
     private final Map<TVariable, long[]> floodControl = new HashMap<>();
+    private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
 
     private long id = 0;
     private Mind next = null;
@@ -130,10 +128,6 @@ public class Mind {
         values.setOrder(root.getValues().getOrder());
         values.setAscending(root.getValues().isAscending());
 
-//        domainCauses.putAll(root.getDomainCauses());
-
-//        private final LibraryStore library = new LibraryStore(this);                            // Системная библиотека функций и предикатов
-//        }
     }
 
     private void init() throws Exception {
@@ -198,6 +192,10 @@ public class Mind {
             Set<Long> list = rules.commit(m.getRules());
             comments.commit(m.getComments());
 
+            Map<UnitType, Set<Long>> saveDeleted = new HashMap<>();
+            saveDeleted.putAll(deleted);
+            deleted.putAll(m.getDeleted());
+
             if (!sequencedBy) {
                 Boolean res = analyzer.checkDatabase(list, false);
                 if (res != null && res) {
@@ -209,6 +207,10 @@ public class Mind {
                     domains.release();
                     rules.release();
                     comments.release();
+
+                    deleted.clear();
+                    deleted.putAll(saveDeleted);
+
                     result = false;
                 } else {
 
@@ -375,11 +377,14 @@ public class Mind {
 //            excluded.clear();
 
             ruleSolves.clear();
+
+            deleted.clear();
         }
 //        update();
     }
 
     public void pack() throws Exception {
+//        if(next == null) {
         synchronized (locker) {
             terms.pack();
             predicates.pack();
@@ -393,6 +398,7 @@ public class Mind {
             fValues.pack();
             functions.pack();
         }
+//        }
 //        tValues.update();
 
 //        update();
@@ -828,6 +834,10 @@ public class Mind {
 
     public Map<TVariable, long[]> getFloodControl() {
         return floodControl;
+    }
+
+    public Map<UnitType, Set<Long>> getDeleted() {
+        return deleted;
     }
 
     //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
@@ -1415,53 +1425,55 @@ public class Mind {
 //        return set;
 //    }
 
-    public Boolean delete(Rule r, boolean logging) throws Exception {
-        this.logging = logging;
-
-        solves.clear();
-        values.clear();
-        getLog().clear();
-
-        Set<Rule> set = new HashSet<>();
-        set.add(r);
-        for (Rule rg : getRules()) {
-            if (rg.isGenerated()) {
-                set.add(rg);
-            }
-        }
-
-        for (Rule rx : set) {
-            rules.delete(rx);
-            comments.delete(rx.getId());
-        }
-
-        pack();
-        tValues.clear();
-        link(r, logging);
-        Boolean ar = analyze(r, logging);
-
-        Set<Rule> success = new HashSet<>();
-        for (Rule rx : set) {
-            if (getRules().find(rx) == null) {
-                success.add(rx);
-            }
-        }
-
-        if (logging) {
-            if (ar) {
-                getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
-            } else if (success.isEmpty()) {
-                getLog().add(LogMode.ANALYZER, "WARNING: No rules have been deleted");
-            } else {
-                getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
-                for (Rule rx : success) {
-                    getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
-                }
-            }
-        }
-        return ar;
-    }
-
+//    public Boolean delete(Rule r, boolean logging) throws Exception {
+//        this.logging = logging;
+//
+//        solves.clear();
+//        values.clear();
+//        getLog().clear();
+//
+//        Set<Rule> set = new HashSet<>();
+//        set.add(r);
+//        for (Rule rg : getRules()) {
+//            if (rg.isGenerated()) {
+//                set.add(rg);
+//            }
+//        }
+//
+//        for (Rule rx : set) {
+////            rx.setDeleted();
+////            comments.get(rx.getId()).setDeleted();
+//            rules.delete(rx);
+//            comments.delete(rx.getId());
+//        }
+//
+//        pack();
+//        tValues.clear();
+//        link(r, logging);
+//        Boolean ar = analyze(r, logging);
+//
+//        Set<Rule> success = new HashSet<>();
+//        for (Rule rx : set) {
+//            if (getRules().find(rx) == null) {
+//                success.add(rx);
+//            }
+//        }
+//
+//        if (logging) {
+//            if (ar) {
+//                getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+//            } else if (success.isEmpty()) {
+//                getLog().add(LogMode.ANALYZER, "WARNING: No rules have been deleted");
+//            } else {
+//                getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
+//                for (Rule rx : success) {
+//                    getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", rx.getId(), rx.toString()));
+//                }
+//            }
+//        }
+//        return ar;
+//    }
+//
 
     private void removeResult(Mind m, boolean logging) throws Exception {
         if (m.getSolutions().size() > 0) {

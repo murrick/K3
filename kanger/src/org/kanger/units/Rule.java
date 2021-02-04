@@ -46,7 +46,7 @@ public class Rule implements IUnit<Rule> {
     //    private transient IUser user = null;
     private transient Mind mind = null;
 
-    private transient boolean deleted = false;
+//    private transient boolean deleted = false;
 
     public Rule() {
     }
@@ -61,7 +61,7 @@ public class Rule implements IUnit<Rule> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(deleted ? 1 : 0)
+                .putByte(isDeleted() ? 1 : 0)
                 .putLong(origId)
                 .putInt(varIndex)
                 .putByte(query ? 1 : 0)
@@ -86,7 +86,9 @@ public class Rule implements IUnit<Rule> {
     public Rule apply(ByteBuffer packet) throws Exception {
         id = packet.getLong();
         mindId = packet.getLong();
-        deleted = packet.getByte() != 0;
+        if (packet.getByte() != 0) {
+            setDeleted();
+        }
         origId = packet.getLong();
         varIndex = packet.getInt();
         query = packet.getByte() != 0;
@@ -286,7 +288,7 @@ public class Rule implements IUnit<Rule> {
     @Override
     public int getHash() throws Exception {
         //TODO: 4
-        if (stored || (tree.size() == 1 && tree.get(0).size() == 1 && getDomain().getArguments().getTVariables(mind).isEmpty())) {
+        if (stored || (tree.size() == 1 && tree.get(0).size() == 1 && !getDomain().isSubstitutable())) {
             return getDomain().getHashBase();
         } else {
             int hash = 0;
@@ -420,12 +422,25 @@ public class Rule implements IUnit<Rule> {
         this.varIndex = varIndex;
     }
 
+    @Override
     public boolean isDeleted() {
-        return deleted;
+        for (Mind m = mind; m != null; m = m.getNext()) {
+            if (m.getDeleted().containsKey(getUnitType())
+                    && m.getDeleted().get(getUnitType()).contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    @Override
     public void setDeleted() {
-        this.deleted = true;
+        if (!isDeleted()) {
+            if (!mind.getDeleted().containsKey(getUnitType())) {
+                mind.getDeleted().put(getUnitType(), new HashSet<>());
+            }
+            mind.getDeleted().get(getUnitType()).add(id);
+        }
     }
 
     public boolean isSubstitutable() {
@@ -493,7 +508,7 @@ public class Rule implements IUnit<Rule> {
 
     @Override
     public UnitType getUnitType() {
-        return UnitType.RIGHT;
+        return UnitType.RULE;
     }
 
     @Override
