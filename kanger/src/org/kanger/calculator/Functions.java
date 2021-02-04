@@ -1292,11 +1292,42 @@ public class Functions {
                     try {
                         ArgList arg = ((Function) o).getArguments();
                         if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
-                            if (!((Function) o).setParameter(1, _length(arg.get(0).getValue(mind)))) {
+                            if (!((Function) o).setParameter(1, _length(arg.get(0).getValue(mind), null))) {
                                 ret = 0;
                             }
                         } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
-                            if (_length(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            if (_length(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                                ret = 2;
+                            } else {
+                                ret = 0;
+                            }
+                        } else {
+                            ret = 0;
+                        }
+                    } catch (Exception ex) {
+                        ret = 0;
+                    }
+                    return ret;
+                }
+            }));
+        }
+
+        {
+            put("length(2)", new SysOp(LibMode.FUNCTION, "length", 2, new IReactor() {
+                public Object run(Object o) {
+                    int ret = 1;
+                    try {
+                        ArgList arg = ((Function) o).getArguments();
+                        if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
+                            if (!((Function) o).setParameter(2, _length(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind) && arg.get(2).isDefined(mind)) {
+                            if (!((Function) o).setParameter(1, _step(arg.get(0).getValue(mind), arg.get(2).getValue(mind)))) {
+                                ret = 0;
+                            }
+                        } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind)) {
+                            if (_length(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
                                 ret = 2;
                             } else {
                                 ret = 0;
@@ -1962,30 +1993,6 @@ public class Functions {
                 list[1] = tmp;
             }
             res = list;
-        } else if (a.getType() == DataType.INTERVAL && b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
-            Term[] list = new Term[2];
-            List<Term> aa = (List<Term>) a.getValue();
-            list[0] = _min(_min(aa.get(0), aa.get(1)), b);
-            list[1] = _max(_max(aa.get(0), aa.get(1)), b);
-            boolean backward = aa.get(0).compareTo(aa.get(1)) > 0;
-            if (backward) {
-                Term tmp = list[0];
-                list[0] = list[1];
-                list[1] = tmp;
-            }
-            res = list;
-        } else if (b.getType() == DataType.INTERVAL && a.getType() == ((List<Term>) b.getValue()).get(0).getType()) {
-            Term[] list = new Term[2];
-            List<Term> bb = (List<Term>) b.getValue();
-            list[0] = _min(_min(bb.get(0), bb.get(1)), a);
-            list[1] = _max(_max(bb.get(0), bb.get(1)), a);
-            boolean backward = bb.get(0).compareTo(bb.get(1)) > 0;
-            if (backward) {
-                Term tmp = list[0];
-                list[0] = list[1];
-                list[1] = tmp;
-            }
-            res = list;
         } else if (a.getType() == DataType.SET) {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
@@ -2016,6 +2023,52 @@ public class Functions {
                 }
             }
             res = list;
+        } else if (a.getType() == DataType.INTERVAL) {
+            if (b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
+                Term[] list = new Term[2];
+                List<Term> aa = (List<Term>) a.getValue();
+                list[0] = _min(_min(aa.get(0), aa.get(1)), b);
+                list[1] = _max(_max(aa.get(0), aa.get(1)), b);
+                boolean backward = aa.get(0).compareTo(aa.get(1)) > 0;
+                if (backward) {
+                    Term tmp = list[0];
+                    list[0] = list[1];
+                    list[1] = tmp;
+                }
+                res = list;
+            } else {
+                ArgList list = new ArgList();
+                for (Term t : mind.getCalculator().getPredicates().expand(a, null, false)) {
+                    if (!list.contains(mind, t)) {
+                        list.add(new Argument(t));
+                    }
+                }
+                list.add(new Argument(b));
+                res = list;
+            }
+        } else if (b.getType() == DataType.INTERVAL) {
+            if (a.getType() == ((List<Term>) b.getValue()).get(0).getType()) {
+                Term[] list = new Term[2];
+                List<Term> bb = (List<Term>) b.getValue();
+                list[0] = _min(_min(bb.get(0), bb.get(1)), a);
+                list[1] = _max(_max(bb.get(0), bb.get(1)), a);
+                boolean backward = bb.get(0).compareTo(bb.get(1)) > 0;
+                if (backward) {
+                    Term tmp = list[0];
+                    list[0] = list[1];
+                    list[1] = tmp;
+                }
+                res = list;
+            } else {
+                ArgList list = new ArgList();
+                for (Term t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+                    if (!list.contains(mind, t)) {
+                        list.add(new Argument(t));
+                    }
+                }
+                list.add(new Argument(a));
+                res = list;
+            }
         } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
             byte[] buffer = new byte[((byte[]) a.getValue()).length + ((byte[]) b.getValue()).length];
             System.arraycopy(a.getValue(), 0, buffer, 0, ((byte[]) a.getValue()).length);
@@ -2077,6 +2130,33 @@ public class Functions {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
             res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
+        } else if (a.getType() == DataType.INTERVAL && b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
+            ArgList list = new ArgList();
+            for (Term n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+                list.add(new Argument(n));
+            }
+            list.remove(mind, b);
+            res = list;
+        } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
+            ArgList list = new ArgList();
+            for (Term n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+                list.add(new Argument(n));
+            }
+            for (Term n : mind.getCalculator().getPredicates().expand(b, null, false)) {
+                list.remove(mind, n);
+            }
+            res = list;
+        } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.SET) {
+            ArgList list = new ArgList();
+            for (Term n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+                list.add(new Argument(n));
+            }
+            for (Term t : (Collection<Term>) b.getValue()) {
+                for (Term n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                    list.remove(mind, n);
+                }
+            }
+            res = list;
         } else if (a.getType() == DataType.SET) {
             ArgList list = new ArgList();
             for (Term t : (Collection<Term>) a.getValue()) {
@@ -2656,18 +2736,34 @@ public class Functions {
         return res;
     }
 
-    private Term _length(Term a) throws Exception {
+    private Term _length(Term a, Term step) throws Exception {
         Object res = null;
         if (a.getType() == DataType.STRING) {
             res = a.getValue().toString().length();
         } else if (a.getType() == DataType.BLOB) {
             res = ((byte[]) a.getValue()).length;
         } else if (a.getType() == DataType.INTERVAL) {
-            res = mind.getCalculator().getPredicates().expand(a, null, false).size();
+            res = mind.getCalculator().getPredicates().expand(a, step, false).size();
         } else if (a.getType() == DataType.SET) {
-            res = mind.getCalculator().getPredicates().expand(a, null, false).size();
+            res = mind.getCalculator().getPredicates().expand(a, step, false).size();
         }
         return mind.getTerms().add(res);
     }
 
+    private Term _step(Term a, Term size) throws Exception {
+        Object res = null;
+        if (a.getType() == DataType.INTERVAL) {
+            List<Term> list = mind.getCalculator().getPredicates().expand(a, null, false);
+            if (list.size() > 1) {
+                Term dif;
+                if (list.get(0).compareTo(list.get(list.size() - 1)) > 0) {
+                    dif = _sub(list.get(0), _dec(list.get(list.size() - 1)));
+                } else {
+                    dif = _sub(list.get(list.size() - 1), _dec(list.get(0)));
+                }
+                res = _div(dif, size);
+            }
+        }
+        return mind.getTerms().add(res);
+    }
 }
