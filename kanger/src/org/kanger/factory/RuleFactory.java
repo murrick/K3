@@ -202,6 +202,7 @@ public class RuleFactory implements Iterable<Rule> {
         if (x != null) {
             //TODO: Непонятно как связать с комментарием
             delete(r);
+            x.setDeleted(false, mind);
             return x;
         } else {
 //            if (r.getId() == -1) {
@@ -311,7 +312,7 @@ public class RuleFactory implements Iterable<Rule> {
     }
 
     public void delete(Rule r) throws Exception {
-        r.setDeleted();
+        r.setDeleted(true, mind);
         for (List<Domain> list : r.getTree()) {
             for (Domain d : list) {
                 mind.getDomains().delete(d);
@@ -358,6 +359,7 @@ public class RuleFactory implements Iterable<Rule> {
     public synchronized Rule add(Domain domain) throws Exception {
         Rule p = find(domain);
         if (p != null) {
+            p.setDeleted(false, mind);
             return p;
         } else {
             ArgList list = null;
@@ -390,7 +392,7 @@ public class RuleFactory implements Iterable<Rule> {
             Domain d = mind.getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
             r.getTree().get(0).add(d);
             r.setGenerated(true);
-            r.setStored();
+            r.setStored(mind);
 
             //TODO: 1
             if (domain.isQuery(mind)) {
@@ -408,7 +410,7 @@ public class RuleFactory implements Iterable<Rule> {
     }
 
     public Rule store(Domain d) throws Exception {
-        d.getRule().setStored();
+        d.getRule().setStored(mind);
 //        stored.add(d.getRight().getId(), d.getRight().getId());
         return d.getRule();
     }
@@ -505,7 +507,7 @@ public class RuleFactory implements Iterable<Rule> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }

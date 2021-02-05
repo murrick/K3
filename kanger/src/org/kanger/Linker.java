@@ -77,7 +77,7 @@ public class Linker {
                     for (Domain d : list) {
                         if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).isTSet()) {
                             for (Rule r : mind.getRules()) {
-                                if (!r.isDeleted() /*&& r.getId() < d.getRuleId()*/) {
+                                if (!r.isDeleted(mind) /*&& r.getId() < d.getRuleId()*/) {
                                     TValue s = null;
                                     TVariable t = d.get(0).getT(mind);
                                     Term tm = mind.getTerms().add(r.getId());
@@ -107,7 +107,7 @@ public class Linker {
 //                }
 //            } else {
             for (Rule r : mind.getRules()) {
-                if (!r.isDeleted()) {
+                if (!r.isDeleted(mind)) {
                     ruleSet.add(r);
                 }
             }

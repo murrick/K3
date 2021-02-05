@@ -105,11 +105,12 @@ public class LibraryFactory implements Iterable<SysOp> {
     public synchronized SysOp add(SysOp s) throws Exception {
         SysOp x = find(s.toString());
         if (x != null) {
+            x.setDeleted(false, mind);
             x.setMode(s.getMode());
             x.setProc(s.getProc());
-            if (s.isDeleted()) {
-                x.setDeleted();
-            }
+//            if (s.isDeleted()) {
+//                x.setDeleted(true);
+//            }
             x.getScripts().clear();
             x.getScripts().addAll(s.getScripts());
             x.getParams().clear();
@@ -156,13 +157,13 @@ public class LibraryFactory implements Iterable<SysOp> {
     }
 
     public void delete(SysOp x) {
-        x.setDeleted();
+        x.setDeleted(true, mind);
     }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }

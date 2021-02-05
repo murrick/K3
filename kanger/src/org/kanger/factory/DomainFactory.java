@@ -120,6 +120,7 @@ public class DomainFactory implements Iterable<Domain> {
     public synchronized Domain add(Predicate pred, boolean antc, ArgList arg, Rule r) throws Exception {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
+            p.setDeleted(false, mind);
             return p;
         } else {
             p = new Domain(mind);
@@ -190,7 +191,7 @@ public class DomainFactory implements Iterable<Domain> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }
@@ -211,7 +212,7 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void delete(Domain d) throws Exception {
-        d.setDeleted();
+        d.setDeleted(true, mind);
         for (TVariable t : d.getArguments().getTVariables(mind)) {
             mind.getTVars().delete(t);
         }

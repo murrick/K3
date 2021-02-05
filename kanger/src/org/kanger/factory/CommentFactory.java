@@ -78,6 +78,7 @@ public class CommentFactory implements Iterable<Term> {
     public synchronized Comment add(long ruleId, String comment) throws Exception {
         Comment p = get(ruleId);
         if (p != null) {
+            p.setDeleted(false, mind);
             if (!p.getComment().equals(comment)) {
                 p.setComment(comment);
                 if (connection != null) {
@@ -179,7 +180,7 @@ public class CommentFactory implements Iterable<Term> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }
@@ -210,7 +211,7 @@ public class CommentFactory implements Iterable<Term> {
     public void delete(long id) throws Exception {
         Comment c = get(id);
         if (c != null) {
-            c.setDeleted();
+            c.setDeleted(true, mind);
         }
     }
 }

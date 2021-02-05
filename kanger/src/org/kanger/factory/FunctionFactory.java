@@ -178,7 +178,7 @@ public class FunctionFactory implements Iterable<Function> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }
@@ -198,7 +198,7 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
     public void delete(Function f) throws Exception {
-        f.setDeleted();
+        f.setDeleted(true, mind);
         FValue v = mind.getFValues().find(f);
         if (v != null) {
             mind.getFValues().delete(v);

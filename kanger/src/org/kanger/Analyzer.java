@@ -44,7 +44,7 @@ public class Analyzer {
 
             boolean occurs = false;
             for (Rule r : mind.getRules()) {
-                if (r.isStored() && !r.isDeleted()) {
+                if (r.isStored() && !r.isDeleted(mind)) {
                     if (r.getMindId() != mind.getId()) {
                         break;
                     }
@@ -135,7 +135,7 @@ public class Analyzer {
 //                    System.err.println("!!");
 //                }
 
-                if (q.isDeleted()) {
+                if (q.isDeleted(mind)) {
                     continue;
                 }
 
@@ -215,7 +215,7 @@ public class Analyzer {
         Set<Rule> orfans = new HashSet<>();
 
         for (Rule p : mind.getRules()) {
-            if (!p.isDeleted() && p.isStored() && (list == null || list.contains(p.getId())) && checkRight(p, orfans, list, logging)) {
+            if (!p.isDeleted(mind) && p.isStored() && (list == null || list.contains(p.getId())) && checkRight(p, orfans, list, logging)) {
                 if (p.getDomain().isCalculated(mind)) {
                     calculated = true;
                 }

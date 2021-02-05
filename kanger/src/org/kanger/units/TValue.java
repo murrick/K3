@@ -62,7 +62,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(isDeleted() ? 1 : 0)
+                .putByte(isDeleted(mind) ? 1 : 0)
                 .putLong(valueId)
                 .putLong(tVarId);
 //                .putByte(cVariable ? 1 : 0);
@@ -79,7 +79,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
-            setDeleted();
+            setDeleted(true, mind);
         }
         valueId = packet.getLong();
         tVarId = packet.getLong();
@@ -245,10 +245,11 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     @Override
-    public boolean isDeleted() {
+    public boolean isDeleted(Mind mind) {
         for (Mind m = mind; m != null; m = m.getNext()) {
-            if (m.getDeleted().containsKey(getUnitType())
-                    && m.getDeleted().get(getUnitType()).contains(id)) {
+            if (m.getRestored().containsKey(getUnitType()) && m.getRestored().get(getUnitType()).contains(id)) {
+                return false;
+            } else if (m.getDeleted().containsKey(getUnitType()) && m.getDeleted().get(getUnitType()).contains(id)) {
                 return true;
             }
         }
@@ -256,12 +257,31 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     @Override
-    public void setDeleted() {
-        if (!isDeleted()) {
-            if (!mind.getDeleted().containsKey(getUnitType())) {
-                mind.getDeleted().put(getUnitType(), new HashSet<>());
+    public void setDeleted(boolean on, Mind mind) {
+        if (on) {
+            if (!isDeleted(mind)) {
+                if (mind.getRestored().containsKey(getUnitType()) && mind.getRestored().get(getUnitType()).contains(id)) {
+                    mind.getRestored().get(getUnitType()).remove(id);
+                }
+                if (!isDeleted(mind)) {
+                    if (!mind.getDeleted().containsKey(getUnitType())) {
+                        mind.getDeleted().put(getUnitType(), new HashSet<>());
+                    }
+                    mind.getDeleted().get(getUnitType()).add(id);
+                }
             }
-            mind.getDeleted().get(getUnitType()).add(id);
+        } else {
+            if (isDeleted(mind)) {
+                if (mind.getDeleted().containsKey(getUnitType()) && mind.getDeleted().get(getUnitType()).contains(id)) {
+                    mind.getDeleted().get(getUnitType()).remove(id);
+                }
+                if (isDeleted(mind)) {
+                    if (!mind.getRestored().containsKey(getUnitType())) {
+                        mind.getRestored().put(getUnitType(), new HashSet<>());
+                    }
+                    mind.getRestored().get(getUnitType()).add(id);
+                }
+            }
         }
     }
 

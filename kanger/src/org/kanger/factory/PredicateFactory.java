@@ -99,6 +99,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     public synchronized Predicate add(Term line, int range) throws Exception {
         Predicate p = find(line, range);
         if (p != null) {
+            p.setDeleted(false, mind);
             return p;
         } else {
             p = new Predicate(mind);
@@ -169,7 +170,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }

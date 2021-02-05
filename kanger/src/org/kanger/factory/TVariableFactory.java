@@ -135,7 +135,7 @@ public class TVariableFactory implements Iterable<TVariable> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }
@@ -156,7 +156,7 @@ public class TVariableFactory implements Iterable<TVariable> {
     }
 
     public void delete(TVariable t) throws Exception {
-        t.setDeleted();
+        t.setDeleted(true, mind);
         for (TValue v : mind.getTValues()) {
             if (v.getTVar().getId() == t.getId()) {
                 mind.getTValues().delete(v);

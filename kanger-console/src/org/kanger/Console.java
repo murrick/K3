@@ -317,7 +317,7 @@ public class Console {
     private static void processFunction(String line, Mind mind) throws Exception {
         mind.setCompliedLine(line);
         SysOp op = (SysOp) mind.compileLine(line, false, null);
-        if (!op.isDeleted()) {
+        if (!op.isDeleted(mind)) {
             System.out.printf("SUCCESS: Updated function: %s;\n", op.toString());
         } else {
             System.out.printf("SUCCESS: Deleted function: %s;\n", op.toString());
@@ -941,7 +941,7 @@ public class Console {
             }
             boolean found = false;
             for (SysOp op : mind.getLibrary()) {
-                if (!op.isDeleted() && op.getMode() == LibMode.FUNCTION && (id == -1 || id == op.getId())) {
+                if (!op.isDeleted(mind) && op.getMode() == LibMode.FUNCTION && (id == -1 || id == op.getId())) {
                     found = true;
                     System.out.printf("Function %03d: %s;\n", op.getId(), op.toString());
                     if (source && !op.getScripts().isEmpty()) {
@@ -1068,7 +1068,7 @@ public class Console {
         } else {
             boolean found = false;
             for (Predicate p : mind.getPredicates()) {
-                if (!p.isDeleted() && !mind.isSystem(p) && !p.getSolves().isEmpty()
+                if (!p.isDeleted(mind) && !mind.isSystem(p) && !p.getSolves().isEmpty()
                         && (name.isEmpty() || p.getName().toString().toLowerCase().equals(name.toLowerCase()))) {
                     if (preds) {
                         found = true;
@@ -1164,17 +1164,17 @@ public class Console {
             System.out.printf(" --- Rules for transaction level %d (%d)\n", m.getTransactionLevel(), m.getId());
         }
         for (Rule r : mind.getRules()) {
-            if (!r.isDeleted() && (id == -1 || r.getId() == id) && (id == -1 && !level && prods == r.isGenerated()) || (level && r.getMindId() == m.getId())) {
+            if (!r.isDeleted(mind) && (id == -1 || r.getId() == id) && (id == -1 && !level && prods == r.isGenerated()) || (level && r.getMindId() == m.getId())) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
                         (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
                         r.getId(),
-                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
+                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
                                 ? " " +
                                 (r.isGenerated() ? "G" : "") +
                                 (r.isStored() ? "B" : "") +
                                 (r.isQuery() ? "Q" : "") +
-                                (r.isDeleted() ? "D" : "")
+                                (r.isDeleted(mind) ? "D" : "")
                                 : "",
                         r.getOrig());
                 if (tree || r.getOrig().isEmpty()) {
@@ -1201,12 +1201,12 @@ public class Console {
                 System.out.printf("%sRule %03d%s: %s\n",
                         (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
                         r.getId(),
-                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
+                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
                                 ? " " +
                                 (r.isGenerated() ? "G" : "") +
                                 (r.isStored() ? "B" : "") +
                                 (r.isQuery() ? "Q" : "") +
-                                (r.isDeleted() ? "D" : "")
+                                (r.isDeleted(mind) ? "D" : "")
                                 : "",
                         r.getOrig());
             }

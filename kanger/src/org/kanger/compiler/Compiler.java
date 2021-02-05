@@ -48,7 +48,7 @@ public class Compiler {
 
         Rule x = mind.getRules().add(r);
 
-        if (!r.isDeleted()) {
+        if (!r.isDeleted(mind)) {
             r.setQuery(query);
             mind.getRules().expand(r);
         } else {

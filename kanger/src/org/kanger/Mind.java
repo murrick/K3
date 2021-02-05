@@ -40,6 +40,7 @@ public class Mind {
     private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
     private final Map<TVariable, long[]> floodControl = new HashMap<>();
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
+    private final Map<UnitType, Set<Long>> restored = new HashMap<>();
 
     private long id = 0;
     private Mind next = null;
@@ -194,15 +195,31 @@ public class Mind {
             comments.commit(m.getComments());
 
             Map<UnitType, Set<Long>> saveDeleted = new HashMap<>();
+            Map<UnitType, Set<Long>> saveRestored = new HashMap<>();
             for (Map.Entry<UnitType, Set<Long>> e : deleted.entrySet()) {
                 saveDeleted.put(e.getKey(), new HashSet<>());
                 saveDeleted.get(e.getKey()).addAll(e.getValue());
+            }
+            for (Map.Entry<UnitType, Set<Long>> e : restored.entrySet()) {
+                saveRestored.put(e.getKey(), new HashSet<>());
+                saveRestored.get(e.getKey()).addAll(e.getValue());
             }
             for (Map.Entry<UnitType, Set<Long>> e : m.getDeleted().entrySet()) {
                 if (!deleted.containsKey(e.getKey())) {
                     deleted.put(e.getKey(), new HashSet<>());
                 }
                 deleted.get(e.getKey()).addAll(e.getValue());
+            }
+            for (Map.Entry<UnitType, Set<Long>> e : m.getRestored().entrySet()) {
+                if (!restored.containsKey(e.getKey())) {
+                    restored.put(e.getKey(), new HashSet<>());
+                }
+                restored.get(e.getKey()).addAll(e.getValue());
+                if (deleted.containsKey(e.getKey())) {
+                    for (long id : restored.get(e.getKey())) {
+                        deleted.get(e.getKey()).remove(id);
+                    }
+                }
             }
 
             if (!sequencedBy) {
@@ -219,7 +236,9 @@ public class Mind {
                     comments.release();
 
                     deleted.clear();
+                    restored.clear();
                     deleted.putAll(saveDeleted);
+                    restored.putAll(saveRestored);
 
                     result = false;
 
@@ -392,6 +411,7 @@ public class Mind {
             ruleSolves.clear();
 
             deleted.clear();
+            restored.clear();
         }
 //        update();
     }
@@ -410,6 +430,9 @@ public class Mind {
         comments.pack();
         fValues.pack();
         functions.pack();
+
+        deleted.clear();
+        restored.clear();
 //        }
 //        }
 //        tValues.update();
@@ -661,7 +684,7 @@ public class Mind {
             PTree p = Parser.parser(line.substring(1));
             r = x.compiler.compileLine(p, suc, orig, query, ext);
             x.setCompliedLine(line);
-            if (r instanceof Rule && ((Rule) r).isDeleted()) {
+            if (r instanceof Rule && ((Rule) r).isDeleted(this)) {
                 release(x);
                 getLog().add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
                 r = null;
@@ -853,7 +876,11 @@ public class Mind {
         return deleted;
     }
 
-    //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
+    public Map<UnitType, Set<Long>> getRestored() {
+        return restored;
+    }
+
+//    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
 //        return domainTags;
 //    }
 
@@ -1061,7 +1088,7 @@ public class Mind {
                 res = true;
             }
         } else {
-            if (logging && r != null && r.isDeleted()) {
+            if (logging && r != null && r.isDeleted(this)) {
                 m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
             }
             release(m);
@@ -1117,7 +1144,7 @@ public class Mind {
                 }
             }
         } else {
-            if (logging && r != null && r.isDeleted()) {
+            if (logging && r != null && r.isDeleted(this)) {
                 m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
             }
             release(m);
@@ -1129,7 +1156,7 @@ public class Mind {
 
     public Boolean queryDelete(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
-        if (next == null) {
+//        if (next == null) {
 
             Mind m = new Mind(this);
             m.setQueryPass(QueryPass.DELETE);
@@ -1151,27 +1178,27 @@ public class Mind {
                         m.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
                     }
                 }
-            } else if (logging && r != null && r.isDeleted()) {
+            } else if (logging && r != null && r.isDeleted(this)) {
                 m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
             }
-            release(m);
-            hypothesis.clear();
-        } else {
-            res = false;
-            getLog().add(LogMode.ANALYZER, "WARNING: Transaction level is " + getTransactionLevel() + " (" + id + ")");
-        }
+        release(m);
+        hypothesis.clear();
+//        } else {
+//            res = false;
+//            getLog().add(LogMode.ANALYZER, "WARNING: Transaction level is " + getTransactionLevel() + " (" + id + ")");
+//        }
         return res;
     }
 
     public Boolean queryCheck(boolean logging) throws Exception {
         Boolean res = null;
 
-        if (next == null) {
+//        if (next == null) {
 
             setQueryPass(QueryPass.CHECK);
             boolean found = false;
             for (Rule rx : getRules()) {
-                if (!rx.isDeleted() && rx.isGenerated()) {
+                if (!rx.isDeleted(this) && rx.isGenerated()) {
                     if (logging) {
                         getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
                     }
@@ -1181,7 +1208,7 @@ public class Mind {
                 }
             }
             if (found) {
-                pack();
+//                pack();
                 if (logging) {
                     getLog().add(LogMode.STORAGE, "-------------------------------------------");
                 }
@@ -1201,11 +1228,11 @@ public class Mind {
                 }
                 res = true;
             }
-            hypothesis.clear();
-        } else {
-            res = false;
-            getLog().add(LogMode.ANALYZER, "WARNING: Transaction level is " + getTransactionLevel() + " (" + id + ")");
-        }
+        hypothesis.clear();
+//        } else {
+//            res = false;
+//            getLog().add(LogMode.ANALYZER, "WARNING: Transaction level is " + getTransactionLevel() + " (" + id + ")");
+//        }
         return res;
     }
 
@@ -1242,7 +1269,7 @@ public class Mind {
                     hypothesis.commit(m.getHypothesisStore());
                 }
             }
-        } else if (logging && r != null && r.isDeleted()) {
+        } else if (logging && r != null && r.isDeleted(this)) {
             m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
         }
         release(m);
@@ -1289,7 +1316,7 @@ public class Mind {
                     }
                 }
             }
-        } else if (logging && r != null && r.isDeleted()) {
+        } else if (logging && r != null && r.isDeleted(this)) {
             m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
         }
         release(m);
@@ -1519,8 +1546,8 @@ public class Mind {
                     getComments().delete(r.getId());
                 }
 
-                pack();
-                getTValues().clear();
+//                pack();
+//                getTValues().clear();
 
                 link(null, logging);
                 Boolean ar = analyze(null, logging);
@@ -1528,7 +1555,7 @@ public class Mind {
                 Set<Rule> success = new HashSet<>();
                 for (Rule r : set) {
                     Rule x = getRules().find(r);
-                    if (x == null || x.isDeleted()) {
+                    if (x == null || x.isDeleted(this)) {
                         success.add(r);
                     }
                 }
@@ -1757,7 +1784,7 @@ public class Mind {
 
     public boolean isEmpty() {
         for (Rule r : rules) {
-            if (!r.isDeleted() && r.getMindId() == id) {
+            if (!r.isDeleted(this) && r.getMindId() == id) {
                 return false;
             }
         }

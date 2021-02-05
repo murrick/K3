@@ -128,6 +128,7 @@ public class DictionaryFactory implements Iterable<Term> {
     public synchronized Term add(Object o) throws Exception {
         Term p = find(o);
         if (p != null) {
+            p.setDeleted(false, mind);
             return p;
         } else {
             if (p instanceof Term) {
@@ -282,7 +283,7 @@ public class DictionaryFactory implements Iterable<Term> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }

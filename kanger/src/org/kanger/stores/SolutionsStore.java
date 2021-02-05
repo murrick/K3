@@ -54,7 +54,7 @@ public class SolutionsStore {
     public boolean contains(Domain d) throws Exception {
         if (!isEmpty()) {
             for (Rule r : root) {
-                if (!r.isDeleted() && r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
+                if (!r.isDeleted(mind) && r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
                     return true;
                 }
             }

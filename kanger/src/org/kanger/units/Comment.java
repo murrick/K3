@@ -68,10 +68,11 @@ public class Comment implements IUnit<Comment> {
     }
 
     @Override
-    public boolean isDeleted() {
+    public boolean isDeleted(Mind mind) {
         for (Mind m = mind; m != null; m = m.getNext()) {
-            if (m.getDeleted().containsKey(getUnitType())
-                    && m.getDeleted().get(getUnitType()).contains(id)) {
+            if (m.getRestored().containsKey(getUnitType()) && m.getRestored().get(getUnitType()).contains(id)) {
+                return false;
+            } else if (m.getDeleted().containsKey(getUnitType()) && m.getDeleted().get(getUnitType()).contains(id)) {
                 return true;
             }
         }
@@ -79,12 +80,31 @@ public class Comment implements IUnit<Comment> {
     }
 
     @Override
-    public void setDeleted() {
-        if (!isDeleted()) {
-            if (!mind.getDeleted().containsKey(getUnitType())) {
-                mind.getDeleted().put(getUnitType(), new HashSet<>());
+    public void setDeleted(boolean on, Mind mind) {
+        if (on) {
+            if (!isDeleted(mind)) {
+                if (mind.getRestored().containsKey(getUnitType()) && mind.getRestored().get(getUnitType()).contains(id)) {
+                    mind.getRestored().get(getUnitType()).remove(id);
+                }
+                if (!isDeleted(mind)) {
+                    if (!mind.getDeleted().containsKey(getUnitType())) {
+                        mind.getDeleted().put(getUnitType(), new HashSet<>());
+                    }
+                    mind.getDeleted().get(getUnitType()).add(id);
+                }
             }
-            mind.getDeleted().get(getUnitType()).add(id);
+        } else {
+            if (isDeleted(mind)) {
+                if (mind.getDeleted().containsKey(getUnitType()) && mind.getDeleted().get(getUnitType()).contains(id)) {
+                    mind.getDeleted().get(getUnitType()).remove(id);
+                }
+                if (isDeleted(mind)) {
+                    if (!mind.getRestored().containsKey(getUnitType())) {
+                        mind.getRestored().put(getUnitType(), new HashSet<>());
+                    }
+                    mind.getRestored().get(getUnitType()).add(id);
+                }
+            }
         }
     }
 
@@ -93,7 +113,7 @@ public class Comment implements IUnit<Comment> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(isDeleted() ? 1 : 0)
+                .putByte(isDeleted(mind) ? 1 : 0)
                 .putString(comment);
         return packet.createMarked();
     }
@@ -103,7 +123,7 @@ public class Comment implements IUnit<Comment> {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
-            setDeleted();
+            setDeleted(true, mind);
         }
         comment = packet.getString();
         return this;

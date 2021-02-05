@@ -61,7 +61,7 @@ public class Rule implements IUnit<Rule> {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(isDeleted() ? 1 : 0)
+                .putByte(isDeleted(mind) ? 1 : 0)
                 .putLong(origId)
                 .putInt(varIndex)
                 .putByte(query ? 1 : 0)
@@ -87,7 +87,7 @@ public class Rule implements IUnit<Rule> {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
-            setDeleted();
+            setDeleted(true, mind);
         }
         origId = packet.getLong();
         varIndex = packet.getInt();
@@ -178,7 +178,8 @@ public class Rule implements IUnit<Rule> {
         return stored;
     }
 
-    public void setStored() {
+    public void setStored(Mind mind) {
+        setDeleted(false, mind);
         this.stored = true;
     }
 
@@ -199,7 +200,7 @@ public class Rule implements IUnit<Rule> {
             for (Domain d : t) {
                 for (Rule r : mind.getRules()) {
                     if (r != null) {
-                        if (!r.isDeleted() && r.getPredicates().contains(d.getPredicateId())) {
+                        if (!r.isDeleted(mind) && r.getPredicates().contains(d.getPredicateId())) {
                             list.add(r);
                         }
                     } else {
@@ -423,10 +424,11 @@ public class Rule implements IUnit<Rule> {
     }
 
     @Override
-    public boolean isDeleted() {
+    public boolean isDeleted(Mind mind) {
         for (Mind m = mind; m != null; m = m.getNext()) {
-            if (m.getDeleted().containsKey(getUnitType())
-                    && m.getDeleted().get(getUnitType()).contains(id)) {
+            if (m.getRestored().containsKey(getUnitType()) && m.getRestored().get(getUnitType()).contains(id)) {
+                return false;
+            } else if (m.getDeleted().containsKey(getUnitType()) && m.getDeleted().get(getUnitType()).contains(id)) {
                 return true;
             }
         }
@@ -434,12 +436,31 @@ public class Rule implements IUnit<Rule> {
     }
 
     @Override
-    public void setDeleted() {
-        if (!isDeleted()) {
-            if (!mind.getDeleted().containsKey(getUnitType())) {
-                mind.getDeleted().put(getUnitType(), new HashSet<>());
+    public void setDeleted(boolean on, Mind mind) {
+        if (on) {
+            if (!isDeleted(mind)) {
+                if (mind.getRestored().containsKey(getUnitType()) && mind.getRestored().get(getUnitType()).contains(id)) {
+                    mind.getRestored().get(getUnitType()).remove(id);
+                }
+                if (!isDeleted(mind)) {
+                    if (!mind.getDeleted().containsKey(getUnitType())) {
+                        mind.getDeleted().put(getUnitType(), new HashSet<>());
+                    }
+                    mind.getDeleted().get(getUnitType()).add(id);
+                }
             }
-            mind.getDeleted().get(getUnitType()).add(id);
+        } else {
+            if (isDeleted(mind)) {
+                if (mind.getDeleted().containsKey(getUnitType()) && mind.getDeleted().get(getUnitType()).contains(id)) {
+                    mind.getDeleted().get(getUnitType()).remove(id);
+                }
+                if (isDeleted(mind)) {
+                    if (!mind.getRestored().containsKey(getUnitType())) {
+                        mind.getRestored().put(getUnitType(), new HashSet<>());
+                    }
+                    mind.getRestored().get(getUnitType()).add(id);
+                }
+            }
         }
     }
 

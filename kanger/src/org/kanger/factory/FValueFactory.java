@@ -116,6 +116,8 @@ public class FValueFactory implements Iterable<FValue> {
             } else {
                 return null;
             }
+        } else {
+            t.setDeleted(false, mind);
         }
         return t;
     }
@@ -188,7 +190,7 @@ public class FValueFactory implements Iterable<FValue> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }
@@ -209,7 +211,7 @@ public class FValueFactory implements Iterable<FValue> {
     }
 
     public void delete(FValue v) {
-        v.setDeleted();
+        v.setDeleted(true, mind);
     }
 
     public boolean isAction() {

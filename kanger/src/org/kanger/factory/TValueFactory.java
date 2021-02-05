@@ -117,6 +117,8 @@ public class TValueFactory implements Iterable<TValue> {
             action = true; //!o.isCVariable() || !o.getSlaves().isEmpty();
 
             tv.incFloodControl(o);
+        } else {
+            t.setDeleted(false, mind);
         }
 
         return t;
@@ -188,7 +190,7 @@ public class TValueFactory implements Iterable<TValue> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted()) {
+            if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             }
         }
@@ -211,7 +213,7 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
     public void delete(TValue v) throws IOException, ClassNotFoundException {
-        v.setDeleted();
+        v.setDeleted(true, mind);
     }
 
 //    public void delete(long id) throws IOException, ClassNotFoundException {
@@ -277,7 +279,7 @@ public class TValueFactory implements Iterable<TValue> {
 
     public TValue getRoot(TVariable t) throws Exception {
         for (TValue v : this) {
-            if (!v.isDeleted() && v.getTVar().getId() == t.getId()) {
+            if (!v.isDeleted(mind) && v.getTVar().getId() == t.getId()) {
                 return v;
             }
         }

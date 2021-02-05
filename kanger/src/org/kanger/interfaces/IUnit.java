@@ -22,9 +22,9 @@ public interface IUnit<T> {
 
     T setMind(Mind mind) throws Exception;
 
-    boolean isDeleted();
+    boolean isDeleted(Mind mind);
 
-    void setDeleted();
+    void setDeleted(boolean on, Mind mind);
 
     ByteBuffer pack();
 

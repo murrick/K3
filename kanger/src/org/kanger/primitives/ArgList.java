@@ -237,7 +237,7 @@ public class ArgList extends ArrayList<Argument> {
         for (Argument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
-            if (a.isTSet() && !a.getT(mind).isDeleted() && !a.getT(mind).isDeleted() && !list.contains(a.getT(mind))) {
+            if (a.isTSet() && !a.getT(mind).isDeleted(mind) && !a.getT(mind).isDeleted(mind) && !list.contains(a.getT(mind))) {
                 list.add(a.getT(mind));
             } else if (a.isFSet()) {
                 List<TVariable> temp = a.getF(mind).getArguments().getTVariables(mind);
@@ -257,7 +257,7 @@ public class ArgList extends ArrayList<Argument> {
         for (Argument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
-            if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && !a.getValue(mind).isDeleted() && !list.contains(a.getValue(mind))) {
+            if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && !a.getValue(mind).isDeleted(mind) && !list.contains(a.getValue(mind))) {
                 Term t = a.getValue(mind);
                 //TODO: Костыль
 //                t.setMind(mind);
@@ -279,9 +279,9 @@ public class ArgList extends ArrayList<Argument> {
     public List<TValue> getTValues(Mind mind, boolean full) throws Exception {
         List<TValue> list = new ArrayList<>();
         for (Argument a : this) {
-            if (a.isTSet() && !a.getT(mind).isDeleted() && !a.isEmpty(mind) && !list.contains(a.getT(mind).getCurrent())) {
+            if (a.isTSet() && !a.getT(mind).isDeleted(mind) && !a.isEmpty(mind) && !list.contains(a.getT(mind).getCurrent())) {
                 list.add(a.getT(mind).getCurrent());
-            } else if (a.isVSet() && !a.getV(mind).isDeleted() && !list.contains(a.getV(mind))) {
+            } else if (a.isVSet() && !a.getV(mind).isDeleted(mind) && !list.contains(a.getV(mind))) {
                 list.add(a.getV(mind));
             } else if (full && a.isFSet()) {
                 List<TValue> temp = a.getF(mind).getArguments().getTValues(mind, full);
