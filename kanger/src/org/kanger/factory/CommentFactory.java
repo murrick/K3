@@ -9,8 +9,9 @@ import org.kanger.storage.Escalera;
 import org.kanger.units.Comment;
 import org.kanger.units.Term;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.12.2020.
@@ -50,17 +51,23 @@ public class CommentFactory implements Iterable<Term> {
         } else if (base.top != null) {
             base.top.setNext(cache.getRoot());
         }
-        if (cache.getRoot() != null) {
-            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-                    ((IUnit) s.getData()).setMind(mind);
-                    ((IUnit) s.getData()).setMindId(mind.getId());
-                } else {
-                    break;
-                }
+//        if (cache.getRoot() != null) {
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+//                    ((IUnit) s.getData()).setMind(mind);
+//                    ((IUnit) s.getData()).setMindId(mind.getId());
+//                } else {
+//                    break;
+//                }
+//            }
+//        }
+        cache.setRoot(base.cache.getRoot());
+        for (Object s : cache) {
+            if (((IUnit) s).getMindId() == base.mind.getId()) {
+                ((IUnit) s).setMind(mind);
+                ((IUnit) s).setMindId(mind.getId());
             }
         }
-        cache.setRoot(base.cache.getRoot());
     }
 
     public void update() throws Exception {
@@ -169,8 +176,16 @@ public class CommentFactory implements Iterable<Term> {
         return cache.iterator(-1);
     }
 
-    public void pack() throws IOException {
-//        update();
+    public void pack() throws Exception {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((IUnit) o).isDeleted()) {
+                toDelete.add(o);
+            }
+        }
+        for (Object o : toDelete) {
+            cache.delete(((IUnit) o).getId());
+        }
     }
 
     public void mark() throws Exception {

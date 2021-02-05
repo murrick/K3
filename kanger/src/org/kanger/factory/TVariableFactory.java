@@ -71,16 +71,23 @@ public class TVariableFactory implements Iterable<TVariable> {
             base.top.setNext(cache.getRoot());
         }
         cache.setRoot(base.cache.getRoot());
-        if (cache.getRoot() != null) {
-            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-                    ((IUnit) s.getData()).setMind(mind);
-                    ((IUnit) s.getData()).setMindId(mind.getId());
-                } else {
-                    break;
-                }
+        for (Object s : cache) {
+            if (((IUnit) s).getMindId() == base.mind.getId()) {
+                ((IUnit) s).setMind(mind);
+                ((IUnit) s).setMindId(mind.getId());
             }
         }
+
+//        if (cache.getRoot() != null) {
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+//                    ((IUnit) s.getData()).setMind(mind);
+//                    ((IUnit) s.getData()).setMindId(mind.getId());
+//                } else {
+//                    break;
+//                }
+//            }
+//        }
 //        pack();
 //        update();
     }
@@ -128,7 +135,7 @@ public class TVariableFactory implements Iterable<TVariable> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted() && ((IUnit) o).getMindId() == mind.getId()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }

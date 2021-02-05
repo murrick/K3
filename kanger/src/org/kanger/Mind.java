@@ -173,6 +173,7 @@ public class Mind {
 
             boolean sequencedBy = rules.isSequencedBy(m.getRules());
             if (!sequencedBy) {
+
                 functions.mark();
                 fValues.mark();
                 tVars.mark();
@@ -207,6 +208,7 @@ public class Mind {
             if (!sequencedBy) {
                 Boolean res = analyzer.checkDatabase(list, false);
                 if (res != null && res) {
+
                     functions.release();
                     fValues.release();
                     tVars.release();
@@ -220,6 +222,7 @@ public class Mind {
                     deleted.putAll(saveDeleted);
 
                     result = false;
+
                 } else {
 
 //                    terms.update();
@@ -256,8 +259,10 @@ public class Mind {
 //                    }
 //                }
 //        }
-            pack();
-            update();
+            if (next == null) {
+                pack();
+                update();
+            }
 
 //            terms.pack();
 //            predicates.pack();
@@ -301,39 +306,39 @@ public class Mind {
 //        }
     }
 
-    public void closeConnection() throws Exception {
-        if (next != null) {
-            terms.closeConnection();
-            predicates.closeConnection();
-            library.closeConnection();
-            functions.closeConnection();
-            fValues.closeConnection();
-            tVars.closeConnection();
-            tValues.closeConnection();
-            domains.closeConnection();
-            rules.closeConnection();
-            comments.closeConnection();
-        }
-    }
+//    public void closeConnection() throws Exception {
+//        if (next != null) {
+//            terms.closeConnection();
+//            predicates.closeConnection();
+//            library.closeConnection();
+//            functions.closeConnection();
+//            fValues.closeConnection();
+//            tVars.closeConnection();
+//            tValues.closeConnection();
+//            domains.closeConnection();
+//            rules.closeConnection();
+//            comments.closeConnection();
+//        }
+//    }
 
     public void update() throws Exception {
 //        synchronized (locker) {
 
-        if (next == null) {
-            terms.update();
-            predicates.update();
-            library.update();
+//        if (next == null) {
+        terms.update();
+        predicates.update();
+        library.update();
 
-            functions.update();
-            fValues.update();
-            tVars.update();
-            tValues.update();
-            domains.update();
-            rules.update();
-            comments.update();
+        functions.update();
+        fValues.update();
+        tVars.update();
+        tValues.update();
+        domains.update();
+        rules.update();
+        comments.update();
 
-            user.flush();
-        }
+        user.flush();
+//        }
 //        }
     }
 
@@ -393,19 +398,19 @@ public class Mind {
 
     public void pack() throws Exception {
 //        if (next == null) {
-        synchronized (locker) {
-            terms.pack();
-            predicates.pack();
-            library.pack();
+//        synchronized (locker) {
+        terms.pack();
+        predicates.pack();
+        library.pack();
 
-            tValues.pack();
-            tVars.pack();
-            domains.pack();
-            rules.pack();
-            comments.pack();
-            fValues.pack();
-            functions.pack();
-        }
+        tValues.pack();
+        tVars.pack();
+        domains.pack();
+        rules.pack();
+        comments.pack();
+        fValues.pack();
+        functions.pack();
+//        }
 //        }
 //        tValues.update();
 
@@ -1124,72 +1129,83 @@ public class Mind {
 
     public Boolean queryDelete(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
-        Mind m = new Mind(this);
-        m.setQueryPass(QueryPass.DELETE);
-        if (logging) {
-            getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
-        }
+        if (next == null) {
 
-        line = invert(line);
-        setCompliedLine(line);
-        Rule r = (Rule) m.compileLine(line, true, ext);
-        if (r != null) {
-            m.link(r, logging);
-            boolean ar = m.analyze(r, logging);
-            if (ar) {
-                removeResult(m, logging);
-                res = true;
-            } else {
-                if (logging) {
-                    m.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
-                }
+            Mind m = new Mind(this);
+            m.setQueryPass(QueryPass.DELETE);
+            if (logging) {
+                getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
             }
-        } else if (logging && r != null && r.isDeleted()) {
-            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+
+            line = invert(line);
+            setCompliedLine(line);
+            Rule r = (Rule) m.compileLine(line, true, ext);
+            if (r != null) {
+                m.link(r, logging);
+                boolean ar = m.analyze(r, logging);
+                if (ar) {
+                    removeResult(m, logging);
+                    res = true;
+                } else {
+                    if (logging) {
+                        m.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+                    }
+                }
+            } else if (logging && r != null && r.isDeleted()) {
+                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+            }
+            release(m);
+            hypothesis.clear();
+        } else {
+            res = false;
+            getLog().add(LogMode.ANALYZER, "WARNING: Transaction level is " + getTransactionLevel() + " (" + id + ")");
         }
-        release(m);
-        hypothesis.clear();
         return res;
     }
 
     public Boolean queryCheck(boolean logging) throws Exception {
         Boolean res = null;
 
-        setQueryPass(QueryPass.CHECK);
+        if (next == null) {
 
-        boolean found = false;
-        for (Rule rx : getRules()) {
-            if (!rx.isDeleted() && rx.isGenerated()) {
-                if (logging) {
-                    getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
+            setQueryPass(QueryPass.CHECK);
+            boolean found = false;
+            for (Rule rx : getRules()) {
+                if (!rx.isDeleted() && rx.isGenerated()) {
+                    if (logging) {
+                        getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
+                    }
+                    getRules().delete(rx);
+                    getComments().delete(rx.getId());
+                    found = true;
                 }
-                getRules().delete(rx);
-                getComments().delete(rx.getId());
-                found = true;
             }
-        }
-        if (found) {
-            pack();
-            if (logging) {
-                getLog().add(LogMode.STORAGE, "-------------------------------------------");
+            if (found) {
+                pack();
+                if (logging) {
+                    getLog().add(LogMode.STORAGE, "-------------------------------------------");
+                }
             }
-        }
 
-        link(null, logging);
-        Boolean ar = analyze(null, logging);
+            link(null, logging);
+            Boolean ar = analyze(null, logging);
 
-        if (ar) {
-            if (logging) {
-                getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+            if (ar) {
+                if (logging) {
+                    getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                }
+                res = false;
+            } else {
+                if (logging) {
+                    getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                }
+                res = true;
             }
-            res = false;
+            hypothesis.clear();
         } else {
-            if (logging) {
-                getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
-            }
-            res = true;
+            res = false;
+            getLog().add(LogMode.ANALYZER, "WARNING: Transaction level is " + getTransactionLevel() + " (" + id + ")");
         }
-        hypothesis.clear();
         return res;
     }
 
@@ -1503,14 +1519,16 @@ public class Mind {
                     getComments().delete(r.getId());
                 }
 
-//                pack();
+                pack();
                 getTValues().clear();
+
                 link(null, logging);
                 Boolean ar = analyze(null, logging);
 
                 Set<Rule> success = new HashSet<>();
                 for (Rule r : set) {
-                    if (getRules().find(r) == null) {
+                    Rule x = getRules().find(r);
+                    if (x == null || x.isDeleted()) {
                         success.add(r);
                     }
                 }

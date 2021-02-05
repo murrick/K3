@@ -1,9 +1,6 @@
 package org.kanger;
 
-import org.kanger.enums.Enums;
-import org.kanger.enums.LibMode;
-import org.kanger.enums.LogMode;
-import org.kanger.enums.Tools;
+import org.kanger.enums.*;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
@@ -1121,8 +1118,10 @@ public class Console {
     public static void showRules(Mind mind, String line) throws Exception {
 
         long id = -1;
+        Mind m = null;
         boolean tree = false;
         boolean prods = false;
+        boolean level = false;
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
                 switch (s.trim().toUpperCase().charAt(0)) {
@@ -1134,9 +1133,25 @@ public class Console {
                     case 'P':
                         prods = true;
                         break;
+                    case 'L':
+                        level = true;
+                        m = mind;
+                        break;
                     default:
                         try {
-                            id = Long.parseLong(s);
+                            if (level) {
+                                long lv = Long.parseLong(s);
+                                if (lv < 0 || lv > mind.getTransactionLevel()) {
+                                    throw new CommandErrorException("Invalid transaction level " + lv);
+                                }
+                                for (m = mind; m != null; m = m.getNext()) {
+                                    if (m.getTransactionLevel() == lv) {
+                                        break;
+                                    }
+                                }
+                            } else {
+                                id = Long.parseLong(s);
+                            }
                         } catch (Exception ex) {
                             throw new CommandErrorException();
                         }
@@ -1145,8 +1160,11 @@ public class Console {
         }
 
         boolean found = false;
+        if (level) {
+            System.out.printf(" --- Rules for transaction level %d (%d)\n", m.getTransactionLevel(), m.getId());
+        }
         for (Rule r : mind.getRules()) {
-            if (!r.isDeleted() && (id == -1 || r.getId() == id) && (id != -1 || prods == r.isGenerated())) {
+            if (!r.isDeleted() && (id == -1 || r.getId() == id) && (id == -1 && !level && prods == r.isGenerated()) || (level && r.getMindId() == m.getId())) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
                         (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
@@ -1172,6 +1190,28 @@ public class Console {
                 }
             }
         }
+        if (level && m.getDeleted().containsKey(UnitType.RULE) && !m.getDeleted().get(UnitType.RULE).isEmpty()) {
+            if (found) {
+                System.out.printf("\n");
+            }
+            System.out.printf(" --- Deleted rules for level %d (%d)\n", m.getTransactionLevel(), m.getId());
+            found = true;
+            for (long rid : m.getDeleted().get(UnitType.RULE)) {
+                Rule r = m.getRules().load(rid);
+                System.out.printf("%sRule %03d%s: %s\n",
+                        (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
+                        r.getId(),
+                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted())
+                                ? " " +
+                                (r.isGenerated() ? "G" : "") +
+                                (r.isStored() ? "B" : "") +
+                                (r.isQuery() ? "Q" : "") +
+                                (r.isDeleted() ? "D" : "")
+                                : "",
+                        r.getOrig());
+            }
+        }
+
         if (!found) {
             System.out.printf("No rules selected\n");
         }

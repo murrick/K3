@@ -9,8 +9,9 @@ import org.kanger.storage.Escalera;
 import org.kanger.units.Predicate;
 import org.kanger.units.Term;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
@@ -68,16 +69,22 @@ public class PredicateFactory implements Iterable<Predicate> {
             base.top.setNext(cache.getRoot());
         }
         cache.setRoot(base.cache.getRoot());
-        if (cache.getRoot() != null) {
-            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-                    ((IUnit) s.getData()).setMind(mind);
-                    ((IUnit) s.getData()).setMindId(mind.getId());
-                } else {
-                    break;
-                }
+        for (Object s : cache) {
+            if (((IUnit) s).getMindId() == base.mind.getId()) {
+                ((IUnit) s).setMind(mind);
+                ((IUnit) s).setMindId(mind.getId());
             }
         }
+//        if (cache.getRoot() != null) {
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+//                    ((IUnit) s.getData()).setMind(mind);
+//                    ((IUnit) s.getData()).setMindId(mind.getId());
+//                } else {
+//                    break;
+//                }
+//            }
+//        }
 //        pack();
 //        update();
     }
@@ -159,8 +166,16 @@ public class PredicateFactory implements Iterable<Predicate> {
         return cache.iterator();
     }
 
-    public void pack() throws IOException {
-//        update();
+    public void pack() throws Exception {
+        List<Object> toDelete = new ArrayList<>();
+        for (Object o : cache) {
+            if (((IUnit) o).isDeleted()) {
+                toDelete.add(o);
+            }
+        }
+        for (Object o : toDelete) {
+            cache.delete(((IUnit) o).getId());
+        }
     }
 
     public void closeConnection() throws Exception {

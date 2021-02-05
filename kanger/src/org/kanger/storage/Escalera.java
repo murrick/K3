@@ -12,22 +12,22 @@ public class Escalera implements ICache {
 
     private IStep root = null;
 
-    private ICache parent = null;
+//    private ICache parent = null;
     private Stack<IStep> stack = new Stack<>();
     private Mind mind = null;
     private String schema = "";
 
     public Escalera(Mind mind, String schema, ICache parent) {
-        this.parent = parent;
+//        this.parent = parent;
         this.mind = mind;
         this.schema = schema;
 
-        if (this.parent == null && !mind.getUser().isClosed()) {
+        if (parent == null && !mind.getUser().isClosed()) {
             synchronized (mind.getUser().getStorage(schema)) {
                 root = mind.getUser().getStorage(schema).getRoot();
             }
-        } else if (this.parent != null) {
-            root = this.parent.getRoot();
+        } else if (parent != null) {
+            root = parent.getRoot();
         }
     }
 
@@ -104,7 +104,7 @@ public class Escalera implements ICache {
                 }
             }
         }
-        if (parent == null && !mind.getUser().isClosed()) {
+        if (/*parent == null && */!mind.getUser().isClosed()) {
             synchronized (mind.getUser().getStorage(schema)) {
                 mind.getUser().getStorage(schema).delete(id);
             }
@@ -143,14 +143,12 @@ public class Escalera implements ICache {
     @Override
     public void clear() throws Exception {
         root = null;
-        if (parent == null) {
-            if (parent == null && !mind.getUser().isClosed()) {
-                synchronized (mind.getUser().getStorage(schema)) {
-                    mind.getUser().getStorage(schema).clear();
-                }
-            } else {
-                mind.getUser().clearCounters(schema);
+        if (!mind.getUser().isClosed()) {
+            synchronized (mind.getUser().getStorage(schema)) {
+                mind.getUser().getStorage(schema).clear();
             }
+        } else {
+            mind.getUser().clearCounters(schema);
         }
     }
 
@@ -209,7 +207,8 @@ public class Escalera implements ICache {
     public boolean update() throws Exception {
         // Это самый низ
 
-        if (parent == null && !mind.getUser().isClosed()) {
+        if (/*parent == null &&*/ !mind.getUser().isClosed()) {
+
             IBase base = mind.getUser().getStorage(schema);
             synchronized (base) {
 
@@ -269,7 +268,6 @@ public class Escalera implements ICache {
 
         public WalkIterator(long fromId) {
             step = root;
-
             try {
                 if (root instanceof Sapato) {
                     root.setData(mind.getUser().getStorage(schema).get(root.getId()).getData(mind));
@@ -295,8 +293,6 @@ public class Escalera implements ICache {
         @Override
         public Object next() {
             Object o = null;
-
-
             try {
                 o = step.getData(mind);
                 step = step.getNext();

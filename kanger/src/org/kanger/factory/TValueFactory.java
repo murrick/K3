@@ -73,17 +73,24 @@ public class TValueFactory implements Iterable<TValue> {
             base.top.setNext(cache.getRoot());
         }
         cache.setRoot(base.cache.getRoot());
-        if (cache.getRoot() != null) {
-            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-                    ((IUnit) s.getData()).setMind(mind);
-                    ((IUnit) s.getData()).setMindId(mind.getId());
-
-                } else {
-                    break;
-                }
+        for (Object s : cache) {
+            if (((IUnit) s).getMindId() == base.mind.getId()) {
+                ((IUnit) s).setMind(mind);
+                ((IUnit) s).setMindId(mind.getId());
             }
         }
+
+//        if (cache.getRoot() != null) {
+//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
+//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
+//                    ((IUnit) s.getData()).setMind(mind);
+//                    ((IUnit) s.getData()).setMindId(mind.getId());
+//
+//                } else {
+//                    break;
+//                }
+//            }
+//        }
 //        pack();
 //        update();
         action = base.isAction();
@@ -150,6 +157,7 @@ public class TValueFactory implements Iterable<TValue> {
             TValue temp = new TValue(tv, v);
             for (long id : cache.find(temp.getHash())) {
                 IUnit one = load(id);
+                //TODO: Осознанно нет проверки на Deleted. Вообще надо понять нужен ли этот стек
                 if (one.equalsTo(temp)) {
                     return (TValue) one;
                 }
@@ -180,7 +188,7 @@ public class TValueFactory implements Iterable<TValue> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted() && ((IUnit) o).getMindId() == mind.getId()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }

@@ -117,10 +117,11 @@ public class RuleFactory implements Iterable<Rule> {
                     if (find((Rule) s.getData()) != null) {
                         //TODO: Непонятно как связать с комментарием
                         base.delete((Rule) s.getData());
-                    } else {
-                        ((IUnit) s.getData()).setMind(mind);
-                        ((IUnit) s.getData()).setMindId(mind.getId());
-                        list.add(s.getId());
+                        base.mind.getComments().delete(s.getId());
+//                    } else {
+//                        ((IUnit) s.getData()).setMind(mind);
+//                        ((IUnit) s.getData()).setMindId(mind.getId());
+//                        list.add(s.getId());
 //                    Right r = (Right) s.getData();
 //                    r.setMind(mind);
                     }
@@ -145,6 +146,13 @@ public class RuleFactory implements Iterable<Rule> {
 //            }
 //        }
         cache.setRoot(base.cache.getRoot());
+        for (Object s : cache) {
+            if (((IUnit) s).getMindId() == base.mind.getId()) {
+                ((IUnit) s).setMind(mind);
+                ((IUnit) s).setMindId(mind.getId());
+                list.add(((IUnit) s).getId());
+            }
+        }
 
 //        if (base.topStored != null) {
 //            if (stored.getRoot() == null) {
@@ -418,7 +426,7 @@ public class RuleFactory implements Iterable<Rule> {
     public Rule find(Rule rule) throws Exception {
         for (long id : cache.find(rule.getHash())) {
             Rule one = load(id);
-            if (!one.isDeleted() && one.equalsTo(rule)) {
+            if (one.equalsTo(rule)) {
                 return one;
             }
         }
@@ -497,7 +505,7 @@ public class RuleFactory implements Iterable<Rule> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted() && ((IUnit) o).getMindId() == mind.getId()) {
+            if (((IUnit) o).isDeleted()) {
                 toDelete.add(o);
             }
         }
