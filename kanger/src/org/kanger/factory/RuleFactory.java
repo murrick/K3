@@ -456,6 +456,11 @@ public class RuleFactory implements Iterable<Rule> {
 //            p.setAntc(!p.isAntc());
 //            r = find(p);
 //        }
+//        if (r != null && !r.isDeleted(m)) {
+//            return r;
+//        } else {
+//            return null;
+//        }
         return r;
     }
 

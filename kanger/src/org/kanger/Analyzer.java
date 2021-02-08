@@ -57,7 +57,8 @@ public class Analyzer {
                     }
                     if (r != null && !r.isQuery()) { //d.isQuery(mind)) {
                         Hypothesis tmp = new Hypothesis(r.getDomain(), mind);
-                        if (mind.getHypothesisStore().find(tmp) == null && mind.getRules().find(tmp) == null) {
+                        Rule rx = mind.getRules().find(tmp);
+                        if (mind.getHypothesisStore().find(tmp) == null && (rx == null || rx.isDeleted(mind))) {
 //                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
 //                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
 //                            tmp.setAntc(true);
