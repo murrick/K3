@@ -114,10 +114,15 @@ public class RuleFactory implements Iterable<Rule> {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
 
 //                    System.err.println(((IUnit) s.getData()).getMindId() + ": " + s.getData());
-                    if (find((Rule) s.getData()) != null) {
-                        //TODO: Непонятно как связать с комментарием
-                        base.delete((Rule) s.getData());
-                        base.mind.getComments().delete(s.getId());
+                    Rule x = find((Rule) s.getData());
+                    if (x != null && x.getId() != s.getId()) {
+                        ((IUnit) s.getData()).setDeleted(true, base.mind);
+//                        if(base.mind.getComments().get(s.getId()) != null) {
+//                            base.mind.getComments().get(s.getId()).setDeleted(true, mind);
+//                        }
+//                        base.mind.getComments().get(s.getId()).setDeleted(true, base.mind);
+//                        base.delete((Rule) s.getData());
+//                        base.mind.getComments().delete(s.getId());
 //                    } else {
 //                        ((IUnit) s.getData()).setMind(mind);
 //                        ((IUnit) s.getData()).setMindId(mind.getId());
@@ -199,10 +204,12 @@ public class RuleFactory implements Iterable<Rule> {
 
     public synchronized Rule add(Rule r) throws Exception {
         Rule x = find(r);
-        if (x != null) {
-            //TODO: Непонятно как связать с комментарием
-            delete(r);
-            x.setDeleted(false, mind);
+        if (x != null && x.getId() != r.getId()) {
+            r.setDeleted(true, mind);
+            if (x.isDeleted(mind)) {
+                x.setDeleted(false, mind);
+                action = true;
+            }
             return x;
         } else {
 //            if (r.getId() == -1) {
@@ -311,16 +318,16 @@ public class RuleFactory implements Iterable<Rule> {
         }
     }
 
-    public void delete(Rule r) throws Exception {
-        r.setDeleted(true, mind);
-        for (List<Domain> list : r.getTree()) {
-            for (Domain d : list) {
-                mind.getDomains().delete(d);
-            }
-        }
-//            cache.delete(id);
-//            stored.delete(id);
-    }
+//    public void delete(Rule r) throws Exception {
+//        r.setDeleted(true, mind);
+//        for (List<Domain> list : r.getTree()) {
+//            for (Domain d : list) {
+//                mind.getDomains().delete(d);
+//            }
+//        }
+////            cache.delete(id);
+////            stored.delete(id);
+//    }
 
 //    public void delete(long id) throws IOException, ClassNotFoundException {
 //        Right r = get(id);
@@ -359,7 +366,10 @@ public class RuleFactory implements Iterable<Rule> {
     public synchronized Rule add(Domain domain) throws Exception {
         Rule p = find(domain);
         if (p != null) {
-            p.setDeleted(false, mind);
+            if (p.isDeleted(mind)) {
+                p.setDeleted(false, mind);
+                action = true;
+            }
             return p;
         } else {
             ArgList list = null;
@@ -411,8 +421,12 @@ public class RuleFactory implements Iterable<Rule> {
 
     public Rule store(Domain d) throws Exception {
         d.getRule().setStored(mind);
-//        stored.add(d.getRight().getId(), d.getRight().getId());
-        return d.getRule();
+        Rule r = d.getRule();
+        if (r.isDeleted(mind)) {
+            r.setDeleted(false, mind);
+            action = true;
+        }
+        return r;
     }
 
     public Rule find(Solve domain) throws Exception {

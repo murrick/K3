@@ -8,7 +8,9 @@ import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.Escalera;
-import org.kanger.units.*;
+import org.kanger.units.Domain;
+import org.kanger.units.Predicate;
+import org.kanger.units.Rule;
 
 import java.util.*;
 
@@ -211,35 +213,35 @@ public class DomainFactory implements Iterable<Domain> {
 
     }
 
-    public void delete(Domain d) throws Exception {
-        d.setDeleted(true, mind);
-        for (TVariable t : d.getArguments().getTVariables(mind)) {
-            mind.getTVars().delete(t);
-        }
-        for (Function f : d.getArguments().getFunctions(mind)) {
-            mind.getFunctions().delete(f);
-        }
-        for (TValue v : d.getArguments().getTValues(mind, true)) {
-            if (v.getMindId() == mind.getId()) {
-                mind.getTValues().delete(v);
-            }
-        }
-
-//            for (TValue v : mind.getTValues()) {
-//                Set<Cause> toDelete = new HashSet<>();
-//                for (Cause c : v.getCauses()) {
-//                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
-//                        toDelete.add(c);
-//                    }
-//                }
-//                if (!toDelete.isEmpty()) {
-//                    v.getCauses().removeAll(toDelete);
-//                }
+//    public void delete(Domain d) throws Exception {
+//        d.setDeleted(true, mind);
+//        for (TVariable t : d.getArguments().getTVariables(mind)) {
+//            mind.getTVars().delete(t);
+//        }
+//        for (Function f : d.getArguments().getFunctions(mind)) {
+//            mind.getFunctions().delete(f);
+//        }
+//        for (TValue v : d.getArguments().getTValues(mind, true)) {
+//            if (v.getMindId() == mind.getId()) {
+//                mind.getTValues().delete(v);
 //            }
-//            mind.getTValues().update();
-//            waiters.remove(d);
-//            cache.delete(id);
-    }
+//        }
+//
+////            for (TValue v : mind.getTValues()) {
+////                Set<Cause> toDelete = new HashSet<>();
+////                for (Cause c : v.getCauses()) {
+////                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
+////                        toDelete.add(c);
+////                    }
+////                }
+////                if (!toDelete.isEmpty()) {
+////                    v.getCauses().removeAll(toDelete);
+////                }
+////            }
+////            mind.getTValues().update();
+////            waiters.remove(d);
+////            cache.delete(id);
+//    }
 
 //    public void delete(long id) throws IOException, ClassNotFoundException {
 //        Domain d = get(id);

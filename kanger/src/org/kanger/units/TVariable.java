@@ -3,11 +3,8 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.ByteBuffer;
-
-import java.util.HashSet;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -48,7 +45,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return packet.createMarked();
     }
 
-    public TVariable apply(ByteBuffer packet) throws OutOfBufferException {
+    public TVariable apply(ByteBuffer packet) throws Exception {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
@@ -345,41 +342,15 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        for (Mind m = mind; m != null; m = m.getNext()) {
-            if (m.getRestored().containsKey(getUnitType()) && m.getRestored().get(getUnitType()).contains(id)) {
-                return false;
-            } else if (m.getDeleted().containsKey(getUnitType()) && m.getDeleted().get(getUnitType()).contains(id)) {
-                return true;
-            }
-        }
-        return false;
+        return mind.isUnitDeleted(getUnitType(), id);
     }
 
     @Override
-    public void setDeleted(boolean on, Mind mind) {
-        if (on) {
-            if (!isDeleted(mind)) {
-                if (mind.getRestored().containsKey(getUnitType()) && mind.getRestored().get(getUnitType()).contains(id)) {
-                    mind.getRestored().get(getUnitType()).remove(id);
-                }
-                if (!isDeleted(mind)) {
-                    if (!mind.getDeleted().containsKey(getUnitType())) {
-                        mind.getDeleted().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getDeleted().get(getUnitType()).add(id);
-                }
-            }
-        } else {
-            if (isDeleted(mind)) {
-                if (mind.getDeleted().containsKey(getUnitType()) && mind.getDeleted().get(getUnitType()).contains(id)) {
-                    mind.getDeleted().get(getUnitType()).remove(id);
-                }
-                if (isDeleted(mind)) {
-                    if (!mind.getRestored().containsKey(getUnitType())) {
-                        mind.getRestored().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getRestored().get(getUnitType()).add(id);
-                }
+    public void setDeleted(boolean on, Mind mind) throws Exception {
+        mind.setUnitDeleted(getUnitType(), id, on);
+        for (TValue v : mind.getTValues()) {
+            if (v.getTVar().getId() == id) {
+                mind.setUnitDeleted(v.getUnitType(), v.getId(), on);
             }
         }
     }

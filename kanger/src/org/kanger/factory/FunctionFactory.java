@@ -8,7 +8,6 @@ import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.Escalera;
-import org.kanger.units.FValue;
 import org.kanger.units.Function;
 import org.kanger.units.Term;
 
@@ -197,13 +196,13 @@ public class FunctionFactory implements Iterable<Function> {
 
     }
 
-    public void delete(Function f) throws Exception {
-        f.setDeleted(true, mind);
-        FValue v = mind.getFValues().find(f);
-        if (v != null) {
-            mind.getFValues().delete(v);
-        }
-    }
+//    public void delete(Function f) throws Exception {
+//        f.setDeleted(true, mind);
+//        FValue v = mind.getFValues().find(f);
+//        if (v != null) {
+//            mind.getFValues().delete(v);
+//        }
+//    }
 
     public void closeConnection() throws Exception {
         if (connection != null) {

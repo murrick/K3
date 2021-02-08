@@ -7,7 +7,6 @@ import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Rule;
-import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 import org.kanger.units.Term;
 
@@ -155,14 +154,14 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     }
 
-    public void delete(TVariable t) throws Exception {
-        t.setDeleted(true, mind);
-        for (TValue v : mind.getTValues()) {
-            if (v.getTVar().getId() == t.getId()) {
-                mind.getTValues().delete(v);
-            }
-        }
-    }
+//    public void delete(TVariable t) throws Exception {
+//        t.setDeleted(true, mind);
+//        for (TValue v : mind.getTValues()) {
+//            if (v.getTVar().getId() == t.getId()) {
+//                mind.getTValues().delete(v);
+//            }
+//        }
+//    }
 
 //    public void delete(long id) throws IOException, ClassNotFoundException {
 //        TVariable t = get(id);

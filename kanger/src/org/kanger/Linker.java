@@ -77,7 +77,7 @@ public class Linker {
                     for (Domain d : list) {
                         if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).isTSet()) {
                             for (Rule r : mind.getRules()) {
-                                if (!r.isDeleted(mind) /*&& r.getId() < d.getRuleId()*/) {
+                                if (!r.isDeleted(mind) && r.getId() < d.getRuleId()) {
                                     TValue s = null;
                                     TVariable t = d.get(0).getT(mind);
                                     Term tm = mind.getTerms().add(r.getId());
@@ -355,7 +355,7 @@ public class Linker {
             final TVariable t = tvars.last();
 
             if (t.getFloodCounter() > mind.getFloodControlLimit()) {
-                throw new RuntimeErrorException("Flood limit exceeded");
+                throw new RuntimeErrorException("Flood limit exceeded (" + mind.getFloodControlLimit() + ")");
             }
 //            result[1] = true;
 

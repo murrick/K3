@@ -210,9 +210,9 @@ public class FValueFactory implements Iterable<FValue> {
 
     }
 
-    public void delete(FValue v) {
-        v.setDeleted(true, mind);
-    }
+//    public void delete(FValue v) {
+//        v.setDeleted(true, mind);
+//    }
 
     public boolean isAction() {
         return action;

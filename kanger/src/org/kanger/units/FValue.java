@@ -12,7 +12,6 @@ import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 public class FValue implements IUnit<FValue> {
@@ -242,43 +241,12 @@ public class FValue implements IUnit<FValue> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        for (Mind m = mind; m != null; m = m.getNext()) {
-            if (m.getRestored().containsKey(getUnitType()) && m.getRestored().get(getUnitType()).contains(id)) {
-                return false;
-            } else if (m.getDeleted().containsKey(getUnitType()) && m.getDeleted().get(getUnitType()).contains(id)) {
-                return true;
-            }
-        }
-        return false;
+        return mind.isUnitDeleted(getUnitType(), id);
     }
 
     @Override
     public void setDeleted(boolean on, Mind mind) {
-        if (on) {
-            if (!isDeleted(mind)) {
-                if (mind.getRestored().containsKey(getUnitType()) && mind.getRestored().get(getUnitType()).contains(id)) {
-                    mind.getRestored().get(getUnitType()).remove(id);
-                }
-                if (!isDeleted(mind)) {
-                    if (!mind.getDeleted().containsKey(getUnitType())) {
-                        mind.getDeleted().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getDeleted().get(getUnitType()).add(id);
-                }
-            }
-        } else {
-            if (isDeleted(mind)) {
-                if (mind.getDeleted().containsKey(getUnitType()) && mind.getDeleted().get(getUnitType()).contains(id)) {
-                    mind.getDeleted().get(getUnitType()).remove(id);
-                }
-                if (isDeleted(mind)) {
-                    if (!mind.getRestored().containsKey(getUnitType())) {
-                        mind.getRestored().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getRestored().get(getUnitType()).add(id);
-                }
-            }
-        }
+        mind.setUnitDeleted(getUnitType(), id, on);
     }
 
     @Override

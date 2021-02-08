@@ -24,7 +24,7 @@ public interface IUnit<T> {
 
     boolean isDeleted(Mind mind);
 
-    void setDeleted(boolean on, Mind mind);
+    void setDeleted(boolean on, Mind mind) throws Exception;
 
     ByteBuffer pack();
 

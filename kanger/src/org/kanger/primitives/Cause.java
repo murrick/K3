@@ -2,7 +2,6 @@ package org.kanger.primitives;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
@@ -64,7 +63,7 @@ public class Cause /*implements Comparable<Cause>*/ {
         return packet.createMarked();
     }
 
-    public Cause apply(ByteBuffer packet) throws OutOfBufferException {
+    public Cause apply(ByteBuffer packet) throws Exception {
 //        index = packet.getInt();
         ruleId = packet.getLong();
 //        nextId = packet.getLong();

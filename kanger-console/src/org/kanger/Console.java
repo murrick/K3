@@ -864,8 +864,9 @@ public class Console {
                         + "INFORMATION:\n"
                         + "   help                    - Get this message\n"
                         + "   rules                   - View rules list\n"
-                        + "      riles produced         only produced statement\n"
-                        + "      rile <n>               rule with ID = n\n"
+                        + "      rules produced         only produced statements\n"
+                        + "      rules all              all rules and statements\n"
+                        + "      rule <n>               rule with ID = n\n"
                         + "      rules tree             rules list with compiled trees\n"
                         + "      rule tree <n>          rule with compiled tree for rule with ID = n\n"
                         + "   base                    - Show predicate-split statements list\n"
@@ -1118,9 +1119,9 @@ public class Console {
     public static void showRules(Mind mind, String line) throws Exception {
 
         long id = -1;
-        Mind m = null;
+        Mind m = mind;
         boolean tree = false;
-        boolean prods = false;
+        int prods = 1;
         boolean level = false;
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
@@ -1131,11 +1132,13 @@ public class Console {
                         tree = true;
                         break;
                     case 'P':
-                        prods = true;
+                        prods = 2;
+                        break;
+                    case 'A':
+                        prods = 0;
                         break;
                     case 'L':
                         level = true;
-                        m = mind;
                         break;
                     default:
                         try {
@@ -1164,7 +1167,12 @@ public class Console {
             System.out.printf(" --- Rules for transaction level %d (%d)\n", m.getTransactionLevel(), m.getId());
         }
         for (Rule r : mind.getRules()) {
-            if (!r.isDeleted(mind) && (id == -1 || r.getId() == id) && (id == -1 && !level && prods == r.isGenerated()) || (level && r.getMindId() == m.getId())) {
+            if (!r.isDeleted(m)
+                    && (r.getId() == id || (id == -1 && (
+                    (!level && prods == 1 && !r.isGenerated())
+                            || (!level && prods == 2 && r.isGenerated())
+                            || (!level && prods == 0)
+                            || (level && r.getMindId() == m.getId()))))) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
                         (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
@@ -1195,20 +1203,22 @@ public class Console {
                 System.out.printf("\n");
             }
             System.out.printf(" --- Deleted rules for level %d (%d)\n", m.getTransactionLevel(), m.getId());
-            found = true;
             for (long rid : m.getDeleted().get(UnitType.RULE)) {
                 Rule r = m.getRules().load(rid);
-                System.out.printf("%sRule %03d%s: %s\n",
-                        (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
-                        r.getId(),
-                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
-                                ? " " +
-                                (r.isGenerated() ? "G" : "") +
-                                (r.isStored() ? "B" : "") +
-                                (r.isQuery() ? "Q" : "") +
-                                (r.isDeleted(mind) ? "D" : "")
-                                : "",
-                        r.getOrig());
+                if (r != null) {
+                    found = true;
+                    System.out.printf("%sRule %03d%s: %s\n",
+                            (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
+                            r.getId(),
+                            (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
+                                    ? " " +
+                                    (r.isGenerated() ? "G" : "") +
+                                    (r.isStored() ? "B" : "") +
+                                    (r.isQuery() ? "Q" : "") +
+                                    (r.isDeleted(mind) ? "D" : "")
+                                    : "",
+                            r.getOrig());
+                }
             }
         }
 

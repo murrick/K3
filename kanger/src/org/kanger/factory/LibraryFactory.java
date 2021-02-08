@@ -156,9 +156,9 @@ public class LibraryFactory implements Iterable<SysOp> {
         return t;
     }
 
-    public void delete(SysOp x) {
-        x.setDeleted(true, mind);
-    }
+//    public void delete(SysOp x) {
+//        x.setDeleted(true, mind);
+//    }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();

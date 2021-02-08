@@ -24,7 +24,7 @@ import java.util.*;
 public class Mind {
 
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
-    private static final int FLOOD_CONTROL_LIMIT = 1000;
+    private static final int FLOOD_CONTROL_LIMIT = 10000;
 
     //    private volatile boolean blockCommit = false;
     private final Object locker = new Object();
@@ -662,9 +662,9 @@ public class Mind {
             case Enums.FOO:
                 r = Parser.implement(line, this);
                 if (r != null) {
-                    if (((SysOp) r).getScripts().isEmpty()) {
-                        library.delete((SysOp) r);
-                    }
+//                    if (((SysOp) r).getScripts().isEmpty()) {
+//                        library.delete((SysOp) r);
+//                    }
                     library.add((SysOp) r);
                 }
                 break;
@@ -684,7 +684,7 @@ public class Mind {
             PTree p = Parser.parser(line.substring(1));
             r = x.compiler.compileLine(p, suc, orig, query, ext);
             x.setCompliedLine(line);
-            if (r instanceof Rule && ((Rule) r).isDeleted(this)) {
+            if (r instanceof Rule && ((Rule) r).isDeleted(x)) {
                 release(x);
                 getLog().add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
                 r = null;
@@ -1080,8 +1080,11 @@ public class Mind {
                     m.getLog().add(LogMode.ANALYZER, String.format("WARNING: No candidates to append"));
                 }
 
-                m.getRules().delete(r);
-                m.getComments().delete(r.getId());
+                r.setDeleted(true, m);
+//                m.setUnitDeleted(UnitType.RULE, r.getId(), true);
+//                m.setUnitDeleted(m.getComments().get(r.getId()), true);
+//                m.getRules().delete(r);
+//                m.getComments().delete(r.getId());
 
                 commit(m);
                 setChanged(true);
@@ -1158,29 +1161,29 @@ public class Mind {
         Boolean res = null;
 //        if (next == null) {
 
-            Mind m = new Mind(this);
-            m.setQueryPass(QueryPass.DELETE);
-            if (logging) {
-                getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
-            }
+        Mind m = new Mind(this);
+        m.setQueryPass(QueryPass.DELETE);
+        if (logging) {
+            getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
+        }
 
-            line = invert(line);
-            setCompliedLine(line);
-            Rule r = (Rule) m.compileLine(line, true, ext);
-            if (r != null) {
-                m.link(r, logging);
-                boolean ar = m.analyze(r, logging);
-                if (ar) {
-                    removeResult(m, logging);
-                    res = true;
-                } else {
-                    if (logging) {
-                        m.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
-                    }
+        line = invert(line);
+        setCompliedLine(line);
+        Rule r = (Rule) m.compileLine(line, true, ext);
+        if (r != null) {
+            m.link(r, logging);
+            boolean ar = m.analyze(r, logging);
+            if (ar) {
+                removeResult(m, logging);
+                res = true;
+            } else {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
                 }
-            } else if (logging && r != null && r.isDeleted(this)) {
-                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
             }
+        } else if (logging && r != null && r.isDeleted(this)) {
+            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+        }
         release(m);
         hypothesis.clear();
 //        } else {
@@ -1195,39 +1198,46 @@ public class Mind {
 
 //        if (next == null) {
 
-            setQueryPass(QueryPass.CHECK);
-            boolean found = false;
-            for (Rule rx : getRules()) {
-                if (!rx.isDeleted(this) && rx.isGenerated()) {
-                    if (logging) {
-                        getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
-                    }
-                    getRules().delete(rx);
-                    getComments().delete(rx.getId());
-                    found = true;
+        Mind m = new Mind(this);
+        setQueryPass(QueryPass.CHECK);
+        boolean found = false;
+        for (Rule rx : m.getRules()) {
+            if (/*!rx.isDeleted(m) && */rx.isGenerated()) {
+                if (logging) {
+                    m.getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
                 }
+                rx.setDeleted(true, m);
+//                m.setUnitDeleted(UnitType.RULE, rx.getId(), true);
+//                m.setUnitDeleted(rx, true);
+//                m.setUnitDeleted(getComments().get(rx.getId()), true);
+//                    getRules().delete(rx);
+//                    getComments().delete(rx.getId());
+                found = true;
             }
-            if (found) {
+        }
+        if (found) {
 //                pack();
-                if (logging) {
-                    getLog().add(LogMode.STORAGE, "-------------------------------------------");
-                }
+            if (logging) {
+                m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
             }
+        }
 
-            link(null, logging);
-            Boolean ar = analyze(null, logging);
+        m.link(null, logging);
+        Boolean ar = m.analyze(null, logging);
 
-            if (ar) {
-                if (logging) {
-                    getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
-                }
-                res = false;
-            } else {
-                if (logging) {
-                    getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
-                }
-                res = true;
+        if (ar) {
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
             }
+            release(m);
+            res = false;
+        } else {
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+            }
+            commit(m);
+            res = true;
+        }
         hypothesis.clear();
 //        } else {
 //            res = false;
@@ -1531,6 +1541,7 @@ public class Mind {
             Set<Rule> set = new HashSet<>();
             for (Rule r : m.getSolutions().getRoot()) {
                 set.add(r);
+                r.setDeleted(true, this);
             }
 
             if (!set.isEmpty()) {
@@ -1538,24 +1549,17 @@ public class Mind {
                 for (Rule r : getRules()) {
                     if (r.isGenerated()) {
                         set.add(r);
+                        r.setDeleted(true, this);
                     }
                 }
-
-                for (Rule r : set) {
-                    getRules().delete(r);
-                    getComments().delete(r.getId());
-                }
-
-//                pack();
-//                getTValues().clear();
 
                 link(null, logging);
                 Boolean ar = analyze(null, logging);
 
                 Set<Rule> success = new HashSet<>();
                 for (Rule r : set) {
-                    Rule x = getRules().find(r);
-                    if (x == null || x.isDeleted(this)) {
+//                    Rule x = getRules().find(r);
+                    if (r.isDeleted(this)) {
                         success.add(r);
                     }
                 }
@@ -1789,6 +1793,56 @@ public class Mind {
             }
         }
         return true;
+    }
+
+
+//    public boolean isUnitDeleted(IUnit unit) {
+//        return isUnitDeleted(unit.getUnitType(), unit.getId());
+//    }
+
+    public boolean isUnitDeleted(UnitType type, long id) {
+        for (Mind m = this; m != null; m = m.getNext()) {
+            if (m.getRestored().containsKey(type) && m.getRestored().get(type).contains(id)) {
+                return false;
+            } else if (m.getDeleted().containsKey(type) && m.getDeleted().get(type).contains(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+//    public void setUnitDeleted(IUnit unit, boolean on) {
+//        if (unit != null) {
+//            setUnitDeleted(unit.getUnitType(), unit.getId(), on);
+//        }
+//    }
+
+    public void setUnitDeleted(UnitType type, long id, boolean on) {
+        if (on) {
+            if (!isUnitDeleted(type, id)) {
+                if (getRestored().containsKey(type) && getRestored().get(type).contains(id)) {
+                    getRestored().get(type).remove(id);
+                }
+                if (!isUnitDeleted(type, id)) {
+                    if (!getDeleted().containsKey(type)) {
+                        getDeleted().put(type, new HashSet<>());
+                    }
+                    getDeleted().get(type).add(id);
+                }
+            }
+        } else {
+            if (isUnitDeleted(type, id)) {
+                if (getDeleted().containsKey(type) && getDeleted().get(type).contains(id)) {
+                    getDeleted().get(type).remove(id);
+                }
+                if (isUnitDeleted(type, id)) {
+                    if (!getRestored().containsKey(type)) {
+                        getRestored().put(type, new HashSet<>());
+                    }
+                    getRestored().get(type).add(id);
+                }
+            }
+        }
     }
 }
 

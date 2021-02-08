@@ -178,8 +178,8 @@ public class Rule implements IUnit<Rule> {
         return stored;
     }
 
-    public void setStored(Mind mind) {
-        setDeleted(false, mind);
+    public void setStored(Mind mind) throws Exception {
+//        setDeleted(false, mind);
         this.stored = true;
     }
 
@@ -272,7 +272,7 @@ public class Rule implements IUnit<Rule> {
         try {
             return getOrig().toString()
                     + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
-                    ? " " + id + " " +
+                    ? " " + mindId + " " +
                     (isGenerated() ? "G" : "") +
                     (isStored() ? "B" : "") +
                     (isStored() && getDomain().isUsed(mind) ? "U" : "") +
@@ -425,43 +425,19 @@ public class Rule implements IUnit<Rule> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        for (Mind m = mind; m != null; m = m.getNext()) {
-            if (m.getRestored().containsKey(getUnitType()) && m.getRestored().get(getUnitType()).contains(id)) {
-                return false;
-            } else if (m.getDeleted().containsKey(getUnitType()) && m.getDeleted().get(getUnitType()).contains(id)) {
-                return true;
-            }
-        }
-        return false;
+        return mind.isUnitDeleted(UnitType.RULE, id);
     }
 
     @Override
-    public void setDeleted(boolean on, Mind mind) {
-        if (on) {
-            if (!isDeleted(mind)) {
-                if (mind.getRestored().containsKey(getUnitType()) && mind.getRestored().get(getUnitType()).contains(id)) {
-                    mind.getRestored().get(getUnitType()).remove(id);
-                }
-                if (!isDeleted(mind)) {
-                    if (!mind.getDeleted().containsKey(getUnitType())) {
-                        mind.getDeleted().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getDeleted().get(getUnitType()).add(id);
-                }
-            }
-        } else {
-            if (isDeleted(mind)) {
-                if (mind.getDeleted().containsKey(getUnitType()) && mind.getDeleted().get(getUnitType()).contains(id)) {
-                    mind.getDeleted().get(getUnitType()).remove(id);
-                }
-                if (isDeleted(mind)) {
-                    if (!mind.getRestored().containsKey(getUnitType())) {
-                        mind.getRestored().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getRestored().get(getUnitType()).add(id);
-                }
+    public void setDeleted(boolean on, Mind mind) throws Exception {
+        mind.setUnitDeleted(UnitType.RULE, id, on);
+        mind.setUnitDeleted(UnitType.COMMENT, id, on);
+        for (List<Domain> list : getTree()) {
+            for (Domain d : list) {
+                mind.setUnitDeleted(d.getUnitType(), d.getId(), on);
             }
         }
+
     }
 
     public boolean isSubstitutable() {

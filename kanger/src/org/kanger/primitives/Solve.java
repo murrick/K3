@@ -4,7 +4,6 @@ import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
 
@@ -296,7 +295,7 @@ public class Solve {
         return packet.createMarked();
     }
 
-    public Solve apply(ByteBuffer packet) throws OutOfBufferException {
+    public Solve apply(ByteBuffer packet) throws Exception {
         predicateId = packet.getLong();
         range = packet.getInt();
         antc = packet.getByte() != 0;

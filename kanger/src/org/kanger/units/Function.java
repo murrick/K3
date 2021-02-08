@@ -5,14 +5,12 @@ import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
-import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -55,7 +53,7 @@ public class Function implements IUnit<Function> {
         return packet.createMarked();
     }
 
-    public Function apply(ByteBuffer packet) throws OutOfBufferException {
+    public Function apply(ByteBuffer packet) throws Exception {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
@@ -445,45 +443,19 @@ public class Function implements IUnit<Function> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        for (Mind m = mind; m != null; m = m.getNext()) {
-            if (m.getRestored().containsKey(getUnitType()) && m.getRestored().get(getUnitType()).contains(id)) {
-                return false;
-            } else if (m.getDeleted().containsKey(getUnitType()) && m.getDeleted().get(getUnitType()).contains(id)) {
-                return true;
-            }
-        }
-        return false;
+        return mind.isUnitDeleted(getUnitType(), id);
     }
 
     @Override
-    public void setDeleted(boolean on, Mind mind) {
+    public void setDeleted(boolean on, Mind mind) throws Exception {
+        mind.setUnitDeleted(getUnitType(), id, on);
         if (on) {
-            if (!isDeleted(mind)) {
-                if (mind.getRestored().containsKey(getUnitType()) && mind.getRestored().get(getUnitType()).contains(id)) {
-                    mind.getRestored().get(getUnitType()).remove(id);
-                }
-                if (!isDeleted(mind)) {
-                    if (!mind.getDeleted().containsKey(getUnitType())) {
-                        mind.getDeleted().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getDeleted().get(getUnitType()).add(id);
-                }
-            }
-        } else {
-            if (isDeleted(mind)) {
-                if (mind.getDeleted().containsKey(getUnitType()) && mind.getDeleted().get(getUnitType()).contains(id)) {
-                    mind.getDeleted().get(getUnitType()).remove(id);
-                }
-                if (isDeleted(mind)) {
-                    if (!mind.getRestored().containsKey(getUnitType())) {
-                        mind.getRestored().put(getUnitType(), new HashSet<>());
-                    }
-                    mind.getRestored().get(getUnitType()).add(id);
-                }
+            FValue v = mind.getFValues().find(this);
+            if (v != null) {
+                mind.setUnitDeleted(v.getUnitType(), v.getId(), on);
             }
         }
     }
-
 
     @Override
     public UnitType getUnitType() {

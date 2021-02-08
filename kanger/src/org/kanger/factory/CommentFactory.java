@@ -208,10 +208,10 @@ public class CommentFactory implements Iterable<Term> {
         }
     }
 
-    public void delete(long id) throws Exception {
-        Comment c = get(id);
-        if (c != null) {
-            c.setDeleted(true, mind);
-        }
-    }
+//    public void delete(long id) throws Exception {
+//        Comment c = get(id);
+//        if (c != null) {
+//            c.setDeleted(true, mind);
+//        }
+//    }
 }

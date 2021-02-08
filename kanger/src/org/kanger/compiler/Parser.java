@@ -204,7 +204,7 @@ public class Parser {
             if (counter != 0) {
                 throw new ParseErrorException(pos, ParseError.RBRACES);
             }
-        } else if (ch == '#') {
+        } else if (ch == '#' /*&& c != '#'*/) {
             line += (char) ch;
             line += (char) c;
             while (pos < ln.length() && isHex(ch = ln.charAt(pos++))) {

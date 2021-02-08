@@ -7,7 +7,6 @@ import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 import org.kanger.units.Term;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -212,9 +211,9 @@ public class TValueFactory implements Iterable<TValue> {
 
     }
 
-    public void delete(TValue v) throws IOException, ClassNotFoundException {
-        v.setDeleted(true, mind);
-    }
+//    public void delete(TValue v) throws IOException, ClassNotFoundException {
+//        v.setDeleted(true, mind);
+//    }
 
 //    public void delete(long id) throws IOException, ClassNotFoundException {
 //        TValue r = get(id);
