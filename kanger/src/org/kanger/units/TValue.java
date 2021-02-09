@@ -246,12 +246,12 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(getUnitType(), id);
+        return mind.isUnitDeleted(this);
     }
 
     @Override
     public void setDeleted(boolean on, Mind mind) {
-        mind.setUnitDeleted(getUnitType(), id, on);
+        mind.setUnitDeleted(this, on);
     }
 
     @Override

@@ -1154,21 +1154,21 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(getUnitType(), id);
+        return mind.isUnitDeleted(this);
     }
 
     @Override
     public void setDeleted(boolean on, Mind mind) throws Exception {
-        mind.setUnitDeleted(getUnitType(), id, on);
+        mind.setUnitDeleted(this, on);
         for (TVariable t : getArguments().getTVariables(mind)) {
-            mind.setUnitDeleted(t.getUnitType(), t.getId(), on);
+            t.setDeleted(on, mind);
         }
         for (Function f : getArguments().getFunctions(mind)) {
-            mind.setUnitDeleted(f.getUnitType(), f.getId(), on);
+            f.setDeleted(on, mind);
         }
         for (TValue v : getArguments().getTValues(mind, true)) {
             if (v.getMindId() == mind.getId()) {
-                mind.setUnitDeleted(v.getUnitType(), v.getId(), on);
+                v.setDeleted(on, mind);
             }
         }
     }

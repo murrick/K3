@@ -443,16 +443,16 @@ public class Function implements IUnit<Function> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(getUnitType(), id);
+        return mind.isUnitDeleted(this);
     }
 
     @Override
     public void setDeleted(boolean on, Mind mind) throws Exception {
-        mind.setUnitDeleted(getUnitType(), id, on);
+        mind.setUnitDeleted(this, on);
         if (on) {
             FValue v = mind.getFValues().find(this);
             if (v != null) {
-                mind.setUnitDeleted(v.getUnitType(), v.getId(), on);
+                v.setDeleted(on, mind);
             }
         }
     }

@@ -44,10 +44,11 @@ public class Analyzer {
 
             boolean occurs = false;
             for (Rule r : mind.getRules()) {
-                if (r.isStored() && !r.isDeleted(mind)) {
-                    if (r.getMindId() != mind.getId()) {
-                        break;
-                    }
+                if (r.isStored() && !r.isDeleted(mind) && (r.getMindId() == mind.getId() || r.isRestored(mind))) {
+
+//                    if (r.getMindId() != mind.getId() && !r.isRestored(mind)) {
+//                        continue;
+//                    }
 //                    Domain d = r.getDomain();
                     for (Argument a : r.getDomain().getArguments()) {
                         if (a.isEmpty(mind) || (a.getValue(mind).isCVariable() /*&& a.getValue(mind).getMindId() != mind.getId()*/)) {

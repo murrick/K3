@@ -342,15 +342,15 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(getUnitType(), id);
+        return mind.isUnitDeleted(this);
     }
 
     @Override
     public void setDeleted(boolean on, Mind mind) throws Exception {
-        mind.setUnitDeleted(getUnitType(), id, on);
+        mind.setUnitDeleted(this, on);
         for (TValue v : mind.getTValues()) {
             if (v.getTVar().getId() == id) {
-                mind.setUnitDeleted(v.getUnitType(), v.getId(), on);
+                v.setDeleted(on, mind);
             }
         }
     }

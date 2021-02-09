@@ -6,6 +6,7 @@ import org.kanger.compiler.PTree;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.*;
 import org.kanger.factory.*;
+import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
@@ -1800,11 +1801,11 @@ public class Mind {
 //        return isUnitDeleted(unit.getUnitType(), unit.getId());
 //    }
 
-    public boolean isUnitDeleted(UnitType type, long id) {
+    public boolean isUnitDeleted(IUnit unit) {
         for (Mind m = this; m != null; m = m.getNext()) {
-            if (m.getRestored().containsKey(type) && m.getRestored().get(type).contains(id)) {
+            if (m.getRestored().containsKey(unit.getUnitType()) && m.getRestored().get(unit.getUnitType()).contains(unit.getId())) {
                 return false;
-            } else if (m.getDeleted().containsKey(type) && m.getDeleted().get(type).contains(id)) {
+            } else if (m.getDeleted().containsKey(unit.getUnitType()) && m.getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
                 return true;
             }
         }
@@ -1817,29 +1818,29 @@ public class Mind {
 //        }
 //    }
 
-    public void setUnitDeleted(UnitType type, long id, boolean on) {
+    public void setUnitDeleted(IUnit unit, boolean on) {
         if (on) {
-            if (!isUnitDeleted(type, id)) {
-                if (getRestored().containsKey(type) && getRestored().get(type).contains(id)) {
-                    getRestored().get(type).remove(id);
+            if (!isUnitDeleted(unit)) {
+                if (getRestored().containsKey(unit.getUnitType()) && getRestored().get(unit.getUnitType()).contains(unit.getId())) {
+                    getRestored().get(unit.getUnitType()).remove(unit.getId());
                 }
-                if (!isUnitDeleted(type, id)) {
-                    if (!getDeleted().containsKey(type)) {
-                        getDeleted().put(type, new HashSet<>());
+                if (!isUnitDeleted(unit)) {
+                    if (!getDeleted().containsKey(unit.getUnitType())) {
+                        getDeleted().put(unit.getUnitType(), new HashSet<>());
                     }
-                    getDeleted().get(type).add(id);
+                    getDeleted().get(unit.getUnitType()).add(unit.getId());
                 }
             }
         } else {
-            if (isUnitDeleted(type, id)) {
-                if (getDeleted().containsKey(type) && getDeleted().get(type).contains(id)) {
-                    getDeleted().get(type).remove(id);
+            if (isUnitDeleted(unit)) {
+                if (getDeleted().containsKey(unit.getUnitType()) && getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
+                    getDeleted().get(unit.getUnitType()).remove(unit.getId());
                 }
-                if (isUnitDeleted(type, id)) {
-                    if (!getRestored().containsKey(type)) {
-                        getRestored().put(type, new HashSet<>());
+                if (unit.getMindId() != id || isUnitDeleted(unit)) {
+                    if (!getRestored().containsKey(unit.getUnitType())) {
+                        getRestored().put(unit.getUnitType(), new HashSet<>());
                     }
-                    getRestored().get(type).add(id);
+                    getRestored().get(unit.getUnitType()).add(unit.getId());
                 }
             }
         }

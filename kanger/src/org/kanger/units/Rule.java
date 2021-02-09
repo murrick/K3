@@ -423,18 +423,24 @@ public class Rule implements IUnit<Rule> {
         this.varIndex = varIndex;
     }
 
+    public boolean isRestored(Mind mind) {
+        return mind.getRestored().containsKey(UnitType.RULE) && mind.getRestored().get(UnitType.RULE).contains(id);
+    }
+
     @Override
     public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(UnitType.RULE, id);
+        return mind.isUnitDeleted(this);
     }
 
     @Override
     public void setDeleted(boolean on, Mind mind) throws Exception {
-        mind.setUnitDeleted(UnitType.RULE, id, on);
-        mind.setUnitDeleted(UnitType.COMMENT, id, on);
+        mind.setUnitDeleted(this, on);
+        if (mind.getComments().get(id) != null) {
+            mind.getComments().get(id).setDeleted(on, mind);
+        }
         for (List<Domain> list : getTree()) {
             for (Domain d : list) {
-                mind.setUnitDeleted(d.getUnitType(), d.getId(), on);
+                d.setDeleted(on, mind);
             }
         }
 

@@ -67,12 +67,12 @@ public class Comment implements IUnit<Comment> {
 
     @Override
     public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(getUnitType(), id);
+        return mind.isUnitDeleted(this);
     }
 
     @Override
     public void setDeleted(boolean on, Mind mind) {
-        mind.setUnitDeleted(getUnitType(), id, on);
+        mind.setUnitDeleted(this, on);
     }
 
     @Override
