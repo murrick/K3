@@ -290,7 +290,7 @@ public class Console {
                         Mind m = mind.getNext();
                         if (m != null) {
                             if (m.commit(mind)) {
-                                System.out.printf("SUCCESS: Transaction commited\n");
+                                System.out.printf("SUCCESS: Transaction committed\n");
                                 mind = m;
                             } else {
                                 System.out.printf("WARNING: Commit rejected. See xplanation log for details\n");
