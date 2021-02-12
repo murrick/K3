@@ -24,12 +24,8 @@ public class Kanger {
         String newlogin = null;
         String login = null;
         String password = null;
-        String rootDir = "KANGER";
         boolean singleUser = false;
 
-        if (System.getenv().containsKey("KANGER_HOME")) {
-            rootDir = System.getenv().get("KANGER_HOME");
-        }
 
         String[] envs = new String[]{};
         if (System.getenv().containsKey("KANGER_OPTIONS")) {
@@ -45,8 +41,6 @@ public class Kanger {
                 login = params[++i];
             } else if ((params[i].equals("--password") || params[i].equals("-P")) && params.length > i + 1) {
                 password = params[++i];
-            } else if ((params[i].equals("--rootdir") || params[i].equals("-R")) && params.length > i + 1) {
-                rootDir = params[++i];
             } else if (params[i].equals("--singleuser") || params[i].equals("-S")) {
                 singleUser = true;
             } else if (params[i].equals("--help") || params[i].equals("-H")) {
@@ -60,7 +54,6 @@ public class Kanger {
                                 "\t--adduser or -A\t-Create new user. Password required.\n" +
                                 "\t--user or -U\t-Login with selected user login.\n" +
                                 "\t--password or -P\t-Select password.\n" +
-                                "\t--rootdir or -R\t-Select home KANGER directory.\n" +
                                 "\t--singleuser or -S\t-Local single user mode.\n" +
                                 "\t--help or -H\t-Show this message.\n",
                         jarName
@@ -71,7 +64,7 @@ public class Kanger {
 
         if (singleUser) {
             try {
-                User.createUser("singleuser", "singleuser", rootDir);
+                UserFactory.createUser("singleuser", "singleuser");
             } catch (Exception ex) {
                 //
             }
@@ -82,7 +75,7 @@ public class Kanger {
                 if (password == null) {
                     throw new AuthenticationErrorException("Password must be defined");
                 }
-                User.createUser(newlogin, password, rootDir);
+                UserFactory.createUser(newlogin, password);
                 System.out.println("New user created: " + newlogin);
                 System.exit(0);
             } catch (Exception ex) {
@@ -145,7 +138,7 @@ public class Kanger {
             System.out.println();
         }
 
-        IUser user = new User(login, password, rootDir);
+        IUser user = UserFactory.getUser(login, password);
 
         IData db = null;
         Class udf = null;

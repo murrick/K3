@@ -1,7 +1,5 @@
 package org.kanger;
 
-import org.kanger.enums.Enums;
-import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IBase;
@@ -10,8 +8,6 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class User implements IUser {
@@ -20,130 +16,17 @@ public class User implements IUser {
     private final Object locker = new Object();
     Properties userSettings = new Properties();
     private IData data = null;
-    private Class udf = null;
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
 
-    public User(String login, String password, String rootDir) throws Exception {
-//        if (mind == null) {
-//            this.mind = new Mind(this);
-//        } else {
-//            this.mind = mind;
-//        }
 
-        String token = token(login, password);
-        userSettings.put("user.home", getHome());
-
-        String confName = getDir("users.conf");
-        if (!new File(confName).exists()) {
-            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
-        }
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
-                        id = Long.parseLong(sCurrentLine.split("\\=")[1]);
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (id == -1L) {
-            throw new AuthenticationErrorException(login);
-        }
-
-        userSettings.put("user.dir", getDir(rootDir + Enums.FILE_SEPARATOR + id + Enums.FILE_SEPARATOR));
-        Files.createDirectories(Paths.get(userSettings.getProperty("user.dir")));
-
-        confName = userSettings.getProperty("user.dir") + "kanger.conf";
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                userSettings.load(br);
-//                String sCurrentLine;
-//                while ((sCurrentLine = br.readLine()) != null) {
-//                    if (sCurrentLine.split("\\=").length == 2) {
-//                        userSettings.setProperty(sCurrentLine.split("\\=")[0], sCurrentLine.split("\\=")[1]);
-//                    }
-//                }
-            }
-        }
-
-        if (!userSettings.containsKey("sources.dir")) {
-            String sourcesDir = userSettings.getProperty("user.dir") + "SRC" + Enums.FILE_SEPARATOR;
-            userSettings.put("sources.dir", sourcesDir);
-            Files.createDirectories(Paths.get(userSettings.getProperty("sources.dir")));
-        }
-
-        if (!userSettings.containsKey("database.dir")) {
-            String sourcesDir = userSettings.getProperty("user.dir") + "DB" + Enums.FILE_SEPARATOR;
-            userSettings.put("database.dir", sourcesDir);
-            Files.createDirectories(Paths.get(userSettings.getProperty("database.dir")));
-        }
-    }
-
-    public static String getHome() {
-        String home = System.getProperty("user.home");
-        if (home.isEmpty()) {
-            home = new File("").getAbsolutePath();
-            if (home.isEmpty() || home.equals(Enums.FILE_SEPARATOR)) {
-                String tmp = "/storage/emulated/0";
-                if (Files.exists(Paths.get(tmp))) {
-                    return tmp;
-                } else {
-                    return home;
-                }
-            }
-        }
-        return home;
-    }
-
-    public static String getDir(String subDir) {
-        String home = getHome();
-        if (!home.isEmpty()) {
-            home += Enums.FILE_SEPARATOR;
-        }
-        return home + subDir;
-    }
-
-    public static IUser createUser(String login, String password, String rootDir) throws Exception {
-        String token = token(login, password);
-        String confName = getDir("users.conf");
-        if (!new File(confName).exists()) {
-            Files.createDirectories(Paths.get(getDir(rootDir)));
-            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
-        }
-        long id = 0;
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
-                        throw new AuthenticationErrorException("User already exists");
-                    }
-                    long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
-                    if (idx > id) {
-                        id = idx;
-                    }
-                }
-            }
-        } else {
-            new File(confName).createNewFile();
-        }
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName, true))) {
-            bw.write(token + "=" + (++id));
-            bw.newLine();
-        }
-
-        return new User(login, password, rootDir);
-    }
-
+    @Override
     public IBase getStorage(String schema) {
         return storage.get(schema);
     }
 
+    @Override
     public IBase connect(String schema) throws Exception {
         if (data != null && !data.isClosed()) {
             return data.connect(schema);
@@ -152,6 +35,7 @@ public class User implements IUser {
         }
     }
 
+    @Override
     public Mind clear(Mind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
@@ -167,6 +51,7 @@ public class User implements IUser {
         return mind;
     }
 
+    @Override
     public void remove() throws Exception {
         if (data != null && !data.isClosed()) {
             data.remove();
@@ -176,7 +61,8 @@ public class User implements IUser {
         }
     }
 
-    public void reindex(IReactor IReactor) throws IOException, RuntimeErrorException {
+    @Override
+    public void reindex(IReactor IReactor) {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 try {
@@ -207,12 +93,12 @@ public class User implements IUser {
         return sz;
     }
 
-    @Override
-    public void clearCache() {
-        for (Map.Entry<String, IBase> e : storage.entrySet()) {
-            e.getValue().clearCache();
-        }
-    }
+//    @Override
+//    public void clearCache() {
+//        for (Map.Entry<String, IBase> e : storage.entrySet()) {
+//            e.getValue().clearCache();
+//        }
+//    }
 
     @Override
     public long lastId(String schema) {
@@ -277,10 +163,12 @@ public class User implements IUser {
     }
 
 
+    @Override
     public boolean isClosed() {
         return data == null || data.isClosed();
     }
 
+    @Override
     public String getStorageName() {
         return data == null ? "" : data.getStorageName();
     }
@@ -302,10 +190,6 @@ public class User implements IUser {
     }
 
     @Override
-    public Object getLocker() {
-        return locker;
-    }
-
     public Mind use(Mind mind, String name) throws Exception {
 
         if (data != null) {
@@ -365,10 +249,6 @@ public class User implements IUser {
         }
     }
 
-    @Override
-    public boolean containsKey(String s) {
-        return userSettings.containsKey(s);
-    }
 
     @Override
     public IData getData() throws RuntimeErrorException {
@@ -389,7 +269,15 @@ public class User implements IUser {
         if (userSettings.containsKey(key)) {
             return userSettings.getProperty(key);
         } else {
-            userSettings.setProperty(key, val);
+            setProperty(key, val);
+        }
+        return val;
+    }
+
+    @Override
+    public void setProperty(String key, String val) {
+        userSettings.setProperty(key, val);
+        if (userSettings.containsKey("user.dir")) {
             String confName = userSettings.getProperty("user.dir") + "kanger.conf";
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName))) {
                 userSettings.store(bw, new Date().toString());
@@ -397,7 +285,6 @@ public class User implements IUser {
                 e.printStackTrace(System.err);
             }
         }
-        return val;
     }
 
     @Override
@@ -410,12 +297,32 @@ public class User implements IUser {
         return userSettings.getProperty("database.dir");
     }
 
-    private static String token(String login, String password) {
-        return String.format("%04x%04x", login.hashCode(), password.hashCode());
-    }
-
     @Override
     public String getSourceDir() {
         return userSettings.getProperty("sources.dir");
+    }
+
+    @Override
+    public void loadProperties(String confName) throws Exception {
+        if (new File(confName).exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                userSettings.load(br);
+            }
+        }
+    }
+
+    @Override
+    public boolean containsProperty(String key) {
+        return userSettings.containsKey(key);
+    }
+
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(long id) {
+        this.id = id;
     }
 }

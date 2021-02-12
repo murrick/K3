@@ -7,10 +7,6 @@ import java.util.Collection;
 
 public interface IUser {
 
-//    Mind getMind();
-
-//    void setMind(Mind mind);
-
     boolean isClosed();
 
     IBase getStorage(String schema);
@@ -35,8 +31,6 @@ public interface IUser {
 
     long getMaxCacheSize();
 
-    void clearCache();
-
     long lastId(String context);
 
     long nextId(String context);
@@ -49,11 +43,13 @@ public interface IUser {
 
     void flush() throws Exception;
 
-    Object getLocker();
-
     String getProperty(String key, String defaultValue);
 
-    boolean containsKey(String s);
+    void setProperty(String key, String defaultValue);
+
+    void loadProperties(String confName) throws Exception;
+
+    boolean containsProperty(String key);
 
     IData getData() throws RuntimeErrorException;
 
@@ -64,4 +60,9 @@ public interface IUser {
     String getDatabaseDir();
 
     String getSourceDir();
+
+    long getId();
+
+    void setId(long id);
+
 }

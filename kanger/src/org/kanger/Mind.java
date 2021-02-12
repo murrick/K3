@@ -76,7 +76,6 @@ public class Mind {
     //    private Mind queryContext = null;
     private QueryPass queryPass = QueryPass.SILENCE;
     private String sourceFileName = "mind.k";
-    private String compiledFileName = "mind.e";
     private boolean logging = true;
 
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES);
@@ -803,14 +802,6 @@ public class Mind {
 
     public void setSourceFileName(String name) {
         sourceFileName = name;
-    }
-
-    public String getCompiledFileName() {
-        return compiledFileName;
-    }
-
-    public void setCompiledFileName(String compiledFileName) {
-        this.compiledFileName = compiledFileName;
     }
 
     public Boolean query(String line) throws Exception {

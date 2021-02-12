@@ -1,6 +1,5 @@
 package org.kanger.storage;
 
-import org.kanger.enums.Enums;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
@@ -37,12 +36,6 @@ public class DB implements IData {
         }
 
         String dbPath = user.getDatabaseDir();
-        if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = user.getUserDir();
-        }
-        if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-            dbPath += Enums.FILE_SEPARATOR;
-        }
         dbPath += name;
 
         connection = DriverManager.getConnection("jdbc:hsqldb:file:"
@@ -72,12 +65,6 @@ public class DB implements IData {
             close();
 
             String dbPath = user.getDatabaseDir();
-            if (dbPath == null || dbPath.isEmpty()) {
-                dbPath = user.getUserDir();
-            }
-            if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-                dbPath += Enums.FILE_SEPARATOR;
-            }
             dbPath += tmp;
             String name = Paths.get(dbPath).getFileName().toString();
             dbPath = dbPath.substring(0, dbPath.length() - name.length());

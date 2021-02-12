@@ -3,7 +3,6 @@ package org.kanger.storage;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.DatabaseConfig;
 import org.cojen.tupl.DurabilityMode;
-import org.kanger.enums.Enums;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
@@ -40,12 +39,6 @@ public class DB implements IData {
         }
 
         String dbPath = user.getDatabaseDir();
-        if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = user.getUserDir();
-        }
-        if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-            dbPath += Enums.FILE_SEPARATOR;
-        }
         dbPath += name;
 
         config.baseFilePath(dbPath);
@@ -75,12 +68,6 @@ public class DB implements IData {
     public void remove() throws IOException {
         if (!isClosed()) {
             String dbPath = user.getDatabaseDir();
-            if (dbPath == null || dbPath.isEmpty()) {
-                dbPath = user.getUserDir();
-            }
-            if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-                dbPath += Enums.FILE_SEPARATOR;
-            }
             dbPath += storageName;
             close();
             new File(dbPath + ".db").delete();

@@ -36,12 +36,6 @@ public class DB implements IData {
         }
 
         String dbPath = user.getDatabaseDir();
-        if (dbPath == null || dbPath.isEmpty()) {
-            dbPath = user.getUserDir();
-        }
-        if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-            dbPath += Enums.FILE_SEPARATOR;
-        }
         dbPath += name;
         dbPath = dbPath.replaceAll("/|\\\\", String.format("\\%s", Enums.FILE_SEPARATOR));
         String[] tmp = dbPath.split(String.format("\\%s", Enums.FILE_SEPARATOR));
@@ -80,12 +74,6 @@ public class DB implements IData {
             close();
 
             String dbPath = user.getDatabaseDir();
-            if (dbPath == null || dbPath.isEmpty()) {
-                dbPath = user.getUserDir();
-            }
-            if (!dbPath.endsWith("/") && !dbPath.endsWith("\\")) {
-                dbPath += Enums.FILE_SEPARATOR;
-            }
             dbPath += tmp;
             String name = Paths.get(dbPath).getFileName().toString();
             dbPath = dbPath.substring(0, dbPath.length() - name.length());
