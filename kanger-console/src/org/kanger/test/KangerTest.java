@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class KangerTest {
 
     Mind mind;
@@ -94,7 +97,7 @@ public class KangerTest {
 //            mind.clear();
             if (!mind.getUser().isClosed()) {
 //                mind.getUser().close();
-                mind.getUser().remove();
+                mind.getUser().remove(mind, null);
                 try {
                     mind = mind.getUser().use(mind, dbName);
                 } catch (RuntimeErrorException e) {

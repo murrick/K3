@@ -5,6 +5,9 @@ import org.kanger.exception.RuntimeErrorException;
 
 import java.util.Collection;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public interface IUser {
 
     boolean isClosed();
@@ -23,7 +26,7 @@ public interface IUser {
 
     Mind use(Mind mind, String name) throws Exception;
 
-    void remove() throws Exception;
+    void remove(Mind mind, String name) throws Exception;
 
     void reindex(IReactor iReactor) throws Exception;
 

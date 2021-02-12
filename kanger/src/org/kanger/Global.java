@@ -5,6 +5,9 @@ import org.kanger.units.SysOp;
 
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Global {
     private static Class udf = null;
 

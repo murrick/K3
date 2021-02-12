@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Sapato implements IStep {
 
     private static final long serialVersionUID = 196402071117L;

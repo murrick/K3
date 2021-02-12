@@ -6,7 +6,7 @@
 package org.kanger.enums;
 
 /**
- * @author Dmitry Kuznetsov
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public enum DataType {
     VOID, PERIOD, TERM, STRING, NUMERIC, DATE, INTERVAL, SET, BLOB

@@ -15,6 +15,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class DB implements IData {
 
     DatabaseConfig config = null;

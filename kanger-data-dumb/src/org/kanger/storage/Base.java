@@ -7,6 +7,9 @@ import org.kanger.interfaces.IUser;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Base implements IBase, Iterable<IStep> {
 
     private static long MAX_CACHE_SIZE = 2048L * 2048L;

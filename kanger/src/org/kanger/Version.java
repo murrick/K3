@@ -5,18 +5,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * $Rev: 60 $ $Date: 2017-01-19 11:24:18 +0300 (Thu, 19 Jan 2017) $
- * $Revision: 60 $
- * $Author: murray $
- *
- * @author murray
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public abstract class Version {
 
     public static final int VERSION = 3;
     public static final int RELEASE = 2;
-    public static final String REVISION = "5663";
-    public static final String DATE = "2021-02-11_13:44:07";
+    public static final String REVISION = "5674";
+    public static final String DATE = "2021-02-12_14:37:50";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
     public static final String VERSION_S = String.format("%d.%d.%s", VERSION, RELEASE, REVISION);

@@ -12,6 +12,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class DB implements IData {
 
     Connection connection = null;
@@ -67,7 +70,7 @@ public class DB implements IData {
     }
 
     @Override
-    public void remove() throws Exception {
+    public void remove(String storageName) throws Exception {
         if (!isClosed()) {
             try (Statement st = connection.createStatement()) {
                 st.executeUpdate("SET search_path TO public;");

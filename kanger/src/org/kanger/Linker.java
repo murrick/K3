@@ -1,4 +1,3 @@
-
 package org.kanger;
 
 import org.kanger.enums.DataType;
@@ -15,7 +14,7 @@ import org.kanger.units.*;
 import java.util.*;
 
 /**
- * @author Dmitry G. Qusnetsov
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public class Linker {
 

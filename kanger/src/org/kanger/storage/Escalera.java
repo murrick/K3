@@ -8,11 +8,14 @@ import org.kanger.interfaces.IUnit;
 
 import java.util.*;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Escalera implements ICache {
 
     private IStep root = null;
 
-//    private ICache parent = null;
+    //    private ICache parent = null;
     private Stack<IStep> stack = new Stack<>();
     private Mind mind = null;
     private String schema = "";
@@ -255,14 +258,12 @@ public class Escalera implements ICache {
         }
     }
 
-    public class WalkIterator implements Iterator
-	{
+    public class WalkIterator implements Iterator {
 
-		@Override
-		public void remove()
-		{
-			// TODO: Implement this method
-		}
+        @Override
+        public void remove() {
+            // TODO: Implement this method
+        }
 
         private IStep step;
 

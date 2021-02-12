@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry Kuznetsov on 25.01.2016.
+ * Created by Dmitry G. Qusnetsov on 25.01.2016.
  */
 public class LibraryFactory implements Iterable<SysOp> {
     public static final String SCHEMA = "library";

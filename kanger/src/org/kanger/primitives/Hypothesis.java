@@ -12,7 +12,7 @@ import org.kanger.enums.UnitType;
 import org.kanger.units.Predicate;
 
 /**
- * @author murray
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public class Hypothesis implements Comparable<Hypothesis> {
 

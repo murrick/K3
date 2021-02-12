@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class FunctionFactory implements Iterable<Function> {
 
     public static final String SCHEMA = "functions";

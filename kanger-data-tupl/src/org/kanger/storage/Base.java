@@ -14,6 +14,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Base implements IBase {
 
     private static long MAX_CACHE_SIZE = 1024L * 1024L;

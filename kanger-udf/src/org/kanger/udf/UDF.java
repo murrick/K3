@@ -8,7 +8,9 @@ import org.kanger.units.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class UDF extends SysOp implements IReactor {
 
     private static Context scriptContext = null;

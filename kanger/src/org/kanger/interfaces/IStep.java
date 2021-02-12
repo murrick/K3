@@ -1,11 +1,13 @@
 package org.kanger.interfaces;
 
-
 import org.kanger.Mind;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public interface IStep {
 
     ByteBuffer pack();

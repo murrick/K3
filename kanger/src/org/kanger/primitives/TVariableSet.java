@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class TVariableSet implements Comparable<TVariableSet> {
 
     private SortedSet<TVariable> set = new TreeSet<>();

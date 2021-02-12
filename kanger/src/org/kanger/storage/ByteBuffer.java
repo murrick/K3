@@ -1,6 +1,5 @@
 package org.kanger.storage;
 
-
 import org.kanger.exception.OutOfBufferException;
 
 import java.io.ObjectInput;
@@ -9,7 +8,7 @@ import java.util.Base64;
 import java.util.Stack;
 
 /**
- * @author murray
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public class ByteBuffer {
 

@@ -4,6 +4,9 @@ import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.storage.ByteBuffer;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public interface IUnit<T> {
 
     long getId();

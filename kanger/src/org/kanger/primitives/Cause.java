@@ -6,6 +6,9 @@ import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Cause /*implements Comparable<Cause>*/ {
     //    private Solve result = null;
 //    private Solve acceptor = null;

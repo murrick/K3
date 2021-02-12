@@ -8,6 +8,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class UserFactory {
 
     private static String rootDir = "KANGER";

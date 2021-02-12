@@ -10,8 +10,6 @@ import org.kanger.units.TValue;
 import java.util.HashSet;
 import java.util.Set;
 
-// !@x a(x) -> b(x), @y b(y) -> c(y), @z c(z) -> d(z);
-
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
  */

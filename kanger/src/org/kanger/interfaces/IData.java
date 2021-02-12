@@ -2,6 +2,9 @@ package org.kanger.interfaces;
 
 import java.util.Collection;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public interface IData {
     void init(IUser user);
 
@@ -11,7 +14,7 @@ public interface IData {
 
     void flush() throws Exception;
 
-    void remove() throws Exception;
+    void remove(String name) throws Exception;
 
     boolean isClosed();
 

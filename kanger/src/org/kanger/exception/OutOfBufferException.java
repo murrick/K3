@@ -1,7 +1,7 @@
 package org.kanger.exception;
 
 /**
- * @author Dmitry Kuznetsov
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public class OutOfBufferException extends Exception {
 

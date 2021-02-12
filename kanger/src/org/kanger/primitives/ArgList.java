@@ -14,6 +14,9 @@ import org.kanger.units.Term;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class ArgList extends ArrayList<Argument> {
 
     private Mind mind = null;

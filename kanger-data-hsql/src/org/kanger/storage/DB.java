@@ -1,5 +1,6 @@
 package org.kanger.storage;
 
+import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
@@ -16,6 +17,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class DB implements IData {
 
     Connection connection = null;
@@ -58,24 +62,28 @@ public class DB implements IData {
     }
 
     @Override
-    public void remove() throws Exception {
-        if (!isClosed()) {
-
-            String tmp = storageName;
+    public void remove(String name) throws Exception {
+        String tmp;
+        if (!isClosed() && (name == null || name.isEmpty() || storageName.equals(name))) {
+            tmp = storageName;
             close();
+        } else if (name != null) {
+            tmp = name;
+        } else {
+            throw new CommandErrorException("DB name expected");
+        }
 
-            String dbPath = user.getDatabaseDir();
-            dbPath += tmp;
-            String name = Paths.get(dbPath).getFileName().toString();
-            dbPath = dbPath.substring(0, dbPath.length() - name.length());
+        String dbPath = user.getDatabaseDir();
+        dbPath += tmp;
+        String dbName = Paths.get(dbPath).getFileName().toString();
+        dbPath = dbPath.substring(0, dbPath.length() - dbName.length());
 
 
-            File[] allContents = new File(dbPath).listFiles();
-            if (allContents != null) {
-                for (File file : allContents) {
-                    if (file.getName().startsWith(name)) {
-                        file.delete();
-                    }
+        File[] allContents = new File(dbPath).listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                if (file.getName().startsWith(dbName)) {
+                    file.delete();
                 }
             }
         }

@@ -11,6 +11,9 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     private static final int BLOCK_SIZE = 512;

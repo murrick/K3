@@ -22,7 +22,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Qusnetsov on 28.05.15. $Author: murray $
+ * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
 public class Console {
 
@@ -221,7 +221,7 @@ public class Console {
                             mind = useDatabase(line, mind, sc);
                             break;
                         case 'D':   // DROP
-                            dropDatabase(mind, sc);
+                            dropDatabase(line, mind, sc);
                             break;
                         case 'I':   // INDEX
                             packDatabase(mind, sc);
@@ -553,16 +553,53 @@ public class Console {
         }
     }
 
-    private static void dropDatabase(Mind mind, Scanner sc) throws Exception {
-        if (!mind.getUser().isClosed()) {
-            System.out.printf("Are you sure to drop database " + mind.getUser().getStorageName() + "? [y/N]? ");
+    private static void dropDatabase(String line, Mind mind, Scanner sc) throws Exception {
+        String name = null;
+        if (line.split(" ").length == 2) {
+            name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
+        } else if (!mind.getUser().isClosed()) {
+            name = mind.getUser().getStorageName();
+        } else {
+            List<String> list = (List<String>) mind.getUser().getStoragesList();
+            if (list.size() > 0) {
+                System.out.println("DBs available:");
+                int i = 0;
+                int n = 1;
+                int cnt = 4;
+                for (String s : list) {
+                    System.out.printf("\t%d: %s", n, s);
+                    if (++i >= cnt) {
+                        System.out.println();
+                        i = 0;
+                    }
+                    ++n;
+                }
+                System.out.printf("\nEnter DB name %s: ", list.isEmpty() ? "" : "or file number");
+                name = sc.nextLine();
+                try {
+                    int ps = Integer.parseInt(name);
+                    ps -= 1;
+                    if (ps < list.size()) {
+                        name = list.get(ps);
+                    }
+                } catch (Exception ex) {
+                }
+                if (!name.isEmpty()) {
+                    name = name.replace(".", Enums.FILE_SEPARATOR);
+                } else {
+                    System.out.println("No database used");
+                }
+            } else {
+                System.out.println("No database used");
+            }
+        }
+        if (name != null) {
+            System.out.printf("Are you sure to drop database " + name + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                mind.getUser().remove();
+                mind.getUser().remove(mind, name);
                 System.out.println("Database files removed");
             }
-        } else {
-            System.out.println("No database used");
         }
     }
 
@@ -903,7 +940,7 @@ public class Console {
                         + "DATABASE:\n"
                         + "   use [<bn>]              - Create, open database with name bn or show name of currently opened\n"
                         + "   close                   - Close currently opened database\n"
-                        + "   drop                    - Drop currently opened database\n"
+                        + "   drop [<name>]           - Drop currently opened or selected by name database\n"
                         + "   index                   - Pack and reindex currently opened database\n"
                         + "\n"
                         + "SYSTEM:\n"
@@ -1259,7 +1296,7 @@ public class Console {
         try {
 //            mind.getHypothesisStore().get(i).setAntc(antc);
             String temp = mind.getHypothesisStore().get(i).toString();
-            String h = String.format("%s;", temp.replace(String.format("%c", Enums.EOLN), ""));
+            String h = String.format("%s;", temp.replaceAll(String.format("%c", Enums.EOLN), ""));
 
             if (h != null) {
                 System.out.println("Statement: " + h);

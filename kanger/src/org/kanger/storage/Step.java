@@ -4,6 +4,9 @@ import org.kanger.Mind;
 import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUnit;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class Step implements IStep {
     private Object data = null;
     private IStep next = null;

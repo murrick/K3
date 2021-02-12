@@ -1,5 +1,8 @@
 package org.kanger.interfaces;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public interface IBase {
 
     void add(IStep one) throws Exception;

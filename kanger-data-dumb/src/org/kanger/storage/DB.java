@@ -1,6 +1,7 @@
 package org.kanger.storage;
 
 import org.kanger.enums.Enums;
+import org.kanger.exception.CommandErrorException;
 import org.kanger.interfaces.IBase;
 import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IUser;
@@ -9,6 +10,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class DB implements IData {
 
     //    String dbPath = "";
@@ -47,18 +51,22 @@ public class DB implements IData {
         }
     }
 
-    public void remove() throws Exception {
-        if (!isClosed()) {
-
-            String tmp = storageName;
+    public void remove(String name) throws Exception {
+        String tmp;
+        if (!isClosed() && (name == null || name.isEmpty() || storageName.equals(name))) {
+            tmp = storageName;
             close();
-
-            String dbPath = user.getDatabaseDir() + tmp;
-
-            new File(dbPath + ".index").delete();
-            new File(dbPath + ".store").delete();
-
+        } else if (name != null) {
+            tmp = name;
+        } else {
+            throw new CommandErrorException("DB name expected");
         }
+
+        String dbPath = user.getDatabaseDir() + tmp;
+
+        new File(dbPath + ".index").delete();
+        new File(dbPath + ".store").delete();
+
     }
 
     @Override

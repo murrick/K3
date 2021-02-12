@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class FValueFactory implements Iterable<FValue> {
 
     public static final String SCHEMA = "fvalues";

@@ -10,6 +10,9 @@ import org.kanger.interfaces.IUser;
 import java.io.*;
 import java.util.*;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public class User implements IUser {
 
     private long id = -1L;
@@ -52,13 +55,9 @@ public class User implements IUser {
     }
 
     @Override
-    public void remove() throws Exception {
-        if (data != null && !data.isClosed()) {
-            data.remove();
-//            for (Map.Entry<String, IBase> e : storage.entrySet()) {
-//                //TODO: Удаление БД
-//            }
-        }
+    public void remove(Mind mind, String name) throws Exception {
+        data.remove(name);
+        clear(mind);
     }
 
     @Override

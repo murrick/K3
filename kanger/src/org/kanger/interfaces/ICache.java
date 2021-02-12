@@ -3,6 +3,9 @@ package org.kanger.interfaces;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * Created by Dmitry G. Qusnetsov on 27.05.20.
+ */
 public interface ICache extends Iterable {
 
     void add(IUnit one) throws Exception;
