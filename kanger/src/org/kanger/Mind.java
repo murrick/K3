@@ -1158,28 +1158,40 @@ public class Mind {
             getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
         }
 
-        Set<Rule> set = new HashSet<>();
-        line = invert(line);
-        setCompliedLine(line);
-        Rule r = (Rule) x.compileLine(line, true, ext);
-        if (r != null) {
-            x.link(r, logging);
-            boolean ar = x.analyze(r, logging);
-            if (ar && x.getSolutions().size() > 0) {
-                for (Rule rx : x.getSolutions().getRoot()) {
-                    set.add(rx);
-                }
-            } else {
-                if (logging) {
-                    x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+        SysOp op = getLibrary().find(line.substring(1).replaceAll(";", ""));
+        if(op != null) {
+
+            Mind m = new Mind(this);
+            op.setDeleted(true, m);
+            m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted function " + line.substring(1));
+            commit(m);
+            res = true;
+
+        } else {
+
+            Set<Rule> set = new HashSet<>();
+            line = invert(line);
+            setCompliedLine(line);
+            Rule r = (Rule) x.compileLine(line, true, ext);
+            if (r != null) {
+                x.link(r, logging);
+                boolean ar = x.analyze(r, logging);
+                if (ar && x.getSolutions().size() > 0) {
+                    for (Rule rx : x.getSolutions().getRoot()) {
+                        set.add(rx);
+                    }
+                } else {
+                    if (logging) {
+                        x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+                    }
                 }
             }
-        }
-        release(x);
-        if (!set.isEmpty()) {
-            removeResult(set, logging);
-            res = true;
-            hypothesis.clear();
+            release(x);
+            if (!set.isEmpty()) {
+                removeResult(set, logging);
+                res = true;
+                hypothesis.clear();
+            }
         }
         return res;
     }
@@ -1831,6 +1843,12 @@ public class Mind {
                 }
             }
         }
+    }
+
+    public Mind getTop() {
+        Mind m = this;
+        for(; m.getNext() != null; m = m.getNext());
+        return m;
     }
 }
 
