@@ -58,42 +58,45 @@ public class UDF extends SysOp implements IReactor {
                 script = scripts.get(index + 1);
             } else {
                 script = "";
+                ret = 0;
             }
 
-            scope.put("org/kanger", scope, mind);
+            if(!script.isEmpty()) {
+                scope.put("org/kanger", scope, mind);
 
-            scriptContext.evaluateString(scope, script, "script", 1, null);
+                scriptContext.evaluateString(scope, script, "script", 1, null);
 
-            if (index != -1) {
-                Object val = scope.get(params.get(index), scope);
-                if (val == null) {
-                    ret = 0;
-                    arg.get(index).setValue(mind, null);
-                } else {
-                    if (!arg.get(index).setValue(mind, mind.getTerms().add(val))) {
+                if (index != -1) {
+                    Object val = scope.get(params.get(index), scope);
+                    if (val == null) {
                         ret = 0;
-                    }
-                }
-            } else if (fres != null) {
-                Object val = scope.get(params.get(params.size() - 1), scope);
-                Term cres = mind.getTerms().add(val);
-                if (cres.getId() == fres.getId()) {
-                    ret = 2;
-                } else {
-                    scope.put(params.get(params.size() - 1), scope, fres.getValue());
-                    for (int i = 0; i < arg.size() - 1; ++i) {
-                        if (arg.get(i).isTSet()) {
-                            String var = params.get(i);
-                            script = scripts.get(i + 1);
-                            Object tmp = scope.get(var, scope);
-                            scriptContext.evaluateString(scope, script, "script", 1, null);
-                            Object calc = scope.get(var, scope);
-                            scope.put(var, scope, tmp);
-                            TValue v = arg.get(i).addValue(mind, mind.getTerms().add(calc));
-                            showLog((IUnit) o, v);
+                        arg.get(index).setValue(mind, null);
+                    } else {
+                        if (!arg.get(index).setValue(mind, mind.getTerms().add(val))) {
+                            ret = 0;
                         }
                     }
-                    ret = 0;
+                } else if (fres != null) {
+                    Object val = scope.get(params.get(params.size() - 1), scope);
+                    Term cres = mind.getTerms().add(val);
+                    if (cres.getId() == fres.getId()) {
+                        ret = 2;
+                    } else {
+                        scope.put(params.get(params.size() - 1), scope, fres.getValue());
+                        for (int i = 0; i < arg.size() - 1; ++i) {
+                            if (arg.get(i).isTSet()) {
+                                String var = params.get(i);
+                                script = scripts.get(i + 1);
+                                Object tmp = scope.get(var, scope);
+                                scriptContext.evaluateString(scope, script, "script", 1, null);
+                                Object calc = scope.get(var, scope);
+                                scope.put(var, scope, tmp);
+                                TValue v = arg.get(i).addValue(mind, mind.getTerms().add(calc));
+                                showLog((IUnit) o, v);
+                            }
+                        }
+                        ret = 0;
+                    }
                 }
             }
         }

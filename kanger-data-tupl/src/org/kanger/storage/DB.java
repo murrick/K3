@@ -68,7 +68,7 @@ public class DB implements IData {
     }
 
     @Override
-    public void remove() throws IOException {
+    public void remove(String storageName) throws IOException {
         if (!isClosed()) {
             String dbPath = user.getDatabaseDir();
             dbPath += storageName;

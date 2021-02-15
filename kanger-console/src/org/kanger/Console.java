@@ -79,9 +79,9 @@ public class Console {
             } else if (line.trim().length() > 0) {
                 lineStop = line.trim().substring(line.trim().length() - 1);
             } else if (currentLine.trim().length() > 1) {
-                if (currentLine.trim().substring(0, 2).equals("/*")) {
+                if (lineStart.equals("/*")) {
                     lineStop = currentLine.trim().substring(currentLine.trim().length() - 2);
-                } else {
+                } else if (!lineStart.equals("=")) {
                     lineStop = currentLine.trim().substring(currentLine.trim().length() - 1);
                 }
             } else if (currentLine.trim().length() > 0) {
@@ -90,6 +90,8 @@ public class Console {
 
             if ("/*".equals(lineStart)) {
                 repeat = !"*/".equals(lineStop);
+            } else if("=".equals(lineStart)) {
+                repeat = !lineStop.isEmpty();
             } else if (!lineStart.isEmpty() && !line.equals("?") && "!?+-=".contains(lineStart.toUpperCase().substring(0, 1))) {
                 repeat = !";".equals(lineStop);
             }
