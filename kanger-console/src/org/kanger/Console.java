@@ -619,8 +619,7 @@ public class Console {
                         } else {
                             mind.release(m);
                         }
-                        System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-                        System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
+                        showDBrief(mind);
                     } else {
                         mind = mind.getUser().close(mind);
                         mind.compile(backup);
@@ -633,15 +632,13 @@ public class Console {
                         System.out.println("No database used");
                     }
                 } else {
-                    System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-                    System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
+                    showDBrief(mind);
                 }
             } else {
                 System.out.println("No database used");
             }
         } else if (!mind.getUser().isClosed()) {
-            System.out.println("Used database " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-            System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
+            showDBrief(mind);
         } else {
             List<String> list = (List<String>) mind.getUser().getStoragesList();
             if (list.size() > 0) {
@@ -680,8 +677,7 @@ public class Console {
                                 } else {
                                     mind.release(m);
                                 }
-                                System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-                                System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
+                                showDBrief(mind);
                             } else {
                                 mind = mind.getUser().close(mind);
                                 mind.compile(backup);
@@ -694,8 +690,7 @@ public class Console {
                                 System.out.println("No database used");
                             }
                         } else {
-                            System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-                            System.out.println("Rules: " + mind.getRules().size() + ", Predicates: " + mind.getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getFunctions().size());
+                            showDBrief(mind);
                         }
                     } else {
                         System.out.println("No database used");
@@ -708,6 +703,11 @@ public class Console {
             }
         }
         return mind;
+    }
+
+    private static void showDBrief(Mind mind) throws Exception {
+        System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+        System.out.println("Rules: " + mind.getTop().getRules().size() + ", Predicates: " + mind.getTop().getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getTop().getFunctions().size());
     }
 
     private static Mind closeDatabase(Mind mind, Scanner sc) throws Exception {
@@ -1360,11 +1360,9 @@ public class Console {
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
     public static Mind loadSourceFile(Mind mind, File f) throws Exception {
         boolean res = false;
-        try {
-
-            if (f == null) {
-                f = new File(mind.getUser().getSourceDir() + mind.getSourceFileName());
-            }
+        if (f == null) {
+            System.out.printf("No source files selected");
+        } else {
 
             if (f.exists()) {
                 final int length = (int) f.length();
@@ -1403,8 +1401,6 @@ public class Console {
             } else {
                 System.out.printf("WARNING: File %s not found\n", f.getName());
             }
-        } catch (IOException ex) {
-            System.out.printf("ERROR: %s\n", ex);
         }
         return mind;
     }
@@ -1469,3 +1465,6 @@ public class Console {
         }
     }
 }
+
+//TODO: Переводы строк и начальные пробелы внутри не сохраняются в комментариях
+//TODO: Что-то не так в созранении файла в PUT

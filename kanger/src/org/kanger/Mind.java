@@ -1832,6 +1832,12 @@ public class Mind {
             }
         }
     }
+
+    public Mind getTop() {
+        Mind m = this;
+        for (; m.getNext() != null; m = m.getNext()) ;
+        return m;
+    }
 }
 
 
