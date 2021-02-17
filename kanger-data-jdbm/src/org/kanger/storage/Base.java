@@ -2,9 +2,9 @@ package org.kanger.storage;
 
 import jdbm.PrimaryTreeMap;
 import jdbm.RecordManager;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IStep;
 
 import java.util.HashMap;
 import java.util.LinkedList;

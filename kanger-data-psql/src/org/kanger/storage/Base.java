@@ -1,8 +1,9 @@
 package org.kanger.storage;
 
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IStep;
+import org.kanger.User;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IStep;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,6 +27,7 @@ public class Base implements IBase {
     private Connection connection;
     private volatile long cacheSize = 0L;
     private long lastId = -1;
+    private Class udf = null;
 
     private String name = "";
 //    private IUser user = null;
@@ -33,6 +35,7 @@ public class Base implements IBase {
     public Base(Connection db, String name, IUser user) throws Exception {
 //        this.user = user;
         this.name = name;
+        this.udf = ((User) user).getUdf().getClass();
 
         MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (1024L * 1024L) + ""));
         CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
@@ -330,6 +333,11 @@ public class Base implements IBase {
     @Override
     public void close() throws Exception {
 
+    }
+
+    @Override
+    public Class getUdf() {
+        return udf;
     }
 
 }

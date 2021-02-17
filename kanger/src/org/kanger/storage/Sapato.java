@@ -1,12 +1,10 @@
 package org.kanger.storage;
 
-import org.kanger.Global;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
-import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.units.*;
 
 import java.util.ArrayList;
@@ -207,7 +205,7 @@ public class Sapato implements IStep {
         size = sz;
     }
 
-    private IUnit newInstance(UnitType type) throws RuntimeErrorException {
+    private IUnit newInstance(UnitType type) throws Exception {
         switch (type) {
             case TERM:
                 return new Term();
@@ -228,7 +226,11 @@ public class Sapato implements IStep {
             case TVARIABLE:
                 return new TVariable();
             case SYSOP:
-                return Global.getUdf();
+                if (base.getUdf() != null) {
+                    return (IUnit) base.getUdf().getConstructors()[0].newInstance();
+                } else {
+                    return null;
+                }
 
             case HYPOTHESE:
             case ARGUMENT:

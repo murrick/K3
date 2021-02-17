@@ -1,9 +1,9 @@
 package org.kanger.storage;
 
 import org.kanger.exception.DatabaseErrorException;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IStep;
 
 import java.io.*;
 import java.util.*;

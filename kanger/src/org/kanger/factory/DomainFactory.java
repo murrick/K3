@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.Escalera;
@@ -40,7 +41,7 @@ public class DomainFactory implements Iterable<Domain> {
     public void transaction(DomainFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -129,7 +130,7 @@ public class DomainFactory implements Iterable<Domain> {
             p.setPredicate(pred);
             p.setAntc(antc);
             p.setRule(r);
-            p.setId(mind.getUser().nextId(SCHEMA));
+            p.setId(((User) mind.getUser()).nextId(SCHEMA));
             p.setMindId(mind.getId());
 
             if (!arg.getTVariables(mind).isEmpty()) {
@@ -310,4 +311,9 @@ public class DomainFactory implements Iterable<Domain> {
             connection.close();
         }
     }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
 }

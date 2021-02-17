@@ -57,11 +57,11 @@ public class Analyzer {
                     if (r != null && !r.isQuery()) { //d.isQuery(mind)) {
                         Hypothesis tmp = new Hypothesis(r.getDomain(), mind);
                         Rule rx = mind.getRules().find(tmp);
-                        if (mind.getHypothesisStore().find(tmp) == null && (rx == null || rx.isDeleted(mind))) {
+                        if (mind.getHypothesis().find(tmp) == null && (rx == null || rx.isDeleted(mind))) {
 //                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
 //                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
 //                            tmp.setAntc(true);
-                            mind.getHypothesisStore().add(tmp);
+                            mind.getHypothesis().add(tmp);
                             occurs = true;
                             if (logging) {
                                 mind.getLog().add(LogMode.ANALYZER, "Hypothesis assumed: " + tmp.toString());

@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Comment;
 import org.kanger.units.Term;
@@ -35,7 +36,7 @@ public class CommentFactory implements Iterable<Term> {
 
     public void transaction(CommentFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
 
         if (base != null) {
@@ -214,4 +215,9 @@ public class CommentFactory implements Iterable<Term> {
 //            c.setDeleted(true, mind);
 //        }
 //    }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
 }

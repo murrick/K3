@@ -2,6 +2,8 @@ package org.kanger.interfaces;
 
 import org.kanger.Mind;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.internal.IData;
+import org.kanger.interfaces.internal.IReactor;
 
 import java.util.Collection;
 
@@ -10,14 +12,18 @@ import java.util.Collection;
  */
 public interface IUser {
 
+    /**
+     * Проверка на использования базы данных
+     *
+     * @return true - не используется, false - используется
+     */
     boolean isClosed();
 
-    IBase getStorage(String schema);
-
-    IBase connect(String schema) throws Exception;
-
-    Mind clear(Mind mind) throws Exception;
-
+    /**
+     * Пролучение имени текузей базы данных. Если БД не используется возвращается пустая строка.
+     *
+     * @return Имя текущей базы данных.
+     */
     String getStorageName();
 
     Collection<String> getStoragesList();
@@ -33,16 +39,6 @@ public interface IUser {
     long getUsedCacheSize();
 
     long getMaxCacheSize();
-
-    long lastId(String context);
-
-    long nextId(String context);
-
-    void clearCounters(String schema);
-
-    long lastId();
-
-    long nextId();
 
     void flush() throws Exception;
 
@@ -63,6 +59,12 @@ public interface IUser {
     String getDatabaseDir();
 
     String getSourceDir();
+
+    void setUserDir(String dir);
+
+    void setDatabaseDir(String dir);
+
+    void setSourceDir(String dir);
 
     long getId();
 

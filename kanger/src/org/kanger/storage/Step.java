@@ -1,8 +1,8 @@
 package org.kanger.storage;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.

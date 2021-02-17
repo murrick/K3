@@ -3,7 +3,7 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
 public class Comment implements IUnit<Comment> {

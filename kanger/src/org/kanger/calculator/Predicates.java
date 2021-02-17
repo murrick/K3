@@ -4,7 +4,7 @@ import org.kanger.Mind;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
-import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.internal.IReactor;
 import org.kanger.primitives.ArgList;
 import org.kanger.units.Domain;
 import org.kanger.units.SysOp;

@@ -1,7 +1,7 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.units.TValue;
@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
-public class ValuesStore implements Iterable<Map<String, Object>> {
+public class ValuesStore implements Iterable<Map<String, Term>> {
 
     private Set<ComparableArgList> root = new LinkedHashSet<>();
 
@@ -134,11 +134,11 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
     }
 
     @Override
-    public Iterator<Map<String, Object>> iterator() {
+    public Iterator<Map<String, Term>> iterator() {
         return new ValuesIterator();
     }
 
-    public class ValuesIterator implements Iterator<Map<String, Object>> {
+    public class ValuesIterator implements Iterator<Map<String, Term>> {
 
         Iterator<ComparableArgList> iterator = getRoot().iterator();
 
@@ -148,8 +148,8 @@ public class ValuesStore implements Iterable<Map<String, Object>> {
         }
 
         @Override
-        public Map<String, Object> next() {
-            SortedMap<String, Object> row = new TreeMap<>();
+        public Map<String, Term> next() {
+            SortedMap<String, Term> row = new TreeMap<>();
             for (Argument v : iterator.next()) {
                 try {
 //                    Object val = (v.getV(mind).getValue().getType() == DataType.INTERVAL

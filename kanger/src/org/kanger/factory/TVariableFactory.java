@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Rule;
 import org.kanger.units.TVariable;
@@ -37,7 +38,7 @@ public class TVariableFactory implements Iterable<TVariable> {
     public void transaction(TVariableFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -100,7 +101,7 @@ public class TVariableFactory implements Iterable<TVariable> {
 
     public synchronized TVariable createTVar(Rule r, Term name) throws Exception {
         TVariable p = new TVariable(mind);
-        p.setId(mind.getUser().nextId(SCHEMA));
+        p.setId(((User) mind.getUser()).nextId(SCHEMA));
         r.setMindId(mind.getId());
         p.setIndex(mind.getTerms().nextVarIndex());
         p.setRule(r);
@@ -218,6 +219,10 @@ public class TVariableFactory implements Iterable<TVariable> {
         if (connection != null) {
             connection.close();
         }
+    }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
     }
 
 }

@@ -6,8 +6,8 @@ import org.kanger.compiler.PTree;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.*;
 import org.kanger.factory.*;
-import org.kanger.interfaces.IUnit;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.TVariableSet;
@@ -57,7 +57,7 @@ public class Mind {
     private CommentFactory comments = null;
 
 
-    private IUser user = null;
+    private User user = null;
 
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
@@ -89,15 +89,15 @@ public class Mind {
 //    private volatile boolean busyCommit = false;
 
     public Mind(IUser user) throws Exception {
-        this.user = user;
+        this.user = (User) user;
 //        user.setMind(this);
         init();
-        clear();
+        clearMind();
     }
 
     public Mind(Mind root) throws Exception {
         next = root;
-        user = root.getUser();
+        user = (User) root.getUser();
 //        user.setMind(this);
         id = user.nextId(); //root.getId() + 1;
         init();
@@ -109,7 +109,9 @@ public class Mind {
 //        synchronized (locker) {
         terms = root.getTerms();
         predicates = root.getPredicates();
-        library = root.getLibrary();
+//        library = root.getLibrary();
+
+        library.transaction(root.getLibrary());
 
 //            rightSolves.putAll(root.getRightSolves());
 
@@ -183,6 +185,8 @@ public class Mind {
                 domains.mark();
                 rules.mark();
                 comments.mark();
+
+                library.mark();
             }
 
             functions.commit(m.getFunctions());
@@ -193,6 +197,7 @@ public class Mind {
             domains.commit(m.getDomains());
             Set<Long> list = rules.commit(m.getRules());
             comments.commit(m.getComments());
+            library.commit(m.getLibrary());
 
             Map<UnitType, Set<Long>> saveDeleted = new HashMap<>();
             Map<UnitType, Set<Long>> saveRestored = new HashMap<>();
@@ -235,6 +240,8 @@ public class Mind {
                     rules.release();
                     comments.release();
 
+                    library.release();
+
                     deleted.clear();
                     restored.clear();
                     deleted.putAll(saveDeleted);
@@ -256,6 +263,8 @@ public class Mind {
                     domains.commit();
                     rules.commit();
                     comments.commit();
+
+                    library.commit();
 
 //                    functions.update();
 //                    fValues.update();
@@ -389,7 +398,7 @@ public class Mind {
 //        querySource = m.getQuerySource();
     }
 
-    public void clear() throws Exception {
+    protected void clearMind() throws Exception {
         synchronized (locker) {
             terms.clear();
             predicates.clear();
@@ -534,7 +543,7 @@ public class Mind {
         return library;
     }
 
-    public HypothesisStore getHypothesisStore() {
+    public HypothesisStore getHypothesis() {
         return hypothesis;
     }
 
@@ -584,6 +593,7 @@ public class Mind {
         int pos = 0;
         Object[] t = null;
         Mind m = new Mind(this);
+        Mind udf = new Mind(this);
         m.setQueryPass(QueryPass.ACCEPT);
         int previousPos = 0;
         while ((t = Tools.extractLine(src, pos)) != null) {
@@ -603,6 +613,7 @@ public class Mind {
             if (!comment.isEmpty() && r instanceof Rule) {
                 m.getComments().add(((Rule) r).getId(), comment);
             }
+
 
 //            Mind x = new Mind(m);
 //            setCompliedLine(line);
@@ -1279,7 +1290,7 @@ public class Mind {
                     res = false;
                     hypothesis.clear();
                 } else {
-                    hypothesis.commit(m.getHypothesisStore());
+                    hypothesis.commit(m.getHypothesis());
                 }
             }
         } else if (logging && r != null && r.isDeleted(this)) {
@@ -1319,7 +1330,7 @@ public class Mind {
                     res = true;
                     hypothesis.clear();
                 } else {
-                    hypothesis.commit(m.getHypothesisStore());
+                    hypothesis.commit(m.getHypothesis());
                     if (logging) {
                         if (hypothesis.getRoot() != null && hypothesis.size() > 0) {
                             m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypothesis.size()));
@@ -1345,7 +1356,7 @@ public class Mind {
         getLog().clear();
         getSolutions().clear();
         getValues().clear();
-        getHypothesisStore().clear();
+        getHypothesis().clear();
 
         long queryStart = System.currentTimeMillis();
 
@@ -1591,9 +1602,9 @@ public class Mind {
         if (mind.getValues().size() > 0) {
             mind.getLog().add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (Map<String, Object> map : mind.getValues()) {
+            for (Map<String, Term> map : mind.getValues()) {
                 String s = String.format("\tRow %03d: ", ++i);
-                for (Map.Entry<String, Object> row : map.entrySet()) {
+                for (Map.Entry<String, Term> row : map.entrySet()) {
                     if (!s.endsWith(" ")) {
                         s += " ";
                     }
@@ -1792,6 +1803,11 @@ public class Mind {
                 return false;
             }
         }
+        for (SysOp s : library) {
+            if (!s.isDeleted(this) && s.getMindId() == id) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -1847,9 +1863,22 @@ public class Mind {
 
     public Mind getTop() {
         Mind m = this;
-        for(; m.getNext() != null; m = m.getNext());
+        for (; m.getNext() != null; m = m.getNext()) ;
         return m;
     }
+
+    public Mind use(String name) throws Exception {
+        return user.use(this, name);
+    }
+
+    public Mind close() throws Exception {
+        return user.close(this);
+    }
+
+    public Mind clear() throws Exception {
+        return user.clear(this);
+    }
+
 }
 
 

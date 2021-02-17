@@ -1,4 +1,4 @@
-package org.kanger.interfaces;
+package org.kanger.interfaces.internal;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
@@ -40,4 +40,6 @@ public interface IBase {
     void flush() throws Exception;
 
     void close() throws Exception;
+
+    Class getUdf();
 }

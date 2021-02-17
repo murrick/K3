@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypothesis;
@@ -43,7 +44,7 @@ public class RuleFactory implements Iterable<Rule> {
     public void transaction(RuleFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -196,7 +197,7 @@ public class RuleFactory implements Iterable<Rule> {
     }
 
     public synchronized Rule register(Rule r) {
-        r.setId(mind.getUser().nextId(SCHEMA));
+        r.setId(((User) mind.getUser()).nextId(SCHEMA));
         r.setMindId(mind.getId());
         r.setVarIndex(mind.getTerms().getVarIndex());
         return r;
@@ -575,6 +576,10 @@ public class RuleFactory implements Iterable<Rule> {
         if (connection != null) {
             connection.close();
         }
+    }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
     }
 
 }

@@ -5,9 +5,9 @@ import jdbm.RecordManagerFactory;
 import org.kanger.enums.Enums;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IData;
 
 import java.io.File;
 import java.io.IOException;

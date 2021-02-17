@@ -2,10 +2,11 @@ package org.kanger;
 
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IData;
-import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IData;
+import org.kanger.interfaces.internal.IReactor;
+import org.kanger.units.SysOp;
 
 import java.io.*;
 import java.util.*;
@@ -19,27 +20,26 @@ public class User implements IUser {
     private final Object locker = new Object();
     Properties userSettings = new Properties();
     private IData data = null;
+    private Class udf = null;
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
 
 
-    @Override
     public IBase getStorage(String schema) {
         return storage.get(schema);
     }
 
-    @Override
-    public IBase connect(String schema) throws Exception {
-        if (data != null && !data.isClosed()) {
-            return data.connect(schema);
-        } else {
-            return null;
-        }
-    }
+//    @Override
+//    public IBase connect(String schema) throws Exception {
+//        if (data != null && !data.isClosed()) {
+//            return data.connect(schema);
+//        } else {
+//            return null;
+//        }
+//    }
 
-    @Override
-    public Mind clear(Mind mind) throws Exception {
+    protected Mind clear(Mind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
@@ -48,7 +48,7 @@ public class User implements IUser {
         }
 
         for (Mind m = mind; m != null; m = m.getNext()) {
-            m.clear();
+            m.clearMind();
             mind = m;
         }
         return mind;
@@ -99,7 +99,6 @@ public class User implements IUser {
 //        }
 //    }
 
-    @Override
     public long lastId(String schema) {
         if (isClosed()) {
             synchronized (this) {
@@ -113,7 +112,6 @@ public class User implements IUser {
         }
     }
 
-    @Override
     public long nextId(String schema) {
         if (isClosed()) {
             synchronized (this) {
@@ -129,17 +127,14 @@ public class User implements IUser {
         }
     }
 
-    @Override
     public void clearCounters(String schema) {
         counters.put(schema, 0L);
     }
 
-    @Override
     public long lastId() {
         return lastId;
     }
 
-    @Override
     public long nextId() {
         return lastId++;
     }
@@ -194,7 +189,7 @@ public class User implements IUser {
         if (data != null) {
 
             for (Mind m = mind; m != null; m = m.getNext()) {
-                m.clear();
+                m.clearMind();
                 mind = m;
             }
             if (mind == null) {
@@ -302,6 +297,21 @@ public class User implements IUser {
     }
 
     @Override
+    public void setUserDir(String dir) {
+        userSettings.setProperty("user.dir", dir);
+    }
+
+    @Override
+    public void setDatabaseDir(String dir) {
+        userSettings.setProperty("database.dir", dir);
+    }
+
+    @Override
+    public void setSourceDir(String dir) {
+        userSettings.setProperty("sources.dir", dir);
+    }
+
+    @Override
     public void loadProperties(String confName) throws Exception {
         if (new File(confName).exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
@@ -323,5 +333,17 @@ public class User implements IUser {
     @Override
     public void setId(long id) {
         this.id = id;
+    }
+
+    public SysOp getUdf() throws Exception {
+        if (udf != null) {
+            return (SysOp) udf.getConstructors()[0].newInstance();
+        } else {
+            return null;
+        }
+    }
+
+    public void setUdf(Class udf) {
+        this.udf = udf;
     }
 }

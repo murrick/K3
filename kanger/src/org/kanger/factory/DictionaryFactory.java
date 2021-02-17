@@ -1,11 +1,12 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.User;
 import org.kanger.enums.Enums;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Rule;
 import org.kanger.units.Term;
@@ -48,7 +49,7 @@ public class DictionaryFactory implements Iterable<Term> {
 //        load.clear();
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if (mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -135,7 +136,7 @@ public class DictionaryFactory implements Iterable<Term> {
                 p.setMind(mind);
             } else {
                 p = new Term(o, mind);
-                p.setId(mind.getUser().nextId(SCHEMA));
+                p.setId(((User) mind.getUser()).nextId(SCHEMA));
                 p.setMindId(mind.getId());
             }
             cache.add(p);
@@ -306,4 +307,22 @@ public class DictionaryFactory implements Iterable<Term> {
             return null;
         }
     }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
+    public void mark() throws Exception {
+        cache.mark();
+    }
+
+
+    public void commit() throws Exception {
+        cache.commit();
+    }
+
+    public void release() throws Exception {
+        cache.release();
+    }
+
 }

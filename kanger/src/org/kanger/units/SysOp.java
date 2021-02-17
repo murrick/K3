@@ -5,8 +5,8 @@ import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.interfaces.IReactor;
-import org.kanger.interfaces.IUnit;
+import org.kanger.interfaces.internal.IReactor;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;

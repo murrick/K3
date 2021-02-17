@@ -1,7 +1,8 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.*;
+import org.kanger.User;
+import org.kanger.interfaces.internal.*;
 import org.kanger.storage.Escalera;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -38,7 +39,7 @@ public class TValueFactory implements Iterable<TValue> {
     public void transaction(TValueFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -107,7 +108,7 @@ public class TValueFactory implements Iterable<TValue> {
         if (t == null) {
             t = new TValue(tv, o, mind);
             t.setTVar(tv);
-            t.setId(mind.getUser().nextId(SCHEMA));
+            t.setId(((User) mind.getUser()).nextId(SCHEMA));
             t.setMindId(mind.getId());
             cache.add(t);
             if (top == null) {
@@ -389,4 +390,9 @@ public class TValueFactory implements Iterable<TValue> {
             connection.close();
         }
     }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
 }

@@ -1,4 +1,4 @@
-package org.kanger.interfaces;
+package org.kanger.interfaces.internal;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;

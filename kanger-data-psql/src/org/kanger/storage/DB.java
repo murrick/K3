@@ -1,9 +1,9 @@
 package org.kanger.storage;
 
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IData;
 
 import java.io.IOException;
 import java.sql.*;

@@ -4,7 +4,7 @@ import org.kanger.enums.*;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.internal.IReactor;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
@@ -393,14 +393,14 @@ public class Console {
 //                                        System.out.println("Database: " + mind.getRights().storedSize());
                     System.out.println("Dictionary: " + mind.getTerms().size());
                     System.out.println("Domains: " + mind.getDomains().size());
-                    System.out.println("Functions: " + mind.getFunctions().size());
+                    System.out.println("Functions: " + mind.getLibrary().size());
                     System.out.println("FValues: " + mind.getFValues().size());
                     System.out.println("Predicates: " + mind.getPredicates().size());
                     System.out.println("Rules: " + mind.getRules().size());
                     System.out.println("TValues: " + mind.getTValues().size());
                     System.out.println("TVariables: " + mind.getTValues().size());
                     System.out.println();
-                    System.out.println("Hypothesis: " + mind.getHypothesisStore().size());
+                    System.out.println("Hypothesis: " + mind.getHypothesis().size());
                     System.out.println("Solutions: " + mind.getSolutions().size());
                     System.out.println("Values: " + mind.getValues().size());
                     break;
@@ -709,7 +709,7 @@ public class Console {
 
     private static void showDBrief(Mind mind) throws Exception {
         System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-        System.out.println("Rules: " + mind.getTop().getRules().size() + ", Predicates: " + mind.getTop().getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getTop().getFunctions().size());
+        System.out.println("Rules: " + mind.getTop().getRules().size() + ", Predicates: " + mind.getTop().getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getTop().getLibrary().size());
     }
 
     private static Mind closeDatabase(Mind mind, Scanner sc) throws Exception {
@@ -737,7 +737,7 @@ public class Console {
         System.out.printf("Are you sure to erase workspace? [y/N]? ");
         String s = sc.nextLine().toUpperCase();
         if (!s.isEmpty() && s.charAt(0) == 'Y') {
-            mind = mind.getUser().clear(mind);
+            mind = mind.clear();
         }
         return mind;
     }
@@ -910,7 +910,7 @@ public class Console {
                         + "      rule tree <n>          rule with compiled tree for rule with ID = n\n"
                         + "   base                    - Show predicate-split statements list\n"
                         + "      base predicates        predicates only list with IDs\n"
-                        + "      base <name>            statements list for predicate with name = nane\n"
+                        + "      base <name>            statements list for predicate with name = name\n"
                         + "      base <n>               statements list for predicate with ID = n\n"
                         + "      base tree              statements list with inference tree\n"
                         + "      base tree <n>          inference tree for statement with ID = n\n"
@@ -1128,7 +1128,7 @@ public class Console {
 
     public static void showHypo(Mind mind) {
         int i;
-        List<Hypothesis> list = mind.getHypothesisStore().getRoot();
+        List<Hypothesis> list = mind.getHypothesis().getRoot();
         if (list != null && list.size() > 0) {
             System.out.printf("Hypothesis list:\n");
             for (i = 0; i < list.size(); ++i) {
@@ -1297,7 +1297,7 @@ public class Console {
         --i;
         try {
 //            mind.getHypothesisStore().get(i).setAntc(antc);
-            String temp = mind.getHypothesisStore().get(i).toString();
+            String temp = mind.getHypothesis().get(i).toString();
             String h = String.format("%s;", temp.replaceAll(String.format("%c", Enums.EOLN), ""));
 
             if (h != null) {

@@ -4,9 +4,9 @@ import org.cojen.tupl.Cursor;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.Index;
 import org.cojen.tupl.Transaction;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IStep;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IStep;
 
 import java.io.IOException;
 import java.util.HashMap;

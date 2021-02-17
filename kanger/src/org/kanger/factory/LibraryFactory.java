@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.SysOp;
 
@@ -40,7 +41,7 @@ public class LibraryFactory implements Iterable<SysOp> {
     public void transaction(LibraryFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -117,8 +118,8 @@ public class LibraryFactory implements Iterable<SysOp> {
             x.getParams().addAll(s.getParams());
 //            update();
         } else {
-                s.setId(mind.getUser().nextId(SCHEMA));
-                s.setMindId(mind.getId());
+            s.setId(((User) mind.getUser()).nextId(SCHEMA));
+            s.setMindId(mind.getId());
                 cache.add(s);
                 if (top == null) {
                     top = cache.getRoot();
@@ -242,10 +243,6 @@ public class LibraryFactory implements Iterable<SysOp> {
 //        return index;
 //    }
 
-    public boolean isEmpty() {
-        return cache.isEmpty();
-    }
-
     @Override
     public Iterator iterator() {
         return cache.iterator();
@@ -256,4 +253,22 @@ public class LibraryFactory implements Iterable<SysOp> {
             connection.close();
         }
     }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
+    public void mark() throws Exception {
+        cache.mark();
+    }
+
+
+    public void commit() throws Exception {
+        cache.commit();
+    }
+
+    public void release() throws Exception {
+        cache.release();
+    }
+
 }

@@ -1,8 +1,9 @@
 package org.kanger.storage;
 
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.IStep;
+import org.kanger.User;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IStep;
 
 import java.io.IOException;
 import java.util.*;
@@ -17,6 +18,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     private Index index = null;
     private Data data = null;
+    private Class udf = null;
     private final Object locker = new Object();
 
     private String name = "";
@@ -28,6 +30,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
         this.name = name;
+        this.udf = ((User) user).getUdf().getClass();
 
         MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (2048L * 2048L) + ""));
         CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
@@ -285,6 +288,10 @@ public class Base implements IBase, Iterable<IStep> {
         return lastId++;
     }
 
+    @Override
+    public Class getUdf() {
+        return udf;
+    }
 
 //    public void remove() throws IOException {
 //        boolean wasOpened = false;

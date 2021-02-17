@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Predicate;
 import org.kanger.units.Term;
@@ -36,7 +37,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     public void transaction(PredicateFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -103,16 +104,16 @@ public class PredicateFactory implements Iterable<Predicate> {
             return p;
         } else {
             p = new Predicate(mind);
-            p.setId(mind.getUser().nextId(SCHEMA));
+            p.setId(((User) mind.getUser()).nextId(SCHEMA));
             p.setMindId(mind.getId());
             p.setRange(range);
             p.setName(line);
             cache.add(p);
-                if (top == null) {
-                    top = cache.getRoot();
-                }
-                return p;
+            if (top == null) {
+                top = cache.getRoot();
             }
+            return p;
+        }
     }
 
     public Predicate find(Term line, int range) throws Exception {
@@ -184,4 +185,22 @@ public class PredicateFactory implements Iterable<Predicate> {
             connection.close();
         }
     }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
+    public void mark() throws Exception {
+        cache.mark();
+    }
+
+
+    public void commit() throws Exception {
+        cache.commit();
+    }
+
+    public void release() throws Exception {
+        cache.release();
+    }
+
 }

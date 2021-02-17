@@ -4,7 +4,7 @@ import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.internal.IReactor;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;

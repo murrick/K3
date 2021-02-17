@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.FValue;
 import org.kanger.units.Function;
@@ -38,7 +39,7 @@ public class FValueFactory implements Iterable<FValue> {
     public void transaction(FValueFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -109,7 +110,7 @@ public class FValueFactory implements Iterable<FValue> {
         if (t == null) {
             if (f.isComplete()) {
                 t = new FValue(f, mind);
-                t.setId(mind.getUser().nextId(SCHEMA));
+                t.setId(((User) mind.getUser()).nextId(SCHEMA));
                 f.setMindId(mind.getId());
                 cache.add(t);
                 if (top == null) {
@@ -235,4 +236,9 @@ public class FValueFactory implements Iterable<FValue> {
             connection.close();
         }
     }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
 }

@@ -1,10 +1,11 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
-import org.kanger.interfaces.IBase;
-import org.kanger.interfaces.ICache;
-import org.kanger.interfaces.IStep;
-import org.kanger.interfaces.IUnit;
+import org.kanger.User;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.Escalera;
@@ -38,7 +39,7 @@ public class FunctionFactory implements Iterable<Function> {
     public void transaction(FunctionFactory base) throws Exception {
         if (mind.getNext() == null && !mind.getUser().isClosed()) {
 //            if(mind.getNext() == null) {
-            connection = mind.getUser().getStorage(SCHEMA);
+            connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
 //                connection = mind.getUser().connect(SCHEMA);
 //            }
@@ -109,7 +110,7 @@ public class FunctionFactory implements Iterable<Function> {
         f.getArguments().addAll(arguments);
 //        f.setArguments(arguments);
         f.getArguments().add(new Argument());
-        f.setId(mind.getUser().nextId(SCHEMA));
+        f.setId(((User) mind.getUser()).nextId(SCHEMA));
         f.setMindId(mind.getId());
         cache.add(f);
         if (top == null) {
@@ -212,4 +213,9 @@ public class FunctionFactory implements Iterable<Function> {
             connection.close();
         }
     }
+
+    public boolean isEmpty() {
+        return cache == null || cache.isEmpty();
+    }
+
 }

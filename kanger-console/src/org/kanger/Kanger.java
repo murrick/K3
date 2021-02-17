@@ -1,8 +1,8 @@
 package org.kanger;
 
 import org.kanger.exception.AuthenticationErrorException;
-import org.kanger.interfaces.IData;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IData;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
@@ -140,10 +140,10 @@ public class Kanger {
         IUser user = UserFactory.getUser(login, password);
 
         IData db = null;
-        Class udf = null;
+        UDF udf = null;
         try {
-            udf = UDF.class;
-            Global.setUdf(udf);
+            udf = new UDF();
+            udf.init(user);
             System.out.println("UDF module loaded");
         } catch (NoClassDefFoundError ex) {
         }
@@ -164,7 +164,7 @@ public class Kanger {
         Mind mind = new Mind(user);
         //TODO: Волшебство
         mind.query("?a;");
-        mind.clear();
+        mind = mind.clear();
 
         Console.session(mind);
     }

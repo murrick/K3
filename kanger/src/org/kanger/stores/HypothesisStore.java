@@ -6,12 +6,13 @@ import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
-public class HypothesisStore implements Comparable<HypothesisStore> {
+public class HypothesisStore implements Comparable<HypothesisStore>, Iterable<Hypothesis> {
 
     private final Mind mind;
     private List<Hypothesis> root = null;
@@ -163,6 +164,15 @@ public class HypothesisStore implements Comparable<HypothesisStore> {
     @Override
     public int compareTo(HypothesisStore o) {
         return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
+    }
+
+    @Override
+    public Iterator<Hypothesis> iterator() {
+        if (root != null) {
+            return root.iterator();
+        } else {
+            return new ArrayList<Hypothesis>().iterator();
+        }
     }
 
 //    public void exclude(HypothesisStore exclude) throws Exception {

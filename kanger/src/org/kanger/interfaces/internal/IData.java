@@ -1,4 +1,6 @@
-package org.kanger.interfaces;
+package org.kanger.interfaces.internal;
+
+import org.kanger.interfaces.IUser;
 
 import java.util.Collection;
 
