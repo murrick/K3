@@ -1325,6 +1325,7 @@ public class Mind implements IMind {
         return res;
     }
 
+
     public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
         Mind m = new Mind(this);
@@ -1398,6 +1399,25 @@ public class Mind implements IMind {
 
             case Enums.DEL:
                 res = queryDelete(line, ext, logging);
+                break;
+
+            case Enums.FOO:
+                Mind m = new Mind(this);
+                IOperation o = Parser.implement(line, m);
+                if (o != null) {
+                    IOperation x = m.getLibrary().add(o);
+                    if (x.getId() == o.getId()) {
+                        m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
+                    } else {
+                        m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
+                    }
+                    commit(m);
+                    res = true;
+                } else {
+                    m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
+                    release(m);
+                    res = false;
+                }
                 break;
 
             case Enums.SUC:

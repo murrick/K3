@@ -65,7 +65,7 @@ public class PTree {
         this.left = left;
     }
 
-    public PTree getRule() {
+    public PTree getRight() {
         return rule;
     }
 

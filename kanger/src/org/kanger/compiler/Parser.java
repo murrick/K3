@@ -429,9 +429,9 @@ public class Parser {
                 }
 
                 //if(term)
-                p.setRule(parse(ln, pos /*, term + mode*/));
-                if (p.getRule() != null) {
-                    pos = p.getRule().getPos();
+                p.setRule(parse(ln.trim(), pos /*, term + mode*/));
+                if (p.getRight() != null) {
+                    pos = p.getRight().getPos();
                 } else {
                     ++pos;
                 }
@@ -481,7 +481,7 @@ public class Parser {
 
                 /* Find point for insertion.
                  */
-                for (r = q = root; q != null; q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRule()) {
+                for (r = q = root; q != null; q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRight()) {
                     if (q.getPrior() <= p.getPrior()) {
                         break;
                     }
@@ -490,7 +490,7 @@ public class Parser {
                 if (p.getDir() != 0) {
                     while (q != null && q.getPrior() == p.getPrior()) {
                         r = q;
-                        q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRule();
+                        q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRight();
                     }
                 }
 
@@ -536,7 +536,7 @@ public class Parser {
                         && p.getLeft() != null
                         && !p.getLeft().getName().isEmpty()
                         && Tools.isInt(p.getLeft().getName())
-                        && p.getRule() == null) {
+                        && p.getRight() == null) {
                     p.setName(p.getLeft().getName() + " " + p.getName());
                     if (p.getLeft().getLeft() != null && Tools.isPeriod(p.getLeft().getLeft().getName())) {
                         p.setName(p.getLeft().getLeft().getName() + " " + p.getName());
@@ -615,9 +615,9 @@ public class Parser {
             return null;
         }
         t.setLeft(squeeze(t.getLeft()));
-        t.setRule(squeeze(t.getRule()));
+        t.setRule(squeeze(t.getRight()));
         if (t.getName().charAt(0) == Enums.LB && t.getLeft() == null) {
-            return squeeze(t.getRule());
+            return squeeze(t.getRight());
         } else {
             return t;
         }
@@ -629,7 +629,7 @@ public class Parser {
         if (!ln.isEmpty() && ln.trim().charAt(ln.trim().length() - 1) != Enums.EOLN) {
             throw new ParseErrorException(ln.trim().length() - 1, ParseError.EOLN);
         }
-        return squeeze(parse(ln, 0 /*, 0*/));
+        return squeeze(parse(ln.trim(), 0 /*, 0*/));
 //        return parse(ln, 0, 0);
     }
 

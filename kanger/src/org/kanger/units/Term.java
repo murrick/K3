@@ -192,7 +192,7 @@ public class Term implements IUnit<Term>, ITerm {
             if ("..".equals(((PTree) o).getName())) {
                 List<ITerm> list = new ArrayList<>();
                 list.add(mind.getTerms().add(((PTree) o).getLeft().getName()));
-                list.add(mind.getTerms().add(((PTree) o).getRule().getName()));
+                list.add(mind.getTerms().add(((PTree) o).getRight().getName()));
                 type = DataType.INTERVAL;
                 value = list;
             }

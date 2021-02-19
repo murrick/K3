@@ -25,7 +25,6 @@ public class Kanger {
         String password = null;
         boolean singleUser = false;
 
-
         String[] envs = new String[]{};
         if (System.getenv().containsKey("KANGER_OPTIONS")) {
             envs = System.getenv().get("KANGER_OPTIONS").split(" ");

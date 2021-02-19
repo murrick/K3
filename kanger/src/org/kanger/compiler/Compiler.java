@@ -84,7 +84,7 @@ public class Compiler {
             case Enums.AQN:
             case Enums.PQN: {
                 antc = compileQuantor(r, root, antc, replacements);
-                construct(r, t, root.getRule(), antc, replacements, list, externals);
+                construct(r, t, root.getRight(), antc, replacements, list, externals);
             }
             break;
 
@@ -97,9 +97,9 @@ public class Compiler {
 //            break;
 
             case Enums.COMMA:
-                if ("_in".equals(root.getLeft().getName()) && root.getRule() != null && root.getRule().getRule() == null && root.getRule().getLeft() == null) {
+                if ("_in".equals(root.getLeft().getName()) && root.getRight() != null && root.getRight().getRight() == null && root.getRight().getLeft() == null) {
                     PTree left = root.getLeft();
-                    root.setLeft(left.getRule());
+                    root.setLeft(left.getRight());
                     left.setRule(root);
                     root = left;
                     compilePredicate(r, t, root, antc, replacements, externals);
@@ -110,13 +110,13 @@ public class Compiler {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), antc, replacements, list, externals);
-                    construct(r, x, root.getRule(), antc, replacements, list, externals);
+                    construct(r, x, root.getRight(), antc, replacements, list, externals);
                 } else {
                     construct(r, t, root.getLeft(), antc, replacements, list, externals);
                     for (List<Domain> x : list) {
-                        construct(r, x, root.getRule(), antc, replacements, tmp, externals);
+                        construct(r, x, root.getRight(), antc, replacements, tmp, externals);
                     }
-                    construct(r, t, root.getRule(), antc, replacements, tmp, externals);
+                    construct(r, t, root.getRight(), antc, replacements, tmp, externals);
                     list.addAll(tmp);
                 }
             }
@@ -126,15 +126,15 @@ public class Compiler {
                 if (antc) {
                     construct(r, t, root.getLeft(), antc, replacements, list, externals);
                     for (List<Domain> x : list) {
-                        construct(r, x, root.getRule(), antc, replacements, tmp, externals);
+                        construct(r, x, root.getRight(), antc, replacements, tmp, externals);
                     }
-                    construct(r, t, root.getRule(), antc, replacements, tmp, externals);
+                    construct(r, t, root.getRight(), antc, replacements, tmp, externals);
                     list.addAll(tmp);
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), antc, replacements, list, externals);
-                    construct(r, x, root.getRule(), antc, replacements, list, externals);
+                    construct(r, x, root.getRight(), antc, replacements, list, externals);
                 }
             }
             break;
@@ -143,22 +143,22 @@ public class Compiler {
                 if (antc) {
                     construct(r, t, root.getLeft(), !antc, replacements, list, externals);
                     for (List<Domain> z : list) {
-                        construct(r, z, root.getRule(), antc, replacements, tmp, externals);
+                        construct(r, z, root.getRight(), antc, replacements, tmp, externals);
                     }
-                    construct(r, t, root.getRule(), antc, replacements, tmp, externals);
+                    construct(r, t, root.getRight(), antc, replacements, tmp, externals);
                     list.addAll(tmp);
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
                     construct(r, t, root.getLeft(), !antc, replacements, list, externals);
-                    construct(r, x, root.getRule(), antc, replacements, list, externals);
+                    construct(r, x, root.getRight(), antc, replacements, list, externals);
                 }
             }
             break;
 
             case Enums.LB: {
                 if (root.getLeft() == null) {
-                    construct(r, t, root.getRule(), antc, replacements, list, externals);
+                    construct(r, t, root.getRight(), antc, replacements, list, externals);
                 } else {
                     compilePredicate(r, t, root, antc, replacements, externals);
                 }
@@ -220,9 +220,9 @@ public class Compiler {
                     root.setLeft(root.getLeft().getLeft());
                     antc = !antc;
                 }
-                if (root.getRule() != null && "_neg".equals(root.getRule().getName()) && root.getRule().getLeft() != null && !"_iv".equals(root.getRule().getLeft().getName())) {
-                    root.setRule(root.getRule().getLeft());
-                    root.getRule().setName("-" + root.getRule().getName());
+                if (root.getRight() != null && "_neg".equals(root.getRight().getName()) && root.getRight().getLeft() != null && !"_iv".equals(root.getRight().getLeft().getName())) {
+                    root.setRule(root.getRight().getLeft());
+                    root.getRight().setName("-" + root.getRight().getName());
                 }
                 if (root.getLeft() != null && "_neg".equals(root.getLeft().getName()) && root.getLeft().getLeft().getName().contains("..")) {
                     root.setLeft(root.getLeft().getLeft());
@@ -248,7 +248,7 @@ public class Compiler {
         } else if (root.getLeft() == null) {
             pred = mind.getPredicates().add(mind.getTerms().add(root.getName()), 0);
         } else {
-            parseArgs(d, arg, root.getRule(), 1, replacements, externals);
+            parseArgs(d, arg, root.getRight(), 1, replacements, externals);
             pred = mind.getPredicates().add(mind.getTerms().add(root.getLeft().getName()), arg.size());
         }
         d.setPredicate(pred);
@@ -266,7 +266,7 @@ public class Compiler {
         } else if (root.isSystem()) {
             if (level == 0) {
                 parseArgs(d, arg, root.getLeft(), level + 1, replacements, externals);
-                parseArgs(d, arg, root.getRule(), level + 1, replacements, externals);
+                parseArgs(d, arg, root.getRight(), level + 1, replacements, externals);
 //            } else if (root.getName().equals("_neg")
 //                    && root.getRight() == null
 //                    && root.getLeft().getName().charAt(0) != Enums.LB
@@ -276,7 +276,7 @@ public class Compiler {
                 // системная функция
                 ArgumentsList arguments = new ArgumentsList();
                 parseArgs(d, arguments, root.getLeft(), level + 1, replacements, externals);
-                parseArgs(d, arguments, root.getRule(), level + 1, replacements, externals);
+                parseArgs(d, arguments, root.getRight(), level + 1, replacements, externals);
                 if (root.getName().equals("_neg")
                         && arguments.size() == 1
                         && !arguments.get(0).isEmpty(mind)
@@ -290,11 +290,11 @@ public class Compiler {
             }
         } else if (root.getName().charAt(0) == Enums.COMMA) {
             parseArgs(d, arg, root.getLeft(), level + 1, replacements, externals);
-            parseArgs(d, arg, root.getRule(), level + 1, replacements, externals);
+            parseArgs(d, arg, root.getRight(), level + 1, replacements, externals);
         } else if (root.getName().charAt(0) == Enums.LB) {
             // вложенная функция
             ArgumentsList arguments = new ArgumentsList();
-            parseArgs(d, arguments, root.getRule(), level + 1, replacements, externals);
+            parseArgs(d, arguments, root.getRight(), level + 1, replacements, externals);
             Function f = mind.getFunctions().add(mind.getTerms().add(root.getLeft().getName()), arguments);
             Argument t = new Argument(f);
             arg.add(t);

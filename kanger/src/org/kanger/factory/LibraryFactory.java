@@ -105,12 +105,12 @@ public class LibraryFactory implements IFactory<IOperation> {
         }
     }
 
-    public synchronized Operation add(Operation s) throws Exception {
+    public synchronized IOperation add(IOperation s) throws Exception {
         Operation x = find(s.toString());
         if (x != null) {
             x.setDeleted(false, mind);
             x.setMode(s.getMode());
-            x.setProc(s.getProc());
+            x.setProc(((Operation) s).getProc());
 //            if (s.isDeleted()) {
 //                x.setDeleted(true);
 //            }
@@ -120,15 +120,15 @@ public class LibraryFactory implements IFactory<IOperation> {
             x.getParams().addAll(s.getParams());
 //            update();
         } else {
-            s.setId(((User) mind.getUser()).nextId(SCHEMA));
-            s.setMindId(mind.getId());
-                cache.add(s);
-                if (top == null) {
-                    top = cache.getRoot();
-                }
-                x = s;
+            ((Operation) s).setId(((User) mind.getUser()).nextId(SCHEMA));
+            ((Operation) s).setMindId(mind.getId());
+            cache.add((IUnit) s);
+            if (top == null) {
+                top = cache.getRoot();
             }
-            return x;
+            x = (Operation) s;
+        }
+        return x;
     }
 
     public Operation find(String title) throws Exception {
