@@ -2,6 +2,7 @@ package org.kanger.storage;
 
 import jdbm.PrimaryTreeMap;
 import jdbm.RecordManager;
+import org.kanger.User;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
@@ -26,10 +27,12 @@ public class Base implements IBase {
     private volatile long cacheSize = 0L;
     private long lastId = -1;
     private String name = "";
+    private Class udf = null;
 
     public Base(RecordManager db, String name, IUser user) throws Exception {
 //        this.user = user;
         this.name = name;
+        this.udf = ((User) user).getUdf().getClass();
 
         MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (1024L * 1024L) + ""));
         CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
@@ -354,5 +357,10 @@ public class Base implements IBase {
 
     @Override
     public void close() throws Exception {
+    }
+
+    @Override
+    public Class getUdf() {
+        return udf;
     }
 }

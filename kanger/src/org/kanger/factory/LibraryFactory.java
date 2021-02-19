@@ -2,12 +2,14 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.IOperation;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
-import org.kanger.units.SysOp;
+import org.kanger.units.Operation;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,7 +18,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 25.01.2016.
  */
-public class LibraryFactory implements Iterable<SysOp> {
+public class LibraryFactory implements IFactory<IOperation> {
     public static final String SCHEMA = "library";
 
 //    private long lastId = 0;
@@ -39,7 +41,7 @@ public class LibraryFactory implements Iterable<SysOp> {
     }
 
     public void transaction(LibraryFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -103,8 +105,8 @@ public class LibraryFactory implements Iterable<SysOp> {
         }
     }
 
-    public synchronized SysOp add(SysOp s) throws Exception {
-        SysOp x = find(s.toString());
+    public synchronized Operation add(Operation s) throws Exception {
+        Operation x = find(s.toString());
         if (x != null) {
             x.setDeleted(false, mind);
             x.setMode(s.getMode());
@@ -129,22 +131,22 @@ public class LibraryFactory implements Iterable<SysOp> {
             return x;
     }
 
-    public SysOp find(String title) throws Exception {
+    public Operation find(String title) throws Exception {
         for (long id : cache.find((title).hashCode())) {
-            IUnit one = load(id);
+            IUnit one = get(id);
             if (one.toString().equals(title)) {
-                return (SysOp) one;
+                return (Operation) one;
             }
         }
         return null;
     }
 
-    public SysOp load(long id) throws Exception {
-        SysOp t = get(id);
+    public Operation get(long id) throws Exception {
+        Operation t = (Operation) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
-                t = (SysOp) s.getData(mind);
+                t = (Operation) s.getData(mind);
 //                t.setMind(mind);
 //                t.setUser(user);
             }
@@ -152,10 +154,10 @@ public class LibraryFactory implements Iterable<SysOp> {
         return t;
     }
 
-    private SysOp get(long id) throws Exception {
-        SysOp t = (SysOp) cache.get(id);
-        return t;
-    }
+//    private SysOp get(long id) throws Exception {
+//        SysOp t = (SysOp) cache.get(id);
+//        return t;
+//    }
 
 //    public void delete(SysOp x) {
 //        x.setDeleted(true, mind);

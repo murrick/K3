@@ -2,6 +2,7 @@ package org.kanger.interfaces.internal;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.IMind;
 import org.kanger.storage.ByteBuffer;
 
 /**
@@ -25,7 +26,7 @@ public interface IUnit<T> {
 
     T setMind(Mind mind) throws Exception;
 
-    boolean isDeleted(Mind mind);
+    boolean isDeleted(IMind mind);
 
     void setDeleted(boolean on, Mind mind) throws Exception;
 

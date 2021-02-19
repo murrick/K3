@@ -4,6 +4,7 @@ import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
@@ -107,7 +108,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     public List<TValue> getSolve() throws Exception {
         if (solve.isEmpty() && !solveIds.isEmpty()) {
             for (long id : solveIds) {
-                TValue v = mind.getTValues().load(id);
+                TValue v = mind.getTValues().get(id);
                 solve.add(v);
             }
         }
@@ -226,8 +227,8 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override

@@ -7,7 +7,7 @@ import org.kanger.enums.LibMode;
 import org.kanger.enums.ParseError;
 import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
-import org.kanger.units.SysOp;
+import org.kanger.units.Operation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,64 +21,64 @@ public class Parser {
 
     private static final int DIR_LEFT = 0;
     private static final int DIR_RIGHT = 1;
-    private static final Operation[] ops = {
+    private static final org.kanger.compiler.Operation[] ops = {
 
             /*  1 */
-            new Operation("..", "_iv", 1, 2, 0, false, false),
-            new Operation("[", "_is", 1, 0, 0, false, false),
+            new org.kanger.compiler.Operation("..", "_iv", 1, 2, 0, false, false),
+            new org.kanger.compiler.Operation("[", "_is", 1, 0, 0, false, false),
 
-            new Operation("++", "_inc", 1, 1, 1, false, false),
-            new Operation("--", "_dec", 1, 1, 1, false, false),
-            new Operation("-", "_neg", 1, 1, 1, false, false),
-            new Operation("+", "_val", 1, 1, 1, false, false),
-            new Operation("~~", "_bitnot", 1, 1, 1, false, false),
+            new org.kanger.compiler.Operation("++", "_inc", 1, 1, 1, false, false),
+            new org.kanger.compiler.Operation("--", "_dec", 1, 1, 1, false, false),
+            new org.kanger.compiler.Operation("-", "_neg", 1, 1, 1, false, false),
+            new org.kanger.compiler.Operation("+", "_val", 1, 1, 1, false, false),
+            new org.kanger.compiler.Operation("~~", "_bitnot", 1, 1, 1, false, false),
 
-            new Operation("~", "", 1, 1, 1, false, false),
+            new org.kanger.compiler.Operation("~", "", 1, 1, 1, false, false),
 
 
             /*  2 */
-            new Operation("*", "_mul", 2, 2, 0, false, false),
-            new Operation("/", "_div", 2, 2, 0, false, false),
-            new Operation("%", "_rem", 2, 2, 0, false, false),
+            new org.kanger.compiler.Operation("*", "_mul", 2, 2, 0, false, false),
+            new org.kanger.compiler.Operation("/", "_div", 2, 2, 0, false, false),
+            new org.kanger.compiler.Operation("%", "_rem", 2, 2, 0, false, false),
 
             /*  3 */
-            new Operation("+", "_add", 3, 2, 0, false, false),
-            new Operation("-", "_sub", 3, 2, 0, false, false),
-            new Operation("<<", "_bitleft", 3, 2, 0, false, false),
-            new Operation(">>", "_bitright", 3, 2, 0, false, false),
-            new Operation("&", "_bitand", 3, 2, 0, false, false),
-            new Operation("^", "_bitxor", 3, 2, 0, false, false),
-            new Operation("|", "_bitor", 3, 2, 0, false, false),
+            new org.kanger.compiler.Operation("+", "_add", 3, 2, 0, false, false),
+            new org.kanger.compiler.Operation("-", "_sub", 3, 2, 0, false, false),
+            new org.kanger.compiler.Operation("<<", "_bitleft", 3, 2, 0, false, false),
+            new org.kanger.compiler.Operation(">>", "_bitright", 3, 2, 0, false, false),
+            new org.kanger.compiler.Operation("&", "_bitand", 3, 2, 0, false, false),
+            new org.kanger.compiler.Operation("^", "_bitxor", 3, 2, 0, false, false),
+            new org.kanger.compiler.Operation("|", "_bitor", 3, 2, 0, false, false),
 
             /* 4 */
-            new Operation(":", "_in", 4, 2, 0, false, false),
-            new Operation(":", "_in", 4, 3, 0, false, false),
+            new org.kanger.compiler.Operation(":", "_in", 4, 2, 0, false, false),
+            new org.kanger.compiler.Operation(":", "_in", 4, 3, 0, false, false),
 
-            new Operation("<=", "_le", 4, 2, 0, false, false),
-            new Operation("<", "_lr", 4, 2, 0, false, false),
-            new Operation(">=", "_ge", 4, 2, 0, false, false),
-            new Operation(">", "_gr", 4, 2, 0, false, false),
+            new org.kanger.compiler.Operation("<=", "_le", 4, 2, 0, false, false),
+            new org.kanger.compiler.Operation("<", "_lr", 4, 2, 0, false, false),
+            new org.kanger.compiler.Operation(">=", "_ge", 4, 2, 0, false, false),
+            new org.kanger.compiler.Operation(">", "_gr", 4, 2, 0, false, false),
 
             /* 5 */
-            new Operation("==", "_eq", 5, 2, 0, false, false),
-            new Operation("=", "_eq", 5, 2, 0, false, false),
-            new Operation("!=", "_ne", 5, 2, 0, false, false),
-            new Operation("<>", "_ne", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation("==", "_eq", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation("=", "_eq", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation("!=", "_ne", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation("<>", "_ne", 5, 2, 0, false, false),
 
             /* 6 */
 //            new Operation("..", "", 11, 2, 0, false, false),
-            new Operation(",", "", 6, 2, 0, false, false),
-            new Operation("&&", "&", 6, 2, 0, false, true),
+            new org.kanger.compiler.Operation(",", "", 6, 2, 0, false, false),
+            new org.kanger.compiler.Operation("&&", "&", 6, 2, 0, false, true),
 
             /* 7 */
-            new Operation("||", "|", 7, 2, 0, false, true),
+            new org.kanger.compiler.Operation("||", "|", 7, 2, 0, false, true),
 
             /* 8 */
-            new Operation("->", "}", 8, 2, 0, false, true),
+            new org.kanger.compiler.Operation("->", "}", 8, 2, 0, false, true),
 
             /* 9 */
-            new Operation("@", "", 9, 1, 1, true, false),
-            new Operation("$", "", 9, 1, 1, true, false)
+            new org.kanger.compiler.Operation("@", "", 9, 1, 1, true, false),
+            new org.kanger.compiler.Operation("$", "", 9, 1, 1, true, false)
 
     };
 
@@ -560,12 +560,12 @@ public class Parser {
         return root;
     }
 
-    public static SysOp implement(String ln, Mind mind) throws Exception {
+    public static Operation implement(String ln, Mind mind) throws Exception {
         String line = "";
         boolean waitParams = false;
         boolean waitScript = false;
         int pos = 1;
-        SysOp f = ((User) mind.getUser()).getUdf();
+        Operation f = ((User) mind.getUser()).getUdf();
         f.setMind(mind);
         do {
             Object[] t = getToken(ln, pos);
@@ -712,8 +712,8 @@ public class Parser {
 //    }
 
 
-    public static Operation getOp(String o, int range) {
-        for (Operation op : ops) {
+    public static org.kanger.compiler.Operation getOp(String o, int range) {
+        for (org.kanger.compiler.Operation op : ops) {
             if (op.getSubst().equals(o) && (op.getRange() == 0 || op.getRange() == range)) {
                 return op;
             }

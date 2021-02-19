@@ -7,9 +7,12 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.Tools;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
 import java.text.SimpleDateFormat;
@@ -20,7 +23,7 @@ import java.util.*;
  * <p>
  * Элемент словаря
  */
-public class Term implements Comparable<Object>, IUnit<Term> {
+public class Term implements IUnit<Term>, ITerm {
 
     public static final double FLT_EPSILON = 0.00000000001;
 
@@ -32,11 +35,11 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     private Object value = null;
 
     private int index = 0;              // Индекс c-переменной
-    private Term name = null;             // Оригинальное имя c-переменной
-    private Rule rule = null;          // Ссылка на правило
+    private ITerm name = null;             // Оригинальное имя c-переменной
+    private IRule rule = null;          // Ссылка на правило
     private final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
-    private Term parent = null;
+    private ITerm parent = null;
 
     //    private Term next = null;      // Следующая запись
     private Mind mind = null;
@@ -187,21 +190,21 @@ public class Term implements Comparable<Object>, IUnit<Term> {
             value = o;
         } else if (o instanceof PTree) {
             if ("..".equals(((PTree) o).getName())) {
-                List<Term> list = new ArrayList<>();
+                List<ITerm> list = new ArrayList<>();
                 list.add(mind.getTerms().add(((PTree) o).getLeft().getName()));
                 list.add(mind.getTerms().add(((PTree) o).getRule().getName()));
                 type = DataType.INTERVAL;
                 value = list;
             }
-        } else if (o instanceof Term[]) {
-            List<Term> list = new ArrayList<>();
-            list.add(((Term[]) o)[0]);
-            list.add(((Term[]) o)[1]);
+        } else if (o instanceof ITerm[]) {
+            List<ITerm> list = new ArrayList<>();
+            list.add(((ITerm[]) o)[0]);
+            list.add(((ITerm[]) o)[1]);
             type = DataType.INTERVAL;
             value = list;
-        } else if (o instanceof ArgList) {
-            List<Term> list = new ArrayList<>();
-            for (Argument a : (ArgList) o) {
+        } else if (o instanceof ArgumentsList) {
+            List<ITerm> list = new ArrayList<>();
+            for (Argument a : (ArgumentsList) o) {
                 list.add(a.getValue(mind));
             }
             type = DataType.SET;
@@ -297,10 +300,10 @@ public class Term implements Comparable<Object>, IUnit<Term> {
             if (ch.startsWith("{") && ch.endsWith("}")) {
                 ch = ch.substring(1, ch.length() - 1);
             }
-            List<Term> list = new ArrayList<>();
+            List<ITerm> list = new ArrayList<>();
             for (String s : ch.split("\\.\\.")) {
                 if (!s.trim().isEmpty()) {
-                    Term t = mind.getTerms().add(s);
+                    ITerm t = mind.getTerms().add(s);
                     list.add(t);
                 }
             }
@@ -310,6 +313,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         }
     }
 
+    @Override
     public DataType getType() {
         return type;
     }
@@ -324,14 +328,14 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.id = id;
     }
 
-    public Rule getRule() throws Exception {
+    public IRule getRule() throws Exception {
         if (rule == null) {
-            rule = mind.getRules().load(ruleId);
+            rule = mind.getRules().get(ruleId);
         }
         return rule;
     }
 
-    public void setRule(Rule r) {
+    public void setRule(IRule r) {
         this.rule = r;
         this.ruleId = r.getId();
     }
@@ -389,6 +393,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         }
     }
 
+    @Override
     public String toString() {
         if (value != null) {
             if (isCVariable()) {
@@ -448,6 +453,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         return t != null && t instanceof Term && ((Term) t).getId() == id;
     }
 
+    @Override
     public Object getValue() {
         return value;
     }
@@ -456,14 +462,14 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         this.value = value;
     }
 
-    public Term getName() throws Exception {
+    public ITerm getName() throws Exception {
         if (name == null) {
-            name = mind.getTerms().load(nameId);
+            name = mind.getTerms().get(nameId);
         }
         return name;
     }
 
-    public void setName(Term name) {
+    public void setName(ITerm name) {
         this.name = name;
         this.nameId = name.getId();
     }
@@ -538,6 +544,7 @@ public class Term implements Comparable<Object>, IUnit<Term> {
         }
     }
 
+    @Override
     public boolean isEmpty() {
         return value == null;
     }
@@ -558,8 +565,8 @@ public class Term implements Comparable<Object>, IUnit<Term> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override
@@ -601,14 +608,14 @@ public class Term implements Comparable<Object>, IUnit<Term> {
 //        return childs;
 //    }
 //
-    public Term getParent() throws Exception {
+    public ITerm getParent() throws Exception {
         if (parent == null && parentId > 0) {
-            parent = mind.getTerms().load(parentId);
+            parent = mind.getTerms().get(parentId);
         }
         return parent;
     }
 
-    public void setParent(Term parent) {
+    public void setParent(ITerm parent) {
         this.parent = parent;
         this.parentId = parent.getId();
     }

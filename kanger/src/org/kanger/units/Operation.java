@@ -5,6 +5,7 @@ import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.internal.IReactor;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
@@ -16,7 +17,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.15.
  */
-public class SysOp implements IUnit<SysOp> {
+public class Operation implements IUnit<Operation>, org.kanger.interfaces.IOperation {
 
     protected final List<String> params = new ArrayList<>();
     protected final List<String> scripts = new ArrayList<>();
@@ -24,27 +25,27 @@ public class SysOp implements IUnit<SysOp> {
     protected String name = "";                   /* predefined name */
     protected IReactor proc = null;              /* called procedure */
     protected int range = 0;
-    protected SysOp next = null;
+    protected Operation next = null;
     protected transient Mind mind = null;
     //    protected transient boolean deleted = false;
     protected long id = -1;                                       // id домена
     private long mindId = -1;                                   // id транзакции
 
 
-    public SysOp(Mind mind) {
+    public Operation(Mind mind) {
 
         this.mind = mind;
     }
 
 
-    public SysOp(LibMode mode, String name, int range, IReactor proc) {
+    public Operation(LibMode mode, String name, int range, IReactor proc) {
         this.mode = mode;
         this.name = name;
         this.proc = proc;
         this.range = range;
     }
 
-    public SysOp() {
+    public Operation() {
     }
 
     public static void showLog(IUnit o, TValue v) {
@@ -55,6 +56,7 @@ public class SysOp implements IUnit<SysOp> {
         }
     }
 
+    @Override
     public LibMode getMode() {
         return mode;
     }
@@ -63,6 +65,7 @@ public class SysOp implements IUnit<SysOp> {
         this.mode = mode;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -79,6 +82,7 @@ public class SysOp implements IUnit<SysOp> {
         this.proc = proc;
     }
 
+    @Override
     public int getRange() {
         return range;
     }
@@ -87,11 +91,11 @@ public class SysOp implements IUnit<SysOp> {
         this.range = range;
     }
 
-    public SysOp getNext() {
+    public Operation getNext() {
         return next;
     }
 
-    public void setNext(SysOp next) {
+    public void setNext(Operation next) {
         this.next = next;
     }
 
@@ -100,6 +104,7 @@ public class SysOp implements IUnit<SysOp> {
         return name + "(" + range + ")";
     }
 
+    @Override
     public String asString() {
         String str = "=" + name + "(";
         if (params.isEmpty()) {
@@ -144,7 +149,7 @@ public class SysOp implements IUnit<SysOp> {
     }
 
     @Override
-    public SysOp apply(ByteBuffer packet) throws OutOfBufferException {
+    public Operation apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
@@ -194,7 +199,7 @@ public class SysOp implements IUnit<SysOp> {
     }
 
     @Override
-    public boolean equalsTo(SysOp to) {
+    public boolean equalsTo(Operation to) {
         return toString().equals(to.toString());
     }
 
@@ -204,14 +209,14 @@ public class SysOp implements IUnit<SysOp> {
     }
 
     @Override
-    public SysOp setMind(Mind mind) {
+    public Operation setMind(Mind mind) {
         this.mind = mind;
         return this;
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override
@@ -219,10 +224,12 @@ public class SysOp implements IUnit<SysOp> {
         mind.setUnitDeleted(this, on);
     }
 
+    @Override
     public List<String> getScripts() {
         return scripts;
     }
 
+    @Override
     public List<String> getParams() {
         return params;
     }

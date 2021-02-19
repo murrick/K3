@@ -2,6 +2,8 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.*;
 import org.kanger.storage.Escalera;
 import org.kanger.units.TValue;
@@ -13,7 +15,7 @@ import java.util.*;
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class TValueFactory implements Iterable<TValue> {
+public class TValueFactory implements IFactory<TValue> {
 
     public static final String SCHEMA = "tvalues";
 
@@ -37,7 +39,7 @@ public class TValueFactory implements Iterable<TValue> {
     }
 
     public void transaction(TValueFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -103,7 +105,7 @@ public class TValueFactory implements Iterable<TValue> {
         }
     }
 
-    public synchronized TValue add(TVariable tv, Term o) throws Exception {
+    public synchronized TValue add(TVariable tv, ITerm o) throws Exception {
         TValue t = find(tv, o);
         if (t == null) {
             t = new TValue(tv, o, mind);
@@ -141,9 +143,9 @@ public class TValueFactory implements Iterable<TValue> {
         mind.getTValues().forEach(tv, new IReactor<TValue>() {
             @Override
             public Object run(TValue o) throws Exception {
-                if (o.getValue().isXVariable()
-                        && (o.getValue().getParentId() == parent.getId()
-                        || o.getValue().getParentId() == parent.getParentId())) {
+                if (((Term) o.getValue()).isXVariable()
+                        && (((Term) o.getValue()).getParentId() == parent.getId()
+                        || ((Term) o.getValue()).getParentId() == parent.getParentId())) {
                     result[0] = o;
                 }
                 return true;
@@ -152,13 +154,13 @@ public class TValueFactory implements Iterable<TValue> {
         return result[0];
     }
 
-    public TValue find(TVariable tv, Term v) throws Exception {
-        if (v.isXVariable()) {
-            return getXValue(tv, v.getParent());
+    public TValue find(TVariable tv, ITerm v) throws Exception {
+        if (((Term) v).isXVariable()) {
+            return getXValue(tv, (Term) ((Term) v).getParent());
         } else {
             TValue temp = new TValue(tv, v);
             for (long id : cache.find(temp.getHash())) {
-                IUnit one = load(id);
+                IUnit one = get(id);
                 //TODO: Осознанно нет проверки на Deleted. Вообще надо понять нужен ли этот стек
                 if (one.equalsTo(temp)) {
                     return (TValue) one;
@@ -168,8 +170,8 @@ public class TValueFactory implements Iterable<TValue> {
         return null;
     }
 
-    public TValue load(long id) throws Exception {
-        TValue t = get(id);
+    public TValue get(long id) throws Exception {
+        TValue t = (TValue) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -182,10 +184,10 @@ public class TValueFactory implements Iterable<TValue> {
         return t;
     }
 
-    private TValue get(long id) throws Exception {
-        TValue t = (TValue) cache.get(id);
-        return t;
-    }
+//    private TValue get(long id) throws Exception {
+//        TValue t = (TValue) cache.get(id);
+//        return t;
+//    }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
@@ -225,7 +227,7 @@ public class TValueFactory implements Iterable<TValue> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getTValues());
+            transaction(((Mind) mind.getNext()).getTValues());
         } else {
             cache.clear();
             transaction(null);

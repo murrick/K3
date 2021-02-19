@@ -2,11 +2,12 @@ package org.kanger;
 
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.*;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
 import org.kanger.interfaces.internal.IReactor;
-import org.kanger.units.SysOp;
+import org.kanger.units.Operation;
 
 import java.io.*;
 import java.util.*;
@@ -24,6 +25,7 @@ public class User implements IUser {
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
+    private String sourceFileName = "mind.k";
 
 
     public IBase getStorage(String schema) {
@@ -39,7 +41,7 @@ public class User implements IUser {
 //        }
 //    }
 
-    protected Mind clear(Mind mind) throws Exception {
+    protected IMind clear(IMind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clear();
@@ -47,21 +49,20 @@ public class User implements IUser {
             data.flush();
         }
 
-        for (Mind m = mind; m != null; m = m.getNext()) {
-            m.clearMind();
+        for (IMind m = mind; m != null; m = m.getNext()) {
+            ((Mind) m).clearMind();
             mind = m;
         }
         return mind;
     }
 
-    @Override
-    public void remove(Mind mind, String name) throws Exception {
+    public IMind remove(IMind mind, String name) throws Exception {
         data.remove(name);
-        clear(mind);
+        return clear(mind);
     }
 
-    @Override
-    public void reindex(IReactor IReactor) {
+    public IMind reindex(IReactor IReactor, IMind mind) throws Exception {
+        mind = close(mind);
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 try {
@@ -72,9 +73,9 @@ public class User implements IUser {
             }
 //            use(data.getStorageName());
         }
+        return mind;
     }
 
-    @Override
     public long getUsedCacheSize() {
         long sz = 0;
         for (Map.Entry<String, IBase> e : storage.entrySet()) {
@@ -83,7 +84,6 @@ public class User implements IUser {
         return sz;
     }
 
-    @Override
     public long getMaxCacheSize() {
         long sz = 0;
         for (Map.Entry<String, IBase> e : storage.entrySet()) {
@@ -139,8 +139,7 @@ public class User implements IUser {
         return lastId++;
     }
 
-    @Override
-    public Mind close(Mind mind) throws Exception {
+    public IMind close(IMind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
                 e.getValue().clearCache();
@@ -157,17 +156,14 @@ public class User implements IUser {
     }
 
 
-    @Override
     public boolean isClosed() {
         return data == null || data.isClosed();
     }
 
-    @Override
     public String getStorageName() {
         return data == null ? "" : data.getStorageName();
     }
 
-    @Override
     public Collection<String> getStoragesList() {
         if (data != null) {
             return data.list();
@@ -176,20 +172,18 @@ public class User implements IUser {
         }
     }
 
-    @Override
     public void flush() throws Exception {
         if (data != null) {
             data.flush();
         }
     }
 
-    @Override
-    public Mind use(Mind mind, String name) throws Exception {
+    public IMind use(IMind mind, String name) throws Exception {
 
         if (data != null) {
 
-            for (Mind m = mind; m != null; m = m.getNext()) {
-                m.clearMind();
+            for (IMind m = mind; m != null; m = m.getNext()) {
+                ((Mind) m).clearMind();
                 mind = m;
             }
             if (mind == null) {
@@ -212,14 +206,14 @@ public class User implements IUser {
             storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
 
             mind.getTerms().transaction(null);
-            mind.getDomains().transaction(null);
-            mind.getFunctions().transaction(null);
-            mind.getFValues().transaction(null);
+            ((Mind) mind).getDomains().transaction(null);
+            ((Mind) mind).getFunctions().transaction(null);
+            ((Mind) mind).getFValues().transaction(null);
             mind.getPredicates().transaction(null);
             mind.getRules().transaction(null);
             mind.getComments().transaction(null);
-            mind.getTValues().transaction(null);
-            mind.getTVars().transaction(null);
+            ((Mind) mind).getTValues().transaction(null);
+            ((Mind) mind).getTVars().transaction(null);
             mind.getLibrary().transaction(null);
 
 //            Mind m = new Mind(mind);
@@ -244,7 +238,6 @@ public class User implements IUser {
     }
 
 
-    @Override
     public IData getData() throws RuntimeErrorException {
         if (data != null) {
             return data;
@@ -253,7 +246,6 @@ public class User implements IUser {
         }
     }
 
-    @Override
     public void setData(IData db) {
         data = db;
     }
@@ -335,9 +327,9 @@ public class User implements IUser {
         this.id = id;
     }
 
-    public SysOp getUdf() throws Exception {
+    public Operation getUdf() throws Exception {
         if (udf != null) {
-            return (SysOp) udf.getConstructors()[0].newInstance();
+            return (Operation) udf.getConstructors()[0].newInstance();
         } else {
             return null;
         }
@@ -345,5 +337,13 @@ public class User implements IUser {
 
     public void setUdf(Class udf) {
         this.udf = udf;
+    }
+
+    public String getSourceFileName() {
+        return sourceFileName;
+    }
+
+    public void setSourceFileName(String sourceFileName) {
+        this.sourceFileName = sourceFileName;
     }
 }

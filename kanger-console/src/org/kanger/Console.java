@@ -4,13 +4,11 @@ import org.kanger.enums.*;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IReactor;
-import org.kanger.primitives.Cause;
-import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
 import org.kanger.stores.LogStore;
 import org.kanger.test.KangerTest;
-import org.kanger.units.*;
 
 import java.io.*;
 import java.nio.BufferOverflowException;
@@ -116,7 +114,7 @@ public class Console {
 //        return sourcesDir;
 //    }
 
-    public static void session(Mind mind) throws Exception, ClassNotFoundException, RuntimeErrorException {
+    public static void session(IMind mind) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
 
 
@@ -169,7 +167,7 @@ public class Console {
                 if (line.length() > 0) {
                     switch (line.toUpperCase().charAt(0)) {
                         case 'Q':   // QUIT
-                            if (!mind.getUser().isClosed() && mind.getTransactionLevel() > 0 && !mind.isEmpty()) {
+                            if (mind.isStorageUsed() && mind.getTransactionLevel() > 0 && !mind.isEmpty()) {
                                 System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
                                 System.out.printf("Are you sure to quit ? [y/N]? ");
                                 String s = sc.nextLine().toUpperCase();
@@ -242,7 +240,11 @@ public class Console {
                             processQuery(line, mind);
                             break;
                         case Enums.FOO:
-                            processFunction(line, mind);
+                            mind.compile(line);
+                            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                                System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                            }
+//                            processFunction(line, mind);
                             break;
                         default:
                             System.out.printf("ERROR: Unknown Instruction\n");
@@ -271,7 +273,7 @@ public class Console {
 
         }
         try {
-            mind = mind.getUser().close(mind);
+            mind = mind.closeStorage();
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
@@ -279,7 +281,7 @@ public class Console {
 
     }
 
-    private static Mind processTransaction(String line, Mind mind, Scanner sc) throws Exception {
+    private static IMind processTransaction(String line, IMind mind, Scanner sc) throws Exception {
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
                 switch (s.trim().toUpperCase().charAt(0)) {
@@ -289,7 +291,7 @@ public class Console {
                         mind = new Mind(mind);
                         break;
                     case 'C': {
-                        Mind m = mind.getNext();
+                        IMind m = mind.getNext();
                         if (m != null) {
                             if (m.commit(mind)) {
                                 System.out.printf("SUCCESS: Transaction committed\n");
@@ -301,7 +303,7 @@ public class Console {
                     }
                     break;
                     case 'R': {
-                        Mind m = mind.getNext();
+                        IMind m = mind.getNext();
                         if (m != null) {
                             m.release(mind);
                             System.out.printf("SUCCESS: Transaction rolled back\n");
@@ -316,17 +318,16 @@ public class Console {
         return mind;
     }
 
-    private static void processFunction(String line, Mind mind) throws Exception {
-        mind.setCompliedLine(line);
-        SysOp op = (SysOp) mind.compileLine(line, false, null);
-        if (!op.isDeleted(mind)) {
-            System.out.printf("SUCCESS: Updated function: %s;\n", op.toString());
-        } else {
-            System.out.printf("SUCCESS: Deleted function: %s;\n", op.toString());
-        }
-    }
+//    private static void processFunction(String line, IMind mind) throws Exception {
+//        SysOp op = (SysOp) mind.compileLine(line, false, null);
+//        if (!op.isDeleted((Mind) mind)) {
+//            System.out.printf("SUCCESS: Updated function: %s;\n", op.toString());
+//        } else {
+//            System.out.printf("SUCCESS: Deleted function: %s;\n", op.toString());
+//        }
+//    }
 
-    private static void processQuery(String line, Mind mind) throws Exception {
+    private static void processQuery(String line, IMind mind) throws Exception {
         int pos = 0;
         Object[] t = null;
         while ((t = Tools.extractLine(line, pos)) != null) {
@@ -351,7 +352,7 @@ public class Console {
         }
     }
 
-    private static void showOptions(Mind mind) {
+    private static void showOptions(IMind mind) {
         System.out.print("Debug level: ");
         switch (mind.getDebugLevel() & 0xFF) {
             case Enums.DEBUG_LEVEL_QUIET:
@@ -369,7 +370,7 @@ public class Console {
     }
 
 
-    private static void options(String line, Mind mind, Scanner sc) throws Exception {
+    private static void options(String line, IMind mind, Scanner sc) throws Exception {
         if (line.split(" ").length == 1) {
             showOptions(mind);
         } else if (line.split(" ").length > 1) {
@@ -385,20 +386,16 @@ public class Console {
                     System.out.println("Used memory: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024) + " mb");
                     System.out.println();
 
-                    if (!mind.getUser().isClosed()) {
-                        System.out.println("Cache size: " + mind.getUser().getMaxCacheSize());
-                        System.out.println("Cache used: " + mind.getUser().getUsedCacheSize());
-                        System.out.println();
-                    }
+//                    if (!mind.getUser().isClosed()) {
+//                        System.out.println("Cache size: " + mind.getUser().getMaxCacheSize());
+//                        System.out.println("Cache used: " + mind.getUser().getUsedCacheSize());
+//                        System.out.println();
+//                    }
 //                                        System.out.println("Database: " + mind.getRights().storedSize());
                     System.out.println("Dictionary: " + mind.getTerms().size());
-                    System.out.println("Domains: " + mind.getDomains().size());
                     System.out.println("Functions: " + mind.getLibrary().size());
-                    System.out.println("FValues: " + mind.getFValues().size());
                     System.out.println("Predicates: " + mind.getPredicates().size());
                     System.out.println("Rules: " + mind.getRules().size());
-                    System.out.println("TValues: " + mind.getTValues().size());
-                    System.out.println("TVariables: " + mind.getTValues().size());
                     System.out.println();
                     System.out.println("Hypothesis: " + mind.getHypothesis().size());
                     System.out.println("Solutions: " + mind.getSolutions().size());
@@ -464,13 +461,13 @@ public class Console {
                     if (line.split(" ").length > 2) {
                         prefix = line.split(" ")[2];
                     }
-                    KangerTest.test(mind, "set_" + prefix);
+                    KangerTest.test((Mind) mind, "set_" + prefix);
                     break;
             }
         }
     }
 
-    private static void saveSource(String line, Mind mind, Scanner sc) throws Exception {
+    private static void saveSource(String line, IMind mind, Scanner sc) throws Exception {
         String fname = null;
         if (line.split(" ").length == 1) {
             System.out.println(mind.getSourceCode());
@@ -536,12 +533,12 @@ public class Console {
 
     }
 
-    private static void packDatabase(Mind mind, Scanner sc) throws Exception {
-        if (!mind.getUser().isClosed()) {
-            System.out.printf("Are you sure to pack database " + mind.getUser().getStorageName() + "? [y/N]? ");
+    private static void packDatabase(IMind mind, Scanner sc) throws Exception {
+        if (mind.isStorageUsed()) {
+            System.out.printf("Are you sure to pack database " + mind.getStorageName() + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                mind.getUser().reindex(new IReactor() {
+                mind = mind.reindexStorage(new IReactor() {
                     @Override
                     public Object run(Object o) {
                         System.out.println("Processing " + o);
@@ -555,14 +552,14 @@ public class Console {
         }
     }
 
-    private static void dropDatabase(String line, Mind mind, Scanner sc) throws Exception {
+    private static void dropDatabase(String line, IMind mind, Scanner sc) throws Exception {
         String name = null;
         if (line.split(" ").length == 2) {
             name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
-        } else if (!mind.getUser().isClosed()) {
-            name = mind.getUser().getStorageName();
+        } else if (mind.isStorageUsed()) {
+            name = mind.getStorageName();
         } else {
-            List<String> list = (List<String>) mind.getUser().getStoragesList();
+            List<String> list = (List<String>) mind.getStoragesList();
             if (list.size() > 0) {
                 System.out.println("DBs available:");
                 int i = 0;
@@ -599,21 +596,21 @@ public class Console {
             System.out.printf("Are you sure to drop database " + name + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                mind.getUser().remove(mind, name);
+                mind = mind.removeStorage(name);
                 System.out.println("Database files removed");
             }
         }
     }
 
-    private static Mind useDatabase(String line, Mind mind, Scanner sc) throws Exception {
+    private static IMind useDatabase(String line, IMind mind, Scanner sc) throws Exception {
         String backup = mind.getSourceCode();
 
         if (line.split(" ").length == 2) {
             String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
-            mind = mind.getUser().use(mind, name);
-            if (!mind.getUser().isClosed()) {
+            mind = mind.useStorage(name);
+            if (mind.isStorageUsed()) {
                 if (!backup.isEmpty()) {
-                    Mind m = new Mind(mind);
+                    IMind m = new Mind(mind);
                     if (m.compile(backup)) {
                         if (!m.isEmpty()) {
                             mind = m;
@@ -623,7 +620,7 @@ public class Console {
                         }
                         showDBrief(mind);
                     } else {
-                        mind = mind.getUser().close(mind);
+                        mind = mind.closeStorage();
                         mind.compile(backup);
                         mind.getLog().clear();
                         mind.release(m);
@@ -639,10 +636,10 @@ public class Console {
             } else {
                 System.out.println("No database used");
             }
-        } else if (!mind.getUser().isClosed()) {
+        } else if (mind.isStorageUsed()) {
             showDBrief(mind);
         } else {
-            List<String> list = (List<String>) mind.getUser().getStoragesList();
+            List<String> list = (List<String>) mind.getStoragesList();
             if (list.size() > 0) {
                 System.out.println("DBs available:");
                 int i = 0;
@@ -668,10 +665,10 @@ public class Console {
                 }
                 if (!line.isEmpty()) {
                     line = line.replace(".", Enums.FILE_SEPARATOR);
-                    mind = mind.getUser().use(mind, line);
-                    if (!mind.getUser().isClosed()) {
+                    mind = mind.useStorage(line);
+                    if (mind.isStorageUsed()) {
                         if (!backup.isEmpty()) {
-                            Mind m = new Mind(mind);
+                            IMind m = new Mind(mind);
                             if (m.compile(backup)) {
                                 if (!m.isEmpty()) {
                                     mind = m;
@@ -681,7 +678,7 @@ public class Console {
                                 }
                                 showDBrief(mind);
                             } else {
-                                mind = mind.getUser().close(mind);
+                                mind = mind.closeStorage();
                                 mind.compile(backup);
                                 mind.getLog().clear();
                                 mind.release(m);
@@ -707,24 +704,24 @@ public class Console {
         return mind;
     }
 
-    private static void showDBrief(Mind mind) throws Exception {
-        System.out.println("Database used: " + mind.getUser().getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+    private static void showDBrief(IMind mind) throws Exception {
+        System.out.println("Database used: " + mind.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
         System.out.println("Rules: " + mind.getTop().getRules().size() + ", Predicates: " + mind.getTop().getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getTop().getLibrary().size());
     }
 
-    private static Mind closeDatabase(Mind mind, Scanner sc) throws Exception {
-        if (!mind.getUser().isClosed()) {
+    private static IMind closeDatabase(IMind mind, Scanner sc) throws Exception {
+        if (mind.isStorageUsed()) {
             if (mind.getTransactionLevel() > 0 && !mind.isEmpty()) {
                 System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
-                System.out.printf("Are you sure to close database " + mind.getUser().getStorageName() + "? [y/N]? ");
+                System.out.printf("Are you sure to close database " + mind.getStorageName() + "? [y/N]? ");
                 String s = sc.nextLine().toUpperCase();
                 if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                    mind = mind.getUser().close(mind);
+                    mind = mind.closeStorage();
                     System.out.println("No database used");
                 }
             } else {
-                String tmp = mind.getUser().getStorageName();
-                mind = mind.getUser().close(mind);
+                String tmp = mind.getStorageName();
+                mind = mind.closeStorage();
                 System.out.printf("Database " + tmp + " closed\n");
             }
         } else {
@@ -733,16 +730,16 @@ public class Console {
         return mind;
     }
 
-    private static Mind clearWorkspace(Mind mind, Scanner sc) throws Exception {
+    private static IMind clearWorkspace(IMind mind, Scanner sc) throws Exception {
         System.out.printf("Are you sure to erase workspace? [y/N]? ");
         String s = sc.nextLine().toUpperCase();
         if (!s.isEmpty() && s.charAt(0) == 'Y') {
-            mind = mind.clear();
+            mind = mind.clearStorage();
         }
         return mind;
     }
 
-    private static void showSolutions(Mind mind, String line) throws Exception {
+    private static void showSolutions(IMind mind, String line) throws Exception {
         long id = -1;
         boolean tree = false;
         for (String s : line.split(" ")) {
@@ -766,7 +763,7 @@ public class Console {
         if (tree || id != -1) {
             if (!mind.getSolutions().isEmpty()) {
                 boolean found = false;
-                for (Rule log : mind.getSolutions().getRoot()) {
+                for (IRule log : mind.getSolutions().getRoot()) {
                     if (id == -1 || id == log.getId()) {
                         found = true;
                         System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
@@ -790,7 +787,7 @@ public class Console {
         }
     }
 
-    public static void showLog(Mind mind, LogMode type, File fi, Scanner sc) throws IOException {
+    public static void showLog(IMind mind, LogMode type, File fi, Scanner sc) throws IOException {
 
         if (mind.getLog().size() > 0) {
             BufferedWriter f = null;
@@ -827,7 +824,7 @@ public class Console {
 
     }
 
-    public static void showExplanation(Mind mind, LogMode type, String line, Scanner sc) throws IOException {
+    public static void showExplanation(IMind mind, LogMode type, String line, Scanner sc) throws IOException {
 
         if (mind.getLog().size() > 0) {
             File f = null;
@@ -954,7 +951,7 @@ public class Console {
                         + "You can use just first letters of keywords.\n");
     }
 
-    public static void showFunctions(Mind mind, String line) throws CommandErrorException {
+    public static void showFunctions(IMind mind, String line) throws CommandErrorException {
         long id = -1;
         boolean source = false;
         for (String s : line.split(" ")) {
@@ -980,7 +977,7 @@ public class Console {
                 System.out.printf("Defined functions (%d):\n", mind.getLibrary().size());
             }
             boolean found = false;
-            for (SysOp op : mind.getLibrary()) {
+            for (IOperation op : mind.getLibrary()) {
                 if (!op.isDeleted(mind) && op.getMode() == LibMode.FUNCTION && (id == -1 || id == op.getId())) {
                     found = true;
                     System.out.printf("Function %03d: %s;\n", op.getId(), op.toString());
@@ -1005,7 +1002,7 @@ public class Console {
         }
     }
 
-    public static void showCauses(Mind mind, Set<Cause> causes, int level) throws Exception {
+    public static void showCauses(IMind mind, Set<ICause> causes, int level) throws Exception {
 
         String indent = "";
         for (int i = 0; i <= level; ++i) {
@@ -1019,47 +1016,46 @@ public class Console {
         }
 
         boolean ruleShowed = false;
-        for (Cause c : causes) {
+        for (ICause c : causes) {
             if (!ruleShowed) {
                 System.out.printf("\t%sRule:  %s\n", indent, c.getRule(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
             }
             System.out.printf("\t%sCause: %s\n", indent, c.getDonor().toString(mind)); //c.getArguments()));
-            Rule r = mind.getRules().find(c.getDonor());
+            IRule r = mind.getRules().find(c.getDonor());
             if (r != null) {
                 showCauses(mind, r.getCauses(), level + 1);
             }
         }
     }
 
-    private static void showPredRecurse(Mind mind, Domain d, boolean showCauses) throws Exception {
-        if (d.isStored(mind)) {
-            Rule dest = mind.getRules().find(d);
-            if (dest != null) {
-                if (showCauses) {
-                    System.out.println("\t-------------------------------------------");
-                }
-                System.out.printf("\t%s%03d: %s\n",
-                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", dest.getMindId()) : "",
-                        dest.getId(),
-                        dest.toString());
-                if (showCauses && !dest.getCauses().isEmpty()) {
-                    showCauses(mind, dest.getCauses(), 0);
+    private static void showPredRecurse(IMind mind, IRule dest, boolean showCauses) throws Exception {
+        if (dest != null) {
+            if (showCauses) {
+                System.out.println("\t-------------------------------------------");
+            }
+            System.out.printf("\t%s%03d: %s\n",
+                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", dest.getMindId()) : "",
+                    dest.getId(),
+                    dest.toString());
+            if (showCauses && !dest.getCauses().isEmpty()) {
+                showCauses(mind, dest.getCauses(), 0);
                 }
             }
-        }
     }
 
-    public static void showPred(Mind mind, Predicate p, boolean showCauses) throws Exception {
+    public static void showPred(IMind mind, IPredicate p, boolean showCauses) throws Exception {
 //        Set<Domain> set = p.getSolves();
 //        if (!set.isEmpty()) {
         System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
-        for (Domain s : p.getSolves()) {
-            showPredRecurse(mind, s, showCauses);
+        for (IRule r : mind.getRules()) {
+            if (!r.isDeleted(mind) && r.isStored() && r.getPredicateId() == p.getId()) {
+                showPredRecurse(mind, r, showCauses);
+            }
         }
 //        }
     }
 
-    public static void showBase(Mind mind, String line) throws Exception {
+    public static void showBase(IMind mind, String line) throws Exception {
         long id = -1;
         String name = "";
         boolean preds = false;
@@ -1086,7 +1082,7 @@ public class Console {
         }
         if (id != -1) {
             if (!tree) {
-                Predicate p = mind.getPredicates().load(id);
+                IPredicate p = mind.getPredicates().get(id);
                 if (p != null && (name.isEmpty() || p.getName().toString().toLowerCase().equals(name.toLowerCase()))) {
                     if (preds) {
                         System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
@@ -1095,7 +1091,7 @@ public class Console {
                     }
                 }
             } else {
-                Rule dest = mind.getRules().load(id);
+                IRule dest = mind.getRules().get(id);
                 if (dest != null) {
                     System.out.printf("Statement %03d: %s\n", dest.getId(), dest.toString());
                     if (!dest.getCauses().isEmpty()) {
@@ -1107,8 +1103,8 @@ public class Console {
             }
         } else {
             boolean found = false;
-            for (Predicate p : mind.getPredicates()) {
-                if (!p.isDeleted(mind) && !mind.isSystem(p) && !p.getSolves().isEmpty()
+            for (IPredicate p : mind.getPredicates()) {
+                if (!p.isDeleted(mind) && !((Mind) mind).isSystem(p) && !p.isEmpty()
                         && (name.isEmpty() || p.getName().toString().toLowerCase().equals(name.toLowerCase()))) {
                     if (preds) {
                         found = true;
@@ -1126,13 +1122,12 @@ public class Console {
         }
     }
 
-    public static void showHypo(Mind mind) {
+    public static void showHypo(IMind mind) {
         int i;
-        List<Hypothesis> list = mind.getHypothesis().getRoot();
-        if (list != null && list.size() > 0) {
+        if (!mind.getHypothesis().isEmpty()) {
             System.out.printf("Hypothesis list:\n");
-            for (i = 0; i < list.size(); ++i) {
-                System.out.printf("\t%03d:\t%s\n", i + 1, list.toArray(new Hypothesis[]{})[i].toString());
+            for (i = 0; i < mind.getHypothesis().size(); ++i) {
+                System.out.printf("\t%03d:\t%s\n", i + 1, mind.getHypothesis().get(i).toString());
             }
 //            System.out.printf("Use APPEND command for select Hypothesis\n");
         } else {
@@ -1140,8 +1135,8 @@ public class Console {
         }
     }
 
-    public static void showTree(Mind mind, Rule r) throws Exception {
-        List<List<String>> net = LogStore.formatTree(mind, r);
+    public static void showTree(IMind mind, IRule r) throws Exception {
+        List<List<String>> net = LogStore.formatTree(r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
                 for (int k = 0; k < net.size(); ++k) {
@@ -1155,10 +1150,10 @@ public class Console {
         }
     }
 
-    public static void showRules(Mind mind, String line) throws Exception {
+    public static void showRules(IMind mind, String line) throws Exception {
 
         long id = -1;
-        Mind m = mind;
+        IMind m = mind;
         boolean tree = false;
         int prods = 1;
         boolean level = false;
@@ -1205,7 +1200,7 @@ public class Console {
         if (level) {
             System.out.printf(" --- Rules for transaction level %d (%d)\n", m.getTransactionLevel(), m.getId());
         }
-        for (Rule r : mind.getRules()) {
+        for (IRule r : mind.getRules()) {
             if (!r.isDeleted(m)
                     && (r.getId() == id || (id == -1 && (
                     (!level && prods == 1 && !r.isGenerated())
@@ -1223,8 +1218,8 @@ public class Console {
                                 (r.isQuery() ? "Q" : "") +
                                 (r.isDeleted(mind) ? "D" : "")
                                 : "",
-                        r.getOrig());
-                if (tree || r.getOrig().isEmpty()) {
+                        r.getOrigin());
+                if (tree || r.getOrigin().isEmpty()) {
                     int save = mind.getDebugLevel();
                     mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
                     showTree(mind, r);
@@ -1237,13 +1232,13 @@ public class Console {
                 }
             }
         }
-        if (level && m.getDeleted().containsKey(UnitType.RULE) && !m.getDeleted().get(UnitType.RULE).isEmpty()) {
+        if (level && ((Mind) m).getDeleted().containsKey(UnitType.RULE) && !((Mind) m).getDeleted().get(UnitType.RULE).isEmpty()) {
             if (found) {
                 System.out.printf("\n");
             }
             System.out.printf(" --- Deleted rules for level %d (%d)\n", m.getTransactionLevel(), m.getId());
-            for (long rid : m.getDeleted().get(UnitType.RULE)) {
-                Rule r = m.getRules().load(rid);
+            for (long rid : ((Mind) m).getDeleted().get(UnitType.RULE)) {
+                IRule r = m.getRules().get(rid);
                 if (r != null) {
                     found = true;
                     System.out.printf("%sRule %03d%s: %s\n",
@@ -1256,7 +1251,7 @@ public class Console {
                                     (r.isQuery() ? "Q" : "") +
                                     (r.isDeleted(mind) ? "D" : "")
                                     : "",
-                            r.getOrig());
+                            r.getOrigin());
                 }
             }
         }
@@ -1268,7 +1263,7 @@ public class Console {
 
     /* Формирует в line строку гипотезы в качестве правила
      */
-    public static void makeHypo(Mind mind, String line, Scanner sc) throws Exception {
+    public static void makeHypo(IMind mind, String line, Scanner sc) throws Exception {
         int i = -1;
 //        boolean antc = true;
         if (line.split(" ").length >= 2) {
@@ -1302,7 +1297,7 @@ public class Console {
 
             if (h != null) {
                 System.out.println("Statement: " + h);
-                Boolean res = mind.queryAccept(h, null, true);
+                Boolean res = ((Mind) mind).queryAccept(h, null, true);
                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
@@ -1314,7 +1309,7 @@ public class Console {
         }
     }
 
-    public static File loadSource(String line, Mind mind, Scanner sc) throws Exception {
+    public static File loadSource(String line, IMind mind, Scanner sc) throws Exception {
         File f = null;
         if (line.split(" ").length == 1) {
             List<File> list = new ArrayList<>();
@@ -1360,7 +1355,7 @@ public class Console {
     }
 
     //TODO: Нужна проверка на наличие правила в базе на уровне дерева
-    public static Mind loadSourceFile(Mind mind, File f) throws Exception {
+    public static IMind loadSourceFile(IMind mind, File f) throws Exception {
         boolean res = false;
         if (f == null) {
             System.out.printf("No source files selected");
@@ -1375,7 +1370,7 @@ public class Console {
                     StringBuffer buf = new StringBuffer(new String(cbuf).replace("\r\n", "\r"));
                     isr.close();
 
-                    if (!mind.getUser().isClosed()) {
+                    if (mind.isStorageUsed()) {
                         mind = new Mind(mind);
                     }
 
@@ -1389,8 +1384,8 @@ public class Console {
                     } else {
                         System.out.printf("Use XPLAIN command for analisys\n");
                     }
-                    if (!mind.getUser().isClosed() && mind.isEmpty()) {
-                        Mind m = mind.getNext();
+                    if (mind.isStorageUsed() && mind.isEmpty()) {
+                        IMind m = mind.getNext();
                         m.release(mind);
                         mind = m;
                     }
@@ -1408,18 +1403,18 @@ public class Console {
     }
 
 
-    public static String formatRightWithComments(Mind mind, long id) throws Exception {
+    public static String formatRightWithComments(IMind mind, long id) throws Exception {
         String str = String.format(" -- Right %03d: ", id);
         str += Enums.LINE_SEPARATOR;
-        Comment c = mind.getComments().get(id);
+        IComment c = mind.getComments().get(id);
         if (c != null && !c.getComment().isEmpty()) {
             for (String s : c.getComment().split("\\R")) {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }
-        Rule r = mind.getRules().load(id);
+        IRule r = mind.getRules().get(id);
         if (r != null) {
-            for (String s : r.getOrig().toString().split("\\R")) {
+            for (String s : r.getOrigin().toString().split("\\R")) {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }

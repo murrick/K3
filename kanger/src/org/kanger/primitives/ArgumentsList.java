@@ -5,11 +5,12 @@ import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.ITerm;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Function;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
-import org.kanger.units.Term;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,21 +18,21 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class ArgList extends ArrayList<Argument> {
+public class ArgumentsList extends ArrayList<Argument> {
 
     private Mind mind = null;
 //    private List<TVariable> tVariables = null;
 //    private List<Long> tVariablesIds = new ArrayList<>();
 
-    public ArgList() {
+    public ArgumentsList() {
         super();
     }
 
-    public ArgList(int size) {
+    public ArgumentsList(int size) {
         super(size);
     }
 
-    public ArgList(ArgList lis) {
+    public ArgumentsList(ArgumentsList lis) {
         super(lis);
     }
 
@@ -44,7 +45,7 @@ public class ArgList extends ArrayList<Argument> {
         return packet.createMarked();
     }
 
-    public ArgList apply(ByteBuffer packet) throws OutOfBufferException {
+    public ArgumentsList apply(ByteBuffer packet) throws OutOfBufferException {
         int count = packet.getInt();
         while (count-- > 0) {
             try {
@@ -99,11 +100,11 @@ public class ArgList extends ArrayList<Argument> {
 
     public boolean equals(Object o) {
         if (o != null) {
-            ArgList arg = null;
-            if (o instanceof ArgList) {
-                arg = ((ArgList) o);
+            ArgumentsList arg = null;
+            if (o instanceof ArgumentsList) {
+                arg = ((ArgumentsList) o);
             } else if (o instanceof List) {
-                arg = (ArgList) o;
+                arg = (ArgumentsList) o;
             }
             if (arg != null && arg.size() == size()) {
                 int i = 0;
@@ -134,11 +135,11 @@ public class ArgList extends ArrayList<Argument> {
 
     public boolean equalsBase(Mind mind, Object o) {
         if (o != null) {
-            ArgList arg = null;
-            if (o instanceof ArgList) {
-                arg = ((ArgList) o);
+            ArgumentsList arg = null;
+            if (o instanceof ArgumentsList) {
+                arg = ((ArgumentsList) o);
             } else if (o instanceof List) {
-                arg = (ArgList) o;
+                arg = (ArgumentsList) o;
             }
             if (arg != null && arg.size() == size()) {
                 int i = 0;
@@ -161,8 +162,8 @@ public class ArgList extends ArrayList<Argument> {
         return false;
     }
 
-    public ArgList convert(Mind mind) {
-        ArgList list = new ArgList();
+    public ArgumentsList convert(Mind mind) {
+        ArgumentsList list = new ArgumentsList();
         for (int i = 0; i < size(); ++i) {
             try {
                 Argument t = get(i);
@@ -181,11 +182,11 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    public ArgList convertBase(Mind mind) {
-        ArgList list = new ArgList();
+    public ArgumentsList convertBase(IMind mind) {
+        ArgumentsList list = new ArgumentsList();
         for (int i = 0; i < size(); ++i) {
             try {
-                Term t = get(i).getValue(mind);
+                ITerm t = get(i).getValue(mind);
 //                if(t.isXVariable()) {
 //                    t.toCVariable();
 //                }
@@ -197,7 +198,7 @@ public class ArgList extends ArrayList<Argument> {
             } catch (Exception x) {
             }
         }
-        list.mind = mind;
+        list.mind = (Mind) mind;
         return list;
     }
 
@@ -255,19 +256,19 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    public List<Term> getCVariables(Mind mind) throws Exception {
-        List<Term> list = new ArrayList<>();
+    public List<ITerm> getCVariables(Mind mind) throws Exception {
+        List<ITerm> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
             if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && !a.getValue(mind).isDeleted(mind) && !list.contains(a.getValue(mind))) {
-                Term t = a.getValue(mind);
+                ITerm t = a.getValue(mind);
                 //TODO: Костыль
 //                t.setMind(mind);
                 list.add(t);
             } else if (a.isFSet()) {
-                List<Term> temp = a.getF(mind).getArguments().getCVariables(mind);
-                for (Term t : temp) {
+                List<ITerm> temp = a.getF(mind).getArguments().getCVariables(mind);
+                for (ITerm t : temp) {
                     if (!list.contains(t)) {
                         //TODO: Костыль
 //                        t.setMind(mind);
@@ -306,16 +307,16 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    public List<Term> getTerms(Mind mind) throws Exception {
-        List<Term> list = new ArrayList<>();
+    public List<ITerm> getTerms(Mind mind) throws Exception {
+        List<ITerm> list = new ArrayList<>();
         for (Argument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
             if (a.getType() == ArgumentType.TERM) {
                 list.add(a.getValue(mind));
             } else if (a.isFSet()) {
-                List<Term> temp = a.getF(mind).getArguments().getTerms(mind);
-                for (Term t : temp) {
+                List<ITerm> temp = a.getF(mind).getArguments().getTerms(mind);
+                for (ITerm t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
                     }
@@ -353,8 +354,8 @@ public class ArgList extends ArrayList<Argument> {
 //        }
 //    }
 
-    public List<Term> getStamp(Mind mind) throws Exception {
-        List<Term> list = new ArrayList<>();
+    public List<ITerm> getStamp(Mind mind) throws Exception {
+        List<ITerm> list = new ArrayList<>();
         for (TVariable t : getTVariables(mind)) {
             if (t.isEmpty()) {
                 throw new ParametersIncompleteException(t.toString());
@@ -364,9 +365,9 @@ public class ArgList extends ArrayList<Argument> {
         return list;
     }
 
-    public boolean equalsStamp(Mind mind, List<Term> list) throws Exception {
+    public boolean equalsStamp(Mind mind, List<ITerm> list) throws Exception {
         try {
-            List<Term> curr = getStamp(mind);
+            List<ITerm> curr = getStamp(mind);
             if (curr.size() == list.size()) {
                 for (int i = 0; i < curr.size(); ++i) {
                     if (curr.get(i).isEmpty() || curr.get(i).getId() != list.get(i).getId()) {
@@ -382,14 +383,14 @@ public class ArgList extends ArrayList<Argument> {
         }
     }
 
-    public void applyArguments(Mind mind, ArgList arguments) throws Exception {
+    public void applyArguments(Mind mind, ArgumentsList arguments) throws Exception {
         for (int i = 0; i < this.size(); ++i) {
             this.get(i).setValue(mind, arguments.get(i).getValue(mind));
         }
 //        this.setMind(mind);
     }
 
-    public void applyStamp(Mind mind, List<Term> list) throws Exception {
+    public void applyStamp(Mind mind, List<ITerm> list) throws Exception {
         List<TVariable> curr = getTVariables(mind);
         for (int i = 0; i < curr.size(); ++i) {
             if (curr.get(i).find(list.get(i)) != null) {
@@ -398,7 +399,7 @@ public class ArgList extends ArrayList<Argument> {
         }
     }
 
-    public boolean contains(Mind mind, Term t) throws Exception {
+    public boolean contains(Mind mind, ITerm t) throws Exception {
         for (Argument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
                 return true;
@@ -407,7 +408,7 @@ public class ArgList extends ArrayList<Argument> {
         return false;
     }
 
-    public Argument remove(Mind mind, Term t) throws Exception {
+    public Argument remove(Mind mind, ITerm t) throws Exception {
         for (Argument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
                 this.remove(a);
@@ -431,7 +432,7 @@ public class ArgList extends ArrayList<Argument> {
 //        return super.add(argument);
 //    }
 
-    public boolean isOverlaps(ArgList arg) throws Exception {
+    public boolean isOverlaps(ArgumentsList arg) throws Exception {
 
 //        for (Argument a : this) {
 //            boolean found = false;

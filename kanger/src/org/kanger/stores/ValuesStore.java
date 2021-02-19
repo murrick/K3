@@ -1,20 +1,20 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.TValue;
-import org.kanger.units.Term;
 
 import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
-public class ValuesStore implements Iterable<Map<String, Term>> {
+public class ValuesStore implements Iterable<Map<String, ITerm>> {
 
-    private Set<ComparableArgList> root = new LinkedHashSet<>();
+    private Set<ComparableArgumentsList> root = new LinkedHashSet<>();
 
     private final Mind mind;
     private String order = "";
@@ -31,13 +31,13 @@ public class ValuesStore implements Iterable<Map<String, Term>> {
         }
     }
 
-    public Set<ComparableArgList> getRoot() {
+    public Set<ComparableArgumentsList> getRoot() {
         if (order.isEmpty() && root instanceof SortedSet) {
-            Set<ComparableArgList> tmp = new LinkedHashSet<>();
+            Set<ComparableArgumentsList> tmp = new LinkedHashSet<>();
             tmp.addAll(root);
             root = tmp;
         } else if (!order.isEmpty() && !(root instanceof SortedSet)) {
-            Set<ComparableArgList> tmp = new TreeSet<>();
+            Set<ComparableArgumentsList> tmp = new TreeSet<>();
             tmp.addAll(root);
             root = tmp;
         }
@@ -46,7 +46,7 @@ public class ValuesStore implements Iterable<Map<String, Term>> {
 
     public void add(Collection<TValue> raw) {
         if (!raw.isEmpty()) {
-            ComparableArgList row = new ComparableArgList();
+            ComparableArgumentsList row = new ComparableArgumentsList();
             for (IUnit one : raw) {
                 row.add(new Argument(one));
             }
@@ -56,9 +56,9 @@ public class ValuesStore implements Iterable<Map<String, Term>> {
         }
     }
 
-    public List<Term> getValues(String name) throws Exception {
-        List<Term> list = new ArrayList<>();
-        for (ArgList row : getRoot()) {
+    public List<ITerm> getValues(String name) throws Exception {
+        List<ITerm> list = new ArrayList<>();
+        for (ArgumentsList row : getRoot()) {
             for (Argument t : row) {
                 if (name == null || name.equals(t.getV(mind).getTVar().getName().getValue())) {
                     list.add(t.getV(mind).getValue());
@@ -96,13 +96,18 @@ public class ValuesStore implements Iterable<Map<String, Term>> {
         return root.isEmpty();
     }
 
-    public class ComparableArgList extends ArgList implements Comparable<ArgList> {
+    @Override
+    public Iterator<Map<String, ITerm>> iterator() {
+        return new ValuesIterator();
+    }
+
+    public class ComparableArgumentsList extends ArgumentsList implements Comparable<ArgumentsList> {
 
         @Override
-        public int compareTo(ArgList arguments) {
+        public int compareTo(ArgumentsList arguments) {
             try {
-                Term t1 = null;
-                Term t2 = null;
+                ITerm t1 = null;
+                ITerm t2 = null;
                 for (Argument a : this) {
                     if (order.equals(a.getV(mind).getTVar().getName())) {
                         t1 = a.getV(mind).getValue();
@@ -133,14 +138,9 @@ public class ValuesStore implements Iterable<Map<String, Term>> {
         }
     }
 
-    @Override
-    public Iterator<Map<String, Term>> iterator() {
-        return new ValuesIterator();
-    }
+    public class ValuesIterator implements Iterator<Map<String, ITerm>> {
 
-    public class ValuesIterator implements Iterator<Map<String, Term>> {
-
-        Iterator<ComparableArgList> iterator = getRoot().iterator();
+        Iterator<ComparableArgumentsList> iterator = getRoot().iterator();
 
         @Override
         public boolean hasNext() {
@@ -148,8 +148,8 @@ public class ValuesStore implements Iterable<Map<String, Term>> {
         }
 
         @Override
-        public Map<String, Term> next() {
-            SortedMap<String, Term> row = new TreeMap<>();
+        public Map<String, ITerm> next() {
+            SortedMap<String, ITerm> row = new TreeMap<>();
             for (Argument v : iterator.next()) {
                 try {
 //                    Object val = (v.getV(mind).getValue().getType() == DataType.INTERVAL

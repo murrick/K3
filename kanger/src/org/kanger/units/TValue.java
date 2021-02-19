@@ -4,6 +4,8 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
@@ -18,7 +20,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     private long id = -1;                   // Идентификатор значения переменной
     private long mindId = -1;                                   // id транзакции
-    private Term value = null;
+    private ITerm value = null;
     private TVariable tVar = null;
 //    private long tag = 0;
 //    private Set<Cause> causes = new HashSet<>();
@@ -37,7 +39,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     public TValue() {
     }
 
-    public TValue(TVariable var, Term val) {
+    public TValue(TVariable var, ITerm val) {
         tVar = var;
         value = val;
         tVarId = tVar.getId();
@@ -49,8 +51,8 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.mind = mind;
     }
 
-    public TValue(TVariable tv, Term t, Mind mind) {
-        this.mind = mind;
+    public TValue(TVariable tv, ITerm t, IMind mind) {
+        this.mind = (Mind) mind;
         this.tVar = tv;
         this.value = t;
         tVarId = tVar.getId();
@@ -99,9 +101,9 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return this;
     }
 
-    public Term getValue() throws Exception {
+    public ITerm getValue() throws Exception {
         if (value == null && valueId != -1) {
-            value = mind.getTerms().load(valueId);
+            value = mind.getTerms().get(valueId);
         }
         return value;
     }
@@ -129,7 +131,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     public TVariable getTVar() throws Exception {
         if (tVar == null && tVarId != -1) {
-            tVar = mind.getTVars().load(tVarId);
+            tVar = mind.getTVars().get(tVarId);
         }
         return tVar;
     }
@@ -245,8 +247,8 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override

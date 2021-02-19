@@ -9,18 +9,21 @@ package org.kanger.primitives;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IPredicate;
+import org.kanger.interfaces.IRule;
 import org.kanger.units.Predicate;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class Hypothesis implements Comparable<Hypothesis> {
+public class Hypothesis implements org.kanger.interfaces.IHypothesis {
 
-    private Predicate predicate = null;
+    private IPredicate predicate = null;
     private boolean antc = true;
     //    private boolean deleted = false;
     private boolean query = false;
-    private ArgList arguments = new ArgList();
+    private ArgumentsList arguments = new ArgumentsList();
 //    private List<Term> solve = new ArrayList<>();
 //    private Set<Right> rights = new HashSet<>();
 
@@ -30,6 +33,12 @@ public class Hypothesis implements Comparable<Hypothesis> {
 //    private transient Mind mind = null;
 
     public Hypothesis() {
+    }
+
+    public Hypothesis(IRule r, IMind mind) throws Exception {
+        antc = !r.isAntc();
+        predicate = r.getPredicate(mind);
+        arguments.addAll(r.getArguments().convertBase(mind));
     }
 
     public Hypothesis(Solve s, Mind mind) throws Exception {
@@ -94,7 +103,8 @@ public class Hypothesis implements Comparable<Hypothesis> {
 //    }
 //
 
-    public Predicate getPredicate() throws Exception {
+    @Override
+    public IPredicate getPredicate() throws Exception {
 //        if (predicate == null) {
 //            predicate = user.getMind().getPredicates().load(predicateId);
 //        }
@@ -116,7 +126,8 @@ public class Hypothesis implements Comparable<Hypothesis> {
 //        return solve;
 //    }
 
-    public ArgList getArguments() {
+    @Override
+    public ArgumentsList getArguments() {
         return arguments;
     }
 
@@ -131,6 +142,7 @@ public class Hypothesis implements Comparable<Hypothesis> {
 //        return rights;
 //    }
 
+    @Override
     public boolean isAntc() {
         return antc;
     }
@@ -139,6 +151,7 @@ public class Hypothesis implements Comparable<Hypothesis> {
         this.antc = antc;
     }
 
+    @Override
     public boolean isQuery() {
         return query;
     }

@@ -3,10 +3,11 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
+import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Cause;
-import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
@@ -20,20 +21,20 @@ import java.util.Set;
  * <p>
  * Список правил
  */
-public class Rule implements IUnit<Rule> {
+public class Rule implements IUnit<IRule>, IRule {
 
     private static final long serialVersionUID = 196402070007L;
 
     private long id = -1;                                   // ID Правила
     private long mindId = -1;                                   // id транзакции
-    private Term orig = null;                               // Оригинальная строка
+    private ITerm origin = null;                               // Оригинальная строка
     private boolean query = false;                          // Вновь введенное правило
     private boolean generated = false;                      // Правило добавлено в процессе выводс
     private boolean stored = false;                         // Правило добавлено в процессе выводс
     private boolean substitutable = false;                  // Правило содержит t-переменные
     private boolean abstractive = false;                    // Правило содержит c-переменные
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
-    private Set<Cause> causes = new HashSet<>();
+    private Set<ICause> causes = new HashSet<>();
 
     private List<TValue> solves = new ArrayList();
     private Set<Long> predicates = new HashSet<>();
@@ -77,8 +78,8 @@ public class Rule implements IUnit<Rule> {
             }
         }
         packet.putInt(causes.size());
-        for (Cause c : causes) {
-            packet.append(c.pack());
+        for (ICause c : causes) {
+            packet.append(((Cause) c).pack());
         }
         return packet.createMarked();
     }
@@ -126,7 +127,7 @@ public class Rule implements IUnit<Rule> {
             for (List<Long> ids : treeIds) {
                 List<Domain> branch = new ArrayList<>();
                 for (long id : ids) {
-                    Domain domain = mind.getDomains().load(id);
+                    Domain domain = mind.getDomains().get(id);
                     branch.add(domain);
                     predicates.add(domain.getPredicateId());
                 }
@@ -158,7 +159,8 @@ public class Rule implements IUnit<Rule> {
         return getTree().get(0).get(0);
     }
 
-    public Set<Cause> getCauses() {
+    @Override
+    public Set<ICause> getCauses() {
         return causes;
     }
 
@@ -166,6 +168,7 @@ public class Rule implements IUnit<Rule> {
         return solves;
     }
 
+    @Override
     public boolean isGenerated() {
         return generated;
     }
@@ -174,6 +177,7 @@ public class Rule implements IUnit<Rule> {
         this.generated = b;
     }
 
+    @Override
     public boolean isStored() {
         return stored;
     }
@@ -198,10 +202,10 @@ public class Rule implements IUnit<Rule> {
         Set<Rule> list = new HashSet<>();
         for (List<Domain> t : getTree()) {
             for (Domain d : t) {
-                for (Rule r : mind.getRules()) {
+                for (IRule r : mind.getRules()) {
                     if (r != null) {
-                        if (!r.isDeleted(mind) && r.getPredicates().contains(d.getPredicateId())) {
-                            list.add(r);
+                        if (!r.isDeleted(mind) && ((Rule) r).getPredicates().contains(d.getPredicateId())) {
+                            list.add((Rule) r);
                         }
                     } else {
                         break;
@@ -227,27 +231,29 @@ public class Rule implements IUnit<Rule> {
         this.id = id;
     }
 
-    public Term getOrig() throws Exception {
-        if (orig == null && origId != -1) {
-            orig = mind.getTerms().load(origId);
+    @Override
+    public ITerm getOrigin() throws Exception {
+        if (origin == null && origId != -1) {
+            origin = mind.getTerms().get(origId);
 
             //TODO: Кастыль
-            if (orig == null && isStored()) {
+            if (origin == null && isStored()) {
                 int save = mind.getDebugLevel();
                 mind.setDebugLevel(0);
-                orig = mind.getTerms().add(getDomain().toString());
+                origin = mind.getTerms().add(getDomain().toString());
                 mind.setDebugLevel(save);
             }
 
         }
-        return orig;
+        return origin;
     }
 
-    public void setOrig(Term orig) {
-        this.orig = orig;
-        this.origId = orig.getId();
+    public void setOrigin(ITerm origin) {
+        this.origin = origin;
+        this.origId = origin.getId();
     }
 
+    @Override
     public boolean isQuery() {
         return query;
     }
@@ -270,7 +276,7 @@ public class Rule implements IUnit<Rule> {
     @Override
     public String toString() {
         try {
-            return getOrig().toString()
+            return getOrigin().toString()
                     + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
                     ? " " + mindId + " " +
                     (isGenerated() ? "G" : "") +
@@ -319,13 +325,13 @@ public class Rule implements IUnit<Rule> {
     }
 
     @Override
-    public boolean equalsTo(Rule to) throws Exception {
+    public boolean equalsTo(IRule to) throws Exception {
 //        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
 //            return equalsTo(to.getDomain());
 //        } else
-        if (getTree().size() == to.getTree().size()) {
+        if (getTree().size() == ((Rule) to).getTree().size()) {
             List<List<Domain>> tmp = new ArrayList<>();
-            tmp.addAll(to.getTree());
+            tmp.addAll(((Rule) to).getTree());
             for (List<Domain> a : tree) {
                 for (List<Domain> b : tmp) {
                     if (branchEquals(a, b)) {
@@ -360,7 +366,7 @@ public class Rule implements IUnit<Rule> {
         return this;
     }
 
-    public boolean equalsTo(Hypothesis x) throws Exception {
+    public boolean equalsTo(IHypothesis x) throws Exception {
         if (isStored()
                 && x.getPredicate().getId() == getDomain().getPredicateId()
                 && x.getPredicate().getRange() == getDomain().getRange()
@@ -371,10 +377,10 @@ public class Rule implements IUnit<Rule> {
         }
     }
 
-    public boolean equalsTo(Solve x) throws Exception {
+    public boolean equalsTo(ISolve x) throws Exception {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
-                && x.getPredicateId() == domain.getPredicateId()
+                && ((Solve) x).getPredicateId() == domain.getPredicateId()
                 && x.getRange() == domain.getRange()) {
             int i = 0;
             for (; i < domain.getRange(); ++i) {
@@ -423,13 +429,14 @@ public class Rule implements IUnit<Rule> {
         this.varIndex = varIndex;
     }
 
-    public boolean isRestored(Mind mind) {
-        return mind.getRestored().containsKey(UnitType.RULE) && mind.getRestored().get(UnitType.RULE).contains(id);
+    @Override
+    public boolean isRestored(IMind mind) {
+        return ((Mind) mind).getRestored().containsKey(UnitType.RULE) && ((Mind) mind).getRestored().get(UnitType.RULE).contains(id);
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override
@@ -446,6 +453,7 @@ public class Rule implements IUnit<Rule> {
 
     }
 
+    @Override
     public boolean isSubstitutable() {
         return substitutable;
     }
@@ -454,6 +462,7 @@ public class Rule implements IUnit<Rule> {
         this.substitutable = substitutable;
     }
 
+    @Override
     public boolean isAbstractive() {
         return abstractive;
     }
@@ -517,6 +526,42 @@ public class Rule implements IUnit<Rule> {
     @Override
     public long getMindId() {
         return mindId;
+    }
+
+    @Override
+    public boolean isAntc() throws Exception {
+        if (isStored()) {
+            return getDomain().isAntc();
+        } else {
+            throw new RuntimeErrorException("Using statement reference for non-statement rule");
+        }
+    }
+
+    @Override
+    public IPredicate getPredicate(IMind mind) throws Exception {
+        if (isStored()) {
+            return getDomain().getPredicate();
+        } else {
+            throw new RuntimeErrorException("Using statement reference for non-statement rule");
+        }
+    }
+
+    @Override
+    public long getPredicateId() throws Exception {
+        if (isStored()) {
+            return getDomain().getPredicateId();
+        } else {
+            throw new RuntimeErrorException("Using statement reference for non-statement rule");
+        }
+    }
+
+    @Override
+    public ArgumentsList getArguments() throws Exception {
+        if (isStored()) {
+            return getDomain().getArguments();
+        } else {
+            throw new RuntimeErrorException("Using statement reference for non-statement rule");
+        }
     }
 
     @Override
@@ -588,7 +633,7 @@ public class Rule implements IUnit<Rule> {
 
     @Override
     public boolean isLoaded() {
-        return orig != null && origId == orig.getId();
+        return origin != null && origId == origin.getId();
     }
 
     public List<TVariable> getTVariables() {
@@ -604,7 +649,7 @@ public class Rule implements IUnit<Rule> {
     public void primitivize() {
         for (List<Domain> a : tree) {
             for (Domain d : a) {
-                ArgList list = d.getArguments().convertBase(mind);
+                ArgumentsList list = d.getArguments().convertBase(mind);
                 d.getArguments().clear();
                 d.getArguments().addAll(list);
             }

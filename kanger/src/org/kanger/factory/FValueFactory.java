@@ -2,6 +2,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class FValueFactory implements Iterable<FValue> {
+public class FValueFactory implements IFactory<FValue> {
 
     public static final String SCHEMA = "fvalues";
 
@@ -37,7 +38,7 @@ public class FValueFactory implements Iterable<FValue> {
     }
 
     public void transaction(FValueFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -129,7 +130,7 @@ public class FValueFactory implements Iterable<FValue> {
 
     public FValue find(Function f) throws Exception {
         for (long id : cache.find(f.getHashBase())) {
-            FValue one = load(id);
+            FValue one = get(id);
             if (one.equalsTo(f)) {
                 return one;
             }
@@ -137,8 +138,8 @@ public class FValueFactory implements Iterable<FValue> {
         return null;
     }
 
-    public FValue load(long id) throws Exception {
-        FValue t = get(id);
+    public FValue get(long id) throws Exception {
+        FValue t = (FValue) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -151,15 +152,15 @@ public class FValueFactory implements Iterable<FValue> {
         return t;
     }
 
-    private FValue get(long id) throws Exception {
-        FValue t = (FValue) cache.get(id);
-        return t;
-    }
+//    private FValue get(long id) throws Exception {
+//        FValue t = (FValue) cache.get(id);
+//        return t;
+//    }
 
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getFValues());
+            transaction(((Mind) mind.getNext()).getFValues());
         } else {
             cache.clear();
             transaction(null);

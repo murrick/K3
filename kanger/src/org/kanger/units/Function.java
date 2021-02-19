@@ -5,9 +5,12 @@ import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
@@ -24,9 +27,9 @@ public class Function implements IUnit<Function> {
 
     private long id = -1;
     private long mindId = -1;                                   // id транзакции
-    private Term name = null;
+    private ITerm name = null;
     private int range = 0;
-    private ArgList arguments = new ArgList();     // Параметры
+    private ArgumentsList arguments = new ArgumentsList();     // Параметры
 
     private Mind mind = null;
 
@@ -63,7 +66,7 @@ public class Function implements IUnit<Function> {
         range = packet.getInt();
         try {
             packet.mark();
-            arguments = new ArgList().apply(packet);
+            arguments = new ArgumentsList().apply(packet);
 //            arguments.setUser(user);
         } finally {
             packet.release();
@@ -89,11 +92,11 @@ public class Function implements IUnit<Function> {
         this.range = range;
     }
 
-    public ArgList getArguments() {
+    public ArgumentsList getArguments() {
         return arguments;
     }
 
-    public Term getValue() throws Exception {
+    public ITerm getValue() throws Exception {
         FValue c = getCurrent();
         if (c != null) {
             return getCurrent().getValue();
@@ -109,7 +112,7 @@ public class Function implements IUnit<Function> {
         arguments.get(range).clear();
     }
 
-    public Argument setResult(Term r) throws Exception {
+    public Argument setResult(ITerm r) throws Exception {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
@@ -133,7 +136,7 @@ public class Function implements IUnit<Function> {
         }
     }
 
-    public boolean setParameter(int i, Term r) throws Exception {
+    public boolean setParameter(int i, ITerm r) throws Exception {
 //        if(i == range) {
 //            TSubst s = setResult(r);
 //            s.setSolves(owner, owner);
@@ -165,14 +168,14 @@ public class Function implements IUnit<Function> {
 //    }
 
 
-    public Term getName() throws Exception {
+    public ITerm getName() throws Exception {
         if (name == null) {
-            name = mind.getTerms().load(nameId);
+            name = mind.getTerms().get(nameId);
         }
         return name;
     }
 
-    public void setName(Term name) {
+    public void setName(ITerm name) {
         this.name = name;
         this.nameId = name.getId();
     }
@@ -387,7 +390,7 @@ public class Function implements IUnit<Function> {
 //        return ("" + id).hashCode();
     }
 
-    public int getHashStruct(Rule r) throws Exception {
+    public int getHashStruct(IRule r) throws Exception {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
@@ -395,7 +398,7 @@ public class Function implements IUnit<Function> {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case TVARIABLE:
-                    hash = 47 * hash + (i + 1) * (arguments.get(i).getT(mind).getIndex() - r.getVarIndex());
+                    hash = 47 * hash + (i + 1) * (arguments.get(i).getT(mind).getIndex() - ((Rule) r).getVarIndex());
                     break;
                 case TERM:
                     long id = arguments.get(i).getValue(mind).getId();
@@ -409,14 +412,14 @@ public class Function implements IUnit<Function> {
         return hash;
     }
 
-    public boolean equalsToStruct(Function f, Rule left, Rule rule) throws Exception {
+    public boolean equalsToStruct(Function f, IRule left, IRule rule) throws Exception {
         if (nameId == f.nameId && range == f.getRange()) {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
-                            if ((arguments.get(i).getT(mind).getIndex() - left.getVarIndex())
-                                    != (f.getArguments().get(i).getT(mind).getIndex() - rule.getVarIndex())) {
+                            if ((arguments.get(i).getT(mind).getIndex() - ((Rule) left).getVarIndex())
+                                    != (f.getArguments().get(i).getT(mind).getIndex() - ((Rule) rule).getVarIndex())) {
                                 return false;
                             }
                             break;
@@ -442,8 +445,8 @@ public class Function implements IUnit<Function> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override

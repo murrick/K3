@@ -1,5 +1,6 @@
 package org.kanger.storage;
 
+import org.kanger.User;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
@@ -30,7 +31,7 @@ public class DB implements IData {
     @Override
     public void init(IUser user) {
         this.user = user;
-        user.setData(this);
+        ((User) user).setData(this);
     }
 
     @Override

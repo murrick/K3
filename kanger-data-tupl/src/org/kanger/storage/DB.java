@@ -3,6 +3,7 @@ package org.kanger.storage;
 import org.cojen.tupl.Database;
 import org.cojen.tupl.DatabaseConfig;
 import org.cojen.tupl.DurabilityMode;
+import org.kanger.User;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
@@ -29,7 +30,7 @@ public class DB implements IData {
     @Override
     public void init(IUser user) {
         this.user = user;
-        user.setData(this);
+        ((User) user).setData(this);
         config = new DatabaseConfig()
                 .minCacheSize(100_000_000)
                 .durabilityMode(DurabilityMode.NO_FLUSH);
@@ -89,7 +90,7 @@ public class DB implements IData {
     }
 
     @Override
-    public IBase getBase(String context) throws IOException, RuntimeErrorException {
+    public IBase getBase(String context) throws Exception {
         if (db != null) {
             if (!bases.containsKey(context)) {
                 IBase base = new Base(db, context, user);

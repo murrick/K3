@@ -2,12 +2,16 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ISolve;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.Escalera;
@@ -18,7 +22,7 @@ import java.util.*;
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class RuleFactory implements Iterable<Rule> {
+public class RuleFactory implements IFactory<IRule> {
 
     public static final String SCHEMA = "rules";
 //    public static final String SCHEMA_STORED = "stored";
@@ -42,7 +46,7 @@ public class RuleFactory implements Iterable<Rule> {
     }
 
     public void transaction(RuleFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -115,7 +119,7 @@ public class RuleFactory implements Iterable<Rule> {
                 if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
 
 //                    System.err.println(((IUnit) s.getData()).getMindId() + ": " + s.getData());
-                    Rule x = find((Rule) s.getData());
+                    IRule x = find((IRule) s.getData());
                     if (x != null && x.getId() != s.getId()) {
                         ((IUnit) s.getData()).setDeleted(true, base.mind);
 //                        if(base.mind.getComments().get(s.getId()) != null) {
@@ -196,19 +200,19 @@ public class RuleFactory implements Iterable<Rule> {
         }
     }
 
-    public synchronized Rule register(Rule r) {
-        r.setId(((User) mind.getUser()).nextId(SCHEMA));
-        r.setMindId(mind.getId());
-        r.setVarIndex(mind.getTerms().getVarIndex());
+    public synchronized IRule register(IRule r) {
+        ((Rule) r).setId(((User) mind.getUser()).nextId(SCHEMA));
+        ((Rule) r).setMindId(mind.getId());
+        ((Rule) r).setVarIndex(mind.getTerms().getVarIndex());
         return r;
     }
 
-    public synchronized Rule add(Rule r) throws Exception {
-        Rule x = find(r);
+    public synchronized IRule add(IRule r) throws Exception {
+        IRule x = find(r);
         if (x != null && x.getId() != r.getId()) {
-            r.setDeleted(true, mind);
+            ((Rule) r).setDeleted(true, mind);
             if (x.isDeleted(mind)) {
-                x.setDeleted(false, mind);
+                ((Rule) x).setDeleted(false, mind);
                 action = true;
             }
             return x;
@@ -216,7 +220,7 @@ public class RuleFactory implements Iterable<Rule> {
 //            if (r.getId() == -1) {
 //                r.setId(lastId++);
 //            }
-            cache.add(r);
+            cache.add((IUnit) r);
             if (top == null) {
                 top = cache.getRoot();
             }
@@ -226,9 +230,9 @@ public class RuleFactory implements Iterable<Rule> {
 //                    topStored = cache.getRoot();
 //                }
 //            }
-            for (List<Domain> list : r.getTree()) {
+            for (List<Domain> list : ((Rule) r).getTree()) {
                 for (Domain d : list) {
-                    r.getPredicates().add(d.getPredicateId());
+                    ((Rule) r).getPredicates().add(d.getPredicateId());
                     d.setRule(r);
 //                    d.setMind(mind);
                     for (TVariable t : d.getArguments().getTVariables(mind)) {
@@ -258,12 +262,12 @@ public class RuleFactory implements Iterable<Rule> {
                 if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {
                     mind.getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
-                    Rule rx = tree.get(0).setStored(mind);
+                    IRule rx = tree.get(0).setStored(mind);
 //                    rx.setGenerated(false);
 //                    rx.setGenerated(false);
                 } else { //if(tree.get(0).getArguments().getCVariables(mind).isEmpty()){
                     //TODO: Нужен список линков для обхода. Нафиг создавать целое правило
-                    Rule rx = tree.get(0).createStored(mind);
+                    IRule rx = tree.get(0).createStored(mind);
 //                    rx.setGenerated(false);
 //                    rx.setGenerated(false);
 //                    tree.remove(0);
@@ -288,8 +292,8 @@ public class RuleFactory implements Iterable<Rule> {
         }
     }
 
-    public Rule load(long id) throws Exception {
-        Rule t = get(id);
+    public IRule get(long id) throws Exception {
+        Rule t = (Rule) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -304,10 +308,10 @@ public class RuleFactory implements Iterable<Rule> {
         return t;
     }
 
-    private Rule get(long id) throws Exception {
-        Rule t = (Rule) cache.get(id);
-        return t;
-    }
+//    private Rule get(long id) throws Exception {
+//        Rule t = (Rule) cache.get(id);
+//        return t;
+//    }
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -364,16 +368,16 @@ public class RuleFactory implements Iterable<Rule> {
 //        return stored.size();
 //    }
 
-    public synchronized Rule add(Domain domain) throws Exception {
-        Rule p = find(domain);
+    public synchronized IRule add(Domain domain) throws Exception {
+        IRule p = find(domain);
         if (p != null) {
             if (p.isDeleted(mind)) {
-                p.setDeleted(false, mind);
+                ((Rule) p).setDeleted(false, mind);
                 action = true;
             }
             return p;
         } else {
-            ArgList list = null;
+            ArgumentsList list = null;
 
             if (domain.isQuery(mind)) {
                 list = domain.getArguments().convert(mind);
@@ -394,9 +398,9 @@ public class RuleFactory implements Iterable<Rule> {
             register(r);
 
             for (Argument a : list) {
-                if (!a.isEmpty(mind) && a.getValue(mind).isXVariable()) {
-                    Term t = mind.getTerms().createCVar(r, a.getValue(mind).getName());
-                    a.setValue(mind, a.getValue(mind).getParent());
+                if (!a.isEmpty(mind) && ((Term) a.getValue(mind)).isXVariable()) {
+                    mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName());
+                    a.setValue(mind, ((Term) a.getValue(mind)).getParent());
                 }
             }
 
@@ -412,47 +416,47 @@ public class RuleFactory implements Iterable<Rule> {
 
             int save = mind.getDebugLevel();
             mind.setDebugLevel(0);
-            Term origin = mind.getTerms().add(d.toString());
+            ITerm origin = mind.getTerms().add(d.toString());
             mind.setDebugLevel(save);
-            r.setOrig(origin);
+            r.setOrigin(origin);
 
             return add(r);
         }
     }
 
-    public Rule store(Domain d) throws Exception {
-        d.getRule().setStored(mind);
-        Rule r = d.getRule();
+    public IRule store(Domain d) throws Exception {
+        ((Rule) d.getRule()).setStored(mind);
+        IRule r = d.getRule();
         if (r.isDeleted(mind)) {
-            r.setDeleted(false, mind);
+            ((Rule) r).setDeleted(false, mind);
             action = true;
         }
         return r;
     }
 
-    public Rule find(Solve domain) throws Exception {
-        for (long id : cache.find(domain.getHash(mind))) {
-            Rule one = load(id);
-            if (one.equalsTo(domain)) {
-                return (Rule) one;
-            }
-        }
-        return null;
-    }
-
-    public Rule find(Rule rule) throws Exception {
-        for (long id : cache.find(rule.getHash())) {
-            Rule one = load(id);
-            if (one.equalsTo(rule)) {
+    public IRule find(ISolve domain) throws Exception {
+        for (long id : cache.find(((Solve) domain).getHash(mind))) {
+            IRule one = get(id);
+            if (((Rule) one).equalsTo(((Solve) domain))) {
                 return one;
             }
         }
         return null;
     }
 
-    public Rule find(Hypothesis h) throws Exception {
+    public IRule find(IRule rule) throws Exception {
+        for (long id : cache.find(((Rule) rule).getHash())) {
+            IRule one = get(id);
+            if (((Rule) one).equalsTo(rule)) {
+                return one;
+            }
+        }
+        return null;
+    }
+
+    public IRule find(Hypothesis h) throws Exception {
         Solve p = new Solve(h.getPredicate(), h.isAntc(), h.getArguments());
-        Rule r = find(p);
+        IRule r = find(p);
 //        if(r == null) {
 //            p.setAntc(!p.isAntc());
 //            r = find(p);
@@ -555,7 +559,7 @@ public class RuleFactory implements Iterable<Rule> {
         List<Rule> list = new ArrayList<>();
         for (Object o : cache) {
             //TODO: ----
-            o = load(((IUnit) o).getId());
+            o = get(((IUnit) o).getId());
             if (((IUnit) o).getMind().getId() == mind.getId()) {
                 list.add((Rule) o);
             }

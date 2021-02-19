@@ -1,8 +1,8 @@
 package org.kanger;
 
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
-import org.kanger.interfaces.internal.IData;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
@@ -139,18 +139,16 @@ public class Kanger {
 
         IUser user = UserFactory.getUser(login, password);
 
-        IData db = null;
-        UDF udf = null;
+//        IData db = null;
+//        UDF udf = null;
         try {
-            udf = new UDF();
-            udf.init(user);
+            new UDF().init(user);
             System.out.println("UDF module loaded");
         } catch (NoClassDefFoundError ex) {
         }
         try {
-            db = new DB();
-            db.init(user);
-            System.out.println("DB module loaded: " + user.getData().getDescription());
+            new DB().init(user);
+            System.out.println("DB module loaded: " + new DB().getDescription());
         } catch (NoClassDefFoundError ex) {
         }
 
@@ -161,10 +159,10 @@ public class Kanger {
 
         Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
 
-        Mind mind = new Mind(user);
+        IMind mind = new Mind(user);
         //TODO: Волшебство
         mind.query("?a;");
-        mind = mind.clear();
+        mind = mind.clearStorage();
 
         Console.session(mind);
     }

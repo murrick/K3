@@ -4,10 +4,11 @@ import org.kanger.Mind;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IReactor;
-import org.kanger.primitives.ArgList;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.Domain;
-import org.kanger.units.SysOp;
+import org.kanger.units.Operation;
 import org.kanger.units.TValue;
 import org.kanger.units.Term;
 
@@ -22,17 +23,17 @@ public class Predicates {
 
 
     private final Mind mind;
-    private final Map<String, SysOp> sysOps = new HashMap<String, SysOp>() {
+    private final Map<String, Operation> sysOps = new HashMap<String, Operation>() {
 
         /// Системные предикаты
         {
 
-            put("_eq(2)", new SysOp(LibMode.PREDICATE, "_eq", 2, new IReactor() {
+            put("_eq(2)", new Operation(LibMode.PREDICATE, "_eq", 2, new IReactor() {
 
                 @Override
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
 
 //                    if (arg.get(0).isFSet() /*&& arg.get(0).getF().isCalculable() && !arg.get(0).getF().getResult().isEmpty(mind) && arg.get(0).getF().isEmpty(mind)*/) {
 //                        mind.getCalculator().calculate(arg.get(0).getF(), mind.isLogging());
@@ -65,8 +66,8 @@ public class Predicates {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue(mind).isCVariable() && arg.createCVar(1).getValue(mind).isCVariable()) || (!arg.createCVar(0).getValue(mind).isCVariable() && !arg.createCVar(1).getValue(mind).isCVariable())) {
 
-                            Term v0 = arg.get(0).getValue(mind);
-                            Term v1 = arg.get(1).getValue(mind);
+                            Term v0 = (Term) arg.get(0).getValue(mind);
+                            Term v1 = (Term) arg.get(1).getValue(mind);
 
 
                             if (arg.get(0).isTSet() && !arg.get(1).isEmpty(mind)) {
@@ -107,10 +108,10 @@ public class Predicates {
 
 
         {
-            put("_ne(2)", new SysOp(LibMode.PREDICATE, "_ne", 2, new IReactor() {
+            put("_ne(2)", new Operation(LibMode.PREDICATE, "_ne", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind)) {
                         int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
                         if (rc != 0) {
@@ -125,10 +126,10 @@ public class Predicates {
         }
 
         {
-            put("_gr(2)", new SysOp(LibMode.PREDICATE, "_gr", 2, new IReactor() {
+            put("_gr(2)", new Operation(LibMode.PREDICATE, "_gr", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
@@ -141,10 +142,10 @@ public class Predicates {
         }
 
         {
-            put("_ge(2)", new SysOp(LibMode.PREDICATE, "_ge", 2, new IReactor() {
+            put("_ge(2)", new Operation(LibMode.PREDICATE, "_ge", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
@@ -157,10 +158,10 @@ public class Predicates {
         }
 
         {
-            put("_lr(2)", new SysOp(LibMode.PREDICATE, "_lr", 2, new IReactor() {
+            put("_lr(2)", new Operation(LibMode.PREDICATE, "_lr", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
@@ -173,10 +174,10 @@ public class Predicates {
         }
 
         {
-            put("_le(2)", new SysOp(LibMode.PREDICATE, "_le", 2, new IReactor() {
+            put("_le(2)", new Operation(LibMode.PREDICATE, "_le", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
 //                        if (rc != -2) {
@@ -189,10 +190,10 @@ public class Predicates {
         }
 
         {
-            put("_in(2)", new SysOp(LibMode.PREDICATE, "_in", 2, new IReactor() {
+            put("_in(2)", new Operation(LibMode.PREDICATE, "_in", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
 //                    if (arg.get(1).isFSet()) {
 //                        mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
 //                    }
@@ -202,8 +203,8 @@ public class Predicates {
                                 || arg.get(1).getValue(mind).getType() == DataType.SET
                                 || arg.get(1).getValue(mind).getType() == DataType.STRING
                                 || arg.get(1).getValue(mind).getType() == DataType.BLOB) {
-                            Term top = null;
-                            for (Term cur : expand(arg.get(1).getValue(mind), null, true)) {
+                            ITerm top = null;
+                            for (ITerm cur : expand(arg.get(1).getValue(mind), null, true)) {
                                 if (top == null) top = cur;
                                 arg.get(0).addValue(mind, cur);
                                 i = 1;
@@ -227,10 +228,10 @@ public class Predicates {
         }
 
         {
-            put("_in(3)", new SysOp(LibMode.PREDICATE, "_in", 3, new IReactor() {
+            put("_in(3)", new Operation(LibMode.PREDICATE, "_in", 3, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int i = -1;
-                    ArgList arg = ((Domain) o).getArguments();
+                    ArgumentsList arg = ((Domain) o).getArguments();
 //                    if (arg.get(1).isFSet()) {
 //                        mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
 //                    }
@@ -242,8 +243,8 @@ public class Predicates {
 //                            if (arg.get(1).isFSet()) {
 //                                mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
 //                            }
-                            Term top = null;
-                            for (Term cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind), true)) {
+                            ITerm top = null;
+                            for (ITerm cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind), true)) {
                                 if (top == null) top = cur;
                                 arg.get(0).addValue(mind, cur);
                                 i = 1;
@@ -272,11 +273,11 @@ public class Predicates {
         this.mind = mind;
     }
 
-    public Map<String, SysOp> getSysOps() {
+    public Map<String, Operation> getSysOps() {
         return sysOps;
     }
 
-    private boolean cmp(int rc, int rcmin, int rcmax, Term cmin, Term cur, Term step) throws Exception {
+    private boolean cmp(int rc, int rcmin, int rcmax, ITerm cmin, ITerm cur, ITerm step) throws Exception {
         boolean res = false;
         if (rc < 0 ? (rcmin >= 0 && rcmax <= 0) : (rcmin <= 0 && rcmax >= 0)) {
             if (cur.getType() == DataType.NUMERIC && step == null) {
@@ -298,22 +299,22 @@ public class Predicates {
 
     //TODO: ОШИБКА! ?$x x : "123123123123";
 
-    public boolean _in(Term cur, Term interval, Term step) throws Exception {
+    public boolean _in(ITerm cur, ITerm interval, ITerm step) throws Exception {
         boolean res = false;
         if (interval.getType() == DataType.INTERVAL) {
 
             int rcmin = -2;
             int rcmax = -2;
             int i = -1;
-            Term min = ((List<Term>) interval.getValue()).get(0);
-            Term max = ((List<Term>) interval.getValue()).get(1);
+            ITerm min = ((List<Term>) interval.getValue()).get(0);
+            ITerm max = ((List<Term>) interval.getValue()).get(1);
             int rc = min.compareTo(max);
 //            Term cmin = rc < 0 ? min : max;
 
             if (cur.getType() == DataType.INTERVAL) {
 
-                Term xmin = (Term) ((Collection) cur.getValue()).toArray()[0];
-                Term xmax = (Term) ((Collection) cur.getValue()).toArray()[1];
+                ITerm xmin = (Term) ((Collection) cur.getValue()).toArray()[0];
+                ITerm xmax = (Term) ((Collection) cur.getValue()).toArray()[1];
                 int xrc = xmin.compareTo(xmax);
                 rcmin = rc == xrc ? xmin.compareTo(min) : xmin.compareTo(max);
                 rcmax = rc == xrc ? xmax.compareTo(max) : xmax.compareTo(min);
@@ -321,7 +322,7 @@ public class Predicates {
 
             } else if (cur.getType() == DataType.SET) {
 
-                for (Term t : expand(cur, step, false)) {
+                for (ITerm t : expand(cur, step, false)) {
                     rcmin = t.compareTo(min);
                     rcmax = t.compareTo(max);
                     if (cmp(rc, rcmin, rcmax, min, cur, step)) {
@@ -339,7 +340,7 @@ public class Predicates {
             }
         } else if (interval.getType() == DataType.SET) {
 
-            for (Term c : expand(cur, step, false)) {
+            for (ITerm c : expand(cur, step, false)) {
                 res = false;
                 for (Term t : (Collection<Term>) interval.getValue()) {
                     if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
@@ -365,7 +366,7 @@ public class Predicates {
                 Matcher mt = pt.matcher(interval.getValue().toString());
                 while (mt.find()) {
                     for (int k = 0; k < mt.groupCount(); ++k) {
-                        Term t = mind.getTerms().add(mt.group(k + 1) + "");
+                        ITerm t = mind.getTerms().add(mt.group(k + 1) + "");
                         if (cur.getId() == t.getId()) {
                             res = true;
                             break;
@@ -400,8 +401,8 @@ public class Predicates {
         return -1;
     }
 
-    public List<Term> expand(Term source, Term step, boolean expandString) throws Exception {
-        List<Term> list = new ArrayList<>();
+    public List<ITerm> expand(ITerm source, ITerm step, boolean expandString) throws Exception {
+        List<ITerm> list = new ArrayList<>();
         Term top = null;
         if (source.getType() == DataType.INTERVAL) {
             Term min = (Term) ((Collection) source.getValue()).toArray()[0];
@@ -416,13 +417,13 @@ public class Predicates {
                 }
                 Term next;
                 if (step != null) {
-                    next = rc < 0
+                    next = (Term) (rc < 0
                             ? mind.getCalculator().getFunctions()._add(cur, step)
-                            : mind.getCalculator().getFunctions()._sub(cur, step);
+                            : mind.getCalculator().getFunctions()._sub(cur, step));
                 } else {
-                    next = rc < 0
+                    next = (Term) (rc < 0
                             ? mind.getCalculator().getFunctions()._inc(cur)
-                            : mind.getCalculator().getFunctions()._dec(cur);
+                            : mind.getCalculator().getFunctions()._dec(cur));
                 }
                 if (next.getId() == cur.getId()) {
                     list.add(max);
@@ -448,7 +449,7 @@ public class Predicates {
             if (step == null) {
                 if (expandString) {
                     for (int k = 0; k < source.getValue().toString().length(); ++k) {
-                        Term x = mind.getTerms().add(source.getValue().toString().charAt(k) + "");
+                        Term x = (Term) mind.getTerms().add(source.getValue().toString().charAt(k) + "");
                         list.add(x);
                     }
                 } else {
@@ -459,7 +460,7 @@ public class Predicates {
                 Matcher mt = pt.matcher(source.getValue().toString());
                 while (mt.find()) {
                     for (int k = 0; k < mt.groupCount(); ++k) {
-                        Term t = mind.getTerms().add(mt.group(k + 1) + "");
+                        Term t = (Term) mind.getTerms().add(mt.group(k + 1) + "");
                         list.add(t);
                     }
                 }
@@ -468,7 +469,7 @@ public class Predicates {
             if (step == null) {
                 if (expandString) {
                     for (int k = 0; k < ((byte[]) source.getValue()).length; ++k) {
-                        Term x = mind.getTerms().add(new byte[]{((byte[]) source.getValue())[k]});
+                        Term x = (Term) mind.getTerms().add(new byte[]{((byte[]) source.getValue())[k]});
                         list.add(x);
                     }
                 } else {
@@ -493,13 +494,13 @@ public class Predicates {
                     if (pos < len) {
                         cell[pos++] = ((byte[]) source.getValue())[k++];
                     } else {
-                        Term x = mind.getTerms().add(cell);
+                        Term x = (Term) mind.getTerms().add(cell);
                         list.add(x);
                         cell = null;
                     }
                 }
                 if (cell != null) {
-                    Term x = mind.getTerms().add(cell);
+                    Term x = (Term) mind.getTerms().add(cell);
                     list.add(x);
                 }
             }

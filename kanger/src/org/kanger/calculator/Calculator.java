@@ -4,11 +4,9 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
+import org.kanger.interfaces.IPredicate;
 import org.kanger.primitives.Argument;
-import org.kanger.units.Domain;
-import org.kanger.units.Function;
-import org.kanger.units.Predicate;
-import org.kanger.units.SysOp;
+import org.kanger.units.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.15.
@@ -45,7 +43,7 @@ public class Calculator {
         }
 //        }
 
-        if (fu.isEmpty() || !fu.getResult().getValue(mind).equalsTo(fu.getValue())) {
+        if (fu.isEmpty() || !((Term) fu.getResult().getValue(mind)).equalsTo((Term) fu.getValue())) {
             int k = execute(fu);
             if (k == 1 || k == 2) {
                 if (fu.isEmpty()) {
@@ -80,7 +78,7 @@ public class Calculator {
     public int execute(Domain d) throws Exception {
         int k = -1;
         String n = d.getPredicate().getName() + "(" + d.getRange() + ")";
-        SysOp op = predicates.getSysOps().get(n) != null
+        Operation op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
                 : mind.getLibrary().find(n);
         if (op != null) {
@@ -110,7 +108,7 @@ public class Calculator {
     public int execute(Function fu) throws Exception {
         int k = -1;
         String n = fu.getName() + "(" + fu.getRange() + ")";
-        SysOp op = functions.getSysOps().get(n) != null
+        Operation op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
                 : mind.getLibrary().find(n);
 
@@ -144,9 +142,9 @@ public class Calculator {
         return k;
     }
 
-    public boolean exists(Predicate p) throws Exception {
+    public boolean exists(IPredicate p) throws Exception {
         String n = p.getName() + "(" + p.getRange() + ")";
-        SysOp op = predicates.getSysOps().get(n) != null
+        Operation op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
                 : mind.getLibrary().find(n);
         return op != null && op.getMode() == LibMode.PREDICATE;
@@ -154,14 +152,14 @@ public class Calculator {
 
     public boolean exists(Function f) throws Exception {
         String n = f.getName() + "(" + f.getRange() + ")";
-        SysOp op = functions.getSysOps().get(n) != null
+        Operation op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
                 : mind.getLibrary().find(n);
         return op != null && functions.getSysOps().get(n).getMode() == LibMode.FUNCTION;
     }
 
 
-    private SysOp findOp(String n) throws Exception {
+    private Operation findOp(String n) throws Exception {
         if (predicates.getSysOps().containsKey(n))
             return predicates.getSysOps().get(n);
         else if (functions.getSysOps().containsKey(n))
@@ -170,7 +168,7 @@ public class Calculator {
             return mind.getLibrary().find(n);
     }
 
-    public SysOp find(Object o) throws Exception {
+    public Operation find(Object o) throws Exception {
         if (o instanceof Predicate) {
             String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
             return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
@@ -179,7 +177,7 @@ public class Calculator {
             return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
         } else {
             String key = o.toString();
-            SysOp op = findOp(key);
+            Operation op = findOp(key);
             if (op != null) {
                 return op;
             } else {

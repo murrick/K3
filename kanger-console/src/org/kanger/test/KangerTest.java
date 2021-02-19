@@ -2,12 +2,14 @@ package org.kanger.test;
 
 import org.kanger.Mind;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.primitives.ArgList;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
-import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.lang.reflect.Method;
@@ -22,28 +24,28 @@ import java.util.concurrent.CountDownLatch;
  */
 public class KangerTest {
 
-    Mind mind;
+    IMind mind;
 
-    public KangerTest(Mind mind) {
+    public KangerTest(IMind mind) {
         this.mind = mind;
     }
 
-    public static boolean test(Mind mind, String prefix) throws Exception {
+    public static boolean test(IMind mind, String prefix) throws Exception {
         System.out.println("Init test system...");
         KangerTest cls = new KangerTest(mind);
         int successCount = 0;
         long startTime = System.currentTimeMillis();
         List<String> fails = new ArrayList<>();
         Map<String, Double> list = new TreeMap<>();
-        String dbName = mind.getUser().getStorageName();
+        String dbName = mind.getStorageName();
         try {
-            if (!mind.getUser().isClosed()) {
-                mind = mind.close();
-                mind = mind.use("data/auto-test");
-                mind = mind = mind.clear();
+            if (mind.isStorageUsed()) {
+                mind = mind.closeStorage();
+                mind = mind.useStorage("data/auto-test");
+                mind = mind = mind.clearStorage();
             }
 
-            mind = mind = mind.clear();
+            mind = mind = mind.clearStorage();
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -95,11 +97,11 @@ public class KangerTest {
         } finally {
             //TODO: Включть!
 //            mind = mind.clear();
-            if (!mind.getUser().isClosed()) {
+            if (mind.isStorageUsed()) {
 //                mind.getUser().close();
-                mind.getUser().remove(mind, null);
+                mind.removeStorage(null);
                 try {
-                    mind = mind.getUser().use(mind, dbName);
+                    mind = mind.useStorage(dbName);
                 } catch (RuntimeErrorException e) {
                     e.printStackTrace(System.err);
                 }
@@ -128,7 +130,7 @@ public class KangerTest {
 //    }
 
     private boolean exists(String name, Object o) throws Exception {
-        for (Term t : mind.getValues().getValues(name)) {
+        for (ITerm t : mind.getValues().getValues(name)) {
             if (o.equals(t.getValue())) {
                 return true;
             }
@@ -136,7 +138,7 @@ public class KangerTest {
         return false;
     }
 
-    private void showResult(Mind mind, Boolean assertResult, boolean local) throws RuntimeErrorException, Exception, ClassNotFoundException {
+    private void showResult(IMind mind, Boolean assertResult, boolean local) throws RuntimeErrorException, Exception, ClassNotFoundException {
 //        for (Right r : mind.getRights()) {
 //            if (!r.isDeleted() && !r.isGenerated() && !r.isQuery() && (!local || r.getMind().getId() == mind.getId())) {
 //                System.out.println("Right: " + r.toString());
@@ -148,7 +150,7 @@ public class KangerTest {
         int size = mind.getSolutions().size();
         if (local) {
             size = 0;
-            for (Rule log : mind.getSolutions().getRoot()) {
+            for (IRule log : mind.getSolutions().getRoot()) {
                 if (log.getMind().getId() == mind.getId()) {
                     ++size;
                 }
@@ -158,7 +160,7 @@ public class KangerTest {
         if (size > 0) {
             System.out.println("Solutions (" + size + "):");
             int i = 0;
-            for (Rule log : mind.getSolutions().getRoot()) {
+            for (IRule log : mind.getSolutions().getRoot()) {
                 if (!local || log.getMind().getId() == mind.getId()) {
                     System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
                 }
@@ -168,8 +170,8 @@ public class KangerTest {
         size = mind.getValues().size();
         if (local) {
             size = 0;
-            for (ArgList a : mind.getValues().getRoot()) {
-                if (a.get(0).getV(mind).getMind().getId() == mind.getId()) {
+            for (ArgumentsList a : mind.getValues().getRoot()) {
+                if (a.get(0).getV((Mind) mind).getMind().getId() == mind.getId()) {
                     ++size;
                 }
             }
@@ -180,14 +182,14 @@ public class KangerTest {
 //            mind.getValues().normalize();
             System.out.println("Values (" + size + "):");
             int i = 0;
-            for (ArgList a : mind.getValues().getRoot()) {
-                if (!local || a.get(0).getV(mind).getMind().getId() == mind.getId()) {
+            for (ArgumentsList a : mind.getValues().getRoot()) {
+                if (!local || a.get(0).getV((Mind) mind).getMind().getId() == mind.getId()) {
                     String s = String.format("\tRow %03d: ", ++i);
                     for (Argument v : a) {
                         if (!s.endsWith(" ")) {
                             s += " ";
                         }
-                        s += v.getV(mind).getTVar().getName().toString() + "=" + v.getV(mind).getValue().getValue();
+                        s += v.getV((Mind) mind).getTVar().getName().toString() + "=" + v.getV((Mind) mind).getValue().getValue();
                     }
                     System.out.println(s);
                 }
@@ -210,7 +212,7 @@ public class KangerTest {
         showResult(mind, assertResult, false);
     }
 
-    public Hypothesis createHypothesis(Mind mind, boolean antc, Object predicate, Object... params) throws Exception {
+    public Hypothesis createHypothesis(IMind mind, boolean antc, Object predicate, Object... params) throws Exception {
         Hypothesis h = new Hypothesis();
         h.setAntc(antc);
         if (predicate instanceof Predicate) {
@@ -220,7 +222,7 @@ public class KangerTest {
         }
 
         for (Object o : params) {
-            Term t = mind.getTerms().add(o);
+            ITerm t = mind.getTerms().add(o);
             h.getArguments().add(new Argument(t));
         }
 //        if (params[0] instanceof Collection) {
@@ -231,8 +233,8 @@ public class KangerTest {
         return h;
     }
 
-    public Domain createRecord(Mind mind, boolean antc, Object predicate, Object... params) throws Exception {
-        Domain d = new Domain(mind);
+    public Domain createRecord(IMind mind, boolean antc, Object predicate, Object... params) throws Exception {
+        Domain d = new Domain((Mind) mind);
         d.setAntc(antc);
         if (predicate instanceof Predicate) {
             d.setPredicate((Predicate) predicate);
@@ -241,7 +243,7 @@ public class KangerTest {
         }
         for (Object p : params) {
             if (p instanceof Term) {
-                d.add(new Argument((Term) p));
+                d.add(new Argument((ITerm) p));
             } else {
                 d.add(new Argument(mind.getTerms().add(p)));
             }
@@ -251,7 +253,7 @@ public class KangerTest {
 
     public void set_01_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -269,7 +271,7 @@ public class KangerTest {
 
     public void set_01_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -287,7 +289,7 @@ public class KangerTest {
 
     public void set_01_03() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -332,7 +334,7 @@ public class KangerTest {
 
     public void set_01_04() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -373,7 +375,7 @@ public class KangerTest {
 
     public void set_01_05() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -414,7 +416,7 @@ public class KangerTest {
 
     public void set_01_06() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -455,7 +457,7 @@ public class KangerTest {
 
     public void set_01_07() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -488,7 +490,7 @@ public class KangerTest {
 
     public void set_01_08() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -496,7 +498,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?$x c(x);");
         showResult(true);
-        Term term = mind.getTerms().add("ooo");
+        ITerm term = mind.getTerms().add("ooo");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
@@ -513,7 +515,7 @@ public class KangerTest {
 
     public void set_01_09() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -521,7 +523,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?$x d(x);");
         showResult(true);
-        Term term = mind.getTerms().add("ooo");
+        ITerm term = mind.getTerms().add("ooo");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
@@ -542,7 +544,7 @@ public class KangerTest {
 
     public void set_01_0A() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -565,7 +567,7 @@ public class KangerTest {
 
     public void set_01_0B() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -591,7 +593,7 @@ public class KangerTest {
 
     public void set_01_0C() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -620,7 +622,7 @@ public class KangerTest {
 
     public void set_01_0D() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -629,7 +631,7 @@ public class KangerTest {
         mind.query("?$x a(x) && d(x);");
         showResult(true);
         if (!mind.getValues().isEmpty()) {
-            Term term = mind.getTerms().add("nnn");
+            ITerm term = mind.getTerms().add("nnn");
             if (!mind.getValues().getValues("x").contains(term)) {
                 fail("Expected x: " + term);
             }
@@ -645,7 +647,7 @@ public class KangerTest {
 
     public void set_01_0E() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); " +
                 "!@x a(x) -> ~n(x); " +
                 "!a(nnn); " +
@@ -653,7 +655,7 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?$x a(x) || d(x);");
         showResult(true);
-        Term term = mind.getTerms().add("nnn");
+        ITerm term = mind.getTerms().add("nnn");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
@@ -674,7 +676,7 @@ public class KangerTest {
 
     public void set_02_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("? (a(z) && c(z)) -> d(z);");
         showResult(true);
@@ -699,7 +701,7 @@ public class KangerTest {
 
     public void set_02_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x));");
         mind.query("?b(z) -> d(z);");
         showResult(null);
@@ -737,7 +739,7 @@ public class KangerTest {
 
     public void set_02_03() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) -> (c(x) -> d(x)) && (e(x) -> f(x)); !e(z);");
         mind.query("?$x f(x);");
         showResult(null);
@@ -766,7 +768,7 @@ public class KangerTest {
 
     public void set_02_04() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!~b(z);");
         mind.query("? b(z) -> d(z);");
         showResult(null);
@@ -779,7 +781,7 @@ public class KangerTest {
 
     public void set_02_05() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!d(z);");
         mind.query("? b(z) -> d(z);");
         showResult(null);
@@ -792,7 +794,7 @@ public class KangerTest {
 
     public void set_02_06() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!~b(z);");
         mind.query("?$x b(x) -> d(x);");
         showResult(null);
@@ -806,7 +808,7 @@ public class KangerTest {
 
     public void set_02_07() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!d(z);");
         mind.query("?$x b(x) -> d(x);");
         showResult(null);
@@ -819,7 +821,7 @@ public class KangerTest {
 
     public void set_02_08() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y x = y, (y = 4 || y = 5);");
         showResult(true);
         if (!exists("x", 5.0)) {
@@ -848,7 +850,7 @@ public class KangerTest {
 
     public void set_02_09() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y x=y*2, (y=4 || y = 5);");
         showResult(true);
         if (!exists("x", 10.0)) {
@@ -877,7 +879,7 @@ public class KangerTest {
 
     public void set_02_0A() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y 5=x + y, (y = 4 || y = 5);");
         showResult(true);
         if (!exists("x", 1.0)) {
@@ -906,7 +908,7 @@ public class KangerTest {
 
     public void set_02_0B() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y 18=x + y, y : 1..3;");
         showResult(true);
         if (!exists("x", 16.0)) {
@@ -941,7 +943,7 @@ public class KangerTest {
 
     public void set_02_0C() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y x=18 + y, y : 1..3;");
         showResult(true);
         if (!exists("x", 20.0)) {
@@ -976,7 +978,7 @@ public class KangerTest {
 
     public void set_02_0D() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x=18 + 2, x=18 + 3;");
         showResult(null);
         System.out.println("OK");
@@ -985,7 +987,7 @@ public class KangerTest {
 
     public void set_02_0E() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x 18=x + 4, 19=x+5;");
         showResult(true);
         if (!exists("x", 14.0)) {
@@ -1000,7 +1002,7 @@ public class KangerTest {
 
     public void set_02_0F() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x @y yy1(x), yy2(y) -> solve(x,y);" +
                         "!@a @b @c @d xx(a,b,c,d) -> yy2((-b-sqrt(d))/(2*a));" +
                         "!@a @b @c @d xx(a,b,c,d) -> yy1((-b+sqrt(d))/(2*a));" +
@@ -1022,7 +1024,7 @@ public class KangerTest {
 
     public void set_03_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
         mind.query("?$x @y a(x,y);");
         showResult(false);
@@ -1032,7 +1034,7 @@ public class KangerTest {
 
     public void set_03_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
         mind.query("? ~($x @y a(x,y));");
         showResult(true);
@@ -1042,7 +1044,7 @@ public class KangerTest {
 
     public void set_03_03() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
         mind.query("?@x $y a(y,x);");
         showResult(true);
@@ -1052,7 +1054,7 @@ public class KangerTest {
 
     public void set_03_04() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
         mind.query("?~($x ~($y a(y,x)));");
         showResult(true);
@@ -1062,7 +1064,7 @@ public class KangerTest {
 
     public void set_03_05() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
         mind.query("?@x a(G, x);");
         showResult(false);
@@ -1072,7 +1074,7 @@ public class KangerTest {
 
     public void set_03_06() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
         mind.query("?$x a(x, A);");
         showResult(true);
@@ -1082,7 +1084,7 @@ public class KangerTest {
 
     public void set_03_07() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
         mind.query("?~$x a(x, A);");
         showResult(false);
@@ -1123,7 +1125,7 @@ public class KangerTest {
 
     public void set_04_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?2 > 3;");
         showResult(false);
         System.out.println("OK");
@@ -1132,7 +1134,7 @@ public class KangerTest {
 
     public void set_04_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?2 < 3;");
         showResult(true);
         System.out.println("OK");
@@ -1141,7 +1143,7 @@ public class KangerTest {
 
     public void set_04_03() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?2 = 3;");
         showResult(false);
         System.out.println("OK");
@@ -1150,7 +1152,7 @@ public class KangerTest {
 
     public void set_04_04() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?2 = 2;");
         showResult(true);
         System.out.println("OK");
@@ -1159,7 +1161,7 @@ public class KangerTest {
 
     public void set_04_05() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x=5;");
         showResult(true);
         if (!exists("x", 5.0)) {
@@ -1171,7 +1173,7 @@ public class KangerTest {
 
     public void set_04_06() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?~$x x=5;");
         showResult(false);
         if (!exists("x", 5.0)) {
@@ -1183,7 +1185,7 @@ public class KangerTest {
 
     public void set_04_07() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x=5 / 2;");
         showResult(true);
         if (!exists("x", 2.5)) {
@@ -1195,7 +1197,7 @@ public class KangerTest {
 
     public void set_04_08() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x ((x+3)*15)=965;");
         showResult(true);
         if (!exists("x", 61.33333333333333)) {
@@ -1207,7 +1209,7 @@ public class KangerTest {
 
     public void set_04_09() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y (12+y)*2=256 && x=5*y;");
         showResult(true);
         if (!exists("y", 116.0)) {
@@ -1222,7 +1224,7 @@ public class KangerTest {
 
     public void set_04_0A() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y x + y = 12;");
         showResult(null);
         System.out.println("OK");
@@ -1231,7 +1233,7 @@ public class KangerTest {
 
     public void set_04_0B() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
         mind.query("?$x num(x);");
         showResult(true);
@@ -1275,7 +1277,7 @@ public class KangerTest {
 
     public void set_04_0C() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
         mind.query("?$x num(x) && x > 5;");
         showResult(true);
@@ -1301,7 +1303,7 @@ public class KangerTest {
 
     public void set_04_0D() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
         mind.query("?$x num(x) && x <= 3;");
         showResult(true);
@@ -1327,7 +1329,7 @@ public class KangerTest {
     //TODO:         !num(0); !@x num(x) && x < 10 -> num(++x);    ?$x $y num(x) && num(y) && x + y = 7;
     public void set_04_0E() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
         mind.query("?$x $y num(x) && num(y) && x + y = 7;");
         showResult(true);
@@ -1376,7 +1378,7 @@ public class KangerTest {
 
     public void set_04_0F() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x num(x);");
         showResult(true);
@@ -1420,7 +1422,7 @@ public class KangerTest {
 
     public void set_04_10() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x num(x) && x > 5;");
         showResult(true);
@@ -1446,7 +1448,7 @@ public class KangerTest {
 
     public void set_04_11() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x num(x) && x <= 3;");
         showResult(true);
@@ -1471,7 +1473,7 @@ public class KangerTest {
 
     public void set_04_12() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x $y num(x) && num(y) && x + y = 7;");
         showResult(true);
@@ -1521,7 +1523,7 @@ public class KangerTest {
 
     public void set_04_13() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x x : 0..10 -> num(x);");
         mind.query("?$x $y num(x) && num(y) && x * y = 12;");
         showResult(true);
@@ -1558,7 +1560,7 @@ public class KangerTest {
 
     public void set_04_14() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!num(0); !@x num(x) && x < 10 -> num(++x);");
         mind.query("?$x $y num(x) && num(y) && x * y = 12;");
         showResult(true);
@@ -1596,7 +1598,7 @@ public class KangerTest {
 
     public void set_05_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?a(nnn);");
@@ -1607,7 +1609,7 @@ public class KangerTest {
 
     public void set_05_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?b(nnn);");
@@ -1618,7 +1620,7 @@ public class KangerTest {
 
     public void set_05_03() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?$x a(x);");
@@ -1629,7 +1631,7 @@ public class KangerTest {
 
     public void set_05_04() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?$x b(x);");
@@ -1640,7 +1642,7 @@ public class KangerTest {
 
     public void set_05_05() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?a(xx) && b(xx);");
@@ -1651,7 +1653,7 @@ public class KangerTest {
 
     public void set_05_06() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?a(xx) || b(xx);");
@@ -1662,7 +1664,7 @@ public class KangerTest {
 
     public void set_05_07() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?$x a(x) && b(x);");
@@ -1673,7 +1675,7 @@ public class KangerTest {
 
     public void set_05_08() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x));" +
                 "!a(nnn);");
         mind.query("?$x a(x) || b(x);");
@@ -1687,7 +1689,7 @@ public class KangerTest {
 
     public void set_06_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -1724,7 +1726,7 @@ public class KangerTest {
 
     public void set_06_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -1771,7 +1773,7 @@ public class KangerTest {
 
     public void set_06_03() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile(
                 "!@x $y parent(y,x);" +
                         "!@x ~parent(x,x);" +
@@ -1811,7 +1813,7 @@ public class KangerTest {
 
     public void set_06_04() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile(
                 "!@x $y parent(y,x);" +
                         "!@x ~parent(x,x);" +
@@ -1847,7 +1849,7 @@ public class KangerTest {
 
     public void set_06_05() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -1881,7 +1883,7 @@ public class KangerTest {
 
     public void set_06_06() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -1922,7 +1924,7 @@ public class KangerTest {
 
     public void set_06_07() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -2001,7 +2003,7 @@ public class KangerTest {
 
     public void set_06_08() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -2041,7 +2043,7 @@ public class KangerTest {
 
     public void set_06_09() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -2075,7 +2077,7 @@ public class KangerTest {
 
     public void set_06_0A() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x ~parent(x,x);" +
                 "!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
@@ -2134,7 +2136,7 @@ public class KangerTest {
 
     public void set_06_0B() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> native(x,y);" +
                 "!parent(John,Tom);");
@@ -2144,7 +2146,7 @@ public class KangerTest {
 
     public void set_06_0C() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!@x $y parent(y,x);" +
                 "!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> native(x,y);" +
                 "!parent(John,Tom);");
@@ -2154,7 +2156,7 @@ public class KangerTest {
 
     public void set_07_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x : '2018-03-01'..'2018-04-19', 38 hours 40 minutes, x > '2018-03-07';");
         showResult(true);
         if (mind.getValues().size() != 27) {
@@ -2166,7 +2168,7 @@ public class KangerTest {
 
     public void set_07_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?'2018-03-07' : '2018-03-01'..'2018-04-19';");
         showResult(true);
         System.out.println("OK");
@@ -2175,7 +2177,7 @@ public class KangerTest {
 
     public void set_07_03() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?er : qwerty;");
         showResult(true);
         System.out.println("OK");
@@ -2184,7 +2186,7 @@ public class KangerTest {
 
     public void set_07_04() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?'(.*)er(.*)' : qwerty;");
         showResult(true);
         System.out.println("OK");
@@ -2193,7 +2195,7 @@ public class KangerTest {
 
     public void set_07_05() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x : qwerty;");
         showResult(true);
         if (mind.getValues().size() != 6) {
@@ -2205,7 +2207,7 @@ public class KangerTest {
 
     public void set_07_06() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x : qwerty,'(.*)er(.*)';");
         showResult(true);
         if (mind.getValues().size() != 2) {
@@ -2217,7 +2219,7 @@ public class KangerTest {
 
     public void set_07_07() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x : qwerty,'(.*)er(.*)', x=qw;");
         showResult(true);
         if (mind.getValues().size() != 1) {
@@ -2229,7 +2231,7 @@ public class KangerTest {
 
     public void set_07_08() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x : qwerty,'(.*)er(.*)', x=ty;");
         showResult(true);
         if (mind.getValues().size() != 1) {
@@ -2241,7 +2243,7 @@ public class KangerTest {
 
     public void set_07_09() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x : qwerty,'(.*)er(.*)', x != ty;");
         showResult(true);
         if (mind.getValues().size() != 1) {
@@ -2253,7 +2255,7 @@ public class KangerTest {
 
     public void set_07_0A() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x $y index(qwerty) -> index(x), y : x;");
         showResult(true);
         if (mind.getValues().size() != 6) {
@@ -2265,7 +2267,7 @@ public class KangerTest {
 
     public void set_07_0B() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.compile("!age(Tom,12);");
         mind.query("?$x $y age(Tom,y) && x : (y-2)..20;");
         showResult(true);
@@ -2278,7 +2280,7 @@ public class KangerTest {
 
     public void set_07_0C() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind.query("?$x x : 1..10, 3;");
         showResult(true);
         if (mind.getValues().size() != 4) {
@@ -2291,7 +2293,7 @@ public class KangerTest {
 
     public void set_08_01() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
 //        mind = new Mind(mind.getUser());
 
         final int COUNT = 13;
@@ -2426,7 +2428,7 @@ public class KangerTest {
 
     public void set_08_02() throws Exception {
 
-        mind = mind.clear();
+        mind = mind.clearStorage();
         mind = new Mind(mind.getUser());
 
         final int COUNT = 164;

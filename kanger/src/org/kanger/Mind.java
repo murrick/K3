@@ -6,10 +6,10 @@ import org.kanger.compiler.PTree;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.*;
 import org.kanger.factory.*;
-import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.*;
+import org.kanger.interfaces.internal.IReactor;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
-import org.kanger.primitives.Cause;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.TVariableSet;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
-public class Mind {
+public class Mind implements IMind {
 
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
     private static final int FLOOD_CONTROL_LIMIT = 10000;
@@ -30,13 +30,13 @@ public class Mind {
     //    private volatile boolean blockCommit = false;
     private final Object locker = new Object();
 
-    private final Map<Long, Set<Rule>> usedRules = new HashMap<>();
-    private final Map<Domain, Set<ArgList>> usedDomains = new HashMap<>();
-    private final Map<Domain, Set<ArgList>> excludedDomains = new HashMap<>();
-    private final Map<Domain, List<List<Term>>> calculatedDomains = new HashMap<>();
-    private final Map<Domain, List<List<Term>>> producedDomains = new HashMap<>();
-    private final Map<Domain, Map<ArgList, Set<Cause>>> domainCauses = new HashMap<>();
-    private final Map<Domain, Map<ArgList, SortedSet<TValue>>> domainSolves = new HashMap<>();
+    private final Map<Long, Set<IRule>> usedRules = new HashMap<>();
+    private final Map<Domain, Set<ArgumentsList>> usedDomains = new HashMap<>();
+    private final Map<Domain, Set<ArgumentsList>> excludedDomains = new HashMap<>();
+    private final Map<Domain, List<List<ITerm>>> calculatedDomains = new HashMap<>();
+    private final Map<Domain, List<List<ITerm>>> producedDomains = new HashMap<>();
+    private final Map<Domain, Map<ArgumentsList, Set<ICause>>> domainCauses = new HashMap<>();
+    private final Map<Domain, Map<ArgumentsList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
     private final Map<TVariable, long[]> floodControl = new HashMap<>();
@@ -44,7 +44,7 @@ public class Mind {
     private final Map<UnitType, Set<Long>> restored = new HashMap<>();
 
     private long id = 0;
-    private Mind next = null;
+    private IMind next = null;
 
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
@@ -75,7 +75,6 @@ public class Mind {
     private String querySource = "";
     //    private Mind queryContext = null;
     private QueryPass queryPass = QueryPass.SILENCE;
-    private String sourceFileName = "mind.k";
     private boolean logging = true;
 
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES);
@@ -95,7 +94,7 @@ public class Mind {
         clearMind();
     }
 
-    public Mind(Mind root) throws Exception {
+    public Mind(IMind root) throws Exception {
         next = root;
         user = (User) root.getUser();
 //        user.setMind(this);
@@ -118,13 +117,13 @@ public class Mind {
 
 //        functions = root.getFunctions();
 
-        domains.transaction(root.getDomains());
+        domains.transaction(((Mind) root).getDomains());
         rules.transaction(root.getRules());
         comments.transaction(root.getComments());
-        tVars.transaction(root.getTVars());
-        tValues.transaction(root.getTValues());
-        functions.transaction(root.getFunctions());
-        fValues.transaction(root.getFValues());
+        tVars.transaction(((Mind) root).getTVars());
+        tValues.transaction(((Mind) root).getTValues());
+        functions.transaction(((Mind) root).getFunctions());
+        fValues.transaction(((Mind) root).getFValues());
 
         debugLevel = root.getDebugLevel();
 
@@ -169,7 +168,8 @@ public class Mind {
     }
 
 
-    public boolean commit(Mind m) throws Exception {
+    @Override
+    public boolean commit(IMind m) throws Exception {
         boolean result = true;
 //        pack();
         synchronized (locker) {
@@ -189,12 +189,13 @@ public class Mind {
                 library.mark();
             }
 
-            functions.commit(m.getFunctions());
-            fValues.commit(m.getFValues());
-            tVars.commit(m.getTVars());
-            tValues.commit(m.getTValues());
+            functions.commit(((Mind) m).getFunctions());
+            fValues.commit(((Mind) m).getFValues());
+            tVars.commit(((Mind) m).getTVars());
+            tValues.commit(((Mind) m).getTValues());
 
-            domains.commit(m.getDomains());
+            domains.commit(((Mind) m).getDomains());
+
             Set<Long> list = rules.commit(m.getRules());
             comments.commit(m.getComments());
             library.commit(m.getLibrary());
@@ -209,13 +210,13 @@ public class Mind {
                 saveRestored.put(e.getKey(), new HashSet<>());
                 saveRestored.get(e.getKey()).addAll(e.getValue());
             }
-            for (Map.Entry<UnitType, Set<Long>> e : m.getDeleted().entrySet()) {
+            for (Map.Entry<UnitType, Set<Long>> e : ((Mind) m).getDeleted().entrySet()) {
                 if (!deleted.containsKey(e.getKey())) {
                     deleted.put(e.getKey(), new HashSet<>());
                 }
                 deleted.get(e.getKey()).addAll(e.getValue());
             }
-            for (Map.Entry<UnitType, Set<Long>> e : m.getRestored().entrySet()) {
+            for (Map.Entry<UnitType, Set<Long>> e : ((Mind) m).getRestored().entrySet()) {
                 if (!restored.containsKey(e.getKey())) {
                     restored.put(e.getKey(), new HashSet<>());
                 }
@@ -349,7 +350,7 @@ public class Mind {
 //        }
 //    }
 
-    public void update() throws Exception {
+    private void update() throws Exception {
 //        synchronized (locker) {
 
 //        if (next == null) {
@@ -370,7 +371,8 @@ public class Mind {
 //        }
     }
 
-    public void release(Mind m) throws Exception {
+    @Override
+    public void release(IMind m) throws Exception {
         synchronized (locker) {
 
             log.commit(m.getLog());
@@ -451,6 +453,7 @@ public class Mind {
     }
 
 
+    @Override
     public QueryPass getQueryPass() {
         return queryPass;
     }
@@ -467,6 +470,7 @@ public class Mind {
         debugLevel = debugLevelStack.pop();
     }
 
+    @Override
     public IUser getUser() {
         return user;
     }
@@ -475,6 +479,7 @@ public class Mind {
         this.user = user;
     }
 
+    @Override
     public long getId() {
         return id;
     }
@@ -483,7 +488,8 @@ public class Mind {
         this.id = id;
     }
 
-    public Mind getNext() {
+    @Override
+    public IMind getNext() {
         return next;
     }
 
@@ -491,18 +497,22 @@ public class Mind {
         this.next = next;
     }
 
+    @Override
     public int getDebugLevel() {
         return debugLevel;
     }
 
+    @Override
     public void setDebugLevel(int debugLevel) {
         this.debugLevel = debugLevel;
     }
 
+    @Override
     public DictionaryFactory getTerms() {
         return terms;
     }
 
+    @Override
     public PredicateFactory getPredicates() {
         return predicates;
     }
@@ -511,14 +521,17 @@ public class Mind {
         return domains;
     }
 
+    @Override
     public ValuesStore getValues() {
         return values;
     }
 
+    @Override
     public RuleFactory getRules() {
         return rules;
     }
 
+    @Override
     public CommentFactory getComments() {
         return comments;
     }
@@ -539,10 +552,12 @@ public class Mind {
         return functions;
     }
 
+    @Override
     public LibraryFactory getLibrary() {
         return library;
     }
 
+    @Override
     public HypothesisStore getHypothesis() {
         return hypothesis;
     }
@@ -551,10 +566,12 @@ public class Mind {
 //        return excluded;
 //    }
 
+    @Override
     public LogStore getLog() {
         return log;
     }
 
+    @Override
     public SolutionsStore getSolutions() {
         return solves;
     }
@@ -583,6 +600,7 @@ public class Mind {
         return analyzer.analyze(rule, logging);
     }
 
+    @Override
     public boolean compile(String src) throws Exception {
         return compile(src, true);
     }
@@ -676,7 +694,7 @@ public class Mind {
 //                    if (((SysOp) r).getScripts().isEmpty()) {
 //                        library.delete((SysOp) r);
 //                    }
-                    library.add((SysOp) r);
+                    library.add((Operation) r);
                 }
                 break;
             case Enums.INS:
@@ -701,11 +719,11 @@ public class Mind {
                 r = null;
             } else if (r instanceof Rule) {
                 commit(x);
-                getLog().add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrig());
+                getLog().add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
                 getLog().add(LogMode.ANALYZER, (Rule) r);
-                for (Rule rx : rules) {
+                for (IRule rx : rules) {
                     if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
-                        getLog().add(LogMode.ANALYZER, "Extracted: " + rx.getOrig());
+                        getLog().add(LogMode.ANALYZER, "Extracted: " + rx.getOrigin());
                     }
                 }
             }
@@ -807,18 +825,21 @@ public class Mind {
 //
 ////        mark();
 //    }
+    @Override
     public String getSourceFileName() {
-        return sourceFileName;
+        return user.getSourceFileName();
     }
 
     public void setSourceFileName(String name) {
-        sourceFileName = name;
+        user.setSourceFileName(name);
     }
 
+    @Override
     public Boolean query(String line) throws Exception {
         return query(line, null);
     }
 
+    @Override
     public Boolean query(String line, Object[] ext) throws Exception {
         querySource = line;
         queryPass = QueryPass.SILENCE;
@@ -827,6 +848,7 @@ public class Mind {
         return queryResult;
     }
 
+    @Override
     public String getCompliedLine() {
         return compliedLine;
     }
@@ -835,35 +857,36 @@ public class Mind {
         this.compliedLine = compliedLine;
     }
 
+    @Override
     public String getVersion() {
         return Version.VERSION_S;
     }
 
-    public Map<Domain, Set<ArgList>> getUsedDomains() {
+    public Map<Domain, Set<ArgumentsList>> getUsedDomains() {
         return usedDomains;
     }
 
-    public Map<Domain, Set<ArgList>> getExcludedDomains() {
+    public Map<Domain, Set<ArgumentsList>> getExcludedDomains() {
         return excludedDomains;
     }
 
-    public Map<Domain, List<List<Term>>> getProducedDomains() {
+    public Map<Domain, List<List<ITerm>>> getProducedDomains() {
         return producedDomains;
     }
 
-    public Map<Domain, List<List<Term>>> getCalculatedDomains() {
+    public Map<Domain, List<List<ITerm>>> getCalculatedDomains() {
         return calculatedDomains;
     }
 
-    public Map<Domain, Map<ArgList, Set<Cause>>> getDomainCauses() {
+    public Map<Domain, Map<ArgumentsList, Set<ICause>>> getDomainCauses() {
         return domainCauses;
     }
 
-    public Map<Domain, Map<ArgList, SortedSet<TValue>>> getDomainSolves() {
+    public Map<Domain, Map<ArgumentsList, SortedSet<TValue>>> getDomainSolves() {
         return domainSolves;
     }
 
-    public Map<Long, Set<Rule>> getUsedRules() {
+    public Map<Long, Set<IRule>> getUsedRules() {
         return usedRules;
     }
 
@@ -950,10 +973,12 @@ public class Mind {
 //        return set;
 //    }
 
+    @Override
     public String getQuerySource() {
         return querySource;
     }
 
+    @Override
     public Object getQueryResult() {
         return queryResult;
     }
@@ -967,7 +992,7 @@ public class Mind {
 //        return null;
 //    }
 
-    public boolean isSystem(Predicate p) throws Exception {
+    public boolean isSystem(IPredicate p) throws Exception {
         return calculator.exists(p);
     }
 
@@ -1027,9 +1052,9 @@ public class Mind {
 //        return String.format("%c%s", sign, line.substring(1));
 //    }
 
-    public List<Rule> getProductions(Rule r) {
-        List<Rule> productions = new ArrayList<>();
-        for (Rule pr : getRules()) {
+    public List<IRule> getProductions(IRule r) {
+        List<IRule> productions = new ArrayList<>();
+        for (IRule pr : getRules()) {
             if (pr.getId() > r.getId()) {
                 if (pr.isGenerated()) {
                     productions.add(pr);
@@ -1066,15 +1091,15 @@ public class Mind {
                 res = null;
             } else {
 
-                List<Rule> productions = m.getProductions(r);
+                List<IRule> productions = m.getProductions(r);
                 if (!productions.isEmpty()) {
                     if (logging) {
                         m.getLog().add(LogMode.ANALYZER, "SUCCESS: Solves to append (" + productions.size() + "):");
                     }
-                    for (Rule pr : productions) {
-                        pr.setQuery(false);
-                        pr.setGenerated(false);
-                        pr.primitivize();
+                    for (IRule pr : productions) {
+                        ((Rule) pr).setQuery(false);
+                        ((Rule) pr).setGenerated(false);
+                        ((Rule) pr).primitivize();
                         if (logging) {
                             m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
                         }
@@ -1135,9 +1160,9 @@ public class Mind {
                 } else {
                     if (logging) {
                         m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
-                        List<Rule> productions = m.getProductions(r);
+                        List<IRule> productions = m.getProductions(r);
                         if (!productions.isEmpty()) {
-                            for (Rule pr : productions) {
+                            for (IRule pr : productions) {
                                 m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
                             }
                         }
@@ -1169,7 +1194,7 @@ public class Mind {
             getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
         }
 
-        SysOp op = getLibrary().find(line.substring(1).replaceAll(";", ""));
+        Operation op = getLibrary().find(line.substring(1).replaceAll(";", ""));
         if(op != null) {
 
             Mind m = new Mind(this);
@@ -1180,7 +1205,7 @@ public class Mind {
 
         } else {
 
-            Set<Rule> set = new HashSet<>();
+            Set<IRule> set = new HashSet<>();
             line = invert(line);
             setCompliedLine(line);
             Rule r = (Rule) x.compileLine(line, true, ext);
@@ -1188,7 +1213,7 @@ public class Mind {
                 x.link(r, logging);
                 boolean ar = x.analyze(r, logging);
                 if (ar && x.getSolutions().size() > 0) {
-                    for (Rule rx : x.getSolutions().getRoot()) {
+                    for (IRule rx : x.getSolutions().getRoot()) {
                         set.add(rx);
                     }
                 } else {
@@ -1215,12 +1240,12 @@ public class Mind {
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.CHECK);
         boolean found = false;
-        for (Rule rx : m.getRules()) {
+        for (IRule rx : m.getRules()) {
             if (/*!rx.isDeleted(m) && */rx.isGenerated()) {
                 if (logging) {
                     m.getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
                 }
-                rx.setDeleted(true, m);
+                ((Rule) rx).setDeleted(true, m);
 //                m.setUnitDeleted(UnitType.RULE, rx.getId(), true);
 //                m.setUnitDeleted(rx, true);
 //                m.setUnitDeleted(getComments().get(rx.getId()), true);
@@ -1550,24 +1575,24 @@ public class Mind {
 //    }
 //
 
-    private void removeResult(Set<Rule> set, boolean logging) throws Exception {
+    private void removeResult(Set<IRule> set, boolean logging) throws Exception {
         Mind m = new Mind(this);
 
-        for (Rule r : set) {
-            r.setDeleted(true, m);
+        for (IRule r : set) {
+            ((Rule) r).setDeleted(true, m);
         }
-        for (Rule r : m.getRules()) {
+        for (IRule r : m.getRules()) {
             if (r.isGenerated() && !r.isDeleted(m)) {
                 set.add(r);
-                r.setDeleted(true, m);
+                ((Rule) r).setDeleted(true, m);
             }
         }
 
         m.link(null, logging);
         Boolean ar = m.analyze(null, logging);
 
-        Set<Rule> success = new HashSet<>();
-        for (Rule r : set) {
+        Set<IRule> success = new HashSet<>();
+        for (IRule r : set) {
 //                    Rule x = getRules().find(r);
             if (r.isDeleted(m)) {
                 success.add(r);
@@ -1583,7 +1608,7 @@ public class Mind {
                 release(m);
             } else {
                 m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
-                for (Rule r : success) {
+                for (IRule r : success) {
                     m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
                 }
                 commit(m);
@@ -1595,16 +1620,16 @@ public class Mind {
         if (mind.getSolutions().size() > 0) {
             mind.getLog().add(LogMode.SOLVES, "Solutions (" + mind.getSolutions().size() + "):");
             int i = 0;
-            for (Rule log : mind.getSolutions().getRoot()) {
+            for (IRule log : mind.getSolutions().getRoot()) {
                 mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", log.getId(), log.toString()));
             }
         }
         if (mind.getValues().size() > 0) {
             mind.getLog().add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
             int i = 0;
-            for (Map<String, Term> map : mind.getValues()) {
+            for (Map<String, ITerm> map : mind.getValues()) {
                 String s = String.format("\tRow %03d: ", ++i);
-                for (Map.Entry<String, Term> row : map.entrySet()) {
+                for (Map.Entry<String, ITerm> row : map.entrySet()) {
                     if (!s.endsWith(" ")) {
                         s += " ";
                     }
@@ -1720,8 +1745,8 @@ public class Mind {
 
     public String getSourceCode() throws Exception {
         String str = "";
-        SortedMap<Long, Rule> map = new TreeMap<>();
-        for (Rule r : getRules()) {
+        SortedMap<Long, IRule> map = new TreeMap<>();
+        for (IRule r : getRules()) {
             if (!r.isGenerated()) {
                 map.put(r.getId(), r);
             }
@@ -1732,7 +1757,7 @@ public class Mind {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }
-        for (Rule r : map.values()) {
+        for (IRule r : map.values()) {
             c = getComments().get(r.getId());
             if (c != null) {
                 str += Enums.LINE_SEPARATOR;
@@ -1741,7 +1766,7 @@ public class Mind {
                 }
             }
 //            str += "// Right ID " + r.getId() + Enums.LINE_SEPARATOR;
-            for (String s : r.getOrig().toString().split("\\R")) {
+            for (String s : r.getOrigin().toString().split("\\R")) {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }
@@ -1777,33 +1802,38 @@ public class Mind {
 //    }
 
 
+    @Override
     public Rule getAcceptedRule() {
         return acceptedRule;
     }
 
+    @Override
     public int getFloodControlLimit() {
         return floodControlLimit;
     }
 
+    @Override
     public void setFloodControlLimit(int floodControlLimit) {
         this.floodControlLimit = floodControlLimit;
     }
 
+    @Override
     public int getTransactionLevel() {
         int level = 0;
-        for (Mind m = this; m.next != null; m = m.next) {
+        for (IMind m = this; m.getNext() != null; m = m.getNext()) {
             ++level;
         }
         return level;
     }
 
+    @Override
     public boolean isEmpty() {
-        for (Rule r : rules) {
+        for (IRule r : rules) {
             if (!r.isDeleted(this) && r.getMindId() == id) {
                 return false;
             }
         }
-        for (SysOp s : library) {
+        for (IOperation s : library) {
             if (!s.isDeleted(this) && s.getMindId() == id) {
                 return false;
             }
@@ -1817,10 +1847,10 @@ public class Mind {
 //    }
 
     public boolean isUnitDeleted(IUnit unit) {
-        for (Mind m = this; m != null; m = m.getNext()) {
-            if (m.getRestored().containsKey(unit.getUnitType()) && m.getRestored().get(unit.getUnitType()).contains(unit.getId())) {
+        for (IMind m = this; m != null; m = m.getNext()) {
+            if (((Mind) m).getRestored().containsKey(unit.getUnitType()) && ((Mind) m).getRestored().get(unit.getUnitType()).contains(unit.getId())) {
                 return false;
-            } else if (m.getDeleted().containsKey(unit.getUnitType()) && m.getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
+            } else if (((Mind) m).getDeleted().containsKey(unit.getUnitType()) && ((Mind) m).getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
                 return true;
             }
         }
@@ -1861,22 +1891,51 @@ public class Mind {
         }
     }
 
-    public Mind getTop() {
-        Mind m = this;
+    @Override
+    public IMind getTop() {
+        IMind m = this;
         for (; m.getNext() != null; m = m.getNext()) ;
         return m;
     }
 
-    public Mind use(String name) throws Exception {
+    @Override
+    public IMind useStorage(String name) throws Exception {
         return user.use(this, name);
     }
 
-    public Mind close() throws Exception {
+    @Override
+    public IMind closeStorage() throws Exception {
         return user.close(this);
     }
 
-    public Mind clear() throws Exception {
+    @Override
+    public IMind clearStorage() throws Exception {
         return user.clear(this);
+    }
+
+    @Override
+    public IMind reindexStorage(IReactor reactor) throws Exception {
+        return user.reindex(reactor, this);
+    }
+
+    @Override
+    public IMind removeStorage(String name) throws Exception {
+        return user.remove(this, name);
+    }
+
+    @Override
+    public boolean isStorageUsed() {
+        return !user.isClosed();
+    }
+
+    @Override
+    public String getStorageName() {
+        return user.getStorageName();
+    }
+
+    @Override
+    public Collection<String> getStoragesList() {
+        return user.getStoragesList();
     }
 
 }

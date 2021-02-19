@@ -5,8 +5,10 @@ import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.ParseError;
 import org.kanger.exception.ParseErrorException;
-import org.kanger.primitives.ArgList;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.*;
 
 import java.util.*;
@@ -22,20 +24,20 @@ public class Compiler {
         this.mind = mind;
     }
 
-    public Rule compileLine(PTree root, boolean antc, String orig, boolean query, Object[] ext) throws Exception {
+    public IRule compileLine(PTree root, boolean antc, String orig, boolean query, Object[] ext) throws Exception {
 
-        Queue<Term> externals = new LinkedList<>();
+        Queue<ITerm> externals = new LinkedList<>();
         if (ext != null) {
             for (Object o : ext) {
-                Term t = mind.getTerms().add(o);
+                ITerm t = mind.getTerms().add(o);
                 externals.add(t);
             }
         }
 
-        Rule r = new Rule(mind);
+        IRule r = new Rule(mind);
         mind.getRules().register(r);
-        r.setOrig(mind.getTerms().add(orig));
-        construct(r, r.getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
+        ((Rule) r).setOrigin(mind.getTerms().add(orig));
+        construct((Rule) r, ((Rule) r).getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
 
         // Если есть с-переменные и нет t-переменных - то все c-переменные это просто термы
 //        if(r.isAbstractable() && !r.isSubstitutable()) {
@@ -50,8 +52,8 @@ public class Compiler {
         r = mind.getRules().add(r);
 
         if (!r.isDeleted(mind)) {
-            r.setQuery(query);
-            mind.getRules().expand(r);
+            ((Rule) r).setQuery(query);
+            mind.getRules().expand((Rule) r);
         } else {
 //            r = x;
         }
@@ -68,7 +70,7 @@ public class Compiler {
 //        return replacements;
 //    }
 
-    private void construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<Term> externals) throws Exception {
+    private void construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<ITerm> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
         if (root == null) {
@@ -185,14 +187,14 @@ public class Compiler {
 
             /* Формирование списка подчиненных t-переменных для последней появившейся ранее c-переменной.
              */
-            Term c = null;
+            ITerm c = null;
             for (Argument a : replacements.values()) {
                 if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && (c == null || c.getIndex() < a.getValue(mind).getIndex())) {
                     c = a.getValue(mind);
                 }
             }
             if (c != null) {
-                c.getSlaves().add(t.getId());
+                ((Term) c).getSlaves().add(t.getId());
             }
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName)));
@@ -202,13 +204,13 @@ public class Compiler {
         return antc;
     }
 
-    private void compilePredicate(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<Term> externals) throws Exception {
+    private void compilePredicate(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
 //        Domain d = mind.getDomains().add(mind.getRights().getRoot());
 
         Domain d = new Domain(mind);
         d.setRule(r);
 
-        ArgList arg = new ArgList();
+        ArgumentsList arg = new ArgumentsList();
         Predicate pred = null;
         if (root.isSystem()) {
             // системный предикат
@@ -257,7 +259,7 @@ public class Compiler {
         t.add(d);
     }
 
-    private void parseArgs(Domain d, ArgList arg, PTree root, int level, Map<String, Argument> replacements, Queue<Term> externals) throws Exception {
+    private void parseArgs(Domain d, ArgumentsList arg, PTree root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
 //        int s;
 
         if (root == null) {
@@ -272,7 +274,7 @@ public class Compiler {
 //                throw new ParseErrorException(root.getPos(), ParseError.ENEG);
             } else {
                 // системная функция
-                ArgList arguments = new ArgList();
+                ArgumentsList arguments = new ArgumentsList();
                 parseArgs(d, arguments, root.getLeft(), level + 1, replacements, externals);
                 parseArgs(d, arguments, root.getRule(), level + 1, replacements, externals);
                 if (root.getName().equals("_neg")
@@ -291,7 +293,7 @@ public class Compiler {
             parseArgs(d, arg, root.getRule(), level + 1, replacements, externals);
         } else if (root.getName().charAt(0) == Enums.LB) {
             // вложенная функция
-            ArgList arguments = new ArgList();
+            ArgumentsList arguments = new ArgumentsList();
             parseArgs(d, arguments, root.getRule(), level + 1, replacements, externals);
             Function f = mind.getFunctions().add(mind.getTerms().add(root.getLeft().getName()), arguments);
             Argument t = new Argument(f);
@@ -310,7 +312,7 @@ public class Compiler {
             if (root.getName().contains("..")) {
                 t = new Argument(mind.getTerms().add(str));
             } else {
-                ArgList list = new ArgList();
+                ArgumentsList list = new ArgumentsList();
                 for (String s : str.split(",")) {
                     if (!s.trim().isEmpty()) {
                         list.add(new Argument(mind.getTerms().add(s)));

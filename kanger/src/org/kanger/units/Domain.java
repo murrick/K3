@@ -6,9 +6,10 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
+import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
@@ -42,19 +43,19 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     //    private boolean antc = true;                                // ! или ?
 //    private Predicate predicate = null;                         // Ссылка на описатель предиката
 //    private ArgList arguments = new ArgList();       // Массив подстановочных переменных
-    private Rule rule = null;                                        // Ссылка на правило
+    private IRule rule = null;                                        // Ссылка на правило
 
 //    private transient boolean deleted = false;
 
     public Domain() {
     }
 
-    public Domain(Predicate pred, boolean antc, ArgList args, Rule r) {
+    public Domain(IPredicate pred, boolean antc, ArgumentsList args, IRule r) {
         this(pred, antc, args);
         setRule(r);
     }
 
-    public Domain(Predicate pred, boolean antc, ArgList args) {
+    public Domain(IPredicate pred, boolean antc, ArgumentsList args) {
         super(pred, antc, args);
     }
 
@@ -102,7 +103,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return predicate != null && predicateId == predicate.getId();
     }
 
-    public Predicate getPredicate() throws Exception {
+    public IPredicate getPredicate() throws Exception {
         return super.getPredicate(mind);
     }
 
@@ -110,14 +111,14 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return super.getRight(mind);
 //    }
 
-    public Rule getRule() throws Exception {
+    public IRule getRule() throws Exception {
         if (rule == null) {
-            rule = mind.getRules().load(ruleId);
+            rule = mind.getRules().get(ruleId);
         }
         return rule;
     }
 
-    public void setRule(Rule r) {
+    public void setRule(IRule r) {
         this.ruleId = r.getId();
         rule = r;
     }
@@ -177,16 +178,16 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return list;
 //    }
 
-    public Set<Cause> getCauses(Mind mind) throws Exception {
-        Set<Cause> causes = new HashSet<>();
+    public Set<ICause> getCauses(Mind mind) throws Exception {
+        Set<ICause> causes = new HashSet<>();
 
-        ArgList args = arguments.convertBase(mind);
+        ArgumentsList args = arguments.convertBase(mind);
         if (mind.getDomainCauses().containsKey(this) && mind.getDomainCauses().get(this).containsKey(args)) {
-            Set<Cause> tmp = mind.getDomainCauses().get(this).get(args.convertBase(mind));
+            Set<ICause> tmp = mind.getDomainCauses().get(this).get(args.convertBase(mind));
             if (tmp != null) {
                 causes.addAll(tmp);
-                SortedMap<Integer, Set<Cause>> map = new TreeMap<>();
-                for (Cause c : causes) {
+                SortedMap<Integer, Set<ICause>> map = new TreeMap<>();
+                for (ICause c : causes) {
                     int weight = 0;
                     for (Argument a : getArguments()) {
                         for (Argument b : c.getDonor().getArguments()) {
@@ -208,7 +209,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 }
                 if (map.size() > 1) {
                     int weight = map.firstKey();
-                    for (Cause c : map.get(weight)) {
+                    for (ICause c : map.get(weight)) {
                         causes.remove(c);
                     }
                     map.remove(weight);
@@ -248,7 +249,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     public boolean setCauses(Collection<Cause> causes, Mind mind) throws Exception {
         boolean result = false;
         if (causes != null) {
-            ArgList current = arguments.convertBase(mind);
+            ArgumentsList current = arguments.convertBase(mind);
             if (!mind.getDomainCauses().containsKey(this)) {
                 mind.getDomainCauses().put(this, new HashMap<>());
             }
@@ -289,7 +290,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     public void setSolves(Collection<TValue> solves, Mind mind) {
         if (solves != null) {
-            ArgList current = arguments.convertBase(mind);
+            ArgumentsList current = arguments.convertBase(mind);
             if (!mind.getDomainSolves().containsKey(this)) {
                 mind.getDomainSolves().put(this, new HashMap<>());
             }
@@ -302,8 +303,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public Set<TValue> getSolves(ArgList arguments, Mind mind) {
-        ArgList args = arguments.convertBase(mind);
+    public Set<TValue> getSolves(ArgumentsList arguments, Mind mind) {
+        ArgumentsList args = arguments.convertBase(mind);
         if (mind.getDomainSolves().containsKey(this) && mind.getDomainSolves().get(this).containsKey(args)) {
             return mind.getDomainSolves().get(this).get(args);
         } else {
@@ -393,7 +394,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     //Values (1):
     //	Row 001: x=%2
 
-    public String toString(ArgList arguments) {
+    public String toString(ArgumentsList arguments) {
         try {
             String s = super.toString(mind, arguments);
 
@@ -448,7 +449,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                            && !arguments.get(i).isCVar(mind)) || arguments.get(i).getValue(mind).getRightId() == o.getArguments().get(i).getValue(mind).getRightId())
             ) {
                 return false;
-            } else if (!arguments.get(i).getValue(mind).equalsTo(o.getArguments().get(i).getValue(mind))
+            } else if (!((Term) arguments.get(i).getValue(mind)).equalsTo((Term) o.getArguments().get(i).getValue(mind))
 ////                    && !o.getArguments().get(i).isCVar(mind)
 ////                    && !arguments.get(i).isCVar(mind)
             ) {
@@ -514,7 +515,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return success;
 //    }
 
-    public int getOverlaps(ArgList arg) throws Exception {
+    public int getOverlaps(ArgumentsList arg) throws Exception {
         Set<Long> ids = new HashSet<>();
         for (Argument a : arguments) {
             for (Argument b : arg) {
@@ -603,9 +604,9 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         setUsed(arguments, mind);
     }
 
-    public boolean isUsed(ArgList arguments, Mind mind) {
+    public boolean isUsed(ArgumentsList arguments, Mind mind) {
         if (mind.getUsedDomains().containsKey(this)) {
-            for (ArgList list : mind.getUsedDomains().get(this)) {
+            for (ArgumentsList list : mind.getUsedDomains().get(this)) {
                 if (arguments.equalsBase(mind, list)) {
                     return true;
                 }
@@ -614,7 +615,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return false;
     }
 
-    public void setUsed(ArgList arguments, Mind mind) {
+    public void setUsed(ArgumentsList arguments, Mind mind) {
 //        arguments.setUser(user);
         if (!mind.getUsedDomains().containsKey(this)) {
             mind.getUsedDomains().put(this, new HashSet<>());
@@ -624,9 +625,9 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public boolean isExcluded(ArgList args, Mind mind) {
+    public boolean isExcluded(ArgumentsList args, Mind mind) {
         if (mind.getExcludedDomains().containsKey(this)) {
-            for (ArgList list : mind.getExcludedDomains().get(this)) {
+            for (ArgumentsList list : mind.getExcludedDomains().get(this)) {
                 if (args.equalsBase(mind, list)) {
                     return true;
                 }
@@ -647,7 +648,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return false;
     }
 
-    public void setExcluded(ArgList args, Mind mind) {
+    public void setExcluded(ArgumentsList args, Mind mind) {
         if (!mind.getExcludedDomains().containsKey(this)) {
             mind.getExcludedDomains().put(this, new HashSet<>());
         }
@@ -672,7 +673,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     public boolean isProduced(Mind mind) throws Exception {
         if (mind.getProducedDomains().containsKey(this)) {
-            for (List<Term> list : mind.getProducedDomains().get(this)) {
+            for (List<ITerm> list : mind.getProducedDomains().get(this)) {
                 if (arguments.equalsStamp(mind, list)) {
                     return true;
                 }
@@ -738,9 +739,9 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return isCalculated(arguments, mind);
     }
 
-    public boolean isCalculated(ArgList arguments, Mind mind) throws Exception {
+    public boolean isCalculated(ArgumentsList arguments, Mind mind) throws Exception {
         if (mind.getCalculatedDomains().containsKey(this)) {
-            for (List<Term> list : mind.getCalculatedDomains().get(this)) {
+            for (List<ITerm> list : mind.getCalculatedDomains().get(this)) {
                 if (arguments.equalsStamp(mind, list)) {
                     return true;
                 }
@@ -766,7 +767,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     public void unCalculated(Mind mind) throws Exception {
         if (isCalculated(mind)) {
-            for (List<Term> list : mind.getCalculatedDomains().get(this)) {
+            for (List<ITerm> list : mind.getCalculatedDomains().get(this)) {
                 if (arguments.equalsStamp(mind, list)) {
                     mind.getCalculatedDomains().remove(list);
                     break;
@@ -788,24 +789,24 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public boolean isStored(Mind mind) throws Exception {
-        Rule r = mind.getRules().find(this);
+        IRule r = mind.getRules().find(this);
         return r != null && !r.isDeleted(mind);
     }
 
-    public boolean isStored(ArgList args, Mind mind) throws Exception {
+    public boolean isStored(ArgumentsList args, Mind mind) throws Exception {
         Domain d = new Domain(getPredicate(), antc, args);
-        Rule r = mind.getRules().find(d);
+        IRule r = mind.getRules().find(d);
         return r != null && !r.isDeleted(mind);
     }
 
-    public Rule setStored(Mind mind) throws Exception {
-        Rule r = mind.getRules().store(this);
+    public IRule setStored(Mind mind) throws Exception {
+        IRule r = mind.getRules().store(this);
 //        r.setDeleted(false, mind);
         return r;
     }
 
-    public Rule createStored(Mind mind) throws Exception {
-        Rule r = mind.getRules().add(this);
+    public IRule createStored(Mind mind) throws Exception {
+        IRule r = mind.getRules().add(this);
 //        r.setDeleted(false, mind);
         return r;
     }
@@ -862,7 +863,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return isQuery(arguments, mind);
     }
 
-    public boolean isQuery(ArgList arguments, Mind mind) throws Exception {
+    public boolean isQuery(ArgumentsList arguments, Mind mind) throws Exception {
         if (ruleId == -1) {
             return false;
         }
@@ -1095,7 +1096,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
                     break;
                 case TERM:
-                    Term a = arguments.get(i).getValue(mind);
+                    ITerm a = arguments.get(i).getValue(mind);
                     if (a.isCVariable()) {
                         hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
                     } else {
@@ -1126,8 +1127,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             break;
                         case TVALUE:
                         case TERM:
-                            Term a = arguments.get(i).getValue(mind);
-                            Term b = to.getArguments().get(i).getValue(mind);
+                            ITerm a = arguments.get(i).getValue(mind);
+                            ITerm b = to.getArguments().get(i).getValue(mind);
                             if (a.isCVariable() && b.isCVariable()) {
                                 if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
                                     return false;
@@ -1153,8 +1154,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override
@@ -1218,7 +1219,9 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                } else if (arguments.get(i).getValue(mind).isXVariable() && arguments.get(i).getValue(mind).getParent().getRightId() == rightId) {
 //                    ix = arguments.get(i).getValue(mind).getParent().getIndex();
 //                    ++plains;
-                } else if (!arguments.get(i).isEmpty(mind) && arguments.get(i).getValue(mind).isCVariable() && arguments.get(i).getValue(mind).getRuleId() == ruleId) {
+                } else if (!arguments.get(i).isEmpty(mind)
+                        && arguments.get(i).getValue(mind).isCVariable()
+                        && ((Term) arguments.get(i).getValue(mind)).getRuleId() == ruleId) {
                     ix = arguments.get(i).getValue(mind).getIndex();
                 } else {
                     ++plains;

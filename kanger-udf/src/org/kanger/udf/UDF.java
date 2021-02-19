@@ -2,18 +2,22 @@ package org.kanger.udf;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IReactor;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
-import org.kanger.units.*;
+import org.kanger.primitives.ArgumentsList;
+import org.kanger.units.Domain;
+import org.kanger.units.Function;
+import org.kanger.units.Operation;
+import org.kanger.units.TValue;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class UDF extends SysOp implements IReactor {
+public class UDF extends Operation implements IReactor {
 
     private static Context scriptContext = null;
 
@@ -32,7 +36,7 @@ public class UDF extends SysOp implements IReactor {
     @Override
     public Object run(Object o) throws Exception {
         Mind mind = ((IUnit) o).getMind();
-        ArgList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
+        ArgumentsList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
 //                    ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
         Scriptable scope = scriptContext.initStandardObjects();
 
@@ -54,7 +58,7 @@ public class UDF extends SysOp implements IReactor {
         if (undefined > 1) {
             ret = 0;
         } else {
-            Term fres = null;
+            ITerm fres = null;
             if (index == -1) {
                 script = scripts.get(0);
                 fres = arg.get(arg.size() - 1).getValue(mind);
@@ -84,7 +88,7 @@ public class UDF extends SysOp implements IReactor {
                     }
                 } else if (fres != null) {
                     Object val = scope.get(params.get(params.size() - 1), scope);
-                    Term cres = mind.getTerms().add(val);
+                    ITerm cres = mind.getTerms().add(val);
                     if (cres.getId() == fres.getId()) {
                         ret = 2;
                     } else {

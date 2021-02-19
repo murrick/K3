@@ -2,13 +2,15 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.IPredicate;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Predicate;
-import org.kanger.units.Term;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,7 +19,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class PredicateFactory implements Iterable<Predicate> {
+public class PredicateFactory implements IFactory<IPredicate> {
 
     public static final String SCHEMA = "predicates";
 
@@ -35,7 +37,7 @@ public class PredicateFactory implements Iterable<Predicate> {
     }
 
     public void transaction(PredicateFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -97,7 +99,7 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public synchronized Predicate add(Term line, int range) throws Exception {
+    public synchronized Predicate add(ITerm line, int range) throws Exception {
         Predicate p = find(line, range);
         if (p != null) {
             p.setDeleted(false, mind);
@@ -116,10 +118,10 @@ public class PredicateFactory implements Iterable<Predicate> {
         }
     }
 
-    public Predicate find(Term line, int range) throws Exception {
+    public Predicate find(ITerm line, int range) throws Exception {
         Predicate temp = new Predicate(line, range);
         for (long id : cache.find(temp.getHash())) {
-            IUnit one = load(id);
+            IUnit one = get(id);
             if (one.equalsTo(temp)) {
                 return (Predicate) one;
             }
@@ -127,8 +129,8 @@ public class PredicateFactory implements Iterable<Predicate> {
         return null;
     }
 
-    public Predicate load(long id) throws Exception {
-        Predicate t = get(id);
+    public Predicate get(long id) throws Exception {
+        Predicate t = (Predicate) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -141,10 +143,10 @@ public class PredicateFactory implements Iterable<Predicate> {
         return t;
     }
 
-    private Predicate get(long id) throws Exception {
-        Predicate t = (Predicate) cache.get(id);
-        return t;
-    }
+//    private Predicate get(long id) throws Exception {
+//        Predicate t = (Predicate) cache.get(id);
+//        return t;
+//    }
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {

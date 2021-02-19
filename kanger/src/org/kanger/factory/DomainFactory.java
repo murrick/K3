@@ -2,30 +2,31 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.IPredicate;
+import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Domain;
-import org.kanger.units.Predicate;
-import org.kanger.units.Rule;
 
 import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class DomainFactory implements Iterable<Domain> {
+public class DomainFactory implements IFactory<Domain> {
 
+    //    private long lastId = 0;
+//    private long firstId = 0;
     public static final String SCHEMA = "domains";
 
-//    private long lastId = 0;
-//    private long firstId = 0;
-
     private Set<Domain> waiters = new HashSet<>();
+
 
     private ICache cache;
     private IStep top = null;
@@ -39,7 +40,7 @@ public class DomainFactory implements Iterable<Domain> {
     }
 
     public void transaction(DomainFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -120,7 +121,7 @@ public class DomainFactory implements Iterable<Domain> {
 //    }
 
 
-    public synchronized Domain add(Predicate pred, boolean antc, ArgList arg, Rule r) throws Exception {
+    public synchronized Domain add(IPredicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             p.setDeleted(false, mind);
@@ -156,7 +157,7 @@ public class DomainFactory implements Iterable<Domain> {
         return p;
     }
 
-    public Domain find(Predicate pred, boolean antc, ArgList arg, Rule r) throws Exception {
+    public Domain find(IPredicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
         Domain temp = new Domain(pred, antc, arg, r);
         return find(temp);
 //        temp.setUser(user);
@@ -164,7 +165,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     public Domain find(Domain d) throws Exception {
         for (long id : cache.find(d.getHash())) {
-            IUnit one = load(id);
+            IUnit one = get(id);
             if (one.equalsTo(d)) {
                 return (Domain) one;
             }
@@ -172,8 +173,9 @@ public class DomainFactory implements Iterable<Domain> {
         return null;
     }
 
-    public Domain load(long id) throws Exception {
-        Domain t = get(id);
+    @Override
+    public Domain get(long id) throws Exception {
+        Domain t = (Domain) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -186,10 +188,10 @@ public class DomainFactory implements Iterable<Domain> {
         return t;
     }
 
-    private Domain get(long id) throws Exception {
-        Domain t = (Domain) cache.get(id);
-        return t;
-    }
+//    private Domain get(long id) throws Exception {
+//        Domain t = (Domain) cache.get(id);
+//        return t;
+//    }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
@@ -269,7 +271,7 @@ public class DomainFactory implements Iterable<Domain> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getDomains());
+            transaction(((Mind) mind.getNext()).getDomains());
         } else {
             cache.clear();
             transaction(null);
@@ -293,6 +295,7 @@ public class DomainFactory implements Iterable<Domain> {
         cache.release();
     }
 
+    @Override
     public int size() throws Exception {
         return cache.size();
     }
@@ -312,6 +315,7 @@ public class DomainFactory implements Iterable<Domain> {
         }
     }
 
+    @Override
     public boolean isEmpty() {
         return cache == null || cache.isEmpty();
     }

@@ -1,6 +1,6 @@
 package org.kanger.exception;
 
-import org.kanger.units.SysOp;
+import org.kanger.units.Operation;
 
 /**
  * Created by Dmitry Kuznetsov on 30.12.2015.
@@ -20,7 +20,7 @@ public class RuntimeErrorException extends Exception {
     public RuntimeErrorException(Object object, String msg) {
         this.object = object;
         this.error = msg;
-        if (object instanceof SysOp) {
+        if (object instanceof Operation) {
             exceptionMessage += " in =" + object.toString() + ": " + msg;
         } else {
             exceptionMessage += ": " + msg;

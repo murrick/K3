@@ -1,6 +1,7 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IRule;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
@@ -12,7 +13,7 @@ import java.util.List;
  */
 public class SolutionsStore {
 
-    private List<Rule> root = null;
+    private List<IRule> root = null;
     private boolean enableStore = true;
 
     private final Mind mind;
@@ -34,7 +35,7 @@ public class SolutionsStore {
         }
     }
 
-    public Rule add(Rule d) {
+    public IRule add(IRule d) {
         if (!enableStore) {
             return null;
         }
@@ -53,8 +54,8 @@ public class SolutionsStore {
 
     public boolean contains(Domain d) throws Exception {
         if (!isEmpty()) {
-            for (Rule r : root) {
-                if (!r.isDeleted(mind) && r.getDomain().equalsBase(d) && r.getDomain().isAntc() == d.isAntc()) {
+            for (IRule r : root) {
+                if (!r.isDeleted(mind) && ((Rule) r).getDomain().equalsBase(d) && r.isAntc() == d.isAntc()) {
                     return true;
                 }
             }
@@ -89,7 +90,7 @@ public class SolutionsStore {
 //        return root.indexOf(o);
 //    }
 
-    public List<Rule> getRoot() {
+    public List<IRule> getRoot() {
         return root;
     }
 

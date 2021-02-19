@@ -2,6 +2,7 @@ package org.kanger;
 
 import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
+import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Rule;
@@ -41,22 +42,22 @@ public class Analyzer {
         if (!result) {
 
             boolean occurs = false;
-            for (Rule r : mind.getRules()) {
+            for (IRule r : mind.getRules()) {
                 if (r.isStored() && !r.isDeleted(mind) && (r.getMindId() == mind.getId() || r.isRestored(mind))) {
 
 //                    if (r.getMindId() != mind.getId() && !r.isRestored(mind)) {
 //                        continue;
 //                    }
 //                    Domain d = r.getDomain();
-                    for (Argument a : r.getDomain().getArguments()) {
+                    for (Argument a : r.getArguments()) {
                         if (a.isEmpty(mind) || (a.getValue(mind).isCVariable() /*&& a.getValue(mind).getMindId() != mind.getId()*/)) {
                             r = null;
                             break;
                         }
                     }
                     if (r != null && !r.isQuery()) { //d.isQuery(mind)) {
-                        Hypothesis tmp = new Hypothesis(r.getDomain(), mind);
-                        Rule rx = mind.getRules().find(tmp);
+                        Hypothesis tmp = new Hypothesis(r, mind);
+                        IRule rx = mind.getRules().find(tmp);
                         if (mind.getHypothesis().find(tmp) == null && (rx == null || rx.isDeleted(mind))) {
 //                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
 //                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
@@ -128,7 +129,7 @@ public class Analyzer {
 //            }
 
 //            boolean trigger = false;
-            for (Rule q : mind.getRules()) {
+            for (IRule q : mind.getRules()) {
 
 //                if (p.getDomain().equalsBase(q.getDomain())
 //                        && p.getDomain().isAntc() != q.getDomain().isAntc()) {
@@ -161,20 +162,20 @@ public class Analyzer {
 //                    trigger = true;
 //                }
 
-                    if (p.getDomain().equalsBase(q.getDomain())
-                            && p.getDomain().isAntc() != q.getDomain().isAntc()) {
+                    if (p.getDomain().equalsBase(((Rule) q).getDomain())
+                            && p.getDomain().isAntc() != ((Rule) q).getDomain().isAntc()) {
                         //&& p.getDomain().getArguments().getCVariables(mind).size() != p.getDomain().getRange()) {
 
                         //TODO: Костыль
-                        if (q.getMind() == null) {
-                            q.setMind(mind);
+                        if (((Rule) q).getMind() == null) {
+                            ((Rule) q).setMind(mind);
                         }
                         if (p.getDomain().isQuery(mind) && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(q);
                             mind.getValues().add(p.getSolves());
-                        } else if (q.getDomain().isQuery(mind) && q.getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                        } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(p);
-                            mind.getValues().add(q.getSolves());
+                            mind.getValues().add(((Rule) q).getSolves());
                         }
 
                         if (logging) {
@@ -214,9 +215,9 @@ public class Analyzer {
 
         Set<Rule> orfans = new HashSet<>();
 
-        for (Rule p : mind.getRules()) {
-            if (!p.isDeleted(mind) && p.isStored() && (list == null || list.contains(p.getId())) && checkRight(p, orfans, list, logging)) {
-                if (p.getDomain().isCalculated(mind)) {
+        for (IRule p : mind.getRules()) {
+            if (!p.isDeleted(mind) && p.isStored() && (list == null || list.contains(p.getId())) && checkRight((Rule) p, orfans, list, logging)) {
+                if (((Rule) p).getDomain().isCalculated(mind)) {
                     calculated = true;
                 }
                 result = true;

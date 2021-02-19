@@ -6,12 +6,13 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IReactor;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.Function;
-import org.kanger.units.SysOp;
+import org.kanger.units.Operation;
 import org.kanger.units.TValue;
 import org.kanger.units.Term;
 
@@ -23,15 +24,15 @@ import java.util.*;
 public class Functions {
 
     private final Mind mind;
-    private final Map<String, SysOp> sysOps = new HashMap<String, SysOp>() {
+    private final Map<String, Operation> sysOps = new HashMap<String, Operation>() {
 
 
         /// Арифметика
         {
-            put("_inc(1)", new SysOp(LibMode.FUNCTION, "_inc", 1, new IReactor() {
+            put("_inc(1)", new Operation(LibMode.FUNCTION, "_inc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _inc(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -46,7 +47,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _dec(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
 
                             ret = 0;
@@ -60,10 +61,10 @@ public class Functions {
         }
 
         {
-            put("_dec(1)", new SysOp(LibMode.FUNCTION, "_dec", 1, new IReactor() {
+            put("_dec(1)", new Operation(LibMode.FUNCTION, "_dec", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _dec(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -78,7 +79,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _inc(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -92,10 +93,10 @@ public class Functions {
         }
 
         {
-            put("_bitnot(1)", new SysOp(LibMode.FUNCTION, "_bitnot", 1, new IReactor() {
+            put("_bitnot(1)", new Operation(LibMode.FUNCTION, "_bitnot", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _bitnot(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -110,7 +111,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _bitnot(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -124,10 +125,10 @@ public class Functions {
         }
 
         {
-            put("_neg(1)", new SysOp(LibMode.FUNCTION, "_neg", 1, new IReactor() {
+            put("_neg(1)", new Operation(LibMode.FUNCTION, "_neg", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _neg(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -142,7 +143,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _neg(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -156,10 +157,10 @@ public class Functions {
         }
 
         {
-            put("_val(1)", new SysOp(LibMode.FUNCTION, "_val", 1, new IReactor() {
+            put("_val(1)", new Operation(LibMode.FUNCTION, "_val", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, arg.get(0).getValue(mind))) {
                             ret = 0;
@@ -174,7 +175,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, arg.get(1).getValue(mind));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -188,10 +189,10 @@ public class Functions {
         }
 
         {
-            put("_add(2)", new SysOp(LibMode.FUNCTION, "_add", 2, new IReactor() {
+            put("_add(2)", new Operation(LibMode.FUNCTION, "_add", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _add(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -210,11 +211,11 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _sub(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             if (arg.get(1).isTSet()) {
                                 TValue v = arg.get(1).addValue(mind, _sub(arg.get(2).getValue(mind), arg.get(0).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -227,10 +228,10 @@ public class Functions {
         }
 
         {
-            put("_sub(2)", new SysOp(LibMode.FUNCTION, "_sub", 2, new IReactor() {
+            put("_sub(2)", new Operation(LibMode.FUNCTION, "_sub", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _sub(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -249,11 +250,11 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _add(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             if (arg.get(1).isTSet()) {
                                 TValue v = arg.get(1).addValue(mind, _sub(arg.get(0).getValue(mind), arg.get(2).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -266,10 +267,10 @@ public class Functions {
         }
 
         {
-            put("_mul(2)", new SysOp(LibMode.FUNCTION, "_mul", 2, new IReactor() {
+            put("_mul(2)", new Operation(LibMode.FUNCTION, "_mul", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _mul(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -288,11 +289,11 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet() && (double) arg.get(1).getValue(mind).getValue() != 0) {
                                 TValue v = arg.get(0).addValue(mind, _div(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             if (arg.get(1).isTSet() && (double) arg.get(0).getValue(mind).getValue() != 0) {
                                 TValue v = arg.get(1).addValue(mind, _div(arg.get(2).getValue(mind), arg.get(0).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -305,10 +306,10 @@ public class Functions {
         }
 
         {
-            put("_div(2)", new SysOp(LibMode.FUNCTION, "_div", 2, new IReactor() {
+            put("_div(2)", new Operation(LibMode.FUNCTION, "_div", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind) && (double) arg.get(1).getValue(mind).getValue() != 0) {
                         if (!((Function) o).setParameter(2, _div(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -327,11 +328,11 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _mul(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             if (arg.get(1).isTSet() && (double) arg.get(2).getValue(mind).getValue() != 0) {
                                 TValue v = arg.get(0).addValue(mind, _div(arg.get(0).getValue(mind), arg.get(2).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -344,10 +345,10 @@ public class Functions {
         }
 
         {
-            put("_rem(2)", new SysOp(LibMode.FUNCTION, "_rem", 2, new IReactor() {
+            put("_rem(2)", new Operation(LibMode.FUNCTION, "_rem", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind) && (double) arg.get(1).getValue(mind).getValue() != 0) {
                         if (!((Function) o).setParameter(2, _rem(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -368,12 +369,12 @@ public class Functions {
         }
 
         {
-            put("_iv(2)", new SysOp(LibMode.FUNCTION, "_iv", 2, new IReactor() {
+            put("_iv(2)", new Operation(LibMode.FUNCTION, "_iv", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
-                        if (!((Function) o).setParameter(2, mind.getTerms().add(new Term[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}))) {
+                        if (!((Function) o).setParameter(2, mind.getTerms().add(new ITerm[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}))) {
                             ret = 0;
                         }
                     } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind) && arg.get(2).getValue(mind).getType() == DataType.INTERVAL && arg.get(1).getValue(mind).compareTo(((List<Term>) arg.get(2).getValue(mind).getValue()).get(1)) == 0) {
@@ -389,7 +390,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isDefined(mind) && arg.get(2).getValue(mind).getType() == DataType.INTERVAL
-                            && mind.getTerms().add(new Term[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}).compareTo(arg.get(2).getValue(mind)) == 0) {
+                            && mind.getTerms().add(new ITerm[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}).compareTo(arg.get(2).getValue(mind)) == 0) {
                         ret = 2;
                     } else {
 //                        arg.createCVar(2).delValue(((Function) o).getOwner());
@@ -401,12 +402,12 @@ public class Functions {
         }
 
         {
-            put("_is(0)", new SysOp(LibMode.FUNCTION, "_is", 2, new IReactor() {
+            put("_is(0)", new Operation(LibMode.FUNCTION, "_is", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
 
-                    ArgList tmp = new ArgList();
+                    ArgumentsList tmp = new ArgumentsList();
                     for (int i = 0; i < arg.size() - 1; ++i) {
                         if (arg.get(i).isEmpty(mind)) {
                             ret = 0;
@@ -431,10 +432,10 @@ public class Functions {
         }
 
         {
-            put("_bitleft(2)", new SysOp(LibMode.FUNCTION, "_bitleft", 2, new IReactor() {
+            put("_bitleft(2)", new Operation(LibMode.FUNCTION, "_bitleft", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _bitleft(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -449,7 +450,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _bitright(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -463,10 +464,10 @@ public class Functions {
         }
 
         {
-            put("_bitright(2)", new SysOp(LibMode.FUNCTION, "_bitright", 2, new IReactor() {
+            put("_bitright(2)", new Operation(LibMode.FUNCTION, "_bitright", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _bitright(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -481,7 +482,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _bitleft(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -495,10 +496,10 @@ public class Functions {
         }
 
         {
-            put("_bitxor(2)", new SysOp(LibMode.FUNCTION, "_bitxor", 2, new IReactor() {
+            put("_bitxor(2)", new Operation(LibMode.FUNCTION, "_bitxor", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _bitxor(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -513,7 +514,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _bitxor(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -527,10 +528,10 @@ public class Functions {
         }
 
         {
-            put("_bitand(2)", new SysOp(LibMode.FUNCTION, "_bitand", 2, new IReactor() {
+            put("_bitand(2)", new Operation(LibMode.FUNCTION, "_bitand", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _bitand(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -551,10 +552,10 @@ public class Functions {
         }
 
         {
-            put("_bitor(2)", new SysOp(LibMode.FUNCTION, "_bitor", 2, new IReactor() {
+            put("_bitor(2)", new Operation(LibMode.FUNCTION, "_bitor", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _bitor(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -573,11 +574,11 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _bitandnot(arg.get(2).getValue(mind), arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             if (arg.get(1).isTSet()) {
                                 TValue v = arg.get(1).addValue(mind, _bitandnot(arg.get(2).getValue(mind), arg.get(0).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -591,10 +592,10 @@ public class Functions {
         }
 
         {
-            put("log(1)", new SysOp(LibMode.FUNCTION, "log", 1, new IReactor() {
+            put("log(1)", new Operation(LibMode.FUNCTION, "log", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _log(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -609,7 +610,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _exp(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -623,10 +624,10 @@ public class Functions {
         }
 
         {
-            put("exp(1)", new SysOp(LibMode.FUNCTION, "exp", 1, new IReactor() {
+            put("exp(1)", new Operation(LibMode.FUNCTION, "exp", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _exp(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -641,7 +642,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _log(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -655,10 +656,10 @@ public class Functions {
         }
 
         {
-            put("log10(1)", new SysOp(LibMode.FUNCTION, "log10", 1, new IReactor() {
+            put("log10(1)", new Operation(LibMode.FUNCTION, "log10", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _log10(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -673,7 +674,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _exp10(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -687,10 +688,10 @@ public class Functions {
         }
 
         {
-            put("exp10(1)", new SysOp(LibMode.FUNCTION, "exp10", 1, new IReactor() {
+            put("exp10(1)", new Operation(LibMode.FUNCTION, "exp10", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _exp10(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -705,7 +706,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _log10(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -719,7 +720,7 @@ public class Functions {
         }
 
         {
-            put("pi(0)", new SysOp(LibMode.FUNCTION, "pi", 0, new IReactor() {
+            put("pi(0)", new Operation(LibMode.FUNCTION, "pi", 0, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;
@@ -732,10 +733,10 @@ public class Functions {
         }
 
         {
-            put("sin(1)", new SysOp(LibMode.FUNCTION, "sin", 1, new IReactor() {
+            put("sin(1)", new Operation(LibMode.FUNCTION, "sin", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _sin(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -750,7 +751,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _asin(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -764,10 +765,10 @@ public class Functions {
         }
 
         {
-            put("asin(1)", new SysOp(LibMode.FUNCTION, "asin", 1, new IReactor() {
+            put("asin(1)", new Operation(LibMode.FUNCTION, "asin", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _asin(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -782,7 +783,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _sin(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -796,10 +797,10 @@ public class Functions {
         }
 
         {
-            put("cos(1)", new SysOp(LibMode.FUNCTION, "cos", 1, new IReactor() {
+            put("cos(1)", new Operation(LibMode.FUNCTION, "cos", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _cos(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -814,7 +815,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _acos(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -828,10 +829,10 @@ public class Functions {
         }
 
         {
-            put("acos(1)", new SysOp(LibMode.FUNCTION, "acos", 1, new IReactor() {
+            put("acos(1)", new Operation(LibMode.FUNCTION, "acos", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _acos(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -846,7 +847,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _cos(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -860,10 +861,10 @@ public class Functions {
         }
 
         {
-            put("tan(1)", new SysOp(LibMode.FUNCTION, "tan", 1, new IReactor() {
+            put("tan(1)", new Operation(LibMode.FUNCTION, "tan", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _tan(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -878,7 +879,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _atan(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -892,10 +893,10 @@ public class Functions {
         }
 
         {
-            put("atan(1)", new SysOp(LibMode.FUNCTION, "atan", 1, new IReactor() {
+            put("atan(1)", new Operation(LibMode.FUNCTION, "atan", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _atan(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -910,7 +911,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _tan(arg.get(1).getValue(mind)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -924,10 +925,10 @@ public class Functions {
         }
 
         {
-            put("int(1)", new SysOp(LibMode.FUNCTION, "int", 1, new IReactor() {
+            put("int(1)", new Operation(LibMode.FUNCTION, "int", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _int(arg.get(0).getValue(mind), null))) {
                             ret = 0;
@@ -948,10 +949,10 @@ public class Functions {
         }
 
         {
-            put("int(2)", new SysOp(LibMode.FUNCTION, "int", 2, new IReactor() {
+            put("int(2)", new Operation(LibMode.FUNCTION, "int", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _int(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -972,10 +973,10 @@ public class Functions {
         }
 
         {
-            put("blob(1)", new SysOp(LibMode.FUNCTION, "blob", 1, new IReactor() {
+            put("blob(1)", new Operation(LibMode.FUNCTION, "blob", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _blob(arg.get(0).getValue(mind), null))) {
                             ret = 0;
@@ -996,10 +997,10 @@ public class Functions {
         }
 
         {
-            put("blob(2)", new SysOp(LibMode.FUNCTION, "blob", 2, new IReactor() {
+            put("blob(2)", new Operation(LibMode.FUNCTION, "blob", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _blob(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -1020,10 +1021,10 @@ public class Functions {
         }
 
         {
-            put("date(1)", new SysOp(LibMode.FUNCTION, "date", 1, new IReactor() {
+            put("date(1)", new Operation(LibMode.FUNCTION, "date", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _date(arg.get(0).getValue(mind), null))) {
                             ret = 0;
@@ -1044,10 +1045,10 @@ public class Functions {
         }
 
         {
-            put("date(2)", new SysOp(LibMode.FUNCTION, "date", 2, new IReactor() {
+            put("date(2)", new Operation(LibMode.FUNCTION, "date", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _date(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -1068,10 +1069,10 @@ public class Functions {
         }
 
         {
-            put("string(1)", new SysOp(LibMode.FUNCTION, "string", 1, new IReactor() {
+            put("string(1)", new Operation(LibMode.FUNCTION, "string", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _string(arg.get(0).getValue(mind), null))) {
                             ret = 0;
@@ -1092,10 +1093,10 @@ public class Functions {
         }
 
         {
-            put("string(2)", new SysOp(LibMode.FUNCTION, "string", 2, new IReactor() {
+            put("string(2)", new Operation(LibMode.FUNCTION, "string", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _string(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -1116,10 +1117,10 @@ public class Functions {
         }
 
         {
-            put("abs(1)", new SysOp(LibMode.FUNCTION, "abs", 1, new IReactor() {
+            put("abs(1)", new Operation(LibMode.FUNCTION, "abs", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _abs(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -1140,10 +1141,10 @@ public class Functions {
         }
 
         {
-            put("round(2)", new SysOp(LibMode.FUNCTION, "round", 2, new IReactor() {
+            put("round(2)", new Operation(LibMode.FUNCTION, "round", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _round(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -1164,10 +1165,10 @@ public class Functions {
         }
 
         {
-            put("round(1)", new SysOp(LibMode.FUNCTION, "round", 1, new IReactor() {
+            put("round(1)", new Operation(LibMode.FUNCTION, "round", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _round(arg.get(0).getValue(mind), null))) {
                             ret = 0;
@@ -1188,10 +1189,10 @@ public class Functions {
         }
 
         {
-            put("sqrt(1)", new SysOp(LibMode.FUNCTION, "sqrt", 1, new IReactor() {
+            put("sqrt(1)", new Operation(LibMode.FUNCTION, "sqrt", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _sqrt(arg.get(0).getValue(mind)))) {
                             ret = 0;
@@ -1206,7 +1207,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _pow(arg.get(1).getValue(mind), mind.getTerms().add(2)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -1220,10 +1221,10 @@ public class Functions {
         }
 
         {
-            put("pow(2)", new SysOp(LibMode.FUNCTION, "pow", 2, new IReactor() {
+            put("pow(2)", new Operation(LibMode.FUNCTION, "pow", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _pow(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -1238,7 +1239,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _root(arg.get(2).getValue(mind), mind.getTerms().add(1)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -1252,10 +1253,10 @@ public class Functions {
         }
 
         {
-            put("root(2)", new SysOp(LibMode.FUNCTION, "root", 2, new IReactor() {
+            put("root(2)", new Operation(LibMode.FUNCTION, "root", 2, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                         if (!((Function) o).setParameter(2, _root(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                             ret = 0;
@@ -1270,7 +1271,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, _pow(arg.get(2).getValue(mind), mind.getTerms().add(1)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -1286,11 +1287,11 @@ public class Functions {
         // String functions
         /// Строковые функции
         {
-            put("length(1)", new SysOp(LibMode.FUNCTION, "length", 1, new IReactor() {
+            put("length(1)", new Operation(LibMode.FUNCTION, "length", 1, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
-                        ArgList arg = ((Function) o).getArguments();
+                        ArgumentsList arg = ((Function) o).getArguments();
                         if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                             if (!((Function) o).setParameter(1, _length(arg.get(0).getValue(mind), null))) {
                                 ret = 0;
@@ -1313,11 +1314,11 @@ public class Functions {
         }
 
         {
-            put("length(2)", new SysOp(LibMode.FUNCTION, "length", 2, new IReactor() {
+            put("length(2)", new Operation(LibMode.FUNCTION, "length", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
-                        ArgList arg = ((Function) o).getArguments();
+                        ArgumentsList arg = ((Function) o).getArguments();
                         if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind) && arg.get(2).isEmpty(mind)) {
                             if (!((Function) o).setParameter(2, _length(arg.get(0).getValue(mind), arg.get(1).getValue(mind)))) {
                                 ret = 0;
@@ -1344,11 +1345,11 @@ public class Functions {
         }
 
         {
-            put("mid(2)", new SysOp(LibMode.FUNCTION, "mid", 2, new IReactor() {
+            put("mid(2)", new Operation(LibMode.FUNCTION, "mid", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
-                        ArgList arg = ((Function) o).getArguments();
+                        ArgumentsList arg = ((Function) o).getArguments();
                         Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
                         Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
@@ -1367,7 +1368,7 @@ public class Functions {
                             } else {
                                 if (arg.get(1).isTSet()) {
                                     TValue v = arg.get(1).addValue(mind, mind.getTerms().add(_indexOf(src, result)));
-                                    SysOp.showLog((IUnit) o, v);
+                                    Operation.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
                             }
@@ -1383,11 +1384,11 @@ public class Functions {
         }
 
         {
-            put("mid(3)", new SysOp(LibMode.FUNCTION, "mid", 3, new IReactor() {
+            put("mid(3)", new Operation(LibMode.FUNCTION, "mid", 3, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
-                        ArgList arg = ((Function) o).getArguments();
+                        ArgumentsList arg = ((Function) o).getArguments();
                         Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
                         Double len = arg.get(2).isEmpty(mind) ? null : (Double) arg.get(2).getValue(mind).getValue();
@@ -1416,11 +1417,11 @@ public class Functions {
                             } else {
                                 if (arg.get(1).isTSet()) {
                                     TValue v = arg.get(1).addValue(mind, mind.getTerms().add(_indexOf(src, result)));
-                                    SysOp.showLog((IUnit) o, v);
+                                    Operation.showLog((IUnit) o, v);
                                 }
                                 if (arg.get(2).isTSet()) {
                                     TValue v = arg.get(2).addValue(mind, mind.getTerms().add(_indexOf(src, result) + __length(result)));
-                                    SysOp.showLog((IUnit) o, v);
+                                    Operation.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
                             }
@@ -1436,11 +1437,11 @@ public class Functions {
         }
 
         {
-            put("left(2)", new SysOp(LibMode.FUNCTION, "left", 2, new IReactor() {
+            put("left(2)", new Operation(LibMode.FUNCTION, "left", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
-                        ArgList arg = ((Function) o).getArguments();
+                        ArgumentsList arg = ((Function) o).getArguments();
                         Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
                         Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
@@ -1459,7 +1460,7 @@ public class Functions {
                             } else {
                                 if (arg.get(1).isTSet()) {
                                     TValue v = arg.get(1).addValue(mind, mind.getTerms().add(__length(result)));
-                                    SysOp.showLog((IUnit) o, v);
+                                    Operation.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
                             }
@@ -1475,11 +1476,11 @@ public class Functions {
         }
 
         {
-            put("right(2)", new SysOp(LibMode.FUNCTION, "right", 2, new IReactor() {
+            put("right(2)", new Operation(LibMode.FUNCTION, "right", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
-                        ArgList arg = ((Function) o).getArguments();
+                        ArgumentsList arg = ((Function) o).getArguments();
                         Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
                         Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
@@ -1498,7 +1499,7 @@ public class Functions {
                             } else {
                                 if (arg.get(1).isTSet()) {
                                     TValue v = arg.get(1).addValue(mind, mind.getTerms().add(__length(result)));
-                                    SysOp.showLog((IUnit) o, v);
+                                    Operation.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
                             }
@@ -1514,10 +1515,10 @@ public class Functions {
         }
 
         {
-            put("trim(1)", new SysOp(LibMode.FUNCTION, "trim", 1, new IReactor() {
+            put("trim(1)", new Operation(LibMode.FUNCTION, "trim", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
                     String result = arg.get(1).isEmpty(mind) ? null : (String) arg.get(1).getValue(mind).getValue();
 
@@ -1540,10 +1541,10 @@ public class Functions {
         }
 
         {
-            put("uc(1)", new SysOp(LibMode.FUNCTION, "uc", 1, new IReactor() {
+            put("uc(1)", new Operation(LibMode.FUNCTION, "uc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
                     String result = arg.get(1).isEmpty(mind) ? null : (String) arg.get(1).getValue(mind).getValue();
 
@@ -1566,10 +1567,10 @@ public class Functions {
         }
 
         {
-            put("lc(1)", new SysOp(LibMode.FUNCTION, "lc", 1, new IReactor() {
+            put("lc(1)", new Operation(LibMode.FUNCTION, "lc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
                     String result = arg.get(1).isEmpty(mind) ? null : (String) arg.get(1).getValue(mind).getValue();
 
@@ -1592,11 +1593,11 @@ public class Functions {
         }
 
         {
-            put("at(2)", new SysOp(LibMode.FUNCTION, "at", 2, new IReactor() {
+            put("at(2)", new Operation(LibMode.FUNCTION, "at", 2, new IReactor() {
                 public Object run(Object o) {
                     int ret = 1;
                     try {
-                        ArgList arg = ((Function) o).getArguments();
+                        ArgumentsList arg = ((Function) o).getArguments();
                         Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Object sample = arg.get(1).isEmpty(mind) ? null : arg.get(1).getValue(mind).getValue();
                         Double result = arg.get(2).isEmpty(mind) ? null : (Double) arg.get(2).getValue(mind).getValue();
@@ -1615,7 +1616,7 @@ public class Functions {
                             } else {
                                 if (arg.get(1).isTSet()) {
                                     TValue v = arg.get(1).addValue(mind, mind.getTerms().add(_substring(src, result.intValue(), 0)));
-                                    SysOp.showLog((IUnit) o, v);
+                                    Operation.showLog((IUnit) o, v);
                                 }
                                 ret = 0;
                             }
@@ -1631,10 +1632,10 @@ public class Functions {
         }
 
         {
-            put("replace(3)", new SysOp(LibMode.FUNCTION, "replace", 3, new IReactor() {
+            put("replace(3)", new Operation(LibMode.FUNCTION, "replace", 3, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                     Object target = arg.get(1).isEmpty(mind) ? null : arg.get(1).getValue(mind).getValue();
                     Object replacement = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
@@ -1654,7 +1655,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, mind.getTerms().add(_replaceAll(result, replacement, target)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -1667,10 +1668,10 @@ public class Functions {
         }
 
         {
-            put("chr(1)", new SysOp(LibMode.FUNCTION, "chr", 1, new IReactor() {
+            put("chr(1)", new Operation(LibMode.FUNCTION, "chr", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     Double src = arg.get(0).isEmpty(mind) ? null : (Double) arg.get(0).getValue(mind).getValue();
                     String result = arg.get(1).isEmpty(mind) ? null : (String) arg.get(1).getValue(mind).getValue();
 
@@ -1688,7 +1689,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, mind.getTerms().add((int) result.charAt(0)));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -1701,10 +1702,10 @@ public class Functions {
         }
 
         {
-            put("asc(1)", new SysOp(LibMode.FUNCTION, "asc", 1, new IReactor() {
+            put("asc(1)", new Operation(LibMode.FUNCTION, "asc", 1, new IReactor() {
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
                     String src = arg.get(0).isEmpty(mind) ? null : (String) arg.get(0).getValue(mind).getValue();
                     Double result = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
 
@@ -1722,7 +1723,7 @@ public class Functions {
                         } else {
                             if (arg.get(0).isTSet()) {
                                 TValue v = arg.get(0).addValue(mind, mind.getTerms().add(String.format("%c", result.intValue())));
-                                SysOp.showLog((IUnit) o, v);
+                                Operation.showLog((IUnit) o, v);
                             }
                             ret = 0;
                         }
@@ -1736,7 +1737,7 @@ public class Functions {
 
         ////////// дата и время
         {
-            put("now(0)", new SysOp(LibMode.FUNCTION, "now", 0, new IReactor() {
+            put("now(0)", new Operation(LibMode.FUNCTION, "now", 0, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;
@@ -1749,7 +1750,7 @@ public class Functions {
         }
 
         {
-            put("tz(0)", new SysOp(LibMode.FUNCTION, "tz", 0, new IReactor() {
+            put("tz(0)", new Operation(LibMode.FUNCTION, "tz", 0, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;
@@ -1763,11 +1764,11 @@ public class Functions {
 
         ////////// разное
         {
-            put("type(1)", new SysOp(LibMode.FUNCTION, "type", 1, new IReactor() {
+            put("type(1)", new Operation(LibMode.FUNCTION, "type", 1, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
 
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, mind.getTerms().add(arg.get(0).getValue(mind).getType().name().toLowerCase()))) {
@@ -1788,11 +1789,11 @@ public class Functions {
         }
 
         {
-            put("md5(1)", new SysOp(LibMode.FUNCTION, "md5", 1, new IReactor() {
+            put("md5(1)", new Operation(LibMode.FUNCTION, "md5", 1, new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     int ret = 1;
-                    ArgList arg = ((Function) o).getArguments();
+                    ArgumentsList arg = ((Function) o).getArguments();
 
                     if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
                         if (!((Function) o).setParameter(1, _md5(arg.get(0).getValue(mind)))) {
@@ -1818,7 +1819,7 @@ public class Functions {
         this.mind = mind;
     }
 
-    public Map<String, SysOp> getSysOps() {
+    public Map<String, Operation> getSysOps() {
         return sysOps;
     }
 
@@ -1946,7 +1947,7 @@ public class Functions {
         }
     }
 
-    private Term _min(Term a, Term b) {
+    private ITerm _min(ITerm a, ITerm b) {
         if (a.compareTo(b) > 0) {
             return b;
         } else {
@@ -1954,7 +1955,7 @@ public class Functions {
         }
     }
 
-    private Term _max(Term a, Term b) {
+    private ITerm _max(ITerm a, ITerm b) {
         if (a.compareTo(b) > 0) {
             return a;
         } else {
@@ -1962,7 +1963,7 @@ public class Functions {
         }
     }
 
-    protected Term _add(Term a, Term b) throws Exception {
+    protected ITerm _add(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() + (double) b.getValue();
@@ -1981,43 +1982,43 @@ public class Functions {
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
             res = Tools.timeToInterval(((Double) a.getValue()).longValue() + Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
-            Term[] list = new Term[2];
-            List<Term> aa = (List<Term>) a.getValue();
-            List<Term> bb = (List<Term>) b.getValue();
+            ITerm[] list = new Term[2];
+            List<ITerm> aa = (List<ITerm>) a.getValue();
+            List<ITerm> bb = (List<ITerm>) b.getValue();
             boolean backward = aa.get(0).compareTo(aa.get(1)) > 0 && bb.get(0).compareTo(bb.get(1)) > 0;
             list[0] = _min(_min(aa.get(0), aa.get(1)), _min(bb.get(0), bb.get(1)));
             list[1] = _max(_max(aa.get(0), aa.get(1)), _max(bb.get(0), bb.get(1)));
             if (backward) {
-                Term tmp = list[0];
+                ITerm tmp = list[0];
                 list[0] = list[1];
                 list[1] = tmp;
             }
             res = list;
         } else if (a.getType() == DataType.SET) {
-            ArgList list = new ArgList();
+            ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) a.getValue()) {
-                for (Term n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
                     if (!list.contains(mind, n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
                 if (!list.contains(mind, t)) {
                     list.add(new Argument(t));
                 }
             }
             res = list;
         } else if (b.getType() == DataType.SET) {
-            ArgList list = new ArgList();
+            ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) b.getValue()) {
-                for (Term n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
                     if (!list.contains(mind, n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
                 if (!list.contains(mind, t)) {
                     list.add(new Argument(t));
                 }
@@ -2025,20 +2026,20 @@ public class Functions {
             res = list;
         } else if (a.getType() == DataType.INTERVAL) {
             if (b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
-                Term[] list = new Term[2];
-                List<Term> aa = (List<Term>) a.getValue();
+                ITerm[] list = new Term[2];
+                List<ITerm> aa = (List<ITerm>) a.getValue();
                 list[0] = _min(_min(aa.get(0), aa.get(1)), b);
                 list[1] = _max(_max(aa.get(0), aa.get(1)), b);
                 boolean backward = aa.get(0).compareTo(aa.get(1)) > 0;
                 if (backward) {
-                    Term tmp = list[0];
+                    ITerm tmp = list[0];
                     list[0] = list[1];
                     list[1] = tmp;
                 }
                 res = list;
             } else {
-                ArgList list = new ArgList();
-                for (Term t : mind.getCalculator().getPredicates().expand(a, null, false)) {
+                ArgumentsList list = new ArgumentsList();
+                for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
                     if (!list.contains(mind, t)) {
                         list.add(new Argument(t));
                     }
@@ -2048,20 +2049,20 @@ public class Functions {
             }
         } else if (b.getType() == DataType.INTERVAL) {
             if (a.getType() == ((List<Term>) b.getValue()).get(0).getType()) {
-                Term[] list = new Term[2];
-                List<Term> bb = (List<Term>) b.getValue();
+                ITerm[] list = new Term[2];
+                List<ITerm> bb = (List<ITerm>) b.getValue();
                 list[0] = _min(_min(bb.get(0), bb.get(1)), a);
                 list[1] = _max(_max(bb.get(0), bb.get(1)), a);
                 boolean backward = bb.get(0).compareTo(bb.get(1)) > 0;
                 if (backward) {
-                    Term tmp = list[0];
+                    ITerm tmp = list[0];
                     list[0] = list[1];
                     list[1] = tmp;
                 }
                 res = list;
             } else {
-                ArgList list = new ArgList();
-                for (Term t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+                ArgumentsList list = new ArgumentsList();
+                for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
                     if (!list.contains(mind, t)) {
                         list.add(new Argument(t));
                     }
@@ -2082,7 +2083,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    protected Term _inc(Term a) throws Exception {
+    protected ITerm _inc(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() + 1;
@@ -2098,7 +2099,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    protected Term _dec(Term a) throws Exception {
+    protected ITerm _dec(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() - 1;
@@ -2114,7 +2115,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    protected Term _sub(Term a, Term b) throws Exception {
+    protected ITerm _sub(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() - (double) b.getValue();
@@ -2131,42 +2132,42 @@ public class Functions {
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
             res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
         } else if (a.getType() == DataType.INTERVAL && b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
-            ArgList list = new ArgList();
-            for (Term n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            ArgumentsList list = new ArgumentsList();
+            for (ITerm n : mind.getCalculator().getPredicates().expand(a, null, false)) {
                 list.add(new Argument(n));
             }
             list.remove(mind, b);
             res = list;
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
-            ArgList list = new ArgList();
-            for (Term n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            ArgumentsList list = new ArgumentsList();
+            for (ITerm n : mind.getCalculator().getPredicates().expand(a, null, false)) {
                 list.add(new Argument(n));
             }
-            for (Term n : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm n : mind.getCalculator().getPredicates().expand(b, null, false)) {
                 list.remove(mind, n);
             }
             res = list;
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.SET) {
-            ArgList list = new ArgList();
-            for (Term n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            ArgumentsList list = new ArgumentsList();
+            for (ITerm n : mind.getCalculator().getPredicates().expand(a, null, false)) {
                 list.add(new Argument(n));
             }
             for (Term t : (Collection<Term>) b.getValue()) {
-                for (Term n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
                     list.remove(mind, n);
                 }
             }
             res = list;
         } else if (a.getType() == DataType.SET) {
-            ArgList list = new ArgList();
+            ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) a.getValue()) {
-                for (Term n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
                     if (!list.contains(mind, n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
                 list.remove(mind, t);
             }
             res = list;
@@ -2197,37 +2198,37 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _mul(Term a, Term b) throws Exception {
+    private ITerm _mul(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() * (double) b.getValue();
         } else if (a.getType() == DataType.SET) {
-            ArgList list = new ArgList();
-            ArgList result = new ArgList();
-            for (Term t : (Collection<Term>) a.getValue()) {
-                for (Term n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+            ArgumentsList list = new ArgumentsList();
+            ArgumentsList result = new ArgumentsList();
+            for (ITerm t : (Collection<Term>) a.getValue()) {
+                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
                     if (!list.contains(mind, n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
                 if (list.contains(mind, t)) {
                     result.add(new Argument(t));
                 }
             }
             res = result;
         } else if (b.getType() == DataType.SET) {
-            ArgList list = new ArgList();
-            ArgList result = new ArgList();
-            for (Term t : (Collection<Term>) b.getValue()) {
-                for (Term n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+            ArgumentsList list = new ArgumentsList();
+            ArgumentsList result = new ArgumentsList();
+            for (ITerm t : (Collection<Term>) b.getValue()) {
+                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
                     if (!list.contains(mind, n)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (Term t : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
                 if (list.contains(mind, t)) {
                     result.add(new Argument(t));
                 }
@@ -2239,7 +2240,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _div(Term a, Term b) throws Exception {
+    private ITerm _div(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() / (double) b.getValue();
@@ -2249,7 +2250,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _rem(Term a, Term b) throws Exception {
+    private ITerm _rem(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC || b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() % (double) b.getValue();
@@ -2259,7 +2260,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _neg(Term a) throws Exception {
+    private ITerm _neg(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = -(double) a.getValue();
@@ -2274,7 +2275,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _bitnot(Term a) throws Exception {
+    private ITerm _bitnot(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Long.valueOf(~(long) a.getValue()).doubleValue();
@@ -2294,7 +2295,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _bitleft(Term a, Term b) throws Exception {
+    private ITerm _bitleft(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() << (long) b.getValue()).doubleValue();
@@ -2304,7 +2305,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _bitright(Term a, Term b) throws Exception {
+    private ITerm _bitright(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() >> (long) b.getValue()).doubleValue();
@@ -2314,7 +2315,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _bitxor(Term a, Term b) throws Exception {
+    private ITerm _bitxor(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() ^ (long) b.getValue()).doubleValue();
@@ -2338,7 +2339,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _bitand(Term a, Term b) throws Exception {
+    private ITerm _bitand(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() & (long) b.getValue()).doubleValue();
@@ -2362,7 +2363,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _bitor(Term a, Term b) throws Exception {
+    private ITerm _bitor(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() | (long) b.getValue()).doubleValue();
@@ -2386,7 +2387,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _bitandnot(Term a, Term b) throws Exception {
+    private ITerm _bitandnot(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Long.valueOf((long) a.getValue() & ~(long) b.getValue()).doubleValue();
@@ -2410,7 +2411,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _log(Term a) throws Exception {
+    private ITerm _log(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.log((double) a.getValue());
@@ -2420,7 +2421,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _exp(Term a) throws Exception {
+    private ITerm _exp(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.exp((double) a.getValue());
@@ -2430,7 +2431,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _log10(Term a) throws Exception {
+    private ITerm _log10(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.log10((double) a.getValue());
@@ -2440,7 +2441,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _exp10(Term a) throws Exception {
+    private ITerm _exp10(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.pow(10.0, (double) a.getValue());
@@ -2450,12 +2451,12 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _pi() throws Exception {
+    private ITerm _pi() throws Exception {
         Object res = Math.PI;
         return mind.getTerms().add(res);
     }
 
-    private Term _sin(Term a) throws Exception {
+    private ITerm _sin(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.sin((double) a.getValue());
@@ -2465,7 +2466,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _asin(Term a) throws Exception {
+    private ITerm _asin(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.asin((double) a.getValue());
@@ -2475,7 +2476,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _cos(Term a) throws Exception {
+    private ITerm _cos(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.cos((double) a.getValue());
@@ -2485,7 +2486,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _acos(Term a) throws Exception {
+    private ITerm _acos(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.acos((double) a.getValue());
@@ -2495,7 +2496,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _tan(Term a) throws Exception {
+    private ITerm _tan(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.tan((double) a.getValue());
@@ -2505,7 +2506,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _atan(Term a) throws Exception {
+    private ITerm _atan(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.atan((double) a.getValue());
@@ -2515,7 +2516,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _abs(Term a) throws Exception {
+    private ITerm _abs(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.abs((double) a.getValue());
@@ -2531,7 +2532,7 @@ public class Functions {
      * @return
      * @throws Exception
      */
-    private Term _int(Term a, Term param) throws Exception {
+    private ITerm _int(ITerm a, ITerm param) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = ((Double) a.getValue()).longValue();
@@ -2601,7 +2602,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _blob(Term a, Term param) throws Exception {
+    private ITerm _blob(ITerm a, ITerm param) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC || a.getType() == DataType.DATE) {
             byte[] buffer = new byte[Long.BYTES];
@@ -2626,7 +2627,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _string(Term a, Term param) throws Exception {
+    private ITerm _string(ITerm a, ITerm param) throws Exception {
         Object res;
         if (a.getType() == DataType.BLOB) {
             if (param != null && param.getType() == DataType.STRING) {
@@ -2648,7 +2649,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _date(Term a, Term param) throws Exception {
+    private ITerm _date(ITerm a, ITerm param) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = new Date(((Double) a.getValue()).longValue());
@@ -2662,7 +2663,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _round(Term a, Term b) throws Exception {
+    private ITerm _round(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             Double val;
@@ -2680,7 +2681,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _sqrt(Term a) throws Exception {
+    private ITerm _sqrt(ITerm a) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC) {
             res = Math.sqrt((double) a.getValue());
@@ -2690,7 +2691,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _pow(Term a, Term b) throws Exception {
+    private ITerm _pow(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Math.pow((double) a.getValue(), (double) b.getValue());
@@ -2700,7 +2701,7 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _root(Term a, Term b) throws Exception {
+    private ITerm _root(ITerm a, ITerm b) throws Exception {
         Object res;
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = Math.pow((double) a.getValue(), 1.0 / (double) b.getValue());
@@ -2710,18 +2711,18 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _now() throws Exception {
+    private ITerm _now() throws Exception {
         Object res = new Date(System.currentTimeMillis());
         return mind.getTerms().add(res);
     }
 
-    private Term _tz() throws Exception {
+    private ITerm _tz() throws Exception {
         Object res = TimeZone.getDefault().getID();
         return mind.getTerms().add(res);
     }
 
-    private Term _md5(Term a) throws Exception {
-        Term res = null;
+    private ITerm _md5(ITerm a) throws Exception {
+        ITerm res = null;
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
             byte[] array = md.digest(a.getType() == DataType.BLOB ? (byte[]) a.getValue() : a.toString().getBytes());
@@ -2736,7 +2737,7 @@ public class Functions {
         return res;
     }
 
-    private Term _length(Term a, Term step) throws Exception {
+    private ITerm _length(ITerm a, ITerm step) throws Exception {
         Object res = null;
         if (a.getType() == DataType.STRING) {
             res = a.getValue().toString().length();
@@ -2750,12 +2751,12 @@ public class Functions {
         return mind.getTerms().add(res);
     }
 
-    private Term _step(Term a, Term size) throws Exception {
+    private ITerm _step(ITerm a, ITerm size) throws Exception {
         Object res = null;
         if (a.getType() == DataType.INTERVAL) {
-            List<Term> list = mind.getCalculator().getPredicates().expand(a, null, false);
+            List<ITerm> list = mind.getCalculator().getPredicates().expand(a, null, false);
             if (list.size() > 1) {
-                Term dif;
+                ITerm dif;
                 if (list.get(0).compareTo(list.get(list.size() - 1)) > 0) {
                     dif = _sub(list.get(0), _dec(list.get(list.size() - 1)));
                 } else {

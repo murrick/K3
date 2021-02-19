@@ -2,6 +2,9 @@ package org.kanger.primitives;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ISolve;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
@@ -9,11 +12,11 @@ import org.kanger.units.Rule;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class Cause /*implements Comparable<Cause>*/ {
+public class Cause implements org.kanger.interfaces.ICause {
     //    private Solve result = null;
 //    private Solve acceptor = null;
-    private Solve donor = null;
-    private Rule rule = null;
+    private ISolve donor = null;
+    private IRule rule = null;
 
 //    private Right next = null;
 
@@ -58,7 +61,7 @@ public class Cause /*implements Comparable<Cause>*/ {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(ruleId)
 //                .putLong(nextId)
-                .append(donor.pack());
+                .append(((Solve) donor).pack());
 //                .append(acceptor.pack());
 //        if(result != null) {
 //            packet.append(result.pack());
@@ -110,10 +113,10 @@ public class Cause /*implements Comparable<Cause>*/ {
 //            return toString().hashCode();
 //        }
 
-    private boolean equalsId(ArgList args) {
-        if (args.size() == donor.arguments.size()) {
+    private boolean equalsId(ArgumentsList args) {
+        if (args.size() == donor.getArguments().size()) {
             for (int i = 0; i < args.size(); ++i) {
-                if (args.get(i).getId() != donor.arguments.get(i).getId()) {
+                if (args.get(i).getId() != donor.getArguments().get(i).getId()) {
                     return false;
                 }
             }
@@ -185,7 +188,8 @@ public class Cause /*implements Comparable<Cause>*/ {
 //        this.acceptor = acceptor;
 //    }
 
-    public Solve getDonor() {
+    @Override
+    public ISolve getDonor() {
         return donor;
     }
 
@@ -193,9 +197,10 @@ public class Cause /*implements Comparable<Cause>*/ {
         this.donor = donor;
     }
 
-    public Rule getRule(Mind mind) throws Exception {
+    @Override
+    public IRule getRule(IMind mind) throws Exception {
         if (rule == null) {
-            rule = mind.getRules().load(ruleId);
+            rule = mind.getRules().get(ruleId);
         }
         return rule;
     }
@@ -213,6 +218,7 @@ public class Cause /*implements Comparable<Cause>*/ {
 //        this.next = next;
 //    }
 
+    @Override
     public long getRuleId() {
         return ruleId;
     }

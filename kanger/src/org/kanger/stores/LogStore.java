@@ -3,6 +3,7 @@ package org.kanger.stores;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.interfaces.IRule;
 import org.kanger.primitives.LogEntry;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
@@ -24,12 +25,12 @@ public class LogStore {
         this.mind = mind;
     }
 
-    public static List<List<String>> formatTree(Mind mind, Rule r) throws Exception {
+    public static List<List<String>> formatTree(IRule r) throws Exception {
 //        int save = mind.getDebugLevel();
 //        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
         List<List<String>> list = new ArrayList<>();
         int depth = 0;
-        for (List<Domain> t : r.getTree()) {
+        for (List<Domain> t : ((Rule) r).getTree()) {
             List<String> v = new ArrayList<>();
 //            v.add((t.getRight().isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
             list.add(v);
@@ -93,7 +94,7 @@ public class LogStore {
             root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
         }
         LogEntry log = null;
-        List<List<String>> net = formatTree(mind, r);
+        List<List<String>> net = formatTree(r);
         for (int i = 0; i < net.get(0).size(); ++i) {
             String s = "";
             for (int k = 0; k < net.size(); ++k) {

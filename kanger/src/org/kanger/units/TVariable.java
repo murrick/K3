@@ -3,6 +3,9 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
@@ -17,9 +20,9 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     private long id = -1;                   // Идентификатор переменной
     private long mindId = -1;                                   // id транзакции
-    private Term name = null;               // Оригинальное подкванторное имя
+    private ITerm name = null;               // Оригинальное подкванторное имя
     private int index = 0;                  // Сквозной индекс переменной
-    private Rule rule = null;             // Ссылка на правило
+    private IRule rule = null;             // Ссылка на правило
 
     private transient long nameId = -1;
     private transient long ruleId = -1;
@@ -57,14 +60,14 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return this;
     }
 
-    public Term getName() throws Exception {
+    public ITerm getName() throws Exception {
         if (name == null) {
-            name = mind.getTerms().load(nameId);
+            name = mind.getTerms().get(nameId);
         }
         return name;
     }
 
-    public void setName(Term tName) {
+    public void setName(ITerm tName) {
         this.name = tName;
         this.nameId = tName.getId();
     }
@@ -87,7 +90,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.index = index;
     }
 
-    public Term getValue() throws Exception {
+    public ITerm getValue() throws Exception {
         if (mind.getTValues().get(this) != null) {
             return mind.getTValues().get(this).getValue();
         } else {
@@ -107,7 +110,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return mind.getTValues().set(this, v);
     }
 
-    public TValue setValue(Term value) throws Exception { //throws TValueOutOfOrderException {
+    public TValue setValue(ITerm value) throws Exception { //throws TValueOutOfOrderException {
 //        if (/*isInside(value) && */!"$$".equals(value.toString())) {
 //            if (mind.getTValues().find(this, value) == null) {
 //                mind.getSubstituted().createTVar(this);
@@ -176,14 +179,14 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //        mind.getTValues().createCVar(this).setLevel(owner);
 //
 //    }
-    public Rule getRule() throws Exception {
+    public IRule getRule() throws Exception {
         if (rule == null && ruleId != -1) {
-            rule = mind.getRules().load(ruleId);
+            rule = mind.getRules().get(ruleId);
         }
         return rule;
     }
 
-    public void setRule(Rule rule) {
+    public void setRule(IRule rule) {
         this.rule = rule;
         this.ruleId = rule.getId();
     }
@@ -257,7 +260,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //    }
 
     //
-    public TValue find(Term value) throws Exception {
+    public TValue find(ITerm value) throws Exception {
         return mind.getTValues().find(this, value);
     }
 
@@ -341,8 +344,8 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override
@@ -392,7 +395,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return name != null && nameId == name.getId();
     }
 
-    public void incFloodControl(Term t) throws Exception {
+    public void incFloodControl(ITerm t) throws Exception {
         if (!mind.getFloodControl().containsKey(this)) {
             Term r = mind.getTerms().getRoot();
             long[] val = new long[]{r == null ? 0 : r.getId(), 0L};

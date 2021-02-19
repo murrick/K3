@@ -3,12 +3,14 @@ package org.kanger.factory;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.enums.Enums;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
-import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
  */
-public class DictionaryFactory implements Iterable<Term> {
+public class DictionaryFactory implements IFactory<ITerm> {
 
     public static final String SCHEMA = "dictionary";
 
@@ -47,7 +49,7 @@ public class DictionaryFactory implements Iterable<Term> {
     public void transaction(DictionaryFactory base) throws Exception {
 //        cache.clear();
 //        load.clear();
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if (mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -70,7 +72,7 @@ public class DictionaryFactory implements Iterable<Term> {
             if (!cache.isEmpty()) {
 //                lastId = cache.getRoot().getId() + 1;
 //                firstId = lastId;
-                for (Term t : this) {
+                for (ITerm t : this) {
                     if (t.isCVariable()) {
                         varIndex = t.getIndex();
                         break;
@@ -126,20 +128,20 @@ public class DictionaryFactory implements Iterable<Term> {
         }
     }
 
-    public synchronized Term add(Object o) throws Exception {
-        Term p = find(o);
+    public synchronized ITerm add(Object o) throws Exception {
+        ITerm p = find(o);
         if (p != null) {
-            p.setDeleted(false, mind);
+            ((Term) p).setDeleted(false, mind);
             return p;
         } else {
             if (p instanceof Term) {
-                p.setMind(mind);
+                ((Term) p).setMind(mind);
             } else {
                 p = new Term(o, mind);
-                p.setId(((User) mind.getUser()).nextId(SCHEMA));
-                p.setMindId(mind.getId());
+                ((Term) p).setId(((User) mind.getUser()).nextId(SCHEMA));
+                ((Term) p).setMindId(mind.getId());
             }
-            cache.add(p);
+            cache.add((IUnit) p);
             if (top == null) {
                 top = cache.getRoot();
             }
@@ -156,7 +158,7 @@ public class DictionaryFactory implements Iterable<Term> {
             t = new Term(o, mind);
         }
         for (long id : cache.find(t.getHash())) {
-            IUnit one = load(id);
+            IUnit one = get(id);
             if (one.equalsTo(t)) {
                 return (Term) one;
             }
@@ -164,18 +166,18 @@ public class DictionaryFactory implements Iterable<Term> {
         return null;
     }
 
-    public Term createCVar(Rule r, Term name) throws Exception {
+    public ITerm createCVar(IRule r, ITerm name) throws Exception {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.CVC, i);
-        Term t = add(temp);
-        t.setRule(r);
-        t.setIndex(i);
-        t.setName(name);
+        ITerm t = add(temp);
+        ((Term) t).setRule(r);
+        ((Term) t).setIndex(i);
+        ((Term) t).setName(name);
         return t;
     }
 
-    public Term createXVar(Term c) throws Exception {
-        Term t = null;
+    public ITerm createXVar(ITerm c) throws Exception {
+        ITerm t = null;
 //        for(Term x : this) {
 //            if(x.getParent().getId() == c.getId()) {
 //                t = x;
@@ -186,17 +188,17 @@ public class DictionaryFactory implements Iterable<Term> {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.XVC, i);
         t = add(temp);
-        t.setRule(c.getRule());
-        t.setIndex(i);
-        t.setName(c.getName());
+        ((Term) t).setRule(((Term) c).getRule());
+        ((Term) t).setIndex(i);
+        ((Term) t).setName(((Term) c).getName());
 //            c.getChilds().add(t.getId());
-        t.setParent(c);
+        ((Term) t).setParent(c);
 //        }
         return t;
     }
 
-    public Term load(long id) throws Exception {
-        Term t = get(id);
+    public Term get(long id) throws Exception {
+        Term t = (Term) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -209,10 +211,10 @@ public class DictionaryFactory implements Iterable<Term> {
         return t;
     }
 
-    private Term get(long id) throws Exception {
-        Term t = (Term) cache.get(id);
-        return t;
-    }
+//    private Term get(long id) throws Exception {
+//        Term t = (Term) cache.get(id);
+//        return t;
+//    }
 
 //    public Term load(long id) throws RuntimeErrorException {
 //        Term t = null;

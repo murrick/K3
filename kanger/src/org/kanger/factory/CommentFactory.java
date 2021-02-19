@@ -2,13 +2,14 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IComment;
+import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Comment;
-import org.kanger.units.Term;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 20.12.2020.
  */
-public class CommentFactory implements Iterable<Term> {
+public class CommentFactory implements IFactory<IComment> {
 
     public static final String SCHEMA = "comments";
 
@@ -35,7 +36,7 @@ public class CommentFactory implements Iterable<Term> {
     }
 
     public void transaction(CommentFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
 

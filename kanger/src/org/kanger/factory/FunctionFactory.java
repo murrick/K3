@@ -2,15 +2,16 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Function;
-import org.kanger.units.Term;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class FunctionFactory implements Iterable<Function> {
+public class FunctionFactory implements IFactory<Function> {
 
     public static final String SCHEMA = "functions";
 
@@ -37,7 +38,7 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
     public void transaction(FunctionFactory base) throws Exception {
-        if (mind.getNext() == null && !mind.getUser().isClosed()) {
+        if (mind.getNext() == null && mind.isStorageUsed()) {
 //            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
 //            } else {
@@ -102,7 +103,7 @@ public class FunctionFactory implements Iterable<Function> {
     }
 
 
-    public synchronized Function add(Term name, ArgList arguments) throws Exception {
+    public synchronized Function add(ITerm name, ArgumentsList arguments) throws Exception {
         Function f = new Function(mind);
         f.setName(name);
         f.setRange(arguments.size());
@@ -124,8 +125,8 @@ public class FunctionFactory implements Iterable<Function> {
         return f;
     }
 
-    public Function load(long id) throws Exception {
-        Function t = get(id);
+    public Function get(long id) throws Exception {
+        Function t = (Function) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
@@ -138,14 +139,14 @@ public class FunctionFactory implements Iterable<Function> {
         return t;
     }
 
-    private Function get(long id) throws Exception {
-        Function t = (Function) cache.get(id);
-        return t;
-    }
+//    private Function get(long id) throws Exception {
+//        Function t = (Function) cache.get(id);
+//        return t;
+//    }
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getFunctions());
+            transaction(((Mind) mind.getNext()).getFunctions());
         } else {
             cache.clear();
             transaction(null);

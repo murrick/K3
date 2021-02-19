@@ -8,7 +8,6 @@ public enum ArgumentType {
     TERM,
     FUNCTION,
     TVARIABLE,
-//    CVARIABLE,
-FVALUE,
+    FVALUE,
     TVALUE
 }

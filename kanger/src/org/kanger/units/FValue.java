@@ -6,9 +6,11 @@ import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.ArgList;
 import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
@@ -21,8 +23,8 @@ public class FValue implements IUnit<FValue> {
     private long id = -1;
     private long mindId = -1;                                   // id транзакции
     private Function function = null;
-    private Term value = null;
-    private ArgList condition = new ArgList();
+    private ITerm value = null;
+    private ArgumentsList condition = new ArgumentsList();
     private List<Long> stamp = new ArrayList<>();
 
     //    private FValue next = null;
@@ -97,7 +99,7 @@ public class FValue implements IUnit<FValue> {
         }
         try {
             packet.mark();
-            condition = new ArgList().apply(packet);
+            condition = new ArgumentsList().apply(packet);
 //            condition.setUser(user);
         } finally {
             packet.release();
@@ -120,9 +122,9 @@ public class FValue implements IUnit<FValue> {
         valueId = value.getId();
     }
 
-    public Term getValue() throws Exception {
+    public ITerm getValue() throws Exception {
         if (value == null && valueId != -1) {
-            value = mind.getTerms().load(valueId);
+            value = mind.getTerms().get(valueId);
         }
         return value;
     }
@@ -150,7 +152,7 @@ public class FValue implements IUnit<FValue> {
 
     public Function getFunction() throws Exception {
         if (function == null) {
-            function = mind.getFunctions().load(functionId);
+            function = mind.getFunctions().get(functionId);
         }
         return function;
     }
@@ -164,7 +166,7 @@ public class FValue implements IUnit<FValue> {
 //        return condition.get(index);
 //    }
 
-    public ArgList getCondition() {
+    public ArgumentsList getCondition() {
         return condition;
     }
 
@@ -240,8 +242,8 @@ public class FValue implements IUnit<FValue> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override

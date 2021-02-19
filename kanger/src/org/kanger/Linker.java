@@ -4,6 +4,9 @@ import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.ICause;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IReactor;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
@@ -51,7 +54,7 @@ public class Linker {
         dumpedPasses = 0;
         skippedPasses = 0;
 
-        final Map<Rule, Set<Cause>> causes = new HashMap<>();
+        final Map<IRule, Set<Cause>> causes = new HashMap<>();
 
         Rule top = mind.getRules().getTop();
         long topId = top == null ? -1 : top.getId();
@@ -69,17 +72,17 @@ public class Linker {
             mind.getTValues().dropAction();
             mind.getFValues().dropAction();
 
-            Set<Rule> ruleSet = new HashSet<>();
+            Set<IRule> ruleSet = new HashSet<>();
             if (rule != null) {
 
                 for (List<Domain> list : rule.getTree()) {
                     for (Domain d : list) {
                         if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).isTSet()) {
-                            for (Rule r : mind.getRules()) {
+                            for (IRule r : mind.getRules()) {
                                 if (!r.isDeleted(mind) && r.getId() < d.getRuleId()) {
                                     TValue s = null;
                                     TVariable t = d.get(0).getT(mind);
-                                    Term tm = mind.getTerms().add(r.getId());
+                                    ITerm tm = mind.getTerms().add(r.getId());
                                     s = mind.getTValues().find(t, tm);
                                     if (s == null) {
                                         s = mind.getTValues().add(t, tm);
@@ -105,7 +108,7 @@ public class Linker {
 //                    }
 //                }
 //            } else {
-            for (Rule r : mind.getRules()) {
+            for (IRule r : mind.getRules()) {
                 if (!r.isDeleted(mind)) {
                     ruleSet.add(r);
                 }
@@ -116,20 +119,20 @@ public class Linker {
 //            for(Right r : rightSet) {
 //                System.err.println(r);
 //            }
-            List<Rule> leftList = new ArrayList<>();
-            List<Rule> ruleList = new ArrayList<>();
+            List<IRule> leftList = new ArrayList<>();
+            List<IRule> ruleList = new ArrayList<>();
 
             leftList.addAll(ruleSet);
-            Collections.sort(leftList, new Comparator<Rule>() {
+            Collections.sort(leftList, new Comparator<IRule>() {
                 @Override
-                public int compare(Rule o1, Rule o2) {
+                public int compare(IRule o1, IRule o2) {
                     return (int) (o2.getId() - o1.getId());
                 }
             });
             ruleList.addAll(ruleSet);
-            Collections.sort(ruleList, new Comparator<Rule>() {
+            Collections.sort(ruleList, new Comparator<IRule>() {
                 @Override
-                public int compare(Rule o1, Rule o2) {
+                public int compare(IRule o1, IRule o2) {
                     return (int) (o1.getId() - o2.getId());
                 }
             });
@@ -161,7 +164,7 @@ public class Linker {
 //        }
     }
 
-    private boolean rotator(final Collection<Rule> ruleList, final Map<Rule, Set<Cause>> causes, final boolean logging) throws Exception {
+    private boolean rotator(final Collection<IRule> ruleList, final Map<IRule, Set<Cause>> causes, final boolean logging) throws Exception {
 
         boolean used = false;
 
@@ -176,7 +179,7 @@ public class Linker {
 //            }
 //        }
 
-        for (Rule r : ruleList) {
+        for (IRule r : ruleList) {
 
             //TODO: Костыль
 //            r.setMind(mind);
@@ -186,13 +189,13 @@ public class Linker {
             mind.getDomainCauses().clear();
 
             final SortedSet<TVariable> tvars = new TreeSet<>();
-            for (List<Domain> tree : r.getTree()) {
+            for (List<Domain> tree : ((Rule) r).getTree()) {
                 for (Domain d : tree) {
                     tvars.addAll(d.getArguments().getTVariables(mind));
                 }
             }
 
-            boolean wasUsed = r.isUsed(mind);
+            boolean wasUsed = ((Rule) r).isUsed(mind);
 
 //            if (!mind.getRightSolves().isEmpty()) {
 //                System.err.println("========================================");
@@ -209,7 +212,7 @@ public class Linker {
 //            }
 
 
-            for (List<Domain> tree : r.getTree()) {
+            for (List<Domain> tree : ((Rule) r).getTree()) {
 
                 final List<Domain> t = tree;
 
@@ -293,7 +296,7 @@ public class Linker {
 //                }
 //            }
 
-            if (!wasUsed && r.isUsed(mind)) {
+            if (!wasUsed && ((Rule) r).isUsed(mind)) {
                 used = true;
             }
         }
@@ -473,14 +476,14 @@ public class Linker {
         return !found || result;
     }
 
-    private boolean linkDomains(List<Domain> treeSlave, Collection<Rule> ruleList, Map<Rule, Set<Cause>> causes, boolean logging) throws Exception {
+    private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging) throws Exception {
 
         Map<Solve, List<Object[]>> variants = new HashMap<>();
         boolean result = false;
 
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
-                for (Rule rule : ruleList /*mind.getRights()*/) {
+                for (IRule rule : ruleList /*mind.getRights()*/) {
 //                    if (right.isDeleted() || !right.getPredicates().contains(slave.getPredicateId())) {
 //                        continue;
 //                    }
@@ -491,7 +494,7 @@ public class Linker {
 //                                                        TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
 
 
-                    for (List<Domain> treeMaster : rule.getTree()) {
+                    for (List<Domain> treeMaster : ((Rule) rule).getTree()) {
                         for (Domain master : treeMaster) {
 
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
@@ -651,7 +654,7 @@ public class Linker {
 //
 //                                }
 
-                                Set<Rule> usedRules = new HashSet<>();
+                                Set<IRule> usedRules = new HashSet<>();
 
                                 if (success) {
 
@@ -678,13 +681,13 @@ public class Linker {
 
 //                                            long parentId = -1;
 
-                                                    Term tm = slave.get(i).getValue(mind);
+                                                    Term tm = (Term) slave.get(i).getValue(mind);
                                                     TVariable t = master.get(i).getT(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && slave.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         s = mind.getTValues().getXValue(t, tm);
                                                         if (s == null) {
-                                                            tm = mind.getTerms().createXVar(tm);
+                                                            tm = (Term) mind.getTerms().createXVar(tm);
                                                         }
                                                     } else {
                                                         s = mind.getTValues().find(t, tm);
@@ -730,13 +733,13 @@ public class Linker {
 //                                            }
 
 //                                            long parentId = -1;
-                                                    Term tm = master.get(i).getValue(mind);
+                                                    Term tm = (Term) master.get(i).getValue(mind);
                                                     TVariable t = slave.get(i).getT(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && master.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         s = mind.getTValues().getXValue(t, tm);
                                                         if (s == null) {
-                                                            tm = mind.getTerms().createXVar(tm);
+                                                            tm = (Term) mind.getTerms().createXVar(tm);
                                                         }
                                                     } else {
                                                         s = mind.getTValues().find(t, tm);
@@ -849,8 +852,8 @@ public class Linker {
                                     markExcluded(result, substMaster, master, slave, causes, variants, logging);
                                     markExcluded(result, substSlave, slave, master, causes, variants, logging);
 
-                                    master.getRule().setUsed(mind);
-                                    slave.getRule().setUsed(mind);
+                                    ((Rule) master.getRule()).setUsed(mind);
+                                    ((Rule) slave.getRule()).setUsed(mind);
 //                                    for(Right r : usedRights) {
 //                                        r.setUsed();
 //                                    }
@@ -922,8 +925,8 @@ public class Linker {
 //        }
 //    }
 
-    private boolean markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<Rule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {
-        Rule r = null;
+    private boolean markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {
+        IRule r = null;
         boolean occurrs = false;
 
 
@@ -1044,7 +1047,7 @@ public class Linker {
 //        }
 //    }
 
-    private boolean linkDatabase(List<Domain> tree, Map<Rule, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
+    private boolean linkDatabase(List<Domain> tree, Map<IRule, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
 
         boolean result = false;
         boolean occurs = false;
@@ -1269,7 +1272,7 @@ public class Linker {
     private void logCauses(LogMode mode, Domain d) throws Exception {
         boolean ruleShowed = false;
         if (d.getCauses(mind) != null) {
-            for (Cause c : d.getCauses(mind)) {
+            for (ICause c : d.getCauses(mind)) {
                 if (!ruleShowed) {
                     mind.getLog().add(mode, "\tFrom rule: " + c.getRule(mind));
                     ruleShowed = true;
@@ -1371,9 +1374,9 @@ public class Linker {
 
     private boolean updateDatabase(boolean logging) throws Exception {
         boolean result = false;
-        for (Map.Entry<Domain, List<List<Term>>> e : mind.getProducedDomains().entrySet()) {
+        for (Map.Entry<Domain, List<List<ITerm>>> e : mind.getProducedDomains().entrySet()) {
             Domain d = e.getKey();
-            for (List<Term> args : e.getValue()) {
+            for (List<ITerm> args : e.getValue()) {
                 result = true;
                 d.getArguments().applyStamp(mind, args);
                 for (int i = 0; i < d.getRange(); ++i) {
@@ -1402,7 +1405,7 @@ public class Linker {
 //                    }
 //                }
 
-                    Rule x;
+                    IRule x;
 //                if (d.getArguments().getTVariables(true).isEmpty()) {
 //                    x = d.setStored();
 //                    if (logging) {
@@ -1415,7 +1418,7 @@ public class Linker {
 
                     x = d.createStored(mind);
                     if (d.isUsed(mind)) {
-                        x.getDomain().setUsed(mind);
+                        ((Rule) x).getDomain().setUsed(mind);
                     }
                     if (logging) {
                         mind.getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
@@ -1423,7 +1426,7 @@ public class Linker {
 //                }
 
                     if (d.isCalculated(mind)) {
-                        x.getDomain().setCalculated(mind);
+                        ((Rule) x).getDomain().setCalculated(mind);
                     }
                     if (d.getCauses(mind) != null) {
                         x.getCauses().clear();
@@ -1440,8 +1443,8 @@ public class Linker {
 //                    }
                     }
                     if (d.getSolves(mind) != null) {
-                        x.getSolves().clear();
-                        x.getSolves().addAll(d.getSolves(mind));
+                        ((Rule) x).getSolves().clear();
+                        ((Rule) x).getSolves().addAll(d.getSolves(mind));
                     }
 
 //                    if(!rightList.contains(x)) {
@@ -1459,7 +1462,7 @@ public class Linker {
     }
 
 
-    public boolean calcFunctions(List<Domain> master, Map<Rule, Set<Cause>> causes, boolean logging) throws Exception {
+    public boolean calcFunctions(List<Domain> master, Map<IRule, Set<Cause>> causes, boolean logging) throws Exception {
         boolean result = false;
 
         for (Domain d : master) {

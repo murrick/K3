@@ -3,6 +3,10 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IPredicate;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
@@ -12,13 +16,13 @@ import java.util.Set;
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  */
-public class Predicate implements IUnit<Predicate> {
+public class Predicate implements IUnit<Predicate>, IPredicate {
 
     private static final long serialVersionUID = 196402070004L;
 
     private long id = -1;                   // Идентификатор
     private long mindId = -1;                                   // id транзакции
-    private Term name = null;               // Имя предиката
+    private ITerm name = null;               // Имя предиката
     private int range = 0;                  // К-во параметров
 
     private transient Mind mind = null;
@@ -30,7 +34,7 @@ public class Predicate implements IUnit<Predicate> {
     public Predicate() {
     }
 
-    public Predicate(Term name, int range) {
+    public Predicate(ITerm name, int range) {
         this.name = name;
         this.range = range;
         this.nameId = name.getId();
@@ -63,18 +67,20 @@ public class Predicate implements IUnit<Predicate> {
         return this;
     }
 
-    public Term getName() throws Exception {
+    @Override
+    public ITerm getName() throws Exception {
         if (name == null) {
-            name = mind.getTerms().load(nameId);
+            name = mind.getTerms().get(nameId);
         }
         return name;
     }
 
-    public void setName(Term name) {
+    public void setName(ITerm name) {
         this.name = name;
         this.nameId = name.getId();
     }
 
+    @Override
     public int getRange() {
         return range;
     }
@@ -93,11 +99,11 @@ public class Predicate implements IUnit<Predicate> {
         this.id = id;
     }
 
-    public Set<Domain> getSolves() throws Exception {
-        Set<Domain> set = new HashSet<>();
-        for (Rule r : mind.getRules()) {
-            if (r.isStored() && !r.isDeleted(mind) && getId() == r.getDomain().getPredicateId()) {
-                set.add(r.getDomain());
+    public Set<IRule> getSolves() throws Exception {
+        Set<IRule> set = new HashSet<>();
+        for (IRule r : mind.getRules()) {
+            if (r.isStored() && !r.isDeleted(mind) && getId() == r.getPredicateId()) {
+                set.add(r);
             }
         }
         return set;
@@ -237,8 +243,8 @@ public class Predicate implements IUnit<Predicate> {
     }
 
     @Override
-    public boolean isDeleted(Mind mind) {
-        return mind.isUnitDeleted(this);
+    public boolean isDeleted(IMind mind) {
+        return ((Mind) mind).isUnitDeleted(this);
     }
 
     @Override
@@ -287,4 +293,9 @@ public class Predicate implements IUnit<Predicate> {
 //        predicate.setMind(m);
 //        return predicate;
 //    }
+
+    @Override
+    public boolean isEmpty() throws Exception {
+        return getSolves().isEmpty();
+    }
 }

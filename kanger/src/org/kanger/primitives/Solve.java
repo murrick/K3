@@ -4,22 +4,24 @@ import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.Enums;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IPredicate;
+import org.kanger.interfaces.ISolve;
 import org.kanger.storage.ByteBuffer;
-import org.kanger.units.Predicate;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
  * <p>
  * Описатель варианта решения предиката
  */
-public class Solve {
+public class Solve implements ISolve {
 
     private static final long serialVersionUID = 196402070001L;
 
     protected boolean antc = true;                                // ! или ?
     protected int range = 0;
-    protected Predicate predicate = null;                         // Ссылка на описатель предиката
-    protected ArgList arguments = new ArgList();       // Массив подстановочных переменных
+    protected IPredicate predicate = null;                         // Ссылка на описатель предиката
+    protected ArgumentsList arguments = new ArgumentsList();       // Массив подстановочных переменных
 
     protected transient long predicateId = -1;
 //    protected transient long rightId = -1;
@@ -27,20 +29,21 @@ public class Solve {
     public Solve() {
     }
 
-    public Solve(Predicate pred, boolean antc, ArgList args) {
+    public Solve(IPredicate pred, boolean antc, ArgumentsList args) {
         setPredicate(pred);
         setAntc(antc);
         getArguments().addAll(args);
     }
 
-    public Predicate getPredicate(Mind mind) throws Exception {
+    @Override
+    public IPredicate getPredicate(IMind mind) throws Exception {
         if (predicate == null) {
-            predicate = mind.getPredicates().load(predicateId);
+            predicate = mind.getPredicates().get(predicateId);
         }
         return predicate;
     }
 
-    public void setPredicate(Predicate predicate) {
+    public void setPredicate(IPredicate predicate) {
         this.predicateId = predicate.getId();
         this.predicate = predicate;
         this.range = predicate.getRange();
@@ -58,10 +61,12 @@ public class Solve {
 //        right = r;
 //    }
 
-    public ArgList getArguments() {
+    @Override
+    public ArgumentsList getArguments() {
         return arguments;
     }
 
+    @Override
     public boolean isAntc() {
         return antc;
     }
@@ -100,7 +105,7 @@ public class Solve {
 //    s += ");";
 //    return s;
 
-    protected String formatParam(Mind mind, Argument t) throws Exception {
+    protected String formatParam(IMind mind, Argument t) throws Exception {
         String s = "";
         //TODO: Костыль
 //        t.setUser(user);
@@ -109,15 +114,15 @@ public class Solve {
 //        }
 
         if (t.isFSet()) {
-            s += t.getF(mind).toString();
+            s += t.getF((Mind) mind).toString();
         } else if (t.isTSet()) {
-            s += t.getT(mind).toString();
+            s += t.getT((Mind) mind).toString();
         } else if (t.isVSet()) {
-            s += t.getV(mind).toString();
+            s += t.getV((Mind) mind).toString();
         } else if (t.isRSet()) {
-            s += t.getR(mind).toString();
-        } else if (!t.isEmpty(mind)) {
-            s += t.getValue(mind).toString();
+            s += t.getR((Mind) mind).toString();
+        } else if (!t.isEmpty((Mind) mind)) {
+            s += t.getValue((Mind) mind).toString();
         } else {
             s += "_";
         }
@@ -136,11 +141,11 @@ public class Solve {
     //Values (1):
     //	Row 001: x=%2
 
-    public String toString(Mind mind) {
+    public String toString(IMind mind) {
         return toString(mind, arguments);
     }
 
-    public String toString(Mind mind, ArgList arguments) {
+    public String toString(IMind mind, ArgumentsList arguments) {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
 
@@ -278,6 +283,7 @@ public class Solve {
         return predicateId;
     }
 
+    @Override
     public int getRange() {
         return range;
     }
@@ -301,7 +307,7 @@ public class Solve {
         antc = packet.getByte() != 0;
         try {
             packet.mark();
-            arguments = new ArgList().apply(packet);
+            arguments = new ArgumentsList().apply(packet);
         } finally {
             packet.release();
         }
@@ -443,12 +449,12 @@ public class Solve {
 //        return this;
 //    }
 
-    public int getHash(Mind mind) {
+    public int getHash(IMind mind) {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
         //TODO: ---
-        hash = 47 * hash + arguments.getHash(mind);
+        hash = 47 * hash + arguments.getHash((Mind) mind);
 //        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
     }

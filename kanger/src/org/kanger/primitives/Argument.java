@@ -4,6 +4,8 @@ import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
@@ -30,6 +32,10 @@ public class Argument {
 //    private transient IUser user = null;
 
     public Argument() {
+    }
+
+    public Argument(ITerm d) {
+        this((IUnit) d);
     }
 
     public Argument(IUnit d) {
@@ -59,19 +65,19 @@ public class Argument {
     private void load(Mind mind) throws Exception {
         switch (type) {
             case TERM:
-                o = mind.getTerms().load(id);
+                o = mind.getTerms().get(id);
                 break;
             case TVARIABLE:
-                o = mind.getTVars().load(id);
+                o = mind.getTVars().get(id);
                 break;
             case TVALUE:
-                o = mind.getTValues().load(id);
+                o = mind.getTValues().get(id);
                 break;
             case FUNCTION:
-                o = mind.getFunctions().load(id);
+                o = mind.getFunctions().get(id);
                 break;
             case FVALUE:
-                o = mind.getFValues().load(id);
+                o = mind.getFValues().get(id);
                 break;
             default:
                 o = null;
@@ -95,24 +101,24 @@ public class Argument {
         }
     }
 
-    public Term getValue(Mind mind) throws Exception {
+    public ITerm getValue(IMind mind) throws Exception {
         switch (type) {
             case TERM:
-                return (Term) getO(mind);
+                return (Term) getO((Mind) mind);
             case TVARIABLE:
-                return ((TVariable) getO(mind)).getValue();
+                return ((TVariable) getO((Mind) mind)).getValue();
             case TVALUE:
-                return ((TValue) getO(mind)).getValue();
+                return ((TValue) getO((Mind) mind)).getValue();
             case FVALUE:
-                return ((FValue) getO(mind)).getValue();
+                return ((FValue) getO((Mind) mind)).getValue();
             case FUNCTION:
-                return ((Function) getO(mind)).getValue();
+                return ((Function) getO((Mind) mind)).getValue();
             default:
                 return null;
         }
     }
 
-    public TValue addValue(Mind mind, Term t) throws Exception {
+    public TValue addValue(Mind mind, ITerm t) throws Exception {
 //        Mind mind = t.getUser().getMind();
         switch (type) {
             case TVARIABLE:
@@ -134,20 +140,20 @@ public class Argument {
         }
     }
 
-    public boolean setValue(Mind mind, Term t) throws Exception {
+    public boolean setValue(Mind mind, ITerm t) throws Exception {
 //        Mind mind = t.getUser().getMind();
         switch (type) {
             case EMPTY:
-                o = t;
+                o = (IUnit) t;
                 id = o.getId();
                 type = ArgumentType.TERM;
                 return true;
             case TERM:
-                o = t;
+                o = (IUnit) t;
                 id = o.getId();
                 return true;
             case TVARIABLE:
-                TVariable tv = (TVariable) getO(mind);
+                TVariable tv = (TVariable) getO((Mind) mind);
                 TValue s = tv.setValue(t);
 //                mind.addTSolve(s);
 
@@ -172,9 +178,9 @@ public class Argument {
         }
     }
 
-    public IUnit getO(Mind mind) throws Exception {
+    public IUnit getO(IMind mind) throws Exception {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
-            load(mind);
+            load((Mind) mind);
         }
         return o;
     }
@@ -252,7 +258,7 @@ public class Argument {
 
 
     public boolean isDefined(Mind mind) throws Exception {
-        Term t = getValue(mind);
+        Term t = (Term) getValue(mind);
         return t != null && !t.isCVariable(); //isCVar(mind); //type != ArgumentType.CVARIABLE;
     }
 

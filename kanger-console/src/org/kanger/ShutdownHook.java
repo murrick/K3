@@ -6,10 +6,10 @@ import org.kanger.interfaces.IUser;
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public class ShutdownHook extends Thread {
-    IUser user = null;
+    User user = null;
 
     public ShutdownHook(IUser user) {
-        this.user = user;
+        this.user = (User) user;
     }
 
     @Override
