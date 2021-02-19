@@ -275,17 +275,29 @@ public class User implements IUser {
 
     @Override
     public String getUserDir() {
-        return userSettings.getProperty("user.dir");
+        if (userSettings.containsKey("user.dir")) {
+            return userSettings.getProperty("user.dir");
+        } else {
+            return "";
+        }
     }
 
     @Override
     public String getDatabaseDir() {
-        return userSettings.getProperty("database.dir");
+        if (userSettings.containsKey("database.dir")) {
+            return userSettings.getProperty("database.dir");
+        } else {
+            return "";
+        }
     }
 
     @Override
     public String getSourceDir() {
-        return userSettings.getProperty("sources.dir");
+        if (userSettings.containsKey("sources.dir")) {
+            return userSettings.getProperty("sources.dir");
+        } else {
+            return "";
+        }
     }
 
     @Override
