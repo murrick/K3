@@ -106,11 +106,11 @@ public class Mind implements IMind {
 //        library.transaction(root.getLibrary());
 
 //        synchronized (locker) {
-        terms = root.getTerms();
-        predicates = root.getPredicates();
+        terms = (DictionaryFactory) root.getTerms();
+        predicates = (PredicateFactory) root.getPredicates();
 //        library = root.getLibrary();
 
-        library.transaction(root.getLibrary());
+        library.transaction((LibraryFactory) root.getLibrary());
 
 //            rightSolves.putAll(root.getRightSolves());
 
@@ -118,8 +118,8 @@ public class Mind implements IMind {
 //        functions = root.getFunctions();
 
         domains.transaction(((Mind) root).getDomains());
-        rules.transaction(root.getRules());
-        comments.transaction(root.getComments());
+        rules.transaction((RuleFactory) root.getRules());
+        comments.transaction((CommentFactory) root.getComments());
         tVars.transaction(((Mind) root).getTVars());
         tValues.transaction(((Mind) root).getTValues());
         functions.transaction(((Mind) root).getFunctions());
@@ -174,7 +174,7 @@ public class Mind implements IMind {
 //        pack();
         synchronized (locker) {
 
-            boolean sequencedBy = rules.isSequencedBy(m.getRules());
+            boolean sequencedBy = rules.isSequencedBy((RuleFactory) m.getRules());
             if (!sequencedBy) {
 
                 functions.mark();
@@ -196,9 +196,9 @@ public class Mind implements IMind {
 
             domains.commit(((Mind) m).getDomains());
 
-            Set<Long> list = rules.commit(m.getRules());
-            comments.commit(m.getComments());
-            library.commit(m.getLibrary());
+            Set<Long> list = rules.commit((RuleFactory) m.getRules());
+            comments.commit((CommentFactory) m.getComments());
+            library.commit((LibraryFactory) m.getLibrary());
 
             Map<UnitType, Set<Long>> saveDeleted = new HashMap<>();
             Map<UnitType, Set<Long>> saveRestored = new HashMap<>();
@@ -1934,8 +1934,8 @@ public class Mind implements IMind {
     }
 
     @Override
-    public IMind reindexStorage(IReactor reactor) throws Exception {
-        return user.reindex(reactor, this);
+    public IMind reindexStorage(String name, IReactor reactor) throws Exception {
+        return user.reindex(reactor, this, name);
     }
 
     @Override

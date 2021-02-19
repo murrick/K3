@@ -1,7 +1,6 @@
 package org.kanger.interfaces;
 
 import org.kanger.enums.QueryPass;
-import org.kanger.factory.*;
 import org.kanger.interfaces.internal.IReactor;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
@@ -29,17 +28,17 @@ public interface IMind {
 
     void setDebugLevel(int debugLevel);
 
-    DictionaryFactory getTerms();
+    IFactory<ITerm> getTerms();
 
-    PredicateFactory getPredicates();
+    IFactory<IPredicate> getPredicates();
 
     ValuesStore getValues();
 
-    RuleFactory getRules();
+    IFactory<IRule> getRules();
 
-    CommentFactory getComments();
+    IFactory<IComment> getComments();
 
-    LibraryFactory getLibrary();
+    IFactory<IOperation> getLibrary();
 
     HypothesisStore getHypothesis();
 
@@ -83,7 +82,7 @@ public interface IMind {
 
     IMind clearStorage() throws Exception;
 
-    IMind reindexStorage(IReactor reactor) throws Exception;
+    IMind reindexStorage(String name, IReactor reactor) throws Exception;
 
     IMind removeStorage(String name) throws Exception;
 

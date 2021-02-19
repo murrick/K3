@@ -9,6 +9,7 @@ package org.kanger.primitives;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
@@ -17,7 +18,7 @@ import org.kanger.units.Predicate;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class Hypothesis implements org.kanger.interfaces.IHypothesis {
+public class Hypothesis implements IHypothesis {
 
     private IPredicate predicate = null;
     private boolean antc = true;

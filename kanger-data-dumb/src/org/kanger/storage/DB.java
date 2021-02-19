@@ -1,14 +1,16 @@
 package org.kanger.storage;
 
+import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.enums.Enums;
 import org.kanger.exception.CommandErrorException;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
+import org.kanger.interfaces.internal.IReactor;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -29,7 +31,7 @@ public class DB implements IData {
     }
 
     @Override
-    public void use(String name) throws IOException {
+    public void use(String name) throws Exception {
         if (!isClosed()) {
             close();
         }
@@ -37,9 +39,9 @@ public class DB implements IData {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
         for (IBase b : bases.values()) {
-            ((Base) b).close();
+            b.close();
         }
         bases.clear();
         storageName = "";
@@ -68,6 +70,42 @@ public class DB implements IData {
         new File(dbPath + ".index").delete();
         new File(dbPath + ".store").delete();
 
+    }
+
+    @Override
+    public void reindex(IReactor<String> reactor, IMind mind) throws Exception {
+        String tmp = storageName;
+        if (isClosed()) {
+            throw new CommandErrorException("DB not used");
+        }
+
+        IUser u = new User();
+        IMind m = new Mind(u);
+
+        u.setDatabaseDir(user.getDatabaseDir());
+        DB tmpDB = new DB();
+        tmpDB.init(u);
+        m.useStorage(tmp + ".temporary");
+
+        for (Map.Entry<String, IBase> e : bases.entrySet()) {
+            if (reactor != null) {
+                reactor.run(e.getKey());
+            }
+            e.getValue().reindex(tmpDB.getBase(e.getKey()), mind);
+        }
+
+        close();
+        m.closeStorage();
+
+        String dbPath = user.getDatabaseDir() + tmp;
+
+        new File(dbPath + ".index").delete();
+        new File(dbPath + ".store").delete();
+
+        new File(dbPath + ".temporary.index").renameTo(new File(dbPath + ".index"));
+        new File(dbPath + ".temporary.store").renameTo(new File(dbPath + ".store"));
+
+        use(tmp);
     }
 
     @Override

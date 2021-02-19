@@ -1,5 +1,7 @@
 package org.kanger.interfaces.internal;
 
+import org.kanger.interfaces.IMind;
+
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
@@ -20,6 +22,8 @@ public interface IBase {
     void delete(long id) throws Exception;
 
     void clear() throws Exception;
+
+    void reindex(IBase to, IMind mind) throws Exception;
 
     boolean containsKey(long id) throws Exception;
 
@@ -42,4 +46,5 @@ public interface IBase {
     void close() throws Exception;
 
     Class getUdf();
+
 }

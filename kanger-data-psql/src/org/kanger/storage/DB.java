@@ -2,9 +2,11 @@ package org.kanger.storage;
 
 import org.kanger.User;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
+import org.kanger.interfaces.internal.IReactor;
 
 import java.io.IOException;
 import java.sql.*;
@@ -79,6 +81,11 @@ public class DB implements IData {
             }
             close();
         }
+    }
+
+    @Override
+    public void reindex(IReactor<String> reactor, IMind mind) throws Exception {
+
     }
 
     @Override

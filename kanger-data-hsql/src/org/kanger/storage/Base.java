@@ -1,6 +1,7 @@
 package org.kanger.storage;
 
 import org.kanger.User;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
@@ -241,6 +242,11 @@ public class Base implements IBase {
         }
         clearCache();
         lastId = 0;
+    }
+
+    @Override
+    public void reindex(IBase to, IMind mind) throws Exception {
+
     }
 
     @Override

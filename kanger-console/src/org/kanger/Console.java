@@ -4,6 +4,7 @@ import org.kanger.enums.*;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IReactor;
 import org.kanger.primitives.LogEntry;
@@ -224,7 +225,7 @@ public class Console {
                             dropDatabase(line, mind, sc);
                             break;
                         case 'I':   // INDEX
-                            packDatabase(mind, sc);
+                            packDatabase(line, mind, sc);
                             break;
                         case 'O':   // OPTIONS
                             options(line, mind, sc);
@@ -336,7 +337,7 @@ public class Console {
 
             Boolean res = mind.query(ln);
             if (!lastComments.isEmpty() && mind.getAcceptedRule() != null) {
-                mind.getComments().add(mind.getAcceptedRule().getId(), lastComments);
+                mind.getAcceptedRule().setComment(lastComments);
                 lastComments = "";
             }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
@@ -514,7 +515,8 @@ public class Console {
                     if (out.replaceAll(Enums.LINE_SEPARATOR, "").trim().isEmpty()) {
                         out = "";
                     }
-                    mind.getComments().add(id, out.trim());
+                    IRule r = mind.getRules().get(id);
+                    r.setComment(out.trim());
                     System.out.println(formatRightWithComments(mind, id));
                 }
             } catch (Exception ex) {
@@ -533,19 +535,59 @@ public class Console {
 
     }
 
-    private static void packDatabase(IMind mind, Scanner sc) throws Exception {
-        if (mind.isStorageUsed()) {
-            System.out.printf("Are you sure to pack database " + mind.getStorageName() + "? [y/N]? ");
+    private static void packDatabase(String line, IMind mind, Scanner sc) throws Exception {
+        String name = null;
+        if (line.split(" ").length == 2) {
+            name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
+        } else if (mind.isStorageUsed()) {
+            name = mind.getStorageName();
+        } else {
+            List<String> list = (List<String>) mind.getStoragesList();
+            if (list.size() > 0) {
+                System.out.println("DBs available:");
+                int i = 0;
+                int n = 1;
+                int cnt = 4;
+                for (String s : list) {
+                    System.out.printf("\t%d: %s", n, s);
+                    if (++i >= cnt) {
+                        System.out.println();
+                        i = 0;
+                    }
+                    ++n;
+                }
+                System.out.printf("\nEnter DB name %s: ", list.isEmpty() ? "" : "or file number");
+                name = sc.nextLine();
+                try {
+                    int ps = Integer.parseInt(name);
+                    ps -= 1;
+                    if (ps < list.size()) {
+                        name = list.get(ps);
+                    }
+                } catch (Exception ex) {
+                }
+                if (!name.isEmpty()) {
+                    name = name.replace(".", Enums.FILE_SEPARATOR);
+                } else {
+                    System.out.println("No database used");
+                }
+            } else {
+                System.out.println("No database used");
+            }
+        }
+
+        if (name != null) {
+            System.out.printf("Are you sure to pack database " + name + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                mind = mind.reindexStorage(new IReactor() {
+                mind = mind.reindexStorage(name, new IReactor() {
                     @Override
                     public Object run(Object o) {
-                        System.out.println("Processing " + o);
+                        System.out.println("Processing " + o + "...");
                         return null;
                     }
                 });
-                System.out.println("Database packed and reindexed");
+                System.out.println("Database reindexed");
             }
         } else {
             System.out.println("No database used");
@@ -951,7 +993,7 @@ public class Console {
                         + "You can use just first letters of keywords.\n");
     }
 
-    public static void showFunctions(IMind mind, String line) throws CommandErrorException {
+    public static void showFunctions(IMind mind, String line) throws Exception {
         long id = -1;
         boolean source = false;
         for (String s : line.split(" ")) {
@@ -1020,8 +1062,8 @@ public class Console {
             if (!ruleShowed) {
                 System.out.printf("\t%sRule:  %s\n", indent, c.getRule(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
             }
-            System.out.printf("\t%sCause: %s\n", indent, c.getDonor().toString(mind)); //c.getArguments()));
-            IRule r = mind.getRules().find(c.getDonor());
+            System.out.printf("\t%sCause: %s\n", indent, c.getDonor().toString()); //c.getArguments()));
+            IRule r = ((RuleFactory) mind.getRules()).find(c.getDonor());
             if (r != null) {
                 showCauses(mind, r.getCauses(), level + 1);
             }

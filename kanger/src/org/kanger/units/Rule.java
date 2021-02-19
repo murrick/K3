@@ -290,6 +290,16 @@ public class Rule implements IUnit<IRule>, IRule {
         }
     }
 
+    @Override
+    public IComment getComment() throws Exception {
+        return mind.getComments().get(id);
+    }
+
+    @Override
+    public void setComment(String comment) throws Exception {
+        mind.getComments().add(id, comment);
+    }
+
     //TODO: 5  !~b(z); ?b(z) -> c(z);  => TRUE - Не верно
 
     @Override

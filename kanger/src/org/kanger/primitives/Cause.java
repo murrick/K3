@@ -2,6 +2,7 @@ package org.kanger.primitives;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.ICause;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ISolve;
@@ -12,7 +13,7 @@ import org.kanger.units.Rule;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class Cause implements org.kanger.interfaces.ICause {
+public class Cause implements ICause {
     //    private Solve result = null;
 //    private Solve acceptor = null;
     private ISolve donor = null;

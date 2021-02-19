@@ -1279,7 +1279,7 @@ public class Linker {
                 }
 
 
-                mind.getLog().add(mode, "\t\tUsing: " + c.getDonor().toString(mind));
+                mind.getLog().add(mode, "\t\tUsing: " + c.getDonor().toString());
 //                mind.getLog().add(mode, "\t\tUsing: " + mind.getRights().find(c.getDonor()).getDomain().toString());
             }
         }

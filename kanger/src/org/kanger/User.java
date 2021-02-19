@@ -61,36 +61,42 @@ public class User implements IUser {
         return clear(mind);
     }
 
-    public IMind reindex(IReactor IReactor, IMind mind) throws Exception {
-        mind = close(mind);
+    public IMind reindex(IReactor reactor, IMind mind, String name) throws Exception {
+        boolean reopened = true;
+        String saveName = "";
+        if (isClosed()) {
+            reopened = false;
+        } else {
+            saveName = data.getStorageName();
+            close(mind);
+        }
+        use(mind, name);
         if (data != null && !data.isClosed()) {
-            for (Map.Entry<String, IBase> e : storage.entrySet()) {
-                try {
-                    IReactor.run(e.getKey());
-                } catch (Exception ex) {
-                }
-                //TODO: Переиндексация БД
-            }
-//            use(data.getStorageName());
+            data.reindex(reactor, mind);
+        }
+
+        close(mind);
+        if (reopened) {
+            use(mind, saveName);
         }
         return mind;
     }
 
-    public long getUsedCacheSize() {
-        long sz = 0;
-        for (Map.Entry<String, IBase> e : storage.entrySet()) {
-            sz += e.getValue().getUsedCacheSize();
-        }
-        return sz;
-    }
-
-    public long getMaxCacheSize() {
-        long sz = 0;
-        for (Map.Entry<String, IBase> e : storage.entrySet()) {
-            sz += e.getValue().getMaxCacheSize();
-        }
-        return sz;
-    }
+//    public long getUsedCacheSize() {
+//        long sz = 0;
+//        for (Map.Entry<String, IBase> e : storage.entrySet()) {
+//            sz += e.getValue().getUsedCacheSize();
+//        }
+//        return sz;
+//    }
+//
+//    public long getMaxCacheSize() {
+//        long sz = 0;
+//        for (Map.Entry<String, IBase> e : storage.entrySet()) {
+//            sz += e.getValue().getMaxCacheSize();
+//        }
+//        return sz;
+//    }
 
 //    @Override
 //    public void clearCache() {
@@ -205,16 +211,16 @@ public class User implements IUser {
 
             storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
 
-            mind.getTerms().transaction(null);
+            ((DictionaryFactory) mind.getTerms()).transaction(null);
             ((Mind) mind).getDomains().transaction(null);
             ((Mind) mind).getFunctions().transaction(null);
             ((Mind) mind).getFValues().transaction(null);
-            mind.getPredicates().transaction(null);
-            mind.getRules().transaction(null);
-            mind.getComments().transaction(null);
+            ((PredicateFactory) mind.getPredicates()).transaction(null);
+            ((RuleFactory) mind.getRules()).transaction(null);
+            ((CommentFactory) mind.getComments()).transaction(null);
             ((Mind) mind).getTValues().transaction(null);
             ((Mind) mind).getTVars().transaction(null);
-            mind.getLibrary().transaction(null);
+            ((LibraryFactory) mind.getLibrary()).transaction(null);
 
 //            Mind m = new Mind(mind);
 //            m.link(null, true);

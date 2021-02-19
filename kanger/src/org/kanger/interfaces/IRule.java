@@ -39,4 +39,7 @@ public interface IRule {
 
     String toString();
 
+    IComment getComment() throws Exception;
+
+    void setComment(String term) throws Exception;
 }

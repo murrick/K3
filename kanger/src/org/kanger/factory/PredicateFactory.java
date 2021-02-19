@@ -150,7 +150,7 @@ public class PredicateFactory implements IFactory<IPredicate> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getPredicates());
+            transaction((PredicateFactory) mind.getNext().getPredicates());
         } else {
             cache.clear();
             transaction(null);

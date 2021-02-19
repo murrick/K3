@@ -167,7 +167,7 @@ public class CommentFactory implements IFactory<IComment> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getComments());
+            transaction((CommentFactory) mind.getNext().getComments());
         } else {
             cache.clear();
             transaction(null);

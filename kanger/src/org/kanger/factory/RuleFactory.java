@@ -315,7 +315,7 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getRules());
+            transaction((RuleFactory) mind.getNext().getRules());
         } else {
             cache.clear();
 //            stored.clear();

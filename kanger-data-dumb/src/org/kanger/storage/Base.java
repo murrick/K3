@@ -1,6 +1,8 @@
 package org.kanger.storage;
 
+import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
@@ -22,6 +24,7 @@ public class Base implements IBase, Iterable<IStep> {
     private final Object locker = new Object();
 
     private String name = "";
+    private int baseCode = -1;
     private final Map<Long, IStep> cache = new HashMap<>();
     private final Queue<Long> timing = new LinkedList<>();
     private volatile long cacheSize = 0L;
@@ -30,7 +33,10 @@ public class Base implements IBase, Iterable<IStep> {
 
     public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
         this.name = name;
-        this.udf = ((User) user).getUdf().getClass();
+        this.baseCode = baseCode;
+        if (((User) user).getUdf() != null) {
+            this.udf = ((User) user).getUdf().getClass();
+        }
 
         MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (2048L * 2048L) + ""));
         CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
@@ -147,6 +153,19 @@ public class Base implements IBase, Iterable<IStep> {
 
                 clearCache();
                 lastId = 0;
+            }
+        }
+    }
+
+    @Override
+    public void reindex(IBase base, IMind mind) throws Exception {
+        if (!index.isEmpty()) {
+            for (Index.IndexOne one : index) {
+                if (!one.isDeleted()) {
+                    IStep o = get(one.getId());
+                    o.getData((Mind) mind);
+                    base.add(o);
+                }
             }
         }
     }

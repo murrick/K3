@@ -259,7 +259,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getTerms());
+            transaction((DictionaryFactory) mind.getNext().getTerms());
         } else {
             cache.clear();
             transaction(null);

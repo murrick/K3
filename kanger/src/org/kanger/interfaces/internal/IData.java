@@ -1,5 +1,6 @@
 package org.kanger.interfaces.internal;
 
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 
 import java.util.Collection;
@@ -17,6 +18,8 @@ public interface IData {
     void flush() throws Exception;
 
     void remove(String name) throws Exception;
+
+    void reindex(IReactor<String> reactor, IMind mind) throws Exception;
 
     boolean isClosed();
 

@@ -6,6 +6,7 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IOperation;
 import org.kanger.interfaces.internal.IReactor;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.15.
  */
-public class Operation implements IUnit<Operation>, org.kanger.interfaces.IOperation {
+public class Operation implements IUnit<Operation>, IOperation {
 
     protected final List<String> params = new ArrayList<>();
     protected final List<String> scripts = new ArrayList<>();

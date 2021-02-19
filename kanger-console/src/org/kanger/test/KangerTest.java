@@ -2,6 +2,8 @@ package org.kanger.test;
 
 import org.kanger.Mind;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.factory.DictionaryFactory;
+import org.kanger.factory.PredicateFactory;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
@@ -218,11 +220,11 @@ public class KangerTest {
         if (predicate instanceof Predicate) {
             h.setPredicate((Predicate) predicate);
         } else {
-            h.setPredicate(mind.getPredicates().add(mind.getTerms().add(predicate.toString()), params.length));
+            h.setPredicate(((PredicateFactory) mind.getPredicates()).add(((DictionaryFactory) mind.getTerms()).add(predicate.toString()), params.length));
         }
 
         for (Object o : params) {
-            ITerm t = mind.getTerms().add(o);
+            ITerm t = ((DictionaryFactory) mind.getTerms()).add(o);
             h.getArguments().add(new Argument(t));
         }
 //        if (params[0] instanceof Collection) {
@@ -239,13 +241,13 @@ public class KangerTest {
         if (predicate instanceof Predicate) {
             d.setPredicate((Predicate) predicate);
         } else {
-            d.setPredicate(mind.getPredicates().add(mind.getTerms().add(predicate.toString()), params.length));
+            d.setPredicate(((PredicateFactory) mind.getPredicates()).add(((DictionaryFactory) mind.getTerms()).add(predicate.toString()), params.length));
         }
         for (Object p : params) {
             if (p instanceof Term) {
                 d.add(new Argument((ITerm) p));
             } else {
-                d.add(new Argument(mind.getTerms().add(p)));
+                d.add(new Argument(((DictionaryFactory) mind.getTerms()).add(p)));
             }
         }
         return d;
@@ -498,11 +500,11 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?$x c(x);");
         showResult(true);
-        ITerm term = mind.getTerms().add("ooo");
+        ITerm term = ((DictionaryFactory) mind.getTerms()).add("ooo");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
-        term = mind.getTerms().add("nnn");
+        term = ((DictionaryFactory) mind.getTerms()).add("nnn");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
@@ -523,15 +525,15 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?$x d(x);");
         showResult(true);
-        ITerm term = mind.getTerms().add("ooo");
+        ITerm term = ((DictionaryFactory) mind.getTerms()).add("ooo");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
-        term = mind.getTerms().add("nnn");
+        term = ((DictionaryFactory) mind.getTerms()).add("nnn");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
-        term = mind.getTerms().add("v");
+        term = ((DictionaryFactory) mind.getTerms()).add("v");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
@@ -553,7 +555,7 @@ public class KangerTest {
         mind.query("?a(nn) -> b(nn);");
         showResult(true);
         /*
-        Term term = mind.getTerms().add("nn");
+        Term term = ((DictionaryFactory) mind.getTerms()).add("nn");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
@@ -576,7 +578,7 @@ public class KangerTest {
         mind.query("?a(nn) -> c(nn);");
         showResult(true);
         /*
-        Term term = mind.getTerms().add("nn");
+        Term term = ((DictionaryFactory) mind.getTerms()).add("nn");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
@@ -602,7 +604,7 @@ public class KangerTest {
         mind.query("?a(nn) -> d(nn);");
         showResult(true);
         /*
-        Term term = mind.getTerms().add("nn");
+        Term term = ((DictionaryFactory) mind.getTerms()).add("nn");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected x: " + term);
         }
@@ -631,7 +633,7 @@ public class KangerTest {
         mind.query("?$x a(x) && d(x);");
         showResult(true);
         if (!mind.getValues().isEmpty()) {
-            ITerm term = mind.getTerms().add("nnn");
+            ITerm term = ((DictionaryFactory) mind.getTerms()).add("nnn");
             if (!mind.getValues().getValues("x").contains(term)) {
                 fail("Expected x: " + term);
             }
@@ -655,15 +657,15 @@ public class KangerTest {
                 "!d(v);");
         mind.query("?$x a(x) || d(x);");
         showResult(true);
-        ITerm term = mind.getTerms().add("nnn");
+        ITerm term = ((DictionaryFactory) mind.getTerms()).add("nnn");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
-        term = mind.getTerms().add("ooo");
+        term = ((DictionaryFactory) mind.getTerms()).add("ooo");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }
-        term = mind.getTerms().add("v");
+        term = ((DictionaryFactory) mind.getTerms()).add("v");
         if (!mind.getValues().getValues("x").contains(term)) {
             fail("Expected: " + term);
         }

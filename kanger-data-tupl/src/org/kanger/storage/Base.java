@@ -5,6 +5,7 @@ import org.cojen.tupl.Database;
 import org.cojen.tupl.Index;
 import org.cojen.tupl.Transaction;
 import org.kanger.User;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
@@ -235,6 +236,22 @@ public class Base implements IBase {
     }
 
     @Override
+    public void reindex(IBase base, IMind mind) throws Exception {
+//        if(size() > 0) {
+//            Cursor c = index.newCursor(Transaction.BOGUS);
+//            c.first();
+//            do {
+//                long id = new ByteBuffer(c.key()).getLong();
+//                IStep o = get(id);
+//                IUnit u = (IUnit) o.getData((Mind) mind);
+//                if(!u.isDeleted(mind)) {
+//                    base.add(o);
+//                }
+//            } while (c.next() != null);
+//        }
+    }
+
+    @Override
     public boolean containsKey(long id) throws IOException {
 //        synchronized (locker) {
         return index.load(Transaction.BOGUS, new ByteBuffer().putLong(id).getBuffer()) != null;
@@ -325,4 +342,5 @@ public class Base implements IBase {
     public Class getUdf() {
         return udf;
     }
+
 }

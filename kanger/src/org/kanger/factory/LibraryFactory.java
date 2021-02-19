@@ -208,7 +208,7 @@ public class LibraryFactory implements IFactory<IOperation> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction(mind.getNext().getLibrary());
+            transaction((LibraryFactory) mind.getNext().getLibrary());
         } else {
             cache.clear();
             transaction(null);
