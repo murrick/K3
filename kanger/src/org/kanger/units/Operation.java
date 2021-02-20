@@ -7,7 +7,7 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IOperation;
-import org.kanger.interfaces.internal.IReactor;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 

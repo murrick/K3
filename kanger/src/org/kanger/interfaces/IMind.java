@@ -1,22 +1,13 @@
 package org.kanger.interfaces;
 
-import org.kanger.enums.QueryPass;
-import org.kanger.interfaces.internal.IReactor;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
 import org.kanger.stores.SolutionsStore;
 import org.kanger.stores.ValuesStore;
-import org.kanger.units.Rule;
 
 import java.util.Collection;
 
 public interface IMind {
-
-    boolean commit(IMind m) throws Exception;
-
-    void release(IMind m) throws Exception;
-
-    QueryPass getQueryPass();
 
     IUser getUser();
 
@@ -24,15 +15,23 @@ public interface IMind {
 
     IMind getNext();
 
-    int getDebugLevel();
+    IMind getTop();
 
-    void setDebugLevel(int debugLevel);
+
+    Boolean query(String line) throws Exception;
+
+    Boolean query(String line, Object[] ext) throws Exception;
+
+    boolean compile(String src) throws Exception;
+
+    boolean commit(IMind m) throws Exception;
+
+    void release(IMind m) throws Exception;
+
 
     IFactory<ITerm> getTerms();
 
     IFactory<IPredicate> getPredicates();
-
-    ValuesStore getValues();
 
     IFactory<IRule> getRules();
 
@@ -42,49 +41,43 @@ public interface IMind {
 
     HypothesisStore getHypothesis();
 
-    LogStore getLog();
+    ValuesStore getValues();
 
     SolutionsStore getSolutions();
 
-    boolean compile(String src) throws Exception;
+    LogStore getLog();
+
 
     String getSourceFileName();
 
     void setSourceFileName(String fname);
 
-    Boolean query(String line) throws Exception;
+    String getSourceCode() throws Exception;
 
-    Boolean query(String line, Object[] ext) throws Exception;
+    String getCompliedString();
 
-    String getCompliedLine();
-
-    String getVersion();
-
-    String getQuerySource();
+    String getQueryString();
 
     Object getQueryResult();
 
-    Rule getAcceptedRule();
+    IRule getAcceptedRule();
+
+
+    String getVersion();
+
+    int getDebugLevel();
+
+    void setDebugLevel(int debugLevel);
 
     int getFloodControlLimit();
 
     void setFloodControlLimit(int floodControlLimit);
 
+
     int getTransactionLevel();
 
-    boolean isEmpty();
+    boolean isEmptyLevel();
 
-    IMind getTop();
-
-    IMind useStorage(String name) throws Exception;
-
-    IMind closeStorage() throws Exception;
-
-    IMind clearStorage() throws Exception;
-
-    IMind reindexStorage(String name, IReactor reactor) throws Exception;
-
-    IMind removeStorage(String name) throws Exception;
 
     boolean isStorageUsed();
 
@@ -92,5 +85,17 @@ public interface IMind {
 
     Collection<String> getStoragesList();
 
-    String getSourceCode() throws Exception;
+    IMind useStorage(String name) throws Exception;
+
+    IMind closeStorage() throws Exception;
+
+    IMind clearStorage() throws Exception;
+
+    IMind reindexStorage(String name) throws Exception;
+
+    IMind reindexStorage(String name, IReactor reactor) throws Exception;
+
+    IMind removeStorage(String name) throws Exception;
+
+
 }

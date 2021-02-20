@@ -12,6 +12,4 @@ public interface IHypothesis extends Comparable<Hypothesis> {
 
     boolean isQuery();
 
-    String toString();
-
 }

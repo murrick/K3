@@ -4,6 +4,7 @@ import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
@@ -663,6 +664,19 @@ public class Rule implements IUnit<IRule>, IRule {
                 d.getArguments().clear();
                 d.getArguments().addAll(list);
             }
+        }
+    }
+
+    public void packCauses(IMind mind) throws Exception {
+        List<ICause> toDelete = new ArrayList<>();
+        for (ICause c : causes) {
+            IRule r = ((RuleFactory) mind.getRules()).find(c.getDonor());
+            if (r == null || r.isDeleted(mind) || c.getRule(mind).isDeleted(mind)) {
+                toDelete.add(c);
+            }
+        }
+        for (ICause c : toDelete) {
+            causes.remove(c);
         }
     }
 

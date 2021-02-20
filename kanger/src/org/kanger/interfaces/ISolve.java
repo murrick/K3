@@ -13,6 +13,4 @@ public interface ISolve {
 
     String toString(IMind mind);
 
-    String toString();
-
 }

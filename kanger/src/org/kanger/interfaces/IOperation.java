@@ -23,6 +23,4 @@ public interface IOperation {
 
     long getMindId();
 
-    String toString();
-
 }

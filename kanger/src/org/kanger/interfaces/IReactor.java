@@ -1,4 +1,4 @@
-package org.kanger.interfaces.internal;
+package org.kanger.interfaces;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.15.

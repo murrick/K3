@@ -134,6 +134,8 @@ public class RuleFactory implements IFactory<IRule> {
 //                        list.add(s.getId());
 //                    Right r = (Right) s.getData();
 //                    r.setMind(mind);
+                    } else {
+                        ((Rule) s.getData()).packCauses(base.mind);
                     }
                 } else {
                     break;

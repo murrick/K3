@@ -10,6 +10,4 @@ public interface IComment {
 
     long getMindId();
 
-    String toString();
-
 }

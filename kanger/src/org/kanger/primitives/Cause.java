@@ -2,6 +2,7 @@ package org.kanger.primitives;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
+import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.ICause;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
@@ -192,6 +193,11 @@ public class Cause implements ICause {
     @Override
     public ISolve getDonor() {
         return donor;
+    }
+
+    @Override
+    public IRule getDonor(IMind mind) throws Exception {
+        return ((RuleFactory) mind.getRules()).find(donor);
     }
 
     public void setDonor(Solve donor) {

@@ -29,6 +29,4 @@ public interface IUser {
 
     void setSourceDir(String dir);
 
-    String toString();
-
 }

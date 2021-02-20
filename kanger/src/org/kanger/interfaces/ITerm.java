@@ -20,5 +20,4 @@ public interface ITerm extends Comparable<Object> {
 
     int getIndex();
 
-    String toString();
 }

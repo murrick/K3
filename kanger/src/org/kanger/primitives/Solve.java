@@ -141,6 +141,7 @@ public class Solve implements ISolve {
     //Values (1):
     //	Row 001: x=%2
 
+    @Override
     public String toString(IMind mind) {
         return toString(mind, arguments);
     }

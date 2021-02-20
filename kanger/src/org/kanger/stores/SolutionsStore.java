@@ -6,12 +6,13 @@ import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
-public class SolutionsStore {
+public class SolutionsStore implements Iterable<IRule> {
 
     private List<IRule> root = null;
     private boolean enableStore = true;
@@ -112,4 +113,8 @@ public class SolutionsStore {
         return root == null || root.isEmpty();
     }
 
+    @Override
+    public Iterator<IRule> iterator() {
+        return root.iterator();
+    }
 }

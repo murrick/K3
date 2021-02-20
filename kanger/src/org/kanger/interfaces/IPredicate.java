@@ -18,6 +18,4 @@ public interface IPredicate {
 
     Set<IRule> getSolves() throws Exception;
 
-    String toString();
-
 }

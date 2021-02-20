@@ -1,6 +1,7 @@
 package org.kanger.interfaces.internal;
 
 import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
 import java.util.Collection;

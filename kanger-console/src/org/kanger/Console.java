@@ -4,9 +4,7 @@ import org.kanger.enums.*;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.*;
-import org.kanger.interfaces.internal.IReactor;
 import org.kanger.primitives.LogEntry;
 import org.kanger.stores.LogStore;
 import org.kanger.test.KangerTest;
@@ -89,7 +87,7 @@ public class Console {
 
             if ("/*".equals(lineStart)) {
                 repeat = !"*/".equals(lineStop);
-            } else if("=".equals(lineStart)) {
+            } else if ("=".equals(lineStart)) {
                 repeat = !lineStop.isEmpty();
             } else if (!lineStart.isEmpty() && !line.equals("?") && "!?+-=".contains(lineStart.toUpperCase().substring(0, 1))) {
                 repeat = !";".equals(lineStop);
@@ -168,7 +166,7 @@ public class Console {
                 if (line.length() > 0) {
                     switch (line.toUpperCase().charAt(0)) {
                         case 'Q':   // QUIT
-                            if (mind.isStorageUsed() && mind.getTransactionLevel() > 0 && !mind.isEmpty()) {
+                            if (mind.isStorageUsed() && mind.getTransactionLevel() > 0 && !mind.isEmptyLevel()) {
                                 System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
                                 System.out.printf("Are you sure to quit ? [y/N]? ");
                                 String s = sc.nextLine().toUpperCase();
@@ -259,7 +257,7 @@ public class Console {
                 int pos = Integer.parseInt(x.split("@")[0]);
                 String msg = x.split("@")[1];
                 System.out.println("ERROR: " + msg);
-                System.out.println(mind.getCompliedLine());
+                System.out.println(mind.getCompliedString());
                 while (pos-- > 0) {
                     System.out.print(" ");
                 }
@@ -580,9 +578,9 @@ public class Console {
             System.out.printf("Are you sure to pack database " + name + "? [y/N]? ");
             String s = sc.nextLine().toUpperCase();
             if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                mind = mind.reindexStorage(name, new IReactor() {
+                mind = mind.reindexStorage(name, new IReactor<String>() {
                     @Override
-                    public Object run(Object o) {
+                    public Object run(String o) {
                         System.out.println("Processing " + o + "...");
                         return null;
                     }
@@ -654,7 +652,7 @@ public class Console {
                 if (!backup.isEmpty()) {
                     IMind m = new Mind(mind);
                     if (m.compile(backup)) {
-                        if (!m.isEmpty()) {
+                        if (!m.isEmptyLevel()) {
                             mind = m;
                             System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
                         } else {
@@ -712,7 +710,7 @@ public class Console {
                         if (!backup.isEmpty()) {
                             IMind m = new Mind(mind);
                             if (m.compile(backup)) {
-                                if (!m.isEmpty()) {
+                                if (!m.isEmptyLevel()) {
                                     mind = m;
                                     System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
                                 } else {
@@ -753,7 +751,7 @@ public class Console {
 
     private static IMind closeDatabase(IMind mind, Scanner sc) throws Exception {
         if (mind.isStorageUsed()) {
-            if (mind.getTransactionLevel() > 0 && !mind.isEmpty()) {
+            if (mind.getTransactionLevel() > 0 && !mind.isEmptyLevel()) {
                 System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
                 System.out.printf("Are you sure to close database " + mind.getStorageName() + "? [y/N]? ");
                 String s = sc.nextLine().toUpperCase();
@@ -1059,13 +1057,13 @@ public class Console {
 
         boolean ruleShowed = false;
         for (ICause c : causes) {
-            if (!ruleShowed) {
-                System.out.printf("\t%sRule:  %s\n", indent, c.getRule(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
-            }
-            System.out.printf("\t%sCause: %s\n", indent, c.getDonor().toString()); //c.getArguments()));
-            IRule r = ((RuleFactory) mind.getRules()).find(c.getDonor());
-            if (r != null) {
-                showCauses(mind, r.getCauses(), level + 1);
+            IRule donor = c.getDonor(mind);
+            if (donor != null) {
+                if (!ruleShowed) {
+                    System.out.printf("\t%sRule:  %s\n", indent, c.getRule(mind).toString().replaceAll("\n", " ").replaceAll("  ", " "));
+                }
+                System.out.printf("\t%sCause: %s\n", indent, donor.toString()); //c.getArguments()));
+                showCauses(mind, donor.getCauses(), level + 1);
             }
         }
     }
@@ -1081,8 +1079,8 @@ public class Console {
                     dest.toString());
             if (showCauses && !dest.getCauses().isEmpty()) {
                 showCauses(mind, dest.getCauses(), 0);
-                }
             }
+        }
     }
 
     public static void showPred(IMind mind, IPredicate p, boolean showCauses) throws Exception {
@@ -1426,7 +1424,7 @@ public class Console {
                     } else {
                         System.out.printf("Use XPLAIN command for analisys\n");
                     }
-                    if (mind.isStorageUsed() && mind.isEmpty()) {
+                    if (mind.isStorageUsed() && mind.isEmptyLevel()) {
                         IMind m = mind.getNext();
                         m.release(mind);
                         mind = m;

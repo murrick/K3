@@ -147,7 +147,7 @@ public class KangerTest {
 //            }
 //        }
 
-        System.out.println("Query: " + mind.getQuerySource());
+        System.out.println("Query: " + mind.getQueryString());
         System.out.println("Result: " + mind.getQueryResult());
         int size = mind.getSolutions().size();
         if (local) {

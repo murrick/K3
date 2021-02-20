@@ -37,8 +37,6 @@ public interface IRule {
 
     IMind getMind();
 
-    String toString();
-
     IComment getComment() throws Exception;
 
     void setComment(String term) throws Exception;

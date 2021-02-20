@@ -2,9 +2,9 @@ package org.kanger.udf;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
-import org.kanger.interfaces.internal.IReactor;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.Domain;

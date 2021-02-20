@@ -10,12 +10,13 @@ import org.kanger.units.Rule;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Created by Dmitry G. Qusnetsov on 28.05.15.
  */
-public class LogStore {
+public class LogStore implements Iterable<LogEntry> {
 
     private List<LogEntry> root = null;
     private boolean enableLogging = true;
@@ -186,4 +187,8 @@ public class LogStore {
     }
 
 
+    @Override
+    public Iterator<LogEntry> iterator() {
+        return root.iterator();
+    }
 }

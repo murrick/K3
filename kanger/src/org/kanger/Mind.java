@@ -7,7 +7,6 @@ import org.kanger.compiler.Parser;
 import org.kanger.enums.*;
 import org.kanger.factory.*;
 import org.kanger.interfaces.*;
-import org.kanger.interfaces.internal.IReactor;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.TVariableSet;
@@ -227,6 +226,7 @@ public class Mind implements IMind {
                     }
                 }
             }
+
 
             if (!sequencedBy) {
                 Boolean res = analyzer.checkDatabase(list, false);
@@ -453,7 +453,6 @@ public class Mind implements IMind {
     }
 
 
-    @Override
     public QueryPass getQueryPass() {
         return queryPass;
     }
@@ -849,7 +848,7 @@ public class Mind implements IMind {
     }
 
     @Override
-    public String getCompliedLine() {
+    public String getCompliedString() {
         return compliedLine;
     }
 
@@ -974,7 +973,7 @@ public class Mind implements IMind {
 //    }
 
     @Override
-    public String getQuerySource() {
+    public String getQueryString() {
         return querySource;
     }
 
@@ -1823,7 +1822,7 @@ public class Mind implements IMind {
 
 
     @Override
-    public Rule getAcceptedRule() {
+    public IRule getAcceptedRule() {
         return acceptedRule;
     }
 
@@ -1847,7 +1846,7 @@ public class Mind implements IMind {
     }
 
     @Override
-    public boolean isEmpty() {
+    public boolean isEmptyLevel() {
         for (IRule r : rules) {
             if (!r.isDeleted(this) && r.getMindId() == id) {
                 return false;
@@ -1931,6 +1930,11 @@ public class Mind implements IMind {
     @Override
     public IMind clearStorage() throws Exception {
         return user.clear(this);
+    }
+
+    @Override
+    public IMind reindexStorage(String name) throws Exception {
+        return user.reindex(null, this, name);
     }
 
     @Override

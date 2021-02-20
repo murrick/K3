@@ -5,9 +5,9 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.ICause;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
-import org.kanger.interfaces.internal.IReactor;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
@@ -1279,7 +1279,7 @@ public class Linker {
                 }
 
 
-                mind.getLog().add(mode, "\t\tUsing: " + c.getDonor().toString());
+                mind.getLog().add(mode, "\t\tUsing: " + c.getDonor().toString(mind));
 //                mind.getLog().add(mode, "\t\tUsing: " + mind.getRights().find(c.getDonor()).getDomain().toString());
             }
         }
