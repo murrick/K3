@@ -86,7 +86,7 @@ public class LogStore implements Iterable<LogEntry> {
         return root == null || root.isEmpty();
     }
 
-    public LogEntry add(LogMode m, Rule r) throws Exception {
+    public LogEntry add(LogMode m, IRule r) throws Exception {
         if (!enableLogging) {
             return null;
         }

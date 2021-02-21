@@ -82,6 +82,10 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.id = id;
     }
 
+    public long getNameId() {
+        return nameId;
+    }
+
     public int getIndex() {
         return index;
     }
@@ -417,4 +421,5 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
             return 0;
         }
     }
+
 }

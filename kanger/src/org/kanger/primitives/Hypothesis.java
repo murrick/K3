@@ -15,6 +15,9 @@ import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Predicate;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
@@ -296,5 +299,15 @@ public class Hypothesis implements IHypothesis {
         return hash;
     }
 
+    public boolean containsTerm(long id, IMind mind) throws Exception {
+        Set<Long> terms = new HashSet<>();
+        terms.add(getPredicate().getName().getId());
+        terms.addAll(arguments.getTerms(mind, true));
+        return terms.contains(id);
+    }
+
+    public boolean containsPredicate(long id) {
+        return predicate.getId() == id;
+    }
 
 }

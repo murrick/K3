@@ -8,6 +8,11 @@ import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.ISolve;
 import org.kanger.storage.ByteBuffer;
+import org.kanger.units.Predicate;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Qusnetsov on 20.05.15.
@@ -458,6 +463,15 @@ public class Solve implements ISolve {
         hash = 47 * hash + arguments.getHash((Mind) mind);
 //        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
+    }
+
+    public Collection<Long> getTerms(IMind mind, boolean total) throws Exception {
+        Set<Long> terms = new HashSet<>();
+        if (total) {
+            terms.add(((Predicate) getPredicate(mind)).getNameId());
+        }
+        terms.addAll(arguments.getTerms(mind, total));
+        return terms;
     }
 }
 

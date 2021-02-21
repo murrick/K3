@@ -195,19 +195,19 @@ public class Argument {
         }
     }
 
-    public TVariable getT(Mind mind) throws Exception {
+    public TVariable getT(IMind mind) throws Exception {
         return type == ArgumentType.TVARIABLE ? (TVariable) getO(mind) : null;
     }
 
-    public TValue getV(Mind mind) throws Exception {
+    public TValue getV(IMind mind) throws Exception {
         return type == ArgumentType.TVALUE ? (TValue) getO(mind) : null;
     }
 
-    public Function getF(Mind mind) throws Exception {
+    public Function getF(IMind mind) throws Exception {
         return type == ArgumentType.FUNCTION ? (Function) getO(mind) : null;
     }
 
-    public FValue getR(Mind mind) throws Exception {
+    public FValue getR(IMind mind) throws Exception {
         return type == ArgumentType.FVALUE ? (FValue) getO(mind) : null;
     }
 

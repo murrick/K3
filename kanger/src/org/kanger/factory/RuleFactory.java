@@ -232,8 +232,11 @@ public class RuleFactory implements IFactory<IRule> {
 //                    topStored = cache.getRoot();
 //                }
 //            }
+            ((Rule) r).getTerms().add(r.getOrigin().getId());
+
             for (List<Domain> list : ((Rule) r).getTree()) {
                 for (Domain d : list) {
+                    ((Rule) r).getTerms().addAll(d.getTerms(mind, true));
                     ((Rule) r).getPredicates().add(d.getPredicateId());
                     d.setRule(r);
 //                    d.setMind(mind);
@@ -421,6 +424,10 @@ public class RuleFactory implements IFactory<IRule> {
             ITerm origin = mind.getTerms().add(d.toString());
             mind.setDebugLevel(save);
             r.setOrigin(origin);
+
+            r.getTerms().add(origin.getId());
+            r.getTerms().addAll(d.getTerms(mind, true));
+            r.getPredicates().add(d.getPredicateId());
 
             return add(r);
         }

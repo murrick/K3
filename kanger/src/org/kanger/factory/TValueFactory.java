@@ -4,12 +4,14 @@ import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
+import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 import org.kanger.units.Term;
@@ -198,11 +200,52 @@ public class TValueFactory implements IFactory<TValue> {
         for (Object o : cache) {
             if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
+            } else {
+                boolean found = false;
+                for (IRule r : mind.getRules()) {
+                    if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((TValue) o).getValue().getId(), mind)) {
+                        found = true;
+                        break;
+                    }
+                }
+//                if(!found) {
+//                    for (IRule r : mind.getSolutions()) {
+//                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((TValue) o).getValue().getId(), mind)) {
+//                            found = true;
+//                            break;
+//                        }
+//                    }
+//                    if (!found) {
+//                        for (IHypothesis r : mind.getHypothesis()) {
+//                            if (((Hypothesis) r).containsTerm(((TValue) o).getValue().getId(), mind)) {
+//                                found = true;
+//                                break;
+//                            }
+//                        }
+//                        if(!found) {
+//                            for(Map<String, ITerm> row : mind.getValues()) {
+//                                for(ITerm t : row.values()) {
+//                                    if(t.getId() == ((TValue) o).getValue().getId()) {
+//                                        found = true;
+//                                        break;
+//                                    }
+//                                    if(found) {
+//                                        break;
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+                if (!found) {
+                    toDelete.add(o);
+                }
             }
         }
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
-            if (current.containsKey(((TValue) o).getTVar()) && current.get(((TValue) o).getTVar()).getId() == ((TValue) o).getId()) {
+            if (current.containsKey(((TValue) o).getTVar())
+                    && current.get(((TValue) o).getTVar()).getId() == ((TValue) o).getId()) {
                 current.remove(((TValue) o).getTVar());
             }
         }

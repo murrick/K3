@@ -3,19 +3,24 @@ package org.kanger.factory;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.enums.Enums;
+import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.storage.Escalera;
+import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Dmitry G. Qusnetsov on 25.05.15.
@@ -288,9 +293,50 @@ public class DictionaryFactory implements IFactory<ITerm> {
         for (Object o : cache) {
             if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
+            } else {
+                boolean found = false;
+                for (IRule r : mind.getRules()) {
+                    if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((IUnit) o).getId(), mind)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    for (IRule r : mind.getSolutions()) {
+                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((IUnit) o).getId(), mind)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        for (IHypothesis r : mind.getHypothesis()) {
+                            if (((Hypothesis) r).containsTerm(((IUnit) o).getId(), mind)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            for (Map<String, ITerm> row : mind.getValues()) {
+                                for (ITerm t : row.values()) {
+                                    if (t.getId() == ((IUnit) o).getId()) {
+                                        found = true;
+                                        break;
+                                    }
+                                    if (found) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!found) {
+                    toDelete.add(o);
+                }
             }
         }
         for (Object o : toDelete) {
+            mind.getLog().add(LogMode.STORAGE, "Unused term wiped: " + o.toString());
             cache.delete(((IUnit) o).getId());
         }
     }

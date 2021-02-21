@@ -54,14 +54,13 @@ public class Mind implements IMind {
     private FunctionFactory functions = null;                    // Функции
     private FValueFactory fValues = null;                          // Решения функций
     private CommentFactory comments = null;
-
+    private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
 
     private User user = null;
 
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
     private LogStore log = null;                                        // Протокол вывода
-    private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
     private HypothesisStore hypothesis = null;                                // Список гипотез
 
     private Calculator calculator = null;                             // Калькулятор
@@ -394,6 +393,12 @@ public class Mind implements IMind {
 
             queryResult = (Boolean) m.getQueryResult();
 
+            if (next == null) {
+                pack();
+                update();
+            }
+
+
 //            m.closeConnection();
 
         }
@@ -430,17 +435,18 @@ public class Mind implements IMind {
     public void pack() throws Exception {
 //        if (next == null) {
 //        synchronized (locker) {
-        terms.pack();
-        predicates.pack();
         library.pack();
 
-        tValues.pack();
         tVars.pack();
         domains.pack();
         rules.pack();
         comments.pack();
         fValues.pack();
         functions.pack();
+
+        tValues.pack();
+        terms.pack();
+        predicates.pack();
 
         deleted.clear();
         restored.clear();

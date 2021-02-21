@@ -12,8 +12,7 @@ import org.kanger.units.Function;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
@@ -206,7 +205,7 @@ public class ArgumentsList extends ArrayList<Argument> {
 //        this.mind = mind;
 //    }
 
-    public List<Function> getFunctions(Mind mind) throws Exception {
+    public List<Function> getFunctions(IMind mind) throws Exception {
         List<Function> list = new ArrayList<>();
         for (Argument a : this) {
             if (a.isFSet()) {
@@ -227,7 +226,7 @@ public class ArgumentsList extends ArrayList<Argument> {
     }
 
 
-    public List<TVariable> getTVariables(Mind mind) throws Exception {
+    public List<TVariable> getTVariables(IMind mind) throws Exception {
 //        if(tVariables == null || tVariables.size() != tVariablesIds.size()) {
 //            tVariables = new ArrayList<>();
 //            for(long id : tVariablesIds) {
@@ -307,22 +306,28 @@ public class ArgumentsList extends ArrayList<Argument> {
         return list;
     }
 
-    public List<ITerm> getTerms(Mind mind) throws Exception {
-        List<ITerm> list = new ArrayList<>();
+    public Collection<Long> getTerms(IMind mind, boolean total) throws Exception {
+        Set<Long> list = new HashSet<>();
         for (Argument a : this) {
-            //TODO: Костыль
-//            a.setUser(user);
             if (a.getType() == ArgumentType.TERM) {
-                list.add(a.getValue(mind));
+                list.add(a.getValue(mind).getId());
             } else if (a.isFSet()) {
-                List<ITerm> temp = a.getF(mind).getArguments().getTerms(mind);
-                for (ITerm t : temp) {
-                    if (!list.contains(t)) {
-                        list.add(t);
-                    }
+                if (total) {
+                    list.add(a.getF(mind).getNameId());
                 }
+                list.addAll(a.getF(mind).getArguments().getTerms(mind, total));
+            } else if (a.isTSet()) {
+                if (total) {
+                    list.add(a.getT(mind).getNameId());
+                }
+            } else if (a.isVSet()) {
+                if (total) {
+                    list.add(a.getV(mind).getTVar().getNameId());
+                }
+                list.add(a.getValue(mind).getId());
+            } else if (a.isRSet()) {
+                list.add(a.getR(mind).getValue().getId());
             }
-
         }
         return list;
     }

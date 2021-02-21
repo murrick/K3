@@ -39,10 +39,11 @@ public class Rule implements IUnit<IRule>, IRule {
 
     private List<TValue> solves = new ArrayList();
     private Set<Long> predicates = new HashSet<>();
+    private Set<Long> terms = new HashSet<>();
 
     private int varIndex = 0;
 
-    private transient long origId = -1;
+    private transient long originId = -1;
     private transient List<List<Long>> treeIds = new ArrayList<>();
 
     //    private transient IUser user = null;
@@ -64,7 +65,7 @@ public class Rule implements IUnit<IRule>, IRule {
                 .putLong(id)
                 .putLong(mindId)
                 .putByte(isDeleted(mind) ? 1 : 0)
-                .putLong(origId)
+                .putLong(originId)
                 .putInt(varIndex)
                 .putByte(query ? 1 : 0)
                 .putByte(generated ? 1 : 0)
@@ -91,7 +92,7 @@ public class Rule implements IUnit<IRule>, IRule {
         if (packet.getByte() != 0) {
             setDeleted(true, mind);
         }
-        origId = packet.getLong();
+        originId = packet.getLong();
         varIndex = packet.getInt();
         query = packet.getByte() != 0;
         generated = packet.getByte() != 0;
@@ -113,7 +114,7 @@ public class Rule implements IUnit<IRule>, IRule {
         while (count-- > 0) {
             try {
                 packet.mark();
-                Cause c = new Cause().apply(packet);
+                ICause c = new Cause().apply(packet);
 //                c.setUser(user);
                 causes.add(c);
             } finally {
@@ -234,16 +235,16 @@ public class Rule implements IUnit<IRule>, IRule {
 
     @Override
     public ITerm getOrigin() throws Exception {
-        if (origin == null && origId != -1) {
-            origin = mind.getTerms().get(origId);
+        if (origin == null && originId != -1) {
+            origin = mind.getTerms().get(originId);
 
             //TODO: Кастыль
-            if (origin == null && isStored()) {
-                int save = mind.getDebugLevel();
-                mind.setDebugLevel(0);
-                origin = mind.getTerms().add(getDomain().toString());
-                mind.setDebugLevel(save);
-            }
+//            if (origin == null && isStored()) {
+//                int save = mind.getDebugLevel();
+//                mind.setDebugLevel(0);
+//                origin = mind.getTerms().add(getDomain().toString());
+//                mind.setDebugLevel(save);
+//            }
 
         }
         return origin;
@@ -251,7 +252,7 @@ public class Rule implements IUnit<IRule>, IRule {
 
     public void setOrigin(ITerm origin) {
         this.origin = origin;
-        this.origId = origin.getId();
+        this.originId = origin.getId();
     }
 
     @Override
@@ -417,6 +418,10 @@ public class Rule implements IUnit<IRule>, IRule {
 
     public Set<Long> getPredicates() {
         return predicates;
+    }
+
+    public Set<Long> getTerms() {
+        return terms;
     }
 
     @Override
@@ -644,7 +649,7 @@ public class Rule implements IUnit<IRule>, IRule {
 
     @Override
     public boolean isLoaded() {
-        return origin != null && origId == origin.getId();
+        return origin != null && originId == origin.getId();
     }
 
     public List<TVariable> getTVariables() {
@@ -679,6 +684,21 @@ public class Rule implements IUnit<IRule>, IRule {
             causes.remove(c);
         }
     }
+
+    public boolean containsTerm(long id, IMind mind) throws Exception {
+        terms.add(originId);
+        for (List<Domain> row : tree) {
+            for (Domain d : row) {
+                terms.addAll(d.getTerms(mind, true));
+            }
+        }
+        return terms.contains(id);
+    }
+
+    public boolean containsPredicate(long id) {
+        return predicates.contains(id);
+    }
+
 
 //    public void washCauses() throws Exception {
 //        if (isStored()) {

@@ -84,6 +84,10 @@ public class Function implements IUnit<Function> {
         this.id = id;
     }
 
+    public long getNameId() {
+        return nameId;
+    }
+
     public int getRange() {
         return range;
     }

@@ -85,7 +85,7 @@ public class DB implements IData {
         u.setDatabaseDir(user.getDatabaseDir());
         DB tmpDB = new DB();
         tmpDB.init(u);
-        m.useStorage(tmp + ".temporary");
+        m.useStorage(tmp + "-temporary");
 
         for (Map.Entry<String, IBase> e : bases.entrySet()) {
             if (reactor != null) {
@@ -102,8 +102,8 @@ public class DB implements IData {
         new File(dbPath + ".index").delete();
         new File(dbPath + ".store").delete();
 
-        new File(dbPath + ".temporary.index").renameTo(new File(dbPath + ".index"));
-        new File(dbPath + ".temporary.store").renameTo(new File(dbPath + ".store"));
+        new File(dbPath + "-temporary.index").renameTo(new File(dbPath + ".index"));
+        new File(dbPath + "-temporary.store").renameTo(new File(dbPath + ".store"));
 
         use(tmp);
     }

@@ -115,6 +115,9 @@ public class SolutionsStore implements Iterable<IRule> {
 
     @Override
     public Iterator<IRule> iterator() {
+        if (root == null) {
+            root = new ArrayList<>();
+        }
         return root.iterator();
     }
 }

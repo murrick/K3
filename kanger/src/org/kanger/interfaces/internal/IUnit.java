@@ -38,5 +38,4 @@ public interface IUnit<T> {
 
     boolean isLoaded();
 
-//    T commit(Mind m) throws Exception;
 }
