@@ -1,3 +1,28 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021 Dmitry G. Quznetsov
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ *
+ */
+
 package org.kanger;
 
 import org.kanger.calculator.Calculator;
@@ -81,6 +106,7 @@ public class Mind implements IMind {
     private String compliedLine = "";
     private Rule acceptedRule = null;
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
+    private volatile int transactionCounter = 0;
 //    private HypothesisStore excluded = null;                                // Список исключенных гипотез
 
 //    private volatile boolean busyCommit = false;
@@ -99,6 +125,7 @@ public class Mind implements IMind {
         id = user.nextId(); //root.getId() + 1;
         init();
 
+        root.incTransactionCounter();
 //        terms.transaction(root.getTerms());
 //        predicates.transaction(root.getPredicates());
 //        library.transaction(root.getLibrary());
@@ -162,6 +189,7 @@ public class Mind implements IMind {
         linker = new Linker(this);                                         // Линкер
 
         floodControlLimit = Integer.parseInt(user.getProperty("flood.limit", FLOOD_CONTROL_LIMIT + ""));
+        transactionCounter = 0;
 //        }
     }
 
@@ -287,7 +315,8 @@ public class Mind implements IMind {
 //                    }
 //                }
 //        }
-            if (next == null) {
+            --transactionCounter;
+            if (next == null && transactionCounter == 0) {
                 pack();
                 update();
             }
@@ -393,7 +422,8 @@ public class Mind implements IMind {
 
             queryResult = (Boolean) m.getQueryResult();
 
-            if (next == null) {
+            --transactionCounter;
+            if (next == null && transactionCounter == 0) {
                 pack();
                 update();
             }
@@ -616,7 +646,7 @@ public class Mind implements IMind {
         int pos = 0;
         Object[] t = null;
         Mind m = new Mind(this);
-        Mind udf = new Mind(this);
+//        Mind udf = new Mind(this);
         m.setQueryPass(QueryPass.ACCEPT);
         int previousPos = 0;
         while ((t = Tools.extractLine(src, pos)) != null) {
@@ -1193,14 +1223,13 @@ public class Mind implements IMind {
     public Boolean queryDelete(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
 
-        Mind x = new Mind(this);
         setQueryPass(QueryPass.DELETE);
         if (logging) {
             getLog().add(LogMode.ANALYZER, "============= DELETE ======================");
         }
 
         Operation op = getLibrary().find(line.substring(1).replaceAll(";", ""));
-        if(op != null) {
+        if (op != null) {
 
             Mind m = new Mind(this);
             op.setDeleted(true, m);
@@ -1210,6 +1239,7 @@ public class Mind implements IMind {
 
         } else {
 
+            Mind x = new Mind(this);
             Set<IRule> set = new HashSet<>();
             line = invert(line);
             setCompliedLine(line);
@@ -1624,20 +1654,24 @@ public class Mind implements IMind {
             }
         }
 
-        if (logging) {
-            if (ar) {
+        if (ar) {
+            if (logging) {
                 m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
-                release(m);
-            } else if (success.isEmpty()) {
+            }
+            release(m);
+        } else if (success.isEmpty()) {
+            if (logging) {
                 m.getLog().add(LogMode.ANALYZER, "WARNING: No rules have been deleted");
-                release(m);
-            } else {
+            }
+            release(m);
+        } else {
+            if (logging) {
                 m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
                 for (IRule r : success) {
                     m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
                 }
-                commit(m);
             }
+            commit(m);
         }
     }
 
@@ -1968,6 +2002,10 @@ public class Mind implements IMind {
         return user.getStoragesList();
     }
 
+    @Override
+    public int incTransactionCounter() {
+        return ++transactionCounter;
+    }
 }
 
 

@@ -1,7 +1,34 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021 Dmitry G. Quznetsov
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ *
+ */
+
 package org.kanger.udf;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.factory.DictionaryFactory;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
@@ -35,7 +62,7 @@ public class UDF extends Operation implements IReactor {
 
     @Override
     public Object run(Object o) throws Exception {
-        Mind mind = ((IUnit) o).getMind();
+        IMind mind = ((IUnit) o).getMind();
         ArgumentsList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
 //                    ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
         Scriptable scope = scriptContext.initStandardObjects();
@@ -46,9 +73,9 @@ public class UDF extends Operation implements IReactor {
         int index = -1;
         for (int i = 0; i < arg.size(); ++i) {
             String var = params.get(i);
-            if (arg.get(i).isDefined(mind)) {
+            if (arg.get(i).isDefined((Mind) mind)) {
                 scope.put(var, scope, arg.get(i).getValue(mind).getValue());
-            } else if (arg.get(i).isEmpty(mind)) {
+            } else if (arg.get(i).isEmpty((Mind) mind)) {
                 index = i;
                 ++undefined;
             } else {
@@ -80,15 +107,15 @@ public class UDF extends Operation implements IReactor {
                     Object val = scope.get(params.get(index), scope);
                     if (val == null) {
                         ret = 0;
-                        arg.get(index).setValue(mind, null);
+                        arg.get(index).setValue((Mind) mind, null);
                     } else {
-                        if (!arg.get(index).setValue(mind, mind.getTerms().add(val))) {
+                        if (!arg.get(index).setValue((Mind) mind, ((DictionaryFactory) mind.getTerms()).add(val))) {
                             ret = 0;
                         }
                     }
                 } else if (fres != null) {
                     Object val = scope.get(params.get(params.size() - 1), scope);
-                    ITerm cres = mind.getTerms().add(val);
+                    ITerm cres = ((DictionaryFactory) mind.getTerms()).add(val);
                     if (cres.getId() == fres.getId()) {
                         ret = 2;
                     } else {
@@ -101,7 +128,7 @@ public class UDF extends Operation implements IReactor {
                                 scriptContext.evaluateString(scope, script, "script", 1, null);
                                 Object calc = scope.get(var, scope);
                                 scope.put(var, scope, tmp);
-                                TValue v = arg.get(i).addValue(mind, mind.getTerms().add(calc));
+                                TValue v = arg.get(i).addValue((Mind) mind, ((DictionaryFactory) mind.getTerms()).add(calc));
                                 showLog((IUnit) o, v);
                             }
                         }
