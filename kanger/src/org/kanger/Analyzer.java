@@ -27,8 +27,8 @@ package org.kanger;
 
 import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
-import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
@@ -74,7 +74,7 @@ public class Analyzer {
 //                        continue;
 //                    }
 //                    Domain d = r.getDomain();
-                    for (Argument a : r.getArguments()) {
+                    for (IArgument a : r.getArguments()) {
                         if (a.isEmpty(mind) || (a.getValue(mind).isCVariable() /*&& a.getValue(mind).getMindId() != mind.getId()*/)) {
                             r = null;
                             break;

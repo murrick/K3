@@ -25,15 +25,12 @@
 
 package org.kanger;
 
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.RuntimeErrorException;
-import org.kanger.interfaces.ICause;
-import org.kanger.interfaces.IReactor;
-import org.kanger.interfaces.IRule;
-import org.kanger.interfaces.ITerm;
-import org.kanger.primitives.Argument;
+import org.kanger.interfaces.*;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.primitives.TVariableSet;
@@ -102,11 +99,11 @@ public class Linker {
 
                 for (List<Domain> list : rule.getTree()) {
                     for (Domain d : list) {
-                        if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).isTSet()) {
+                        if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).getType() == ArgumentType.TVARIABLE) {
                             for (IRule r : mind.getRules()) {
                                 if (!r.isDeleted(mind) && r.getId() < d.getRuleId()) {
                                     TValue s = null;
-                                    TVariable t = d.get(0).getT(mind);
+                                    TVariable t = (TVariable) d.get(0).getObject(mind);
                                     ITerm tm = mind.getTerms().add(r.getId());
                                     s = mind.getTValues().find(t, tm);
                                     if (s == null) {
@@ -551,7 +548,7 @@ public class Linker {
 
                                 boolean acceptable = false;
                                 for (int i = 0; i < master.getRange(); ++i) {
-                                    if (master.get(i).isTSet() /*&& !blockByOrder(i, master, slave)*/) {
+                                    if (master.get(i).getType() == ArgumentType.TVARIABLE /*&& !blockByOrder(i, master, slave)*/) {
                                         acceptable = true;
                                     } else if (slave.get(i).isEmpty(mind) || master.get(i).isEmpty(mind)) {
 //                                    } else if (slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isCVariable()) {
@@ -603,7 +600,7 @@ public class Linker {
 //                                cvarFound = false;
                                 acceptable = false;
                                 for (int i = 0; i < slave.getRange(); ++i) {
-                                    if (slave.get(i).isTSet() /*&& !blockByOrder(i, slave, master)*/) {
+                                    if (slave.get(i).getType() == ArgumentType.TVARIABLE /*&& !blockByOrder(i, slave, master)*/) {
                                         acceptable = true;
                                     } else if (slave.get(i).isEmpty(mind) || master.get(i).isEmpty(mind)) {
 //                                    } else if (slave.get(i).getValue(mind).isCVariable() && master.get(i).getValue(mind).isCVariable()) {
@@ -622,7 +619,7 @@ public class Linker {
 //                                        break;
                                     }
 
-//                                    if (slave.get(i).isTSet() //&& !blockByOrder(i, slave, master))
+//                                    if (slave.get(i).getType() == ArgumentType.TVARIABLE //&& !blockByOrder(i, slave, master))
 //                                            || master.get(i).isEmpty(mind)
 ////                                            || master.get(i).getValue(mind).isCVariable()
 //                                            || (!slave.get(i).isEmpty(mind)
@@ -653,7 +650,7 @@ public class Linker {
 //                                    blockLeft = true;
 //                                }
 
-//                                    } !slave.get(i).isTSet()
+//                                    } !slave.get(i).getType() == ArgumentType.TVARIABLE
 //                                            && (!master.get(i).isFSet() || !master.get(i).getF(mind).isEmpty())
 //                                            && (!slave.get(i).isFSet() || !slave.get(i).getF(mind).isEmpty())
 //                                            && (!slave.get(i).isCVar(mind) || !slave.get(i).getValue(mind).getSlaves().isEmpty())
@@ -669,10 +666,10 @@ public class Linker {
 //                                if(blockRight && blockLeft && cvarFound && !clear) {
 //                                    System.err.println(master + " <- " + slave);
 ////                                    for (int i = 0; i < slave.getRange(); ++i) {
-////                                        if (master.get(i).isTSet() && !slave.get(i).isEmpty(mind) && !slave.get(i).getValue(mind).isCVariable()) {
+////                                        if (master.get(i).getType() == ArgumentType.TVARIABLE && !slave.get(i).isEmpty(mind) && !slave.get(i).getValue(mind).isCVariable()) {
 ////                                            blockRight = false;
 ////                                        }
-////                                        if (slave.get(i).isTSet() && !master.get(i).isEmpty(mind) && !master.get(i).getValue(mind).isCVariable()) {
+////                                        if (slave.get(i).getType() == ArgumentType.TVARIABLE && !master.get(i).isEmpty(mind) && !master.get(i).getValue(mind).isCVariable()) {
 ////                                            blockLeft = false;
 ////                                        }
 ////                                    }
@@ -693,7 +690,7 @@ public class Linker {
                                         // Подстановка снизу вверх
 //                                        if(slaveComplete) {
                                         if (!blockRight) {
-                                            if (master.get(i).isTSet() /*&& master.get(i).isEmpty(mind)*/) {
+                                            if (master.get(i).getType() == ArgumentType.TVARIABLE /*&& master.get(i).isEmpty(mind)*/) {
                                                 if (!slave.get(i).isEmpty(mind)) {
 
 //                                            if (master.getVarOrder(mind, i) < slave.getVarOrder(mind, i)) {
@@ -707,7 +704,7 @@ public class Linker {
 //                                            long parentId = -1;
 
                                                     Term tm = (Term) slave.get(i).getValue(mind);
-                                                    TVariable t = master.get(i).getT(mind);
+                                                    TVariable t = (TVariable) master.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && slave.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         s = mind.getTValues().getXValue(t, tm);
@@ -745,7 +742,7 @@ public class Linker {
                                         // Подстановка сверху вниз
 //                                        if(masterComplete) {
                                         if (!blockLeft) {
-                                            if (slave.get(i).isTSet() && slave.get(i).isEmpty(mind)) {
+                                            if (slave.get(i).getType() == ArgumentType.TVARIABLE && slave.get(i).isEmpty(mind)) {
                                                 if (!master.get(i).isEmpty(mind)) {
 
 //                                            if (slave.getVarOrder(mind, i) < master.getVarOrder(mind, i)) {
@@ -759,7 +756,7 @@ public class Linker {
 
 //                                            long parentId = -1;
                                                     Term tm = (Term) master.get(i).getValue(mind);
-                                                    TVariable t = slave.get(i).getT(mind);
+                                                    TVariable t = (TVariable) slave.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && master.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         s = mind.getTValues().getXValue(t, tm);
@@ -921,7 +918,7 @@ public class Linker {
 ////            if (master.getRightId() == slave.get(pos).getValue(mind).getRightId()) {
 ////                return master.get(pos).getT(mind).getIndex() < slave.get(pos).getValue(mind).getIndex();
 //////            } else if (master.isQuery()){
-////            } else if (!slave.get(pos).isTSet()) {
+////            } else if (!slave.get(pos).getType() == ArgumentType.TVARIABLE) {
 //        master.calcVarOrders(mind);
 //        return master.getVarOrder(mind, pos) < slave.getVarOrder(mind, pos);
 ////            }
@@ -1120,7 +1117,7 @@ public class Linker {
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
                         for (int i = 0; i < d.getRange(); ++i) {
-                            if (master.get(i).isTSet() /*&& master.getVarOrder(mind, i) >= d.getVarOrder(mind, i)*/) {
+                            if (master.get(i).getType() == ArgumentType.TVARIABLE /*&& master.getVarOrder(mind, i) >= d.getVarOrder(mind, i)*/) {
 //                            } else if(master.get(i).isEmpty(mind) || d.get(i).isEmpty(mind)) {
                             } else if (master.get(i).getValue(mind).getId() == d.get(i).getValue(mind).getId()) {
                             } else {
@@ -1405,9 +1402,11 @@ public class Linker {
                 result = true;
                 d.getArguments().applyStamp(mind, args);
                 for (int i = 0; i < d.getRange(); ++i) {
-                    if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF(mind).isCalculable() && d.getArguments().get(i).getF(mind).isEmpty()) {
-                        d.getArguments().get(i).getF(mind).clear();
-                        mind.getCalculator().calculate(d.getArguments().get(i).getF(mind), logging);
+                    if (d.getArguments().get(i).getType() == ArgumentType.FUNCTION
+                            && ((Function) d.getArguments().get(i).getObject(mind)).isCalculable()
+                            && ((Function) d.getArguments().get(i).getObject(mind)).isEmpty()) {
+                        ((Function) d.getArguments().get(i).getObject(mind)).clear();
+                        mind.getCalculator().calculate((Function) d.getArguments().get(i).getObject(mind), logging);
                     }
                 }
                 if (d.isComplete() /*&& !d.isCalculated(mind)*/) {
@@ -1421,7 +1420,7 @@ public class Linker {
 //                d.recalculate(true);
 
 //                for (int i = 0; i < args.size(); /*d.getPredicate().getRange();*/ ++i) {
-//                    if (d.getArguments().get(i).isTSet()) {
+//                    if (d.getArguments().get(i).getType() == ArgumentType.TVARIABLE) {
 //                        if (d.getArguments().get(i).getT().find(args.get(i).getValue()) != null) {
 //                            d.getArguments().get(i).getT().setValue(args.get(i).getValue());
 //                        }
@@ -1534,7 +1533,7 @@ public class Linker {
 //                }
 
                 int res = d.execSystem(mind);
-                for (Argument a : d.getArguments()) {
+                for (IArgument a : d.getArguments()) {
                     if (a.isEmpty(mind)) {
                         res = -2;
                         break;

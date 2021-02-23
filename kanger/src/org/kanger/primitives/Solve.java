@@ -28,7 +28,9 @@ package org.kanger.primitives;
 import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.ISolve;
@@ -135,7 +137,7 @@ public class Solve implements ISolve {
 //    s += ");";
 //    return s;
 
-    protected String formatParam(IMind mind, Argument t) throws Exception {
+    protected String formatParam(IMind mind, IArgument t) throws Exception {
         String s = "";
         //TODO: Костыль
 //        t.setUser(user);
@@ -143,16 +145,16 @@ public class Solve implements ISolve {
 //            t.getValue(mind).setMind(mind);
 //        }
 
-        if (t.isFSet()) {
-            s += t.getF((Mind) mind).toString();
-        } else if (t.isTSet()) {
-            s += t.getT((Mind) mind).toString();
-        } else if (t.isVSet()) {
-            s += t.getV((Mind) mind).toString();
-        } else if (t.isRSet()) {
-            s += t.getR((Mind) mind).toString();
+        if (t.getType() == ArgumentType.FUNCTION) {
+            s += t.getObject(mind).toString();
+        } else if (t.getType() == ArgumentType.TVARIABLE) {
+            s += t.getObject(mind).toString();
+        } else if (t.getType() == ArgumentType.TVALUE) {
+            s += t.getObject(mind).toString();
+        } else if (t.getType() == ArgumentType.FVALUE) {
+            s += t.getObject(mind).toString();
         } else if (!t.isEmpty((Mind) mind)) {
-            s += t.getValue((Mind) mind).toString();
+            s += t.getValue(mind).toString();
         } else {
             s += "_";
         }
@@ -201,7 +203,7 @@ public class Solve implements ISolve {
             if (op == null) {
                 s += getPredicate(mind).getName() + "(";
                 int i = 0;
-                for (Argument t : arguments) {
+                for (IArgument t : arguments) {
                     s += formatParam(mind, t);
                     if (i + 1 != getRange()) {
                         s += (char) Enums.COMMA;
@@ -240,7 +242,7 @@ public class Solve implements ISolve {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-        for (Argument a : arguments) {
+        for (IArgument a : arguments) {
             hash = 47 * hash + (int) (a.getId() ^ (a.getId() >>> 32));
         }
         return hash;
@@ -464,7 +466,7 @@ public class Solve implements ISolve {
 //    }
 
 //    public int compareVars(Domain slave, int pos) throws Exception {
-//        if(arguments.get(pos).isTSet() && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
+//        if(arguments.get(pos).getType() == ArgumentType.TVARIABLE && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
 //            return arguments.get(pos).getT(mind).getIndex() - slave.get(pos).getValue(mind).getIndex();
 //        } else {
 //            return 0;

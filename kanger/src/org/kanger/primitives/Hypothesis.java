@@ -180,7 +180,6 @@ public class Hypothesis implements IHypothesis {
         this.antc = antc;
     }
 
-    @Override
     public boolean isQuery() {
         return query;
     }
@@ -301,7 +300,7 @@ public class Hypothesis implements IHypothesis {
 //    }
 
     @Override
-    public int compareTo(Hypothesis o) {
+    public int compareTo(IHypothesis o) {
         try {
             return getPredicate().getName().compareTo(o.getPredicate().getName());
         } catch (Exception e) {

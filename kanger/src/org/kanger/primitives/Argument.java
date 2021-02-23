@@ -29,21 +29,19 @@ import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by Dmitry G. Qusnetsov on 26.05.15.
  * <p>
  * Решение для предиката
  */
-public class Argument {
+public class Argument implements IArgument {
 
     private static final long serialVersionUID = -7113328096110690461L; //196402070011L;
 
@@ -67,7 +65,7 @@ public class Argument {
         o = d;
         if (o != null) {
             id = o.getId();
-            type = getObjectType();
+            type = detectObjectType();
 //            user = d.getUser();
         }
     }
@@ -110,7 +108,7 @@ public class Argument {
     }
 
 
-    private ArgumentType getObjectType() {
+    private ArgumentType detectObjectType() {
         if (o instanceof Term) {
             return ArgumentType.TERM;
         } else if (o instanceof TVariable) {
@@ -126,44 +124,45 @@ public class Argument {
         }
     }
 
+    @Override
     public ITerm getValue(IMind mind) throws Exception {
         switch (type) {
             case TERM:
-                return (Term) getO((Mind) mind);
+                return (Term) getObject((Mind) mind);
             case TVARIABLE:
-                return ((TVariable) getO((Mind) mind)).getValue();
+                return ((TVariable) getObject((Mind) mind)).getValue();
             case TVALUE:
-                return ((TValue) getO((Mind) mind)).getValue();
+                return ((TValue) getObject((Mind) mind)).getValue();
             case FVALUE:
-                return ((FValue) getO((Mind) mind)).getValue();
+                return ((FValue) getObject((Mind) mind)).getValue();
             case FUNCTION:
-                return ((Function) getO((Mind) mind)).getValue();
+                return ((Function) getObject((Mind) mind)).getValue();
             default:
                 return null;
         }
     }
 
-    public TValue addValue(Mind mind, ITerm t) throws Exception {
-//        Mind mind = t.getUser().getMind();
-        switch (type) {
-            case TVARIABLE:
-                TVariable tv = (TVariable) getO(mind);
-                TValue s = mind.getTValues().find(tv, t);
-                if (s == null) {
-                    s = mind.getTValues().add(tv, t);
-
-                    List<TValue> list = new ArrayList<>();
-                    list.add(s);
-                    mind.addTSolve(list);
-
-                } else {
-                    s = null;
-                }
-                return s;
-            default:
-                return null;
-        }
-    }
+//    public TValue addTValue(Mind mind, ITerm t) throws Exception {
+////        Mind mind = t.getUser().getMind();
+//        switch (type) {
+//            case TVARIABLE:
+//                TVariable tv = (TVariable) getO(mind);
+//                TValue s = mind.getTValues().find(tv, t);
+//                if (s == null) {
+//                    s = mind.getTValues().add(tv, t);
+//
+//                    List<TValue> list = new ArrayList<>();
+//                    list.add(s);
+//                    mind.addTSolve(list);
+//
+//                } else {
+//                    s = null;
+//                }
+//                return s;
+//            default:
+//                return null;
+//        }
+//    }
 
     public boolean setValue(Mind mind, ITerm t) throws Exception {
 //        Mind mind = t.getUser().getMind();
@@ -178,7 +177,7 @@ public class Argument {
                 id = o.getId();
                 return true;
             case TVARIABLE:
-                TVariable tv = (TVariable) getO((Mind) mind);
+                TVariable tv = (TVariable) getObject((Mind) mind);
                 TValue s = tv.setValue(t);
 //                mind.addTSolve(s);
 
@@ -192,7 +191,7 @@ public class Argument {
 //                }
                 return true;
             case FUNCTION:
-                Function f = (Function) getO(mind);
+                Function f = (Function) getObject(mind);
                 if (f.isCalculable()) {
                     f.setResult(t);
                     mind.getCalculator().calculate(f, mind.isLogging());
@@ -203,16 +202,17 @@ public class Argument {
         }
     }
 
-    public IUnit getO(IMind mind) throws Exception {
+    @Override
+    public IUnit getObject(IMind mind) throws Exception {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
             load((Mind) mind);
         }
         return o;
     }
 
-    public void setO(IUnit o) {
+    public void setObject(IUnit o) {
         this.o = o;
-        type = getObjectType();
+        type = detectObjectType();
         if (o != null) {
             id = o.getId();
         } else {
@@ -220,21 +220,21 @@ public class Argument {
         }
     }
 
-    public TVariable getT(IMind mind) throws Exception {
-        return type == ArgumentType.TVARIABLE ? (TVariable) getO(mind) : null;
-    }
-
-    public TValue getV(IMind mind) throws Exception {
-        return type == ArgumentType.TVALUE ? (TValue) getO(mind) : null;
-    }
-
-    public Function getF(IMind mind) throws Exception {
-        return type == ArgumentType.FUNCTION ? (Function) getO(mind) : null;
-    }
-
-    public FValue getR(IMind mind) throws Exception {
-        return type == ArgumentType.FVALUE ? (FValue) getO(mind) : null;
-    }
+//    public TVariable getT(IMind mind) throws Exception {
+//        return type == ArgumentType.TVARIABLE ? (TVariable) getObject(mind) : null;
+//    }
+//
+//    public TValue getV(IMind mind) throws Exception {
+//        return type == ArgumentType.TVALUE ? (TValue) getObject(mind) : null;
+//    }
+//
+//    public Function getF(IMind mind) throws Exception {
+//        return type == ArgumentType.FUNCTION ? (Function) getObject(mind) : null;
+//    }
+//
+//    public FValue getR(IMind mind) throws Exception {
+//        return type == ArgumentType.FVALUE ? (FValue) getObject(mind) : null;
+//    }
 
     public void clear() {
         o = null;
@@ -242,6 +242,7 @@ public class Argument {
         id = -1;
     }
 
+    @Override
     public boolean isEmpty(Mind mind) {
         try {
             return getValue(mind) == null;
@@ -251,23 +252,42 @@ public class Argument {
         }
     }
 
-    public boolean isTSet() {
-        return type == ArgumentType.TVARIABLE;
+    @Override
+    public boolean isDeleted(IMind mind) {
+        if (o == null) {
+            return false;
+        } else {
+            return o.isDeleted(mind);
+        }
     }
 
-    public boolean isVSet() {
-        return type == ArgumentType.TVALUE;
-    }
+//    @Override
+//    public IMind getMind() {
+//        if(o == null) {
+//            return null;
+//        } else {
+//            return o.getMind();
+//        }
+//    }
 
-    public boolean isRSet() {
-        return type == ArgumentType.FVALUE;
-    }
+//    public boolean isTSet() {
+//        return type == ArgumentType.TVARIABLE;
+//    }
+//
+//    public boolean isVSet() {
+//        return type == ArgumentType.TVALUE;
+//    }
+//
+//    public boolean isRSet() {
+//        return type == ArgumentType.FVALUE;
+//    }
+//
+//    public boolean isFSet() {
+//        return type == ArgumentType.FUNCTION;
+//    }
 
-    public boolean isFSet() {
-        return type == ArgumentType.FUNCTION;
-    }
-
-    public String asString(Mind mind) {
+    @Override
+    public String toString(IMind mind) {
         try {
             Object val = getValue(mind);
             if (val != null) {
@@ -282,10 +302,10 @@ public class Argument {
     }
 
 
-    public boolean isDefined(Mind mind) throws Exception {
-        Term t = (Term) getValue(mind);
-        return t != null && !t.isCVariable(); //isCVar(mind); //type != ArgumentType.CVARIABLE;
-    }
+//    public boolean isDefined(Mind mind) throws Exception {
+//        Term t = (Term) getValue(mind);
+//        return t != null && !t.isCVariable(); //isCVar(mind); //type != ArgumentType.CVARIABLE;
+//    }
 
 
 //    public boolean isCVar(Mind mind) throws Exception {
@@ -301,10 +321,12 @@ public class Argument {
 //        this.user = user;
 //    }
 //
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public ArgumentType getType() {
         return type;
     }

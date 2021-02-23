@@ -27,10 +27,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
-import org.kanger.interfaces.IFactory;
-import org.kanger.interfaces.IRule;
-import org.kanger.interfaces.ISolve;
-import org.kanger.interfaces.ITerm;
+import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
@@ -427,10 +424,10 @@ public class RuleFactory implements IFactory<IRule> {
             Rule r = new Rule(mind);
             register(r);
 
-            for (Argument a : list) {
+            for (IArgument a : list) {
                 if (!a.isEmpty(mind) && ((Term) a.getValue(mind)).isXVariable()) {
                     mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName());
-                    a.setValue(mind, ((Term) a.getValue(mind)).getParent());
+                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent());
                 }
             }
 

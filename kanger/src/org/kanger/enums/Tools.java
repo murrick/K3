@@ -408,7 +408,7 @@ public abstract class Tools {
 //    public static List<TVariable> getTVariables(ArgList arg, boolean full) {
 //        List<TVariable> list = new ArrayList<>();
 //        for (Argument a : arg) {
-//            if (a.isTSet() && !list.contains(a.getT())) {
+//            if (a.getType() == ArgumentType.TVARIABLE && !list.contains(a.getT())) {
 //                list.add(a.getT());
 //            } else if (full && a.isFSet()) {
 //                List<TVariable> temp = getTVariables(a.getF().getArguments(), full);
@@ -426,9 +426,9 @@ public abstract class Tools {
 //    public static List<TValue> getTValues(ArgList arg, boolean full) {
 //        List<TValue> list = new ArrayList<>();
 //        for (Argument a : arg) {
-//            if (a.isTSet() && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
+//            if (a.getType() == ArgumentType.TVARIABLE && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
 //                list.add(a.getT().getCurrent());
-//            } else if (a.isVSet() && !list.contains(a.getV())) {
+//            } else if (a.getType() == ArgumentType.TVALUE && !list.contains(a.getV())) {
 //                list.add(a.getV());
 //            } else if (full && a.isFSet()) {
 //                List<TValue> temp = getTValues(a.getF().getArguments(), full);
@@ -437,7 +437,7 @@ public abstract class Tools {
 //                        list.add(t);
 //                    }
 //                }
-//            } else if (full && a.isRSet()) {
+//            } else if (full && a.getType() == ArgumentType.FVALUE) {
 //                List<TValue> temp = getTValues(a.getR().getCondition(), full);
 //                for (TValue t : temp) {
 //                    if (!list.contains(t)) {

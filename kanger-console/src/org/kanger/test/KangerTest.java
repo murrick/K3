@@ -29,6 +29,7 @@ import org.kanger.Mind;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.DictionaryFactory;
 import org.kanger.factory.PredicateFactory;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
@@ -37,6 +38,7 @@ import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
+import org.kanger.units.TValue;
 import org.kanger.units.Term;
 
 import java.lang.reflect.Method;
@@ -165,7 +167,7 @@ public class KangerTest {
         return false;
     }
 
-    private void showResult(IMind mind, Boolean assertResult, boolean local) throws RuntimeErrorException, Exception, ClassNotFoundException {
+    private void showResult(IMind mind, Boolean assertResult) throws RuntimeErrorException, Exception, ClassNotFoundException {
 //        for (Right r : mind.getRights()) {
 //            if (!r.isDeleted() && !r.isGenerated() && !r.isQuery() && (!local || r.getMind().getId() == mind.getId())) {
 //                System.out.println("Right: " + r.toString());
@@ -175,34 +177,34 @@ public class KangerTest {
         System.out.println("Query: " + mind.getQueryString());
         System.out.println("Result: " + mind.getQueryResult());
         int size = mind.getSolutions().size();
-        if (local) {
-            size = 0;
-            for (IRule log : mind.getSolutions().getRoot()) {
-                if (log.getMind().getId() == mind.getId()) {
-                    ++size;
-                }
-            }
-        }
+//        if (local) {
+//            size = 0;
+//            for (IRule log : mind.getSolutions().getRoot()) {
+//                if (log.getMind().getId() == mind.getId()) {
+//                    ++size;
+//                }
+//            }
+//        }
 
         if (size > 0) {
             System.out.println("Solutions (" + size + "):");
             int i = 0;
             for (IRule log : mind.getSolutions().getRoot()) {
-                if (!local || log.getMind().getId() == mind.getId()) {
-                    System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
-                }
+//                if (!local || log.getMind().getId() == mind.getId()) {
+                System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
+//                }
             }
         }
 
         size = mind.getValues().size();
-        if (local) {
-            size = 0;
-            for (ArgumentsList a : mind.getValues().getRoot()) {
-                if (a.get(0).getV((Mind) mind).getMind().getId() == mind.getId()) {
-                    ++size;
-                }
-            }
-        }
+//        if (local) {
+//            size = 0;
+//            for (ArgumentsList a : mind.getValues().getRoot()) {
+//                if (a.get(0).getMind().getId() == mind.getId()) {
+//                    ++size;
+//                }
+//            }
+//        }
 
 
         if (size > 0) {
@@ -210,16 +212,16 @@ public class KangerTest {
             System.out.println("Values (" + size + "):");
             int i = 0;
             for (ArgumentsList a : mind.getValues().getRoot()) {
-                if (!local || a.get(0).getV((Mind) mind).getMind().getId() == mind.getId()) {
-                    String s = String.format("\tRow %03d: ", ++i);
-                    for (Argument v : a) {
-                        if (!s.endsWith(" ")) {
-                            s += " ";
-                        }
-                        s += v.getV((Mind) mind).getTVar().getName().toString() + "=" + v.getV((Mind) mind).getValue().getValue();
+//                if (!local || a.get(0).getMind().getId() == mind.getId()) {
+                String s = String.format("\tRow %03d: ", ++i);
+                for (IArgument v : a) {
+                    if (!s.endsWith(" ")) {
+                        s += " ";
                     }
-                    System.out.println(s);
+                    s += ((TValue) v.getObject(mind)).getTVar().getName().toString() + "=" + ((TValue) v.getObject(mind)).getValue().getValue();
                 }
+                    System.out.println(s);
+//                }
             }
         }
         if (assertResult == null && !mind.getHypothesis().isEmpty()) {
@@ -235,8 +237,8 @@ public class KangerTest {
     }
 
 
-    private void showResult(Boolean assertResult) throws RuntimeErrorException, Exception, ClassNotFoundException {
-        showResult(mind, assertResult, false);
+    private void showResult(Boolean assertResult) throws Exception {
+        showResult(mind, assertResult);
     }
 
     public Hypothesis createHypothesis(IMind mind, boolean antc, Object predicate, Object... params) throws Exception {

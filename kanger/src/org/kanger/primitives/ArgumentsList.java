@@ -30,9 +30,11 @@ import org.kanger.enums.ArgumentType;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
 import org.kanger.storage.ByteBuffer;
+import org.kanger.units.FValue;
 import org.kanger.units.Function;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -42,7 +44,7 @@ import java.util.*;
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
-public class ArgumentsList extends ArrayList<Argument> {
+public class ArgumentsList extends ArrayList<IArgument> {
 
     private Mind mind = null;
 //    private List<TVariable> tVariables = null;
@@ -63,8 +65,8 @@ public class ArgumentsList extends ArrayList<Argument> {
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putInt(size());
-        for (Argument a : this) {
-            packet.append(a.pack());
+        for (IArgument a : this) {
+            packet.append(((Argument) a).pack());
         }
         return packet.createMarked();
     }
@@ -105,7 +107,7 @@ public class ArgumentsList extends ArrayList<Argument> {
     public int getHash(Mind mind) {
         int hashCode = 1;
         try {
-            for (Argument a : this) {
+            for (IArgument a : this) {
                 if (!a.isEmpty(mind)) {
 //                    long id = a.getValue(mind).getId();
                     hashCode = 31 * hashCode + a.getValue(mind).hashCode();
@@ -140,8 +142,23 @@ public class ArgumentsList extends ArrayList<Argument> {
                             break;
                         }
 
-                        TValue a = get(i).isTSet() ? get(i).getT(mind).getCurrent() : get(i).getV(mind);
-                        TValue b = arg.get(i).isTSet() ? arg.get(i).getT(mind).getCurrent() : arg.get(i).getV(mind);
+                        TValue a = null;
+                        switch (get(i).getType()) {
+                            case TVARIABLE:
+                                a = ((TVariable) get(i).getObject(mind)).getCurrent();
+                                break;
+                            case TVALUE:
+                                a = (TValue) get(i).getObject(mind);
+                                break;
+                        }
+                        TValue b = null;
+                        switch (arg.get(i).getType()) {
+                            case TVARIABLE:
+                                b = ((TVariable) arg.get(i).getObject(mind)).getCurrent();
+                                break;
+                            case TVALUE:
+                                b = (TValue) arg.get(i).getObject(mind);
+                        }
                         if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                             break;
                         }
@@ -190,12 +207,12 @@ public class ArgumentsList extends ArrayList<Argument> {
         ArgumentsList list = new ArgumentsList();
         for (int i = 0; i < size(); ++i) {
             try {
-                Argument t = get(i);
-                if (t.isTSet()) {
-                    TValue v = t.getT(mind).getCurrent();
+                IArgument t = get(i);
+                if (t.getType() == ArgumentType.TVARIABLE) {
+                    TValue v = ((TVariable) t.getObject(mind)).getCurrent();
                     list.add(new Argument(v));
-                } else if (t.isFSet()) {
-                    list.add(new Argument(t.getF(mind).getCurrent()));
+                } else if (t.getType() == ArgumentType.FUNCTION) {
+                    list.add(new Argument(((Function) t.getObject(mind)).getCurrent()));
                 } else {
                     list.add(new Argument(t.getValue(mind)));
                 }
@@ -232,10 +249,10 @@ public class ArgumentsList extends ArrayList<Argument> {
 
     public List<Function> getFunctions(IMind mind) throws Exception {
         List<Function> list = new ArrayList<>();
-        for (Argument a : this) {
-            if (a.isFSet()) {
-                if (!list.contains(a.getF(mind))) {
-                    list.add(a.getF(mind));
+        for (IArgument a : this) {
+            if (a.getType() == ArgumentType.FUNCTION) {
+                if (!list.contains(a.getObject(mind))) {
+                    list.add((Function) a.getObject(mind));
                 }
 //                if (full) {
 //                    List<Function> temp = a.getF().getArguments().getFunctions(full);
@@ -262,13 +279,16 @@ public class ArgumentsList extends ArrayList<Argument> {
 //        return  tVariables;
 //
         List<TVariable> list = new ArrayList<>();
-        for (Argument a : this) {
+        for (IArgument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
-            if (a.isTSet() && !a.getT(mind).isDeleted(mind) && !a.getT(mind).isDeleted(mind) && !list.contains(a.getT(mind))) {
-                list.add(a.getT(mind));
-            } else if (a.isFSet()) {
-                List<TVariable> temp = a.getF(mind).getArguments().getTVariables(mind);
+            if (a.getType() == ArgumentType.TVARIABLE
+                    && !a.isDeleted(mind)
+                    && !a.isDeleted(mind)
+                    && !list.contains(a.getObject(mind))) {
+                list.add(((TVariable) a.getObject(mind)));
+            } else if (a.getType() == ArgumentType.FUNCTION) {
+                List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind);
                 for (TVariable t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
@@ -282,7 +302,7 @@ public class ArgumentsList extends ArrayList<Argument> {
 
     public List<ITerm> getCVariables(Mind mind) throws Exception {
         List<ITerm> list = new ArrayList<>();
-        for (Argument a : this) {
+        for (IArgument a : this) {
             //TODO: Костыль
 //            a.setUser(user);
             if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && !a.getValue(mind).isDeleted(mind) && !list.contains(a.getValue(mind))) {
@@ -290,8 +310,8 @@ public class ArgumentsList extends ArrayList<Argument> {
                 //TODO: Костыль
 //                t.setMind(mind);
                 list.add(t);
-            } else if (a.isFSet()) {
-                List<ITerm> temp = a.getF(mind).getArguments().getCVariables(mind);
+            } else if (a.getType() == ArgumentType.FUNCTION) {
+                List<ITerm> temp = ((Function) a.getObject(mind)).getArguments().getCVariables(mind);
                 for (ITerm t : temp) {
                     if (!list.contains(t)) {
                         //TODO: Костыль
@@ -304,22 +324,27 @@ public class ArgumentsList extends ArrayList<Argument> {
         return list;
     }
 
-    public List<TValue> getTValues(Mind mind, boolean full) throws Exception {
+    public List<TValue> getTValues(Mind mind, boolean total) throws Exception {
         List<TValue> list = new ArrayList<>();
-        for (Argument a : this) {
-            if (a.isTSet() && !a.getT(mind).isDeleted(mind) && !a.isEmpty(mind) && !list.contains(a.getT(mind).getCurrent())) {
-                list.add(a.getT(mind).getCurrent());
-            } else if (a.isVSet() && !a.getV(mind).isDeleted(mind) && !list.contains(a.getV(mind))) {
-                list.add(a.getV(mind));
-            } else if (full && a.isFSet()) {
-                List<TValue> temp = a.getF(mind).getArguments().getTValues(mind, full);
+        for (IArgument a : this) {
+            if (a.getType() == ArgumentType.TVARIABLE
+                    && !a.isDeleted(mind)
+                    && !a.isEmpty(mind)
+                    && !list.contains(((TVariable) a.getObject(mind)).getCurrent())) {
+                list.add(((TVariable) a.getObject(mind)).getCurrent());
+            } else if (a.getType() == ArgumentType.TVALUE
+                    && !a.isDeleted(mind)
+                    && !list.contains(a.getObject(mind))) {
+                list.add((TValue) a.getObject(mind));
+            } else if (total && a.getType() == ArgumentType.FUNCTION) {
+                List<TValue> temp = ((Function) a.getObject(mind)).getArguments().getTValues(mind, total);
                 for (TValue t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
                     }
                 }
-            } else if (full && a.isRSet()) {
-                List<TValue> temp = a.getR(mind).getCondition().getTValues(mind, full);
+            } else if (total && a.getType() == ArgumentType.FVALUE) {
+                List<TValue> temp = ((FValue) a.getObject(mind)).getCondition().getTValues(mind, total);
                 for (TValue t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);
@@ -333,45 +358,45 @@ public class ArgumentsList extends ArrayList<Argument> {
 
     public Collection<Long> getTerms(IMind mind, boolean total) throws Exception {
         Set<Long> list = new HashSet<>();
-        for (Argument a : this) {
+        for (IArgument a : this) {
             if (a.getType() == ArgumentType.TERM) {
                 list.add(a.getValue(mind).getId());
-            } else if (a.isFSet()) {
+            } else if (a.getType() == ArgumentType.FUNCTION) {
                 if (total) {
-                    list.add(a.getF(mind).getNameId());
+                    list.add(((Function) a.getObject(mind)).getNameId());
                 }
-                list.addAll(a.getF(mind).getArguments().getTerms(mind, total));
-            } else if (a.isTSet()) {
+                list.addAll(((Function) a.getObject(mind)).getArguments().getTerms(mind, total));
+            } else if (a.getType() == ArgumentType.TVARIABLE) {
                 if (total) {
-                    list.add(a.getT(mind).getNameId());
+                    list.add(((TVariable) a.getObject(mind)).getNameId());
                 }
-            } else if (a.isVSet()) {
+            } else if (a.getType() == ArgumentType.TVALUE) {
                 if (total) {
-                    list.add(a.getV(mind).getTVar().getNameId());
+                    list.add(((TValue) a.getObject(mind)).getTVar().getNameId());
                 }
                 list.add(a.getValue(mind).getId());
-            } else if (a.isRSet()) {
-                list.add(a.getR(mind).getValue().getId());
+            } else if (a.getType() == ArgumentType.FVALUE) {
+                list.add(((FValue) a.getObject(mind)).getValue().getId());
             }
         }
         return list;
     }
 
-    public String asString(Mind mind) {
-        String str = "[";
-        for (Argument a : this) {
-            if (str.length() > 1) {
-                str += ", ";
-            }
-            try {
-                str += a.isVSet() ? a.getV(mind).toString() : a.asString(mind);
-            } catch (Exception e) {
-                e.printStackTrace(System.err);
-            }
-        }
-        str += "]";
-        return str;
-    }
+//    public String asString(Mind mind) {
+//        String str = "[";
+//        for (IArgument a : this) {
+//            if (str.length() > 1) {
+//                str += ", ";
+//            }
+//            try {
+//                str += a.getType() == ArgumentType.TVALUE ? a.getObject(mind).toString() : a.toString(mind);
+//            } catch (Exception e) {
+//                e.printStackTrace(System.err);
+//            }
+//        }
+//        str += "]";
+//        return str;
+//    }
 
 //    public IUser getUser() {
 //        return user;
@@ -413,12 +438,12 @@ public class ArgumentsList extends ArrayList<Argument> {
         }
     }
 
-    public void applyArguments(Mind mind, ArgumentsList arguments) throws Exception {
-        for (int i = 0; i < this.size(); ++i) {
-            this.get(i).setValue(mind, arguments.get(i).getValue(mind));
-        }
-//        this.setMind(mind);
-    }
+//    public void applyArguments(Mind mind, ArgumentsList arguments) throws Exception {
+//        for (int i = 0; i < this.size(); ++i) {
+//            this.get(i).setValue(mind, arguments.get(i).getValue(mind));
+//        }
+////        this.setMind(mind);
+//    }
 
     public void applyStamp(Mind mind, List<ITerm> list) throws Exception {
         List<TVariable> curr = getTVariables(mind);
@@ -430,7 +455,7 @@ public class ArgumentsList extends ArrayList<Argument> {
     }
 
     public boolean contains(Mind mind, ITerm t) throws Exception {
-        for (Argument a : this) {
+        for (IArgument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
                 return true;
             }
@@ -438,8 +463,8 @@ public class ArgumentsList extends ArrayList<Argument> {
         return false;
     }
 
-    public Argument remove(Mind mind, ITerm t) throws Exception {
-        for (Argument a : this) {
+    public IArgument remove(Mind mind, ITerm t) throws Exception {
+        for (IArgument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
                 this.remove(a);
                 return a;
@@ -454,7 +479,7 @@ public class ArgumentsList extends ArrayList<Argument> {
 
 //    @Override
 //    public boolean add(Argument argument) {
-//        if (argument.isTSet()) {
+//        if (argument.getType() == ArgumentType.TVARIABLE) {
 //            if (!tVariablesIds.contains(argument.getId())) {
 //                tVariablesIds.add(argument.getId());
 //            }
@@ -462,31 +487,31 @@ public class ArgumentsList extends ArrayList<Argument> {
 //        return super.add(argument);
 //    }
 
-    public boolean isOverlaps(ArgumentsList arg) throws Exception {
-
-//        for (Argument a : this) {
-//            boolean found = false;
-//            for (Argument b : arg) {
+//    public boolean isOverlaps(ArgumentsList arg) throws Exception {
+//
+////        for (Argument a : this) {
+////            boolean found = false;
+////            for (Argument b : arg) {
+////                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+////                    found = true;
+////                    break;
+////                }
+////            }
+////            if (!found) {
+////                return false;
+////            }
+////        }
+////        return true;
+//
+//        for (IArgument a : this) {
+//            for (IArgument b : arg) {
 //                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-//                    found = true;
-//                    break;
+//                    return true;
 //                }
 //            }
-//            if (!found) {
-//                return false;
-//            }
 //        }
-//        return true;
-
-        for (Argument a : this) {
-            for (Argument b : arg) {
-                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-
-    }
+//        return false;
+//
+//    }
 
 }

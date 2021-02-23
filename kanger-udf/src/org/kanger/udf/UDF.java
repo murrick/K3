@@ -27,12 +27,14 @@ package org.kanger.udf;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.enums.ArgumentType;
 import org.kanger.factory.DictionaryFactory;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IUnit;
+import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.Domain;
 import org.kanger.units.Function;
@@ -73,7 +75,7 @@ public class UDF extends Operation implements IReactor {
         int index = -1;
         for (int i = 0; i < arg.size(); ++i) {
             String var = params.get(i);
-            if (arg.get(i).isDefined((Mind) mind)) {
+            if (((Mind) mind).getCalculator().getFunctions().isDefined(arg.get(i))) {
                 scope.put(var, scope, arg.get(i).getValue(mind).getValue());
             } else if (arg.get(i).isEmpty((Mind) mind)) {
                 index = i;
@@ -107,9 +109,9 @@ public class UDF extends Operation implements IReactor {
                     Object val = scope.get(params.get(index), scope);
                     if (val == null) {
                         ret = 0;
-                        arg.get(index).setValue((Mind) mind, null);
+                        ((Argument) arg.get(index)).setValue((Mind) mind, null);
                     } else {
-                        if (!arg.get(index).setValue((Mind) mind, ((DictionaryFactory) mind.getTerms()).add(val))) {
+                        if (!((Argument) arg.get(index)).setValue((Mind) mind, ((DictionaryFactory) mind.getTerms()).add(val))) {
                             ret = 0;
                         }
                     }
@@ -121,14 +123,14 @@ public class UDF extends Operation implements IReactor {
                     } else {
                         scope.put(params.get(params.size() - 1), scope, fres.getValue());
                         for (int i = 0; i < arg.size() - 1; ++i) {
-                            if (arg.get(i).isTSet()) {
+                            if (arg.get(i).getType() == ArgumentType.TVARIABLE) {
                                 String var = params.get(i);
                                 script = scripts.get(i + 1);
                                 Object tmp = scope.get(var, scope);
                                 scriptContext.evaluateString(scope, script, "script", 1, null);
                                 Object calc = scope.get(var, scope);
                                 scope.put(var, scope, tmp);
-                                TValue v = arg.get(i).addValue((Mind) mind, ((DictionaryFactory) mind.getTerms()).add(calc));
+                                TValue v = ((Mind) mind).getCalculator().getFunctions().addTValue(arg.get(i), ((DictionaryFactory) mind.getTerms()).add(calc));
                                 showLog((IUnit) o, v);
                             }
                         }

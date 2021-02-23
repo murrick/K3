@@ -1037,9 +1037,11 @@ public class Mind implements IMind {
 
     public int executeSystem(Domain d) throws Exception {
         for (int i = 0; i < d.getRange(); ++i) {
-            if (d.getArguments().get(i).isFSet() && d.getArguments().get(i).getF(this).isCalculable() && d.getArguments().get(i).getF(this).isEmpty()) {
+            if (d.getArguments().get(i).getType() == ArgumentType.FUNCTION
+                    && ((Function) d.getArguments().get(i).getObject(this)).isCalculable()
+                    && ((Function) d.getArguments().get(i).getObject(this)).isEmpty()) {
 //                d.getArguments().get(i).getF().clear();
-                calculator.calculate(d.getArguments().get(i).getF(this), logging);
+                calculator.calculate((Function) d.getArguments().get(i).getObject(this), logging);
             }
         }
 

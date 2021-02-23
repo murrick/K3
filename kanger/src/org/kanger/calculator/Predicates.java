@@ -26,16 +26,15 @@
 package org.kanger.calculator;
 
 import org.kanger.Mind;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.ITerm;
+import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
-import org.kanger.units.Domain;
-import org.kanger.units.Operation;
-import org.kanger.units.TValue;
-import org.kanger.units.Term;
+import org.kanger.units.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -68,25 +67,25 @@ public class Predicates {
 //                        mind.getCalculator().calculate(arg.get(1).getF(), mind.isLogging());
 //                    }
 
-                    if (arg.get(0).isDefined(mind) && arg.get(1).isEmpty(mind)) {
-                        if (arg.get(1).setValue(mind, arg.get(0).getValue(mind))) {
+                    if (mind.getCalculator().getFunctions().isDefined(arg.get(0)) && arg.get(1).isEmpty(mind)) {
+                        if (((Argument) arg.get(1)).setValue(mind, arg.get(0).getValue(mind))) {
                             i = 1;
-                            if (arg.get(1).isTSet()) {
+                            if (arg.get(1).getType() == ArgumentType.TVARIABLE) {
                                 List<TValue> list = new ArrayList<>();
-                                list.add(arg.get(1).getT(mind).getCurrent());
+                                list.add(((TVariable) arg.get(1).getObject(mind)).getCurrent());
                                 mind.addTSolve(list);
                             }
                         }
-                    } else if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
-                        if (arg.get(0).setValue(mind, arg.get(1).getValue(mind))) {
+                    } else if (arg.get(0).isEmpty(mind) && mind.getCalculator().getFunctions().isDefined(arg.get(1))) {
+                        if (((Argument) arg.get(0)).setValue(mind, arg.get(1).getValue(mind))) {
                             i = 1;
-                            if (arg.get(0).isTSet()) {
+                            if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
                                 List<TValue> list = new ArrayList<>();
-                                list.add(arg.get(0).getT(mind).getCurrent());
+                                list.add(((TVariable) arg.get(0).getObject(mind)).getCurrent());
                                 mind.addTSolve(list);
                             }
                         }
-                    } else if (arg.get(0).isDefined(mind) && arg.get(1).isDefined(mind)) {
+                    } else if (mind.getCalculator().getFunctions().isDefined(arg.get(0)) && mind.getCalculator().getFunctions().isDefined(arg.get(1))) {
                         if (arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind)) == 0) {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue(mind).isCVariable() && arg.createCVar(1).getValue(mind).isCVariable()) || (!arg.createCVar(0).getValue(mind).isCVariable() && !arg.createCVar(1).getValue(mind).isCVariable())) {
@@ -95,16 +94,16 @@ public class Predicates {
                             Term v1 = (Term) arg.get(1).getValue(mind);
 
 
-                            if (arg.get(0).isTSet() && !arg.get(1).isEmpty(mind)) {
-                                TValue v = arg.get(0).addValue(mind, arg.get(1).getValue(mind));
+                            if (arg.get(0).getType() == ArgumentType.TVARIABLE && !arg.get(1).isEmpty(mind)) {
+                                TValue v = mind.getCalculator().getFunctions().addTValue(arg.get(0), arg.get(1).getValue(mind));
                                 if (mind.isLogging() && v != null) {
                                     mind.getLog().add(LogMode.ANALYZER, "Added: " + v);
                                     mind.getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
                                     mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
                                 }
                             }
-                            if (arg.get(1).isTSet() && !arg.get(0).isEmpty(mind)) {
-                                TValue v = arg.get(1).addValue(mind, arg.get(0).getValue(mind));
+                            if (arg.get(1).getType() == ArgumentType.TVARIABLE && !arg.get(0).isEmpty(mind)) {
+                                TValue v = mind.getCalculator().getFunctions().addTValue(arg.get(1), arg.get(0).getValue(mind));
                                 if (mind.isLogging() && v != null) {
                                     mind.getLog().add(LogMode.ANALYZER, "Added: " + v);
                                     mind.getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
@@ -112,13 +111,15 @@ public class Predicates {
                                 }
                             }
 
-                            if (arg.get(0).isFSet() && arg.get(0).getF(mind).isCalculable()) {
-                                arg.get(0).getF(mind).setResult(v1);
-                                mind.getCalculator().calculate(arg.get(0).getF(mind), mind.isLogging());
+                            if (arg.get(0).getType() == ArgumentType.FUNCTION
+                                    && ((Function) arg.get(0).getObject(mind)).isCalculable()) {
+                                ((Function) arg.get(0).getObject(mind)).setResult(v1);
+                                mind.getCalculator().calculate((Function) arg.get(0).getObject(mind), mind.isLogging());
                             }
-                            if (arg.get(1).isFSet() && arg.get(1).getF(mind).isCalculable()) {
-                                arg.get(1).getF(mind).setResult(v0);
-                                mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
+                            if (arg.get(1).getType() == ArgumentType.FUNCTION
+                                    && ((Function) arg.get(1).getObject(mind)).isCalculable()) {
+                                ((Function) arg.get(1).getObject(mind)).setResult(v0);
+                                mind.getCalculator().calculate((Function) arg.get(1).getObject(mind), mind.isLogging());
                             }
 
                             i = 0;
@@ -223,7 +224,7 @@ public class Predicates {
 //                        mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
 //                    }
 
-                    if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
+                    if (arg.get(0).isEmpty(mind) && mind.getCalculator().getFunctions().isDefined(arg.get(1))) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
                                 || arg.get(1).getValue(mind).getType() == DataType.SET
                                 || arg.get(1).getValue(mind).getType() == DataType.STRING
@@ -231,13 +232,13 @@ public class Predicates {
                             ITerm top = null;
                             for (ITerm cur : expand(arg.get(1).getValue(mind), null, true)) {
                                 if (top == null) top = cur;
-                                arg.get(0).addValue(mind, cur);
+                                mind.getCalculator().getFunctions().addTValue(arg.get(0), cur);
                                 i = 1;
                             }
                         }
                         Term top = null;
                         if (top != null) {
-                            arg.get(0).setValue(mind, top);
+                            ((Argument) arg.get(0)).setValue(mind, top);
                         }
                     } else if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
@@ -260,7 +261,7 @@ public class Predicates {
 //                    if (arg.get(1).isFSet()) {
 //                        mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
 //                    }
-                    if (arg.get(0).isEmpty(mind) && arg.get(1).isDefined(mind)) {
+                    if (arg.get(0).isEmpty(mind) && mind.getCalculator().getFunctions().isDefined(arg.get(1))) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL
                                 || arg.get(1).getValue(mind).getType() == DataType.SET
                                 || arg.get(1).getValue(mind).getType() == DataType.STRING
@@ -271,13 +272,13 @@ public class Predicates {
                             ITerm top = null;
                             for (ITerm cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind), true)) {
                                 if (top == null) top = cur;
-                                arg.get(0).addValue(mind, cur);
+                                mind.getCalculator().getFunctions().addTValue(arg.get(0), cur);
                                 i = 1;
                             }
                         }
                         Term top = null;
                         if (top != null) {
-                            arg.get(0).setValue(mind, top);
+                            ((Argument) arg.get(0)).setValue(mind, top);
                         }
                     } else if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind) && !arg.get(0).getValue(mind).isCVariable() && !arg.get(1).getValue(mind).isCVariable()) {
                         if (arg.get(1).getValue(mind).getType() == DataType.INTERVAL

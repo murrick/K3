@@ -968,6 +968,7 @@ public class Console {
                         + "   rules                   - View rules list\n"
                         + "      rules produced         only produced statements\n"
                         + "      rules all              all rules and statements\n"
+                        + "      rules level [<n>]      all rules and statements for transaction level n\n"
                         + "      rule <n>               rule with ID = n\n"
                         + "      rules tree             rules list with compiled trees\n"
                         + "      rule tree <n>          rule with compiled tree for rule with ID = n\n"

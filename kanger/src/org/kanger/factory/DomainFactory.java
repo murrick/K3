@@ -27,6 +27,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
@@ -34,7 +35,6 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Domain;
@@ -166,7 +166,7 @@ public class DomainFactory implements IFactory<Domain> {
                 p.setAbstractive();
             }
             if (arg != null) {
-                for (Argument t : arg) {
+                for (IArgument t : arg) {
                     p.add(t);
                 }
             }

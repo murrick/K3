@@ -26,6 +26,7 @@
 package org.kanger.compiler;
 
 import org.kanger.Mind;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.ParseError;
@@ -259,7 +260,7 @@ public class Compiler {
 //            if (arg.size() > 2 && ("_in".equals(root.getName()) || "_eq".equals(root.getName()))) {
 //                ArgList tmp = arg;
 //                arg = new ArgList();
-//                if(tmp.get(tmp.size()-1).isTSet()) {
+//                if(tmp.get(tmp.size()-1).getType() == ArgumentType.TVARIABLE) {
 //                    arg.add(tmp.get(tmp.size()-1));
 //                    tmp.remove(tmp.size()-1);
 //                    arg.add(0, new Argument(mind.getTerms().add(tmp)));
@@ -306,7 +307,7 @@ public class Compiler {
                         && arguments.size() == 1
                         && !arguments.get(0).isEmpty(mind)
                         && arguments.get(0).getValue(mind).getType() != DataType.NUMERIC
-                        && !arguments.get(0).isFSet()) {
+                        && arguments.get(0).getType() != ArgumentType.FUNCTION) {
                     throw new ParseErrorException(root.getPos(), ParseError.ENEG);
                 }
                 Function f = mind.getFunctions().add(mind.getTerms().add(root.getName()), arguments);
@@ -361,7 +362,7 @@ public class Compiler {
 //                    t = new Argument(mind.getTerms().createCVar(d.getRight(), t.getValue(mind).getName().toString()));
 //                }
 //            } else {
-//                if (t.isTSet()) {
+//                if (t.getType() == ArgumentType.TVARIABLE) {
 //                    d.setSubstitutable();
 //                } else if (t.getValue(mind).isCVariable()) {
 //                    d.setAbstractive();

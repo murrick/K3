@@ -36,7 +36,7 @@ package org.kanger.interfaces;
  * Конструктор для комментария выглядит так:
  * public Comment(long id, String comment, IMind mind);
  *
- * Где
+ * Здесь:
  * id - иденификатор правила или утверждения,
  * comment - текст комментария,
  * mind - текущий уровень транзакции

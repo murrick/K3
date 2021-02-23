@@ -28,9 +28,11 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
@@ -75,11 +77,11 @@ public class FValue implements IUnit<FValue> {
             valueId = value.getId();
         }
 //        condition.setUser(user);
-        for (Argument a : f.getArguments()) {
-            if (a.isTSet()) {
-                condition.add(new Argument(a.getT(mind).getCurrent()));
-            } else if (a.isFSet()) {
-                condition.add(new Argument(a.getF(mind).getCurrent()));
+        for (IArgument a : f.getArguments()) {
+            if (a.getType() == ArgumentType.TVARIABLE) {
+                condition.add(new Argument(((TVariable) a.getObject(mind)).getCurrent()));
+            } else if (a.getType() == ArgumentType.FUNCTION) {
+                condition.add(new Argument(((Function) a.getObject(mind)).getCurrent()));
             } else {
                 condition.add(new Argument(a.getValue(mind)));
             }
@@ -195,18 +197,18 @@ public class FValue implements IUnit<FValue> {
         return condition;
     }
 
-    private String formatParam(Argument t) throws Exception {
+    private String formatParam(IArgument t) throws Exception {
         Operation op = Parser.getOp(getFunction().getName().toString(), getFunction().getRange());
         boolean isOp = op != null && op.getRange() == getFunction().getRange();
         String s = "";
-        if (t.isFSet()) {
-            s += (isOp ? "(" : "") + t.getF(mind).toString() + (isOp ? ")" : "");
-        } else if (t.isRSet()) {
-            s += (isOp ? "(" : "") + t.getR(mind).toString() + (isOp ? ")" : "");
-        } else if (t.isTSet()) {
-            s += t.getT(mind).toString();
-        } else if (t.isVSet()) {
-            s += t.getV(mind).toString();
+        if (t.getType() == ArgumentType.FUNCTION) {
+            s += (isOp ? "(" : "") + t.getObject(mind).toString() + (isOp ? ")" : "");
+        } else if (t.getType() == ArgumentType.FVALUE) {
+            s += (isOp ? "(" : "") + t.getObject(mind).toString() + (isOp ? ")" : "");
+        } else if (t.getType() == ArgumentType.TVARIABLE) {
+            s += t.getObject(mind).toString();
+        } else if (t.getType() == ArgumentType.TVALUE) {
+            s += t.getObject(mind).toString();
         } else if (!t.isEmpty(mind)) {
             s += t.getValue(mind).toString();
         } else {

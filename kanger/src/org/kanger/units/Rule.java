@@ -428,8 +428,24 @@ public class Rule implements IUnit<IRule>, IRule {
                     break;
                 }
 
-                TValue a = x.getArguments().get(i).isTSet() ? x.getArguments().get(i).getT(mind).getCurrent() : x.getArguments().get(i).getV(mind);
-                TValue b = domain.getArguments().get(i).isTSet() ? domain.getArguments().get(i).getT(mind).getCurrent() : domain.getArguments().get(i).getV(mind);
+                TValue a = null;
+                switch (x.getArguments().get(i).getType()) {
+                    case TVARIABLE:
+                        a = ((TVariable) x.getArguments().get(i).getObject(mind)).getCurrent();
+                        break;
+                    case TVALUE:
+                        a = (TValue) x.getArguments().get(i).getObject(mind);
+                        break;
+                }
+                TValue b = null;
+                switch (domain.getArguments().get(i).getType()) {
+                    case TVARIABLE:
+                        b = ((TVariable) domain.getArguments().get(i).getObject(mind)).getCurrent();
+                        break;
+                    case TVALUE:
+                        b = (TValue) domain.getArguments().get(i).getObject(mind);
+                        break;
+                }
                 if (a != null && b != null && a.getTVarId() != b.getTVarId()) {
                     break;
                 }

@@ -28,8 +28,10 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
@@ -138,18 +140,18 @@ public class Function implements IUnit<Function> {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
-        arguments.get(range).clear();
+        ((Argument) arguments.get(range)).clear();
     }
 
-    public Argument setResult(ITerm r) throws Exception {
+    public IArgument setResult(ITerm r) throws Exception {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
-        arguments.get(range).setValue(mind, r);
+        ((Argument) arguments.get(range)).setValue(mind, r);
         return arguments.get(range);
     }
 
-    public Argument getResult() {
+    public IArgument getResult() {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
         }
@@ -172,11 +174,11 @@ public class Function implements IUnit<Function> {
 //            return true;
 //        } else {
 
-        if (arguments.get(i).setValue(mind, r)) {
+        if (((Argument) arguments.get(i)).setValue(mind, r)) {
 
-            if (arguments.get(i).isTSet()) {
+            if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
                 List<TValue> list = new ArrayList<>();
-                list.add(arguments.get(i).getT(mind).getCurrent());
+                list.add(((TVariable) arguments.get(i).getObject(mind)).getCurrent());
                 mind.addTSolve(list);
             }
             return true;
@@ -209,15 +211,15 @@ public class Function implements IUnit<Function> {
         this.nameId = name.getId();
     }
 
-    private String formatParam(Argument t) throws Exception {
+    private String formatParam(IArgument t) throws Exception {
         Operation op = Parser.getOp(getName().toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
-        if (t.isFSet()) {
-            s += (isOp ? "(" : "") + t.getF(mind).toString() + (isOp ? ")" : "");
-        } else if (t.isTSet()) {
+        if (t.getType() == ArgumentType.FUNCTION) {
+            s += (isOp ? "(" : "") + t.getObject(mind).toString() + (isOp ? ")" : "");
+        } else if (t.getType() == ArgumentType.TVARIABLE) {
 //            if (v == null) {
-            s += t.getT(mind).toString();
+            s += t.getObject(mind).toString();
 //            } else {
 //                TValue tv = v.getValue(t.getTVariable());
 //                s += t.getTVariable().getVarName()
@@ -338,7 +340,7 @@ public class Function implements IUnit<Function> {
 //    }
 //
     public boolean isComplete() throws Exception {
-        for (Argument a : arguments) {
+        for (IArgument a : arguments) {
             if (a.getValue(mind) == null) {
                 return false;
             }
@@ -427,14 +429,14 @@ public class Function implements IUnit<Function> {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case TVARIABLE:
-                    hash = 47 * hash + (i + 1) * (arguments.get(i).getT(mind).getIndex() - ((Rule) r).getVarIndex());
+                    hash = 47 * hash + (i + 1) * (((TVariable) arguments.get(i).getObject(mind)).getIndex() - ((Rule) r).getVarIndex());
                     break;
                 case TERM:
                     long id = arguments.get(i).getValue(mind).getId();
                     hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(r);
+                    hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(r);
                     break;
             }
         }
@@ -447,8 +449,8 @@ public class Function implements IUnit<Function> {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
-                            if ((arguments.get(i).getT(mind).getIndex() - ((Rule) left).getVarIndex())
-                                    != (f.getArguments().get(i).getT(mind).getIndex() - ((Rule) rule).getVarIndex())) {
+                            if ((((TVariable) arguments.get(i).getObject(mind)).getIndex() - ((Rule) left).getVarIndex())
+                                    != (((TVariable) f.getArguments().get(i).getObject(mind)).getIndex() - ((Rule) rule).getVarIndex())) {
                                 return false;
                             }
                             break;
@@ -458,7 +460,8 @@ public class Function implements IUnit<Function> {
                             }
                             break;
                         case FUNCTION:
-                            if (!arguments.get(i).getF(mind).equalsToStruct(f.getArguments().get(i).getF(mind), left, rule)) {
+                            if (!((Function) arguments.get(i).getObject(mind))
+                                    .equalsToStruct(((Function) f.getArguments().get(i).getObject(mind)), left, rule)) {
                                 return false;
                             }
                             break;

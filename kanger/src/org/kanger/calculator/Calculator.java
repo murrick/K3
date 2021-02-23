@@ -26,11 +26,12 @@
 package org.kanger.calculator;
 
 import org.kanger.Mind;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IPredicate;
-import org.kanger.primitives.Argument;
 import org.kanger.units.*;
 
 /**
@@ -61,9 +62,10 @@ public class Calculator {
 
 //        if(fu.isEmpty()) {
         for (int i = 0; i < fu.getRange(); ++i) {
-            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF(mind).isEmpty()) {
-                fu.getArguments().get(i).getF(mind).clear();
-                calculate(fu.getArguments().get(i).getF(mind), logging);
+            if (fu.getArguments().get(i).getType() == ArgumentType.FUNCTION
+                    && ((Function) fu.getArguments().get(i).getObject(mind)).isEmpty()) {
+                ((Function) fu.getArguments().get(i).getObject(mind)).clear();
+                calculate((Function) fu.getArguments().get(i).getObject(mind), logging);
             }
         }
 //        }
@@ -150,7 +152,7 @@ public class Calculator {
 //                fu.getArguments().add(new Argument());
 //            }
 
-            for (Argument a : fu.getArguments()) {
+            for (IArgument a : fu.getArguments()) {
                 if (!a.isEmpty(mind) && a.getValue(mind).isCVariable()) {
 //                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;

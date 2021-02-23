@@ -26,6 +26,7 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Argument;
@@ -84,9 +85,9 @@ public class ValuesStore implements Iterable<Map<String, ITerm>> {
     public List<ITerm> getValues(String name) throws Exception {
         List<ITerm> list = new ArrayList<>();
         for (ArgumentsList row : getRoot()) {
-            for (Argument t : row) {
-                if (name == null || name.equals(t.getV(mind).getTVar().getName().getValue())) {
-                    list.add(t.getV(mind).getValue());
+            for (IArgument t : row) {
+                if (name == null || name.equals(((TValue) t.getObject(mind)).getTVar().getName().getValue())) {
+                    list.add(((TValue) t.getObject(mind)).getValue());
                 }
             }
         }
@@ -133,14 +134,14 @@ public class ValuesStore implements Iterable<Map<String, ITerm>> {
             try {
                 ITerm t1 = null;
                 ITerm t2 = null;
-                for (Argument a : this) {
-                    if (order.equals(a.getV(mind).getTVar().getName())) {
-                        t1 = a.getV(mind).getValue();
+                for (IArgument a : this) {
+                    if (order.equals(((TValue) a.getObject(mind)).getTVar().getName())) {
+                        t1 = ((TValue) a.getObject(mind)).getValue();
                     }
                 }
-                for (Argument a : arguments) {
-                    if (order.equals(a.getV(mind).getTVar().getName())) {
-                        t2 = a.getV(mind).getValue();
+                for (IArgument a : arguments) {
+                    if (order.equals(((TValue) a.getObject(mind)).getTVar().getName())) {
+                        t2 = ((TValue) a.getObject(mind)).getValue();
                     }
                 }
                 if (t1 != null && t2 != null) {
@@ -154,7 +155,7 @@ public class ValuesStore implements Iterable<Map<String, ITerm>> {
                 } else if (t2 != null) {
                     return ascending ? -1 : 1;
                 } else {
-                    return get(0).getV(mind).getValue().compareTo(arguments.get(0).getV(mind).getValue());
+                    return ((TValue) get(0).getObject(mind)).getValue().compareTo(((TValue) arguments.get(0).getObject(mind)).getValue());
                 }
             } catch (Exception e) {
                 e.printStackTrace(System.err);
@@ -175,13 +176,13 @@ public class ValuesStore implements Iterable<Map<String, ITerm>> {
         @Override
         public Map<String, ITerm> next() {
             SortedMap<String, ITerm> row = new TreeMap<>();
-            for (Argument v : iterator.next()) {
+            for (IArgument v : iterator.next()) {
                 try {
 //                    Object val = (v.getV(mind).getValue().getType() == DataType.INTERVAL
 //                            || v.getV(mind).getValue().getType() == DataType.SET)
 //                            ? v.getV(mind).getValue()
 //                            : v.getV(mind).getValue().getValue();
-                    row.put(v.getV(mind).getTVar().getName().toString(), v.getV(mind).getValue());
+                    row.put(((TValue) v.getObject(mind)).getTVar().getName().toString(), ((TValue) v.getObject(mind)).getValue());
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }

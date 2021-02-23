@@ -27,6 +27,7 @@ package org.kanger.units;
 
 import org.kanger.Mind;
 import org.kanger.compiler.Parser;
+import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
@@ -159,11 +160,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         this.id = id;
     }
 
-    public Argument get(int i) {
+    public IArgument get(int i) {
         return arguments.get(i);
     }
 
-    public void add(Argument t) {
+    public void add(IArgument t) {
         arguments.add(t);
     }
 
@@ -214,8 +215,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 SortedMap<Integer, Set<ICause>> map = new TreeMap<>();
                 for (ICause c : causes) {
                     int weight = 0;
-                    for (Argument a : getArguments()) {
-                        for (Argument b : ((Cause) c).getDonor().getArguments()) {
+                    for (IArgument a : getArguments()) {
+                        for (IArgument b : ((Cause) c).getDonor().getArguments()) {
                             if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
                                 ++weight;
                                 break;
@@ -393,11 +394,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //
 //        if (t.isFSet()) {
 //            s += t.getF(mind).toString();
-//        } else if (t.isTSet()) {
+//        } else if (t.getType() == ArgumentType.TVARIABLE) {
 //            s += t.getT(mind).toString();
-//        } else if (t.isVSet()) {
+//        } else if (t.getType() == ArgumentType.TVALUE) {
 //            s += t.getV(mind).toString();
-//        } else if (t.isRSet()) {
+//        } else if (t.getType() == ArgumentType.FVALUE) {
 //            s += t.getR(mind).toString();
 //        } else if (!t.isEmpty(mind)) {
 //            s += t.getValue(mind).toString();
@@ -516,7 +517,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                        || slave.get(i).getValue().getId() != arguments.get(i).getValue().getId()
 ////                        || this.isDestFor(i, slave)
 ////                        || slave.isDestFor(i, this)
-////                        || (slave.get(i).isTSet() && arguments.get(i).isTSet()
+////                        || (slave.get(i).getType() == ArgumentType.TVARIABLE && arguments.get(i).getType() == ArgumentType.TVARIABLE
 ////                        && slave.get(i).getT().getId() == arguments.get(i).getT().getId())
 //                ) {
 //                    success = false;
@@ -528,7 +529,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 ////                        break;
 ////                    } else {
 //
-////                if (get(i).isVSet() && slave.get(i).isVSet() && get(i).getV().isRelativeFor(slave.get(i).getV())) {
+////                if (get(i).getType() == ArgumentType.TVALUE && slave.get(i).getType() == ArgumentType.TVALUE && get(i).getV().isRelativeFor(slave.get(i).getV())) {
 ////                    success = false;
 ////                    break;
 ////                }
@@ -542,8 +543,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     public int getOverlaps(ArgumentsList arg) throws Exception {
         Set<Long> ids = new HashSet<>();
-        for (Argument a : arguments) {
-            for (Argument b : arg) {
+        for (IArgument a : arguments) {
+            for (IArgument b : arg) {
                 if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
                     ids.add(a.getValue(mind).getId());
                 }
@@ -577,8 +578,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 
 //    public boolean isDestFor(int index, Domain d) {
-//        if (index < arguments.size() && ((arguments.get(index).isTSet() && !arguments.get(index).getT().isEmpty()) || arguments.get(index).isVSet())) {
-//            TValue v = arguments.get(index).isVSet() ? arguments.get(index).getV() : arguments.get(index).getT().getCurrent();
+//        if (index < arguments.size() && ((arguments.get(index).getType() == ArgumentType.TVARIABLE && !arguments.get(index).getT().isEmpty()) || arguments.get(index).getType() == ArgumentType.TVALUE)) {
+//            TValue v = arguments.get(index).getType() == ArgumentType.TVALUE ? arguments.get(index).getV() : arguments.get(index).getT().getCurrent();
 //            for (Cause s : v.getCauses()) {
 //                if (s.getIndex() == index
 //                        && s.getDstId() == id
@@ -900,10 +901,10 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     return true;
                 }
             }
-            for (Argument a : arguments) {
-                if (a.isVSet()
-                        && mind.getQueryValues().containsKey(a.getV(mind).getTVar())
-                        && mind.getQueryValues().get(a.getV(mind).getTVar()).contains(a.getV(mind))) {
+            for (IArgument a : arguments) {
+                if (a.getType() == ArgumentType.TVALUE
+                        && mind.getQueryValues().containsKey(((TValue) a.getObject(mind)).getTVar())
+                        && mind.getQueryValues().get(((TValue) a.getObject(mind)).getTVar()).contains(a.getObject(mind))) {
                     return true;
                 }
             }
@@ -965,7 +966,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //            int plains = 0;
 //            for (int i = 0; i < arguments.size(); ++i) {
 //                int ix = 0;
-//                if (arguments.get(i).isTSet()) {
+//                if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
 //                    ix = arguments.get(i).getT(mind).getIndex();
 //                } else if (arguments.get(i).isCVar(mind) && arguments.get(i).getValue(mind).getRightId() == rightId) {
 //                    ix = arguments.get(i).getValue(mind).getIndex();
@@ -1022,7 +1023,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     public boolean isComplete() {
         boolean complete = true;
-        for (Argument a : arguments) {
+        for (IArgument a : arguments) {
             if (a.isEmpty(mind)) {
                 complete = false;
                 break;
@@ -1130,7 +1131,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     }
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(getRule());
+                    hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(getRule());
                     break;
             }
         }
@@ -1163,7 +1164,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             }
                             break;
                         case FUNCTION:
-                            if (!arguments.get(i).getF(mind).equalsToStruct(to.getArguments().get(i).getF(mind), getRule(), to.getRule())) {
+                            if (!((Function) arguments.get(i).getObject(mind))
+                                    .equalsToStruct((Function) to.getArguments().get(i).getObject(mind), getRule(), to.getRule())) {
                                 return false;
                             }
                             break;
@@ -1215,7 +1217,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
 //    public int compareVars(Domain slave, int pos) throws Exception {
-//        if(arguments.get(pos).isTSet() && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
+//        if(arguments.get(pos).getType() == ArgumentType.TVARIABLE && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
 //            return arguments.get(pos).getT(mind).getIndex() - slave.get(pos).getValue(mind).getIndex();
 //        } else {
 //            return 0;
@@ -1239,8 +1241,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
             int plains = 0;
             for (int i = 0; i < arguments.size(); ++i) {
                 int ix = 0;
-                if (arguments.get(i).isTSet()) {
-                    ix = arguments.get(i).getT(mind).getIndex();
+                if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
+                    ix = ((TVariable) arguments.get(i).getObject(mind)).getIndex();
 //                } else if (arguments.get(i).getValue(mind).isXVariable() && arguments.get(i).getValue(mind).getParent().getRightId() == rightId) {
 //                    ix = arguments.get(i).getValue(mind).getParent().getIndex();
 //                    ++plains;
@@ -1258,15 +1260,15 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
             for (Integer e : sort.keySet()) {
                 sort.put(e, i++);
             }
-            arguments.get(pos).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
+            ((Argument) arguments.get(pos)).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
         }
     }
 
     private int getVarOrder(Mind mind, int pos) throws Exception {
-        if (arguments.get(pos).getVarOrder() == -1) {
+        if (((Argument) arguments.get(pos)).getVarOrder() == -1) {
             calcVarOrders(mind);
         }
-        return arguments.get(pos).getVarOrder();
+        return ((Argument) arguments.get(pos)).getVarOrder();
     }
 
     public boolean equalsTo(Domain to) {
@@ -1277,10 +1279,10 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 int i = 0;
                 for (; i < getRange(); ++i) {
                     try {
-                        if ((to.getArguments().get(i).isTSet() && arguments.get(i).isTSet() && to.getArguments().get(i).getT(mind).getId() == arguments.get(i).getT(mind).getId())
-                                || (to.getArguments().get(i).isFSet() && arguments.get(i).isFSet() && to.getArguments().get(i).getF(mind).getId() == arguments.get(i).getF(mind).getId())
-                                || (!to.getArguments().get(i).isTSet() && !arguments.get(i).isTSet()
-                                && !to.getArguments().get(i).isFSet() && !arguments.get(i).isFSet()
+                        if ((to.getArguments().get(i).getType() == ArgumentType.TVARIABLE && arguments.get(i).getType() == ArgumentType.TVARIABLE && to.getArguments().get(i).getId() == arguments.get(i).getId())
+                                || (to.getArguments().get(i).getType() == ArgumentType.FUNCTION && arguments.get(i).getType() == ArgumentType.FUNCTION && to.getArguments().get(i).getId() == arguments.get(i).getId())
+                                || (to.getArguments().get(i).getType() != ArgumentType.TVARIABLE && arguments.get(i).getType() != ArgumentType.TVARIABLE
+                                && to.getArguments().get(i).getType() != ArgumentType.FUNCTION && arguments.get(i).getType() != ArgumentType.FUNCTION
                                 && !to.getArguments().get(i).isEmpty(mind) && !arguments.get(i).isEmpty(mind)
                                 && to.getArguments().get(i).getValue(mind).getId() == arguments.get(i).getValue(mind).getId())) {
                         } else {
