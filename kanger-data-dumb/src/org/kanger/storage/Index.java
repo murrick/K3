@@ -37,7 +37,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Index implements Closeable, Iterable<Index.IndexOne> {
 

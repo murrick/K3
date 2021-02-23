@@ -43,7 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class FunctionFactory implements IFactory<Function> {
 

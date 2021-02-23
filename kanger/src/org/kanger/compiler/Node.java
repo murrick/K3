@@ -28,7 +28,7 @@ package org.kanger.compiler;
 import org.kanger.units.Domain;
 
 /**
- * Created by Dmitry G. Qusnetsov on 25.05.15.
+ * Created by Dmitry G. Quznetsov on 25.05.15.
  * <p/>
  * Узел
  */

@@ -41,7 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Qusnetsov on 20.12.2020.
+ * Created by Dmitry G. Quznetsov on 20.12.2020.
  */
 public class CommentFactory implements IFactory<IComment> {
 

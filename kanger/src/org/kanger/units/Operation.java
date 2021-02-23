@@ -41,7 +41,7 @@ import java.util.List;
 
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.15.
+ * Created by Dmitry G. Quznetsov on 27.05.15.
  */
 public class Operation implements IUnit<Operation>, IOperation {
 

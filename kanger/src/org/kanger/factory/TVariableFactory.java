@@ -42,7 +42,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Qusnetsov on 25.05.15.
+ * Created by Dmitry G. Quznetsov on 25.05.15.
  */
 public class TVariableFactory implements IFactory<TVariable> {
 

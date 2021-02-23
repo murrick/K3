@@ -30,7 +30,7 @@ import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Step implements IStep {
     private Object data = null;

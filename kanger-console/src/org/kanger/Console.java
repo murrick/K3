@@ -44,7 +44,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Qusnetsov on 28.05.15.
+ * Created by Dmitry G. Quznetsov on 28.05.15.
  */
 public class Console {
 
@@ -939,7 +939,7 @@ public class Console {
 
     public static void showCopyrigt() {
         System.out.printf("KANGER III, Version %s\n"
-                + "Copyright (C) 1986-%d, Dmitry G. Qusnetsov, All rights reserved!\n"
+                + "Copyright (C) 1986-%d, Dmitry G. Quznetsov, All rights reserved!\n"
                 + "Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
     }
 

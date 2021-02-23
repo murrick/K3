@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Dmitry G. Qusnetsov on 25.05.15.
+ * Created by Dmitry G. Quznetsov on 25.05.15.
  */
 public class DictionaryFactory implements IFactory<ITerm> {
 

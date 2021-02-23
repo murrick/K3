@@ -31,7 +31,7 @@ import org.kanger.exception.RuntimeErrorException;
 import org.kanger.storage.ByteBuffer;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public interface IStep {
 

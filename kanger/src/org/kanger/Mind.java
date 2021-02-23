@@ -44,7 +44,7 @@ import org.kanger.units.*;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 20.05.15.
+ * Created by Dmitry G. Quznetsov on 20.05.15.
  */
 public class Mind implements IMind {
 

@@ -43,7 +43,7 @@ import org.kanger.storage.ByteBuffer;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 20.05.15.
+ * Created by Dmitry G. Quznetsov on 20.05.15.
  * <p>
  * Описатель варианта решения предиката
  */
@@ -541,7 +541,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //        return success;
 //    }
 
-    public int getOverlaps(ArgumentsList arg) throws Exception {
+    public int getOverlaps(IList arg) throws Exception {
         Set<Long> ids = new HashSet<>();
         for (IArgument a : arguments) {
             for (IArgument b : arg) {

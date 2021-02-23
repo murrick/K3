@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Created by Dmitry G. Qusnetsov on 28.05.15.
+ * Created by Dmitry G. Quznetsov on 28.05.15.
  */
 public class Enums {
 

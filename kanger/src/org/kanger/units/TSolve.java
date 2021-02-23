@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 13.12.16.
+ * Created by Dmitry G. Quznetsov on 13.12.16.
  */
 public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
 

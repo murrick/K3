@@ -35,7 +35,7 @@ import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
 /**
- * Created by Dmitry G. Qusnetsov on 20.05.15.
+ * Created by Dmitry G. Quznetsov on 20.05.15.
  * <p>
  * Элемент подстановочной переменной
  */

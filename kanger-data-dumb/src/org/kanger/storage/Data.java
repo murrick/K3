@@ -34,7 +34,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Data implements Closeable, Iterable<IStep> {
 

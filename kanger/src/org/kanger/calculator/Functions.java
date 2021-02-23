@@ -39,7 +39,7 @@ import org.kanger.units.*;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 18.01.17.
+ * Created by Dmitry G. Quznetsov on 18.01.17.
  */
 public class Functions {
 
@@ -2044,13 +2044,13 @@ public class Functions {
             ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) a.getValue()) {
                 for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
-                if (!list.contains(mind, t)) {
+                if (!list.contains(t, mind)) {
                     list.add(new Argument(t));
                 }
             }
@@ -2059,13 +2059,13 @@ public class Functions {
             ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) b.getValue()) {
                 for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
-                if (!list.contains(mind, t)) {
+                if (!list.contains(t, mind)) {
                     list.add(new Argument(t));
                 }
             }
@@ -2086,7 +2086,7 @@ public class Functions {
             } else {
                 ArgumentsList list = new ArgumentsList();
                 for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
-                    if (!list.contains(mind, t)) {
+                    if (!list.contains(t, mind)) {
                         list.add(new Argument(t));
                     }
                 }
@@ -2109,7 +2109,7 @@ public class Functions {
             } else {
                 ArgumentsList list = new ArgumentsList();
                 for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
-                    if (!list.contains(mind, t)) {
+                    if (!list.contains(t, mind)) {
                         list.add(new Argument(t));
                     }
                 }
@@ -2182,7 +2182,7 @@ public class Functions {
             for (ITerm n : mind.getCalculator().getPredicates().expand(a, null, false)) {
                 list.add(new Argument(n));
             }
-            list.remove(mind, b);
+            list.remove(b, mind);
             res = list;
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
             ArgumentsList list = new ArgumentsList();
@@ -2190,7 +2190,7 @@ public class Functions {
                 list.add(new Argument(n));
             }
             for (ITerm n : mind.getCalculator().getPredicates().expand(b, null, false)) {
-                list.remove(mind, n);
+                list.remove(n, mind);
             }
             res = list;
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.SET) {
@@ -2200,7 +2200,7 @@ public class Functions {
             }
             for (Term t : (Collection<Term>) b.getValue()) {
                 for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
-                    list.remove(mind, n);
+                    list.remove(n, mind);
                 }
             }
             res = list;
@@ -2208,13 +2208,13 @@ public class Functions {
             ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) a.getValue()) {
                 for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
-                list.remove(mind, t);
+                list.remove(t, mind);
             }
             res = list;
         } else if (a.getType() == DataType.BLOB && b.getType() == DataType.BLOB) {
@@ -2253,13 +2253,13 @@ public class Functions {
             ArgumentsList result = new ArgumentsList();
             for (ITerm t : (Collection<Term>) a.getValue()) {
                 for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
-                if (list.contains(mind, t)) {
+                if (list.contains(t, mind)) {
                     result.add(new Argument(t));
                 }
             }
@@ -2269,13 +2269,13 @@ public class Functions {
             ArgumentsList result = new ArgumentsList();
             for (ITerm t : (Collection<Term>) b.getValue()) {
                 for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
-                    if (!list.contains(mind, n)) {
+                    if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
             for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
-                if (list.contains(mind, t)) {
+                if (list.contains(t, mind)) {
                     result.add(new Argument(t));
                 }
             }

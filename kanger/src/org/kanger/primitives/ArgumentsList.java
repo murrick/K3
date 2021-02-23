@@ -31,6 +31,7 @@ import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
 import org.kanger.interfaces.IArgument;
+import org.kanger.interfaces.IList;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
 import org.kanger.storage.ByteBuffer;
@@ -42,9 +43,9 @@ import org.kanger.units.TVariable;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
-public class ArgumentsList extends ArrayList<IArgument> {
+public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
     private Mind mind = null;
 //    private List<TVariable> tVariables = null;
@@ -454,7 +455,8 @@ public class ArgumentsList extends ArrayList<IArgument> {
         }
     }
 
-    public boolean contains(Mind mind, ITerm t) throws Exception {
+    //    @Override
+    public boolean contains(ITerm t, IMind mind) throws Exception {
         for (IArgument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
                 return true;
@@ -463,7 +465,8 @@ public class ArgumentsList extends ArrayList<IArgument> {
         return false;
     }
 
-    public IArgument remove(Mind mind, ITerm t) throws Exception {
+    //    @Override
+    public IArgument remove(ITerm t, IMind mind) throws Exception {
         for (IArgument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
                 this.remove(a);

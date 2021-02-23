@@ -34,7 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class UserFactory {
 

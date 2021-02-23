@@ -32,7 +32,7 @@ import org.kanger.interfaces.IUser;
 import java.util.Collection;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public interface IData {
     void init(IUser user);

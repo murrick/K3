@@ -37,7 +37,7 @@ import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 26.05.15.
+ * Created by Dmitry G. Quznetsov on 26.05.15.
  * <p>
  * Решение для предиката
  */

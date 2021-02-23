@@ -25,8 +25,6 @@
 
 package org.kanger.interfaces;
 
-import org.kanger.primitives.ArgumentsList;
-
 import java.util.Set;
 
 public interface IRule {
@@ -58,7 +56,7 @@ public interface IRule {
 
     long getPredicateId() throws Exception;
 
-    ArgumentsList getArguments() throws Exception;
+    IList getArguments() throws Exception;
 
     IMind getMind();
 

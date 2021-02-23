@@ -25,10 +25,12 @@
 
 package org.kanger.interfaces;
 
-/**
- * Created by Dmitry G. Quznetsov on 27.05.15.
- */
-public interface IReactor<T> {
+import java.util.List;
 
-    Object run(T o) throws Exception;
+/**
+ * Строка аргуметов - параметров предиката, функции, гипотезы или решения.
+ * Наследует интерфейс List с типом элемента IArgument.
+ */
+public interface IList extends List<IArgument> {
+
 }

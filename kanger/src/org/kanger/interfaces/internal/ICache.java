@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public interface ICache extends Iterable {
 

@@ -37,7 +37,7 @@ import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Cause implements ICause {
     //    private Solve result = null;

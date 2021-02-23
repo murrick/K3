@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Qusnetsov on 26.05.15.
+ * Created by Dmitry G. Quznetsov on 26.05.15.
  * <p>
  * Домен для функции. Может быть рекурсивным на уровне структуры TList.
  */

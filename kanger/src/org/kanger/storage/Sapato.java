@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Sapato implements IStep {
 

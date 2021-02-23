@@ -25,8 +25,6 @@
 
 package org.kanger.interfaces;
 
-import org.kanger.primitives.ArgumentsList;
-
 /**
  * Описатель гипотезы. В общем случае гипотеза представляет собой утверждение,
  * для которого определен предикат, строка параметров и признак отношения к антецеденту
@@ -44,12 +42,12 @@ public interface IHypothesis extends Comparable<IHypothesis> {
     IPredicate getPredicate() throws Exception;
 
     /**
-     * Массив аргументов. Прдетставляет собой список реализующий интерфейс List
+     * Массив аргументов. Прдетставляет собой список реализующий интерфейс IList
      * содержащий элементы типа IArgument.
      *
      * @return
      */
-    ArgumentsList getArguments();
+    IList getArguments();
 
     /**
      * Получить признак отношения гипотетического утверждения к антецеденту

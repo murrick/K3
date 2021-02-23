@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Qusnetsov on 20.05.15.
+ * Created by Dmitry G. Quznetsov on 20.05.15.
  * <p>
  * Список правил
  */
@@ -406,7 +406,7 @@ public class Rule implements IUnit<IRule>, IRule {
         if (isStored()
                 && x.getPredicate().getId() == getDomain().getPredicateId()
                 && x.getPredicate().getRange() == getDomain().getRange()
-                && x.getArguments().equalsBase(mind, getDomain().getArguments())) {
+                && ((ArgumentsList) x.getArguments()).equalsBase(mind, getDomain().getArguments())) {
             return true;
         } else {
             return false;

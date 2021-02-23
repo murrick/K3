@@ -44,7 +44,7 @@ import org.kanger.units.Term;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 25.05.15.
+ * Created by Dmitry G. Quznetsov on 25.05.15.
  */
 public class TValueFactory implements IFactory<TValue> {
 

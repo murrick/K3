@@ -42,7 +42,7 @@ import org.kanger.units.Domain;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Qusnetsov on 25.05.15.
+ * Created by Dmitry G. Quznetsov on 25.05.15.
  */
 public class DomainFactory implements IFactory<Domain> {
 

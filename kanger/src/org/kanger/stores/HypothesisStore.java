@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Qusnetsov on 28.05.15.
+ * Created by Dmitry G. Quznetsov on 28.05.15.
  */
 public class HypothesisStore implements Comparable<HypothesisStore>, Iterable<IHypothesis> {
 
@@ -142,7 +142,7 @@ public class HypothesisStore implements Comparable<HypothesisStore>, Iterable<IH
 //            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? h.isAntc() : !h.isAntc();
             if (h.getPredicate().getId() == pred.getId()
                     && (antc == null || h.isAntc() == antc)
-                    && h.getArguments().equalsBase(mind, arg)) {
+                    && ((ArgumentsList) h.getArguments()).equalsBase(mind, arg)) {
                 return h;
             }
         }
@@ -156,7 +156,7 @@ public class HypothesisStore implements Comparable<HypothesisStore>, Iterable<IH
         for (IHypothesis h : root) {
             if (h.getPredicate().getId() == hy.getPredicate().getId()
                     && h.isAntc() == hy.isAntc()
-                    && hy.getArguments().equalsBase(mind, h.getArguments())) {
+                    && ((ArgumentsList) hy.getArguments()).equalsBase(mind, h.getArguments())) {
                 return h;
             }
         }

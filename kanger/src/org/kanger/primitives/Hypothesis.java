@@ -44,7 +44,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Hypothesis implements IHypothesis {
 
@@ -67,7 +67,7 @@ public class Hypothesis implements IHypothesis {
     public Hypothesis(IRule r, IMind mind) throws Exception {
         antc = !r.isAntc();
         predicate = r.getPredicate(mind);
-        arguments.addAll(r.getArguments().convertBase(mind));
+        arguments.addAll(((ArgumentsList) r.getArguments()).convertBase(mind));
     }
 
     public Hypothesis(Solve s, Mind mind) throws Exception {

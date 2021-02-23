@@ -34,7 +34,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
- * Created by Dmitry G. Qusnetsov on 27.05.20.
+ * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class TVariableSet implements Comparable<TVariableSet> {
 

@@ -37,7 +37,7 @@ import org.kanger.storage.ByteBuffer;
 import java.util.HashSet;
 
 /**
- * Created by Dmitry G. Qusnetsov on 13.12.16.
+ * Created by Dmitry G. Quznetsov on 13.12.16.
  */
 public class TValue implements Comparable<TValue>, IUnit<TValue> {
 

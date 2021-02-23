@@ -30,7 +30,7 @@ import org.kanger.enums.LogMode;
 import java.util.Date;
 
 /**
- * Created by Dmitry G. Qusnetsov on 28.05.15.
+ * Created by Dmitry G. Quznetsov on 28.05.15.
  */
 public class LogEntry {
 

@@ -26,7 +26,7 @@
 package org.kanger.compiler;
 
 /**
- * Created by Dmitry G. Qusnetsov on 26.06.15.
+ * Created by Dmitry G. Quznetsov on 26.06.15.
  */
 public class Operation {
     private String name;            // Operation name

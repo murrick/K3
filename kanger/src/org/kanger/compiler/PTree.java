@@ -26,7 +26,7 @@
 package org.kanger.compiler;
 
 /**
- * Created by Dmitry G. Qusnetsov on 04.06.15.
+ * Created by Dmitry G. Quznetsov on 04.06.15.
  */
 public class PTree {
     private String name = null;     // Token name

@@ -38,7 +38,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 
 /**
- * Created by Dmitry G. Qusnetsov on 20.05.15.
+ * Created by Dmitry G. Quznetsov on 20.05.15.
  */
 public class Kanger {
 
