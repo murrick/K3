@@ -85,13 +85,13 @@ public class Kanger {
             }
         }
 
-        if (singleUser) {
+//        if (singleUser) {
             try {
                 UserFactory.createUser("singleuser", "singleuser");
             } catch (Exception ex) {
                 //
             }
-        }
+//        }
 
         if (newlogin != null) {
             try {

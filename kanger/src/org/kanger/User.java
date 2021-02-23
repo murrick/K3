@@ -296,8 +296,10 @@ public class User implements IUser {
         userSettings.setProperty(key, val);
         if (userSettings.containsKey("user.dir")) {
             String confName = userSettings.getProperty("user.dir") + "kanger.conf";
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName))) {
-                userSettings.store(bw, new Date().toString());
+			try {
+            	try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName))) {
+                	userSettings.store(bw, new Date().toString());
+				}
             } catch (IOException e) {
                 e.printStackTrace(System.err);
             }
