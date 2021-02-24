@@ -45,7 +45,7 @@ public interface IHypothesis extends Comparable<IHypothesis> {
      * Массив аргументов. Прдетставляет собой список реализующий интерфейс IList
      * содержащий элементы типа IArgument.
      *
-     * @return
+     * @return Массив аргументов
      */
     IList getArguments();
 

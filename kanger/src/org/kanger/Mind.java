@@ -602,12 +602,12 @@ public class Mind implements IMind {
 //    }
 
     @Override
-    public IFactory<ILogEntry> getLog() {
+    public LogStore getLog() {
         return log;
     }
 
     @Override
-    public IFactory<IRule> getSolutions() {
+    public SolutionsStore getSolutions() {
         return solves;
     }
 
@@ -1014,7 +1014,7 @@ public class Mind implements IMind {
     }
 
     @Override
-    public Object getQueryResult() {
+    public Boolean getQueryResult() {
         return queryResult;
     }
 
@@ -1980,10 +1980,11 @@ public class Mind implements IMind {
     }
 
     @Override
-    public IMind reindexStorage(String name, IReactor reactor) throws Exception {
+    public IMind reindexStorage(String name, IReactor<String> reactor) throws Exception {
         return user.reindex(reactor, this, name);
     }
 
+    //TODO: Обработка удаления внешней базы
     @Override
     public IMind removeStorage(String name) throws Exception {
         return user.remove(this, name);

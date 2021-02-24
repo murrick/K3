@@ -29,10 +29,38 @@ import org.kanger.enums.LogMode;
 
 import java.util.Date;
 
+/**
+ * Запись протокола вывода.
+ */
 public interface ILogEntry {
+
+    /**
+     * Тип записи. Может принимать значения:
+     * <pre>
+     *     COMMON,      Общие
+     *     ANALYZER,    Относится к процессу вывода
+     *     STORAGE,     Относится к базе данных
+     *     VALUES,      Относится к результатам запроса
+     *     SOLVES,      Относится к решениям
+     *     TIMING,      Замеры времени
+     *     ALL;         Все типы
+     * </pre>
+     *
+     * @return тип записи протокола
+     */
     LogMode getType();
 
+    /**
+     * Метка времени записи протокола.
+     *
+     * @return время создания записи
+     */
     Date getTime();
 
+    /**
+     * Информационная строка записи.
+     *
+     * @return информационная строка.
+     */
     String getRecord();
 }

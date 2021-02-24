@@ -31,6 +31,7 @@ import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.stores.LogStore;
+import org.kanger.stores.ValuesStore;
 import org.kanger.test.KangerTest;
 
 import java.io.*;
@@ -473,7 +474,7 @@ public class Console {
                         if (line.split(" ").length > 3) {
                             ascend = line.split(" ")[3].trim().toUpperCase().charAt(0) != 'D';
                         }
-                        mind.getValues().clear();
+                        ((ValuesStore) mind.getValues()).clear();
                         mind.setOrder("-".equals(order) ? "" : order);
                         mind.setAscending(ascend);
                     }
@@ -687,7 +688,7 @@ public class Console {
                     } else {
                         mind = mind.closeStorage();
                         mind.compile(backup);
-                        mind.getLog().clear();
+                        ((LogStore) mind.getLog()).clear();
                         mind.release(m);
                         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                             System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
@@ -745,7 +746,7 @@ public class Console {
                             } else {
                                 mind = mind.closeStorage();
                                 mind.compile(backup);
-                                mind.getLog().clear();
+                                ((LogStore) mind.getLog()).clear();
                                 mind.release(m);
                                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                                     System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());

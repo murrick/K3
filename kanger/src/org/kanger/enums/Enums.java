@@ -220,7 +220,6 @@ public class Enums {
 
     public static final int DEBUG_OPTION_VALUES = 0x100;
     public static final int DEBUG_OPTION_STATUS = 0x200;
-    //    public static final int DEBUG_OPTION_RULES = 0x400;
     public static final int DEBUG_OPTION_RTLOGS = 0x800;
 
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");

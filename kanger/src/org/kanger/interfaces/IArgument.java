@@ -101,7 +101,7 @@ public interface IArgument {
      * для удаления.
      *
      * @param mind уровень транзакци.
-     * @return
+     * @return true - объект помечен для удаления
      */
     boolean isDeleted(IMind mind);
 
