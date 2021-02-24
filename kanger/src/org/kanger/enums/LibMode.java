@@ -26,10 +26,19 @@
 package org.kanger.enums;
 
 /**
- * Created by Dmitry Kuznetsov on 25.01.2016.
+ * Тип операции
  */
 public enum LibMode {
+    /**
+     * Тип неопределен.
+     */
     UNKNOWN,
+    /**
+     * Предикат
+     */
     PREDICATE,
+    /**
+     * Фугкция
+     */
     FUNCTION
 }

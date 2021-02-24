@@ -101,15 +101,12 @@ public class Mind implements IMind {
     private boolean logging = true;
 
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES);
-    private Stack<Integer> debugLevelStack = new Stack<>();
+    private final Stack<Integer> debugLevelStack = new Stack<>();
 
     private String compliedLine = "";
     private Rule acceptedRule = null;
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private volatile int transactionCounter = 0;
-//    private HypothesisStore excluded = null;                                // Список исключенных гипотез
-
-//    private volatile boolean busyCommit = false;
 
     public Mind(IUser user) throws Exception {
         this.user = (User) user;
@@ -1677,16 +1674,15 @@ public class Mind implements IMind {
         }
     }
 
-    private void logResult(Mind mind) throws Exception {
+    private void logResult(Mind mind) {
         if (mind.getSolutions().size() > 0) {
-            ((LogStore) mind.getLog()).add(LogMode.SOLVES, "Solutions (" + mind.getSolutions().size() + "):");
-            int i = 0;
+            mind.getLog().add(LogMode.SOLVES, "Solutions (" + mind.getSolutions().size() + "):");
             for (IRule log : mind.getSolutions()) {
-                ((LogStore) mind.getLog()).add(LogMode.SOLVES, String.format("\tSolution %03d: %s", log.getId(), log.toString()));
+                mind.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d: %s", log.getId(), log.toString()));
             }
         }
         if (mind.getValues().size() > 0) {
-            ((LogStore) mind.getLog()).add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
+            mind.getLog().add(LogMode.VALUES, "Values (" + mind.getValues().size() + "):");
             int i = 0;
             for (Map<String, ITerm> map : mind.getValues()) {
                 String s = String.format("\tRow %03d: ", ++i);
@@ -1696,7 +1692,7 @@ public class Mind implements IMind {
                     }
                     s += row.getKey() + "=" + formatValue(row.getValue());
                 }
-                ((LogStore) mind.getLog()).add(LogMode.VALUES, s);
+                mind.getLog().add(LogMode.VALUES, s);
             }
         }
     }

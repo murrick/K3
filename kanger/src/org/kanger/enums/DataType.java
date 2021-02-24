@@ -31,8 +31,43 @@
 package org.kanger.enums;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Тип данных.
  */
 public enum DataType {
-    VOID, PERIOD, TERM, STRING, NUMERIC, DATE, INTERVAL, SET, BLOB
+    /**
+     * Тип неопределен - void.
+     */
+    VOID,
+    /**
+     * Временной период - строка вида 2 month 3 days 7 hours.
+     */
+    PERIOD,
+    /**
+     * Терм - ITerm.
+     */
+    TERM,
+    /**
+     * Строка текста - String.
+     */
+    STRING,
+    /**
+     * Число - Double.
+     */
+    NUMERIC,
+    /**
+     * Дата и время - Date.
+     */
+    DATE,
+    /**
+     * Интервал - граничные значения типа ITerm.
+     */
+    INTERVAL,
+    /**
+     * Множество значений типа ITerm.
+     */
+    SET,
+    /**
+     * Двоичные данные - byte[].
+     */
+    BLOB
 }

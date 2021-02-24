@@ -26,13 +26,31 @@
 package org.kanger.enums;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Тип аргумента.
  */
 public enum ArgumentType {
+    /**
+     * ОБъект не инициализирован.
+     */
     EMPTY,
+    /**
+     * Объект типа Term - терм.
+     */
     TERM,
+    /**
+     * Объект типа Function - функция.
+     */
     FUNCTION,
+    /**
+     * Объект типа TVariable - t-переменная.
+     */
     TVARIABLE,
+    /**
+     * Объект типа FValue - вариант решения функции.
+     */
     FVALUE,
+    /**
+     * Объект типа TValue - вариант подстановки для t-переменной.
+     */
     TVALUE
 }

@@ -679,7 +679,7 @@ public class Linker {
 //
 //                                }
 
-                                Set<IRule> usedRules = new HashSet<>();
+//                                Set<IRule> usedRules = new HashSet<>();
 
                                 if (success) {
 
@@ -719,7 +719,7 @@ public class Linker {
                                                     }
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
-                                                        usedRules.add(master.getRule());
+//                                                        usedRules.add(master.getRule());
 //                                                s.setParentId(parentId);
                                                         result = true;
                                                     }
@@ -773,7 +773,7 @@ public class Linker {
 //                                                        TValue s = mind.getTValues().find(slave.get(i).getT(mind), tm);
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
-                                                        usedRules.add(slave.getRule());
+//                                                        usedRules.add(slave.getRule());
 //                                                s.setParentId(parentId);
                                                         result = true;
                                                     }

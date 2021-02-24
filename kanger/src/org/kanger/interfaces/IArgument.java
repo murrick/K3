@@ -38,15 +38,7 @@ import org.kanger.enums.ArgumentType;
 public interface IArgument {
 
     /**
-     * Типа базового объекта аргумента. Может принимать значения:
-     * <pre>
-     * ArgumentType.EMPTY,      Объект == null
-     * ArgumentType.TERM,       Терм
-     * ArgumentType.FUNCTION,   Функция
-     * ArgumentType.FVALUE,     Результат функции
-     * ArgumentType.TVARIABLE,  t-переменная
-     * ArgumentType.TVALUE      Подстановка t-переменной
-     * </pre>
+     * Типа базового объекта аргумента.
      *
      * @return тип базового объекта
      */

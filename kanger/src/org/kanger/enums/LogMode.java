@@ -26,8 +26,35 @@
 package org.kanger.enums;
 
 /**
- * Created by Dmitry Kuznetsov on 30.12.2015.
+ * Тип записи протокола вывода.
  */
 public enum LogMode {
-    COMMON, ANALYZER, VALUES, STORAGE, SOLVES, TIMING, ALL;
+    /**
+     * Общая информация.
+     */
+    COMMON,
+    /**
+     * Информация относящаяся к процессу вывода.
+     */
+    ANALYZER,
+    /**
+     * Информация относящаяся к результатам запроса.
+     */
+    VALUES,
+    /**
+     * Информация относящаяся к базе данных.
+     */
+    STORAGE,
+    /**
+     * Информация относящаяся к решениям.
+     */
+    SOLVES,
+    /**
+     * Замеры времени выполнения.
+     */
+    TIMING,
+    /**
+     * Все типы
+     */
+    ALL;
 }
