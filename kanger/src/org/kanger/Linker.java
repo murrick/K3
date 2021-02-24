@@ -34,6 +34,7 @@ import org.kanger.interfaces.*;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.primitives.TVariableSet;
+import org.kanger.stores.LogStore;
 import org.kanger.units.*;
 
 import java.util.*;
@@ -44,6 +45,7 @@ import java.util.*;
 public class Linker {
 
     private final Mind mind;
+    private final LogStore log;
 
     private int solvedPasses = 0;
     private int dumpedPasses = 0;
@@ -55,6 +57,7 @@ public class Linker {
 
     public Linker(Mind mind) {
         this.mind = mind;
+        this.log = (LogStore) mind.getLog();
     }
 
     public void link(Rule rule, boolean logging) throws Exception {
@@ -85,7 +88,7 @@ public class Linker {
         do {
 
             if (logging) {
-                mind.getLog().add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
+                log.add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
             }
 
 //            sz = mind.getRightSolves().size();
@@ -171,16 +174,16 @@ public class Linker {
         );
 
         if (logging) {
-            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
-            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
-            mind.getLog().add(LogMode.TIMING, String.format("* LINKER Skipped passes: %03d", skippedPasses));
+            log.add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
+            log.add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
+            log.add(LogMode.TIMING, String.format("* LINKER Skipped passes: %03d", skippedPasses));
         }
 
 //        if (logging) {
 //            if (mind.getUsedRights().containsKey(0L) && !mind.getUsedRights().get(0L).isEmpty()) {
-//                mind.getLog().add(LogMode.ANALIZER, String.format("---------- LINKER USED RIGHTS -------------"));
+//                log.add(LogMode.ANALIZER, String.format("---------- LINKER USED RIGHTS -------------"));
 //                for (Right r : mind.getUsedRights().get(0L)) {
-//                    mind.getLog().add(LogMode.ANALIZER, r.toString());
+//                    log.add(LogMode.ANALIZER, r.toString());
 //                }
 //            }
 //        }
@@ -966,7 +969,7 @@ public class Linker {
 //            if (!master.isExcluded(slave.getArguments())) {
             r = v.getTVar().getRule();
             if (logging && result) {
-                mind.getLog().add(LogMode.ANALYZER, "Closed: " + v);
+                log.add(LogMode.ANALYZER, "Closed: " + v);
             }
             occurrs = true;
 //            }
@@ -1019,7 +1022,7 @@ public class Linker {
 //                    }
 //                    causes.get(r).add(s);
 //                    if (logging) {
-//                        mind.getLog().add(LogMode.ANALIZER, "Closed: " + t);
+//                        log.add(LogMode.ANALIZER, "Closed: " + t);
 //                    }
 //                    occurrs = true;
 //                }
@@ -1048,11 +1051,11 @@ public class Linker {
             if (occurrs && result && logging) {
                 mind.pushDebugLevel();
                 mind.setDebugLevel(mind.getDebugLevel() & ~(Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS));
-                mind.getLog().add(LogMode.ANALYZER, "From right: " + r); //master.getRight());
-                mind.getLog().add(LogMode.ANALYZER, "\tAcceptor: " + master);
+                log.add(LogMode.ANALYZER, "From right: " + r); //master.getRight());
+                log.add(LogMode.ANALYZER, "\tAcceptor: " + master);
                 mind.popDebugLevel();
-                mind.getLog().add(LogMode.ANALYZER, "\tDonor   : " + slave);
-                mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
+                log.add(LogMode.ANALYZER, "\tDonor   : " + slave);
+                log.add(LogMode.ANALYZER, "-------------------------------------------");
             }
         }
         return r != null;
@@ -1061,10 +1064,10 @@ public class Linker {
 
 //    private void logBranch(List<Domain> tree, boolean logging) {
 //        if (!tree.isEmpty() && logging) {
-//            mind.getLog().add(LogMode.ANALIZER, "With branch:");
+//            log.add(LogMode.ANALIZER, "With branch:");
 //
 //            for (Domain d : tree) {
-//                mind.getLog().add(LogMode.ANALIZER, "\t" + d.toString());
+//                log.add(LogMode.ANALIZER, "\t" + d.toString());
 //            }
 //        }
 //    }
@@ -1142,7 +1145,7 @@ public class Linker {
 
                 if ("rule(1)".equals(d.getPredicate().toString()) && !d.get(0).isEmpty(mind) && d.get(0).getValue(mind).getType() == DataType.NUMERIC) {
                     d.setProduced(mind);
-                    mind.getLog().add(LogMode.STORAGE, "DB assumed record (r): " + d);
+                    log.add(LogMode.STORAGE, "DB assumed record (r): " + d);
                     occurs = true;
 //                    calculated.add(d);
                 } else if (d.isCalculated(mind)) {
@@ -1203,7 +1206,7 @@ public class Linker {
                         d.setSolves(solve, mind);
                         if (logging) {
 //                            logBranch(tree, logging);
-                            mind.getLog().add(LogMode.STORAGE, "DB assumed record: " + d);
+                            log.add(LogMode.STORAGE, "DB assumed record: " + d);
                             logCauses(LogMode.STORAGE, d);
                         }
                     }
@@ -1220,7 +1223,7 @@ public class Linker {
                             d.setSolves(solve, mind);
                             if (logging) {
 //                                logBranch(tree, logging);
-                                mind.getLog().add(LogMode.STORAGE, "DB assumed record (x): " + d);
+                                log.add(LogMode.STORAGE, "DB assumed record (x): " + d);
                                 logCauses(LogMode.STORAGE, d);
                             }
                         }
@@ -1241,7 +1244,7 @@ public class Linker {
                             d.setSolves(solve, mind);
                             if (logging) {
 //                                logBranch(tree, logging);
-                                mind.getLog().add(LogMode.STORAGE, "DB assumed record (c): " + d);
+                                log.add(LogMode.STORAGE, "DB assumed record (c): " + d);
                                 logCauses(LogMode.STORAGE, d);
                             }
                         }
@@ -1273,7 +1276,7 @@ public class Linker {
                             d.setSolves(solve, mind);
                             if (logging) {
 //                                logBranch(tree, logging);
-                                mind.getLog().add(LogMode.STORAGE, "DB assumed record (a): " + d);
+                                log.add(LogMode.STORAGE, "DB assumed record (a): " + d);
                                 logCauses(LogMode.STORAGE, d);
                             }
                         }
@@ -1282,7 +1285,7 @@ public class Linker {
             }
             if (result) {
                 if (logging) {
-                    mind.getLog().add(LogMode.STORAGE, "-------------------------------------------");
+                    log.add(LogMode.STORAGE, "-------------------------------------------");
                 }
             }
 
@@ -1296,13 +1299,13 @@ public class Linker {
         if (d.getCauses(mind) != null) {
             for (ICause c : d.getCauses(mind)) {
                 if (!ruleShowed) {
-                    mind.getLog().add(mode, "\tFrom rule: " + c.getRule(mind));
+                    log.add(mode, "\tFrom rule: " + c.getRule(mind));
                     ruleShowed = true;
                 }
 
 
-                mind.getLog().add(mode, "\t\tUsing: " + ((Cause) c).getDonor().toString());
-//                mind.getLog().add(mode, "\t\tUsing: " + mind.getRights().find(c.getDonor()).getDomain().toString());
+                log.add(mode, "\t\tUsing: " + ((Cause) c).getDonor().toString());
+//                log.add(mode, "\t\tUsing: " + mind.getRights().find(c.getDonor()).getDomain().toString());
             }
         }
     }
@@ -1433,7 +1436,7 @@ public class Linker {
 //                if (d.getArguments().getTVariables(true).isEmpty()) {
 //                    x = d.setStored();
 //                    if (logging) {
-//                        mind.getLog().add(LogMode.ANALIZER, "DB set record: " + d);
+//                        log.add(LogMode.ANALIZER, "DB set record: " + d);
 //                    }
 //                } else {
 //                    for(Term t : d.getArguments().getCVariables(mind)) {
@@ -1445,7 +1448,7 @@ public class Linker {
                         ((Rule) x).getDomain().setUsed(mind);
                     }
                     if (logging) {
-                        mind.getLog().add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
+                        log.add(LogMode.STORAGE, "DB add record: " + d + " -> " + x);
                     }
 //                }
 
@@ -1480,7 +1483,7 @@ public class Linker {
         }
 
         if (result && logging) {
-            mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
+            log.add(LogMode.ANALYZER, "-------------------------------------------");
         }
         return result;
     }
@@ -1513,7 +1516,7 @@ public class Linker {
 //        }
 
         if (result && logging) {
-            mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
+            log.add(LogMode.ANALYZER, "-------------------------------------------");
         }
         return result;
     }
@@ -1557,7 +1560,7 @@ public class Linker {
                 }
 
 //                if (block && logging) {
-//                    mind.getLog().add(LogMode.ANALIZER, "Blocker: " + d.toString());
+//                    log.add(LogMode.ANALIZER, "Blocker: " + d.toString());
 //                }
 
                 if (!block & d.isComplete()) {

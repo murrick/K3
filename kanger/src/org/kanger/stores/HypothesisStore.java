@@ -26,6 +26,7 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
  */
-public class HypothesisStore implements Comparable<HypothesisStore>, Iterable<IHypothesis> {
+public class HypothesisStore implements IFactory<IHypothesis> {
 
     private final Mind mind;
     private List<IHypothesis> root = null;
@@ -129,8 +130,9 @@ public class HypothesisStore implements Comparable<HypothesisStore>, Iterable<IH
         return enableStore;
     }
 
-    public IHypothesis get(int index) {
-        return root.get(index);
+    @Override
+    public IHypothesis get(long index) {
+        return root.get((int) index);
     }
 
 
@@ -187,10 +189,9 @@ public class HypothesisStore implements Comparable<HypothesisStore>, Iterable<IH
     }
 
 
-    @Override
-    public int compareTo(HypothesisStore o) {
-        return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
-    }
+//    public int compareTo(HypothesisStore o) {
+//        return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
+//    }
 
     @Override
     public Iterator<IHypothesis> iterator() {

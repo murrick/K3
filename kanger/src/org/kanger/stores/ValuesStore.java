@@ -27,6 +27,7 @@ package org.kanger.stores;
 
 import org.kanger.Mind;
 import org.kanger.interfaces.IArgument;
+import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Argument;
@@ -38,7 +39,7 @@ import java.util.*;
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
  */
-public class ValuesStore implements Iterable<Map<String, ITerm>> {
+public class ValuesStore implements IFactory<Map<String, ITerm>> {
 
     private Set<ComparableArgumentsList> root = new LinkedHashSet<>();
 
@@ -112,6 +113,11 @@ public class ValuesStore implements Iterable<Map<String, ITerm>> {
 
     public void clear() {
         root.clear();
+    }
+
+    @Override
+    public Map<String, ITerm> get(long id) throws Exception {
+        return null;
     }
 
     public int size() {

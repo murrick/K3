@@ -23,41 +23,16 @@
  *
  */
 
-package org.kanger.primitives;
+package org.kanger.interfaces;
 
 import org.kanger.enums.LogMode;
-import org.kanger.interfaces.ILogEntry;
 
 import java.util.Date;
 
-/**
- * Created by Dmitry G. Quznetsov on 28.05.15.
- */
-public class LogEntry implements ILogEntry {
+public interface ILogEntry {
+    LogMode getType();
 
-    LogMode type = LogMode.ALL;
-    Date time = new Date();
-    String record = "";
+    Date getTime();
 
-    public LogEntry(LogMode type, String rec) {
-        this.type = type;
-        this.record = rec;
-    }
-
-    @Override
-    public LogMode getType() {
-        return type;
-    }
-
-    @Override
-    public Date getTime() {
-        return time;
-    }
-
-    @Override
-    public String getRecord() {
-        return record;
-    }
-
-
+    String getRecord();
 }

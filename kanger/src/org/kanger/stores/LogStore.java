@@ -28,6 +28,8 @@ package org.kanger.stores;
 import org.kanger.Mind;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.ILogEntry;
 import org.kanger.interfaces.IRule;
 import org.kanger.primitives.LogEntry;
 import org.kanger.units.Domain;
@@ -41,9 +43,9 @@ import java.util.List;
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
  */
-public class LogStore implements Iterable<LogEntry> {
+public class LogStore implements IFactory<ILogEntry> {
 
-    private List<LogEntry> root = null;
+    private List<ILogEntry> root = null;
     private boolean enableLogging = true;
     private final Mind mind;
 
@@ -107,7 +109,8 @@ public class LogStore implements Iterable<LogEntry> {
         }
     }
 
-    private boolean isEmpty() {
+    @Override
+    public boolean isEmpty() {
         return root == null || root.isEmpty();
     }
 
@@ -138,8 +141,8 @@ public class LogStore implements Iterable<LogEntry> {
         return log;
     }
 
-    public LogEntry find(LogMode m, String s) {
-        for (LogEntry e : root) {
+    public ILogEntry find(LogMode m, String s) {
+        for (ILogEntry e : root) {
             if (e.getType() == m && s.equals(e.getRecord())) {
                 return e;
             }
@@ -172,7 +175,7 @@ public class LogStore implements Iterable<LogEntry> {
         return enableLogging;
     }
 
-    public LogEntry get(int index) {
+    public ILogEntry get(int index) {
         return root.get(index);
     }
 
@@ -180,11 +183,11 @@ public class LogStore implements Iterable<LogEntry> {
         return root.indexOf(objects[0]);
     }
 
-    public List<LogEntry> getRoot() {
+    public List<ILogEntry> getRoot() {
         return root;
     }
 
-    public LogEntry getCurrent(LogMode mode) {
+    public ILogEntry getCurrent(LogMode mode) {
         if (root == null || root.size() == 0) {
             return null;
         } else {
@@ -207,13 +210,18 @@ public class LogStore implements Iterable<LogEntry> {
         }
     }
 
+    @Override
+    public LogEntry get(long id) throws Exception {
+        return null;
+    }
+
     public int size() {
         return root == null ? 0 : root.size();
     }
 
 
     @Override
-    public Iterator<LogEntry> iterator() {
+    public Iterator<ILogEntry> iterator() {
         return root.iterator();
     }
 }

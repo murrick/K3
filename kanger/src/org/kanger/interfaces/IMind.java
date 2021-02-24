@@ -25,32 +25,171 @@
 
 package org.kanger.interfaces;
 
-import org.kanger.stores.HypothesisStore;
-import org.kanger.stores.LogStore;
-import org.kanger.stores.SolutionsStore;
-import org.kanger.stores.ValuesStore;
-
 import java.util.Collection;
+import java.util.Map;
 
+/**
+ * Интерфейс описателя транзакции. Все взаимодействие с КАНГЕР происходит через
+ * этот интерфейс. Взаимодействие начинается с создания транзакции нулевого
+ * уровня, или корневой транзакции, с помошью конструктора
+ * <pre>
+ *
+ *     IMind rootLevel = new Mind(IUser user); </pre>
+ * Для создания транзакций следующих уровней используется конструктор
+ * <pre>
+ *
+ *     IMind level = new Mind(IMind previousLevel);  </pre>
+ * Последовательность транзакций выстраивается в одно-свяханный список.
+ * Уровень транзакции находящейся на вершине списка является текущим
+ * уровнем.
+ * <pre>
+ *
+ *     +----------------+
+ *     | Current level  |
+ *     +----------------+
+ *              &darr;
+ *             ...
+ *              &darr;
+ *     +----------------+
+ *     | Level 1        |
+ *     +----------------+
+ *              &darr;
+ *     +----------------+
+ *     | Root level     |
+ *     +----------------+ </pre>
+ */
 public interface IMind {
 
+    /**
+     * Получить описатель пользователя, с которым связан список транзакций.
+     *
+     * @return описатель пользователя.
+     */
     IUser getUser();
 
+    /**
+     * Получить идентификатор транзакции.
+     *
+     * @return идентификатор транзакции.
+     */
     long getId();
 
+    /**
+     * Получить описатель следующей транзакции относительно текущей
+     * в списке.
+     *
+     * @return описатель следующей транзакции в списке, или null если
+     * текущая транзакция яволяется корневой (имеет нулевой уровень).
+     */
     IMind getNext();
 
+    /**
+     * Получить корневую транзакцию в списке относительно текущей.
+     *
+     * @return описатель корневой (имеющей нулевой уровень) транзакции относительно текущей.
+     */
     IMind getTop();
 
+    /**
+     * Инициировать запрос КАНГЕР. Строка параметра может содержать только один запрос. Если
+     * результат вывода true - возможно получение решений с использованием метода getSolutions()
+     * и значений результатов с использованием getValues(). Если запрос неопределен то возможно
+     * получение списка гипотез методом getHypothesis(). Например:
+     * <pre>
+     *     IMind mind = new Mind(user);
+     *     Boolean res;
+     *     res = mind.query("!@x @y father(x,y) -> child(y,x);");
+     *     res = mind.query("?$x child(x, John);"); </pre>
+     *
+     * @param query запрос КАНГЕР в виде текстовой строки.
+     * @return результат вывода true, false или null в случае неопределенного результата.
+     * @throws Exception
+     */
+    Boolean query(String query) throws Exception;
 
-    Boolean query(String line) throws Exception;
+    /**
+     * Инициировать запрос КАНГЕР и передать ему параметры. Строка параметра может содержать
+     * только один запрос. Параметры передаются в виде массива элементов произвольного
+     * типа. Строка запроса, начиная с первого символа может содержать символы ?
+     * (вопростительный знак) которые при компиляции последовательно заменяются элементами массива.
+     * Если результат вывода true - возможно получение решений с использованием метода getSolutions()
+     * и значений результатов с использованием getValues(). Если запрос неопределен то возможно
+     * получение списка гипотез методом getHypothesis(). Например:
+     * <pre>
+     *     IMind mind = new Mind(user);
+     *     Boolean res = mind.query("!age(?, ?);", new Object[]{"John", 37}); </pre>
+     *
+     * @param query запрос КАНГЕР в виде текстовой строки, содержащей символы ? (вопросительный
+     *              знак) для подстановки параметров из массива.
+     * @param ext   массив элементов произвольного типа, которые при комптляции запроса будут
+     *              последовательно подствалены вместо символов ? (вопросительный знак)
+     * @return результат вывода true, false или null в случае неопределенного результата.
+     * @throws Exception
+     */
+    Boolean query(String query, Object[] ext) throws Exception;
 
-    Boolean query(String line, Object[] ext) throws Exception;
+    /**
+     * Компиляция текста программы. Строка параметра может содержать множество выражений
+     * на языке КАНГЕР и комментариев. Все выражения при компиляции воспринимаются как правила
+     * и утверждения, обработка запросов не производится. Если текущее состояние КАНГЕР уже сожержит
+     * информацию, будет предпринята попытка объединения новой информации с уже существующей. Если
+     * компилируемая программа содеожит инфлрмацию противоречащую имеющейся - весь компилируемый текст
+     * целиком будет отвергнут. Например:
+     * <pre>
+     *     boolean rc = mind.compile("!@x @y father(x,y) -> child(y,x);   // This is new rule \n"
+     *                             + "?female(John);                      // John is not female");</pre>
+     *
+     * @param source текст программы на языке КАНГЕР.
+     * @return true если текст принят, false если обнаружены конфликты или обнаружены ошибки.
+     * @throws Exception
+     */
+    boolean compile(String source) throws Exception;
 
-    boolean compile(String src) throws Exception;
-
+    /**
+     * Применить все изменения ранее созданной транзакции. Пример:
+     * <pre>
+     *     IMind m = new Mind(current);
+     *     ... операции на уровне транзакции m
+     *     current.commit(m);
+     *
+     *     +----------------+
+     *     | !b;            |
+     *     +----------------+
+     *              &darr;             +----------------+
+     *     +----------------+     | !b;            |
+     *     | !a;            |  &rarr;  | !a;            |
+     *     +----------------+     +----------------+</pre>
+     * Операция является потокобезопасной, т.к. на случай если после создания транзакции m
+     * на уровне транзакции current произошли изменения, производится проверка на
+     * противоречия и блокировка дублирования правил и утверждений. При любом результате
+     * проверки текущей транзакцией становится current. Транзакция m удаляется из памяти.
+     *
+     * @param m ранее созданная на базе текущей транзакция
+     * @return true если изменения были применены успешно, false если изменения были отвергнуты.
+     * @throws Exception
+     */
     boolean commit(IMind m) throws Exception;
 
+    /**
+     * Откатить все изменения ранее созданной транзакции. Пример:
+     * <pre>
+     *     IMind m = new Mind(current);
+     *     ... операции на уровне транзакции m
+     *     current.release(m);
+     *
+     *     +----------------+
+     *     | !b;            |
+     *     +----------------+
+     *              &darr;
+     *     +----------------+     +----------------+
+     *     | !a;            |  &rarr;  | !a;            |
+     *     +----------------+     +----------------+</pre>
+     * Операция является потокобезопасной. Текущей транзакцией становится current.
+     * Транзакция m удаляется из памяти.
+     *
+     * @param m ранее созданная на базе текущей транзакция
+     * @throws Exception
+     */
     void release(IMind m) throws Exception;
 
 
@@ -64,18 +203,18 @@ public interface IMind {
 
     IFactory<IOperation> getLibrary();
 
-    HypothesisStore getHypothesis();
+    IFactory<IHypothesis> getHypothesis();
 
-    ValuesStore getValues();
+    IFactory<Map<String, ITerm>> getValues();
 
-    SolutionsStore getSolutions();
+    IFactory<IRule> getSolutions();
 
-    LogStore getLog();
+    IFactory<ILogEntry> getLog();
 
 
     String getSourceFileName();
 
-    void setSourceFileName(String fname);
+    void setSourceFileName(String name);
 
     String getSourceCode() throws Exception;
 
@@ -101,8 +240,6 @@ public interface IMind {
 
     int getTransactionLevel();
 
-    int incTransactionCounter();
-
     boolean isEmptyLevel();
 
 
@@ -125,4 +262,11 @@ public interface IMind {
     IMind removeStorage(String name) throws Exception;
 
 
+    String getOrder();
+
+    void setOrder(String order);
+
+    boolean isAscending();
+
+    void setAscending(boolean ascending);
 }

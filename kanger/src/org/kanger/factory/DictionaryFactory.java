@@ -39,6 +39,7 @@ import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.storage.Escalera;
+import org.kanger.stores.LogStore;
 import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
@@ -361,7 +362,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
             }
         }
         for (Object o : toDelete) {
-            mind.getLog().add(LogMode.STORAGE, "Unused term wiped: " + o.toString());
+            ((LogStore) mind.getLog()).add(LogMode.STORAGE, "Unused term wiped: " + o.toString());
             cache.delete(((IUnit) o).getId());
         }
     }

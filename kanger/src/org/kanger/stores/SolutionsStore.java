@@ -26,6 +26,7 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
@@ -37,7 +38,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
  */
-public class SolutionsStore implements Iterable<IRule> {
+public class SolutionsStore implements IFactory<IRule> {
 
     private List<IRule> root = null;
     private boolean enableStore = true;
@@ -128,6 +129,11 @@ public class SolutionsStore implements Iterable<IRule> {
         if (enableStore) {
             root = null;
         }
+    }
+
+    @Override
+    public IRule get(long id) throws Exception {
+        return null;
     }
 
     public int size() {

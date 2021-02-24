@@ -32,6 +32,7 @@ import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IPredicate;
+import org.kanger.stores.LogStore;
 import org.kanger.units.*;
 
 /**
@@ -77,8 +78,8 @@ public class Calculator {
                     mind.getFValues().add(fu);
                     result = true;
                     if (logging) {
-                        mind.getLog().add(LogMode.ANALYZER, "Calculated function:");
-                        mind.getLog().add(LogMode.ANALYZER, String.format("\t%s", fu.toString()));
+                        ((LogStore) mind.getLog()).add(LogMode.ANALYZER, "Calculated function:");
+                        ((LogStore) mind.getLog()).add(LogMode.ANALYZER, String.format("\t%s", fu.toString()));
 //                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                     }
                 }

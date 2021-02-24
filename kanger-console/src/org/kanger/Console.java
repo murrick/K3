@@ -30,7 +30,6 @@ import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
-import org.kanger.primitives.LogEntry;
 import org.kanger.stores.LogStore;
 import org.kanger.test.KangerTest;
 
@@ -266,7 +265,7 @@ public class Console {
                         case Enums.FOO:
                             mind.compile(line);
                             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                                System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
                             }
 //                            processFunction(line, mind);
                             break;
@@ -365,7 +364,7 @@ public class Console {
                 lastComments = "";
             }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
                 if (res != null) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
@@ -391,7 +390,7 @@ public class Console {
         System.out.println("Status of statements and rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
         System.out.println("Order for sorting values: " +
-                (mind.getValues().getOrder().isEmpty() ? "natural" : (mind.getValues().getOrder() + " " + (mind.getValues().isAscending() ? "ASCEND" : "DESCEND"))));
+                (mind.getOrder().isEmpty() ? "natural" : (mind.getOrder() + " " + (mind.isAscending() ? "ASCEND" : "DESCEND"))));
     }
 
 
@@ -475,11 +474,11 @@ public class Console {
                             ascend = line.split(" ")[3].trim().toUpperCase().charAt(0) != 'D';
                         }
                         mind.getValues().clear();
-                        mind.getValues().setOrder("-".equals(order) ? "" : order);
-                        mind.getValues().setAscending(ascend);
+                        mind.setOrder("-".equals(order) ? "" : order);
+                        mind.setAscending(ascend);
                     }
                     System.out.println("Order for sorting values: " +
-                            (mind.getValues().getOrder().isEmpty() ? "natural" : (mind.getValues().getOrder() + " " + (mind.getValues().isAscending() ? "ASCEND" : "DESCEND"))));
+                            (mind.getOrder().isEmpty() ? "natural" : (mind.getOrder() + " " + (mind.isAscending() ? "ASCEND" : "DESCEND"))));
                     break;
                 case 'T':
                     String prefix = "";
@@ -691,7 +690,7 @@ public class Console {
                         mind.getLog().clear();
                         mind.release(m);
                         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                            System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                            System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
                         }
                         System.out.println("Use XPLAIN command for analisys");
                         System.out.println("No database used");
@@ -749,7 +748,7 @@ public class Console {
                                 mind.getLog().clear();
                                 mind.release(m);
                                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                    System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                                    System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
                                 }
                                 System.out.println("Use XPLAIN command for analisys");
                                 System.out.println("No database used");
@@ -829,7 +828,7 @@ public class Console {
         if (tree || id != -1) {
             if (!mind.getSolutions().isEmpty()) {
                 boolean found = false;
-                for (IRule log : mind.getSolutions().getRoot()) {
+                for (IRule log : mind.getSolutions()) {
                     if (id == -1 || id == log.getId()) {
                         found = true;
                         System.out.println(String.format("\tSolution %03d: %s", log.getId(), log.toString()));
@@ -853,7 +852,7 @@ public class Console {
         }
     }
 
-    public static void showLog(IMind mind, LogMode type, File fi, Scanner sc) throws IOException {
+    public static void showLog(IMind mind, LogMode type, File fi, Scanner sc) throws Exception {
 
         if (mind.getLog().size() > 0) {
             BufferedWriter f = null;
@@ -863,7 +862,7 @@ public class Console {
                     f = new BufferedWriter(new FileWriter(fi));
                 }
 
-                for (LogEntry log : mind.getLog().getRoot()) {
+                for (ILogEntry log : mind.getLog()) {
                     if (type == LogMode.ALL || log.getType() == type) {
                         if (f != null) {
                             String line = String.format("%s [%8s] %s",
@@ -890,7 +889,7 @@ public class Console {
 
     }
 
-    public static void showExplanation(IMind mind, LogMode type, String line, Scanner sc) throws IOException {
+    public static void showExplanation(IMind mind, LogMode type, String line, Scanner sc) throws Exception {
 
         if (mind.getLog().size() > 0) {
             File f = null;
@@ -1189,7 +1188,7 @@ public class Console {
         }
     }
 
-    public static void showHypo(IMind mind) {
+    public static void showHypo(IMind mind) throws Exception {
         int i;
         if (!mind.getHypothesis().isEmpty()) {
             System.out.printf("Hypothesis list:\n");
@@ -1368,7 +1367,7 @@ public class Console {
                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
-                    System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                    System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
                 }
             }
         } catch (Exception e) {
@@ -1444,7 +1443,7 @@ public class Console {
                     mind.setSourceFileName(f.getName());
                     res = mind.compile(buf.toString());
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                        System.out.println(mind.getLog().getCurrent(LogMode.ANALYZER).getRecord());
+                        System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
                     }
                     if (res) {
                         System.out.printf("File %s loaded\n", f.getName());

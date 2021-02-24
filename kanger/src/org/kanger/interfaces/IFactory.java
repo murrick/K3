@@ -59,4 +59,6 @@ public interface IFactory<T> extends Iterable<T> {
      * @return true если список пуст.
      */
     boolean isEmpty();
+
+    void clear() throws Exception;
 }
