@@ -25,6 +25,8 @@
 
 package org.kanger.interfaces;
 
+import org.kanger.enums.LogMode;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -530,4 +532,19 @@ public interface IMind {
      * @param ascending true - по возрастанию, false - по убыванию.
      */
     void setAscending(boolean ascending);
+
+    /**
+     * Получить последнюю добавленную запись протокола указанного типа.
+     * Обычно таким образом можно вывести текст результата запроса если
+     * указать тип LogMode.ANALYZER.
+     *
+     * @param mode тип протокола.
+     * @return запись протокола вывода.
+     */
+    ILogEntry getCurrentLogRecord(LogMode mode);
+
+    /**
+     * Полностью очистить протокол вывода.
+     */
+    void clearLog();
 }

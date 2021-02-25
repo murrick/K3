@@ -30,7 +30,6 @@ import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
-import org.kanger.stores.LogStore;
 import org.kanger.stores.ValuesStore;
 import org.kanger.test.KangerTest;
 import org.kanger.units.Rule;
@@ -267,7 +266,7 @@ public class Console {
                         case Enums.FOO:
                             mind.compile(line);
                             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
+                                System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
                             }
 //                            processFunction(line, mind);
                             break;
@@ -366,7 +365,7 @@ public class Console {
                 lastComments = "";
             }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
+                System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
                 if (res != null) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
@@ -691,10 +690,10 @@ public class Console {
                     } else {
                         mind = mind.closeStorage();
                         mind.compile(backup);
-                        ((LogStore) mind.getLog()).clear();
+                        mind.clearLog();
                         mind.release(m);
                         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                            System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
+                            System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
                         }
                         System.out.println("Use XPLAIN command for analisys");
                         System.out.println("No database used");
@@ -749,10 +748,10 @@ public class Console {
                             } else {
                                 mind = mind.closeStorage();
                                 mind.compile(backup);
-                                ((LogStore) mind.getLog()).clear();
+                                mind.clearLog();
                                 mind.release(m);
                                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                    System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
+                                    System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
                                 }
                                 System.out.println("Use XPLAIN command for analisys");
                                 System.out.println("No database used");
@@ -1206,7 +1205,7 @@ public class Console {
     }
 
     public static void showTree(IMind mind, IRule r) throws Exception {
-        List<List<String>> net = LogStore.formatTree(r);
+        List<List<String>> net = ((Mind) mind).formatTree(r);
         if (net.size() > 0 && net.get(0).size() > 0) {
             for (int i = 0; i < net.get(0).size(); ++i) {
                 for (int k = 0; k < net.size(); ++k) {
@@ -1371,7 +1370,7 @@ public class Console {
                 if (res != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                     showLog(mind, LogMode.SOLVES, null, null);
                     showLog(mind, LogMode.VALUES, null, null);
-                    System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
+                    System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
                 }
             }
         } catch (Exception e) {
@@ -1447,7 +1446,7 @@ public class Console {
                     mind.setSourceFileName(f.getName());
                     res = mind.compile(buf.toString());
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                        System.out.println(((LogStore) mind.getLog()).getCurrent(LogMode.ANALYZER).getRecord());
+                        System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
                     }
                     if (res) {
                         System.out.printf("File %s loaded\n", f.getName());

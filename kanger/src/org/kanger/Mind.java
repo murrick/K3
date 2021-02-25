@@ -2024,6 +2024,56 @@ public class Mind implements IMind {
         values.setAscending(ascending);
     }
 
+    @Override
+    public ILogEntry getCurrentLogRecord(LogMode mode) {
+        return log.getCurrent(mode);
+    }
+
+    @Override
+    public void clearLog() {
+        log.clear();
+    }
+
+    public List<List<String>> formatTree(IRule r) throws Exception {
+//        int save = mind.getDebugLevel();
+//        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
+        List<List<String>> list = new ArrayList<>();
+        int depth = 0;
+        for (List<Domain> t : ((Rule) r).getTree()) {
+            List<String> v = new ArrayList<>();
+//            v.add((t.getRight().isGenerated() ? "G" : "") + (t.isClosed() ? "C" : "") + (t.isUsed() ? "U" : "") + (t.isReady() ? "R" : ""));
+            list.add(v);
+            int len = 0;
+            for (Domain d : t) {
+                String s = d.toString(); // + (d.isUsed() ? " *" : "");
+                len = Math.max(len, s.length());
+                v.add(s);
+            }
+            depth = Math.max(depth, v.size());
+            for (int i = 0; i < v.size(); ++i) {
+                String s = v.get(i);
+                while (s.length() < len) {
+                    s += " ";
+                }
+                v.set(i, s);
+            }
+        }
+        for (List<String> v : list) {
+//            if(!v.isEmpty()) {
+            int len = v.get(0).length();
+            String s = " ";
+            while (s.length() < len) {
+                s += " ";
+            }
+            while (v.size() < depth) {
+                v.add(s);
+            }
+//            }
+        }
+//        mind.setDebugLevel(save);
+        return list;
+    }
+
 }
 
 
