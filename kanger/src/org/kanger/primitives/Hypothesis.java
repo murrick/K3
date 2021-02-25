@@ -66,7 +66,7 @@ public class Hypothesis implements IHypothesis {
 
     public Hypothesis(IRule r, IMind mind) throws Exception {
         antc = !r.isAntc();
-        predicate = r.getPredicate(mind);
+        predicate = r.getPredicate();
         arguments.addAll(((ArgumentsList) r.getArguments()).convertBase(mind));
     }
 
@@ -325,7 +325,7 @@ public class Hypothesis implements IHypothesis {
 
     public boolean containsTerm(long id, IMind mind) throws Exception {
         Set<Long> terms = new HashSet<>();
-        terms.add(getPredicate().getName().getId());
+        terms.add(((Predicate) getPredicate()).getNameId());
         terms.addAll(arguments.getTerms(mind, true));
         return terms.contains(id);
     }

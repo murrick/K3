@@ -72,7 +72,7 @@ public class Analyzer {
 
             boolean occurs = false;
             for (IRule r : mind.getRules()) {
-                if (r.isStored() && !r.isDeleted(mind) && (r.getMindId() == mind.getId() || r.isRestored(mind))) {
+                if (r.isStored() && !r.isDeleted(mind) && (((Rule) r).getMindId() == mind.getId() || r.isRestored(mind))) {
 
 //                    if (r.getMindId() != mind.getId() && !r.isRestored(mind)) {
 //                        continue;

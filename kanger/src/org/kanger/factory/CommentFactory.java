@@ -27,8 +27,6 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
-import org.kanger.interfaces.IComment;
-import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
@@ -43,7 +41,7 @@ import java.util.List;
 /**
  * Created by Dmitry G. Quznetsov on 20.12.2020.
  */
-public class CommentFactory implements IFactory<IComment> {
+public class CommentFactory {
 
     public static final String SCHEMA = "comments";
 
@@ -192,14 +190,13 @@ public class CommentFactory implements IFactory<IComment> {
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
-            transaction((CommentFactory) mind.getNext().getComments());
+            transaction((CommentFactory) ((Mind) mind.getNext()).getComments());
         } else {
             cache.clear();
             transaction(null);
         }
     }
 
-    @Override
     public Iterator iterator() {
         return cache.iterator(-1);
     }

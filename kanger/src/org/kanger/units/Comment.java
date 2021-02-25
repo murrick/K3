@@ -28,12 +28,11 @@ package org.kanger.units;
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.interfaces.IComment;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
-public class Comment implements IUnit<Comment>, IComment {
+public class Comment implements IUnit<Comment> {
 
     private long id = -1;
     private String comment = "";
@@ -132,12 +131,10 @@ public class Comment implements IUnit<Comment>, IComment {
         return true;
     }
 
-    @Override
     public String getComment() {
         return comment;
     }
 
-    @Override
     public void setComment(String comment) {
         this.comment = comment;
     }

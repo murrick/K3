@@ -76,12 +76,12 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     public Domain() {
     }
 
-    public Domain(IPredicate pred, boolean antc, ArgumentsList args, IRule r) {
+    public Domain(Predicate pred, boolean antc, ArgumentsList args, IRule r) {
         this(pred, antc, args);
         setRule(r);
     }
 
-    public Domain(IPredicate pred, boolean antc, ArgumentsList args) {
+    public Domain(Predicate pred, boolean antc, ArgumentsList args) {
         super(pred, antc, args);
     }
 
@@ -129,7 +129,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return predicate != null && predicateId == predicate.getId();
     }
 
-    public IPredicate getPredicate() throws Exception {
+    public Predicate getPredicate() throws Exception {
         return super.getPredicate(mind);
     }
 
@@ -838,7 +838,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public boolean isSystem() throws Exception {
-        return Parser.getOp(getPredicate().getName().toString(), getRange()) != null;
+        return Parser.getOp(getPredicate().getName(), getRange()) != null;
     }
 
     public int execSystem(Mind mind) throws Exception {
@@ -1249,7 +1249,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 } else if (!arguments.get(i).isEmpty(mind)
                         && arguments.get(i).getValue(mind).isCVariable()
                         && ((Term) arguments.get(i).getValue(mind)).getRuleId() == ruleId) {
-                    ix = arguments.get(i).getValue(mind).getIndex();
+                    ix = ((Term) arguments.get(i).getValue(mind)).getIndex();
                 } else {
                     ++plains;
                 }

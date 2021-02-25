@@ -27,22 +27,53 @@ package org.kanger.interfaces;
 
 import org.kanger.enums.DataType;
 
+/**
+ * Описатель терма.
+ */
 public interface ITerm extends Comparable<Object> {
 
+    /**
+     * Получить тип терма.
+     *
+     * @return тип терма.
+     */
     DataType getType();
 
+    /**
+     * Получить идентификатор терма.
+     *
+     * @return идентификатор терма.
+     */
     long getId();
 
+    /**
+     * Получить значение терма.
+     *
+     * @return значение терма.
+     */
     Object getValue();
 
+    /**
+     * Признак того что терм не имеет значения.
+     *
+     * @return true - терм не имеет значения.
+     */
     boolean isEmpty();
 
+    /**
+     * Признак того что терм помечен для удаления на указанном
+     * уровне транзакции.
+     *
+     * @param mind уровень транзакции.
+     * @return true если терм помечен для удаления.
+     */
     boolean isDeleted(IMind mind);
 
-    long getMindId();
-
+    /**
+     * Признак того что терм является u-переменной.
+     *
+     * @return true - терм является u-переменной.
+     */
     boolean isCVariable();
-
-    int getIndex();
 
 }

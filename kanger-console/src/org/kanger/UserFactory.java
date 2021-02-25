@@ -77,8 +77,7 @@ public class UserFactory {
         user.setProperty("user.dir", userDir);
         Files.createDirectories(Paths.get(userDir));
 
-        confName = userDir + "kanger.conf";
-        user.loadProperties(confName);
+        user.loadProperties();
 
         if (!user.containsProperty("sources.dir")) {
             String sourcesDir = userDir + "SRC" + Enums.FILE_SEPARATOR;

@@ -29,7 +29,6 @@ import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IFactory;
-import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
@@ -38,6 +37,7 @@ import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.Escalera;
 import org.kanger.units.Domain;
+import org.kanger.units.Predicate;
 
 import java.util.*;
 
@@ -146,7 +146,7 @@ public class DomainFactory implements IFactory<Domain> {
 //    }
 
 
-    public synchronized Domain add(IPredicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
+    public synchronized Domain add(Predicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
         Domain p = find(pred, antc, arg, r);
         if (p != null) {
             p.setDeleted(false, mind);
@@ -182,7 +182,7 @@ public class DomainFactory implements IFactory<Domain> {
         return p;
     }
 
-    public Domain find(IPredicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
+    public Domain find(Predicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
         Domain temp = new Domain(pred, antc, arg, r);
         return find(temp);
 //        temp.setUser(user);

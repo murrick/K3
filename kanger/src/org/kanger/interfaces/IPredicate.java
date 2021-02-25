@@ -27,20 +27,59 @@ package org.kanger.interfaces;
 
 import java.util.Set;
 
+/**
+ * Описатель предиката.
+ */
 public interface IPredicate {
 
-    ITerm getName() throws Exception;
+    /**
+     * Получить имя предиката.
+     *
+     * @return имя предиката в виде строки.
+     * @throws Exception
+     */
+    String getName() throws Exception;
 
+    /**
+     * Получить ранг предиката.
+     *
+     * @return ранг предиката - количество аргументов.
+     */
     int getRange();
 
+    /**
+     * Получить идентификатор предиката.
+     *
+     * @return идентификатор предиката.
+     */
     long getId();
 
+    /**
+     * Признак пометки на удаление для указанного уровня транзакции.
+     *
+     * @param mind уровень транзакции.
+     * @return true - предикат помечен для удаления
+     */
     boolean isDeleted(IMind mind);
 
-    boolean isEmpty() throws Exception;
+    /**
+     * Признак того что программа не содержит утверждений с
+     * этим предикатом на указанном уровне транзакции.
+     *
+     * @param mind уровень транзакции.
+     * @return true если в программе нет утверждений с предикатом.
+     * @throws Exception
+     */
+    boolean isEmpty(IMind mind) throws Exception;
 
-    long getMindId();
-
-    Set<IRule> getSolves() throws Exception;
+    /**
+     * Получить список утверждений с этим предикатом на
+     * указанном уровне транзакции.
+     *
+     * @param mind уровень транзакции.
+     * @return список утверждений.
+     * @throws Exception
+     */
+    Set<IRule> getSolves(IMind mind) throws Exception;
 
 }

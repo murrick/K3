@@ -26,9 +26,16 @@
 package org.kanger.interfaces;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.15.
+ * Общий callback интерфейс.
  */
 public interface IReactor<T> {
 
+    /**
+     * Метод вызова callback функции.
+     *
+     * @param o параметр имеющий тип задаваемый при объявлении.
+     * @return произвольное значение, контролируемое вызывающей стороной.
+     * @throws Exception
+     */
     Object run(T o) throws Exception;
 }

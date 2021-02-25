@@ -287,17 +287,12 @@ public class Argument implements IArgument {
 //    }
 
     @Override
-    public String toString(IMind mind) {
-        try {
-            Object val = getValue(mind);
-            if (val != null) {
-                return val.toString();
-            } else {
-                return "null";
-            }
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            return "";
+    public String toString(IMind mind) throws Exception {
+        Object val = getValue(mind);
+        if (val != null) {
+            return val.toString();
+        } else {
+            return "null";
         }
     }
 

@@ -28,7 +28,7 @@ package org.kanger.interfaces;
 import java.util.List;
 
 /**
- * Строка аргуметов - параметров предиката, функции, гипотезы или решения.
+ * Строка аргуметов - параметров предиката, функции или гипотезы.
  * Наследует интерфейс List с типом элемента IArgument.
  */
 public interface IList extends List<IArgument> {

@@ -32,8 +32,6 @@ import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
-import org.kanger.interfaces.IPredicate;
-import org.kanger.interfaces.ISolve;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Predicate;
 
@@ -46,13 +44,13 @@ import java.util.Set;
  * <p>
  * Описатель варианта решения предиката
  */
-public class Solve implements ISolve {
+public class Solve {
 
     private static final long serialVersionUID = 196402070001L;
 
     protected boolean antc = true;                                // ! или ?
     protected int range = 0;
-    protected IPredicate predicate = null;                         // Ссылка на описатель предиката
+    protected Predicate predicate = null;                         // Ссылка на описатель предиката
     protected ArgumentsList arguments = new ArgumentsList();       // Массив подстановочных переменных
 
     protected transient long predicateId = -1;
@@ -61,21 +59,20 @@ public class Solve implements ISolve {
     public Solve() {
     }
 
-    public Solve(IPredicate pred, boolean antc, ArgumentsList args) {
+    public Solve(Predicate pred, boolean antc, ArgumentsList args) {
         setPredicate(pred);
         setAntc(antc);
         getArguments().addAll(args);
     }
 
-    @Override
-    public IPredicate getPredicate(IMind mind) throws Exception {
+    public Predicate getPredicate(Mind mind) throws Exception {
         if (predicate == null) {
             predicate = mind.getPredicates().get(predicateId);
         }
         return predicate;
     }
 
-    public void setPredicate(IPredicate predicate) {
+    public void setPredicate(Predicate predicate) {
         this.predicateId = predicate.getId();
         this.predicate = predicate;
         this.range = predicate.getRange();
@@ -93,12 +90,10 @@ public class Solve implements ISolve {
 //        right = r;
 //    }
 
-    @Override
     public ArgumentsList getArguments() {
         return arguments;
     }
 
-    @Override
     public boolean isAntc() {
         return antc;
     }
@@ -173,12 +168,11 @@ public class Solve implements ISolve {
     //Values (1):
     //	Row 001: x=%2
 
-    @Override
-    public String toString(IMind mind) {
+    public String toString(Mind mind) {
         return toString(mind, arguments);
     }
 
-    public String toString(IMind mind, ArgumentsList arguments) {
+    public String toString(Mind mind, ArgumentsList arguments) {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
 
@@ -194,10 +188,10 @@ public class Solve implements ISolve {
 //                s += "$" + t.getName() + " ";
 //            }
 
-            Operation op = Parser.getOp(getPredicate(mind).getName().toString(), getRange());
+            Operation op = Parser.getOp(getPredicate(mind).getName(), getRange());
 
             if (op == null) {
-                op = Parser.getOp(getPredicate(mind).getName().toString(), 0);
+                op = Parser.getOp(getPredicate(mind).getName(), 0);
             }
 
             if (op == null) {
@@ -316,7 +310,6 @@ public class Solve implements ISolve {
         return predicateId;
     }
 
-    @Override
     public int getRange() {
         return range;
     }
@@ -492,7 +485,7 @@ public class Solve implements ISolve {
         return hash;
     }
 
-    public Collection<Long> getTerms(IMind mind, boolean total) throws Exception {
+    public Collection<Long> getTerms(Mind mind, boolean total) throws Exception {
         Set<Long> terms = new HashSet<>();
         if (total) {
             terms.add(((Predicate) getPredicate(mind)).getNameId());

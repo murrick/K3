@@ -30,7 +30,7 @@ package org.kanger.enums;
  */
 public enum ArgumentType {
     /**
-     * ОБъект не инициализирован.
+     * Объект не инициализирован.
      */
     EMPTY,
     /**

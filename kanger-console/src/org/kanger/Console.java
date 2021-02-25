@@ -33,6 +33,7 @@ import org.kanger.interfaces.*;
 import org.kanger.stores.LogStore;
 import org.kanger.stores.ValuesStore;
 import org.kanger.test.KangerTest;
+import org.kanger.units.Rule;
 
 import java.io.*;
 import java.nio.BufferOverflowException;
@@ -245,10 +246,10 @@ public class Console {
                             mind = useDatabase(line, mind, sc);
                             break;
                         case 'D':   // DROP
-                            dropDatabase(line, mind, sc);
+                            mind = dropDatabase(line, mind, sc);
                             break;
                         case 'I':   // INDEX
-                            packDatabase(line, mind, sc);
+                            mind = packDatabase(line, mind, sc);
                             break;
                         case 'O':   // OPTIONS
                             options(line, mind, sc);
@@ -559,7 +560,7 @@ public class Console {
 
     }
 
-    private static void packDatabase(String line, IMind mind, Scanner sc) throws Exception {
+    private static IMind packDatabase(String line, IMind mind, Scanner sc) throws Exception {
         String name = null;
         if (line.split(" ").length == 2) {
             name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
@@ -616,9 +617,10 @@ public class Console {
         } else {
             System.out.println("No database used");
         }
+        return mind;
     }
 
-    private static void dropDatabase(String line, IMind mind, Scanner sc) throws Exception {
+    private static IMind dropDatabase(String line, IMind mind, Scanner sc) throws Exception {
         String name = null;
         if (line.split(" ").length == 2) {
             name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
@@ -666,6 +668,7 @@ public class Console {
                 System.out.println("Database files removed");
             }
         }
+        return mind;
     }
 
     private static IMind useDatabase(String line, IMind mind, Scanner sc) throws Exception {
@@ -1101,7 +1104,7 @@ public class Console {
                 System.out.println("\t-------------------------------------------");
             }
             System.out.printf("\t%s%03d: %s\n",
-                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", dest.getMindId()) : "",
+                    (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", ((Rule) dest).getMindId()) : "",
                     dest.getId(),
                     dest.toString());
             if (showCauses && !dest.getCauses().isEmpty()) {
@@ -1115,7 +1118,7 @@ public class Console {
 //        if (!set.isEmpty()) {
         System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
         for (IRule r : mind.getRules()) {
-            if (!r.isDeleted(mind) && r.isStored() && r.getPredicateId() == p.getId()) {
+            if (!r.isDeleted(mind) && r.isStored() && ((Rule) r).getPredicateId() == p.getId()) {
                 showPredRecurse(mind, r, showCauses);
             }
         }
@@ -1150,7 +1153,7 @@ public class Console {
         if (id != -1) {
             if (!tree) {
                 IPredicate p = mind.getPredicates().get(id);
-                if (p != null && (name.isEmpty() || p.getName().toString().toLowerCase().equals(name.toLowerCase()))) {
+                if (p != null && (name.isEmpty() || p.getName().toLowerCase().equals(name.toLowerCase()))) {
                     if (preds) {
                         System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
                     } else {
@@ -1171,8 +1174,8 @@ public class Console {
         } else {
             boolean found = false;
             for (IPredicate p : mind.getPredicates()) {
-                if (!p.isDeleted(mind) && !((Mind) mind).isSystem(p) && !p.isEmpty()
-                        && (name.isEmpty() || p.getName().toString().toLowerCase().equals(name.toLowerCase()))) {
+                if (!p.isDeleted(mind) && !((Mind) mind).isSystem(p) && !p.isEmpty(mind)
+                        && (name.isEmpty() || p.getName().toLowerCase().equals(name.toLowerCase()))) {
                     if (preds) {
                         found = true;
                         System.out.printf("Predicate %03d: %s;\n", p.getId(), p.toString());
@@ -1273,10 +1276,10 @@ public class Console {
                     (!level && prods == 1 && !r.isGenerated())
                             || (!level && prods == 2 && r.isGenerated())
                             || (!level && prods == 0)
-                            || (level && r.getMindId() == m.getId()))))) {
+                            || (level && ((Rule) r).getMindId() == m.getId()))))) {
                 found = true;
                 System.out.printf("%sRule %03d%s: %s\n",
-                        (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
+                        (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", ((Rule) r).getMindId()) : ""),
                         r.getId(),
                         (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
                                 ? " " +
@@ -1309,7 +1312,7 @@ public class Console {
                 if (r != null) {
                     found = true;
                     System.out.printf("%sRule %03d%s: %s\n",
-                            (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", r.getMindId()) : ""),
+                            (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", ((Rule) r).getMindId()) : ""),
                             r.getId(),
                             (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
                                     ? " " +
@@ -1473,15 +1476,14 @@ public class Console {
     public static String formatRightWithComments(IMind mind, long id) throws Exception {
         String str = String.format(" -- Right %03d: ", id);
         str += Enums.LINE_SEPARATOR;
-        IComment c = mind.getComments().get(id);
-        if (c != null && !c.getComment().isEmpty()) {
-            for (String s : c.getComment().split("\\R")) {
-                str += s + Enums.LINE_SEPARATOR;
-            }
-        }
         IRule r = mind.getRules().get(id);
         if (r != null) {
-            for (String s : r.getOrigin().toString().split("\\R")) {
+            if (!r.getComment().isEmpty()) {
+                for (String s : r.getComment().split("\\R")) {
+                    str += s + Enums.LINE_SEPARATOR;
+                }
+            }
+            for (String s : r.getOrigin().split("\\R")) {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }

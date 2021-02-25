@@ -27,7 +27,10 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
-import org.kanger.interfaces.*;
+import org.kanger.interfaces.IArgument;
+import org.kanger.interfaces.IFactory;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
@@ -254,7 +257,7 @@ public class RuleFactory implements IFactory<IRule> {
 //                    topStored = cache.getRoot();
 //                }
 //            }
-            ((Rule) r).getTerms().add(r.getOrigin().getId());
+            ((Rule) r).getTerms().add(((Rule) r).getOriginId());
 
             for (List<Domain> list : ((Rule) r).getTree()) {
                 for (Domain d : list) {
@@ -465,10 +468,10 @@ public class RuleFactory implements IFactory<IRule> {
         return r;
     }
 
-    public IRule find(ISolve domain) throws Exception {
-        for (long id : cache.find(((Solve) domain).getHash(mind))) {
+    public IRule find(Solve domain) throws Exception {
+        for (long id : cache.find((domain).getHash(mind))) {
             IRule one = get(id);
-            if (((Rule) one).equalsTo(((Solve) domain))) {
+            if (((Rule) one).equalsTo((domain))) {
                 return one;
             }
         }
@@ -486,7 +489,7 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public IRule find(Hypothesis h) throws Exception {
-        Solve p = new Solve(h.getPredicate(), h.isAntc(), h.getArguments());
+        Solve p = new Solve((Predicate) h.getPredicate(), h.isAntc(), h.getArguments());
         IRule r = find(p);
 //        if(r == null) {
 //            p.setAntc(!p.isAntc());

@@ -31,7 +31,6 @@ import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.ICause;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
-import org.kanger.interfaces.ISolve;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
@@ -42,7 +41,7 @@ import org.kanger.units.Rule;
 public class Cause implements ICause {
     //    private Solve result = null;
 //    private Solve acceptor = null;
-    private ISolve donor = null;
+    private Solve donor = null;
     private IRule rule = null;
 
 //    private Right next = null;
@@ -215,7 +214,7 @@ public class Cause implements ICause {
 //        this.acceptor = acceptor;
 //    }
 
-    public ISolve getDonor() {
+    public Solve getDonor() {
         return donor;
     }
 

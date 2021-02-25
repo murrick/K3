@@ -82,8 +82,13 @@ public class User implements IUser {
     }
 
     public IMind remove(IMind mind, String name) throws Exception {
+        boolean needClose = false;
+        if (!isClosed() && (name == null || name.isEmpty() || name.equals(data.getStorageName()))) {
+            name = data.getStorageName();
+            needClose = true;
+        }
         data.remove(name);
-        return clear(mind);
+        return needClose ? close(mind) : mind;
     }
 
     public IMind reindex(IReactor reactor, IMind mind, String name) throws Exception {
@@ -242,7 +247,7 @@ public class User implements IUser {
             ((Mind) mind).getFValues().transaction(null);
             ((PredicateFactory) mind.getPredicates()).transaction(null);
             ((RuleFactory) mind.getRules()).transaction(null);
-            ((CommentFactory) mind.getComments()).transaction(null);
+            ((Mind) mind).getComments().transaction(null);
             ((Mind) mind).getTValues().transaction(null);
             ((Mind) mind).getTVars().transaction(null);
             ((LibraryFactory) mind.getLibrary()).transaction(null);
@@ -293,13 +298,17 @@ public class User implements IUser {
 
     @Override
     public void setProperty(String key, String val) {
-        userSettings.setProperty(key, val);
+        if (val != null) {
+            userSettings.setProperty(key, val);
+        } else {
+            userSettings.remove(key);
+        }
         if (userSettings.containsKey("user.dir")) {
             String confName = userSettings.getProperty("user.dir") + "kanger.conf";
-			try {
-            	try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName))) {
-                	userSettings.store(bw, new Date().toString());
-				}
+            try {
+                try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName))) {
+                    userSettings.store(bw, new Date().toString());
+                }
             } catch (IOException e) {
                 e.printStackTrace(System.err);
             }
@@ -349,10 +358,13 @@ public class User implements IUser {
     }
 
     @Override
-    public void loadProperties(String confName) throws Exception {
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                userSettings.load(br);
+    public void loadProperties() throws Exception {
+        if (userSettings.containsKey("user.dir")) {
+            String confName = userSettings.getProperty("user.dir") + "kanger.conf";
+            if (new File(confName).exists()) {
+                try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                    userSettings.load(br);
+                }
             }
         }
     }

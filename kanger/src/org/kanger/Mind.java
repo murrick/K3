@@ -141,7 +141,7 @@ public class Mind implements IMind {
 
         domains.transaction(((Mind) root).getDomains());
         rules.transaction((RuleFactory) root.getRules());
-        comments.transaction((CommentFactory) root.getComments());
+        comments.transaction(((Mind) root).getComments());
         tVars.transaction(((Mind) root).getTVars());
         tValues.transaction(((Mind) root).getTValues());
         functions.transaction(((Mind) root).getFunctions());
@@ -220,7 +220,7 @@ public class Mind implements IMind {
             domains.commit(((Mind) m).getDomains());
 
             Set<Long> list = rules.commit((RuleFactory) m.getRules());
-            comments.commit((CommentFactory) m.getComments());
+            comments.commit(((Mind) m).getComments());
             library.commit((LibraryFactory) m.getLibrary());
 
             Map<UnitType, Set<Long>> saveDeleted = new HashMap<>();
@@ -563,7 +563,6 @@ public class Mind implements IMind {
         return rules;
     }
 
-    @Override
     public CommentFactory getComments() {
         return comments;
     }
@@ -1886,12 +1885,12 @@ public class Mind implements IMind {
     @Override
     public boolean isEmptyLevel() {
         for (IRule r : rules) {
-            if (!r.isDeleted(this) && r.getMindId() == id) {
+            if (!r.isDeleted(this) && ((Rule) r).getMindId() == id) {
                 return false;
             }
         }
         for (IOperation s : library) {
-            if (!s.isDeleted(this) && s.getMindId() == id) {
+            if (!s.isDeleted(this) && ((Operation) s).getMindId() == id) {
                 return false;
             }
         }

@@ -257,8 +257,12 @@ public class Rule implements IUnit<IRule>, IRule {
         this.id = id;
     }
 
+    public long getOriginId() {
+        return originId;
+    }
+
     @Override
-    public ITerm getOrigin() throws Exception {
+    public String getOrigin() throws Exception {
         if (origin == null && originId != -1) {
             origin = mind.getTerms().get(originId);
 
@@ -271,7 +275,7 @@ public class Rule implements IUnit<IRule>, IRule {
 //            }
 
         }
-        return origin;
+        return (String) origin.getValue();
     }
 
     public void setOrigin(ITerm origin) {
@@ -317,8 +321,12 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     @Override
-    public IComment getComment() throws Exception {
-        return mind.getComments().get(id);
+    public String getComment() throws Exception {
+        if (mind.getComments().get(id) != null) {
+            return mind.getComments().get(id).getComment();
+        } else {
+            return "";
+        }
     }
 
     @Override
@@ -413,7 +421,7 @@ public class Rule implements IUnit<IRule>, IRule {
         }
     }
 
-    public boolean equalsTo(ISolve x) throws Exception {
+    public boolean equalsTo(Solve x) throws Exception {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
                 && ((Solve) x).getPredicateId() == domain.getPredicateId()
@@ -594,7 +602,7 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     @Override
-    public IPredicate getPredicate(IMind mind) throws Exception {
+    public IPredicate getPredicate() throws Exception {
         if (isStored()) {
             return getDomain().getPredicate();
         } else {
@@ -602,7 +610,6 @@ public class Rule implements IUnit<IRule>, IRule {
         }
     }
 
-    @Override
     public long getPredicateId() throws Exception {
         if (isStored()) {
             return getDomain().getPredicateId();
@@ -725,7 +732,7 @@ public class Rule implements IUnit<IRule>, IRule {
         }
     }
 
-    public boolean containsTerm(long id, IMind mind) throws Exception {
+    public boolean containsTerm(long id, Mind mind) throws Exception {
         terms.add(originId);
         for (List<Domain> row : tree) {
             for (Domain d : row) {

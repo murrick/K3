@@ -105,7 +105,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
 //                firstId = lastId;
                 for (ITerm t : this) {
                     if (t.isCVariable()) {
-                        varIndex = t.getIndex();
+                        varIndex = ((Term) t).getIndex();
                         break;
                     }
                 }

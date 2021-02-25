@@ -93,11 +93,11 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
     }
 
     @Override
-    public ITerm getName() throws Exception {
+    public String getName() throws Exception {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
-        return name;
+        return (String) name.getValue();
     }
 
     public void setName(ITerm name) {
@@ -124,10 +124,11 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         this.id = id;
     }
 
-    public Set<IRule> getSolves() throws Exception {
+    @Override
+    public Set<IRule> getSolves(IMind mind) throws Exception {
         Set<IRule> set = new HashSet<>();
         for (IRule r : mind.getRules()) {
-            if (r.isStored() && !r.isDeleted(mind) && getId() == r.getPredicateId()) {
+            if (r.isStored() && !r.isDeleted(mind) && getId() == ((Rule) r).getPredicateId()) {
                 set.add(r);
             }
         }
@@ -320,7 +321,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
 //    }
 
     @Override
-    public boolean isEmpty() throws Exception {
-        return getSolves().isEmpty();
+    public boolean isEmpty(IMind mind) throws Exception {
+        return getSolves(mind).isEmpty();
     }
 }
