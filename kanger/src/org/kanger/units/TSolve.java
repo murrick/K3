@@ -219,7 +219,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

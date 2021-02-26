@@ -254,7 +254,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

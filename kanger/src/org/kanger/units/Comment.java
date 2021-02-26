@@ -37,12 +37,12 @@ public class Comment implements IUnit<Comment> {
     private long id = -1;
     private String comment = "";
     private long mindId = -1;
-    private IMind mind;
+    private Mind mind;
 
     public Comment() {
     }
 
-    public Comment(long id, String comment, IMind mind) {
+    public Comment(long id, String comment, Mind mind) {
         this.id = id;
         this.comment = comment;
         this.mind = mind;
@@ -80,7 +80,7 @@ public class Comment implements IUnit<Comment> {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

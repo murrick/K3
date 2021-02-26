@@ -402,7 +402,7 @@ public class Function implements IUnit<Function> {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

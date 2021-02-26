@@ -257,7 +257,7 @@ public class FValue implements IUnit<FValue> {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

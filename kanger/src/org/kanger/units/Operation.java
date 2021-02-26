@@ -35,7 +35,6 @@ import org.kanger.interfaces.IOperation;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
-import org.kanger.stores.LogStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,10 +75,10 @@ public class Operation implements IUnit<Operation>, IOperation {
     }
 
     public static void showLog(IUnit o, TValue v) {
-        if (((Mind) o.getMind()).isLogging() && v != null) {
-            ((LogStore) o.getMind().getLog()).add(LogMode.ANALYZER, "Added: " + v);
-            ((LogStore) o.getMind().getLog()).add(LogMode.ANALYZER, "\tFrom: " + o);
-            ((LogStore) o.getMind().getLog()).add(LogMode.ANALYZER, "-------------------------------------------");
+        if (o.getMind().isLogging() && v != null) {
+            o.getMind().getLog().add(LogMode.ANALYZER, "Added: " + v);
+            o.getMind().getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
+            o.getMind().getLog().add(LogMode.ANALYZER, "-------------------------------------------");
         }
     }
 
@@ -231,7 +230,7 @@ public class Operation implements IUnit<Operation>, IOperation {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

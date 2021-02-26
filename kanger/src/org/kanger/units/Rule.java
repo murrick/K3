@@ -391,7 +391,7 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

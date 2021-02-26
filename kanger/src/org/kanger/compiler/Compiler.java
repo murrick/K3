@@ -50,15 +50,7 @@ public class Compiler {
         this.mind = mind;
     }
 
-    public IRule compileLine(PTree root, boolean antc, String orig, boolean query, Object[] ext) throws Exception {
-
-        Queue<ITerm> externals = new LinkedList<>();
-        if (ext != null) {
-            for (Object o : ext) {
-                ITerm t = mind.getTerms().add(o);
-                externals.add(t);
-            }
-        }
+    public IRule compileLine(PTree root, boolean antc, String orig, boolean query, Queue<ITerm> externals) throws Exception {
 
         IRule r = new Rule(mind);
         mind.getRules().register(r);

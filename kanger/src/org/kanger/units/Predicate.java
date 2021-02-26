@@ -258,7 +258,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

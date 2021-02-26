@@ -47,7 +47,7 @@ public interface IUnit<T> {
 
     boolean equalsTo(T to) throws Exception;
 
-    IMind getMind();
+    Mind getMind();
 
     T setMind(Mind mind) throws Exception;
 

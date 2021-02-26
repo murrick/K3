@@ -28,6 +28,7 @@ package org.kanger.primitives;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.ILogEntry;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -59,5 +60,10 @@ public class LogEntry implements ILogEntry {
         return record;
     }
 
-
+    @Override
+    public String toString() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(time) +
+                " [" + (type.name() + "        ").substring(0, 8) + "] " +
+                record;
+    }
 }

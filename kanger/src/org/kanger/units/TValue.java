@@ -232,7 +232,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

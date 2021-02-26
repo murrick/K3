@@ -579,7 +579,7 @@ public class Term implements IUnit<Term>, ITerm {
     }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

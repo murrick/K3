@@ -117,6 +117,12 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
 
     @Override
     public Map<String, ITerm> get(long id) throws Exception {
+        int i = 0;
+        for (Map<String, ITerm> row : this) {
+            if (id == i++) {
+                return row;
+            }
+        }
         return null;
     }
 

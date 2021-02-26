@@ -1061,7 +1061,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 
     @Override
-    public IMind getMind() {
+    public Mind getMind() {
         return mind;
     }
 

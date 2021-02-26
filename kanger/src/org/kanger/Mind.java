@@ -633,10 +633,15 @@ public class Mind implements IMind {
 
     @Override
     public boolean compile(String src) throws Exception {
-        return compile(src, true);
+        return compile(src, null, true);
     }
 
-    public boolean compile(String src, boolean logging) throws Exception {
+    @Override
+    public boolean compile(String src, Object[] ext) throws Exception {
+        return compile(src, ext, true);
+    }
+
+    public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
         this.logging = logging;
 
         int pos = 0;
@@ -645,6 +650,8 @@ public class Mind implements IMind {
 //        Mind udf = new Mind(this);
         m.setQueryPass(QueryPass.ACCEPT);
         int previousPos = 0;
+        Queue<ITerm> externals = convertExternals(ext);
+
         while ((t = Tools.extractLine(src, pos)) != null) {
             pos = (int) t[1];
             String line = (String) t[0];
@@ -658,7 +665,7 @@ public class Mind implements IMind {
             }
             previousPos = pos;
 
-            Object r = m.compileLine(line, false, null);
+            Object r = m.compileLine(line, false, externals);
             if (!comment.isEmpty() && r instanceof Rule) {
                 m.getComments().add(((Rule) r).getId(), comment);
             }
@@ -695,13 +702,13 @@ public class Mind implements IMind {
 
         if (ar) {
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
             }
             release(m);
             return false;
         } else {
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
             }
 
             commit(m);
@@ -712,7 +719,7 @@ public class Mind implements IMind {
         }
     }
 
-    public Object compileLine(String line, boolean query, Object[] ext) throws Exception {
+    public Object compileLine(String line, boolean query, Queue<ITerm> externals) throws Exception {
         String orig = line.trim();
         compliedLine = orig;
         Object r = null;
@@ -742,7 +749,8 @@ public class Mind implements IMind {
             Mind x = new Mind(this);
 
             PTree p = Parser.parser(line.substring(1));
-            r = x.compiler.compileLine(p, suc, orig, query, ext);
+
+            r = x.compiler.compileLine(p, suc, orig, query, externals);
             x.setCompliedLine(line);
             if (r instanceof Rule && ((Rule) r).isDeleted(x)) {
                 release(x);
@@ -1099,26 +1107,38 @@ public class Mind implements IMind {
         return productions;
     }
 
+    private Queue<ITerm> convertExternals(Object[] ext) throws Exception {
+        Queue<ITerm> externals = new LinkedList<>();
+        if (ext != null) {
+            for (Object o : ext) {
+                ITerm t = getTerms().add(o);
+                externals.add(t);
+            }
+        }
+        return externals;
+    }
+
+
     public Boolean queryInsert(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.INSERT);
         if (logging) {
-            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "============= INSERT ======================");
+            m.getLog().add(LogMode.ANALYZER, "============= INSERT ======================");
         }
 
         line = invert(line);
         line = invert(line);
 
         setCompliedLine(line);
-        Rule r = (Rule) m.compileLine(line, true, ext);
+        Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
         if (r != null) {
 
             m.link(r, logging);
             boolean ar = m.analyze(r, logging);
             if (ar) {
                 if (logging) {
-                    ((LogStore) m.getLog()).add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                    m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
                 }
                 release(m);
                 res = null;
@@ -1127,18 +1147,18 @@ public class Mind implements IMind {
                 List<IRule> productions = m.getProductions(r);
                 if (!productions.isEmpty()) {
                     if (logging) {
-                        ((LogStore) m.getLog()).add(LogMode.ANALYZER, "SUCCESS: Solves to append (" + productions.size() + "):");
+                        m.getLog().add(LogMode.ANALYZER, "SUCCESS: Solves to append (" + productions.size() + "):");
                     }
                     for (IRule pr : productions) {
                         ((Rule) pr).setQuery(false);
                         ((Rule) pr).setGenerated(false);
                         ((Rule) pr).primitivize();
                         if (logging) {
-                            ((LogStore) m.getLog()).add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
+                            m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
                         }
                     }
                 } else if (logging) {
-                    ((LogStore) m.getLog()).add(LogMode.ANALYZER, String.format("WARNING: No candidates to append"));
+                    m.getLog().add(LogMode.ANALYZER, String.format("WARNING: No candidates to append"));
                 }
 
                 r.setDeleted(true, m);
@@ -1153,7 +1173,7 @@ public class Mind implements IMind {
             }
         } else {
             if (logging && r != null && r.isDeleted(this)) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
             }
             release(m);
         }
@@ -1167,16 +1187,16 @@ public class Mind implements IMind {
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.ACCEPT);
         if (logging) {
-            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "============= ACCEPTING ===================");
+            m.getLog().add(LogMode.ANALYZER, "============= ACCEPTING ===================");
         }
 
         setCompliedLine(line);
-        Rule r = (Rule) m.compileLine(line, false, ext);
+        Rule r = (Rule) m.compileLine(line, false, convertExternals(ext));
         if (r != null) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
                 if (logging) {
-                    ((LogStore) m.getLog()).add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                    m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
                 }
                 release(m);
                 res = null;
@@ -1186,20 +1206,20 @@ public class Mind implements IMind {
                 ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
-                        ((LogStore) m.getLog()).add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                        m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
                     }
                     release(m);
                     res = null;
                 } else {
                     if (logging) {
-                        ((LogStore) m.getLog()).add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
+                        m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
                         List<IRule> productions = m.getProductions(r);
                         if (!productions.isEmpty()) {
                             for (IRule pr : productions) {
-                                ((LogStore) m.getLog()).add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
+                                m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
                             }
                         }
-                        ((LogStore) m.getLog()).add(LogMode.ANALYZER, "SUCCESS: New rule accepted");
+                        m.getLog().add(LogMode.ANALYZER, "SUCCESS: New rule accepted");
                     }
                     commit(m);
                     setChanged(true);
@@ -1209,7 +1229,7 @@ public class Mind implements IMind {
             }
         } else {
             if (logging && r != null && r.isDeleted(this)) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
             }
             release(m);
         }
@@ -1231,7 +1251,7 @@ public class Mind implements IMind {
 
             Mind m = new Mind(this);
             op.setDeleted(true, m);
-            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "SUCCESS: Deleted function " + line.substring(1));
+            m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted function " + line.substring(1));
             commit(m);
             res = true;
 
@@ -1241,7 +1261,7 @@ public class Mind implements IMind {
             Set<IRule> set = new HashSet<>();
             line = invert(line);
             setCompliedLine(line);
-            Rule r = (Rule) x.compileLine(line, true, ext);
+            Rule r = (Rule) x.compileLine(line, true, convertExternals(ext));
             if (r != null) {
                 x.link(r, logging);
                 boolean ar = x.analyze(r, logging);
@@ -1251,7 +1271,7 @@ public class Mind implements IMind {
                     }
                 } else {
                     if (logging) {
-                        ((LogStore) x.getLog()).add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+                        x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
                     }
                 }
             }
@@ -1276,7 +1296,7 @@ public class Mind implements IMind {
         for (IRule rx : m.getRules()) {
             if (/*!rx.isDeleted(m) && */rx.isGenerated()) {
                 if (logging) {
-                    ((LogStore) m.getLog()).add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
+                    m.getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
                 }
                 ((Rule) rx).setDeleted(true, m);
 //                m.setUnitDeleted(UnitType.RULE, rx.getId(), true);
@@ -1290,7 +1310,7 @@ public class Mind implements IMind {
         if (found) {
 //                pack();
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.STORAGE, "-------------------------------------------");
+                m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
             }
         }
 
@@ -1299,13 +1319,13 @@ public class Mind implements IMind {
 
         if (ar) {
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
             }
             release(m);
             res = false;
         } else {
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
             }
             commit(m);
             res = true;
@@ -1323,16 +1343,16 @@ public class Mind implements IMind {
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.CHECKFALSE);
         if (logging) {
-            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
+            m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
         }
 
         setCompliedLine(line);
-        Rule r = (Rule) m.compileLine(invert(line), true, ext);
+        Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
         if (r != null) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
                 if (logging) {
-                    ((LogStore) m.getLog()).add(LogMode.ANALYZER, "Result: FALSE");
+                    m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
                     logResult(m);
                 }
                 res = false;
@@ -1342,7 +1362,7 @@ public class Mind implements IMind {
                 ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
-                        ((LogStore) m.getLog()).add(LogMode.ANALYZER, "Result: FALSE");
+                        m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
                         logResult(m);
                     }
                     res = false;
@@ -1352,7 +1372,7 @@ public class Mind implements IMind {
                 }
             }
         } else if (logging && r != null && r.isDeleted(this)) {
-            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
         }
         release(m);
         return res;
@@ -1364,16 +1384,16 @@ public class Mind implements IMind {
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.CHECKTRUE);
         if (logging) {
-            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
+            m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
         }
 
         setCompliedLine(line);
-        Rule r = (Rule) m.compileLine(line, true, ext);
+        Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
         if (r != null) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
                 if (logging) {
-                    ((LogStore) m.getLog()).add(LogMode.ANALYZER, "Result: TRUE");
+                    m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
                     logResult(m);
                 }
                 res = true;
@@ -1383,7 +1403,7 @@ public class Mind implements IMind {
                 ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
-                        ((LogStore) m.getLog()).add(LogMode.ANALYZER, "Result: TRUE");
+                        m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
                         logResult(m);
                     }
                     res = true;
@@ -1392,15 +1412,15 @@ public class Mind implements IMind {
                     hypothesis.commit(m.getHypothesis());
                     if (logging) {
                         if (hypothesis.getRoot() != null && hypothesis.size() > 0) {
-                            ((LogStore) m.getLog()).add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypothesis.size()));
+                            m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypothesis.size()));
                         } else {
-                            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
+                            m.getLog().add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
                         }
                     }
                 }
             }
         } else if (logging && r != null && r.isDeleted(this)) {
-            ((LogStore) m.getLog()).add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
         }
         release(m);
         return res;
@@ -1440,14 +1460,14 @@ public class Mind implements IMind {
                 if (o != null) {
                     IOperation x = m.getLibrary().add(o);
                     if (x.getId() == o.getId()) {
-                        ((LogStore) m.getLog()).add(LogMode.ANALYZER, "Function updated: " + x.toString());
+                        m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
                     } else {
-                        ((LogStore) m.getLog()).add(LogMode.ANALYZER, "New function implemented: " + x.toString());
+                        m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
                     }
                     commit(m);
                     res = true;
                 } else {
-                    ((LogStore) m.getLog()).add(LogMode.ANALYZER, "Implementation error: " + line);
+                    m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
                     release(m);
                     res = false;
                 }
@@ -1654,19 +1674,19 @@ public class Mind implements IMind {
 
         if (ar) {
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
             }
             release(m);
         } else if (success.isEmpty()) {
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "WARNING: No rules have been deleted");
+                m.getLog().add(LogMode.ANALYZER, "WARNING: No rules have been deleted");
             }
             release(m);
         } else {
             if (logging) {
-                ((LogStore) m.getLog()).add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
+                m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
                 for (IRule r : success) {
-                    ((LogStore) m.getLog()).add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
+                    m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
                 }
             }
             commit(m);

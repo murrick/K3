@@ -34,7 +34,6 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.ITerm;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
-import org.kanger.stores.LogStore;
 import org.kanger.units.*;
 
 import java.util.*;
@@ -98,17 +97,17 @@ public class Predicates {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE && !arg.get(1).isEmpty(mind)) {
                                 TValue v = mind.getCalculator().getFunctions().addTValue(arg.get(0), arg.get(1).getValue(mind));
                                 if (mind.isLogging() && v != null) {
-                                    ((LogStore) mind.getLog()).add(LogMode.ANALYZER, "Added: " + v);
-                                    ((LogStore) mind.getLog()).add(LogMode.ANALYZER, "\tFrom: " + o);
-                                    ((LogStore) mind.getLog()).add(LogMode.ANALYZER, "-------------------------------------------");
+                                    mind.getLog().add(LogMode.ANALYZER, "Added: " + v);
+                                    mind.getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
+                                    mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
                                 }
                             }
                             if (arg.get(1).getType() == ArgumentType.TVARIABLE && !arg.get(0).isEmpty(mind)) {
                                 TValue v = mind.getCalculator().getFunctions().addTValue(arg.get(1), arg.get(0).getValue(mind));
                                 if (mind.isLogging() && v != null) {
-                                    ((LogStore) mind.getLog()).add(LogMode.ANALYZER, "Added: " + v);
-                                    ((LogStore) mind.getLog()).add(LogMode.ANALYZER, "\tFrom: " + o);
-                                    ((LogStore) mind.getLog()).add(LogMode.ANALYZER, "-------------------------------------------");
+                                    mind.getLog().add(LogMode.ANALYZER, "Added: " + v);
+                                    mind.getLog().add(LogMode.ANALYZER, "\tFrom: " + o);
+                                    mind.getLog().add(LogMode.ANALYZER, "-------------------------------------------");
                                 }
                             }
 
