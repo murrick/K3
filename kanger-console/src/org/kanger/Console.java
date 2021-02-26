@@ -802,7 +802,7 @@ public class Console {
         System.out.printf("Are you sure to erase workspace? [y/N]? ");
         String s = sc.nextLine().toUpperCase();
         if (!s.isEmpty() && s.charAt(0) == 'Y') {
-            mind = mind.clearStorage();
+            mind = mind.clearWorkspace();
         }
         return mind;
     }

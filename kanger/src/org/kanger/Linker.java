@@ -871,6 +871,10 @@ public class Linker {
                                         ++solvedPasses;
                                         mind.getTValues().commit();
                                         mind.getFValues().commit();
+                                    } else if (!master.isSubstitutable() && !slave.isSubstitutable()) {
+                                        ++solvedPasses;
+                                        master.setUsed(mind);
+                                        slave.setUsed(mind);
                                     } else {
                                         ++dumpedPasses;
                                     }

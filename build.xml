@@ -29,6 +29,7 @@
     </description>
     <!-- set global properties for this build -->
     <property name="src" location="./kanger/src"/>
+    <property name="doc" location="./doc"/>
 
     <tstamp>
         <format property="build.time" pattern="yyyy-MM-dd_HH:mm:ss"/>
@@ -48,6 +49,9 @@
                        replace="public static final String DATE = &quot;${build.time}&quot;;"
                        byline="true"
         />
+        <!--exec dir="${doc}" executable="jar">
+            <arg line="cf ../kanger-javadoc.jar ."/>
+        </exec-->
 
     </target>
 </project>

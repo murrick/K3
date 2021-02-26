@@ -186,7 +186,7 @@ public class Kanger {
         IMind mind = new Mind(user);
         //TODO: Волшебство
         mind.query("?a;");
-        mind = mind.clearStorage();
+        mind = mind.clearWorkspace();
 
         Console.session(mind);
     }

@@ -31,7 +31,6 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.LogStore;
-import org.kanger.stores.SolutionsStore;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 
@@ -165,13 +164,13 @@ public class Analyzer {
 //                    System.err.println("!!");
 //                }
 
-                if (q.isDeleted(mind)) {
+                if (q.isDeleted(mind) || q.getId() == p.getId()) {
                     continue;
                 }
 
                 if ("rule(1)".equals(p.getDomain().getPredicate().toString()) && p.getDomain().get(0).getValue(mind).getType() == DataType.NUMERIC) {
                     if (q.getId() == ((Double) p.getDomain().get(0).getValue(mind).getValue()).longValue()) {
-                        ((SolutionsStore) mind.getSolutions()).add(q);
+                        mind.getSolutions().add(q);
                         if (logging) {
                             log.add(LogMode.ANALYZER, "Select by id: ");
                             log.add(LogMode.ANALYZER, "\t" + q.toString());
@@ -200,10 +199,10 @@ public class Analyzer {
                             ((Rule) q).setMind(mind);
                         }
                         if (p.getDomain().isQuery(mind) && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
-                            ((SolutionsStore) mind.getSolutions()).add(q);
+                            mind.getSolutions().add(q);
                             mind.getValues().add(p.getSolves());
                         } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
-                            ((SolutionsStore) mind.getSolutions()).add(p);
+                            mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
                         }
 

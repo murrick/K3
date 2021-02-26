@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="kanger-javadoc">
+    <output-path>$PROJECT_DIR$/out/artifacts/dist/modules</output-path>
+    <root id="archive" name="kanger-javadoc.jar">
+      <element id="dir-copy" path="$PROJECT_DIR$/doc" />
+    </root>
+  </artifact>
+</component>

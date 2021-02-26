@@ -472,8 +472,8 @@ public class Mind implements IMind {
         functions.pack();
 
         tValues.pack();
-        terms.pack();
-        predicates.pack();
+//        terms.pack();
+//        predicates.pack();
 
         deleted.clear();
         restored.clear();
@@ -1965,7 +1965,7 @@ public class Mind implements IMind {
     }
 
     @Override
-    public IMind clearStorage() throws Exception {
+    public IMind clearWorkspace() throws Exception {
         return user.clear(this);
     }
 

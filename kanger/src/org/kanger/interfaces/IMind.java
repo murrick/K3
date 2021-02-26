@@ -464,7 +464,7 @@ public interface IMind {
      * @return текущий уровень транзакции после очистки.
      * @throws Exception
      */
-    IMind clearStorage() throws Exception;
+    IMind clearWorkspace() throws Exception;
 
     /**
      * Переиндексация и уплотнение файловой базы данных с указанным именем. Если в
