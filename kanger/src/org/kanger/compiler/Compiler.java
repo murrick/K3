@@ -67,13 +67,14 @@ public class Compiler {
 //        }
 
 //        Rule x
+        long id = r.getId();
         r = mind.getRules().add(r);
 
-        if (!r.isDeleted(mind)) {
+        if (r.getId() == id) {
             ((Rule) r).setQuery(query);
             mind.getRules().expand((Rule) r);
         } else {
-//            r = x;
+            ((Rule) r).setSecond(true);
         }
         return r;
     }

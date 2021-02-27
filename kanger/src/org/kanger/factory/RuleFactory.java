@@ -236,11 +236,13 @@ public class RuleFactory implements IFactory<IRule> {
 
     public synchronized IRule add(IRule r) throws Exception {
         IRule x = find(r);
-        if (x != null && x.getId() != r.getId()) {
-            ((Rule) r).setDeleted(true, mind);
-            if (x.isDeleted(mind)) {
-                ((Rule) x).setDeleted(false, mind);
-                action = true;
+        if (x != null) {
+            if (x.getId() != r.getId()) {
+                ((Rule) r).setDeleted(true, mind);
+                if (x.isDeleted(mind)) {
+                    ((Rule) x).setDeleted(false, mind);
+                    action = true;
+                }
             }
             return x;
         } else {

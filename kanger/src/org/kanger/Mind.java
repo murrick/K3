@@ -472,8 +472,8 @@ public class Mind implements IMind {
         functions.pack();
 
         tValues.pack();
-//        terms.pack();
-//        predicates.pack();
+        terms.pack();
+        predicates.pack();
 
         deleted.clear();
         restored.clear();
@@ -752,7 +752,7 @@ public class Mind implements IMind {
 
             r = x.compiler.compileLine(p, suc, orig, query, externals);
             x.setCompliedLine(line);
-            if (r instanceof Rule && ((Rule) r).isDeleted(x)) {
+            if (r instanceof Rule && ((Rule) r).isSecond()) {
                 release(x);
                 log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
                 r = null;
@@ -1132,7 +1132,7 @@ public class Mind implements IMind {
 
         setCompliedLine(line);
         Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
-        if (r != null) {
+        if (r != null && !r.isSecond()) {
 
             m.link(r, logging);
             boolean ar = m.analyze(r, logging);
@@ -1172,8 +1172,8 @@ public class Mind implements IMind {
                 res = true;
             }
         } else {
-            if (logging && r != null && r.isDeleted(this)) {
-                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+            if (logging && r != null && r.isSecond()) {
+                m.getLog().add(LogMode.ANALYZER, "Rule already exists: " + r);
             }
             release(m);
         }
@@ -1192,7 +1192,7 @@ public class Mind implements IMind {
 
         setCompliedLine(line);
         Rule r = (Rule) m.compileLine(line, false, convertExternals(ext));
-        if (r != null) {
+        if (r != null && !r.isSecond()) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
                 if (logging) {
@@ -1201,7 +1201,7 @@ public class Mind implements IMind {
                 release(m);
                 res = null;
             } else {
-                release(m);
+//                release(m);
                 m.link(r, logging);
                 ar = m.analyze(r, logging);
                 if (ar) {
@@ -1228,7 +1228,7 @@ public class Mind implements IMind {
                 }
             }
         } else {
-            if (logging && r != null && r.isDeleted(this)) {
+            if (logging && r != null) {
                 m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
             }
             release(m);
@@ -1262,16 +1262,12 @@ public class Mind implements IMind {
             line = invert(line);
             setCompliedLine(line);
             Rule r = (Rule) x.compileLine(line, true, convertExternals(ext));
-            if (r != null) {
+            if (r != null && !r.isSecond()) {
                 x.link(r, logging);
                 boolean ar = x.analyze(r, logging);
                 if (ar && x.getSolutions().size() > 0) {
                     for (IRule rx : x.getSolutions()) {
                         set.add(rx);
-                    }
-                } else {
-                    if (logging) {
-                        x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
                     }
                 }
             }
@@ -1280,6 +1276,10 @@ public class Mind implements IMind {
                 removeResult(set, logging);
                 res = true;
                 hypothesis.clear();
+            } else {
+                if (logging) {
+                    x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+                }
             }
         }
         return res;
@@ -1348,7 +1348,7 @@ public class Mind implements IMind {
 
         setCompliedLine(line);
         Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
-        if (r != null) {
+        if (r != null && !r.isSecond()) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
                 if (logging) {
@@ -1371,8 +1371,14 @@ public class Mind implements IMind {
                     hypothesis.commit(m.getHypothesis());
                 }
             }
-        } else if (logging && r != null && r.isDeleted(this)) {
-            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+        } else if (r != null && r.isSecond()) {
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "Rule already defined: " + r);
+                m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
+                logResult(m);
+            }
+            res = true;
+            hypothesis.clear();
         }
         release(m);
         return res;
@@ -1389,7 +1395,7 @@ public class Mind implements IMind {
 
         setCompliedLine(line);
         Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
-        if (r != null) {
+        if (r != null && !r.isSecond()) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
                 if (logging) {
@@ -1419,8 +1425,14 @@ public class Mind implements IMind {
                     }
                 }
             }
-        } else if (logging && r != null && r.isDeleted(this)) {
-            m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+        } else if (r != null && r.isSecond()) {
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "Rule already defined: " + r);
+                m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
+                logResult(m);
+            }
+            res = false;
+            hypothesis.clear();
         }
         release(m);
         return res;

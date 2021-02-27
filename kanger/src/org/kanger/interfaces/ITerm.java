@@ -76,6 +76,12 @@ public interface ITerm extends Comparable<Object> {
      */
     boolean isCVariable();
 
+    /**
+     * Оптимизированное сравнение значений двух термов.
+     *
+     * @param term сравниваемый терм
+     * @return true если значения термов эквивалентны
+     */
     boolean equalsTo(ITerm term);
 
 }

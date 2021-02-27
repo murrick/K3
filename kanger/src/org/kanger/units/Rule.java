@@ -58,6 +58,7 @@ public class Rule implements IUnit<IRule>, IRule {
     private boolean stored = false;                         // Правило добавлено в процессе выводс
     private boolean substitutable = false;                  // Правило содержит t-переменные
     private boolean abstractive = false;                    // Правило содержит c-переменные
+    private boolean second = false;
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<ICause> causes = new HashSet<>();
 
@@ -275,7 +276,7 @@ public class Rule implements IUnit<IRule>, IRule {
 //            }
 
         }
-        return (String) origin.getValue();
+        return origin == null ? null : (String) origin.getValue();
     }
 
     public void setOrigin(ITerm origin) {
@@ -746,6 +747,13 @@ public class Rule implements IUnit<IRule>, IRule {
         return predicates.contains(id);
     }
 
+    public boolean isSecond() {
+        return second;
+    }
+
+    public void setSecond(boolean second) {
+        this.second = second;
+    }
 
 //    public void washCauses() throws Exception {
 //        if (isStored()) {
