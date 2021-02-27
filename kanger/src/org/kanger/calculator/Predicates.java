@@ -86,7 +86,7 @@ public class Predicates {
                             }
                         }
                     } else if (mind.getCalculator().getFunctions().isDefined(arg.get(0)) && mind.getCalculator().getFunctions().isDefined(arg.get(1))) {
-                        if (arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (arg.get(0).getValue(mind).equalsTo(arg.get(1).getValue(mind))) {
                             i = 1;
                         } else { //if ((arg.createCVar(0).getValue(mind).isCVariable() && arg.createCVar(1).getValue(mind).isCVariable()) || (!arg.createCVar(0).getValue(mind).isCVariable() && !arg.createCVar(1).getValue(mind).isCVariable())) {
 
@@ -139,10 +139,10 @@ public class Predicates {
                     int i = -1;
                     ArgumentsList arg = ((Domain) o).getArguments();
                     if (!arg.get(0).isEmpty(mind) && !arg.get(1).isEmpty(mind)) {
-                        int rc = arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind));
-                        if (rc != 0) {
+                        boolean rc = arg.get(0).getValue(mind).equalsTo(arg.get(1).getValue(mind));
+                        if (!rc) {
                             i = 1;
-                        } else if (rc == 0) {
+                        } else {
                             i = 0;
                         }
                     }

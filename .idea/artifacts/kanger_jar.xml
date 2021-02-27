@@ -2,7 +2,7 @@
   <artifact type="jar" name="kanger:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/dist/modules</output-path>
     <root id="archive" name="kanger.jar">
-      <element id="module-output" name="$project_name$" />
+      <element id="module-output" name="kanger" />
     </root>
   </artifact>
 </component>

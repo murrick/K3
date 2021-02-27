@@ -76,4 +76,6 @@ public interface ITerm extends Comparable<Object> {
      */
     boolean isCVariable();
 
+    boolean equalsTo(ITerm term);
+
 }

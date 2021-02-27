@@ -53,16 +53,15 @@ public class Term implements IUnit<Term>, ITerm {
     public static final double FLT_EPSILON = 0.00000000001;
 
     private static final long serialVersionUID = 196402070008L;
-
+    private final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     private long id = -1;                // Идентификатор
     private long mindId = -1;                                   // id транзакции
     private DataType type = DataType.VOID;
     private Object value = null;
-
+    private int hash = 0;
     private int index = 0;              // Индекс c-переменной
     private ITerm name = null;             // Оригинальное имя c-переменной
     private IRule rule = null;          // Ссылка на правило
-    private final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
     private ITerm parent = null;
 
@@ -92,7 +91,8 @@ public class Term implements IUnit<Term>, ITerm {
                 .putLong(id)
                 .putLong(mindId)
                 .putByte(isDeleted(mind) ? 1 : 0)
-                .putInt(type.ordinal());
+                .putInt(type.ordinal())
+                .putInt(hash);
         switch (type) {
             case DATE:
                 packet.putLong(((Date) value).getTime());
@@ -144,6 +144,7 @@ public class Term implements IUnit<Term>, ITerm {
             setDeleted(true, mind);
         }
         type = DataType.values()[packet.getInt()];
+        hash = packet.getInt();
         switch (type) {
             case DATE:
                 value = new Date(packet.getLong());
@@ -293,6 +294,7 @@ public class Term implements IUnit<Term>, ITerm {
                 value = o;
             }
         }
+        getHash();
     }
 
     private byte[] constructBlob(String str) {
@@ -369,6 +371,11 @@ public class Term implements IUnit<Term>, ITerm {
         return index > 0;
     }
 
+    @Override
+    public boolean equalsTo(ITerm term) {
+        return equalsTo((Term) term);
+    }
+
     public boolean isXVariable() {
         return parentId > 0;
     }
@@ -377,6 +384,7 @@ public class Term implements IUnit<Term>, ITerm {
         if (isXVariable()) {
             value = String.format("%c%d", Enums.CVC, index);
             parentId = -1;
+            getHash();
         }
     }
 
@@ -445,24 +453,76 @@ public class Term implements IUnit<Term>, ITerm {
 
     @Override
     public int getHash() {
-        if (value == null) {
-            return 0;
-        } else {
-            if (type == DataType.DATE) {
-                return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format((Date) value).hashCode();
+        if (hash == 0) {
+            if (value == null) {
+                hash = 0;
             } else {
-                return formatValue().hashCode();
+                hash = 3;
+                switch (type) {
+                    case PERIOD:
+                        long time = Tools.intervalToTime((String) value);
+                        hash = 47 * hash + (int) (time ^ (time >>> 32));
+                        break;
+                    case INTERVAL:
+                        hash = 47 * hash + ((Term) ((List<ITerm>) value).get(0)).getHash();
+                        hash = 47 * hash + ((Term) ((List<ITerm>) value).get(1)).getHash();
+                        break;
+                    case TERM:
+                        hash = 47 * hash + ((Term) value).getHash();
+                        break;
+                    case DATE:
+                        long date = ((Date) value).getTime();
+                        hash = 47 * hash + (int) (date ^ (date >>> 32));
+                        break;
+                    case SET:
+                        for (ITerm t : (List<ITerm>) value) {
+                            hash = 47 * hash + ((Term) t).getHash();
+                        }
+                        break;
+                    case BLOB:
+                        hash = Arrays.hashCode((byte[]) value);
+                        break;
+                    case STRING:
+                        hash = value.hashCode();
+                        break;
+                    case NUMERIC:
+                        hash = Double.hashCode((Double) value);
+                }
             }
         }
-//        int hash = 3;
-//        hash = 47 * hash + type.ordinal();
-//        hash = 47 * hash + Objects.hashCode(value);
-//        return hash;
+        return hash;
     }
 
     @Override
     public boolean equalsTo(Term to) {
-        return compareTo(to) == 0;
+        if (type == to.getType() && getHash() == to.getHash()) {
+            switch (type) {
+                case BLOB:
+                    return Arrays.equals((byte[]) value, (byte[]) to.getValue());
+                case SET:
+                    if (((List<ITerm>) value).size() == ((List<ITerm>) to.getValue()).size()) {
+                        for (ITerm t : (List<ITerm>) value) {
+                            if (!((List<ITerm>) to.getValue()).contains(t)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    } else {
+                        return false;
+                    }
+                case TERM:
+                    return ((Term) value).equalsTo((Term) to.getValue());
+                case INTERVAL:
+                    return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0))
+                            && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1));
+                case PERIOD:
+                    return Tools.intervalToTime((String) value) == Tools.intervalToTime((String) to.getValue());
+                default:
+                    return value.equals(to.getValue());
+            }
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -483,9 +543,10 @@ public class Term implements IUnit<Term>, ITerm {
         return value;
     }
 
-    public void setValue(Object value) {
-        this.value = value;
-    }
+//    public void setValue(Object value) {
+//        this.value = value;
+//        getHash();
+//    }
 
     public ITerm getName() throws Exception {
         if (name == null) {
@@ -576,6 +637,7 @@ public class Term implements IUnit<Term>, ITerm {
 
     public void clear() {
         value = null;
+        hash = 0;
     }
 
     @Override

@@ -63,7 +63,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_inc(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_inc(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -95,7 +95,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_dec(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_dec(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -127,7 +127,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_bitnot(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_bitnot(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -159,7 +159,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_neg(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_neg(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -191,7 +191,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (arg.get(0).getValue(mind).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (arg.get(0).getValue(mind).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -227,7 +227,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_add(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_add(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -266,7 +266,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_sub(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_sub(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -305,7 +305,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_mul(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_mul(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE && (double) arg.get(1).getValue(mind).getValue() != 0) {
@@ -344,7 +344,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_div(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_div(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -375,7 +375,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_rem(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_rem(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -398,11 +398,11 @@ public class Functions {
                         if (!o.setParameter(2, mind.getTerms().add(new ITerm[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}))) {
                             ret = 0;
                         }
-                    } else if (arg.get(0).isEmpty(mind) && isDefined(arg.get(1)) && isDefined(arg.get(2)) && arg.get(2).getValue(mind).getType() == DataType.INTERVAL && arg.get(1).getValue(mind).compareTo(((List<Term>) arg.get(2).getValue(mind).getValue()).get(1)) == 0) {
+                    } else if (arg.get(0).isEmpty(mind) && isDefined(arg.get(1)) && isDefined(arg.get(2)) && arg.get(2).getValue(mind).getType() == DataType.INTERVAL && arg.get(1).getValue(mind).equalsTo(((List<Term>) arg.get(2).getValue(mind).getValue()).get(1))) {
                         if (!o.setParameter(0, ((List<Term>) arg.get(2).getValue(mind).getValue()).get(0))) {
                             ret = 0;
                         }
-                    } else if (isDefined(arg.get(0)) && arg.get(1).isEmpty(mind) && isDefined(arg.get(2)) && arg.get(2).getValue(mind).getType() == DataType.INTERVAL && arg.get(0).getValue(mind).compareTo(((List<Term>) arg.get(2).getValue(mind).getValue()).get(1)) == 0) {
+                    } else if (isDefined(arg.get(0)) && arg.get(1).isEmpty(mind) && isDefined(arg.get(2)) && arg.get(2).getValue(mind).getType() == DataType.INTERVAL && arg.get(0).getValue(mind).equalsTo(((List<Term>) arg.get(2).getValue(mind).getValue()).get(1))) {
                         if (!o.setParameter(1, ((List<Term>) arg.get(2).getValue(mind).getValue()).get(1))) {
                             ret = 0;
                         }
@@ -411,7 +411,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2)) && arg.get(2).getValue(mind).getType() == DataType.INTERVAL
-                            && mind.getTerms().add(new ITerm[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}).compareTo(arg.get(2).getValue(mind)) == 0) {
+                            && mind.getTerms().add(new ITerm[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}).equalsTo(arg.get(2).getValue(mind))) {
                         ret = 2;
                     } else {
 //                        arg.createCVar(2).delValue(o.getOwner());
@@ -466,7 +466,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_bitleft(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_bitleft(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -498,7 +498,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_bitright(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_bitright(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -530,7 +530,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_bitxor(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_bitxor(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -558,7 +558,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_bitand(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_bitand(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -590,7 +590,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_bitor(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_bitor(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -626,7 +626,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_log(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_log(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -658,7 +658,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_exp(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_exp(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -690,7 +690,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_log10(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_log10(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -722,7 +722,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_exp10(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_exp10(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -767,7 +767,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_sin(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_sin(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -799,7 +799,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_asin(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_asin(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -831,7 +831,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_cos(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_cos(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -863,7 +863,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_acos(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_acos(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -895,7 +895,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_tan(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_tan(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -927,7 +927,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_atan(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_atan(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -955,7 +955,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_int(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_int(arg.get(0).getValue(mind), null).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -979,7 +979,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_int(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_int(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1003,7 +1003,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_blob(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_blob(arg.get(0).getValue(mind), null).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1027,7 +1027,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_blob(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_blob(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1051,7 +1051,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_date(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_date(arg.get(0).getValue(mind), null).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1075,7 +1075,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_date(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_date(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1099,7 +1099,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_string(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_string(arg.get(0).getValue(mind), null).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1123,7 +1123,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_string(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_string(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1147,7 +1147,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_abs(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_abs(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1171,7 +1171,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_round(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_round(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1195,7 +1195,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_round(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_round(arg.get(0).getValue(mind), null).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             ret = 0;
@@ -1223,7 +1223,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                        if (_sqrt(arg.get(0).getValue(mind)).compareTo(arg.get(1).getValue(mind)) == 0) {
+                        if (_sqrt(arg.get(0).getValue(mind)).equalsTo(arg.get(1).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -1255,7 +1255,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_pow(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_pow(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -1287,7 +1287,7 @@ public class Functions {
                             ret = 0;
                         }
                     } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                        if (_root(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                        if (_root(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                             ret = 2;
                         } else {
                             if (arg.get(0).getType() == ArgumentType.TVARIABLE) {
@@ -1318,7 +1318,7 @@ public class Functions {
                                 ret = 0;
                             }
                         } else if (isDefined(arg.get(0)) && isDefined(arg.get(1))) {
-                            if (_length(arg.get(0).getValue(mind), null).compareTo(arg.get(1).getValue(mind)) == 0) {
+                            if (_length(arg.get(0).getValue(mind), null).equalsTo(arg.get(1).getValue(mind))) {
                                 ret = 2;
                             } else {
                                 ret = 0;
@@ -1349,7 +1349,7 @@ public class Functions {
                                 ret = 0;
                             }
                         } else if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && isDefined(arg.get(2))) {
-                            if (_length(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).compareTo(arg.get(2).getValue(mind)) == 0) {
+                            if (_length(arg.get(0).getValue(mind), arg.get(1).getValue(mind)).equalsTo(arg.get(2).getValue(mind))) {
                                 ret = 2;
                             } else {
                                 ret = 0;
