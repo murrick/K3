@@ -43,7 +43,7 @@ public class Escalera implements ICache {
 
     //    private ICache parent = null;
     private Stack<IStep> stack = new Stack<>();
-    private Mind mind = null;
+    private transient Mind mind = null;
     private String schema = "";
 
     public Escalera(Mind mind, String schema, ICache parent) {

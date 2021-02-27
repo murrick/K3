@@ -54,7 +54,7 @@ public class FunctionFactory implements IFactory<Function> {
 
     private ICache cache;
     private IStep top = null;
-    private Mind mind = null;
+    private transient Mind mind = null;
     private IBase connection = null;
 
     public FunctionFactory(Mind mind) throws Exception {

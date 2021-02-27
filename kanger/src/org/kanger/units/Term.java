@@ -66,7 +66,7 @@ public class Term implements IUnit<Term>, ITerm {
     private ITerm parent = null;
 
     //    private Term next = null;      // Следующая запись
-    private Mind mind = null;
+    private transient Mind mind = null;
 
 //    private transient boolean deleted = false;
 
@@ -227,6 +227,13 @@ public class Term implements IUnit<Term>, ITerm {
             list.add(((ITerm[]) o)[0]);
             list.add(((ITerm[]) o)[1]);
             type = DataType.INTERVAL;
+            value = list;
+        } else if (o instanceof Object[]) {
+            List<ITerm> list = new ArrayList<>();
+            for (Object a : (Object[]) o) {
+                list.add(mind.getTerms().add(a));
+            }
+            type = DataType.SET;
             value = list;
         } else if (o instanceof ArgumentsList) {
             List<ITerm> list = new ArrayList<>();

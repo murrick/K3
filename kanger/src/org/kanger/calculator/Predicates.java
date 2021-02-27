@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
 public class Predicates {
 
 
-    private final Mind mind;
+    private final transient Mind mind;
     private final Map<String, Operation> sysOps = new HashMap<String, Operation>() {
 
         /// Системные предикаты

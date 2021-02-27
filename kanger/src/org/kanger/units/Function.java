@@ -58,7 +58,7 @@ public class Function implements IUnit<Function> {
     private int range = 0;
     private ArgumentsList arguments = new ArgumentsList();     // Параметры
 
-    private Mind mind = null;
+    private transient Mind mind = null;
 
     private transient long nameId = -1;
 

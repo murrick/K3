@@ -52,7 +52,7 @@ public class FValueFactory implements IFactory<FValue> {
 
     private ICache cache;
     private IStep top = null;
-    private Mind mind = null;
+    private transient Mind mind = null;
     private IBase connection = null;
 
     private transient boolean action = false;

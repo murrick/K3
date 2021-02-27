@@ -43,7 +43,7 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
 
     private Set<ComparableArgumentsList> root = new LinkedHashSet<>();
 
-    private final Mind mind;
+    private final transient Mind mind;
     private String order = "";
     private boolean ascending = true;
 

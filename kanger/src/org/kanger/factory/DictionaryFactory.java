@@ -63,7 +63,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
     private ICache cache;
     private IStep top = null;
     //    private Cache load = new Cache();
-    private Mind mind = null;
+    private transient Mind mind = null;
     private IBase connection = null;
 
 //    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
@@ -352,6 +352,18 @@ public class DictionaryFactory implements IFactory<ITerm> {
                                     }
                                 }
                             }
+//                            if(!found) {
+//                                for(Function f : mind.getFunctions()) {
+//                                    if (!f.isDeleted(mind) && !f.isEmpty() && f.getValue().getId() == ((IUnit) o).getId()) {
+//                                        found = true;
+//                                        break;
+//                                    }
+//                                    if(!f.isDeleted(mind) && f.getResult().getValue(mind).getId() == ((IUnit) o).getId()) {
+//                                        found = true;
+//                                        break;
+//                                    }
+//                                }
+//                            }
                         }
                     }
                 }

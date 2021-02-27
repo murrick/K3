@@ -1,4 +1,8 @@
-=plus(a,b) 
+=kanger() {
+    kanger = kanger.getTerms().get(1);
+};
+
+=plus(a,b)
 	{plus = a+b;},
 	{a = plus-b;},
 	{b = plus-a;};

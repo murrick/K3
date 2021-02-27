@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class Compiler {
 
-    private final Mind mind;
+    private final transient Mind mind;
 
     public Compiler(Mind mind) {
         this.mind = mind;

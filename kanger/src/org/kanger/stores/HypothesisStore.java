@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class HypothesisStore implements IFactory<IHypothesis> {
 
-    private final Mind mind;
+    private final transient Mind mind;
     private List<IHypothesis> root = null;
     private boolean enableStore = true;
 

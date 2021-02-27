@@ -60,7 +60,7 @@ public class RuleFactory implements IFactory<IRule> {
     private IStep top = null;
     private IStep bottom = null;
     //    private IStep topStored = null;
-    private Mind mind = null;
+    private transient Mind mind = null;
     private IBase connection = null;
 
     private transient boolean action = false;

@@ -66,10 +66,9 @@ public class Mind implements IMind {
     private final Map<TVariable, long[]> floodControl = new HashMap<>();
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
     private final Map<UnitType, Set<Long>> restored = new HashMap<>();
-
+    private final Stack<Integer> debugLevelStack = new Stack<>();
     private long id = 0;
     private IMind next = null;
-
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
@@ -80,29 +79,22 @@ public class Mind implements IMind {
     private FValueFactory fValues = null;                          // Решения функций
     private CommentFactory comments = null;
     private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
-
     private User user = null;
-
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
     private LogStore log = null;                                        // Протокол вывода
     private HypothesisStore hypothesis = null;                                // Список гипотез
-
     private Calculator calculator = null;                             // Калькулятор
     private Analyzer analyzer = null;                                   // Анализатор
     private Compiler compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
-
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
     //    private Mind queryContext = null;
     private QueryPass queryPass = QueryPass.SILENCE;
     private boolean logging = true;
-
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES);
-    private final Stack<Integer> debugLevelStack = new Stack<>();
-
     private String compliedLine = "";
     private Rule acceptedRule = null;
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
@@ -462,6 +454,8 @@ public class Mind implements IMind {
     public void pack() throws Exception {
 //        if (next == null) {
 //        synchronized (locker) {
+
+
         library.pack();
 
         tVars.pack();
@@ -472,6 +466,7 @@ public class Mind implements IMind {
         functions.pack();
 
         tValues.pack();
+
         terms.pack();
         predicates.pack();
 

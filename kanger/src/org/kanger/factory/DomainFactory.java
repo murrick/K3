@@ -56,7 +56,7 @@ public class DomainFactory implements IFactory<Domain> {
     private ICache cache;
     private IStep top = null;
     //    private Cache load = new Cache();
-    private Mind mind = null;
+    private transient Mind mind = null;
     private IBase connection = null;
 
     public DomainFactory(Mind mind) throws Exception {

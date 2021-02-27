@@ -39,7 +39,7 @@ import org.kanger.units.*;
  */
 public class Calculator {
 
-    private final Mind mind;
+    private final transient Mind mind;
     private final Functions functions;
     private final Predicates predicates;
 

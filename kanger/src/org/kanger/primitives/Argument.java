@@ -169,8 +169,10 @@ public class Argument implements IArgument {
         switch (type) {
             case EMPTY:
                 o = (IUnit) t;
-                id = o.getId();
-                type = ArgumentType.TERM;
+                if (o != null) {
+                    id = o.getId();
+                    type = ArgumentType.TERM;
+                }
                 return true;
             case TERM:
                 o = (IUnit) t;

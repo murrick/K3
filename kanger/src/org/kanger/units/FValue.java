@@ -55,7 +55,7 @@ public class FValue implements IUnit<FValue> {
     private List<Long> stamp = new ArrayList<>();
 
     //    private FValue next = null;
-    private Mind mind = null;
+    private transient Mind mind = null;
 
     private transient long functionId = -1;
     private transient long valueId = -1;

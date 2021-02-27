@@ -43,7 +43,7 @@ import java.util.*;
  */
 public class Functions {
 
-    private final Mind mind;
+    private final transient Mind mind;
     private final Map<String, Operation> sysOps = new HashMap<String, Operation>() {
 
 

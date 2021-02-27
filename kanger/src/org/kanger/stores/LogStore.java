@@ -45,7 +45,7 @@ public class LogStore implements IFactory<ILogEntry> {
 
     private List<ILogEntry> root = null;
     private boolean enableLogging = true;
-    private final Mind mind;
+    private final transient Mind mind;
 
     public LogStore(Mind mind) {
         this.mind = mind;

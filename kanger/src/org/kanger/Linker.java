@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class Linker {
 
-    private final Mind mind;
+    private final transient Mind mind;
     private final LogStore log;
 
     private int solvedPasses = 0;

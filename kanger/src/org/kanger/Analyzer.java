@@ -43,7 +43,7 @@ import java.util.Set;
 public class Analyzer {
 
 
-    private final Mind mind;
+    private final transient Mind mind;
     private final LogStore log;
 
     public Analyzer(Mind mind) {

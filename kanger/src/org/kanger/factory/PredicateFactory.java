@@ -54,7 +54,7 @@ public class PredicateFactory implements IFactory<IPredicate> {
 
     private ICache cache;
     private IStep top = null;
-    private Mind mind = null;
+    private transient Mind mind = null;
     private IBase connection = null;
 
     public PredicateFactory(Mind mind) throws Exception {

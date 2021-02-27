@@ -37,7 +37,7 @@ public class Comment implements IUnit<Comment> {
     private long id = -1;
     private String comment = "";
     private long mindId = -1;
-    private Mind mind;
+    private transient Mind mind;
 
     public Comment() {
     }

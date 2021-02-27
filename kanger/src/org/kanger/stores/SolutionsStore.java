@@ -43,7 +43,7 @@ public class SolutionsStore implements IFactory<IRule> {
     private List<IRule> root = null;
     private boolean enableStore = true;
 
-    private final Mind mind;
+    private final transient Mind mind;
 
     public SolutionsStore(Mind mind) {
         this.mind = mind;

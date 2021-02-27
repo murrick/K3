@@ -36,11 +36,12 @@ import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
-import org.kanger.units.Domain;
 import org.kanger.units.Function;
 import org.kanger.units.Operation;
 import org.kanger.units.TValue;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
 
 /**
@@ -65,8 +66,7 @@ public class UDF extends Operation implements IReactor {
     @Override
     public Object run(Object o) throws Exception {
         IMind mind = ((IUnit) o).getMind();
-        ArgumentsList arg = (o instanceof Domain) ? ((Domain) o).getArguments() : ((Function) o).getArguments();
-//                    ScriptEngine scryptEngine = new ScriptEngineManager().getEngineByName("js");
+        ArgumentsList arg = ((Function) o).getArguments();
         Scriptable scope = scriptContext.initStandardObjects();
 
         int ret = 1;
@@ -100,8 +100,8 @@ public class UDF extends Operation implements IReactor {
                 ret = 0;
             }
 
-            if(!script.isEmpty()) {
-                scope.put("org/kanger", scope, mind);
+            if (!script.isEmpty()) {
+                scope.put("kanger", scope, mind);
 
                 scriptContext.evaluateString(scope, script, "script", 1, null);
 
@@ -111,7 +111,15 @@ public class UDF extends Operation implements IReactor {
                         ret = 0;
                         ((Argument) arg.get(index)).setValue((Mind) mind, null);
                     } else {
-                        if (!((Argument) arg.get(index)).setValue((Mind) mind, ((DictionaryFactory) mind.getTerms()).add(val))) {
+                        if (val instanceof NativeJavaObject) {
+                            val = ((NativeJavaObject) val).unwrap();
+                        } else if (val instanceof NativeArray) {
+                            val = ((NativeArray) val).toArray();
+                        }
+                        if (!(val instanceof ITerm)) {
+                            val = ((DictionaryFactory) mind.getTerms()).add(val);
+                        }
+                        if (!((Argument) arg.get(index)).setValue((Mind) mind, (ITerm) val)) {
                             ret = 0;
                         }
                     }

@@ -47,7 +47,7 @@ import java.util.*;
  */
 public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
-    private Mind mind = null;
+    private transient Mind mind = null;
 //    private List<TVariable> tVariables = null;
 //    private List<Long> tVariablesIds = new ArrayList<>();
 
