@@ -53,6 +53,8 @@ public class Term implements IUnit<Term>, ITerm {
     public static final double FLT_EPSILON = 0.00000000001;
 
     private static final long serialVersionUID = 196402070008L;
+
+
     private final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     private long id = -1;                // Идентификатор
     private long mindId = -1;                                   // id транзакции

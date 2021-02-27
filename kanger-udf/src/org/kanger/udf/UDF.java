@@ -101,7 +101,7 @@ public class UDF extends Operation implements IReactor {
             }
 
             if (!script.isEmpty()) {
-                scope.put("kanger", scope, mind);
+                scope.put("mind", scope, mind);
 
                 scriptContext.evaluateString(scope, script, "script", 1, null);
 
