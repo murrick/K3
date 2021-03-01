@@ -347,9 +347,9 @@ public class DictionaryFactory implements IFactory<ITerm> {
                                         found = true;
                                         break;
                                     }
-                                    if (found) {
-                                        break;
-                                    }
+                                }
+                                if (found) {
+                                    break;
                                 }
                             }
 //                            if(!found) {
