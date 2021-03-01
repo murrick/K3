@@ -1308,7 +1308,7 @@ public class Linker {
                 }
 
 
-                log.add(mode, "\t\tUsing: " + ((Cause) c).getDonor().toString());
+                log.add(mode, "\t\tUsing: " + ((Cause) c).getDonor().toString(mind));
 //                log.add(mode, "\t\tUsing: " + mind.getRights().find(c.getDonor()).getDomain().toString());
             }
         }

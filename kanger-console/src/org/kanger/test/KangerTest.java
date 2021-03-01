@@ -2492,9 +2492,9 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 1 STRT: " + m1.getRules().size() + "/" + mind.getRules().size());
                     for (int i = 0; i < COUNT; ++i) {
-                        Boolean res = m1.query("!value(1, " + i + ", " + (1000 + i) + ");");
+                        Boolean res = m1.query("!value(1, ?, ?);", new Object[]{i, 1000 + i});
                     }
-                    m1.query("!value(1, " + 2 + ", " + (7000 + 2) + ");");
+                    m1.query("!value(1, ?, ?);", new Object[]{2, 7000 + 2});
                     if (!mind.commit(m1)) {
                         System.out.println("PROCESS 1 ROLLED BACK");
                     }
@@ -2620,6 +2620,100 @@ public class KangerTest {
         showResult(true);
         if (mind.getSolutions().size() != COUNT * 3 + 1) {
             fail("Expected " + (COUNT * 3 + 1) + " solves");
+        }
+
+        System.out.println("OK");
+        System.out.println("====================================================");
+    }
+
+    public void set_08_03() throws Exception {
+
+        mind = mind.clearWorkspace();
+        mind = new Mind(mind.getUser());
+
+        final int COUNT = 3;
+
+        final Mind m1 = new Mind(mind);
+        final Mind m2 = new Mind(mind);
+        final Mind m3 = new Mind(mind);
+
+        final CountDownLatch latchEnd = new CountDownLatch(3);
+
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    System.out.println("PROCESS 1 START: " + m1.getRules().size() + "/" + mind.getRules().size());
+                    for (int i = 0; i < COUNT; ++i) {
+                        Boolean res = m1.query("!value(1, ?, ?);", new Object[]{i, 1000 + i});
+                    }
+                    m1.query("!value(1, 2, 3002);");
+                    if (!mind.commit(m1)) {
+                        System.out.println("PROCESS 1 ROLLED BACK");
+                    }
+                    System.out.println("PROCESS 1 STOP: " + m1.getRules().size() + "/" + mind.getRules().size());
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latchEnd.countDown();
+                }
+            }
+        });
+
+        Thread t2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    System.out.println("PROCESS 2 START: " + m2.getRules().size() + "/" + mind.getRules().size());
+                    for (int i = 0; i < COUNT; ++i) {
+                        Boolean res = m2.query("!value(1, ?, ?);", new Object[]{i, 2000 + i});
+                    }
+                    m2.query("!~value(1, 2, 1002);");
+                    if (!mind.commit(m2)) {
+                        System.out.println("PROCESS 2 ROLLED BACK");
+                    }
+                    System.out.println("PROCESS 2 STOP: " + m2.getRules().size() + "/" + mind.getRules().size());
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latchEnd.countDown();
+                }
+            }
+        });
+
+        Thread t3 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    System.out.println("PROCESS 3 START: " + m3.getRules().size() + "/" + mind.getRules().size());
+                    for (int i = 0; i < COUNT; ++i) {
+                        Boolean res = m3.query("!value(1, ?, ?);", new Object[]{i, 3000 + i});
+                    }
+                    if (!mind.commit(m3)) {
+                        System.out.println("PROCESS 3 ROLLED BACK");
+                    }
+                    System.out.println("PROCESS 3 STOP: " + m3.getRules().size() + "/" + mind.getRules().size());
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                } finally {
+                    latchEnd.countDown();
+                }
+            }
+        });
+
+        t2.start();
+        t3.start();
+        t1.start();
+
+        latchEnd.await();
+
+        System.out.println("PROCESSES STOP: " + mind.getRules().size());
+
+        Boolean res = mind.query("?$x $y value(1, x, y);");
+
+        showResult(true);
+        if (mind.getSolutions().size() != COUNT * 2) {
+            fail("Expected " + (COUNT * 2) + " solves");
         }
 
         System.out.println("OK");

@@ -102,9 +102,12 @@ public class Mind implements IMind {
 
     public Mind(IUser user) throws Exception {
         this.user = (User) user;
+        this.user.nextId();
 //        user.setMind(this);
         init();
-        clearMind();
+//        clearMind();
+
+//        new Mind(this);
     }
 
     public Mind(IMind root) throws Exception {
@@ -113,6 +116,7 @@ public class Mind implements IMind {
 //        user.setMind(this);
         id = user.nextId(); //root.getId() + 1;
         init();
+//        clearMind();
 
         ((Mind) root).incTransactionCounter();
 //        terms.transaction(root.getTerms());
@@ -409,7 +413,7 @@ public class Mind implements IMind {
 //        functions.unlink();
 //        library.unlink();
 
-            queryResult = (Boolean) m.getQueryResult();
+            queryResult = m.getQueryResult();
 
             --transactionCounter;
             if (next == null && transactionCounter == 0) {
