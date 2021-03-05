@@ -1021,6 +1021,10 @@ public class Mind implements IMind {
         return queryResult;
     }
 
+    public void setQueryResult(Boolean queryResult) {
+        this.queryResult = queryResult;
+    }
+
 //    public Right getQuery() {
 //        for (Right r = rights.getRoot(); r != null; r = r.getNext()) {
 //            if (r.isQuery()) {
@@ -1042,7 +1046,7 @@ public class Mind implements IMind {
         for (int i = 0; i < d.getRange(); ++i) {
             if (d.getArguments().get(i).getType() == ArgumentType.FUNCTION
                     && ((Function) d.getArguments().get(i).getObject(this)).isCalculable()
-                    && ((Function) d.getArguments().get(i).getObject(this)).isEmpty()) {
+                    && ((Function) d.getArguments().get(i).getObject(this)).isEmpty(this)) {
 //                d.getArguments().get(i).getF().clear();
                 calculator.calculate((Function) d.getArguments().get(i).getObject(this), logging);
             }
@@ -1803,7 +1807,7 @@ public class Mind implements IMind {
 //    }
 
     public TSolve findTSolve(List<TValue> list) throws Exception {
-        TVariableSet ts = new TVariableSet(list);
+        TVariableSet ts = new TVariableSet(list, this);
         if (getRuleSolves().containsKey(ts)) {
             TSolve tmp = new TSolve(list, this);
             for (TSolve t : getRuleSolves().get(ts)) {
@@ -1821,7 +1825,7 @@ public class Mind implements IMind {
             return tmp;
         } else {
             tmp = new TSolve(list, this);
-            TVariableSet ts = new TVariableSet(tmp);
+            TVariableSet ts = new TVariableSet(tmp, this);
             if (!getRuleSolves().containsKey(ts)) {
                 getRuleSolves().put(ts, new ArrayList<>());
             }

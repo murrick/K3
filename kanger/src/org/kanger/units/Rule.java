@@ -36,10 +36,7 @@ import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 20.05.15.
@@ -62,9 +59,9 @@ public class Rule implements IUnit<IRule>, IRule {
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
     private Set<ICause> causes = new HashSet<>();
 
-    private List<TValue> solves = new ArrayList();
-    private Set<Long> predicates = new HashSet<>();
-    private Set<Long> terms = new HashSet<>();
+    private transient List<TValue> solves = new ArrayList();
+    private transient Set<Long> predicates = new HashSet<>();
+    private transient Set<Long> terms = new HashSet<>();
 
     private int varIndex = 0;
 
@@ -341,7 +338,7 @@ public class Rule implements IUnit<IRule>, IRule {
     public int getHash() throws Exception {
         //TODO: 4
         if (stored || (tree.size() == 1 && tree.get(0).size() == 1 && !getDomain().isSubstitutable())) {
-            return getDomain().getHashBase();
+            return getDomain().getHashBase(mind);
         } else {
             int hash = 0;
             for (List<Domain> list : tree) {
@@ -698,6 +695,54 @@ public class Rule implements IUnit<IRule>, IRule {
     @Override
     public boolean isLoaded() {
         return origin != null && originId == origin.getId();
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("origin_id", originId);
+        map.put("query", query);
+        map.put("generated", generated);
+        map.put("stored", stored);
+        map.put("substitutable", substitutable);
+        map.put("abstractive", abstractive);
+        map.put("second", second);
+
+        map.put("origin", getOrigin());
+
+//        List<List<String>> mt = new ArrayList<>();
+//        for(List<Domain> branch : tree) {
+//            List<String> b = new ArrayList<>();
+//            mt.add(b);
+//            for(Domain d : branch ) {
+//                b.add(d.toString());
+//            }
+//        }
+//        map.put("tree", mt);
+
+//        List<Map<String, Object>> mc = new ArrayList<>();
+//        for(ICause cause : causes) {
+//            mc.add(((Cause) cause).createMap(mind));
+//        }
+//        map.put("causes", mc);
+
+        return map;
+    }
+
+    @Override
+    public IRule applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        originId = Long.parseLong(map.get("origin_id") + "");
+        origin = null;
+        return null;
     }
 
     public List<TVariable> getTVariables() {

@@ -174,9 +174,9 @@ public class TValueFactory implements IFactory<TValue> {
         mind.getTValues().forEach(tv, new IReactor<TValue>() {
             @Override
             public Object run(TValue o) throws Exception {
-                if (((Term) o.getValue()).isXVariable()
-                        && (((Term) o.getValue()).getParentId() == parent.getId()
-                        || ((Term) o.getValue()).getParentId() == parent.getParentId())) {
+                if (((Term) o.getValue(mind)).isXVariable()
+                        && (((Term) o.getValue(mind)).getParentId() == parent.getId()
+                        || ((Term) o.getValue(mind)).getParentId() == parent.getParentId())) {
                     result[0] = o;
                 }
                 return true;
@@ -187,7 +187,7 @@ public class TValueFactory implements IFactory<TValue> {
 
     public TValue find(TVariable tv, ITerm v) throws Exception {
         if (((Term) v).isXVariable()) {
-            return getXValue(tv, (Term) ((Term) v).getParent());
+            return getXValue(tv, (Term) ((Term) v).getParent(mind));
         } else {
             TValue temp = new TValue(tv, v);
             for (long id : cache.find(temp.getHash())) {
@@ -228,7 +228,7 @@ public class TValueFactory implements IFactory<TValue> {
             } else {
                 boolean found = false;
                 for (IRule r : mind.getRules()) {
-                    if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((TValue) o).getValue().getId(), mind)) {
+                    if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((TValue) o).getValue(mind).getId(), mind)) {
                         found = true;
                         break;
                     }
@@ -269,9 +269,9 @@ public class TValueFactory implements IFactory<TValue> {
         }
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
-            if (current.containsKey(((TValue) o).getTVar())
-                    && current.get(((TValue) o).getTVar()).getId() == ((TValue) o).getId()) {
-                current.remove(((TValue) o).getTVar());
+            if (current.containsKey(((TValue) o).getTVar(mind))
+                    && current.get(((TValue) o).getTVar(mind)).getId() == ((TValue) o).getId()) {
+                current.remove(((TValue) o).getTVar(mind));
             }
         }
 //        update();
@@ -353,7 +353,7 @@ public class TValueFactory implements IFactory<TValue> {
 
     public TValue getRoot(TVariable t) throws Exception {
         for (TValue v : this) {
-            if (!v.isDeleted(mind) && v.getTVar().getId() == t.getId()) {
+            if (!v.isDeleted(mind) && v.getTVar(mind).getId() == t.getId()) {
                 return v;
             }
         }

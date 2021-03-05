@@ -431,8 +431,8 @@ public class RuleFactory implements IFactory<IRule> {
 
             for (IArgument a : list) {
                 if (!a.isEmpty(mind) && ((Term) a.getValue(mind)).isXVariable()) {
-                    mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName());
-                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent());
+                    mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName(mind));
+                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent(mind));
                 }
             }
 

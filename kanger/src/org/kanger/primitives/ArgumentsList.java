@@ -373,11 +373,11 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                 }
             } else if (a.getType() == ArgumentType.TVALUE) {
                 if (total) {
-                    list.add(((TValue) a.getObject(mind)).getTVar().getNameId());
+                    list.add(((TValue) a.getObject(mind)).getTVar((Mind) mind).getNameId());
                 }
                 list.add(a.getValue(mind).getId());
             } else if (a.getType() == ArgumentType.FVALUE) {
-                list.add(((FValue) a.getObject(mind)).getValue().getId());
+                list.add(((FValue) a.getObject(mind)).getValue((Mind) mind).getId());
             }
         }
         return list;
@@ -478,6 +478,22 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
     public UnitType getUnitType() {
         return UnitType.ARGLIST;
+    }
+
+    public List<Map<String, Object>> createMap(IMind mind) throws Exception {
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (IArgument a : this) {
+            list.add(((Argument) a).createMap(mind));
+        }
+        return list;
+    }
+
+    public void applyMap(List<Map<String, Object>> map) throws Exception {
+        this.clear();
+        for (Map<String, Object> a : map) {
+            Argument argument = new Argument().applyMap(a);
+            add(argument);
+        }
     }
 
 //    @Override

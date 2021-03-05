@@ -254,7 +254,7 @@ public class Sapato implements IStep {
                 if (base.getUdf() != null) {
                     return (IUnit) base.getUdf().getConstructors()[0].newInstance();
                 } else {
-                    return null;
+                    return new Operation();
                 }
 
             case HYPOTHESE:

@@ -87,8 +87,8 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
         List<ITerm> list = new ArrayList<>();
         for (ArgumentsList row : getRoot()) {
             for (IArgument t : row) {
-                if (name == null || name.equals(((TValue) t.getObject(mind)).getTVar().getName().getValue())) {
-                    list.add(((TValue) t.getObject(mind)).getValue());
+                if (name == null || name.equals(((TValue) t.getObject(mind)).getTVar(mind).getName(mind).getValue())) {
+                    list.add(((TValue) t.getObject(mind)).getValue(mind));
                 }
             }
         }
@@ -147,13 +147,13 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
                 ITerm t1 = null;
                 ITerm t2 = null;
                 for (IArgument a : this) {
-                    if (order.equals(((TValue) a.getObject(mind)).getTVar().getName())) {
-                        t1 = ((TValue) a.getObject(mind)).getValue();
+                    if (order.equals(((TValue) a.getObject(mind)).getTVar(mind).getName(mind))) {
+                        t1 = ((TValue) a.getObject(mind)).getValue(mind);
                     }
                 }
                 for (IArgument a : arguments) {
-                    if (order.equals(((TValue) a.getObject(mind)).getTVar().getName())) {
-                        t2 = ((TValue) a.getObject(mind)).getValue();
+                    if (order.equals(((TValue) a.getObject(mind)).getTVar(mind).getName(mind))) {
+                        t2 = ((TValue) a.getObject(mind)).getValue(mind);
                     }
                 }
                 if (t1 != null && t2 != null) {
@@ -167,7 +167,7 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
                 } else if (t2 != null) {
                     return ascending ? -1 : 1;
                 } else {
-                    return ((TValue) get(0).getObject(mind)).getValue().compareTo(((TValue) arguments.get(0).getObject(mind)).getValue());
+                    return ((TValue) get(0).getObject(mind)).getValue(mind).compareTo(((TValue) arguments.get(0).getObject(mind)).getValue(mind));
                 }
             } catch (Exception e) {
                 e.printStackTrace(System.err);
@@ -194,7 +194,7 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
 //                            || v.getV(mind).getValue().getType() == DataType.SET)
 //                            ? v.getV(mind).getValue()
 //                            : v.getV(mind).getValue().getValue();
-                    row.put(((TValue) v.getObject(mind)).getTVar().getName().toString(), ((TValue) v.getObject(mind)).getValue());
+                    row.put(((TValue) v.getObject(mind)).getTVar(mind).getName(mind).toString(), ((TValue) v.getObject(mind)).getValue(mind));
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }

@@ -40,7 +40,9 @@ import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Predicate;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -201,8 +203,7 @@ public class Hypothesis implements IHypothesis {
 //    }
 
 
-    @Override
-    public String toString() {
+    public String toString(IMind mind) {
         String line = "";
 
         try {
@@ -213,7 +214,7 @@ public class Hypothesis implements IHypothesis {
             int ccnt = 0;
             //line += (antc ? "" : String.format("%c", Enums.NOT));
             line += String.format("%c", antc ? Enums.ANT : Enums.SUC);
-            String tmp = getPredicate().getName() + "(";
+            String tmp = getPredicate().getName(mind) + "(";
             for (i = 0; i < getPredicate().getRange(); ++i) {
                 if (!getArguments().get(i).isEmpty(null) && getArguments().get(i).getValue(null).isCVariable()) {
                     String qnt = "";
@@ -299,15 +300,15 @@ public class Hypothesis implements IHypothesis {
 //        return false;
 //    }
 
-    @Override
-    public int compareTo(IHypothesis o) {
-        try {
-            return getPredicate().getName().compareTo(o.getPredicate().getName());
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            return 0;
-        }
-    }
+//    @Override
+//    public int compareTo(IHypothesis o) {
+//        try {
+//            return getPredicate().getName().compareTo(o.getPredicate().getName());
+//        } catch (Exception e) {
+//            e.printStackTrace(System.err);
+//            return 0;
+//        }
+//    }
 
     public UnitType getUnitType() {
         return UnitType.HYPOTHESE;
@@ -334,4 +335,12 @@ public class Hypothesis implements IHypothesis {
         return predicate.getId() == id;
     }
 
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("antc", antc);
+        map.put("query", query);
+        map.put("predicate", ((Predicate) getPredicate()).createMap(mind));
+        map.put("arguments", getArguments().createMap(mind));
+        return map;
+    }
 }

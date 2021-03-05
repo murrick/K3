@@ -42,7 +42,7 @@ public class Cause implements ICause {
     //    private Solve result = null;
 //    private Solve acceptor = null;
     private Solve donor = null;
-    private IRule rule = null;
+    private Rule rule = null;
 
 //    private Right next = null;
 
@@ -55,7 +55,7 @@ public class Cause implements ICause {
 
     public Cause(Domain dst, Domain src, Mind mind) throws Exception {
         this.donor = new Solve(dst.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
-        this.rule = dst.getRule();
+        this.rule = (Rule) dst.getRule();
 //        this.next = mind.getRights().find(src);
 
         ruleId = dst.getRuleId();
@@ -230,7 +230,7 @@ public class Cause implements ICause {
     @Override
     public IRule getRule(IMind mind) throws Exception {
         if (rule == null) {
-            rule = mind.getRules().get(ruleId);
+            rule = (Rule) mind.getRules().get(ruleId);
         }
         return rule;
     }
@@ -252,6 +252,23 @@ public class Cause implements ICause {
     public long getRuleId() {
         return ruleId;
     }
+
+//    public Map<String, Object> createMap(IMind mind) throws Exception {
+//        IRule donor = getDonor(mind);
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("rule_id", ruleId);
+//        map.put("donor_id", donor.getId());
+//        map.put("donor", getDonor(mind).getOrigin());
+//        map.put("rule", getRule(mind).getOrigin());
+//        return map;
+//    }
+//
+//    public Cause applyMap(Map<String, Object> map) throws Exception {
+//        ruleId = Long.parseLong(map.get("rule_id") + "");
+//        donor.applyMap((Map<String, Object>) map.get("donor"));
+//        rule = null;
+//        return this;
+//    }
 
 //    public void setRuleId(long ruleId) {
 //        this.ruleId = ruleId;

@@ -34,7 +34,9 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Created by Dmitry G. Quznetsov on 13.12.16.
@@ -59,7 +61,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     private transient Mind mind = null;
 
     //    private transient boolean deleted = false;
-    private transient boolean calculated = false;
+//    private transient boolean calculated = false;
 
     public TValue() {
     }
@@ -126,7 +128,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return this;
     }
 
-    public ITerm getValue() throws Exception {
+    public ITerm getValue(Mind mind) throws Exception {
         if (value == null && valueId != -1) {
             value = mind.getTerms().get(valueId);
         }
@@ -154,7 +156,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.id = id;
     }
 
-    public TVariable getTVar() throws Exception {
+    public TVariable getTVar(Mind mind) throws Exception {
         if (tVar == null && tVarId != -1) {
             tVar = mind.getTVars().get(tVarId);
         }
@@ -174,10 +176,11 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 //        this.tag = tag;
 //    }
 
-    @Override
-    public String toString() {
+    public String toString(IMind mind) {
         try {
-            return ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? getTVar().getVarName() + "=" : "") + getValue().toString();
+            return ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0
+                    ? getTVar((Mind) mind).getVarName((Mind) mind) + "="
+                    : "") + getValue((Mind) mind).toString();
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
@@ -185,10 +188,10 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     public void setQuery(Mind mind) throws Exception {
-        if (!mind.getQueryValues().containsKey(getTVar())) {
-            mind.getQueryValues().put(getTVar(), new HashSet<>());
+        if (!mind.getQueryValues().containsKey(getTVar(mind))) {
+            mind.getQueryValues().put(getTVar(mind), new HashSet<>());
         }
-        mind.getQueryValues().get(getTVar()).add(this);
+        mind.getQueryValues().get(getTVar(mind)).add(this);
     }
 
     //    public void setBlocked() {
@@ -327,12 +330,42 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return value != null && valueId == value.getId();
     }
 
-    public boolean isCalculated() {
-        return calculated;
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("value_id", valueId);
+        map.put("tvar_id", tVarId);
+
+        map.put("value", getValue((Mind) mind).getValue());
+        map.put("tvar", getTVar((Mind) mind).createMap(mind));
+
+        return map;
     }
 
-    public void setCalculated(boolean calculated) {
-        this.calculated = calculated;
+    @Override
+    public TValue applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        valueId = Long.parseLong(map.get("value_id") + "");
+        tVarId = Long.parseLong(map.get("tvar_id") + "");
+        value = null;
+        tVar = null;
+        return this;
     }
+
+//    public boolean isCalculated() {
+//        return calculated;
+//    }
+//
+//    public void setCalculated(boolean calculated) {
+//        this.calculated = calculated;
+//    }
 
 }

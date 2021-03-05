@@ -41,7 +41,9 @@ import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Dmitry G. Quznetsov on 26.05.15.
@@ -127,10 +129,10 @@ public class Function implements IUnit<Function> {
         return arguments;
     }
 
-    public ITerm getValue() throws Exception {
+    public ITerm getValue(Mind mind) throws Exception {
         FValue c = getCurrent();
         if (c != null) {
-            return getCurrent().getValue();
+            return getCurrent().getValue(mind);
         } else {
             return null;
         }
@@ -158,9 +160,9 @@ public class Function implements IUnit<Function> {
         return arguments.get(range);
     }
 
-    public boolean isEmpty() {
+    public boolean isEmpty(Mind mind) {
         try {
-            return getValue() == null;
+            return getValue(mind) == null;
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return true;
@@ -199,7 +201,7 @@ public class Function implements IUnit<Function> {
 //    }
 
 
-    public ITerm getName() throws Exception {
+    public ITerm getName(Mind mind) throws Exception {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
@@ -211,8 +213,8 @@ public class Function implements IUnit<Function> {
         this.nameId = name.getId();
     }
 
-    private String formatParam(IArgument t) throws Exception {
-        Operation op = Parser.getOp(getName().toString(), range);
+    private String formatParam(IArgument t, Mind mind) throws Exception {
+        Operation op = Parser.getOp(getName(mind).toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
         if (t.getType() == ArgumentType.FUNCTION) {
@@ -235,17 +237,17 @@ public class Function implements IUnit<Function> {
         return s;
     }
 
-    public String toString() {
+    public String toString(IMind mind) {
         try {
-            if (!isCalculable() && getValue() != null) {
-                return getValue().toString();
+            if (!isCalculable() && getValue((Mind) mind) != null) {
+                return getValue((Mind) mind).toString();
             } else {
-                Operation op = Parser.getOp(getName().toString(), range);
+                Operation op = Parser.getOp(getName((Mind) mind).toString(), range);
                 String s = "";
                 if (op == null || op.getRange() != range) {
-                    s = String.format("%s(", getName().toString());
+                    s = String.format("%s(", getName((Mind) mind).toString());
                     for (int i = 0; i < range; ++i) {
-                        s += formatParam(arguments.get(i));
+                        s += formatParam(arguments.get(i), (Mind) mind);
                         if (i + 1 < range) {
                             s += (char) Enums.COMMA;
                         }
@@ -253,13 +255,13 @@ public class Function implements IUnit<Function> {
                     s += ")";
                 } else if (op.getRange() == 1) {
                     if (op.isPost()) {
-                        s = formatParam(arguments.get(0)) + op.getName();
+                        s = formatParam(arguments.get(0), (Mind) mind) + op.getName();
                     } else {
-                        s = op.getName() + formatParam(arguments.get(0));
+                        s = op.getName() + formatParam(arguments.get(0), (Mind) mind);
                     }
                 } else {
                     for (int i = 0; i < op.getRange(); ++i) {
-                        s += formatParam(arguments.get(i));
+                        s += formatParam(arguments.get(i), (Mind) mind);
                         if (i + 1 < op.getRange()) {
                             s += " " + op.getName() + " ";
                         }
@@ -270,8 +272,8 @@ public class Function implements IUnit<Function> {
                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
                     //                if (getResult() != null) {
                     if (getCurrent() != null) {
-                        res = " {= " + getValue() + "}";
-                    } else if (arguments.size() > range && !arguments.get(range).isEmpty(mind)) {
+                        res = " {= " + getValue((Mind) mind) + "}";
+                    } else if (arguments.size() > range && !arguments.get(range).isEmpty((Mind) mind)) {
                         res = " [= " + arguments.get(range).getValue(mind) + "]";
                     }
                 }
@@ -370,7 +372,7 @@ public class Function implements IUnit<Function> {
         return mind.getFValues().find(this);
     }
 
-    public int getHashBase() throws Exception {
+    public int getHashBase(Mind mind) throws Exception {
         long valueId = getResult().isEmpty(mind) ? 0 : getResult().getValue(mind).getId();
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
@@ -525,6 +527,34 @@ public class Function implements IUnit<Function> {
     @Override
     public boolean isLoaded() {
         return name != null && nameId == name.getId();
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("name_id", nameId);
+        map.put("range", range);
+        map.put("name", getName((Mind) mind).getValue());
+        map.put("arguments", arguments.createMap(mind));
+        return map;
+    }
+
+    @Override
+    public Function applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        nameId = Long.parseLong(map.get("name_id") + "");
+        range = Integer.parseInt(map.get("tange") + "");
+        arguments.applyMap((List<Map<String, Object>>) map.get("arguments"));
+        name = null;
+        return this;
     }
 
 }

@@ -167,4 +167,8 @@ public interface IUser {
      */
     void setSourceDir(String dir);
 
+    IMind getCurrentMind();
+
+    void setCurrentMind(IMind mind);
+
 }

@@ -36,6 +36,9 @@ import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Dmitry G. Quznetsov on 26.05.15.
  * <p>
@@ -128,15 +131,15 @@ public class Argument implements IArgument {
     public ITerm getValue(IMind mind) throws Exception {
         switch (type) {
             case TERM:
-                return (Term) getObject((Mind) mind);
+                return (Term) getObject(mind);
             case TVARIABLE:
-                return ((TVariable) getObject((Mind) mind)).getValue();
+                return ((TVariable) getObject(mind)).getValue();
             case TVALUE:
-                return ((TValue) getObject((Mind) mind)).getValue();
+                return ((TValue) getObject(mind)).getValue((Mind) mind);
             case FVALUE:
-                return ((FValue) getObject((Mind) mind)).getValue();
+                return ((FValue) getObject(mind)).getValue((Mind) mind);
             case FUNCTION:
-                return ((Function) getObject((Mind) mind)).getValue();
+                return ((Function) getObject(mind)).getValue((Mind) mind);
             default:
                 return null;
         }
@@ -338,5 +341,38 @@ public class Argument implements IArgument {
 
     public void setVarOrder(int varOrder) {
         this.varOrder = varOrder;
+    }
+
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("type", type.name());
+        map.put("var_order", varOrder);
+        map.put("object", o.createMap(mind));
+        return map;
+    }
+
+    public Argument applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        type = ArgumentType.valueOf((String) map.get("type"));
+        varOrder = Integer.parseInt(map.get("var_order") + "");
+        switch (type) {
+            case TERM:
+                o = new Term();
+            case TVARIABLE:
+                o = new TVariable();
+            case TVALUE:
+                o = new TValue();
+            case FVALUE:
+                o = new FValue();
+            case FUNCTION:
+                o = new Function();
+            default:
+                o = null;
+        }
+        if (o != null) {
+            o.applyMap((Map<String, Object>) map.get("object"));
+        }
+        return this;
     }
 }

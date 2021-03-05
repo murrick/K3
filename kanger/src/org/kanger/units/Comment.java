@@ -32,6 +32,9 @@ import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Comment implements IUnit<Comment> {
 
     private long id = -1;
@@ -115,7 +118,7 @@ public class Comment implements IUnit<Comment> {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
-            setDeleted(true, (Mind) mind);
+            setDeleted(true, mind);
         }
         comment = packet.getString();
         return this;
@@ -129,6 +132,28 @@ public class Comment implements IUnit<Comment> {
     @Override
     public boolean isLoaded() {
         return true;
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("comment", comment);
+        return map;
+    }
+
+    @Override
+    public Comment applyMap(Map<String, Object> map) {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        comment = map.get("comment") + "";
+        return this;
     }
 
     public String getComment() {

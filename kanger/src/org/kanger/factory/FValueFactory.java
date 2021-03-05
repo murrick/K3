@@ -154,7 +154,7 @@ public class FValueFactory implements IFactory<FValue> {
 
 
     public FValue find(Function f) throws Exception {
-        for (long id : cache.find(f.getHashBase())) {
+        for (long id : cache.find(f.getHashBase(mind))) {
             FValue one = get(id);
             if (one.equalsTo(f)) {
                 return one;

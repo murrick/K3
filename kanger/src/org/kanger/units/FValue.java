@@ -41,7 +41,9 @@ import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FValue implements IUnit<FValue> {
 
@@ -50,7 +52,7 @@ public class FValue implements IUnit<FValue> {
     private long id = -1;
     private long mindId = -1;                                   // id транзакции
     private Function function = null;
-    private ITerm value = null;
+    private Term value = null;
     private ArgumentsList condition = new ArgumentsList();
     private List<Long> stamp = new ArrayList<>();
 
@@ -71,7 +73,7 @@ public class FValue implements IUnit<FValue> {
 
     public FValue(Function f, Mind mind) throws Exception {
         function = f;
-        value = f.getArguments().get(f.getRange()).getValue(mind);
+        value = (Term) f.getArguments().get(f.getRange()).getValue(mind);
         functionId = function.getId();
         if (value != null) {
             valueId = value.getId();
@@ -90,7 +92,7 @@ public class FValue implements IUnit<FValue> {
             if (t.isEmpty()) {
                 stamp.add(0L);
             } else {
-                stamp.add(t.getCurrent().getValue().getId());
+                stamp.add(t.getCurrent().getValue(mind).getId());
             }
         }
         this.mind = mind;
@@ -149,7 +151,7 @@ public class FValue implements IUnit<FValue> {
         valueId = value.getId();
     }
 
-    public ITerm getValue() throws Exception {
+    public ITerm getValue(Mind mind) throws Exception {
         if (value == null && valueId != -1) {
             value = mind.getTerms().get(valueId);
         }
@@ -197,8 +199,8 @@ public class FValue implements IUnit<FValue> {
         return condition;
     }
 
-    private String formatParam(IArgument t) throws Exception {
-        Operation op = Parser.getOp(getFunction().getName().toString(), getFunction().getRange());
+    private String formatParam(IArgument t, Mind mind) throws Exception {
+        Operation op = Parser.getOp(getFunction().getName(mind).toString(), getFunction().getRange());
         boolean isOp = op != null && op.getRange() == getFunction().getRange();
         String s = "";
         if (t.getType() == ArgumentType.FUNCTION) {
@@ -287,19 +289,18 @@ public class FValue implements IUnit<FValue> {
 //        return ("" + id).hashCode();
     }
 
-    @Override
-    public String toString() {
+    public String toString(IMind mind) {
         try {
-            if (!getFunction().isCalculable() && getValue() != null) {
-                return getValue().toString();
+            if (!getFunction().isCalculable() && getValue((Mind) mind) != null) {
+                return getValue((Mind) mind).toString();
             } else {
                 try {
-                    Operation op = Parser.getOp(getFunction().getName().toString(), getFunction().getRange());
+                    Operation op = Parser.getOp(getFunction().getName((Mind) mind).toString(), getFunction().getRange());
                     String s = "";
                     if (op == null || op.getRange() != getFunction().getRange()) {
-                        s = String.format("%s(", getFunction().getName().toString());
+                        s = String.format("%s(", getFunction().getName((Mind) mind).toString());
                         for (int i = 0; i < getFunction().getRange(); ++i) {
-                            s += formatParam(condition.get(i));
+                            s += formatParam(condition.get(i), (Mind) mind);
                             if (i + 1 < getFunction().getRange()) {
                                 s += (char) Enums.COMMA;
                             }
@@ -307,13 +308,13 @@ public class FValue implements IUnit<FValue> {
                         s += ")";
                     } else if (op.getRange() == 1) {
                         if (op.isPost()) {
-                            s = formatParam(condition.get(0)) + op.getName();
+                            s = formatParam(condition.get(0), (Mind) mind) + op.getName();
                         } else {
-                            s = op.getName() + formatParam(condition.get(0));
+                            s = op.getName() + formatParam(condition.get(0), (Mind) mind);
                         }
                     } else {
                         for (int i = 0; i < op.getRange(); ++i) {
-                            s += formatParam(condition.get(i));
+                            s += formatParam(condition.get(i), (Mind) mind);
                             if (i + 1 < op.getRange()) {
                                 s += " " + op.getName() + " ";
                             }
@@ -323,9 +324,9 @@ public class FValue implements IUnit<FValue> {
                     String res = "";
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
                         //                if (getResult() != null) {
-                        if (getValue() != null) {
-                            res = " {= " + getValue() + "}";
-                        } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty(mind)) {
+                        if (getValue((Mind) mind) != null) {
+                            res = " {= " + getValue((Mind) mind) + "}";
+                        } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty((Mind) mind)) {
                             res = " [= " + condition.get(function.getRange()).getValue(mind) + "]";
                         }
                     }
@@ -384,6 +385,36 @@ public class FValue implements IUnit<FValue> {
     @Override
     public boolean isLoaded() {
         return function != null && functionId == function.getId();
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("function_id", functionId);
+        map.put("value_id", valueId);
+        map.put("condition", condition.createMap(mind));
+        map.put("function", function.createMap(mind));
+        map.put("value", value.createMap(mind));
+        return map;
+    }
+
+    @Override
+    public FValue applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        functionId = Long.parseLong(map.get("function_id") + "");
+        valueId = Long.parseLong(map.get("value_id") + "");
+        condition.applyMap((List<Map<String, Object>>) map.get("condition"));
+        function = null;
+        value = null;
+        return this;
     }
 
 }

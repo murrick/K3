@@ -912,7 +912,7 @@ public class Linker {
                         }
                     }
                     TSolve s = mind.addTSolve(list);
-                    s.setVariant(variantsList.getKey());
+//                    s.setVariant(variantsList.getKey());
                 }
             }
 
@@ -971,7 +971,7 @@ public class Linker {
         }
         for (TValue v : list) {
 //            if (!master.isExcluded(slave.getArguments())) {
-            r = v.getTVar().getRule();
+            r = v.getTVar(mind).getRule(mind);
             if (logging && result) {
                 log.add(LogMode.ANALYZER, "Closed: " + v);
             }
@@ -1154,7 +1154,7 @@ public class Linker {
 //                    calculated.add(d);
                 } else if (d.isCalculated(mind)) {
                     calculated.add(d);
-                } else if (d.isSystem() || !d.isComplete()) {
+                } else if (d.isSystem(mind) || !d.isComplete()) {
                     excluded.clear();
                     candidates.clear();
                     break;
@@ -1260,7 +1260,7 @@ public class Linker {
                 candidates.clear();
                 excluded.clear();
                 for (Domain d : tree) {
-                    if (d.isComplete() && !d.isCalculated(mind) && !d.isSystem() && !assumed.contains(d)) {
+                    if (d.isComplete() && !d.isCalculated(mind) && !d.isSystem(mind) && !assumed.contains(d)) {
                         if (!d.isExcluded(mind)) {
                             candidates.add(d);
                         } else {
@@ -1411,7 +1411,7 @@ public class Linker {
                 for (int i = 0; i < d.getRange(); ++i) {
                     if (d.getArguments().get(i).getType() == ArgumentType.FUNCTION
                             && ((Function) d.getArguments().get(i).getObject(mind)).isCalculable()
-                            && ((Function) d.getArguments().get(i).getObject(mind)).isEmpty()) {
+                            && ((Function) d.getArguments().get(i).getObject(mind)).isEmpty(mind)) {
                         ((Function) d.getArguments().get(i).getObject(mind)).clear();
                         mind.getCalculator().calculate((Function) d.getArguments().get(i).getObject(mind), logging);
                     }
@@ -1498,7 +1498,7 @@ public class Linker {
 
         for (Domain d : master) {
             for (Function f : d.getArguments().getFunctions(mind)) {
-                if (f.isCalculable() && f.isEmpty()) {
+                if (f.isCalculable() && f.isEmpty(mind)) {
                     f.clear();
                     if (mind.getCalculator().calculate(f, logging)) {
                         result = true;
@@ -1530,7 +1530,7 @@ public class Linker {
         boolean success = false;
         List<List<TValue>> solves = new ArrayList<>();
         for (Domain d : tree) {
-            if (d.isSystem()) {
+            if (d.isSystem(mind)) {
 
 //                d.pushValues();
 
@@ -1590,7 +1590,7 @@ public class Linker {
 
         if (success && !block) {
             for (Domain d : tree) {
-                if (d.isSystem() && !d.isCalculated(mind)) {
+                if (d.isSystem(mind) && !d.isCalculated(mind)) {
                     block = true;
                 }
             }

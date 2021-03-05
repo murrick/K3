@@ -63,17 +63,17 @@ public class Calculator {
 //        if(fu.isEmpty()) {
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).getType() == ArgumentType.FUNCTION
-                    && ((Function) fu.getArguments().get(i).getObject(mind)).isEmpty()) {
+                    && ((Function) fu.getArguments().get(i).getObject(mind)).isEmpty(mind)) {
                 ((Function) fu.getArguments().get(i).getObject(mind)).clear();
                 calculate((Function) fu.getArguments().get(i).getObject(mind), logging);
             }
         }
 //        }
 
-        if (fu.isEmpty() || !((Term) fu.getResult().getValue(mind)).equalsTo((Term) fu.getValue())) {
+        if (fu.isEmpty(mind) || !((Term) fu.getResult().getValue(mind)).equalsTo((Term) fu.getValue(mind))) {
             int k = execute(fu);
             if (k == 1 || k == 2) {
-                if (fu.isEmpty()) {
+                if (fu.isEmpty(mind)) {
                     mind.getFValues().add(fu);
                     result = true;
                     if (logging) {
@@ -104,7 +104,7 @@ public class Calculator {
      */
     public int execute(Domain d) throws Exception {
         int k = -1;
-        String n = d.getPredicate().getName() + "(" + d.getRange() + ")";
+        String n = d.getPredicate().getName(mind) + "(" + d.getRange() + ")";
         Operation op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
                 : mind.getLibrary().find(n);
@@ -134,13 +134,13 @@ public class Calculator {
 
     public int execute(Function fu) throws Exception {
         int k = -1;
-        String n = fu.getName() + "(" + fu.getRange() + ")";
+        String n = fu.getName(mind) + "(" + fu.getRange() + ")";
         Operation op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
                 : mind.getLibrary().find(n);
 
         if (op == null) {
-            n = fu.getName() + "(0)";
+            n = fu.getName(mind) + "(0)";
             op = functions.getSysOps().get(n) != null
                     ? functions.getSysOps().get(n)
                     : mind.getLibrary().find(n);
@@ -170,7 +170,7 @@ public class Calculator {
     }
 
     public boolean exists(IPredicate p) throws Exception {
-        String n = p.getName() + "(" + p.getRange() + ")";
+        String n = p.getName(mind) + "(" + p.getRange() + ")";
         Operation op = predicates.getSysOps().get(n) != null
                 ? predicates.getSysOps().get(n)
                 : mind.getLibrary().find(n);
@@ -178,7 +178,7 @@ public class Calculator {
     }
 
     public boolean exists(Function f) throws Exception {
-        String n = f.getName() + "(" + f.getRange() + ")";
+        String n = f.getName(mind) + "(" + f.getRange() + ")";
         Operation op = functions.getSysOps().get(n) != null
                 ? functions.getSysOps().get(n)
                 : mind.getLibrary().find(n);
@@ -197,10 +197,10 @@ public class Calculator {
 
     public Operation find(Object o) throws Exception {
         if (o instanceof Predicate) {
-            String n = ((Predicate) o).getName() + "(" + ((Predicate) o).getRange() + ")";
+            String n = ((Predicate) o).getName(mind) + "(" + ((Predicate) o).getRange() + ")";
             return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
         } else if (o instanceof Function) {
-            String n = ((Function) o).getName() + "(" + ((Function) o).getRange() + ")";
+            String n = ((Function) o).getName(mind) + "(" + ((Function) o).getRange() + ")";
             return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
         } else {
             String key = o.toString();

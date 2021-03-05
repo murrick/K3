@@ -23,50 +23,11 @@
  *
  */
 
-package org.kanger.interfaces.internal;
+package org.kanger;
 
-import org.kanger.Mind;
-import org.kanger.enums.UnitType;
-import org.kanger.interfaces.IMind;
-import org.kanger.storage.ByteBuffer;
+public class Kanger {
 
-import java.util.Map;
-
-/**
- * Created by Dmitry G. Quznetsov on 27.05.20.
- */
-public interface IUnit<T> {
-
-    long getId();
-
-    void setId(long id);
-
-    long getMindId();
-
-    void setMindId(long id);
-
-    int getHash() throws Exception;
-
-    boolean equalsTo(T to) throws Exception;
-
-    Mind getMind();
-
-    T setMind(Mind mind) throws Exception;
-
-    boolean isDeleted(IMind mind);
-
-    void setDeleted(boolean on, Mind mind) throws Exception;
-
-    ByteBuffer pack();
-
-    T apply(ByteBuffer packet) throws Exception;
-
-    UnitType getUnitType();
-
-    boolean isLoaded();
-
-    Map<String, Object> createMap(IMind mind) throws Exception;
-
-    T applyMap(Map<String, Object> map) throws Exception;
-
+    public static void main(String[] args) throws Exception {
+        new HttpServer().start(9090, false, new QueryProcessor());
+    }
 }

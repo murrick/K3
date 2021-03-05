@@ -89,9 +89,10 @@ public class Compiler {
 //        return replacements;
 //    }
 
-    private void construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<ITerm> externals) throws Exception {
+    private Domain construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<ITerm> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
+        Domain d = null;
         if (root == null) {
             throw new ParseErrorException(0, ParseError.EMPTY);
         }
@@ -121,7 +122,7 @@ public class Compiler {
                     root.setLeft(left.getRight());
                     left.setRule(root);
                     root = left;
-                    compilePredicate(r, t, root, antc, replacements, externals);
+                    d = compilePredicate(r, t, root, antc, replacements, externals);
                     break;
                 }
             case Enums.CON: {
@@ -179,16 +180,17 @@ public class Compiler {
                 if (root.getLeft() == null) {
                     construct(r, t, root.getRight(), antc, replacements, list, externals);
                 } else {
-                    compilePredicate(r, t, root, antc, replacements, externals);
+                    d = compilePredicate(r, t, root, antc, replacements, externals);
                 }
             }
             break;
 
             default: {
-                compilePredicate(r, t, root, antc, replacements, externals);
+                d = compilePredicate(r, t, root, antc, replacements, externals);
             }
         }
         clones.addAll(list);
+        return d;
     }
 
     private boolean compileQuantor(Rule r, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
@@ -223,7 +225,7 @@ public class Compiler {
         return antc;
     }
 
-    private void compilePredicate(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
+    private Domain compilePredicate(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
 //        Domain d = mind.getDomains().add(mind.getRights().getRoot());
 
         Domain d = new Domain(mind);
@@ -276,6 +278,8 @@ public class Compiler {
 
         d = mind.getDomains().add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRule());
         t.add(d);
+
+        return d;
     }
 
     private void parseArgs(Domain d, ArgumentsList arg, PTree root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {

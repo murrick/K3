@@ -33,11 +33,9 @@ import org.kanger.enums.Enums;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.storage.ByteBuffer;
-import org.kanger.units.Predicate;
+import org.kanger.units.*;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 20.05.15.
@@ -141,13 +139,13 @@ public class Solve {
 //        }
 
         if (t.getType() == ArgumentType.FUNCTION) {
-            s += t.getObject(mind).toString();
+            s += ((Function) t.getObject(mind)).toString(mind);
         } else if (t.getType() == ArgumentType.TVARIABLE) {
-            s += t.getObject(mind).toString();
+            s += ((TVariable) t.getObject(mind)).toString(mind);
         } else if (t.getType() == ArgumentType.TVALUE) {
-            s += t.getObject(mind).toString();
+            s += ((TValue) t.getObject(mind)).toString(mind);
         } else if (t.getType() == ArgumentType.FVALUE) {
-            s += t.getObject(mind).toString();
+            s += ((FValue) t.getObject(mind)).toString(mind);
         } else if (!t.isEmpty((Mind) mind)) {
             s += t.getValue(mind).toString();
         } else {
@@ -188,14 +186,14 @@ public class Solve {
 //                s += "$" + t.getName() + " ";
 //            }
 
-            Operation op = Parser.getOp(getPredicate(mind).getName(), getRange());
+            Operation op = Parser.getOp(getPredicate(mind).getName(mind), getRange());
 
             if (op == null) {
-                op = Parser.getOp(getPredicate(mind).getName(), 0);
+                op = Parser.getOp(getPredicate(mind).getName(mind), 0);
             }
 
             if (op == null) {
-                s += getPredicate(mind).getName() + "(";
+                s += getPredicate(mind).getName(mind) + "(";
                 int i = 0;
                 for (IArgument t : arguments) {
                     s += formatParam(mind, t);
@@ -492,6 +490,25 @@ public class Solve {
         }
         terms.addAll(arguments.getTerms(mind, total));
         return terms;
+    }
+
+    protected Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("predicate_id", predicateId);
+        map.put("predicate", getPredicate((Mind) mind).getName(mind));
+        map.put("range", range);
+        map.put("antc", antc);
+        map.put("arguments", arguments.createMap(mind));
+        return map;
+    }
+
+    protected Solve applyMap(Map<String, Object> map) throws Exception {
+        predicateId = Long.parseLong(map.get("predicate_id") + "");
+        range = Integer.parseInt(map.get("tange") + "");
+        antc = Boolean.parseBoolean(map.get("antc") + "");
+        arguments.applyMap((List<Map<String, Object>>) map.get("arguments"));
+        predicate = null;
+        return this;
     }
 }
 

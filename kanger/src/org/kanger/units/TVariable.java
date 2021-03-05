@@ -34,6 +34,9 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Dmitry G. Quznetsov on 20.05.15.
  * <p>
@@ -45,12 +48,13 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     private long id = -1;                   // Идентификатор переменной
     private long mindId = -1;                                   // id транзакции
-    private ITerm name = null;               // Оригинальное подкванторное имя
     private int index = 0;                  // Сквозной индекс переменной
+    private ITerm name = null;               // Оригинальное подкванторное имя
     private IRule rule = null;             // Ссылка на правило
 
     private transient long nameId = -1;
     private transient long ruleId = -1;
+
     private transient Mind mind = null;
 
 //    private transient boolean deleted = false;
@@ -85,7 +89,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return this;
     }
 
-    public ITerm getName() throws Exception {
+    public ITerm getName(Mind mind) throws Exception {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
@@ -121,7 +125,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     public ITerm getValue() throws Exception {
         if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this).getValue();
+            return mind.getTValues().get(this).getValue(mind);
         } else {
             return null;
         }
@@ -208,7 +212,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 //        mind.getTValues().createCVar(this).setLevel(owner);
 //
 //    }
-    public IRule getRule() throws Exception {
+    public IRule getRule(Mind mind) throws Exception {
         if (rule == null && ruleId != -1) {
             rule = mind.getRules().get(ruleId);
         }
@@ -220,19 +224,18 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.ruleId = rule.getId();
     }
 
-    public String getVarName() throws Exception {
+    public String getVarName(Mind mind) throws Exception {
         switch (mind.getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_DEBUG:
                 return String.format("%c%d", Enums.TVC, index);
             default:
-                return getName().toString();
+                return getName(mind).toString();
         }
     }
 
-    @Override
-    public String toString() {
+    public String toString(IMind mind) {
         try {
-            return getVarName() + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
+            return getVarName((Mind) mind) + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
@@ -381,7 +384,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     public void setDeleted(boolean on, Mind mind) throws Exception {
         mind.setUnitDeleted(this, on);
         for (TValue v : mind.getTValues()) {
-            if (v.getTVar().getId() == id) {
+            if (v.getTVar(mind).getId() == id) {
                 v.setDeleted(on, mind);
             }
         }
@@ -422,6 +425,37 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     @Override
     public boolean isLoaded() {
         return name != null && nameId == name.getId();
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("name_id", nameId);
+        map.put("ruleId", ruleId);
+        map.put("index", index);
+
+        map.put("name", getName((Mind) mind).getValue());
+        map.put("rule", getRule((Mind) mind).getOrigin());
+        return map;
+    }
+
+    @Override
+    public TVariable applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        nameId = Long.parseLong(map.get("name_id") + "");
+        ruleId = Long.parseLong(map.get("rule_id") + "");
+        index = Integer.parseInt(map.get("index") + "");
+        name = null;
+        rule = null;
+        return this;
     }
 
     public void incFloodControl(ITerm t) throws Exception {

@@ -218,9 +218,9 @@ public class DictionaryFactory implements IFactory<ITerm> {
         int i = nextVarIndex();
         String temp = String.format("%c%d", Enums.XVC, i);
         t = add(temp);
-        ((Term) t).setRule(((Term) c).getRule());
+        ((Term) t).setRule(((Term) c).getRule(mind));
         ((Term) t).setIndex(i);
-        ((Term) t).setName(((Term) c).getName());
+        ((Term) t).setName(((Term) c).getName(mind));
 //            c.getChilds().add(t.getId());
         ((Term) t).setParent(c);
 //        }

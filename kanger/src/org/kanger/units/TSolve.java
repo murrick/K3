@@ -31,7 +31,6 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.Solve;
 import org.kanger.storage.ByteBuffer;
 
 import java.io.IOException;
@@ -47,7 +46,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     private long id = -1;                   // Идентификатор значения переменной
     private long mindId = -1;                                   // id транзакции
     private List<TValue> solve = new ArrayList<>();
-    private Solve variant = null;
+//    private Solve variant = null;
 //    private long tag = 0;
 //    private Set<Cause> causes = new HashSet<>();
 
@@ -74,7 +73,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
             solveIds.add(v.getId());
         }
         this.mind = mind;
-        variant = new Solve(d.getPredicate(), d.isAntc(), d.getArguments());
+//        variant = new Solve(d.getPredicate(), d.isAntc(), d.getArguments());
     }
 
     public TSolve(TValue vv, Mind mind) {
@@ -152,9 +151,9 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
 //        return causes;
 //    }
 
-    public TValue getValue(TVariable t) throws Exception {
+    public TValue getValue(TVariable t, Mind mind) throws Exception {
         for (TValue v : solve) {
-            if (t.getId() == v.getTVar().getId()) {
+            if (t.getId() == v.getTVar(mind).getId()) {
                 return v;
             }
         }
@@ -276,9 +275,9 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         this.mindId = mindId;
     }
 
-    public void clearCurrent() throws Exception {
+    public void clearCurrent(Mind mind) throws Exception {
         for (TValue v : solve) {
-            v.getTVar().setCurrent(null);
+            v.getTVar(mind).setCurrent(null);
         }
     }
 
@@ -289,28 +288,28 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
      * @throws OutOfBufferException
      * @throws IOException
      */
-    public Set<TVariable> activate() throws Exception {
+    public Set<TVariable> activate(Mind mind) throws Exception {
         Set<TVariable> list = new HashSet<>();
         boolean fail = false;
         for (TValue v : solve) {
-            if (!v.getTVar().isEmpty() && v.getTVar().getValue().getId() != v.getValueId()) {
+            if (!v.getTVar(mind).isEmpty() && v.getTVar(mind).getValue().getId() != v.getValueId()) {
                 return null;
             }
         }
         if (!fail) {
             for (TValue v : solve) {
-                if (v.getTVar().isEmpty()) {
-                    v.getTVar().setCurrent(v);
-                    list.add(v.getTVar());
+                if (v.getTVar(mind).isEmpty()) {
+                    v.getTVar(mind).setCurrent(v);
+                    list.add(v.getTVar(mind));
                 }
             }
         }
         return list;
     }
 
-    public boolean contains(Collection<TValue> vals) throws Exception {
+    public boolean contains(Collection<TValue> vals, Mind mind) throws Exception {
         for (TValue x : vals) {
-            if (!containsTVar(x.getTVar())) {
+            if (!containsTVar(x.getTVar(mind))) {
                 return false;
             }
             if (!containsTValue(x)) {
@@ -342,27 +341,27 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
         return solve.size();
     }
 
-    public boolean isValid(TValue[] solve) throws Exception {
-        for (TValue v : solve) {
-            if (v != null) {
-                TValue x = getValue(v.getTVar());
-                if (x != null) {
-                    if (v.getValue().getId() != x.getValue().getId()) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    public Solve getVariant() {
-        return variant;
-    }
-
-    public void setVariant(Solve variant) {
-        this.variant = variant;
-    }
+//    public boolean isValid(TValue[] solve) throws Exception {
+//        for (TValue v : solve) {
+//            if (v != null) {
+//                TValue x = getValue(v.getTVar());
+//                if (x != null) {
+//                    if (v.getValue().getId() != x.getValue().getId()) {
+//                        return false;
+//                    }
+//                }
+//            }
+//        }
+//        return true;
+//    }
+//
+//    public Solve getVariant() {
+//        return variant;
+//    }
+//
+//    public void setVariant(Solve variant) {
+//        this.variant = variant;
+//    }
 
 //    public TSolve commit(Mind m) throws Exception {
 //        setMind(m);
@@ -376,6 +375,25 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
     @Override
     public boolean isLoaded() {
         return true;
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        List<Map<String, Object>> s = new ArrayList<>();
+        for (TValue v : solve) {
+            s.add(createMap(mind));
+        }
+        map.put("solve", s);
+        return map;
+    }
+
+    @Override
+    public TSolve applyMap(Map<String, Object> map) throws Exception {
+        // Нечего тут накатывать
+        return this;
     }
 
 

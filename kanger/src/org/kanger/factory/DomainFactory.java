@@ -189,7 +189,7 @@ public class DomainFactory implements IFactory<Domain> {
     }
 
     public Domain find(Domain d) throws Exception {
-        for (long id : cache.find(d.getHash())) {
+        for (long id : cache.find(d.getHash(mind))) {
             IUnit one = get(id);
             if (one.equalsTo(d)) {
                 return (Domain) one;

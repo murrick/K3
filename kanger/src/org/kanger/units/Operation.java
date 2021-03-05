@@ -36,8 +36,7 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -51,7 +50,6 @@ public class Operation implements IUnit<Operation>, IOperation {
     protected String name = "";                   /* predefined name */
     protected IReactor proc = null;              /* called procedure */
     protected int range = 0;
-    protected Operation next = null;
     protected transient Mind mind = null;
     //    protected transient boolean deleted = false;
     protected long id = -1;                                       // id домена
@@ -115,14 +113,6 @@ public class Operation implements IUnit<Operation>, IOperation {
 
     public void setRange(int range) {
         this.range = range;
-    }
-
-    public Operation getNext() {
-        return next;
-    }
-
-    public void setNext(Operation next) {
-        this.next = next;
     }
 
     @Override
@@ -273,6 +263,43 @@ public class Operation implements IUnit<Operation>, IOperation {
     @Override
     public boolean isLoaded() {
         return true;
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("mode", mode.name());
+        map.put("name", name);
+        map.put("range", range);
+//        map.put("scripts", scripts);
+        map.put("parameters", params);
+        return map;
+    }
+
+    @Override
+    public Operation applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        mode = LibMode.valueOf(map.get("mode") + "");
+        name = map.get("name") + "";
+        range = Integer.parseInt(map.get("range") + "");
+
+        scripts.clear();
+        for (String script : (Collection<String>) map.get("scripts")) {
+            scripts.add(script);
+        }
+        params.clear();
+        for (String param : (Collection<String>) map.get("params")) {
+            params.add(param);
+        }
+        return this;
     }
 
 }

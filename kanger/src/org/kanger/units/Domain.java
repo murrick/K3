@@ -26,7 +26,6 @@
 package org.kanger.units;
 
 import org.kanger.Mind;
-import org.kanger.compiler.Parser;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
@@ -127,6 +126,29 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     @Override
     public boolean isLoaded() {
         return predicate != null && predicateId == predicate.getId();
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("rule_id", ruleId);
+        map.put("solve", super.createMap(mind));
+        return map;
+    }
+
+    @Override
+    public Domain applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        super.applyMap((Map<String, Object>) map.get("solve"));
+        return this;
     }
 
     public Predicate getPredicate() throws Exception {
@@ -837,12 +859,12 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return r;
     }
 
-    public boolean isSystem() throws Exception {
-        return Parser.getOp(getPredicate().getName(), getRange()) != null;
+    public boolean isSystem(Mind mind) throws Exception {
+        return getPredicate().isSystem(mind);
     }
 
     public int execSystem(Mind mind) throws Exception {
-        if (isSystem()) {
+        if (isSystem(mind)) {
             return mind.executeSystem(this);
         }
         return -1;
@@ -903,8 +925,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
             }
             for (IArgument a : arguments) {
                 if (a.getType() == ArgumentType.TVALUE
-                        && mind.getQueryValues().containsKey(((TValue) a.getObject(mind)).getTVar())
-                        && mind.getQueryValues().get(((TValue) a.getObject(mind)).getTVar()).contains(a.getObject(mind))) {
+                        && mind.getQueryValues().containsKey(((TValue) a.getObject(mind)).getTVar(mind))
+                        && mind.getQueryValues().get(((TValue) a.getObject(mind)).getTVar(mind)).contains(a.getObject(mind))) {
                     return true;
                 }
             }
@@ -993,10 +1015,10 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     @Override
     public int getHash() {
-        return 47 * getHashBase() + (int) (ruleId ^ (ruleId >>> 32));
+        return 47 * getHashBase(mind) + (int) (ruleId ^ (ruleId >>> 32));
     }
 
-    public int getHashBase() {
+    public int getHashBase(Mind mind) {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));

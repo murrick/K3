@@ -55,7 +55,6 @@ public class Term implements IUnit<Term>, ITerm {
     private static final long serialVersionUID = 196402070008L;
 
 
-    private final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     private long id = -1;                // Идентификатор
     private long mindId = -1;                                   // id транзакции
     private DataType type = DataType.VOID;
@@ -64,10 +63,11 @@ public class Term implements IUnit<Term>, ITerm {
     private int index = 0;              // Индекс c-переменной
     private ITerm name = null;             // Оригинальное имя c-переменной
     private IRule rule = null;          // Ссылка на правило
-    //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
     private ITerm parent = null;
+    //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
 
     //    private Term next = null;      // Следующая запись
+    private transient final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     private transient Mind mind = null;
 
 //    private transient boolean deleted = false;
@@ -364,7 +364,7 @@ public class Term implements IUnit<Term>, ITerm {
         this.id = id;
     }
 
-    public IRule getRule() throws Exception {
+    public IRule getRule(Mind mind) throws Exception {
         if (rule == null) {
             rule = mind.getRules().get(ruleId);
         }
@@ -444,7 +444,7 @@ public class Term implements IUnit<Term>, ITerm {
                         return formatValue();
                     default:
                         try {
-                            return getName().toString();
+                            return getName(mind).toString();
                         } catch (Exception e) {
                             e.printStackTrace(System.err);
                             return "";
@@ -557,7 +557,7 @@ public class Term implements IUnit<Term>, ITerm {
 //        getHash();
 //    }
 
-    public ITerm getName() throws Exception {
+    public ITerm getName(Mind mind) throws Exception {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
@@ -704,7 +704,7 @@ public class Term implements IUnit<Term>, ITerm {
 //        return childs;
 //    }
 //
-    public ITerm getParent() throws Exception {
+    public ITerm getParent(Mind mind) throws Exception {
         if (parent == null && parentId > 0) {
             parent = mind.getTerms().get(parentId);
         }
@@ -723,6 +723,54 @@ public class Term implements IUnit<Term>, ITerm {
     @Override
     public boolean isLoaded() {
         return true;
+    }
+
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("type", type.name());
+        map.put("value", value);
+        map.put("hash", hash);
+        map.put("index", index);
+        map.put("name_id", nameId);
+        map.put("rule_id", ruleId);
+        map.put("parent_id", parentId);
+
+        if (nameId != -1) {
+            map.put("name", getName((Mind) mind).getValue());
+        }
+        if (ruleId != -1) {
+            map.put("rule", getRule((Mind) mind).getOrigin());
+        }
+        if (parentId != -1) {
+            map.put("parent", getParent((Mind) mind).getValue());
+        }
+
+        return map;
+    }
+
+    @Override
+    public Term applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        type = DataType.valueOf(map.get("type") + "");
+        construct(map.get("value"));
+        index = Integer.parseInt(map.get("index") + "");
+        nameId = Long.parseLong(map.get("name_id") + "");
+        ruleId = Long.parseLong(map.get("rule_id") + "");
+        parentId = Long.parseLong(map.get("parent_id") + "");
+        name = null;
+        rule = null;
+        parent = null;
+
+        return this;
     }
 
 }

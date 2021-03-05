@@ -25,6 +25,7 @@
 
 package org.kanger.primitives;
 
+import org.kanger.Mind;
 import org.kanger.units.TSolve;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -40,15 +41,15 @@ public class TVariableSet implements Comparable<TVariableSet> {
 
     private SortedSet<TVariable> set = new TreeSet<>();
 
-    public TVariableSet(List<TValue> list) throws Exception {
+    public TVariableSet(List<TValue> list, Mind mind) throws Exception {
         for (TValue v : list) {
-            set.add(v.getTVar());
+            set.add(v.getTVar(mind));
         }
     }
 
-    public TVariableSet(TSolve solve) throws Exception {
+    public TVariableSet(TSolve solve, Mind mind) throws Exception {
         for (TValue v : solve.getSolve()) {
-            set.add(v.getTVar());
+            set.add(v.getTVar(mind));
         }
     }
 

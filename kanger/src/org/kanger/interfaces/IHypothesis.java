@@ -30,7 +30,7 @@ package org.kanger.interfaces;
  * для которого определен предикат, строка параметров и признак отношения к антецеденту
  * или сукцеденту.
  */
-public interface IHypothesis extends Comparable<IHypothesis> {
+public interface IHypothesis /*extends Comparable<IHypothesis>*/ {
 
     /**
      * Получить описатель предиката на котором построено гипотетическое

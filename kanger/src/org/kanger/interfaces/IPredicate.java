@@ -38,7 +38,7 @@ public interface IPredicate {
      * @return имя предиката в виде строки.
      * @throws Exception
      */
-    String getName() throws Exception;
+    String getName(IMind mind) throws Exception;
 
     /**
      * Получить ранг предиката.

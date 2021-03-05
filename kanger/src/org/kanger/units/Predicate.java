@@ -26,6 +26,7 @@
 package org.kanger.units;
 
 import org.kanger.Mind;
+import org.kanger.compiler.Parser;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IMind;
@@ -35,7 +36,9 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -93,7 +96,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
     }
 
     @Override
-    public String getName() throws Exception {
+    public String getName(IMind mind) throws Exception {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
@@ -215,10 +218,9 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
 //        return set;
 //    }
 
-    @Override
-    public String toString() {
+    public String toString(IMind mind) {
         try {
-            return getName() + "(" + range + ")";
+            return getName(mind) + "(" + range + ")";
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return "";
@@ -310,6 +312,32 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return name != null && nameId == name.getId();
     }
 
+    @Override
+    public Map<String, Object> createMap(IMind mind) throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("mind_id", mindId);
+        map.put("deleted", isDeleted(mind));
+        map.put("name_id", nameId);
+        map.put("range", range);
+        map.put("name", getName(mind));
+        return map;
+    }
+
+    @Override
+    public Predicate applyMap(Map<String, Object> map) throws Exception {
+        id = Long.parseLong(map.get("id") + "");
+        mindId = Long.parseLong(map.get("mind_id") + "");
+        boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
+        if (deleted) {
+            setDeleted(true, mind);
+        }
+        nameId = Long.parseLong(map.get("name_id") + "");
+        range = Integer.parseInt(map.get("range") + "");
+        name = null;
+        return this;
+    }
+
 //    public Predicate commit(Mind m) throws Exception {
 //        setName(name.commit(m));
 //        Predicate predicate = m.getPredicates().find(name, range);
@@ -324,4 +352,9 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
     public boolean isEmpty(IMind mind) throws Exception {
         return getSolves(mind).isEmpty();
     }
+
+    public boolean isSystem(Mind mind) throws Exception {
+        return Parser.getOp(getName(mind), getRange()) != null;
+    }
+
 }

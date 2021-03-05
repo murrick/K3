@@ -51,6 +51,7 @@ public class User implements IUser {
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
     private String sourceFileName = "mind.k";
+    private IMind currentMind = null;
 
 
     public IBase getStorage(String schema) {
@@ -91,7 +92,7 @@ public class User implements IUser {
         return needClose ? close(mind) : mind;
     }
 
-    public IMind reindex(IReactor reactor, IMind mind, String name) throws Exception {
+    public IMind reindex(IReactor<String> reactor, IMind mind, String name) throws Exception {
         boolean reopened = true;
         String saveName = "";
         if (isClosed()) {
@@ -402,5 +403,15 @@ public class User implements IUser {
 
     public void setSourceFileName(String sourceFileName) {
         this.sourceFileName = sourceFileName;
+    }
+
+    @Override
+    public IMind getCurrentMind() {
+        return currentMind;
+    }
+
+    @Override
+    public void setCurrentMind(IMind currentMind) {
+        this.currentMind = currentMind;
     }
 }

@@ -1115,7 +1115,7 @@ public class Console {
     public static void showPred(IMind mind, IPredicate p, boolean showCauses) throws Exception {
 //        Set<Domain> set = p.getSolves();
 //        if (!set.isEmpty()) {
-        System.out.printf("Predicate %s(%d) :\n", p.getName(), p.getRange());
+        System.out.printf("Predicate %s(%d) :\n", p.getName(mind), p.getRange());
         for (IRule r : mind.getRules()) {
             if (!r.isDeleted(mind) && r.isStored() && ((Rule) r).getPredicateId() == p.getId()) {
                 showPredRecurse(mind, r, showCauses);
@@ -1152,7 +1152,7 @@ public class Console {
         if (id != -1) {
             if (!tree) {
                 IPredicate p = mind.getPredicates().get(id);
-                if (p != null && (name.isEmpty() || p.getName().toLowerCase().equals(name.toLowerCase()))) {
+                if (p != null && (name.isEmpty() || p.getName(mind).equalsIgnoreCase(name))) {
                     if (preds) {
                         System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
                     } else {
@@ -1174,7 +1174,7 @@ public class Console {
             boolean found = false;
             for (IPredicate p : mind.getPredicates()) {
                 if (!p.isDeleted(mind) && !((Mind) mind).isSystem(p) && !p.isEmpty(mind)
-                        && (name.isEmpty() || p.getName().toLowerCase().equals(name.toLowerCase()))) {
+                        && (name.isEmpty() || p.getName(mind).equalsIgnoreCase(name))) {
                     if (preds) {
                         found = true;
                         System.out.printf("Predicate %03d: %s;\n", p.getId(), p.toString());
