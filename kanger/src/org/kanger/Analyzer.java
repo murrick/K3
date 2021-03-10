@@ -93,7 +93,7 @@ public class Analyzer {
                             mind.getHypothesis().add(tmp);
                             occurs = true;
                             if (logging) {
-                                log.add(LogMode.ANALYZER, "Hypothesis assumed: " + tmp.toString());
+                                log.add(LogMode.ANALYZER, "Hypothesis assumed: " + tmp.toString(mind));
                             }
                         }
                     }

@@ -1,0 +1,902 @@
+<!--
+  ~ MIT License
+  ~
+  ~ Copyright (c) 2021 Dmitry G. Quznetsov
+  ~  
+  ~  Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~  of this software and associated documentation files (the "Software"), to
+  ~  deal in the Software without restriction, including without limitation the
+  ~  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  ~  sell copies of the Software, and to permit persons to whom the Software is
+  ~  furnished to do so, subject to the following conditions:
+  ~  
+  ~  The above copyright notice and this permission notice shall be included in
+  ~  all copies or substantial portions of the Software.
+  ~  
+  ~  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  ~  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  ~  IN THE SOFTWARE.
+  ~
+  -->
+
+<!DOCTYPE html>
+<html lang="en" style="height:100%; padding:0; margin:0; font-family: helvetica; font-size: 15px;">
+<head>
+    <meta charset="UTF-8">
+    <title>KANGER III</title>
+
+    <link
+            href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all"
+            rel="stylesheet"
+            type="text/css"
+    />
+    <script charset="UTF-8" language="javascript" src="jquery-3.6.0.min.js" type="text/javascript"></script>
+
+    <script>
+        window.apihost = "http://localhost:9090"
+        window.token = "";
+        window.sizeX = null;
+        window.sizeY = null;
+
+        jQuery(document).ready(function(){
+
+            var v = document.getElementById("version-code");
+            var u = document.getElementById("user-name");
+            var d = document.getElementById("db-name");
+            if(v) {
+                $.getJSON(window.apihost + "/version", function(data){
+                    if(data.result == "OK") {
+                        v.innerHTML = data.version;
+                    }
+                });
+            }
+            if(u) {
+                $.getJSON(window.apihost + "/login?login=singleuser&password=singleuser", function(data){
+                    if(data.result == "OK") {
+                        u.innerHTML = "singleuser";
+                        window.token = data.token;
+
+                        if(d) {
+                            $.getJSON(window.apihost + "/command?token=" + window.token + "&used", function(data){
+                                if(data.result == "OK") {
+                                    d.style.color = "#000";
+                                    d.style.fontWeight = "bold";
+                                    d.innerHTML = data.name;
+                                } else {
+                                    d.style.color = "#777";
+                                    d.innerHTML = "unused";
+                                }
+                            });
+
+                            showResults();
+                            showSolutions();
+                            showHypothesis();
+                            showLog();
+
+                            $.getJSON(window.apihost + "/history?token=" + window.token + "&get", function(data){
+                                if(data.result == "OK") {
+                                    var queryHistory = document.getElementById("query-history");
+                                    for(var i=0; i < data.size; ++i) {
+                                        var h = decodeURIComponent(data.list[i].replace(/\+/g, '%20'));
+                                        var mode = h.charAt(0);
+                                        h = h.substr(1);
+                                        var color = h.split("~~~")[0];
+                                        h = h.split("~~~")[1];
+                                        var div;
+                                        if(mode == "Q") {
+                                            div = logRequestRaw(h);
+                                        } else {
+                                            div = logResponseRaw(null, h);
+                                        }
+                                        div.style.color = color;
+                                    }
+
+                                    showTransactionLevel(data);
+                                }
+                            });
+
+                            placeElements(data);
+                            var queryInput = document.getElementById("query_input");
+                            if(queryInput) {
+                                queryInput.focus();
+                            }
+
+                        }
+
+                    } else {
+                        alert(data.description);
+                    }
+                });
+            }
+        });
+
+        function showTransactionLevel(data) {
+            if(data.transaction != null && data.empty != null) {
+                var transactionLevel = document.getElementById("transaction-level");
+                transactionLevel.innerHTML = data.transaction;
+                if(data.empty) {
+                    transactionLevel.style.color = "#777";
+                    transactionLevel.style.fontWeight = "";
+                } else {
+                    transactionLevel.style.color = "#282";
+                    transactionLevel.style.fontWeight = "bold";
+                }
+            }
+        }
+
+        function auto_grow(element) {
+            //element.style.height = "0px";
+            //element.style.height = (element.scrollHeight)+"px";
+        }
+
+        function storeHistory(queryText) {
+            var uri = encodeURIComponent(queryText);
+            $.getJSON(window.apihost + "/history?token=" + window.token + "&put=" + uri);
+        }
+
+        function check_enter() {
+            var e = window.event;
+            var queryInput = document.getElementById("query_input");
+            if (!e.ctrlKey && (e.keyCode == 13 || e.keyCode == 10)) {
+                var queryText = queryInput.value.trim();
+
+                logRequest(queryText);
+
+                setTimeout(function() {
+                    queryInput.value = "";
+                    queryInput.style.height = "20px";
+                }, 100);
+
+                if(queryText.charAt(0) == '!'
+                    || queryText.charAt(0) == '?'
+                    || queryText.charAt(0) == '+'
+                    || queryText.charAt(0) == '-'
+                    || queryText.charAt(0) == '=') {
+                    query(queryText);
+                } else {
+                    command(queryText);
+                }
+
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        function logRequest(queryText) {
+            var div = logRequestRaw(queryText);
+            storeHistory("Q" + div.style.color + "~~~" + div.innerHTML);
+        }
+
+        function logRequestRaw(queryText) {
+            var div = document.createElement("div");
+            div.style.padding = "2px 2px 2px 8px";
+            div.innerHTML = queryText;
+            div.style.cursor = "pointer";
+            div.style.fontFamily = "monospace";
+            div.onmouseover = function(e){
+                this.style.backgroundColor="#DDD";
+            };
+            div.onmouseout = function(e){
+                this.style.backgroundColor="";
+            };
+            div.onclick = function(e){
+                var queryInput = document.getElementById("query_input");
+                document.getElementById("query_input").value = this.innerHTML;
+                queryInput.focus();
+                queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
+            };
+            var queryHistory = document.getElementById("query-history");
+            queryHistory.append(div);
+            scrollToBottom();
+            return div;
+        }
+
+        function logResponseRaw(data, ln) {
+            var queryHistory = document.getElementById("query-history");
+            var div = document.createElement("div");
+            div.style.padding = "2px 2px 4px 32px";
+            div.style.fontSize = "13px";
+            div.style.fontFamily = "monospace";
+            if(!ln && data) {
+                ln = data.description;
+                if(data.results != null) {
+                    ln += "<br>" +
+                    "Results: " + data.results + ", " +
+                    "Solutions: " + data.solutions + ", " +
+                    "Hypothesis: " + data.hypothesis;
+                }
+                showTransactionLevel(data);
+                placeElements(data);
+            }
+            div.innerHTML = ln;
+            if(data == null || data.result == "OK") {
+                div.style.color = "#777";
+            } else {
+                div.style.color = "#A55";
+            }
+            queryHistory.append(div);
+            scrollToBottom();
+            return div;
+        }
+
+        function logResponse(data, ln) {
+            var div = logResponseRaw(data, ln);
+            storeHistory("R" + div.style.color + "~~~" + div.innerHTML);
+        }
+
+        function command(queryText) {
+            var cmd = queryText.split(" ");
+            switch(cmd[0]) {
+                case "used" :
+                case "use" :
+                    commandUse(cmd);
+                    break;
+                case "close" :
+                    commandClose(cmd);
+                    break;
+                case "get" :
+                    commandGet(cmd);
+                    break;
+                case "erase" :
+                    commandErase(cmd);
+                    break;
+                case "transaction" :
+                case "create" :
+                case "commit" :
+                case "rollback" :
+                    commandTransaction(cmd);
+                    break;
+            }
+        }
+
+        function commandTransaction(cmd) {
+            if(cmd.length == 2 && cmd[0] == "transaction") {
+                $.getJSON(window.apihost + "/query?token=" + window.token + "&transaction=" + cmd[1], function(data){
+                    logResponse(data);
+                    showResults();
+                    showSolutions();
+                    showHypothesis();
+                    showLog();
+                });
+            } else if(cmd[0] != "transaction") {
+                $.getJSON(window.apihost + "/query?token=" + window.token + "&transaction=" + cmd[0], function(data){
+                    logResponse(data);
+                    showResults();
+                    showSolutions();
+                    showHypothesis();
+                    showLog();
+                });
+            } else {
+                $.getJSON(window.apihost + "/query?token=" + window.token + "&transaction=create", function(data){
+                    logResponse(data);
+                    showResults();
+                    showSolutions();
+                    showHypothesis();
+                    showLog();
+                });
+            }
+        }
+
+        function commandErase(cmd) {
+            $.getJSON(window.apihost + "/command?token=" + window.token + "&erase", function(data){
+                if(data.result == "OK") {
+                    logResponse(data, "Workspace erased");
+                    showResults();
+                    showSolutions();
+                    showHypothesis();
+                    showLog();
+                }
+            });
+        }
+
+        function commandGet(cmd) {
+            if(cmd.length == 2) {
+                $.getJSON(window.apihost + "/command?token=" + window.token + "&get=" + cmd[1], function(data){
+                    logResponse(data);
+                    showResults();
+                    showSolutions();
+                    showHypothesis();
+                    showLog();
+                });
+            } else {
+                $.getJSON(window.apihost + "/command?token=" + window.token + "&get", function(data){
+                    if(data.result == "OK") {
+                        if(data.size > 0) {
+                            var ln = "Available sources: ";
+                            for(var i = 0; i < data.list.length; ++i) {
+                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
+                                    "onclick=\"command(\'get " + data.list[i] + "\')\"" +
+                                    "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
+                                    "onmouseout=\"this.style.backgroundColor=\'\'\"" +
+                                    ">" +
+                                    data.list[i] +
+                                    "</span> ";
+                            }
+                            logResponse(data, ln);
+                        } else {
+                            logResponse(data, "No source files available");
+                        }
+                    } else {
+                        logResponse(data);
+                    }
+                });
+            }
+        }
+
+
+        function commandClose(cmd) {
+            $.getJSON(window.apihost + "/command?token=" + window.token + "&used", function(data){
+                var d = document.getElementById("db-name");
+                if(data.result == "OK") {
+                    var name = data.name;
+                    $.getJSON(window.apihost + "/command?token=" + window.token + "&close", function(data){
+                        if(data.result == "OK") {
+                            logResponse(data, "Database " + name + " closed");
+                            d.style.color = "#777";
+                            d.innerHTML = "unused";
+                        }
+                    });
+                } else {
+                    logResponse(data, "No database used");
+                    d.style.color = "#777";
+                    d.innerHTML = "unused";
+                }
+            });
+        }
+
+        function commandUse(cmd) {
+            if(cmd.length == 2 && cmd[0] == "use") {
+                $.getJSON(window.apihost + "/command?token=" + window.token + "&use=" + cmd[1], function(data){
+                    logResponse(data);
+                    showResults();
+                    showSolutions();
+                    showHypothesis();
+                    showLog();
+
+                    var d = document.getElementById("db-name");
+                    if(data.result == "OK") {
+                        d.style.color = "#000";
+                        d.style.fontWeight = "bold";
+                        d.innerHTML = data.name;
+                    } else {
+                        d.style.color = "#777";
+                        d.innerHTML = "unused";
+                    }
+                });
+            } else if(cmd[0] == "use") {
+                $.getJSON(window.apihost + "/command?token=" + window.token + "&use", function(data){
+                    if(data.result == "OK") {
+                        if(data.size > 0) {
+                            var ln = "Available DBs: ";
+                            for(var i = 0; i < data.list.length; ++i) {
+                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
+                                "onclick=\"command(\'use " + data.list[i] + "\')\"" +
+                                "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
+                                "onmouseout=\"this.style.backgroundColor=\'\'\"" +
+                                ">" +
+                                    data.list[i] +
+                                    "</span> ";
+                            }
+                            logResponse(data, ln);
+                        } else {
+                            logResponse(data, "No databases was created");
+                        }
+                    } else {
+                        logResponse(data);
+                    }
+                });
+            } else {
+                $.getJSON(window.apihost + "/command?token=" + window.token + "&used", function(data){
+                    logResponse(data);
+                    var d = document.getElementById("db-name");
+                    if(data.result == "OK") {
+                        d.style.color = "#000";
+                        d.style.fontWeight = "bold";
+                        d.innerHTML = data.name;
+                    } else {
+                        d.style.color = "#777";
+                        d.innerHTML = "unused";
+                    }
+                });
+            }
+        }
+
+        function query(queryText) {
+            var uri = encodeURIComponent(queryText);
+            $.getJSON(window.apihost + "/query?token=" + window.token + "&request=" + uri, function(data){
+                logResponse(data);
+                showResults();
+                showSolutions();
+                showHypothesis();
+                showLog();
+            });
+        }
+
+        function showResults() {
+            var queryResults = document.getElementById("query-results");
+            if(queryResults) {
+                queryResults.innerHTML = "";
+                $.getJSON(window.apihost + "/query?token=" + window.token + "&results", function(data) {
+                    if(data.result == "OK" && data.size > 0) {
+                        var titles = [];
+
+                        var table = document.createElement("table");
+                        queryResults.append(table);
+
+                        var row = document.createElement("tr");
+                        table.append(row);
+
+                        var col = document.createElement("td");
+                        row.append(col);
+                        col.style.backgroundColor = "#444";
+                        col.style.color = "#FFF";
+                        col.style.fontWeight = "bold";
+                        col.style.fontFamily = "monospace";
+                        col.style.fontSize = "13px";
+                        col.style.padding = "6px";
+                        col.innerHTML = "#";
+
+                        for(var i = 0; i < data.list.length; ++i) {
+                            for(var j=0; j < data.list[i].length; ++j) {
+                                if(!titles.includes(data.list[i][j].name)) {
+                                    titles.push(data.list[i][j].name);
+                                    var col = document.createElement("td");
+                                    row.append(col);
+                                    col.style.backgroundColor = "#444";
+                                    col.style.color = "#FFF";
+                                    col.style.fontWeight = "bold";
+                                    col.style.fontFamily = "monospace";
+                                    col.style.fontSize = "13px";
+                                    col.style.padding = "6px";
+                                    col.innerHTML = data.list[i][j].name;
+                                }
+                            }
+                        }
+
+                        for(var i = 0; i < data.list.length; ++i) {
+                            var row = document.createElement("tr");
+                            table.append(row);
+                            var col = document.createElement("td");
+                            row.append(col);
+                            col.style.backgroundColor = i % 2 ? "#FFF" : "#EEE";
+                            col.style.color = "#000";
+                            col.style.fontFamily = "monospace";
+                            col.style.fontSize = "13px";
+                            col.style.padding = "2px 6px 2px 6px";
+                            col.style.textAlign = "right";
+                            col.innerHTML = (i+1) + "";
+                            for(var k = 0; k < titles.length; ++k) {
+                                col = document.createElement("td");
+                                row.append(col);
+                                col.style.backgroundColor = i % 2 ? "#FFF" : "#EEE";
+                                col.style.color = "#000";
+                                col.style.fontFamily = "monospace";
+                                col.style.fontSize = "13px";
+                                col.style.padding = "2px 6px 2px 6px";
+                                for(var j = 0; j < data.list[i].length; ++j) {
+                                    if(data.list[i][j].name == titles[k]) {
+                                        col.innerHTML = data.list[i][j].value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function showSolutions() {
+            var querySolutions = document.getElementById("query-solutions");
+            if(querySolutions) {
+                querySolutions.innerHTML = "";
+                $.getJSON(window.apihost + "/query?token=" + window.token + "&solutions", function(data){
+                    if(data.result == "OK") {
+                        for(var i = 0; i < data.list.length; ++i) {
+                            var div = document.createElement("div");
+                            div.id = "SOL" + data.list[i].id;
+                            div.style.fontSize = "13px";
+                            div.style.fontFamily = "monospace";
+                            div.style.whiteSpace = "nowrap";
+                            switch(data.list[i].origin.charAt(0)) {
+                                case "!":
+                                    div.style.color = "#272";
+                                    break;
+                                case "?":
+                                    div.style.color = "#722";
+                                    break;
+                            }
+                            div.innerHTML = ("0000" + data.list[i].id).substr(-4) + "&nbsp;<b>" + data.list[i].origin + "</b>";
+                            querySolutions.append(div);
+                        }
+                    }
+                });
+            }
+        }
+
+        function showHypothesis() {
+            var queryHypothesis = document.getElementById("query-hypothesis");
+            if(queryHypothesis) {
+                queryHypothesis.innerHTML = "";
+                $.getJSON(window.apihost + "/query?token=" + window.token + "&hypothesis", function(data){
+                    if(data.result == "OK") {
+                        for(var i = 0; i < data.list.length; ++i) {
+                            var div = document.createElement("div");
+                            div.id = "HYL" + i;
+                            div.style.fontSize = "13px";
+                            div.style.fontFamily = "monospace";
+                            div.style.whiteSpace = "nowrap";
+                            div.style.cursor = "pointer";
+                            switch(data.list[i].origin.charAt(0)) {
+                                case "!":
+                                    div.style.color = "#272";
+                                    break;
+                                case "?":
+                                    div.style.color = "#722";
+                                    break;
+                            }
+                            div.innerHTML = ("0000" + i).substr(-4) +
+                                "&nbsp;<span style=\"font-weight: bold;\">" +
+                                data.list[i].origin +
+                                "</span>";
+                            div.origin = data.list[i].origin;
+                            div.onclick = function(e){
+                                var queryInput = document.getElementById("query_input");
+                                var s = this.origin.charAt(0) == "?" ? "!~" + this.origin.substr(1) : this.origin;
+                                queryInput.value = s;
+                                queryInput.focus();
+                                queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
+                            };
+                            queryHypothesis.append(div);
+                        }
+                    }
+                });
+            }
+        }
+
+        function showLog() {
+            var queryLog = document.getElementById("query-log");
+            if(queryLog) {
+                queryLog.innerHTML = "";
+                $.getJSON(window.apihost + "/query?token=" + window.token + "&log", function(data){
+                    if(data.result == "OK") {
+                        for(var i = 0; i < data.list.length; ++i) {
+                            var div = document.createElement("div");
+                            div.style.fontSize = "13px";
+                            div.style.fontFamily = "monospace";
+                            div.style.whiteSpace = "nowrap";
+                            switch(data.list[i].type) {
+                                case "ANALYZER":
+                                    div.style.color = "#000";
+                                    break;
+                                case "VALUES":
+                                case "SOLVES":
+                                    div.style.color = "#272";
+                                    break;
+                                case "STORAGE":
+                                    div.style.color = "#227";
+                                    break;
+                                default:
+                                    div.style.color = "#777";
+                            }
+                            div.innerHTML = data.list[i].record;
+                            queryLog.append(div);
+                        }
+                    }
+                });
+            }
+        }
+
+        function getCookie(name) {
+            cookies = document.cookie.split(";");
+            for(var i = 0; i < cookies.length; ++i) {
+                var coo = cookies[i].split("=");
+                if(coo[0].trim() == name) {
+                    if(coo.length > 1) {
+                        return decodeURIComponent(coo[1].replace(/\+/g, '%20'));
+                    } else {
+                        return "";
+                    }
+                }
+            }
+            return "";
+        }
+
+        function setCookie(name, value) {
+            document.cookie = encodeURIComponent(name) + '=' + encodeURIComponent(value);
+        }
+
+        function placeElements(data) {
+
+            var containerStatements = document.getElementById("container-statements");
+            var statements = document.getElementById("statements");
+            var sx = getCookie("sx");
+            if(sx == "") {
+                sx = "200px";
+                setCookie("sx", sx);
+            }
+            containerStatements.style.width = sx;
+            statements.style.width = ($(containerStatements).width() - 16) + "px";
+            statements.style.height = ($(containerStatements).height() - 40) + "px";
+
+            var qy = getCookie("qy");
+            if(qy == "") {
+                qy = "400px";
+                setCookie("qy", qy);
+            }
+            var containerDiv = document.getElementById("container-div");
+            var containerResults = document.getElementById("container-results");
+            var containerSolutions = document.getElementById("container-solutions");
+            var containerHypothesis = document.getElementById("container-hypothesis");
+            var containerLogging = document.getElementById("container-logging");
+            var queryResults = document.getElementById("query-results");
+            var querySolutions = document.getElementById("query-solutions");
+            var queryHypothesis = document.getElementById("query-hypothesis");
+            var queryLog = document.getElementById("query-log");
+
+            if(data) {
+                if(data.results != null && data.results > 0) {
+                    containerResults.style.display = "";
+                } else {
+                    containerResults.style.display = "none";
+                }
+                if(data.solutions != null && data.solutions > 0) {
+                    containerSolutions.style.display = "";
+                } else {
+                    containerSolutions.style.display = "none";
+                }
+                if(data.hypothesis != null && data.hypothesis > 0) {
+                    containerHypothesis.style.display = "";
+                } else {
+                    containerHypothesis.style.display = "none";
+                }
+            }
+
+            containerDiv.style.width = $(containerDiv.parentElement).width() + "px";
+            var cnt = 0;
+            if(containerResults.style.display != "none") {
+                ++cnt;
+            }
+            if(containerSolutions.style.display != "none") {
+                ++cnt;
+            }
+            if(containerHypothesis.style.display != "none") {
+                ++cnt;
+            }
+            if(containerLogging.style.display != "none") {
+                ++cnt;
+            }
+
+            containerDiv.style.height = qy;
+            var divHeight = parseInt($(containerDiv).height());
+            var divWidth = parseInt($(containerDiv).width());
+
+            if(cnt == 1) {
+                lx = (divWidth - 1) + "px";
+            } else {
+                var lx = ""; //getCookie("lx");
+                if(lx == "") {
+                    lx = ((divWidth / cnt) - 1) + "px";
+                    setCookie("lx", lx);
+                }
+            }
+
+            containerLogging.style.height = divHeight + "px";
+            containerLogging.style.width = lx;
+            queryLog.style.height = (divHeight - 40) + "px";
+
+            divWidth -= $(containerLogging).width() + 1;
+            --cnt;
+
+            if(containerResults.style.display != "none") {
+                var rx = ""; //getCookie("rx");
+                if(rx == "") {
+                    rx = ((divWidth / cnt) - 1) + "px";
+                    setCookie("rx", rx);
+                }
+                containerResults.style.height = divHeight + "px";
+                containerResults.style.width = rx;
+                queryResults.style.height = (divHeight - 40) + "px";
+            }
+            if(containerSolutions.style.display != "none") {
+                var ox = ""; //getCookie("ox");
+                if(ox == "") {
+                    ox = ((divWidth / cnt) - 1) + "px";
+                    setCookie("ox", ox);
+                }
+                containerSolutions.style.height = divHeight + "px";
+                containerSolutions.style.width = ox;
+                querySolutions.style.height = (divHeight - 40) + "px";
+            }
+            if(containerHypothesis.style.display != "none") {
+                var hx = ""; //getCookie("hx");
+                if(hx == "") {
+                    hx = ((divWidth / cnt) - 1) + "px";
+                    setCookie("hx", hx);
+                }
+                containerHypothesis.style.height = divHeight + "px";
+                containerHypothesis.style.width = hx;
+                queryHypothesis.style.height = (divHeight - 40) + "px";
+            }
+
+            var containerConsole = document.getElementById("container-console");
+            var consoleInput = document.getElementById("console-input");
+            var console = document.getElementById("console");
+            var consoleHeight = $(containerConsole).height() - 24 - $(consoleInput).height();
+            console.style.height = consoleHeight + "px";
+
+        }
+
+        function scrollToBottom() {
+            var queryHistory = document.getElementById("query-history");
+            queryHistory.scrollTop = queryHistory.scrollHeight - queryHistory.clientHeight;
+        }
+
+        function onMouseDownX(e) {
+            if (document.all)  {
+                window.sizeX = e.x + document.body.scrollLeft;
+            } else {
+                window.sizeX = e.pageX;
+            }
+            window.sizeY = null;
+            window.widthFrom = $("#container-statements").width();
+        }
+
+        function onMouseDownY(e) {
+            if (document.all)  {
+                window.sizeY = e.y + document.body.scrollTop;
+            } else {
+                window.sizeY = e.pageY;
+            }
+            window.sizeX = null;
+            window.heightFrom = $("#container-div").height();
+        }
+
+        function onMouseUp(e) {
+            if(window.sizeX != null) {
+                setCookie("sx", window.widthFrom + "px");
+            } else if(window.sizeY != null) {
+                setCookie("qy", window.heightFrom + "px");
+            }
+            if(window.sizeX != null || window.sizeY != null) {
+                window.sizeX = null;
+                window.sizeY = null;
+                document.location.reload();
+            }
+        }
+
+        function onMouseMove(e) {
+            if(window.sizeX != null) {
+                var x;
+                if (document.all)  {
+                    x = e.x + document.body.scrollLeft;
+                } else {
+                    x = e.pageX;
+                }
+                var width = window.widthFrom + (x - window.sizeX);
+                window.widthFrom = width;
+                window.sizeX = x;
+                document.getElementById("container-statements").style.width = width + "px";
+            } else if(window.sizeY != null) {
+                var y;
+                if (document.all)  {
+                    y = e.y + document.body.scrollTop;
+                } else {
+                    y = e.pageY;
+                }
+                var height = window.heightFrom + (window.sizeY - y);
+                window.heightFrom = height;
+                window.sizeY = y;
+                document.getElementById("container-div").style.height = height + "px";
+            }
+        }
+
+
+    </script>
+</head>
+<body onmousemove="onMouseMove(event)" onmouseup="onMouseUp(event)" onresize="placeElements()"
+      style="height:100%; padding:0; margin:0; overflow: hidden;">
+
+<table cellpadding="0" cellspacing="0" style="width:100%; height:100%; padding:0; margin:0">
+    <tr style="height: 24px">
+        <td colspan="5" style="background: #F3F3F3"><span style="padding: 0 0 0 8px;">KANGER III Version</span>
+            <span id="version-code"></span>
+            <span id="user-name" style="padding: 0 8px 0 8px; float: right;"></span>
+            <span id="db-name" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;"></span>
+            <span id="transaction" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;">
+                Transaction level <span id="transaction-level">0</span></span>
+        </td>
+    </tr>
+    <tr>
+        <td rowspan="3" style="width: 1px; border: 1px #999 solid; vertical-align:top; ">
+            <div id="container-statements" style="width: 300px; height:100%; background: #F0F0F0; vertical-align:top;">
+                <div style="height: 20px; width: 100%; ; padding:2px 2px 2px 8px; background-color: #444; color: #EEE">
+                    Statements
+                </div>
+                <div id="statements" style="height: 100%; width: 100%; ; padding:8px; ">
+                    ---
+                </div>
+            </div>
+        </td>
+        <td onmousedown="onMouseDownX(event)" rowspan="3"
+            style="width: 4px; border: none; vertical-align:top; cursor: col-resize">
+        </td>
+        <td colspan="4"
+            style="border-top: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top;">
+            <div id="container-console" style="height: 100%; width: 100%; display: flex; flex-direction: column; ">
+                <div style="height: 20px; width: 100%; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
+                    Console
+                </div>
+                <div id="console" style="width: 100%; vertical-align:top; background: #FFF; flex-grow: 1;">
+                    <div id="query-history" style="width: 100%; vertical-align:top; height:100%; overflow-y: auto">
+                    </div>
+                </div>
+                <div id="console-input" style="height: auto; width: 100%;">
+                    <span style="float: left; position: fixed; ">&nbsp;:&nbsp;</span>
+                    <textarea id="query_input"
+                              oninput="auto_grow(this)"
+                              onkeypress="check_enter()"
+                              style="font-family: monospace; margin-left: 20px; resize: none; overflow: hidden; min-height: 20px; max-height: 100px; height: 16px; border: none; outline-style: none; width: 95%;"></textarea>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr style="height: 1px;">
+        <td colspan="4" onmousedown="onMouseDownY(event)" style="height: 4px; cursor: row-resize; "></td>
+    </tr>
+    <tr style="height: 320px;">
+        <td colspan="5">
+            <div id="container-div"
+                 style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; ">
+                <div id="container-results"
+                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
+                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
+                        Results
+                    </div>
+                    <div id="query-results" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                        ---
+                    </div>
+                </div>
+                <div id="container-solutions"
+                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
+                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
+                        Solutions
+                    </div>
+                    <div id="query-solutions" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                        ---
+                    </div>
+                </div>
+                <div id="container-hypothesis"
+                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
+                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
+                        Hypothesis
+                    </div>
+                    <div id="query-hypothesis" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                        ---
+                    </div>
+                </div>
+                <div id="container-logging"
+                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
+                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
+                        Logging
+                    </div>
+                    <div id="query-log" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                        ---
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr style="height: 24px">
+        <td colspan="5" style="background: #F3F3F3"><span
+                id="copyright">Copyright &copy; 2021, Dmitry G. Quznetsov</span></td>
+    </tr>
+</table>
+
+
+</body>
+</html>

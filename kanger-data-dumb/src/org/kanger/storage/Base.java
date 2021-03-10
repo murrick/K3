@@ -27,6 +27,7 @@ package org.kanger.storage;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
@@ -59,8 +60,11 @@ public class Base implements IBase, Iterable<IStep> {
     public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
         this.name = name;
         this.baseCode = baseCode;
-        if (((User) user).getUdf() != null) {
+        try {
+            ((User) user).getUdf();
             this.udf = ((User) user).getUdf().getClass();
+        } catch (RuntimeErrorException e) {
+            //
         }
 
         MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (2048L * 2048L) + ""));

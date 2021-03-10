@@ -33,15 +33,16 @@ import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Hypothesis;
+import org.kanger.primitives.LogEntry;
 import org.kanger.storage.DB;
+import org.kanger.udf.UDF;
 import org.kanger.units.Domain;
 import org.kanger.units.Operation;
 import org.kanger.units.Predicate;
 import org.kanger.units.Rule;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -73,7 +74,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     result = processLogin(parameters);
                 } else if ("version".equalsIgnoreCase(context)) {
                     result = new JSONObject();
-                    result.put("result", Version.VERSION_S);
+                    result.put("result", "OK");
+                    result.put("version", Version.VERSION_S);
                 } else if (!parameters.isNull("token")) {
                     String token = parameters.getString("token");
                     IUser user = UserFactory.getUser(token);
@@ -86,6 +88,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         result = processCommand(parameters, user);
                     } else if ("query".equalsIgnoreCase(context)) {
                         result = processQuery(parameters, user);
+                    } else if ("history".equalsIgnoreCase(context)) {
+                        result = processHistory(parameters, user);
                     }
                 } else {
                     result = new JSONObject();
@@ -101,6 +105,29 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
+    private JSONObject processHistory(JSONObject parameters, IUser user) throws UnsupportedEncodingException {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+        List<String> list = new ArrayList<>();
+        if (!parameters.isNull("get")) {
+            for (String s : UserFactory.getHistory(user)) {
+                list.add(URLEncoder.encode(s, "utf-8"));
+            }
+            result.put("result", "OK");
+            result.put("size", list.size());
+            result.put("list", list);
+        } else if (!parameters.isNull("put")) {
+            String s = parameters.getString("put"); //URLDecoder.decode(parameters.getString("put"), "utf-8");
+            UserFactory.addHystory(user, s);
+            result.put("result", "OK");
+        }
+        if (result != null) {
+            result.put("transaction", mind.getTransactionLevel());
+            result.put("empty", mind.isEmptyLevel());
+        }
+        return result;
+    }
+
     private JSONObject processLogin(JSONObject parameters) throws JSONException {
         JSONObject result = new JSONObject();
         if (!parameters.isNull("login") && !parameters.isNull("password")) {
@@ -110,6 +137,11 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     ((User) user).getData();
                 } catch (RuntimeErrorException e) {
                     new DB().init(user);
+                }
+                try {
+                    ((User) user).getUdf();
+                } catch (RuntimeErrorException e) {
+                    new UDF().init(user);
                 }
                 String token = UserFactory.addUser(user);
                 result.put("result", "OK");
@@ -126,22 +158,171 @@ public class QueryProcessor implements IReactor<JSONObject> {
     }
 
     private JSONObject processQuery(JSONObject parameters, IUser user) throws Exception {
-        IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
         if (!parameters.isNull("request")) {
-            String query = parameters.getString("request");
-            Boolean res = mind.query(query);
-            if (res == null) {
-                result.put("result", "unknown");
-            } else {
-                result.put("result", res ? "yes" : "no");
-            }
-        } else if (!parameters.isNull("values")) {
+            result = query(parameters, user);
+        } else if (!parameters.isNull("compile")) {
+            result = compile(parameters, user);
+        } else if (!parameters.isNull("results")) {
             result = getValues(user);
+        } else if (!parameters.isNull("solutions")) {
+            result = getSolutions(parameters, user);
         } else if (!parameters.isNull("hypothesis")) {
             result = getHypothesis(parameters, user);
+        } else if (!parameters.isNull("rules")) {
+            result = getRules(parameters, user);
+        } else if (!parameters.isNull("predicates")) {
+            result = getPredicates(parameters, user);
+        } else if (!parameters.isNull("statements")) {
+            result = getStatements(parameters, user);
+        } else if (!parameters.isNull("functions")) {
+            result = getFunctions(parameters, user);
+        } else if (!parameters.isNull("transaction")) {
+            result = processTransaction(parameters, user);
+        } else if (!parameters.isNull("log")) {
+            result = getLog(parameters, user);
+        } else if (!parameters.isNull("source")) {
+            result = getSourceCode(user);
         }
+        if (result != null) {
+            IMind mind = user.getCurrentMind();
+            result.put("transaction", mind.getTransactionLevel());
+            result.put("empty", mind.isEmptyLevel());
+        }
+        return result;
+    }
+
+    private JSONObject getSourceCode(IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+        result.put("result", "OK");
+        result.put("source", mind.getSourceCode());
+        return result;
+    }
+
+    private JSONObject getLog(JSONObject parameters, IUser user) {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+        LogMode filter = LogMode.ALL;
+        if (!parameters.getString("log").isEmpty()) {
+            filter = LogMode.valueOf(parameters.getString("log"));
+        }
+        List<JSONObject> list = new ArrayList<>();
+        for (ILogEntry log : mind.getLog()) {
+            if (filter == LogMode.ALL || filter == log.getType()) {
+                list.add(new JSONObject(((LogEntry) log).createMap()));
+            }
+        }
+        result.put("result", "OK");
+        result.put("size", list.size());
+        result.put("list", list);
+        return result;
+    }
+
+    private JSONObject processTransaction(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        if ("create".equalsIgnoreCase(parameters.getString("transaction"))) {
+            IMind m = new Mind(mind);
+            user.setCurrentMind(m);
+            result.put("result", "OK");
+            result.put("description", "New transaction created");
+        } else if ("commit".equalsIgnoreCase(parameters.getString("transaction"))) {
+            IMind m = mind.getNext();
+            if (m != null) {
+                if (m.commit(mind)) {
+                    result.put("result", "OK");
+                } else {
+                    result.put("result", "error");
+                }
+                user.setCurrentMind(m);
+                if (!m.getLog().isEmpty()) {
+                    result.put("description", m.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+                } else {
+                    result.put("description", "Transaction committed");
+                }
+            } else {
+                result.put("result", "error");
+                result.put("description", "No transactions was created");
+            }
+        } else if ("rollback".equalsIgnoreCase(parameters.getString("transaction"))) {
+            IMind m = mind.getNext();
+            if (m != null) {
+                m.release(mind);
+                user.setCurrentMind(m);
+                result.put("result", "OK");
+                if (!m.getLog().isEmpty()) {
+                    result.put("description", m.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+                } else {
+                    result.put("description", "Transaction rolled back");
+                }
+            } else {
+                result.put("result", "error");
+                result.put("description", "No transactions was created");
+            }
+        }
+        if (result != null) {
+            result.put("id", mind.getId());
+            result.put("transaction", mind.getTransactionLevel());
+            result.put("empty", mind.isEmptyLevel());
+        }
+        return result;
+    }
+
+    private JSONObject compile(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        String query = parameters.getString("request");
+        boolean res = mind.compile(query);
+        if (res) {
+            result.put("result", "OK");
+        } else {
+            result.put("result", "error");
+        }
+        result.put("description", mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+        return result;
+    }
+
+    private JSONObject query(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        String query = parameters.getString("request");
+        Boolean res = mind.query(query);
+        if (res == null) {
+            result.put("response", "unknown");
+        } else {
+            result.put("response", res ? "yes" : "no");
+        }
+        result.put("results", mind.getValues().size());
+        result.put("solutions", mind.getSolutions().size());
+        result.put("hypothesis", mind.getHypothesis().size());
+        if (mind.getCurrentLogRecord(LogMode.ANALYZER) != null) {
+            result.put("result", "OK");
+            result.put("description", mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+        } else {
+            result.put("result", "error");
+            result.put("description", "Query error");
+        }
+        return result;
+    }
+
+    private JSONObject getSolutions(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        List<JSONObject> list = new ArrayList<>();
+        for (IRule r : mind.getSolutions()) {
+            JSONObject op = new JSONObject(((Rule) r).createMap(mind));
+            list.add(op);
+        }
+
+        result.put("result", "OK");
+        result.put("size", list.size());
+        result.put("list", list);
         return result;
     }
 
@@ -149,14 +330,16 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
-        List<JSONObject> list = new ArrayList<>();
+        List<List<JSONObject>> list = new ArrayList<>();
         for (Map<String, ITerm> row : mind.getValues()) {
-            JSONObject op = new JSONObject();
+            List<JSONObject> one = new ArrayList<>();
             for (Map.Entry<String, ITerm> e : row.entrySet()) {
+                JSONObject op = new JSONObject();
                 op.put("name", e.getKey());
                 op.put("value", e.getValue().getValue());
+                one.add(op);
             }
-            list.add(op);
+            list.add(one);
         }
 
         result.put("result", "OK");
@@ -169,25 +352,76 @@ public class QueryProcessor implements IReactor<JSONObject> {
         JSONObject result = null;
         if (!parameters.isNull("get")) {
             result = loadSourceFile(parameters, user);
+        } else if (!parameters.isNull("put")) {
+            result = saveSourceFile(parameters, user);
         } else if (!parameters.isNull("use")) {
             result = useDatabase(parameters, user);
         } else if (!parameters.isNull("used")) {
             result = usedDatabase(user);
         } else if (!parameters.isNull("close")) {
             result = closeDatabase(user);
+        } else if (!parameters.isNull("drop")) {
+            result = dropDatabase(parameters, user);
+        } else if (!parameters.isNull("reindex")) {
+            result = reindexDatabase(parameters, user);
         } else if (!parameters.isNull("erase")) {
             result = clearWorkspace(user);
-        } else if (!parameters.isNull("rules")) {
-            result = getRules(parameters, user);
-        } else if (!parameters.isNull("predicates")) {
-            result = getPredicates(parameters, user);
-        } else if (!parameters.isNull("statements")) {
-            result = getStatements(parameters, user);
-        } else if (!parameters.isNull("functions")) {
-            result = getFunctions(parameters, user);
         } else if (!parameters.isNull("quit")) {
             result = quit(user);
         }
+        if (result != null) {
+            IMind mind = user.getCurrentMind();
+            result.put("transaction", mind.getTransactionLevel());
+            result.put("empty", mind.isEmptyLevel());
+        }
+        return result;
+    }
+
+    private JSONObject saveSourceFile(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        String fname = mind.getSourceFileName();
+        if (!parameters.getString("put").isEmpty()) {
+            fname = parameters.getString("put");
+        }
+        if (fname != null && !fname.isEmpty()) {
+            File f = new File(mind.getUser().getSourceDir() + fname);
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
+                bw.write(mind.getSourceCode());
+                mind.setSourceFileName(fname);
+                result.put("description", "Source file " + fname + " saved.");
+            }
+        }
+        result.put("result", "OK");
+        return result;
+    }
+
+    private JSONObject reindexDatabase(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        String name = null;
+        if (!parameters.getString("drop").isEmpty()) {
+            name = parameters.getString("drop");
+        }
+        mind = mind.reindexStorage(name);
+        user.setCurrentMind(mind);
+        result.put("result", "OK");
+        return result;
+    }
+
+    private JSONObject dropDatabase(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        String name = null;
+        if (!parameters.getString("drop").isEmpty()) {
+            name = parameters.getString("drop");
+        }
+        mind = mind.removeStorage(name);
+        user.setCurrentMind(mind);
+        result.put("result", "OK");
         return result;
     }
 
@@ -451,6 +685,11 @@ public class QueryProcessor implements IReactor<JSONObject> {
             result.put("predicates", mind.getTop().getPredicates().size());
             result.put("dictionary", mind.getTerms().size());
             result.put("udf", mind.getTop().getLibrary().size());
+            result.put("description", "Database used: " + "Database used: " + mind.getStorageName().replace(Enums.FILE_SEPARATOR, ".") +
+                    ", Rules: " + mind.getTop().getRules().size() +
+                    ", Predicates: " + mind.getTop().getPredicates().size() +
+                    ", Dictionary: " + mind.getTerms().size() +
+                    ", UDF: " + mind.getTop().getLibrary().size());
         } else {
             result.put("result", "error");
             result.put("description", "No database used");
@@ -525,11 +764,9 @@ public class QueryProcessor implements IReactor<JSONObject> {
 
                     mind.setSourceFileName(f.getName());
                     Boolean res = mind.compile(buf.toString());
-                    System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+                    String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
                     if (res) {
-                        System.out.printf("File %s loaded\n", f.getName());
-                    } else {
-                        System.out.printf("Use XPLAIN command for analisys\n");
+                        description += "<br>" + String.format("File %s loaded", f.getName());
                     }
                     if (mind.isStorageUsed() && mind.isEmptyLevel()) {
                         IMind m = mind.getNext();
@@ -537,13 +774,13 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         mind = m;
                     }
                     if (mind.getTransactionLevel() > 0) {
-                        System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
+                        description += "<br>" + String.format("Transaction level %d (%d)", mind.getTransactionLevel(), mind.getId());
                     }
                     ((Mind) mind).setQueryResult(res);
 
                     user.setCurrentMind(mind);
                     result.put("result", mind.getQueryResult() != null && mind.getQueryResult() ? "OK" : "fail");
-                    result.put("description", mind.getCurrentLogRecord(LogMode.ANALYZER));
+                    result.put("description", description);
                 } else {
                     result.put("result", "error");
                     result.put("description", "File is empty " + user.getSourceDir() + parameters.getString("load"));

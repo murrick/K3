@@ -973,7 +973,7 @@ public class Linker {
 //            if (!master.isExcluded(slave.getArguments())) {
             r = v.getTVar(mind).getRule(mind);
             if (logging && result) {
-                log.add(LogMode.ANALYZER, "Closed: " + v);
+                log.add(LogMode.ANALYZER, "Closed: " + v.toString(mind));
             }
             occurrs = true;
 //            }

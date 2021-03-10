@@ -32,6 +32,8 @@ import org.kanger.interfaces.IUser;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +45,7 @@ public class UserFactory {
 
     private static String rootDir = "KANGER";
     private static Map<String, IUser> users = new ConcurrentHashMap<>();
+    private static Map<Long, List<String>> history = new ConcurrentHashMap<>();
 
     static {
         if (System.getenv().containsKey("KANGER_HOME")) {
@@ -77,6 +80,7 @@ public class UserFactory {
                 break;
             }
         }
+        history.remove(user.getId());
     }
 
     public static IUser getUser(String login, String password) throws Exception {
@@ -203,5 +207,19 @@ public class UserFactory {
         return home + subDir;
     }
 
+    public static void addHystory(IUser user, String record) {
+        if (!history.containsKey(user.getId())) {
+            history.put(user.getId(), new ArrayList<>());
+        }
+        history.get(user.getId()).add(record);
+    }
+
+    public static List<String> getHistory(IUser user) {
+        if (history.containsKey(user.getId())) {
+            return history.get(user.getId());
+        } else {
+            return new ArrayList<>();
+        }
+    }
 
 }

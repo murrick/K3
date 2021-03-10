@@ -30,6 +30,8 @@ import org.kanger.interfaces.ILogEntry;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
@@ -65,5 +67,13 @@ public class LogEntry implements ILogEntry {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(time) +
                 " [" + (type.name() + "        ").substring(0, 8) + "] " +
                 record;
+    }
+
+    public Map<String, Object> createMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("time", time);
+        map.put("type", type.name());
+        map.put("record", record);
+        return map;
     }
 }

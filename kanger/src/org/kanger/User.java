@@ -389,7 +389,7 @@ public class User implements IUser {
         if (udf != null) {
             return (Operation) udf.getConstructors()[0].newInstance();
         } else {
-            return null;
+            throw new RuntimeErrorException("UDF module doesn't loaded");
         }
     }
 

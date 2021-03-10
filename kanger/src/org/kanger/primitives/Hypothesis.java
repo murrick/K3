@@ -341,6 +341,7 @@ public class Hypothesis implements IHypothesis {
         map.put("query", query);
         map.put("predicate", ((Predicate) getPredicate()).createMap(mind));
         map.put("arguments", getArguments().createMap(mind));
+        map.put("origin", toString(mind));
         return map;
     }
 }

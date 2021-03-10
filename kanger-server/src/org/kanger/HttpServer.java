@@ -108,6 +108,14 @@ public class HttpServer {
         return "HTTP/1.1 200 OK\r\n" +
                 String.format("Content-Length: %d\r\n", contentLength) +
                 String.format("Content-Type: application/json; charset=%s\r\n", encoding.displayName()) +
+
+                "Cache-Control: no-cache\r\n" +
+                "Access-Control-Allow-Origin: *\r\n" +
+                "Access-Control-Allow-Methods: GET. POST\r\n" +
+                "Access-Control-Allow-Headers: Content-Type, *\r\n" +
+                "Access-Control-Allow-Credentials: true\r\n" +
+                "P3P: CP='IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT'\r\n" +
+
                 // An empty line marks the end of the response's header
                 "\r\n" +
                 body;
@@ -141,13 +149,12 @@ public class HttpServer {
         query.put("context", context);
         if (get.split("\\?").length > 1) {
             for (String p : get.split("\\?")[1].split("\\&")) {
-                p = URLDecoder.decode(p.trim(), encoding.displayName());
                 if (!p.isEmpty()) {
                     String val = "";
                     if (p.split("\\=").length > 1) {
-                        val = p.split("\\=")[1].trim();
+                        val = URLDecoder.decode(p.split("\\=")[1].trim(), encoding.displayName());
                     }
-                    parameters.put(p.split("\\=")[0].trim().toLowerCase(), val);
+                    parameters.put(URLDecoder.decode(p.split("\\=")[0].trim(), encoding.displayName()).toLowerCase(), val);
                 }
             }
         }

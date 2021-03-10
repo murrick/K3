@@ -181,6 +181,10 @@ public class LogStore implements IFactory<ILogEntry> {
 
     @Override
     public Iterator<ILogEntry> iterator() {
-        return root.iterator();
+        if (root == null) {
+            return new ArrayList<ILogEntry>().iterator();
+        } else {
+            return root.iterator();
+        }
     }
 }
