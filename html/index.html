@@ -48,20 +48,32 @@
             var u = document.getElementById("user-name");
             var d = document.getElementById("db-name");
             if(v) {
-                $.getJSON(window.apihost + "/version", function(data){
+                post({context: "version"}, function(data){
                     if(data.result == "OK") {
                         v.innerHTML = data.version;
                     }
                 });
             }
             if(u) {
-                $.getJSON(window.apihost + "/login?login=singleuser&password=singleuser", function(data){
+                post({
+                    context: "login",
+                    parameters: {
+                        login: "singleuser",
+                        password: "singleuser"
+                    }
+                }, function(data) {
                     if(data.result == "OK") {
                         u.innerHTML = "singleuser";
                         window.token = data.token;
 
                         if(d) {
-                            $.getJSON(window.apihost + "/command?token=" + window.token + "&used", function(data){
+                            post({
+                                context: "command",
+                                parameters: {
+                                    token : window.token,
+                                    used: ""
+                                }
+                            }, function(data){
                                 if(data.result == "OK") {
                                     d.style.color = "#000";
                                     d.style.fontWeight = "bold";
@@ -73,11 +85,19 @@
                             });
 
                             showResults();
+                            showStatements();
+                            showFunctions();
                             showSolutions();
                             showHypothesis();
                             showLog();
 
-                            $.getJSON(window.apihost + "/history?token=" + window.token + "&get", function(data){
+                            post({
+                                context: "history",
+                                parameters: {
+                                    token : window.token,
+                                    get : ""
+                                }
+                            }, function(data){
                                 if(data.result == "OK") {
                                     var queryHistory = document.getElementById("query-history");
                                     for(var i=0; i < data.size; ++i) {
@@ -114,6 +134,21 @@
             }
         });
 
+        function post(data, callback) {
+            $.ajax({
+                type: "POST",
+                url: window.apihost,
+                headers: {
+                  "Accept": "application/json; odata=verbose"
+                },
+                data: JSON.stringify(data),
+                success: callback,
+                error: function(e){
+                    alert(e);
+                }
+            });
+        }
+
         function showTransactionLevel(data) {
             if(data.transaction != null && data.empty != null) {
                 var transactionLevel = document.getElementById("transaction-level");
@@ -134,8 +169,14 @@
         }
 
         function storeHistory(queryText) {
-            var uri = encodeURIComponent(queryText);
-            $.getJSON(window.apihost + "/history?token=" + window.token + "&put=" + uri);
+            //var uri = encodeURIComponent(queryText);
+            post({
+                context: "history",
+                parameters: {
+                    token: window.token,
+                    put: queryText
+                }
+            });
         }
 
         function check_enter() {
@@ -176,20 +217,22 @@
             var div = document.createElement("div");
             div.style.padding = "2px 2px 2px 8px";
             div.innerHTML = queryText;
-            div.style.cursor = "pointer";
             div.style.fontFamily = "monospace";
-            div.onmouseover = function(e){
-                this.style.backgroundColor="#DDD";
-            };
-            div.onmouseout = function(e){
-                this.style.backgroundColor="";
-            };
-            div.onclick = function(e){
-                var queryInput = document.getElementById("query_input");
-                document.getElementById("query_input").value = this.innerHTML;
-                queryInput.focus();
-                queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
-            };
+            if(!queryText.startsWith("//")) {
+                div.style.cursor = "pointer";
+                div.onmouseover = function(e){
+                    this.style.backgroundColor="#DDD";
+                };
+                div.onmouseout = function(e){
+                    this.style.backgroundColor="";
+                };
+                div.onclick = function(e){
+                    var queryInput = document.getElementById("query_input");
+                    document.getElementById("query_input").value = decodeEntities(this.innerHTML);
+                    queryInput.focus();
+                    queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
+                };
+            }
             var queryHistory = document.getElementById("query-history");
             queryHistory.append(div);
             scrollToBottom();
@@ -203,14 +246,10 @@
             div.style.fontSize = "13px";
             div.style.fontFamily = "monospace";
             if(!ln && data) {
-                ln = data.description;
-                if(data.results != null) {
-                    ln += "<br>" +
-                    "Results: " + data.results + ", " +
-                    "Solutions: " + data.solutions + ", " +
-                    "Hypothesis: " + data.hypothesis;
-                }
+                ln = data.description.replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
                 showTransactionLevel(data);
+            }
+            if(data) {
                 placeElements(data);
             }
             div.innerHTML = ln;
@@ -254,57 +293,83 @@
             }
         }
 
+        function refreshScreen(data, ln) {
+            showResults();
+            showStatements();
+            showFunctions();
+            showSolutions();
+            showHypothesis();
+            showLog();
+            logResponse(data, ln);
+        }
+
         function commandTransaction(cmd) {
             if(cmd.length == 2 && cmd[0] == "transaction") {
-                $.getJSON(window.apihost + "/query?token=" + window.token + "&transaction=" + cmd[1], function(data){
-                    logResponse(data);
-                    showResults();
-                    showSolutions();
-                    showHypothesis();
-                    showLog();
+                post({
+                    context: "query",
+                    parameters: {
+                        token : window.token,
+                        transaction : cmd[1]
+                    }
+                }, function(data){
+                    refreshScreen(data);
                 });
             } else if(cmd[0] != "transaction") {
-                $.getJSON(window.apihost + "/query?token=" + window.token + "&transaction=" + cmd[0], function(data){
-                    logResponse(data);
-                    showResults();
-                    showSolutions();
-                    showHypothesis();
-                    showLog();
+                post({
+                    context: "query",
+                    parameters: {
+                        token: window.token,
+                        transaction: cmd[0]
+                    }
+                }, function(data){
+                    refreshScreen(data);
                 });
             } else {
-                $.getJSON(window.apihost + "/query?token=" + window.token + "&transaction=create", function(data){
-                    logResponse(data);
-                    showResults();
-                    showSolutions();
-                    showHypothesis();
-                    showLog();
+                post({
+                    context: "query",
+                    parameters: {
+                        token: window.token,
+                        transaction: "create"
+                    }
+                }, function(data){
+                    refreshScreen(data);
                 });
             }
         }
 
         function commandErase(cmd) {
-            $.getJSON(window.apihost + "/command?token=" + window.token + "&erase", function(data){
+            post({
+                context: "command",
+                parameters: {
+                    token: window.token,
+                    erase: ""
+                }
+            }, function(data){
                 if(data.result == "OK") {
-                    logResponse(data, "Workspace erased");
-                    showResults();
-                    showSolutions();
-                    showHypothesis();
-                    showLog();
+                    refreshScreen(data, "Workspace erased");
                 }
             });
         }
 
         function commandGet(cmd) {
             if(cmd.length == 2) {
-                $.getJSON(window.apihost + "/command?token=" + window.token + "&get=" + cmd[1], function(data){
-                    logResponse(data);
-                    showResults();
-                    showSolutions();
-                    showHypothesis();
-                    showLog();
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        get: cmd[1]
+                    }
+                }, function(data){
+                    refreshScreen(data);
                 });
             } else {
-                $.getJSON(window.apihost + "/command?token=" + window.token + "&get", function(data){
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        get: ""
+                    }
+                }, function(data){
                     if(data.result == "OK") {
                         if(data.size > 0) {
                             var ln = "Available sources: ";
@@ -330,13 +395,25 @@
 
 
         function commandClose(cmd) {
-            $.getJSON(window.apihost + "/command?token=" + window.token + "&used", function(data){
+            post({
+                context: "command",
+                parameters: {
+                    token: window.token,
+                    used: ""
+                }
+            }, function(data){
                 var d = document.getElementById("db-name");
                 if(data.result == "OK") {
                     var name = data.name;
-                    $.getJSON(window.apihost + "/command?token=" + window.token + "&close", function(data){
+                    post({
+                        context: "command",
+                        parameters: {
+                            token: window.token,
+                            close: ""
+                        }
+                    }, function(data){
                         if(data.result == "OK") {
-                            logResponse(data, "Database " + name + " closed");
+                            refreshScreen(data, "Database " + name + " closed");
                             d.style.color = "#777";
                             d.innerHTML = "unused";
                         }
@@ -351,12 +428,14 @@
 
         function commandUse(cmd) {
             if(cmd.length == 2 && cmd[0] == "use") {
-                $.getJSON(window.apihost + "/command?token=" + window.token + "&use=" + cmd[1], function(data){
-                    logResponse(data);
-                    showResults();
-                    showSolutions();
-                    showHypothesis();
-                    showLog();
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        use: cmd[1]
+                    }
+                }, function(data){
+                    refreshScreen(data);
 
                     var d = document.getElementById("db-name");
                     if(data.result == "OK") {
@@ -369,7 +448,13 @@
                     }
                 });
             } else if(cmd[0] == "use") {
-                $.getJSON(window.apihost + "/command?token=" + window.token + "&use", function(data){
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        use: ""
+                    }
+                }, function(data){
                     if(data.result == "OK") {
                         if(data.size > 0) {
                             var ln = "Available DBs: ";
@@ -391,7 +476,13 @@
                     }
                 });
             } else {
-                $.getJSON(window.apihost + "/command?token=" + window.token + "&used", function(data){
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        used: ""
+                    }
+                }, function(data){
                     logResponse(data);
                     var d = document.getElementById("db-name");
                     if(data.result == "OK") {
@@ -408,12 +499,154 @@
 
         function query(queryText) {
             var uri = encodeURIComponent(queryText);
-            $.getJSON(window.apihost + "/query?token=" + window.token + "&request=" + uri, function(data){
-                logResponse(data);
-                showResults();
-                showSolutions();
-                showHypothesis();
-                showLog();
+            post({
+                context: "query",
+                parameters: {
+                    token: window.token,
+                    request: uri
+                }
+            }, function(data){
+                refreshScreen(data);
+            });
+        }
+
+        function showStatements() {
+            var statements = document.getElementById("statements");
+            if(statements) {
+                statements.innerHTML = "";
+                post({
+                    context: "query",
+                    parameters: {
+                        token: window.token,
+                        predicates: "",
+                        statements: true
+                    }
+                }, function(data) {
+                    if(data.result == "OK") {
+                        for(var i = 0; i < data.size; ++i) {
+                            var div = document.createElement("div");
+                            div.id = "PR" + data.list[i].id;
+                            div.style.fontSize = "13px";
+                            div.style.fontFamily = "monospace";
+                            div.style.whiteSpace = "nowrap";
+                            div.style.cursor = "pointer";
+                            if(data.list[i].deleted) {
+                                div.style.color = "#777";
+                            }
+                            div.innerHTML = ("0000" + data.list[i].id).substr(-4) + "&nbsp;<b>" +
+                                data.list[i].name + "</b>(" + data.list[i].range + ")" + " " +
+                                data.list[i].statements.length;
+                            div.onclick = function(e) {
+                                var x = "PRL" + this.id.substr(2);
+                                var y = document.getElementById(x);
+                                if(y.style.display == "none") {
+                                    y.style.display = "";
+                                } else {
+                                    y.style.display = "none";
+                                }
+                            }
+                            statements.append(div);
+
+                            div = document.createElement("div");
+                            div.id = "PRL" + data.list[i].id;
+                            div.style.fontSize = "13px";
+                            div.style.fontFamily = "monospace";
+                            div.style.whiteSpace = "nowrap";
+                            div.style.paddingLeft = "16px";
+                            div.style.display = "none";
+
+                            statements.append(div);
+
+                            for(var j = 0; j < data.list[i].statements.length; ++j) {
+                                var d = document.createElement("div");
+                                d.id = "PS" + data.list[i].statements[j].id;
+                                d.style.fontSize = "13px";
+                                d.style.fontFamily = "monospace";
+                                d.style.whiteSpace = "nowrap";
+                                d.style.cursor = "pointer";
+                                if(data.list[i].statements[j].deleted) {
+                                    d.style.color = "#777";
+                                } else if(data.list[i].statements[j].generated) {
+                                    d.style.color = "#282";
+                                } else {
+                                    d.style.color = "#228";
+                                }
+                                d.onclick = function(e) {
+                                    showTree(e.currentTarget.id.substr(2));
+                                }
+                                d.innerHTML = ("0000" + data.list[i].statements[j].id).substr(-4) + "&nbsp;<b>" +
+                                    data.list[i].statements[j].origin;
+                                div.append(d);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function recurseTree(causes, level) {
+            var str = "";
+            var prefix = "";
+            for(var i = 0; i < level; ++i) {
+                prefix += "&nbsp;&nbsp;&nbsp;&nbsp;";
+            }
+            for(var i = 0; i < causes.length; ++i) {
+                str += prefix + "<span style=\"font-weight: bold;\">" + causes[i].rule.origin + "</span><br>" +
+                        prefix + "<span style=\"color: #3A3;\">" + causes[i].donor.origin + "</span><br>" +
+                        recurseTree(causes[i].causes, level + 1);
+
+            }
+            return str;
+        }
+
+        function showTree(id) {
+            post({
+                context: "query",
+                parameters: {
+                    token: window.token,
+                    statements: "",
+                    id: id,
+                    causes: true
+                }
+            }, function(data) {
+                if(data.result == "OK" && data.size == 1) {
+                    logRequest("// Inference tree for: <b>" +  data.list[0].origin + "</b>");
+                    var str = recurseTree(data.list[0].causes, 0);
+                    logResponse(null, str);
+                }
+            });
+        }
+
+        function showFunctions() {
+            var functions = document.getElementById("functions");
+            functions.innerHTML = "";
+            post({
+                context: "query",
+                parameters: {
+                    token: window.token,
+                    functions: ""
+                }
+            }, function(data) {
+                if(data.size > 0) {
+                    for(var i = 0; i < data.size; ++i) {
+                        var div = document.createElement("div");
+                        div.id = "FN" + data.list[i].id;
+                        div.style.fontSize = "13px";
+                        div.style.fontFamily = "monospace";
+                        div.style.whiteSpace = "nowrap";
+                        div.style.cursor = "pointer";
+                        if(data.list[i].deleted) {
+                            div.style.color = "#777";
+                        }
+                        div.onclick = function(e) {
+                            var x = this.id.substr(2);
+                            showFunctionEditor(x);
+                        }
+                        div.innerHTML = ("0000" + data.list[i].id).substr(-4) + "&nbsp;<b>" +
+                            data.list[i].name + "</b>(" + data.list[i].range + ")";
+                        functions.append(div);
+                    }
+                }
             });
         }
 
@@ -421,7 +654,13 @@
             var queryResults = document.getElementById("query-results");
             if(queryResults) {
                 queryResults.innerHTML = "";
-                $.getJSON(window.apihost + "/query?token=" + window.token + "&results", function(data) {
+                post({
+                    context: "query",
+                    parameters: {
+                        token: window.token,
+                        results: ""
+                    }
+                }, function(data) {
                     if(data.result == "OK" && data.size > 0) {
                         var titles = [];
 
@@ -494,7 +733,13 @@
             var querySolutions = document.getElementById("query-solutions");
             if(querySolutions) {
                 querySolutions.innerHTML = "";
-                $.getJSON(window.apihost + "/query?token=" + window.token + "&solutions", function(data){
+                post({
+                    context: "query",
+                    parameters: {
+                        token: window.token,
+                        solutions: ""
+                    }
+                }, function(data){
                     if(data.result == "OK") {
                         for(var i = 0; i < data.list.length; ++i) {
                             var div = document.createElement("div");
@@ -502,6 +747,11 @@
                             div.style.fontSize = "13px";
                             div.style.fontFamily = "monospace";
                             div.style.whiteSpace = "nowrap";
+                            div.style.cursor = "pointer";
+                            var id = data.list[i].id;
+                            div.onclick = function(e) {
+                                showTree(e.currentTarget.id.substr(3));
+                            }
                             switch(data.list[i].origin.charAt(0)) {
                                 case "!":
                                     div.style.color = "#272";
@@ -522,7 +772,13 @@
             var queryHypothesis = document.getElementById("query-hypothesis");
             if(queryHypothesis) {
                 queryHypothesis.innerHTML = "";
-                $.getJSON(window.apihost + "/query?token=" + window.token + "&hypothesis", function(data){
+                post({
+                    context: "query",
+                    parameters: {
+                        token: window.token,
+                        hypothesis: ""
+                    }
+                }, function(data){
                     if(data.result == "OK") {
                         for(var i = 0; i < data.list.length; ++i) {
                             var div = document.createElement("div");
@@ -547,7 +803,7 @@
                             div.onclick = function(e){
                                 var queryInput = document.getElementById("query_input");
                                 var s = this.origin.charAt(0) == "?" ? "!~" + this.origin.substr(1) : this.origin;
-                                queryInput.value = s;
+                                queryInput.value = decodeEntities(s);
                                 queryInput.focus();
                                 queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
                             };
@@ -562,7 +818,13 @@
             var queryLog = document.getElementById("query-log");
             if(queryLog) {
                 queryLog.innerHTML = "";
-                $.getJSON(window.apihost + "/query?token=" + window.token + "&log", function(data){
+                post({
+                    context: "query",
+                    parameters: {
+                        token: window.token,
+                        log: ""
+                    }
+                }, function(data){
                     if(data.result == "OK") {
                         for(var i = 0; i < data.list.length; ++i) {
                             var div = document.createElement("div");
@@ -612,123 +874,141 @@
 
         function placeElements(data) {
 
-            var containerStatements = document.getElementById("container-statements");
-            var statements = document.getElementById("statements");
-            var sx = getCookie("sx");
-            if(sx == "") {
-                sx = "200px";
-                setCookie("sx", sx);
-            }
-            containerStatements.style.width = sx;
-            statements.style.width = ($(containerStatements).width() - 16) + "px";
-            statements.style.height = ($(containerStatements).height() - 40) + "px";
+            post({
+                context: "query",
+                parameters: {
+                    token: window.token,
+                    functions: ""
+                }
+            }, function(tmp) {
 
-            var qy = getCookie("qy");
-            if(qy == "") {
-                qy = "400px";
-                setCookie("qy", qy);
-            }
-            var containerDiv = document.getElementById("container-div");
-            var containerResults = document.getElementById("container-results");
-            var containerSolutions = document.getElementById("container-solutions");
-            var containerHypothesis = document.getElementById("container-hypothesis");
-            var containerLogging = document.getElementById("container-logging");
-            var queryResults = document.getElementById("query-results");
-            var querySolutions = document.getElementById("query-solutions");
-            var queryHypothesis = document.getElementById("query-hypothesis");
-            var queryLog = document.getElementById("query-log");
+                var screenWidth = $("#super").width();
+                var screenHeight = $("#super").height();
 
-            if(data) {
-                if(data.results != null && data.results > 0) {
-                    containerResults.style.display = "";
+                var containerLeft = document.getElementById("container-left");
+                var containerRight = document.getElementById("container-right");
+
+                var statements = document.getElementById("statements");
+                var functions = document.getElementById("functions");
+                var titleFunctions = document.getElementById("title-functions");
+
+                var sx = getCookie("sx");
+                if(sx == "") {
+                    sx = "200px";
+                    setCookie("sx", sx);
+                }
+                containerLeft.style.width = sx;
+                var w = $(containerLeft).width();
+                var h = $(containerLeft).height();
+
+                if(tmp.size > 0) {
+                    statements.style.width = (w - 16) + "px";
+                    statements.style.height = (h * 0.6 - 40) + "px";
+
+                    functions.style.display = "";
+                    titleFunctions.style.display = "";
+
+                    functions.style.width = (w - 16) + "px";
+                    functions.style.height = (h * 0.4 - 40) + "px";
                 } else {
-                    containerResults.style.display = "none";
+                    statements.style.width = (w - 16) + "px";
+                    statements.style.height = (h - 40) + "px";
+
+                    functions.style.display = "none";
+                    titleFunctions.style.display = "none";
                 }
-                if(data.solutions != null && data.solutions > 0) {
-                    containerSolutions.style.display = "";
-                } else {
-                    containerSolutions.style.display = "none";
+
+                containerRight.style.width = (screenWidth - w - 2) + "px";
+                containerRight.style.left = (w + 2) + "px";
+
+                var qy = getCookie("qy");
+                if(qy == "") {
+                    qy = "400px";
+                    setCookie("qy", qy);
                 }
-                if(data.hypothesis != null && data.hypothesis > 0) {
-                    containerHypothesis.style.display = "";
-                } else {
-                    containerHypothesis.style.display = "none";
+
+                var containerDiv = document.getElementById("container-div");
+                containerDiv.style.height = qy;
+
+                var containerConsole = document.getElementById("container-console");
+                var consoleInput = document.getElementById("console-input");
+                var console = document.getElementById("console");
+                var editor = document.getElementById("editor");
+                containerConsole.style.height = (screenHeight - 24 - 24 - 9 - $(containerDiv).height()) + "px";
+                console.style.height = ($(containerConsole).height() - 26 - $(consoleInput).height()) + "px";
+                editor.style.height = ($(containerConsole).height() - 26) + "px";
+
+                var containerResults = document.getElementById("container-results");
+                var containerSolutions = document.getElementById("container-solutions");
+                var containerHypothesis = document.getElementById("container-hypothesis");
+                var containerLogging = document.getElementById("container-logging");
+
+                var queryResults = document.getElementById("query-results");
+                var querySolutions = document.getElementById("query-solutions");
+                var queryHypothesis = document.getElementById("query-hypothesis");
+                var queryLog = document.getElementById("query-log");
+
+                if(data) {
+                    if(data.results != null && data.results > 0) {
+                        containerResults.style.display = "";
+                    } else {
+                        containerResults.style.display = "none";
+                    }
+                    if(data.solutions != null && data.solutions > 0) {
+                        containerSolutions.style.display = "";
+                    } else {
+                        containerSolutions.style.display = "none";
+                    }
+                    if(data.hypothesis != null && data.hypothesis > 0) {
+                        containerHypothesis.style.display = "";
+                    } else {
+                        containerHypothesis.style.display = "none";
+                    }
                 }
-            }
 
-            containerDiv.style.width = $(containerDiv.parentElement).width() + "px";
-            var cnt = 0;
-            if(containerResults.style.display != "none") {
-                ++cnt;
-            }
-            if(containerSolutions.style.display != "none") {
-                ++cnt;
-            }
-            if(containerHypothesis.style.display != "none") {
-                ++cnt;
-            }
-            if(containerLogging.style.display != "none") {
-                ++cnt;
-            }
-
-            containerDiv.style.height = qy;
-            var divHeight = parseInt($(containerDiv).height());
-            var divWidth = parseInt($(containerDiv).width());
-
-            if(cnt == 1) {
-                lx = (divWidth - 1) + "px";
-            } else {
-                var lx = ""; //getCookie("lx");
-                if(lx == "") {
-                    lx = ((divWidth / cnt) - 1) + "px";
-                    setCookie("lx", lx);
+                var cnt = 0;
+                if(containerResults.style.display != "none") {
+                    ++cnt;
                 }
-            }
-
-            containerLogging.style.height = divHeight + "px";
-            containerLogging.style.width = lx;
-            queryLog.style.height = (divHeight - 40) + "px";
-
-            divWidth -= $(containerLogging).width() + 1;
-            --cnt;
-
-            if(containerResults.style.display != "none") {
-                var rx = ""; //getCookie("rx");
-                if(rx == "") {
-                    rx = ((divWidth / cnt) - 1) + "px";
-                    setCookie("rx", rx);
+                if(containerSolutions.style.display != "none") {
+                    ++cnt;
                 }
-                containerResults.style.height = divHeight + "px";
-                containerResults.style.width = rx;
-                queryResults.style.height = (divHeight - 40) + "px";
-            }
-            if(containerSolutions.style.display != "none") {
-                var ox = ""; //getCookie("ox");
-                if(ox == "") {
-                    ox = ((divWidth / cnt) - 1) + "px";
-                    setCookie("ox", ox);
+                if(containerHypothesis.style.display != "none") {
+                    ++cnt;
                 }
-                containerSolutions.style.height = divHeight + "px";
-                containerSolutions.style.width = ox;
-                querySolutions.style.height = (divHeight - 40) + "px";
-            }
-            if(containerHypothesis.style.display != "none") {
-                var hx = ""; //getCookie("hx");
-                if(hx == "") {
-                    hx = ((divWidth / cnt) - 1) + "px";
-                    setCookie("hx", hx);
+                if(containerLogging.style.display != "none") {
+                    ++cnt;
                 }
-                containerHypothesis.style.height = divHeight + "px";
-                containerHypothesis.style.width = hx;
-                queryHypothesis.style.height = (divHeight - 40) + "px";
-            }
 
-            var containerConsole = document.getElementById("container-console");
-            var consoleInput = document.getElementById("console-input");
-            var console = document.getElementById("console");
-            var consoleHeight = $(containerConsole).height() - 24 - $(consoleInput).height();
-            console.style.height = consoleHeight + "px";
+                containerDiv.style.height = qy;
+                var divHeight = parseInt($(containerDiv).height());
+                var divWidth = parseInt($(containerDiv).width()) - 1;
 
+
+                var lx = ((divWidth / cnt) - 1);
+
+                containerLogging.style.height = divHeight + "px";
+                containerLogging.style.width = lx + "px";
+                queryLog.style.height = (divHeight - 40) + "px";
+
+                if(containerResults.style.display != "none") {
+                    containerResults.style.height = divHeight + "px";
+                    containerResults.style.width = lx + "px";
+                    queryResults.style.height = (divHeight - 40) + "px";
+                }
+                if(containerSolutions.style.display != "none") {
+                    containerSolutions.style.height = divHeight + "px";
+                    containerSolutions.style.width = lx + "px";
+                    querySolutions.style.height = (divHeight - 40) + "px";
+                }
+                if(containerHypothesis.style.display != "none") {
+                    containerHypothesis.style.height = divHeight + "px";
+                    containerHypothesis.style.width = lx + "px";
+                    queryHypothesis.style.height = (divHeight - 40) + "px";
+                }
+
+
+            });
         }
 
         function scrollToBottom() {
@@ -743,7 +1023,7 @@
                 window.sizeX = e.pageX;
             }
             window.sizeY = null;
-            window.widthFrom = $("#container-statements").width();
+            window.widthFrom = $("#container-left").width();
         }
 
         function onMouseDownY(e) {
@@ -757,15 +1037,9 @@
         }
 
         function onMouseUp(e) {
-            if(window.sizeX != null) {
-                setCookie("sx", window.widthFrom + "px");
-            } else if(window.sizeY != null) {
-                setCookie("qy", window.heightFrom + "px");
-            }
             if(window.sizeX != null || window.sizeY != null) {
                 window.sizeX = null;
                 window.sizeY = null;
-                document.location.reload();
             }
         }
 
@@ -780,7 +1054,8 @@
                 var width = window.widthFrom + (x - window.sizeX);
                 window.widthFrom = width;
                 window.sizeX = x;
-                document.getElementById("container-statements").style.width = width + "px";
+                setCookie("sx", window.widthFrom + "px");
+                placeElements();
             } else if(window.sizeY != null) {
                 var y;
                 if (document.all)  {
@@ -791,51 +1066,174 @@
                 var height = window.heightFrom + (window.sizeY - y);
                 window.heightFrom = height;
                 window.sizeY = y;
-                document.getElementById("container-div").style.height = height + "px";
+                setCookie("qy", window.heightFrom + "px");
+                placeElements();
             }
         }
 
+        function decodeEntities(encodedString) {
+            var textArea = document.createElement('textarea');
+            textArea.innerHTML = encodedString;
+            return textArea.value;
+        }
+
+        function openConsole() {
+            var consoleInput = document.getElementById("console-input");
+            var console = document.getElementById("console");
+            var editor = document.getElementById("editor");
+            var consoleTitle = document.getElementById("console-title");
+            var consoleButton = document.getElementById("console-button");
+            var consoleClose = document.getElementById("console-close");
+
+            editor.style.display = "none";
+            consoleClose.style.display = "none";
+            consoleInput.style.display = "";
+            console.style.display = "";
+
+            consoleTitle.innerHTML = "Console";
+            consoleButton.innerHTML = "Editor";
+            consoleButton.onclick = showSourceEditor;
+        }
+
+        function openEditor(text) {
+            if(text != null) {
+                var consoleInput = document.getElementById("console-input");
+                var console = document.getElementById("console");
+                var editorInput = document.getElementById("editor-input");
+                var editor = document.getElementById("editor");
+                var consoleTitle = document.getElementById("console-title");
+                var consoleButton = document.getElementById("console-button");
+                var consoleClose = document.getElementById("console-close");
+
+                consoleInput.style.display = "none";
+                console.style.display = "none";
+                editor.style.display = "";
+                consoleClose.style.display = "";
+
+                consoleTitle.innerHTML = "Editor";
+                consoleButton.innerHTML = "Compile";
+                consoleButton.onclick = compileSource;
+                consoleClose.onclick = openConsole;
+
+                editorInput.value = text;
+            }
+        }
+
+        function showSourceEditor(id) {
+            post({
+                context: "query",
+                parameters: {
+                    token: window.token,
+                    source: ""
+                }
+            }, function(data) {
+                if(data.result == "OK") {
+                    var text = data.source;
+                    openEditor(text);
+                }
+            });
+        }
+
+        function showFunctionEditor(id) {
+            post({
+                context: "query",
+                parameters: {
+                    token: window.token,
+                    functions: "",
+                    id: id,
+                    sources: true
+                }
+            }, function(data) {
+                if(data.result == "OK" && data.size == 1) {
+                    var text = "=" + data.list[0].name + "(";
+                    for(var i = 0; i < data.list[0].range; ++i) {
+                        if(i > 0) {
+                            text += ", ";
+                        }
+                        text += data.list[0].parameters[i];
+                    }
+                    text += ") ";
+                    for(var i = 0; i < data.list[0].scripts.length; ++i) {
+                        text += "{\n" + data.list[0].scripts[i] + "\n} ";
+                    }
+                    text = text.trim() + ";";
+                    openEditor(text);
+                }
+            });
+        }
+
+        function compileSource() {
+            var editorInput = document.getElementById("editor-input");
+            var src = editorInput.value;
+            var uri = encodeURIComponent(src);
+
+            post({
+                context: "query",
+                parameters: {
+                    token: window.token,
+                    compile: uri
+                }
+            }, function(data) {
+                logRequest("// Compile");
+                refreshScreen(data);
+                openConsole();
+            });
+        }
 
     </script>
 </head>
 <body onmousemove="onMouseMove(event)" onmouseup="onMouseUp(event)" onresize="placeElements()"
       style="height:100%; padding:0; margin:0; overflow: hidden;">
 
-<table cellpadding="0" cellspacing="0" style="width:100%; height:100%; padding:0; margin:0">
-    <tr style="height: 24px">
-        <td colspan="5" style="background: #F3F3F3"><span style="padding: 0 0 0 8px;">KANGER III Version</span>
-            <span id="version-code"></span>
-            <span id="user-name" style="padding: 0 8px 0 8px; float: right;"></span>
-            <span id="db-name" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;"></span>
-            <span id="transaction" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;">
+<div id="super" style="height:100%; width:100%">
+    <div style="background: #CCC; width:100%; height: 24px; padding: 4px 0 4px 0;">
+        <span style="padding: 0 0 0 8px;">KANGER III Version</span>
+        <span id="version-code"></span>
+        <span id="user-name" style="padding: 0 8px 0 8px; float: right;"></span>
+        <span id="db-name" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;"></span>
+        <span id="transaction" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;">
                 Transaction level <span id="transaction-level">0</span></span>
-        </td>
-    </tr>
-    <tr>
-        <td rowspan="3" style="width: 1px; border: 1px #999 solid; vertical-align:top; ">
-            <div id="container-statements" style="width: 300px; height:100%; background: #F0F0F0; vertical-align:top;">
-                <div style="height: 20px; width: 100%; ; padding:2px 2px 2px 8px; background-color: #444; color: #EEE">
-                    Statements
-                </div>
-                <div id="statements" style="height: 100%; width: 100%; ; padding:8px; ">
-                    ---
-                </div>
+    </div>
+    <div id="container"
+         style="width: 100%; height:100%; position:fixed; top: 24px; vertical-align:top; background-color: #FFF; ;">
+        <div id="container-left" style="width: 300px; height:100%; vertical-align:top; float: left;">
+            <div style="height: 20px; width: auto; ; padding:2px 2px 2px 8px; background-color: #444; color: #EEE">
+                Statements
             </div>
-        </td>
-        <td onmousedown="onMouseDownX(event)" rowspan="3"
-            style="width: 4px; border: none; vertical-align:top; cursor: col-resize">
-        </td>
-        <td colspan="4"
-            style="border-top: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top;">
-            <div id="container-console" style="height: 100%; width: 100%; display: flex; flex-direction: column; ">
-                <div style="height: 20px; width: 100%; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
-                    Console
+            <div id="statements" style="height: 100%; width: auto;  padding:8px; overflow: auto">
+                ---
+            </div>
+            <div id="title-functions"
+                 style="height: 20px; width: auto; ; padding:2px 2px 2px 8px; background-color: #444; color: #EEE">
+                Functions
+            </div>
+            <div id="functions" style="height: 100%; width: auto;  padding:8px; overflow: auto">
+                ---
+            </div>
+        </div>
+        <div id="container-left-size" onmousedown="onMouseDownX(event)"
+             style="width: 2px; height:100%; vertical-align:top; float: left; cursor: col-resize; background-color:#AAA;">
+        </div>
+        <div id="container-right"
+             style="background-color: #FFF; float: left; height: 100%; width: 100%; position:fixed; left:300px;">
+
+            <div id="container-console" style="height: 400px; width: 100%; display: flex; flex-direction: column; ">
+                <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
+                    <span id="console-title" style="float:left;">Console</span>
+                    <span id="console-button" onclick="showSourceEditor()"
+                          style="float:right; cursor:pointer; padding-right:8px;">Editor</span>
+                    <span id="console-close" style="display: none; float:right; cursor:pointer; padding-right:8px;">Close</span>
                 </div>
-                <div id="console" style="width: 100%; vertical-align:top; background: #FFF; flex-grow: 1;">
-                    <div id="query-history" style="width: 100%; vertical-align:top; height:100%; overflow-y: auto">
+                <div id="editor"
+                     style="display: none; width: 100%; vertical-align:top; background: #FFF; padding: 12px;">
+                    <textarea id="editor-input"
+                              style="font-family: monospace; width: 100%; height: 100%; border: none; outline-style: none; "></textarea>
+                </div>
+                <div id="console" style="width: 100%; vertical-align:top; background: #FFF; ">
+                    <div id="query-history" style="width: 100%; height: 100%; vertical-align:top; overflow-y: auto">
                     </div>
                 </div>
-                <div id="console-input" style="height: auto; width: 100%;">
+                <div id="console-input" style="height: 24px; width: 100%; background: #FFF; ">
                     <span style="float: left; position: fixed; ">&nbsp;:&nbsp;</span>
                     <textarea id="query_input"
                               oninput="auto_grow(this)"
@@ -843,21 +1241,17 @@
                               style="font-family: monospace; margin-left: 20px; resize: none; overflow: hidden; min-height: 20px; max-height: 100px; height: 16px; border: none; outline-style: none; width: 95%;"></textarea>
                 </div>
             </div>
-        </td>
-    </tr>
-    <tr style="height: 1px;">
-        <td colspan="4" onmousedown="onMouseDownY(event)" style="height: 4px; cursor: row-resize; "></td>
-    </tr>
-    <tr style="height: 320px;">
-        <td colspan="5">
+            <div id="container-div-resize" onmousedown="onMouseDownY(event)"
+                 style="width: 100%; height: 2px; cursor: row-resize; background-color:#AAA;">
+            </div>
             <div id="container-div"
-                 style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; ">
+                 style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; width: 100%">
                 <div id="container-results"
                      style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
                     <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
                         Results
                     </div>
-                    <div id="query-results" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                    <div id="query-results" style="height: auto; width: auto; padding:8px; overflow: auto; ">
                         ---
                     </div>
                 </div>
@@ -866,7 +1260,7 @@
                     <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
                         Solutions
                     </div>
-                    <div id="query-solutions" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                    <div id="query-solutions" style="height: auto; width: auto; padding:8px; overflow: auto; ">
                         ---
                     </div>
                 </div>
@@ -875,7 +1269,7 @@
                     <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
                         Hypothesis
                     </div>
-                    <div id="query-hypothesis" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                    <div id="query-hypothesis" style="height: auto; width: auto; padding:8px; overflow: auto; ">
                         ---
                     </div>
                 </div>
@@ -884,19 +1278,17 @@
                     <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
                         Logging
                     </div>
-                    <div id="query-log" style="height: 320px; width: auto; padding:8px; overflow: auto; ">
+                    <div id="query-log" style="height: auto; width: auto; padding:8px; overflow: auto; ">
                         ---
                     </div>
                 </div>
             </div>
-        </td>
-    </tr>
-    <tr style="height: 24px">
-        <td colspan="5" style="background: #F3F3F3"><span
-                id="copyright">Copyright &copy; 2021, Dmitry G. Quznetsov</span></td>
-    </tr>
-</table>
-
+        </div>
+    </div>
+    <div style="background: #CCC; width: 100%; height: 24px; bottom: 0px; padding: 4px 0 4px 0; position: fixed">
+        <span id="copyright" style="padding: 0 0 0 8px;">Copyright &copy; 2021, Dmitry G. Quznetsov</span>
+    </div>
+</div>
 
 </body>
 </html>

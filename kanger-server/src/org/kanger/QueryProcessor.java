@@ -42,6 +42,7 @@ import org.kanger.units.Predicate;
 import org.kanger.units.Rule;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -275,7 +276,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
-        String query = parameters.getString("request");
+        String query = parameters.getString("compile");
+        query = URLDecoder.decode(query, "utf-8");
         boolean res = mind.compile(query);
         if (res) {
             result.put("result", "OK");
@@ -291,6 +293,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         JSONObject result = new JSONObject();
 
         String query = parameters.getString("request");
+        query = URLDecoder.decode(query, "utf-8");
         Boolean res = mind.query(query);
         if (res == null) {
             result.put("response", "unknown");
@@ -302,7 +305,18 @@ public class QueryProcessor implements IReactor<JSONObject> {
         result.put("hypothesis", mind.getHypothesis().size());
         if (mind.getCurrentLogRecord(LogMode.ANALYZER) != null) {
             result.put("result", "OK");
-            result.put("description", mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+            String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
+            for (ILogEntry e : mind.getLog()) {
+                if (e.getType() == LogMode.SOLVES) {
+                    description += "<br>" + e.getRecord();
+                }
+            }
+            for (ILogEntry e : mind.getLog()) {
+                if (e.getType() == LogMode.VALUES) {
+                    description += "<br>" + e.getRecord();
+                }
+            }
+            result.put("description", description);
         } else {
             result.put("result", "error");
             result.put("description", "Query error");

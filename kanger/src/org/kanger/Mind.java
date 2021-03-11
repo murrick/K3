@@ -2115,3 +2115,4 @@ public class Mind implements IMind {
 //TODO: При use: 1) Путает имена переменных, 2) Добавляет в результат %%, 3) Выводит море кривых гипотез
 //TODO: +@x @y ($z parent(z,x), parent(z,y), x != y) -> native(x,y);
 //TODO: -$x $y native(x,y);
+//TODO: УДаление функции с пустым телом!

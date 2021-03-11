@@ -52,10 +52,10 @@ public class UDF extends Operation implements IReactor {
     private static Context scriptContext = null;
 
     public UDF() {
-        if (scriptContext == null) {
-            scriptContext = Context.enter();
-            scriptContext.setLanguageVersion(Context.VERSION_1_7);
-        }
+//        if (scriptContext == null) {
+//            scriptContext = Context.enter();
+//            scriptContext.setLanguageVersion(Context.VERSION_1_7);
+//        }
         this.proc = this;
     }
 
@@ -65,87 +65,94 @@ public class UDF extends Operation implements IReactor {
 
     @Override
     public Object run(Object o) throws Exception {
-        IMind mind = ((IUnit) o).getMind();
-        ArgumentsList arg = ((Function) o).getArguments();
-        Scriptable scope = scriptContext.initStandardObjects();
+        scriptContext = Context.enter();
+        scriptContext.setLanguageVersion(Context.VERSION_1_7);
 
         int ret = 1;
-        String script = "";
-        int undefined = 0;
-        int index = -1;
-        for (int i = 0; i < arg.size(); ++i) {
-            String var = params.get(i);
-            if (((Mind) mind).getCalculator().getFunctions().isDefined(arg.get(i))) {
-                scope.put(var, scope, arg.get(i).getValue(mind).getValue());
-            } else if (arg.get(i).isEmpty((Mind) mind)) {
-                index = i;
-                ++undefined;
-            } else {
-                undefined = 3;
+        try {
+            IMind mind = ((IUnit) o).getMind();
+            ArgumentsList arg = ((Function) o).getArguments();
+            Scriptable scope = scriptContext.initStandardObjects();
+
+            String script = "";
+            int undefined = 0;
+            int index = -1;
+            for (int i = 0; i < arg.size(); ++i) {
+                String var = params.get(i);
+                if (((Mind) mind).getCalculator().getFunctions().isDefined(arg.get(i))) {
+                    scope.put(var, scope, arg.get(i).getValue(mind).getValue());
+                } else if (arg.get(i).isEmpty((Mind) mind)) {
+                    index = i;
+                    ++undefined;
+                } else {
+                    undefined = 3;
+                }
             }
-        }
-        if (undefined > 1) {
-            ret = 0;
-        } else {
-            ITerm fres = null;
-            if (index == -1) {
-                script = scripts.get(0);
-                fres = arg.get(arg.size() - 1).getValue(mind);
-            } else if (index + 1 == arg.size() && !scripts.isEmpty()) {
-                script = scripts.get(0);
-            } else if (index + 1 < scripts.size()) {
-                script = scripts.get(index + 1);
-            } else {
-                script = "";
+            if (undefined > 1) {
                 ret = 0;
-            }
+            } else {
+                ITerm fres = null;
+                if (index == -1) {
+                    script = scripts.get(0);
+                    fres = arg.get(arg.size() - 1).getValue(mind);
+                } else if (index + 1 == arg.size() && !scripts.isEmpty()) {
+                    script = scripts.get(0);
+                } else if (index + 1 < scripts.size()) {
+                    script = scripts.get(index + 1);
+                } else {
+                    script = "";
+                    ret = 0;
+                }
 
-            if (!script.isEmpty()) {
-                scope.put("mind", scope, mind);
+                if (!script.isEmpty()) {
+                    scope.put("mind", scope, mind);
 
-                scriptContext.evaluateString(scope, script, "script", 1, null);
+                    scriptContext.evaluateString(scope, script, "script", 1, null);
 
-                if (index != -1) {
-                    Object val = scope.get(params.get(index), scope);
-                    if (val == null) {
-                        ret = 0;
-                        ((Argument) arg.get(index)).setValue((Mind) mind, null);
-                    } else {
-                        if (val instanceof NativeJavaObject) {
-                            val = ((NativeJavaObject) val).unwrap();
-                        } else if (val instanceof NativeArray) {
-                            val = ((NativeArray) val).toArray();
+                    if (index != -1) {
+                        Object val = scope.get(params.get(index), scope);
+                        if (val == null) {
+                            ret = 0;
+                            ((Argument) arg.get(index)).setValue((Mind) mind, null);
+                        } else {
+                            if (val instanceof NativeJavaObject) {
+                                val = ((NativeJavaObject) val).unwrap();
+                            } else if (val instanceof NativeArray) {
+                                val = ((NativeArray) val).toArray();
+                            }
+                            if (!(val instanceof ITerm)) {
+                                val = ((DictionaryFactory) mind.getTerms()).add(val);
+                            }
+                            if (!((Argument) arg.get(index)).setValue((Mind) mind, (ITerm) val)) {
+                                ret = 0;
+                            }
                         }
-                        if (!(val instanceof ITerm)) {
-                            val = ((DictionaryFactory) mind.getTerms()).add(val);
-                        }
-                        if (!((Argument) arg.get(index)).setValue((Mind) mind, (ITerm) val)) {
+                    } else if (fres != null) {
+                        Object val = scope.get(params.get(params.size() - 1), scope);
+                        ITerm cres = ((DictionaryFactory) mind.getTerms()).add(val);
+                        if (cres.getId() == fres.getId()) {
+                            ret = 2;
+                        } else {
+                            scope.put(params.get(params.size() - 1), scope, fres.getValue());
+                            for (int i = 0; i < arg.size() - 1; ++i) {
+                                if (arg.get(i).getType() == ArgumentType.TVARIABLE) {
+                                    String var = params.get(i);
+                                    script = scripts.get(i + 1);
+                                    Object tmp = scope.get(var, scope);
+                                    scriptContext.evaluateString(scope, script, "script", 1, null);
+                                    Object calc = scope.get(var, scope);
+                                    scope.put(var, scope, tmp);
+                                    TValue v = ((Mind) mind).getCalculator().getFunctions().addTValue(arg.get(i), ((DictionaryFactory) mind.getTerms()).add(calc));
+                                    showLog((IUnit) o, v);
+                                }
+                            }
                             ret = 0;
                         }
                     }
-                } else if (fres != null) {
-                    Object val = scope.get(params.get(params.size() - 1), scope);
-                    ITerm cres = ((DictionaryFactory) mind.getTerms()).add(val);
-                    if (cres.getId() == fres.getId()) {
-                        ret = 2;
-                    } else {
-                        scope.put(params.get(params.size() - 1), scope, fres.getValue());
-                        for (int i = 0; i < arg.size() - 1; ++i) {
-                            if (arg.get(i).getType() == ArgumentType.TVARIABLE) {
-                                String var = params.get(i);
-                                script = scripts.get(i + 1);
-                                Object tmp = scope.get(var, scope);
-                                scriptContext.evaluateString(scope, script, "script", 1, null);
-                                Object calc = scope.get(var, scope);
-                                scope.put(var, scope, tmp);
-                                TValue v = ((Mind) mind).getCalculator().getFunctions().addTValue(arg.get(i), ((DictionaryFactory) mind.getTerms()).add(calc));
-                                showLog((IUnit) o, v);
-                            }
-                        }
-                        ret = 0;
-                    }
                 }
             }
+        } finally {
+            scriptContext.exit();
         }
         return ret;
     }

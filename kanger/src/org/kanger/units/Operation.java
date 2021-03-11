@@ -274,7 +274,6 @@ public class Operation implements IUnit<Operation>, IOperation {
         map.put("mode", mode.name());
         map.put("name", name);
         map.put("range", range);
-//        map.put("scripts", scripts);
         map.put("parameters", params);
         return map;
     }

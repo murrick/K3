@@ -161,7 +161,7 @@ public class HttpServer {
 
         int length = 0;
         for (String line : headers) {
-            if (line.trim().toLowerCase().startsWith("content-hength")) {
+            if (line.trim().toLowerCase().startsWith("content-length")) {
                 length = Integer.parseInt(line.split(":")[1].trim());
             }
         }
