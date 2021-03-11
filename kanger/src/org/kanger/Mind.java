@@ -1861,6 +1861,14 @@ public class Mind implements IMind {
                 str += s + Enums.LINE_SEPARATOR;
             }
         }
+        for (IOperation o : getLibrary()) {
+            if (!o.isDeleted(this)) {
+                str += Enums.LINE_SEPARATOR;
+                for (String s : o.asString().split("\\R")) {
+                    str += s + Enums.LINE_SEPARATOR;
+                }
+            }
+        }
         c = getComments().get(CommentFactory.FOOTER_ID);
         if (c != null) {
             str += Enums.LINE_SEPARATOR;

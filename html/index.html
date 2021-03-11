@@ -44,95 +44,150 @@
 
         jQuery(document).ready(function(){
 
-            var v = document.getElementById("version-code");
-            var u = document.getElementById("user-name");
-            var d = document.getElementById("db-name");
-            if(v) {
-                post({context: "version"}, function(data){
-                    if(data.result == "OK") {
-                        v.innerHTML = data.version;
-                    }
-                });
+            if(window.token == null || window.token == "") {
+                window.token = getCookie("token");
             }
-            if(u) {
-                post({
-                    context: "login",
-                    parameters: {
-                        login: "singleuser",
-                        password: "singleuser"
+            if(window.token == null || window.token == "") {
+                document.getElementById("super").style.display = "none";
+                document.getElementById("login").style.display = "";
+                document.getElementById("login-in").focus();
+                document.getElementById("login-in").onkeypress = function(e){
+                    if(e.keyCode == 13) {
+                        document.getElementById("login-submit").click();
                     }
-                }, function(data) {
-                    if(data.result == "OK") {
-                        u.innerHTML = "singleuser";
-                        window.token = data.token;
+                }
+                document.getElementById("password-in").onkeypress = function(e){
+                    if(e.keyCode == 13) {
+                        document.getElementById("login-submit").click();
+                    }
+                }
+            } else {
+                document.getElementById("super").style.display = "";
+                document.getElementById("login").style.display = "none";
 
-                        if(d) {
-                            post({
-                                context: "command",
-                                parameters: {
-                                    token : window.token,
-                                    used: ""
-                                }
-                            }, function(data){
-                                if(data.result == "OK") {
-                                    d.style.color = "#000";
-                                    d.style.fontWeight = "bold";
-                                    d.innerHTML = data.name;
-                                } else {
-                                    d.style.color = "#777";
-                                    d.innerHTML = "unused";
-                                }
-                            });
+                var v = document.getElementById("version-code");
+                var u = document.getElementById("user-name");
+                var d = document.getElementById("db-name");
+                if(v) {
+                    post({context: "version"}, function(data){
+                        if(data.result == "OK") {
+                            v.innerHTML = data.version;
+                        }
+                    });
+                }
+                if(u) {
+                    loginCheck(function(data) {
+                        if(data.result == "OK") {
+                            u.innerHTML = getCookie("login");
+                            window.token = data.token;
+                            setCookie("token", data.token);
 
-                            showResults();
-                            showStatements();
-                            showFunctions();
-                            showSolutions();
-                            showHypothesis();
-                            showLog();
-
-                            post({
-                                context: "history",
-                                parameters: {
-                                    token : window.token,
-                                    get : ""
-                                }
-                            }, function(data){
-                                if(data.result == "OK") {
-                                    var queryHistory = document.getElementById("query-history");
-                                    for(var i=0; i < data.size; ++i) {
-                                        var h = decodeURIComponent(data.list[i].replace(/\+/g, '%20'));
-                                        var mode = h.charAt(0);
-                                        h = h.substr(1);
-                                        var color = h.split("~~~")[0];
-                                        h = h.split("~~~")[1];
-                                        var div;
-                                        if(mode == "Q") {
-                                            div = logRequestRaw(h);
-                                        } else {
-                                            div = logResponseRaw(null, h);
-                                        }
-                                        div.style.color = color;
+                            if(d) {
+                                post({
+                                    context: "command",
+                                    parameters: {
+                                        token : window.token,
+                                        used: ""
                                     }
+                                }, function(data){
+                                    if(data.result == "OK") {
+                                        d.style.color = "#000";
+                                        d.style.fontWeight = "bold";
+                                        d.innerHTML = data.name;
+                                    } else {
+                                        d.style.color = "#777";
+                                        d.innerHTML = "unused";
+                                    }
+                                });
 
-                                    showTransactionLevel(data);
+                                showResults();
+                                showStatements();
+                                showFunctions();
+                                showSolutions();
+                                showHypothesis();
+                                showLog();
+
+                                post({
+                                    context: "history",
+                                    parameters: {
+                                        token : window.token,
+                                        get : ""
+                                    }
+                                }, function(data){
+                                    if(data.result == "OK") {
+                                        var queryHistory = document.getElementById("query-history");
+                                        for(var i=0; i < data.size; ++i) {
+                                            var h = decodeURIComponent(data.list[i].replace(/\+/g, '%20'));
+                                            var mode = h.charAt(0);
+                                            h = h.substr(1);
+                                            var color = h.split("~~~")[0];
+                                            h = h.split("~~~")[1];
+                                            var div;
+                                            if(mode == "Q") {
+                                                div = logRequestRaw(h);
+                                            } else {
+                                                div = logResponseRaw(null, h);
+                                            }
+                                            div.style.color = color;
+                                        }
+
+                                        showTransactionLevel(data);
+                                    }
+                                });
+
+                                placeElements(data);
+                                var queryInput = document.getElementById("query_input");
+                                if(queryInput) {
+                                    queryInput.focus();
                                 }
-                            });
 
-                            placeElements(data);
-                            var queryInput = document.getElementById("query_input");
-                            if(queryInput) {
-                                queryInput.focus();
                             }
 
+                        } else {
+                            alert(data.description);
                         }
-
-                    } else {
-                        alert(data.description);
-                    }
-                });
+                    });
+                }
             }
         });
+
+        function loginCheck(callback) {
+            post({
+                context: "command",
+                parameters: {
+                    token : window.token,
+                    ping: ""
+                }
+            }, function(data){
+                if(data.result == "OK") {
+                    callback({
+                        result: "OK",
+                        token: window.token
+                    });
+                } else {
+                    setCookie("token", "");
+                    document.location.reload();
+                }
+            });
+        }
+
+        function login() {
+            var loginStr = document.getElementById("login-in").value;
+            var passwordStr = document.getElementById("password-in").value;
+            post({
+                context: "login",
+                parameters: {
+                    login: loginStr,
+                    password: passwordStr
+                }
+            }, function(data) {
+                if(data.result == "OK") {
+                    setCookie("token", data.token);
+                    setCookie("login", loginStr);
+                }
+                document.location.reload();
+            });
+        }
 
         function post(data, callback) {
             $.ajax({
@@ -290,7 +345,23 @@
                 case "rollback" :
                     commandTransaction(cmd);
                     break;
+                case "quit":
+                    commandQuit();
+                    break;
             }
+        }
+
+        function commandQuit() {
+                post({
+                    context: "command",
+                    parameters: {
+                        token : window.token,
+                        quit : ""
+                    }
+                }, function(data){
+                    setCookie("token", "");
+                    document.location.reload();
+                });
         }
 
         function refreshScreen(data, ln) {
@@ -1154,7 +1225,7 @@
                     }
                     text += ") ";
                     for(var i = 0; i < data.list[0].scripts.length; ++i) {
-                        text += "{\n" + data.list[0].scripts[i] + "\n} ";
+                        text += "\n{" + data.list[0].scripts[i] + "}";
                     }
                     text = text.trim() + ";";
                     openEditor(text);
@@ -1180,12 +1251,43 @@
             });
         }
 
+
+
     </script>
 </head>
 <body onmousemove="onMouseMove(event)" onmouseup="onMouseUp(event)" onresize="placeElements()"
       style="height:100%; padding:0; margin:0; overflow: hidden;">
 
-<div id="super" style="height:100%; width:100%">
+<div id="login" style="height:100%; width:100%">
+    <div style="width: 400px; height: 200px; background-color: #999; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
+        <table cellpadding="0" cellspacing="0" style="width:200px; border: none; margin-top: 50px; margin-left: 22px;">
+            <tr>
+                <td>
+                    <div style="width: 100px; padding: 8px; float: left;">login:</div>
+                </td>
+                <td>
+                    <input id="login-in" style="width: 200px;" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100px; padding: 8px; float: left;">password:</div>
+                </td>
+                <td>
+                    <input id="password-in" style="width: 200px;" type="password">
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button id="login-submit" onclick="login()" style="float: right; width: 80px; margin-top:30px;">Ok
+                    </button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="super" style="height:100%; width:100%; display: none;">
     <div style="background: #CCC; width:100%; height: 24px; padding: 4px 0 4px 0;">
         <span style="padding: 0 0 0 8px;">KANGER III Version</span>
         <span id="version-code"></span>

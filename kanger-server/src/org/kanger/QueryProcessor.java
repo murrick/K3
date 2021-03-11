@@ -119,7 +119,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             result.put("list", list);
         } else if (!parameters.isNull("put")) {
             String s = parameters.getString("put"); //URLDecoder.decode(parameters.getString("put"), "utf-8");
-            UserFactory.addHystory(user, s);
+            UserFactory.addHistory(user, s);
             result.put("result", "OK");
         }
         if (result != null) {
@@ -380,14 +380,24 @@ public class QueryProcessor implements IReactor<JSONObject> {
             result = reindexDatabase(parameters, user);
         } else if (!parameters.isNull("erase")) {
             result = clearWorkspace(user);
-        } else if (!parameters.isNull("quit")) {
-            result = quit(user);
+        } else if (!parameters.isNull("ping")) {
+            result = pong(user);
         }
         if (result != null) {
             IMind mind = user.getCurrentMind();
             result.put("transaction", mind.getTransactionLevel());
             result.put("empty", mind.isEmptyLevel());
         }
+        if (!parameters.isNull("quit")) {
+            result = quit(user);
+        }
+        return result;
+    }
+
+    private JSONObject pong(IUser user) {
+        JSONObject result = new JSONObject();
+        result.put("result", "OK");
+        result.put("description", "pong");
         return result;
     }
 

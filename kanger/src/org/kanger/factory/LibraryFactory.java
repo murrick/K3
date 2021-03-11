@@ -153,6 +153,9 @@ public class LibraryFactory implements IFactory<IOperation> {
             }
             x = (Operation) s;
         }
+        if (x.getScripts().isEmpty()) {
+            x.setDeleted(true, mind);
+        }
         return x;
     }
 

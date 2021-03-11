@@ -32,30 +32,36 @@ import org.kanger.interfaces.IUser;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class UserFactory {
+    public static final int MAX_HISTORY_SIZE = 512;
+    public static final long INACTIVITY_TIME = 1000L * 60 * 60 * 3;    // 3 hours
 
     private static String rootDir = "KANGER";
     private static Map<String, IUser> users = new ConcurrentHashMap<>();
     private static Map<Long, List<String>> history = new ConcurrentHashMap<>();
+    private static Map<Long, Long> activity = new ConcurrentHashMap<>();
+    private static TimerThread timerThread = new TimerThread(activity);
 
     static {
         if (System.getenv().containsKey("KANGER_HOME")) {
             rootDir = System.getenv().get("KANGER_HOME");
         }
+
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(timerThread, 0, INACTIVITY_TIME / 10);
     }
 
     public static IUser getUser(String token) throws Exception {
         if (users.containsKey(token)) {
-            return users.get(token);
+            IUser user = users.get(token);
+            activity.put(user.getId(), System.currentTimeMillis());
+            return user;
         } else {
             throw new AuthenticationErrorException("token " + token);
         }
@@ -70,17 +76,12 @@ public class UserFactory {
         }
         String token = token();
         users.put(token, user);
+        activity.put(user.getId(), System.currentTimeMillis());
         return token;
     }
 
     public static void dropUser(IUser user) {
-        for (Map.Entry<String, IUser> e : users.entrySet()) {
-            if (e.getValue().getId() == user.getId()) {
-                users.remove(e.getKey());
-                break;
-            }
-        }
-        history.remove(user.getId());
+        dropUser(user.getId());
     }
 
     public static IUser getUser(String login, String password) throws Exception {
@@ -207,11 +208,14 @@ public class UserFactory {
         return home + subDir;
     }
 
-    public static void addHystory(IUser user, String record) {
+    public static void addHistory(IUser user, String record) {
         if (!history.containsKey(user.getId())) {
             history.put(user.getId(), new ArrayList<>());
         }
         history.get(user.getId()).add(record);
+        while (history.get(user.getId()).size() > Integer.parseInt(user.getProperty("user.history.size", MAX_HISTORY_SIZE + ""))) {
+            history.get(user.getId()).remove(0);
+        }
     }
 
     public static List<String> getHistory(IUser user) {
@@ -222,4 +226,14 @@ public class UserFactory {
         }
     }
 
+    public static void dropUser(Long id) {
+        for (Map.Entry<String, IUser> e : users.entrySet()) {
+            if (e.getValue().getId() == id) {
+                users.remove(e.getKey());
+                break;
+            }
+        }
+        history.remove(id);
+        activity.remove(id);
+    }
 }
