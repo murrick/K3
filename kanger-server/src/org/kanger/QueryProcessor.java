@@ -29,6 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
@@ -41,13 +42,18 @@ import org.kanger.units.Operation;
 import org.kanger.units.Predicate;
 import org.kanger.units.Rule;
 
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.io.*;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 
 public class QueryProcessor implements IReactor<JSONObject> {
 
@@ -106,7 +112,59 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
-    private JSONObject processHistory(JSONObject parameters, IUser user) throws UnsupportedEncodingException {
+    public static void sendEmail(String[] addressTo, String subject, String text, String from, String charset, String login, String password, String host, int port) throws Exception {
+
+        try {
+
+            if (addressTo.length == 0 || addressTo[0].length() == 0) {
+                throw new AddressException("Получатель электронной почты неопределен");
+            }
+
+            Properties props = new Properties();
+
+            props.put("mail.transport.protocol", "smtp");
+            props.put("mail.host", host);
+            props.put("mail.user", login);
+            props.put("mail.password", password);
+            props.put("mail.port", port);
+
+            //props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.EnableSSL.enable", "true");
+
+            Session session = Session.getInstance(props, null);
+            //Transport tr = session.getTransport("smtp");
+
+            MimeMessage msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress(from));
+            for (String to : addressTo) {
+                try {
+                    new InternetAddress(to).validate();
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+                } catch (AddressException ex) {
+                }
+            }
+            msg.setSentDate(new Date());
+            msg.addHeader("Reply-To", from);
+
+            msg.setSubject(subject, charset);
+            msg.setContent(text,
+                    "text/plain; charset=" + charset);
+
+            Transport transport = session.getTransport();
+            try {
+                transport.connect(host, login, password);
+                transport.sendMessage(msg, msg.getAllRecipients());
+            } finally {
+                transport.close();
+            }
+        } catch (MessagingException ex) {
+            ex.printStackTrace(System.err);
+            throw new Exception(ex);
+        }
+    }
+
+    private JSONObject processHistory(JSONObject parameters, IUser user) throws Exception {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
         List<String> list = new ArrayList<>();
@@ -125,35 +183,6 @@ public class QueryProcessor implements IReactor<JSONObject> {
         if (result != null) {
             result.put("transaction", mind.getTransactionLevel());
             result.put("empty", mind.isEmptyLevel());
-        }
-        return result;
-    }
-
-    private JSONObject processLogin(JSONObject parameters) throws JSONException {
-        JSONObject result = new JSONObject();
-        if (!parameters.isNull("login") && !parameters.isNull("password")) {
-            try {
-                IUser user = UserFactory.getUser(parameters.getString("login"), parameters.getString("password"));
-                try {
-                    ((User) user).getData();
-                } catch (RuntimeErrorException e) {
-                    new DB().init(user);
-                }
-                try {
-                    ((User) user).getUdf();
-                } catch (RuntimeErrorException e) {
-                    new UDF().init(user);
-                }
-                String token = UserFactory.addUser(user);
-                result.put("result", "OK");
-                result.put("token", token);
-            } catch (Exception e) {
-                result.put("result", "error");
-                result.put("description", e.toString());
-            }
-        } else {
-            result.put("result", "error");
-            result.put("description", "Login request format error");
         }
         return result;
     }
@@ -362,12 +391,126 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
+    private JSONObject processLogin(JSONObject parameters) throws JSONException {
+        JSONObject result = new JSONObject();
+        if (!parameters.isNull("login") && !parameters.isNull("password")) {
+            try {
+                IUser user = UserFactory.getUser(parameters.getString("login"), parameters.getString("password"));
+                if (user.containsProperty("reg.agreed") && Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
+                    try {
+                        ((User) user).getData();
+                    } catch (RuntimeErrorException e) {
+                        new DB().init(user);
+                    }
+                    try {
+                        ((User) user).getUdf();
+                    } catch (RuntimeErrorException e) {
+                        new UDF().init(user);
+                    }
+                }
+                String token = UserFactory.addUser(user);
+                result.put("result", "OK");
+                result.put("token", token);
+            } catch (Exception e) {
+                result.put("result", "error");
+                result.put("description", e.toString());
+            }
+        } else if (!parameters.isNull("confirm")) {
+            try {
+                IUser user = UserFactory.getUserByToken(parameters.getString("confirm"));
+                if (Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
+                    result.put("result", "error");
+                    result.put("description", "E-mail " + user.getProperty("reg.email", "") + " already confirmed");
+                } else {
+                    user.setProperty("reg.agreed", true + "");
+                    result.put("result", "OK");
+                    result.put("description", "E-mail " + user.getProperty("reg.email", "") + " confirmed");
+                }
+            } catch (Exception e) {
+                result.put("result", "error");
+                result.put("description", e.toString());
+            }
+        } else if (!parameters.isNull("register") && !parameters.isNull("password")) {
+            try {
+                UserFactory.getUser(parameters.getString("register"), parameters.getString("password"));
+                result.put("result", "error");
+                result.put("description", "User " + parameters.getString("register") + " already registered");
+            } catch (AuthenticationErrorException ex) {
+                try {
+                    String mainToken = UserFactory.token(parameters.getString("register"), parameters.getString("password"));
+                    IUser user = UserFactory.createUser(parameters.getString("register"), parameters.getString("password"));
+                    user.setProperty("reg.agreed", false + "");
+                    if (!parameters.isNull("register")) {
+                        user.setProperty("reg.login", parameters.getString("register"));
+                    }
+                    if (!parameters.isNull("email")) {
+                        user.setProperty("reg.email", parameters.getString("email"));
+                    }
+                    if (!parameters.isNull("name")) {
+                        user.setProperty("reg.name", URLDecoder.decode(parameters.getString("name"), "utf-8"));
+                    }
+                    if (!parameters.isNull("country")) {
+                        user.setProperty("reg.country", URLDecoder.decode(parameters.getString("country"), "utf-8"));
+                    }
+                    if (!parameters.isNull("city")) {
+                        user.setProperty("reg.city", URLDecoder.decode(parameters.getString("city"), "utf-8"));
+                    }
+                    if (!parameters.isNull("privacy")) {
+                        user.setProperty("reg.privacy", parameters.getBoolean("privacy") + "");
+                    }
+                    if (user.containsProperty("reg.agreed") && Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
+                        try {
+                            ((User) user).getData();
+                        } catch (RuntimeErrorException e) {
+                            new DB().init(user);
+                        }
+                        try {
+                            ((User) user).getUdf();
+                        } catch (RuntimeErrorException e) {
+                            new UDF().init(user);
+                        }
+                    }
+
+                    String token = UserFactory.addUser(user);
+                    result.put("result", "OK");
+                    result.put("token", token);
+
+                    if (!parameters.isNull("email") && !parameters.getString("email").isEmpty()) {
+                        sendEmail(new String[]{parameters.getString("email")},
+                                "KANGER: Registration confirmation",
+                                "You are just registered on site kanger.org. Please confirm your e-mail by following link: " +
+                                        "https://kanger.org:9090/login?confirm=" + mainToken,
+                                Settings.getProperty("server.email.from", "murray@kanger.org"),
+                                "utf-8",
+                                Settings.getProperty("server.email.login", "murray@kanger.org"),
+                                Settings.getProperty("server.email.password", "nhb3rjnf64"),
+                                Settings.getProperty("server.email.host", "smtp.yandex.ru"),
+                                Integer.parseInt(Settings.getProperty("server.email.port", 993 + "")));
+                    }
+
+                } catch (Exception e) {
+                    result.put("result", "error");
+                    result.put("description", e.toString());
+                }
+            } catch (Exception e) {
+                result.put("result", "error");
+                result.put("description", e.toString());
+            }
+        } else {
+            result.put("result", "error");
+            result.put("description", "Login request format error");
+        }
+        return result;
+    }
+
     private JSONObject processCommand(JSONObject parameters, IUser user) throws Exception {
         JSONObject result = null;
         if (!parameters.isNull("get")) {
             result = loadSourceFile(parameters, user);
         } else if (!parameters.isNull("put")) {
             result = saveSourceFile(parameters, user);
+        } else if (!parameters.isNull("delete")) {
+            result = deleteSourceFile(parameters, user);
         } else if (!parameters.isNull("use")) {
             result = useDatabase(parameters, user);
         } else if (!parameters.isNull("used")) {
@@ -401,23 +544,28 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
-    private JSONObject saveSourceFile(JSONObject parameters, IUser user) throws Exception {
+    private JSONObject deleteSourceFile(JSONObject parameters, IUser user) {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
         String fname = mind.getSourceFileName();
-        if (!parameters.getString("put").isEmpty()) {
-            fname = parameters.getString("put");
+        if (!parameters.getString("delete").isEmpty()) {
+            fname = parameters.getString("delete");
         }
         if (fname != null && !fname.isEmpty()) {
             File f = new File(mind.getUser().getSourceDir() + fname);
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
-                bw.write(mind.getSourceCode());
-                mind.setSourceFileName(fname);
-                result.put("description", "Source file " + fname + " saved.");
+            if (f.exists()) {
+                f.delete();
+                result.put("result", "OK");
+                result.put("description", "Source file " + fname + " deleted.");
+            } else {
+                result.put("result", "error");
+                result.put("description", "Source file not found " + fname);
             }
+        } else {
+            result.put("result", "error");
+            result.put("description", "You have to select name for file");
         }
-        result.put("result", "OK");
         return result;
     }
 
@@ -767,6 +915,29 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
+    private JSONObject saveSourceFile(JSONObject parameters, IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        JSONObject result = new JSONObject();
+
+        String fname = mind.getSourceFileName();
+        if (!parameters.getString("put").isEmpty()) {
+            fname = parameters.getString("put");
+        }
+        if (fname != null && !fname.isEmpty()) {
+            File f = new File(mind.getUser().getSourceDir() + fname);
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
+                bw.write(mind.getSourceCode());
+                mind.setSourceFileName(fname);
+                result.put("result", "OK");
+                result.put("description", "Source file " + fname + " saved.");
+            }
+        } else {
+            result.put("result", "error");
+            result.put("description", "You have to select name for file.");
+        }
+        return result;
+    }
+
     private JSONObject loadSourceFile(JSONObject parameters, IUser user) throws Exception {
         JSONObject result = new JSONObject();
         IMind mind = user.getCurrentMind();
@@ -803,7 +974,11 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     ((Mind) mind).setQueryResult(res);
 
                     user.setCurrentMind(mind);
-                    result.put("result", mind.getQueryResult() != null && mind.getQueryResult() ? "OK" : "fail");
+                    if (mind.getQueryResult() != null && mind.getQueryResult()) {
+                        result.put("result", "OK");
+                    } else {
+                        result.put("result", "error");
+                    }
                     result.put("description", description);
                 } else {
                     result.put("result", "error");

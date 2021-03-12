@@ -384,9 +384,13 @@ public class Predicates {
                 }
             }
         } else if (interval.getType() == DataType.STRING) {
+            String scur = cur.getValue().toString();
+            if (cur.getType() == DataType.NUMERIC) {
+                scur = ((Double) cur.getValue()).longValue() + "";
+            }
             if (step == null) {
-                res = interval.getValue().toString().contains(cur.getValue().toString())
-                        || Pattern.matches((String) cur.getValue(), (String) interval.getValue());
+                res = interval.getValue().toString().contains(scur)
+                        || Pattern.matches(scur, interval.getValue().toString());
             } else {
                 Pattern pt = Pattern.compile(step.getValue().toString());
                 Matcher mt = pt.matcher(interval.getValue().toString());

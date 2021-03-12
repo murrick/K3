@@ -30,8 +30,9 @@ import org.kanger.interfaces.IReactor;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
@@ -57,47 +58,51 @@ public class HttpServer {
         this.port = port;
         this.ssl = ssl;
 
-        InetSocketAddress address = new InetSocketAddress("0.0.0.0", port);
-        startMultiThreaded(address, ssl, reactor);
+        startMultiThreaded(port, ssl, reactor);
     }
 
-    private ServerSocket getServerSocket(InetSocketAddress address, boolean ssl) throws Exception {
+    private ServerSocket getServerSocket(int port, boolean ssl) throws Exception {
         ServerSocket serverSocket = null;
         if (ssl) {
             // Backlog is the maximum number of pending connections on the socket,
             // 0 means that an implementation-specific default is used
             int backlog = 0;
 
-            Path keyStorePath = Paths.get("./keystore.jks");
-            char[] keyStorePassword = "pass_for_self_signed_cert".toCharArray();
+            Path keyStorePath = Paths.get(Settings.getProperty("server.keystore", "./keystore.jks"));
+            char[] keyStorePassword = Settings.getProperty("server.keystore.password", "password").toCharArray();
 
             // Bind the socket to the given port and address
             serverSocket = getSslContext(keyStorePath, keyStorePassword)
                     .getServerSocketFactory()
-                    .createServerSocket(address.getPort(), backlog, address.getAddress());
+                    .createServerSocket(port);
+//                    .createServerSocket(address.getPort(), backlog, address.getAddress());
 
             // We don't need the password anymore → Overwrite it
             Arrays.fill(keyStorePassword, '0');
 
         } else {
-            serverSocket = new ServerSocket();
-            serverSocket.bind(address);
+            serverSocket = new ServerSocket(port);
+//            serverSocket.bind(address);
         }
         return serverSocket;
     }
 
-    private SSLContext getSslContext(Path keyStorePath, char[] keyStorePass)
-            throws Exception {
+    private SSLContext getSslContext(Path keyStorePath, char[] keyStorePass) throws Exception {
 
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(new FileInputStream(keyStorePath.toFile()), keyStorePass);
 
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509"); //KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         keyManagerFactory.init(keyStore, keyStorePass);
 
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(keyStore);
+
         SSLContext sslContext = SSLContext.getInstance("TLS");
+        TrustManager[] trustManagers = tmf.getTrustManagers();
+
         // Null means using default implementations for TrustManager and SecureRandom
-        sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, null);
         return sslContext;
     }
 
@@ -139,7 +144,10 @@ public class HttpServer {
 
         JSONObject query = new JSONObject();
         JSONObject parameters = new JSONObject();
-        String get = headers.get(0).split(" ")[1]; //headers.get(0).split(" ")[1]; URLDecoder.decode(headers.get(0).split(" ")[1], encoding.displayName());
+        String get = "";
+        if (!headers.isEmpty() && headers.get(0).split(" ").length > 1) {
+            get = headers.get(0).split(" ")[1]; //headers.get(0).split(" ")[1]; URLDecoder.decode(headers.get(0).split(" ")[1], encoding.displayName());
+        }
         packet.put("query", query);
         query.put("parameters", parameters);
         String context = URLDecoder.decode(get.split("\\?")[0], encoding.displayName());
@@ -163,6 +171,7 @@ public class HttpServer {
         for (String line : headers) {
             if (line.trim().toLowerCase().startsWith("content-length")) {
                 length = Integer.parseInt(line.split(":")[1].trim());
+                break;
             }
         }
         int c;
@@ -175,11 +184,11 @@ public class HttpServer {
         return packet;
     }
 
-    private void startMultiThreaded(InetSocketAddress address, boolean ssl, IReactor<JSONObject> reactor) {
+    private void startMultiThreaded(int port, boolean ssl, IReactor<JSONObject> reactor) {
 
-        try (ServerSocket serverSocket = getServerSocket(address, ssl)) {
+        try (ServerSocket serverSocket = getServerSocket(port, ssl)) {
 
-            System.out.println("Started multi-threaded server at " + address);
+            System.out.println("Started multi-threaded server at port " + port + (ssl ? " with SSL" : ""));
 
             // A cached thread pool with a limited number of threads
             ExecutorService threadPool = newCachedThreadPool(8);
@@ -223,7 +232,7 @@ public class HttpServer {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Could not create socket at " + address);
+            System.err.println("Could not create socket at port " + port);
             e.printStackTrace();
         }
     }

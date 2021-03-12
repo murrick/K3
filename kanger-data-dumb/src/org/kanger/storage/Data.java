@@ -67,7 +67,7 @@ public class Data implements Closeable, Iterable<IStep> {
     private IBase base = null;
 
 
-    public Data(IBase base, IUser user) {
+    public Data(IBase base, IUser user) throws Exception {
         this.base = base;
         MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.data.size", (1024L * 1024) + ""));
     }

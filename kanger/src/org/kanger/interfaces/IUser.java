@@ -68,7 +68,7 @@ public interface IUser {
      * @param defaultValue значение по умолчанию.
      * @return текстовое значение параметра.
      */
-    String getProperty(String key, String defaultValue);
+    String getProperty(String key, String defaultValue) throws Exception;
 
     /**
      * Задать параметр пользователя. КАНГЕР не контролирует параметры
@@ -85,7 +85,7 @@ public interface IUser {
      * @param key          текстовый ключ параметра.
      * @param defaultValue текстовое значение параметра.
      */
-    void setProperty(String key, String defaultValue);
+    void setProperty(String key, String defaultValue) throws Exception;
 
     /**
      * Загрузить параметры пользователя из ранее созданного файла

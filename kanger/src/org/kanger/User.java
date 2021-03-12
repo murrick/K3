@@ -44,7 +44,7 @@ public class User implements IUser {
 
     private long id = -1L;
     private final Object locker = new Object();
-    Properties userSettings = new Properties();
+    private Properties userSettings = new Properties();
     private IData data = null;
     private Class udf = null;
     private Map<String, IBase> storage = new HashMap<>();
@@ -288,7 +288,7 @@ public class User implements IUser {
     }
 
     @Override
-    public String getProperty(String key, String val) {
+    public String getProperty(String key, String val) throws Exception {
         if (userSettings.containsKey(key)) {
             return userSettings.getProperty(key);
         } else {
@@ -298,7 +298,13 @@ public class User implements IUser {
     }
 
     @Override
-    public void setProperty(String key, String val) {
+    public void setProperty(String key, String val) throws Exception {
+        if (val != null) {
+            userSettings.setProperty(key, val);
+        } else {
+            userSettings.remove(key);
+        }
+        loadProperties();
         if (val != null) {
             userSettings.setProperty(key, val);
         } else {

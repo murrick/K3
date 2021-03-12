@@ -42,7 +42,8 @@ public class UserFactory {
     public static final int MAX_HISTORY_SIZE = 512;
     public static final long INACTIVITY_TIME = 1000L * 60 * 60 * 3;    // 3 hours
 
-    private static String rootDir = "KANGER";
+    public static String rootDir = "KANGER";
+
     private static Map<String, IUser> users = new ConcurrentHashMap<>();
     private static Map<Long, List<String>> history = new ConcurrentHashMap<>();
     private static Map<Long, Long> activity = new ConcurrentHashMap<>();
@@ -84,10 +85,7 @@ public class UserFactory {
         dropUser(user.getId());
     }
 
-    public static IUser getUser(String login, String password) throws Exception {
-
-        String token = token(login, password);
-
+    public static IUser getUserByToken(String token) throws Exception {
         IUser user = new User();
         user.setProperty("user.home", getHome());
 
@@ -108,7 +106,7 @@ public class UserFactory {
         }
 
         if (user.getId() == -1L) {
-            throw new AuthenticationErrorException(login);
+            throw new AuthenticationErrorException();
         }
 
         boolean found = false;
@@ -121,8 +119,8 @@ public class UserFactory {
 
         if (!found) {
             String userDir = getDir(rootDir + Enums.FILE_SEPARATOR + user.getId() + Enums.FILE_SEPARATOR);
-            user.setProperty("user.dir", userDir);
             Files.createDirectories(Paths.get(userDir));
+            user.setProperty("user.dir", userDir);
 
             user.loadProperties();
 
@@ -140,6 +138,12 @@ public class UserFactory {
         }
 
         return user;
+    }
+
+    public static IUser getUser(String login, String password) throws Exception {
+
+        String token = token(login, password);
+        return getUserByToken(token);
     }
 
 
@@ -176,7 +180,7 @@ public class UserFactory {
         return getUser(login, password);
     }
 
-    private static String token(String login, String password) {
+    public static String token(String login, String password) {
         return String.format("%04x%04x", login.hashCode(), password.hashCode());
     }
 
@@ -184,7 +188,7 @@ public class UserFactory {
         return String.format("%04x%04x", UUID.randomUUID().hashCode(), UUID.randomUUID().hashCode());
     }
 
-    private static String getHome() {
+    public static String getHome() {
         String home = System.getProperty("user.home");
         if (home.isEmpty()) {
             home = new File("").getAbsolutePath();
@@ -200,7 +204,7 @@ public class UserFactory {
         return home;
     }
 
-    private static String getDir(String subDir) {
+    public static String getDir(String subDir) {
         String home = getHome();
         if (!home.isEmpty()) {
             home += Enums.FILE_SEPARATOR;
@@ -208,7 +212,7 @@ public class UserFactory {
         return home + subDir;
     }
 
-    public static void addHistory(IUser user, String record) {
+    public static void addHistory(IUser user, String record) throws Exception {
         if (!history.containsKey(user.getId())) {
             history.put(user.getId(), new ArrayList<>());
         }

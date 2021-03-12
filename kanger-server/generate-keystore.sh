@@ -24,5 +24,5 @@
 #
 
 keytool -genkeypair -keyalg RSA -alias selfsigned -keystore ../keystore.jks \
-        -storepass pass_for_self_signed_cert \
+        -storepass password \
         -dname "CN=localhost, OU=Developers, O=Qusnetsoft Developer's Roof, L=Saint-Petersburg C=RU"

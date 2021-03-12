@@ -29,15 +29,10 @@
     <meta charset="UTF-8">
     <title>KANGER III</title>
 
-    <link
-            href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all"
-            rel="stylesheet"
-            type="text/css"
-    />
     <script charset="UTF-8" language="javascript" src="jquery-3.6.0.min.js" type="text/javascript"></script>
 
     <script>
-        window.apihost = "http://localhost:9090"
+        window.apihost = "http://localhost:1964";
         window.token = "";
         window.sizeX = null;
         window.sizeY = null;
@@ -48,7 +43,9 @@
                 window.token = getCookie("token");
             }
             if(window.token == null || window.token == "") {
+
                 document.getElementById("super").style.display = "none";
+                document.getElementById("register").style.display = "none";
                 document.getElementById("login").style.display = "";
                 document.getElementById("login-in").focus();
                 document.getElementById("login-in").onkeypress = function(e){
@@ -61,15 +58,26 @@
                         document.getElementById("login-submit").click();
                     }
                 }
+
+                var w = document.getElementById("version-code-login");
+                var r = document.getElementById("version-code-reg");
+                post({context: "version", parameters: {}}, function(data){
+                    if(data.result == "OK") {
+                        w.innerHTML = data.version;
+                        r.innerHTML = data.version;
+                    }
+                });
+
             } else {
                 document.getElementById("super").style.display = "";
+                document.getElementById("register").style.display = "none";
                 document.getElementById("login").style.display = "none";
 
                 var v = document.getElementById("version-code");
                 var u = document.getElementById("user-name");
                 var d = document.getElementById("db-name");
                 if(v) {
-                    post({context: "version"}, function(data){
+                    post({context: "version", parameters: {}}, function(data){
                         if(data.result == "OK") {
                             v.innerHTML = data.version;
                         }
@@ -190,18 +198,10 @@
         }
 
         function post(data, callback) {
-            $.ajax({
-                type: "POST",
-                url: window.apihost,
-                headers: {
-                  "Accept": "application/json; odata=verbose"
-                },
-                data: JSON.stringify(data),
-                success: callback,
-                error: function(e){
-                    alert(e);
-                }
-            });
+            $.post(
+                window.apihost,
+                JSON.stringify(data),
+                callback);
         }
 
         function showTransactionLevel(data) {
@@ -336,6 +336,12 @@
                 case "get" :
                     commandGet(cmd);
                     break;
+                case "put" :
+                    commandPut(cmd);
+                    break;
+                case "delete" :
+                    commandDelete(cmd);
+                    break;
                 case "erase" :
                     commandErase(cmd);
                     break;
@@ -424,6 +430,9 @@
 
         function commandGet(cmd) {
             if(cmd.length == 2) {
+                if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
+                    cmd[1] = cmd[1].trim() + ".k";
+                }
                 post({
                     context: "command",
                     parameters: {
@@ -464,6 +473,95 @@
             }
         }
 
+        function commandPut(cmd) {
+            if(cmd.length == 2) {
+                if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
+                    cmd[1] = cmd[1].trim() + ".k";
+                }
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        put: cmd[1]
+                    }
+                }, function(data){
+                    logResponse(data);
+                });
+            } else {
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        get: ""
+                    }
+                }, function(data){
+                    if(data.result == "OK") {
+                        if(data.size > 0) {
+                            var ln = "Save current source to: ";
+                            for(var i = 0; i < data.list.length; ++i) {
+                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
+                                    "onclick=\"command(\'put " + data.list[i] + "\')\"" +
+                                    "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
+                                    "onmouseout=\"this.style.backgroundColor=\'\'\"" +
+                                    ">" +
+                                    data.list[i] +
+                                    "</span> ";
+                            }
+                            logResponse(data, ln);
+                        } else {
+                            logResponse(data, "You have to select a source file name");
+                        }
+                    } else {
+                        logResponse(data);
+                    }
+                });
+            }
+        }
+
+        function commandDelete(cmd) {
+            if(cmd.length == 2) {
+                if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
+                    cmd[1] = cmd[1].trim() + ".k";
+                }
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        delete: cmd[1]
+                    }
+                }, function(data){
+                    logResponse(data);
+                });
+            } else {
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        get: ""
+                    }
+                }, function(data){
+                    if(data.result == "OK") {
+                        if(data.size > 0) {
+                            var ln = "Select file for delete: ";
+                            for(var i = 0; i < data.list.length; ++i) {
+                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
+                                    "onclick=\"command(\'delete " + data.list[i] + "\')\"" +
+                                    "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
+                                    "onmouseout=\"this.style.backgroundColor=\'\'\"" +
+                                    ">" +
+                                    data.list[i] +
+                                    "</span> ";
+                            }
+                            logResponse(data, ln);
+                        } else {
+                            logResponse(data, "No source files available");
+                        }
+                    } else {
+                        logResponse(data);
+                    }
+                });
+            }
+        }
 
         function commandClose(cmd) {
             post({
@@ -1003,11 +1101,14 @@
 
                 var containerConsole = document.getElementById("container-console");
                 var consoleInput = document.getElementById("console-input");
+                var editorInput = document.getElementById("editor-input");
                 var console = document.getElementById("console");
                 var editor = document.getElementById("editor");
                 containerConsole.style.height = (screenHeight - 24 - 24 - 9 - $(containerDiv).height()) + "px";
                 console.style.height = ($(containerConsole).height() - 26 - $(consoleInput).height()) + "px";
                 editor.style.height = ($(containerConsole).height() - 26) + "px";
+                editorInput.style.height = ($(editor).height() - 2) + "px";
+                editorInput.style.width = ($(editor).width() - 15) + "px";
 
                 var containerResults = document.getElementById("container-results");
                 var containerSolutions = document.getElementById("container-solutions");
@@ -1251,7 +1352,43 @@
             });
         }
 
+        function registerForm() {
+            document.getElementById("super").style.display = "none";
+            document.getElementById("login").style.display = "none";
+            document.getElementById("register").style.display = "";
+        }
 
+        function register() {
+            if(document.getElementById("password-reg").value != document.getElementById("password-repeat-reg").value) {
+                alert("Password confirmation does not match");
+            } else if(!document.getElementById("privacy-reg").checked) {
+                alert("Consent to the processing of personal data doesn't received");
+            } else {
+                post({
+                    context: "login",
+                    parameters: {
+                        register: document.getElementById("login-reg").value,
+                        password: document.getElementById("password-reg").value,
+                        email: document.getElementById("email-reg").value,
+                        name: encodeURIComponent(document.getElementById("name-reg").value),
+                        country: encodeURIComponent(document.getElementById("country-reg").value),
+                        city: encodeURIComponent(document.getElementById("city-reg").value),
+                        privacy: document.getElementById("privacy-reg").checked
+                    }
+                }, function(data) {
+                    if(data.result == "OK") {
+                        var u = document.getElementById("user-name");
+                        setCookie("login", document.getElementById("login-reg").value);
+                        setCookie("token", data.token);
+                        window.token = data.token;
+                        u.innerHTML = getCookie("login");
+                        document.location.reload();
+                    } else {
+                        alert(data.description);
+                    }
+                });
+            }
+        }
 
     </script>
 </head>
@@ -1259,8 +1396,14 @@
       style="height:100%; padding:0; margin:0; overflow: hidden;">
 
 <div id="login" style="height:100%; width:100%">
-    <div style="width: 400px; height: 200px; background-color: #999; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
+    <div style="width: 400px; height: 220px; background-color: #EEE; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
         <table cellpadding="0" cellspacing="0" style="width:200px; border: none; margin-top: 50px; margin-left: 22px;">
+            <tr>
+                <td colspan="2" style="padding-bottom: 12px;">
+                    <span style="padding: 0 0 0 8px; font-weight: bold">KANGER III</span> Version
+                    <span id="version-code-login" style="font-weight: bold"></span> authorization
+                </td>
+            </tr>
             <tr>
                 <td>
                     <div style="width: 100px; padding: 8px; float: left;">login:</div>
@@ -1279,7 +1422,95 @@
             </tr>
             <tr>
                 <td colspan="2">
-                    <button id="login-submit" onclick="login()" style="float: right; width: 80px; margin-top:30px;">Ok
+                    <button id="login-submit" onclick="login()" style="float: right; width: 80px; margin-top:20px;">Ok
+                    </button>
+                    <button id="login-register" onclick="registerForm()"
+                            style="float: right; width: 80px; margin-top:20px; margin-right: 4px;">Register
+                    </button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="register" style="display: none; height:100%; width:100%">
+    <div style="width: 500px; height: 420px; background-color: #EEE; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
+        <table cellpadding="0" cellspacing="0" style="width:400px; border: none; margin-top: 50px; margin-left: 22px;">
+            <tr>
+                <td colspan="2" style="padding-bottom: 12px;">
+                    <span style="padding: 0 0 0 8px; font-weight: bold">KANGER III</span> Version
+                    <span id="version-code-reg" style="font-weight: bold"></span> registration
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">login:</div>
+                </td>
+                <td>
+                    <input id="login-reg" style="width: 200px;" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">password:</div>
+                </td>
+                <td>
+                    <input id="password-reg" style="width: 200px;" type="password">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left; white-space: nowrap;">repeat password:</div>
+                </td>
+                <td>
+                    <input id="password-repeat-reg" style="width: 200px;" type="password">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">e-mail:</div>
+                </td>
+                <td>
+                    <input id="email-reg" style="width: 200px;" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">your name:</div>
+                </td>
+                <td>
+                    <input id="name-reg" style="width: 200px;" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">your country:</div>
+                </td>
+                <td>
+                    <input id="country-reg" style="width: 200px;" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">your city:</div>
+                </td>
+                <td>
+                    <input id="city-reg" style="width: 200px;" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+                <td>
+                    <input id="privacy-reg" type="checkbox">
+                    <label for="privacy-reg">consent to the processing of personal data</label>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button id="login-submit-reg" onclick="register()"
+                            style="float: right; width: 80px; margin-top:20px;">Ok
                     </button>
                 </td>
             </tr>
@@ -1327,7 +1558,7 @@
                     <span id="console-close" style="display: none; float:right; cursor:pointer; padding-right:8px;">Close</span>
                 </div>
                 <div id="editor"
-                     style="display: none; width: 100%; vertical-align:top; background: #FFF; padding: 12px;">
+                     style="display: none; width: 100%; vertical-align:top; background: #FFF; padding: 0px 0 0 12px;">
                     <textarea id="editor-input"
                               style="font-family: monospace; width: 100%; height: 100%; border: none; outline-style: none; "></textarea>
                 </div>

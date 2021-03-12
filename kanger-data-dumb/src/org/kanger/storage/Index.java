@@ -66,7 +66,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private int blockSize = BLOCK_SIZE;
     private boolean changed = false;
 
-    public Index(int baseCode, Object locker, IUser user) {
+    public Index(int baseCode, Object locker, IUser user) throws Exception {
         this.file = null;
         this.rasRead = null;
         this.changed = false;

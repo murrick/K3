@@ -28,6 +28,9 @@ package org.kanger;
 public class Kanger {
 
     public static void main(String[] args) throws Exception {
-        new HttpServer().start(9090, false, new QueryProcessor());
+        new HttpServer().start(
+                Integer.parseInt(Settings.getProperty("server.port", 1964 + "")),
+                Boolean.parseBoolean(Settings.getProperty("server.ssl", false + "")),
+                new QueryProcessor());
     }
 }
