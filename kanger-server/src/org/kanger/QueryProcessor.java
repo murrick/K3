@@ -117,7 +117,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         try {
 
             if (addressTo.length == 0 || addressTo[0].length() == 0) {
-                throw new AddressException("Получатель электронной почты неопределен");
+                throw new AddressException("Receiver address not defined");
             }
 
             Properties props = new Properties();
@@ -153,7 +153,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
 
             Transport transport = session.getTransport();
             try {
-                transport.connect(host, login, password);
+                transport.connect(host, port, login, password);
                 transport.sendMessage(msg, msg.getAllRecipients());
             } finally {
                 transport.close();
@@ -411,6 +411,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 String token = UserFactory.addUser(user);
                 result.put("result", "OK");
                 result.put("token", token);
+                Watchdog.log(user, "User logged in");
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
@@ -421,10 +422,12 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 if (Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
                     result.put("result", "error");
                     result.put("description", "E-mail " + user.getProperty("reg.email", "") + " already confirmed");
+                    Watchdog.log(user, "E-mail " + user.getProperty("reg.email", "") + " already confirmed");
                 } else {
                     user.setProperty("reg.agreed", true + "");
                     result.put("result", "OK");
                     result.put("description", "E-mail " + user.getProperty("reg.email", "") + " confirmed");
+                    Watchdog.log(user, "E-mail " + user.getProperty("reg.email", "") + " confirmed");
                 }
             } catch (Exception e) {
                 result.put("result", "error");
@@ -475,17 +478,30 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     result.put("result", "OK");
                     result.put("token", token);
 
+                    Watchdog.log(user, "New user registered");
+
                     if (!parameters.isNull("email") && !parameters.getString("email").isEmpty()) {
-                        sendEmail(new String[]{parameters.getString("email")},
-                                "KANGER: Registration confirmation",
-                                "You are just registered on site kanger.org. Please confirm your e-mail by following link: " +
-                                        "https://kanger.org:9090/login?confirm=" + mainToken,
-                                Settings.getProperty("server.email.from", "murray@kanger.org"),
-                                "utf-8",
-                                Settings.getProperty("server.email.login", "murray@kanger.org"),
-                                Settings.getProperty("server.email.password", "nhb3rjnf64"),
-                                Settings.getProperty("server.email.host", "smtp.yandex.ru"),
-                                Integer.parseInt(Settings.getProperty("server.email.port", 993 + "")));
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Watchdog.log(user, "Sending confirmation email to " + parameters.getString("email"));
+                                    sendEmail(new String[]{parameters.getString("email")},
+                                            "KANGER: Registration confirmation",
+                                            "You are just registered on site kanger.org. Please confirm your e-mail by following link: " +
+                                                    "https://x.kanger.org:1964/login?confirm=" + mainToken,
+                                            Settings.getProperty("server.email.from", "murray@kanger.org"),
+                                            "utf-8",
+                                            Settings.getProperty("server.email.login", "murray@kanger.org"),
+                                            Settings.getProperty("server.email.password", "nhb3rjnf64"),
+                                            Settings.getProperty("server.email.host", "smtp.yandex.ru"),
+                                            Integer.parseInt(Settings.getProperty("server.email.port", 993 + "")));
+                                    Watchdog.log(user, "Confirmation email to " + parameters.getString("email") + " sent");
+                                } catch (Exception e) {
+                                    e.printStackTrace(System.err);
+                                }
+                            }
+                        }).start();
                     }
 
                 } catch (Exception e) {
@@ -544,7 +560,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
-    private JSONObject deleteSourceFile(JSONObject parameters, IUser user) {
+    private JSONObject deleteSourceFile(JSONObject parameters, IUser user) throws Exception {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
@@ -558,6 +574,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 f.delete();
                 result.put("result", "OK");
                 result.put("description", "Source file " + fname + " deleted.");
+                Watchdog.log(user, "Source file " + fname + " deleted.");
             } else {
                 result.put("result", "error");
                 result.put("description", "Source file not found " + fname);
@@ -591,7 +608,13 @@ public class QueryProcessor implements IReactor<JSONObject> {
         if (!parameters.getString("drop").isEmpty()) {
             name = parameters.getString("drop");
         }
+
+        String current = mind.getStorageName();
+        boolean exists = (mind.isStorageUsed() && name == null) || (name != null && mind.isStorageExists(name));
         mind = mind.removeStorage(name);
+        if (exists) {
+            Watchdog.log(user, "Database " + (name == null ? current : name) + " deleted");
+        }
         user.setCurrentMind(mind);
         result.put("result", "OK");
         return result;
@@ -844,6 +867,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         UserFactory.dropUser(user);
         JSONObject result = new JSONObject();
         result.put("result", "OK");
+        Watchdog.log(user, "User left system");
         return result;
     }
 
@@ -876,8 +900,12 @@ public class QueryProcessor implements IReactor<JSONObject> {
 
         if (!parameters.getString("use").isEmpty()) {
             String name = parameters.getString("use").replace(".", Enums.FILE_SEPARATOR);
+            boolean exists = mind.isStorageExists(name);
             mind = mind.useStorage(name);
             if (mind.isStorageUsed()) {
+                if (!exists) {
+                    Watchdog.log(user, "New database created: " + name);
+                }
                 boolean success = true;
                 if (!backup.isEmpty()) {
                     IMind m = new Mind(mind);
@@ -925,11 +953,15 @@ public class QueryProcessor implements IReactor<JSONObject> {
         }
         if (fname != null && !fname.isEmpty()) {
             File f = new File(mind.getUser().getSourceDir() + fname);
+            boolean exists = f.exists();
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
                 bw.write(mind.getSourceCode());
                 mind.setSourceFileName(fname);
                 result.put("result", "OK");
                 result.put("description", "Source file " + fname + " saved.");
+                if (!exists) {
+                    Watchdog.log(user, "New source file created: " + fname);
+                }
             }
         } else {
             result.put("result", "error");

@@ -240,4 +240,10 @@ public class UserFactory {
         history.remove(id);
         activity.remove(id);
     }
+
+    public static void shutdown() {
+        while (!users.isEmpty()) {
+            dropUser(users.values().iterator().next().getId());
+        }
+    }
 }

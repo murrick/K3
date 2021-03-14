@@ -477,6 +477,15 @@ public interface IMind {
     IMind closeStorage() throws Exception;
 
     /**
+     * Проверить наличие базы данных в списке доступных
+     *
+     * @param name имя базы данных
+     * @return true если база данных есть
+     * @throws Exception
+     */
+    boolean isStorageExists(String name) throws Exception;
+
+    /**
      * Полная очистка рабочего пространства программы, включая содержимое
      * файловой базы данных, если она открыта. Если в текущий момент есть
      * открытые транзакции - они будут потеряны.

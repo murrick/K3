@@ -28,10 +28,7 @@ package org.kanger;
 import org.json.JSONObject;
 import org.kanger.interfaces.IReactor;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -51,14 +48,11 @@ import java.util.concurrent.TimeUnit;
 
 public class HttpServer {
 
-    private int port = 440;
-    private boolean ssl = true;
+    private volatile boolean active = true;
+    private ServerSocket serverSocket = null;
 
-    public void start(int port, boolean ssl, IReactor<JSONObject> reactor) {
-        this.port = port;
-        this.ssl = ssl;
-
-        startMultiThreaded(port, ssl, reactor);
+    public void start(IReactor<JSONObject> reactor) throws Exception {
+        startMultiThreaded(reactor);
     }
 
     private ServerSocket getServerSocket(int port, boolean ssl) throws Exception {
@@ -106,7 +100,7 @@ public class HttpServer {
         return sslContext;
     }
 
-    private String createResponse(Charset encoding, JSONObject json) {
+    private String createResponse(Charset encoding, String origin, JSONObject json) throws UnsupportedEncodingException {
 
         String body = json == null ? "" : json.toString();
         int contentLength = body.getBytes(encoding).length;
@@ -115,7 +109,7 @@ public class HttpServer {
                 String.format("Content-Type: application/json; charset=%s\r\n", encoding.displayName()) +
 
                 "Cache-Control: no-cache\r\n" +
-                "Access-Control-Allow-Origin: *\r\n" +
+                "Access-Control-Allow-Origin: " + origin + "\r\n" +
                 "Access-Control-Allow-Methods: GET. POST\r\n" +
                 "Access-Control-Allow-Headers: Content-Type, *\r\n" +
                 "Access-Control-Allow-Credentials: true\r\n" +
@@ -176,7 +170,10 @@ public class HttpServer {
         }
         int c;
         StringBuffer b = new StringBuffer();
-        while (length-- > 0 && (c = reader.read()) != -1) {
+        while (length-- > 0) {
+            if ((c = reader.read()) <= 0) {
+                break;
+            }
             b.append((char) c);
         }
         String page = b.toString();
@@ -184,20 +181,25 @@ public class HttpServer {
         return packet;
     }
 
-    private void startMultiThreaded(int port, boolean ssl, IReactor<JSONObject> reactor) {
+    private void startMultiThreaded(IReactor<JSONObject> reactor) throws Exception {
 
+        int port = Integer.parseInt(Settings.getProperty("server.port", 1964 + ""));
+        boolean ssl = Boolean.parseBoolean(Settings.getProperty("server.ssl", false + ""));
+        int maxThreads = Integer.parseInt(Settings.getProperty("server.maxthreads", 100 + ""));
+        ExecutorService threadPool = newCachedThreadPool(maxThreads);
         try (ServerSocket serverSocket = getServerSocket(port, ssl)) {
 
-            System.out.println("Started multi-threaded server at port " + port + (ssl ? " with SSL" : ""));
+            this.serverSocket = serverSocket;
+
+            Watchdog.log("Started multi-threaded HTTP server at port " + port + (ssl ? " with SSL" : ""));
 
             // A cached thread pool with a limited number of threads
-            ExecutorService threadPool = newCachedThreadPool(8);
 
             Charset encoding = StandardCharsets.UTF_8;
 
             // This infinite loop is not CPU-intensive since method "accept" blocks
             // until a client has made a connection to the socket
-            while (true) {
+            while (active) {
                 try {
                     Socket socket = serverSocket.accept();
                     // Create a response to the request on a separate thread to
@@ -216,24 +218,44 @@ public class HttpServer {
                             JSONObject json = getPacket(encoding, reader, headers);
                             JSONObject response = (JSONObject) reactor.run(json);
 
-                            writer.write(createResponse(encoding, response));
+                            String origin = "*";
+                            for (String line : headers) {
+                                if (line.trim().toLowerCase().startsWith("origin:")) {
+                                    origin = line.substring(7).trim();
+                                    break;
+//                                } else if (line.trim().toLowerCase().startsWith("referer:")) {
+//                                    origin = line.substring(8).trim();
+//                                    break;
+                                }
+                            }
+
+                            writer.write(createResponse(encoding, origin, response));
                             writer.flush();
                             // We're done with the connection → Close the socket
                             socket.close();
 
+                        } catch (SSLHandshakeException e) {
+                            Watchdog.err("Exception while creating response");
+                            Watchdog.err(e.toString());
                         } catch (Exception e) {
-                            System.err.println("Exception while creating response");
-                            e.printStackTrace();
+                            Watchdog.err("Exception while creating response");
+                            e.printStackTrace(System.err);
                         }
                     });
                 } catch (IOException e) {
-                    System.err.println("Exception while handling connection");
-                    e.printStackTrace();
+                    if (active) {
+                        Watchdog.err("Exception while handling connection");
+                        e.printStackTrace(System.err);
+                    } else {
+                        Watchdog.log("Server socket closed");
+                    }
                 }
             }
         } catch (Exception e) {
-            System.err.println("Could not create socket at port " + port);
-            e.printStackTrace();
+            Watchdog.err("Could not create socket at port " + port);
+            e.printStackTrace(System.err);
+        } finally {
+            threadPool.shutdown();
         }
     }
 
@@ -241,6 +263,17 @@ public class HttpServer {
         return new ThreadPoolExecutor(0, maximumNumberOfThreads,
                 60L, TimeUnit.SECONDS,
                 new SynchronousQueue<>());
+    }
+
+    public void stop() {
+        active = false;
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace(System.err);
+            }
+        }
     }
 
 }
