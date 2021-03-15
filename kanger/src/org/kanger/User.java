@@ -184,12 +184,12 @@ public class User implements IUser {
             data.close();
         }
 
-//        return mind;
-        if (mind != null) {
-            return clear(mind);
-        } else {
-            return null;
+        for (IMind m = mind; m != null; m = m.getNext()) {
+            ((Mind) m).clearMind();
+            mind = m;
         }
+
+        return mind;
     }
 
 
@@ -219,10 +219,10 @@ public class User implements IUser {
 
         if (data != null) {
 
-            for (IMind m = mind; m != null; m = m.getNext()) {
-                ((Mind) m).clearMind();
-                mind = m;
+            if (!data.isClosed()) {
+                mind = close(mind);
             }
+
             if (mind == null) {
                 mind = new Mind(this);
             }

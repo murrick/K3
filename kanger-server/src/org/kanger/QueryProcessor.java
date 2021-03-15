@@ -112,6 +112,29 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
+    private JSONObject processHelp() {
+        JSONObject result = new JSONObject();
+        result.put("result", "OK");
+        result.put("description", "<b>Console commands</b>:<br>" +
+                "\t<b>use [name]</b> - use database<br>" +
+                "\t<b>used</b> - show information about used database<br>" +
+                "\t<b>close</b> - close database<br>" +
+                "\t<b>drop [name]</b> - drop database<br>" +
+                "\t<b>reindex [name]</b> - optimize and reindex database<br>" +
+                "\t<b>get [name]</b> - open source file from repository<br>" +
+                "\t<b>put [name]</b> - save source file to repository<br>" +
+                "\t<b>delete [name]</b> - delete source file from repository<br>" +
+                "\t<b>erase</b> - clear workspace<br>" +
+                "\t<b>transaction</b> - show transaction level<br>" +
+                "\t<b>transaction create</b> or <b>create</b> - create new transaction<br>" +
+                "\t<b>transaction commit</b> or <b>commit</b> - commit current transaction<br>" +
+                "\t<b>transaction rollback</b> or <b>rollback</b> - rollback current transaction<br>" +
+                "\t<b>help</b> - show this message<br>" +
+                "\t<b>quit</b> - log out<br>"
+        );
+        return result;
+    }
+
     public static void sendEmail(String[] addressTo, String subject, String text, String from, String charset, String login, String password, String host, int port) throws Exception {
 
         try {
@@ -541,6 +564,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
             result = clearWorkspace(user);
         } else if (!parameters.isNull("ping")) {
             result = pong(user);
+        } else if (!parameters.isNull("help")) {
+            result = processHelp();
         }
         if (result != null) {
             IMind mind = user.getCurrentMind();
@@ -591,8 +616,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
         JSONObject result = new JSONObject();
 
         String name = null;
-        if (!parameters.getString("drop").isEmpty()) {
-            name = parameters.getString("drop");
+        if (!parameters.getString("reindex").isEmpty()) {
+            name = parameters.getString("reindex");
         }
         mind = mind.reindexStorage(name);
         user.setCurrentMind(mind);
@@ -881,7 +906,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             result.put("predicates", mind.getTop().getPredicates().size());
             result.put("dictionary", mind.getTerms().size());
             result.put("udf", mind.getTop().getLibrary().size());
-            result.put("description", "Database used: " + "Database used: " + mind.getStorageName().replace(Enums.FILE_SEPARATOR, ".") +
+            result.put("description", "Database used: " + mind.getStorageName().replace(Enums.FILE_SEPARATOR, ".") +
                     ", Rules: " + mind.getTop().getRules().size() +
                     ", Predicates: " + mind.getTop().getPredicates().size() +
                     ", Dictionary: " + mind.getTerms().size() +

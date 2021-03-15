@@ -28,7 +28,6 @@ package org.kanger;
 import org.json.JSONObject;
 import org.kanger.interfaces.IReactor;
 
-import javax.net.ssl.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -36,8 +35,6 @@ import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -49,25 +46,6 @@ public class HttpServer {
 
     private volatile boolean active = true;
     private ServerSocket serverSocket = null;
-
-    private SSLContext getSslContext(Path keyStorePath, char[] keyStorePass) throws Exception {
-
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        keyStore.load(new FileInputStream(keyStorePath.toFile()), keyStorePass);
-
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509"); //KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, keyStorePass);
-
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        tmf.init(keyStore);
-
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        TrustManager[] trustManagers = tmf.getTrustManagers();
-
-        // Null means using default implementations for TrustManager and SecureRandom
-        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, null);
-        return sslContext;
-    }
 
     private String createResponse(Charset encoding, String origin, JSONObject json) throws UnsupportedEncodingException {
 
@@ -220,9 +198,6 @@ public class HttpServer {
                                 // We're done with the connection → Close the socket
                                 socket.close();
 
-                            } catch (SSLHandshakeException e) {
-                                Watchdog.err("Exception while creating response");
-                                Watchdog.err(e.toString());
                             } catch (Exception e) {
                                 Watchdog.err("Exception while creating response");
                                 e.printStackTrace(System.err);
