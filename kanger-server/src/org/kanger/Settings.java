@@ -28,7 +28,11 @@ package org.kanger;
 import org.kanger.enums.Enums;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 public class Settings {
@@ -73,6 +77,34 @@ public class Settings {
             } catch (IOException e) {
                 e.printStackTrace(System.err);
             }
+        }
+    }
+
+    public static List<String> getByPrefix(String prefix) {
+        List<String> list = new ArrayList<>();
+        for (String key : settings.stringPropertyNames()) {
+            if (key.startsWith(prefix)) {
+                list.add(settings.getProperty(key));
+            }
+        }
+        return list;
+    }
+
+    public static boolean isActive() {
+        String active = UserFactory.getDir(UserFactory.rootDir) + Enums.FILE_SEPARATOR + "kanger.active";
+        return new File(active).exists();
+    }
+
+    public static void setActive(boolean on) throws IOException {
+        Files.createDirectories(Paths.get(UserFactory.getDir(UserFactory.rootDir)));
+        String active = UserFactory.getDir(UserFactory.rootDir) + Enums.FILE_SEPARATOR + "kanger.active";
+        File f = new File(active);
+        if (on) {
+            FileWriter fw = new FileWriter(f);
+            fw.write(new Date().toString());
+            fw.close();
+        } else {
+            f.delete();
         }
     }
 

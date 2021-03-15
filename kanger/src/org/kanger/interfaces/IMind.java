@@ -161,7 +161,7 @@ public interface IMind {
      * @param source текст программы на языке КАНГЕР.
      * @param ext    массив элементов произвольного типа, которые при комптляции запроса будут
      *               последовательно подствалены вместо символов ? (вопросительный знак)
-     * @return
+     * @return true если нет противоречий. false - отмена по причине противоречий.
      * @throws Exception
      */
     boolean compile(String source, Object[] ext) throws Exception;
@@ -475,6 +475,15 @@ public interface IMind {
      * @throws Exception
      */
     IMind closeStorage() throws Exception;
+
+    /**
+     * Проверить наличие базы данных в списке доступных
+     *
+     * @param name имя базы данных
+     * @return true если база данных есть
+     * @throws Exception
+     */
+    boolean isStorageExists(String name) throws Exception;
 
     /**
      * Полная очистка рабочего пространства программы, включая содержимое

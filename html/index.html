@@ -30,6 +30,9 @@
     <title>KANGER III</title>
 
     <script charset="UTF-8" language="javascript" src="jquery-3.6.0.min.js" type="text/javascript"></script>
+    <script src="codemirror.js"></script>
+    <script src="javascript.js"></script>
+    <link href="codemirror.css" rel="stylesheet">
 
     <script>
         window.apihost = "http://localhost:1964";
@@ -124,23 +127,37 @@
                                 }, function(data){
                                     if(data.result == "OK") {
                                         var queryHistory = document.getElementById("query-history");
-                                        for(var i=0; i < data.size; ++i) {
-                                            var h = decodeURIComponent(data.list[i].replace(/\+/g, '%20'));
-                                            var mode = h.charAt(0);
-                                            h = h.substr(1);
-                                            var color = h.split("~~~")[0];
-                                            h = h.split("~~~")[1];
-                                            var div;
-                                            if(mode == "Q") {
-                                                div = logRequestRaw(h);
-                                            } else {
-                                                div = logResponseRaw(null, h);
+                                        if(data.size > 0) {
+                                            for(var i=0; i < data.size; ++i) {
+                                                var h = decodeURIComponent(data.list[i].replace(/\+/g, '%20'));
+                                                var mode = h.charAt(0);
+                                                h = h.substr(1);
+                                                var color = h.split("~~~")[0];
+                                                h = h.split("~~~")[1];
+                                                var div;
+                                                if(mode == "Q") {
+                                                    div = logRequestRaw(h);
+                                                } else {
+                                                    div = logResponseRaw(null, h);
+                                                }
+                                                div.style.color = color;
                                             }
-                                            div.style.color = color;
+                                        } else {
+                                            logRequest("use");
+                                            command("use", function(){
+                                                logRequest("get");
+                                                command("get");
+                                            });
                                         }
 
                                         showTransactionLevel(data);
                                     }
+                                });
+
+                                window.editor = CodeMirror.fromTextArea(document.getElementById("editor-input"), {
+                                    lineNumbers: true,
+                                    lineWrapping:true,
+                                    autofocus:true,
                                 });
 
                                 placeElements(data);
@@ -323,33 +340,36 @@
             storeHistory("R" + div.style.color + "~~~" + div.innerHTML);
         }
 
-        function command(queryText) {
+        function command(queryText, callback) {
             var cmd = queryText.split(" ");
             switch(cmd[0]) {
                 case "used" :
                 case "use" :
-                    commandUse(cmd);
+                    commandUse(cmd, callback);
                     break;
                 case "close" :
-                    commandClose(cmd);
+                    commandClose(cmd, callback);
+                    break;
+                case "drop" :
+                    commandDrop(cmd, callback);
                     break;
                 case "get" :
-                    commandGet(cmd);
+                    commandGet(cmd, callback);
                     break;
                 case "put" :
-                    commandPut(cmd);
+                    commandPut(cmd, callback);
                     break;
                 case "delete" :
-                    commandDelete(cmd);
+                    commandDelete(cmd, callback);
                     break;
                 case "erase" :
-                    commandErase(cmd);
+                    commandErase(cmd, callback);
                     break;
                 case "transaction" :
                 case "create" :
                 case "commit" :
                 case "rollback" :
-                    commandTransaction(cmd);
+                    commandTransaction(cmd, callback);
                     break;
                 case "quit":
                     commandQuit();
@@ -380,7 +400,7 @@
             logResponse(data, ln);
         }
 
-        function commandTransaction(cmd) {
+        function commandTransaction(cmd, callback) {
             if(cmd.length == 2 && cmd[0] == "transaction") {
                 post({
                     context: "query",
@@ -390,6 +410,9 @@
                     }
                 }, function(data){
                     refreshScreen(data);
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             } else if(cmd[0] != "transaction") {
                 post({
@@ -400,6 +423,9 @@
                     }
                 }, function(data){
                     refreshScreen(data);
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             } else {
                 post({
@@ -410,11 +436,14 @@
                     }
                 }, function(data){
                     refreshScreen(data);
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             }
         }
 
-        function commandErase(cmd) {
+        function commandErase(cmd, callback) {
             post({
                 context: "command",
                 parameters: {
@@ -424,11 +453,16 @@
             }, function(data){
                 if(data.result == "OK") {
                     refreshScreen(data, "Workspace erased");
+                } else {
+                    logResponse(data);
+                }
+                if(callback) {
+                    callback(data);
                 }
             });
         }
 
-        function commandGet(cmd) {
+        function commandGet(cmd, callback) {
             if(cmd.length == 2) {
                 if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
                     cmd[1] = cmd[1].trim() + ".k";
@@ -441,6 +475,9 @@
                     }
                 }, function(data){
                     refreshScreen(data);
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             } else {
                 post({
@@ -455,7 +492,7 @@
                             var ln = "Available sources: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"command(\'get " + data.list[i] + "\')\"" +
+                                    "onclick=\"logRequest(\'get " + data.list[i] + "\'); command(\'get " + data.list[i] + "\')\"" +
                                     "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                     "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                     ">" +
@@ -469,11 +506,14 @@
                     } else {
                         logResponse(data);
                     }
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             }
         }
 
-        function commandPut(cmd) {
+        function commandPut(cmd, callback) {
             if(cmd.length == 2) {
                 if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
                     cmd[1] = cmd[1].trim() + ".k";
@@ -486,6 +526,9 @@
                     }
                 }, function(data){
                     logResponse(data);
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             } else {
                 post({
@@ -500,7 +543,7 @@
                             var ln = "Save current source to: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"command(\'put " + data.list[i] + "\')\"" +
+                                    "onclick=\"logRequest(\'put " + data.list[i] + "\'); command(\'put " + data.list[i] + "\')\"" +
                                     "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                     "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                     ">" +
@@ -514,11 +557,14 @@
                     } else {
                         logResponse(data);
                     }
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             }
         }
 
-        function commandDelete(cmd) {
+        function commandDelete(cmd, callback) {
             if(cmd.length == 2) {
                 if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
                     cmd[1] = cmd[1].trim() + ".k";
@@ -531,6 +577,9 @@
                     }
                 }, function(data){
                     logResponse(data);
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             } else {
                 post({
@@ -545,7 +594,7 @@
                             var ln = "Select file for delete: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"command(\'delete " + data.list[i] + "\')\"" +
+                                    "onclick=\"logRequest(\'delete " + data.list[i] + "\'); command(\'delete " + data.list[i] + "\')\"" +
                                     "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                     "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                     ">" +
@@ -559,11 +608,14 @@
                     } else {
                         logResponse(data);
                     }
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             }
         }
 
-        function commandClose(cmd) {
+        function commandClose(cmd, callback) {
             post({
                 context: "command",
                 parameters: {
@@ -585,6 +637,8 @@
                             refreshScreen(data, "Database " + name + " closed");
                             d.style.color = "#777";
                             d.innerHTML = "unused";
+                        } else {
+                            logResponse(data);
                         }
                     });
                 } else {
@@ -592,10 +646,13 @@
                     d.style.color = "#777";
                     d.innerHTML = "unused";
                 }
+                if(callback) {
+                    callback(data);
+                }
             });
         }
 
-        function commandUse(cmd) {
+        function commandUse(cmd, callback) {
             if(cmd.length == 2 && cmd[0] == "use") {
                 post({
                     context: "command",
@@ -615,6 +672,10 @@
                         d.style.color = "#777";
                         d.innerHTML = "unused";
                     }
+                    if(callback) {
+                        callback(data);
+                    }
+
                 });
             } else if(cmd[0] == "use") {
                 post({
@@ -629,12 +690,10 @@
                             var ln = "Available DBs: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                "onclick=\"command(\'use " + data.list[i] + "\')\"" +
+                                "onclick=\"logRequest(\'use " + data.list[i] + "\'); command(\'use " + data.list[i] + "\')\"" +
                                 "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                 "onmouseout=\"this.style.backgroundColor=\'\'\"" +
-                                ">" +
-                                    data.list[i] +
-                                    "</span> ";
+                                ">" + data.list[i] + "</span> ";
                             }
                             logResponse(data, ln);
                         } else {
@@ -642,6 +701,9 @@
                         }
                     } else {
                         logResponse(data);
+                    }
+                    if(callback) {
+                        callback(data);
                     }
                 });
             } else {
@@ -662,11 +724,68 @@
                         d.style.color = "#777";
                         d.innerHTML = "unused";
                     }
+                    if(callback) {
+                        callback(data);
+                    }
                 });
             }
         }
 
-        function query(queryText) {
+        function commandDrop(cmd, callback) {
+            if(cmd.length == 2 && cmd[0] == "drop") {
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        drop: cmd[1]
+                    }
+                }, function(data){
+                    var d = document.getElementById("db-name");
+                    if(data.result == "OK") {
+                        refreshScreen(data, "Database " + cmd[1] + " dropped");
+                        d.style.color = "#777";
+                        d.innerHTML = "unused";
+                    } else {
+                        logResponse(data);
+                    }
+                    if(callback) {
+                        callback(data);
+                    }
+
+                });
+            } else if(cmd[0] == "drop") {
+                post({
+                    context: "command",
+                    parameters: {
+                        token: window.token,
+                        use: ""
+                    }
+                }, function(data){
+                    if(data.result == "OK") {
+                        if(data.size > 0) {
+                            var ln = "Select DB for drop: ";
+                            for(var i = 0; i < data.list.length; ++i) {
+                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
+                                "onclick=\"logRequest(\'drop " + data.list[i] + "\'); command(\'drop " + data.list[i] + "\')\"" +
+                                "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
+                                "onmouseout=\"this.style.backgroundColor=\'\'\"" +
+                                ">" + data.list[i] + "</span> ";
+                            }
+                            logResponse(data, ln);
+                        } else {
+                            logResponse(data, "No databases was created");
+                        }
+                    } else {
+                        logResponse(data);
+                    }
+                    if(callback) {
+                        callback(data);
+                    }
+                });
+            }
+        }
+
+        function query(queryText, callback) {
             var uri = encodeURIComponent(queryText);
             post({
                 context: "query",
@@ -676,6 +795,9 @@
                 }
             }, function(data){
                 refreshScreen(data);
+                if(callback) {
+                    callback(data);
+                }
             });
         }
 
@@ -1107,8 +1229,14 @@
                 containerConsole.style.height = (screenHeight - 24 - 24 - 9 - $(containerDiv).height()) + "px";
                 console.style.height = ($(containerConsole).height() - 26 - $(consoleInput).height()) + "px";
                 editor.style.height = ($(containerConsole).height() - 26) + "px";
-                editorInput.style.height = ($(editor).height() - 2) + "px";
-                editorInput.style.width = ($(editor).width() - 15) + "px";
+
+                //editorInput.style.height = ($(editor).height() - 2) + "px";
+                //editorInput.style.width = ($(editor).width() - 15) + "px";
+
+                //var w = ($(editorInput).width() + 16) + "px";
+                //var h = ($(editorInput).height() + 4) + "px";
+
+                window.editor.setSize($(editor).width() + "px", $(editor).height() + "px");
 
                 var containerResults = document.getElementById("container-results");
                 var containerSolutions = document.getElementById("container-solutions");
@@ -1287,7 +1415,14 @@
                 consoleButton.onclick = compileSource;
                 consoleClose.onclick = openConsole;
 
-                editorInput.value = text;
+                //editorInput.value = text;
+
+                //editorInput.selectionStart = editorInput.selectionEnd = 0;
+                //editorInput.scrollTop = 0;
+                //editorInput.focus();
+
+                window.editor.setValue(text);
+                window.editor.setCursor(0,0);
             }
         }
 
@@ -1335,8 +1470,8 @@
         }
 
         function compileSource() {
-            var editorInput = document.getElementById("editor-input");
-            var src = editorInput.value;
+            //var editorInput = document.getElementById("editor-input");
+            var src = window.editor.getValue(); //editorInput.value;
             var uri = encodeURIComponent(src);
 
             post({
@@ -1391,6 +1526,7 @@
         }
 
     </script>
+
 </head>
 <body onmousemove="onMouseMove(event)" onmouseup="onMouseUp(event)" onresize="placeElements()"
       style="height:100%; padding:0; margin:0; overflow: hidden;">
@@ -1558,7 +1694,7 @@
                     <span id="console-close" style="display: none; float:right; cursor:pointer; padding-right:8px;">Close</span>
                 </div>
                 <div id="editor"
-                     style="display: none; width: 100%; vertical-align:top; background: #FFF; padding: 0px 0 0 12px;">
+                     style="display: none; width: 100%; font-size: 13px; vertical-align:top; background: #FFF; padding: 0px 0 0 12px;">
                     <textarea id="editor-input"
                               style="font-family: monospace; width: 100%; height: 100%; border: none; outline-style: none; "></textarea>
                 </div>

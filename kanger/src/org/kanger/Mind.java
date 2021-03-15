@@ -2003,6 +2003,11 @@ public class Mind implements IMind {
     }
 
     @Override
+    public boolean isStorageExists(String name) throws Exception {
+        return user.getStoragesList().contains(name);
+    }
+
+    @Override
     public IMind closeStorage() throws Exception {
         return user.close(this);
     }

@@ -420,4 +420,5 @@ public class User implements IUser {
     public void setCurrentMind(IMind currentMind) {
         this.currentMind = currentMind;
     }
+
 }
