@@ -151,21 +151,27 @@ public class HttpServer {
                     InetAddress addr = socket.getInetAddress();
 
 //                    Watchdog.log("Connection from " + addr.getHostAddress());
-                    boolean allowed = false;
+//                    boolean allowed = false;
                     List<String> list = Settings.getByPrefix("server.remote.allowed");
                     if (list.isEmpty()) {
                         Settings.setProperty("server.remote.allowed.0", "localhost");
                         Settings.setProperty("server.remote.allowed.1", "127.0.0.1");
                         Settings.setProperty("server.remote.allowed.2", "0:0:0:0:0:0:0:1");
                     }
+                    boolean allowed = false;
+//                    if (headers.get(0).startsWith("GET /login/confirm")) {
+//                        allowed = true;
+//                    } else {
                     for (String str : Settings.getByPrefix("server.remote.allowed")) {
                         if (compareAddresses(addr.getHostAddress(), str)) {
                             allowed = true;
                             break;
                         }
                     }
+//                    }
 
                     if (allowed) {
+
                         // Create a response to the request on a separate thread to
                         // handle multiple requests simultaneously
                         threadPool.submit(() -> {
@@ -179,6 +185,7 @@ public class HttpServer {
                                           socket.getOutputStream(), encoding.name()))
                             ) {
                                 List<String> headers = getHeaderLines(reader);
+
                                 JSONObject json = getPacket(encoding, reader, headers);
                                 JSONObject response = (JSONObject) reactor.run(json);
 
@@ -196,8 +203,9 @@ public class HttpServer {
                                 writer.write(createResponse(encoding, origin, response));
                                 writer.flush();
                                 // We're done with the connection → Close the socket
-                                socket.close();
+//                                socket.close();
 
+                                socket.close();
                             } catch (Exception e) {
                                 Watchdog.err("Exception while creating response");
                                 e.printStackTrace(System.err);
@@ -205,7 +213,6 @@ public class HttpServer {
                         });
                     } else {
                         Watchdog.log("Block inbound connection from " + addr.getHostAddress());
-                        socket.close();
                     }
                 } catch (IOException e) {
                     if (active) {

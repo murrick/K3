@@ -85,6 +85,65 @@ public class UserFactory {
         dropUser(user.getId());
     }
 
+    public static String getUserToken(IUser user) throws Exception {
+        String confName = getDir("users.conf");
+        if (!new File(confName).exists()) {
+            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
+        }
+        if (new File(confName).exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    if (sCurrentLine.split("\\=").length == 2 && (user.getId() + "").equalsIgnoreCase(sCurrentLine.split("\\=")[1])) {
+                        return sCurrentLine.split("\\=")[0];
+                    }
+                }
+            }
+        }
+        throw new AuthenticationErrorException();
+    }
+
+    public static void updateUserToken(IUser user, String login, String password) throws Exception {
+        String token = token(login, password);
+        String confName = getDir("users.conf");
+        if (!new File(confName).exists()) {
+            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
+        }
+
+        List<String> list = new ArrayList<>();
+        if (new File(confName).exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    if (sCurrentLine.split("\\=").length == 2 && token.equalsIgnoreCase(sCurrentLine.split("\\=")[0])) {
+                        if (user.getId() != Long.parseLong(sCurrentLine.split("\\=")[1])) {
+                            throw new Exception("Login and password used by another user");
+                        }
+                    } else {
+                        list.add(sCurrentLine);
+                    }
+                }
+            }
+            list.add(token + "=" + user.getId());
+        } else {
+            new File(confName).createNewFile();
+        }
+
+        String tmp = confName + "temp";
+        new File(tmp).createNewFile();
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(tmp, true))) {
+            for (String s : list) {
+                bw.write(s);
+                bw.newLine();
+            }
+        }
+
+        new File(confName).delete();
+        new File(tmp).renameTo(new File(confName));
+
+    }
+
     public static IUser getUserByToken(String token) throws Exception {
         IUser user = new User();
         user.setProperty("user.home", getHome());
@@ -160,12 +219,14 @@ public class UserFactory {
             try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
                 String sCurrentLine;
                 while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2 && token.toLowerCase().equals(sCurrentLine.split("\\=")[0].toLowerCase())) {
-                        throw new AuthenticationErrorException("User already exists");
-                    }
-                    long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
-                    if (idx > id) {
-                        id = idx;
+                    if (sCurrentLine.split("\\=").length == 2) {
+                        if (token.equalsIgnoreCase(sCurrentLine.split("\\=")[0])) {
+                            throw new AuthenticationErrorException("User already exists");
+                        }
+                        long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
+                        if (idx > id) {
+                            id = idx;
+                        }
                     }
                 }
             }

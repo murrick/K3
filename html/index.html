@@ -35,12 +35,31 @@
     <link href="codemirror.css" rel="stylesheet">
 
     <script>
-        window.apihost = "https://x.kanger.org";
+        //window.apihost = "https://x.kanger.org";
+        window.apihost = "http://localhost:1964";
         window.token = "";
         window.sizeX = null;
         window.sizeY = null;
 
         jQuery(document).ready(function(){
+
+            if(window.location.href.includes("?confirm=")) {
+                var token = window.location.href.split("=")[1];
+                post({
+                    context: "login",
+                    parameters: {
+                        confirm: token
+                    }
+                }, function(data){
+                    if(data.result == "OK") {
+                        setCookie("token", data.token);
+                        var url = window.location.href.split("?confirm")[0];
+                        window.location.href = url;
+                    } else {
+                        alert(data.description);
+                    }
+                });
+            }
 
             if(window.token == null || window.token == "") {
                 window.token = getCookie("token");
@@ -168,7 +187,6 @@
                                 if(queryInput) {
                                     queryInput.focus();
                                 }
-
                             }
 
                         } else {
@@ -281,6 +299,19 @@
             } else {
                 return true;
             }
+        }
+
+        function resendConfirmation() {
+            logRequestRaw("// Resend confirmation e-mail");
+            post({
+                context: "login",
+                parameters: {
+                    resend: "",
+                    token: window.token
+                }
+            }, function(data) {
+                logResponseRaw(data);
+            });
         }
 
         function logRequest(queryText) {
@@ -1580,16 +1611,44 @@
             });
         }
 
-        function registerForm() {
+        function registerForm(init) {
             document.getElementById("super").style.display = "none";
             document.getElementById("login").style.display = "none";
             document.getElementById("register").style.display = "";
+            if(init) {
+                post({
+                    context: "login",
+                    parameters: {
+                        info: "",
+                        token: window.token
+                    }
+                }, function(data){
+                    if(data.result == "OK") {
+                        //document.getElementById("password-reg").style.display = "none";
+                        //document.getElementById("password-repeat-reg").style.display = "none";
+                        document.getElementById("privacy-reg").parentNode.style.display = "none";
+
+                        document.getElementById("login-reg").value = data.login;
+                        document.getElementById("email-reg").value = data.email;
+                        document.getElementById("name-reg").value = decodeURIComponent(data.name.replace(/\+/g, '%20'));
+                        document.getElementById("country-reg").value = decodeURIComponent(data.country.replace(/\+/g, '%20'));
+                        document.getElementById("city-reg").value = decodeURIComponent(data.city.replace(/\+/g, '%20'));
+                    } else {
+                        alert(data.description);
+                    }
+                });
+            } else {
+                //document.getElementById("password-reg").style.display = "";
+                //document.getElementById("password-repeat-reg").style.display = "";
+                document.getElementById("privacy-reg").parentNode.style.display = "";
+            }
         }
 
         function register() {
-            if(document.getElementById("password-reg").value != document.getElementById("password-repeat-reg").value) {
+            var update = window.token && window.token != "";
+            if(!update && document.getElementById("password-reg").value != document.getElementById("password-repeat-reg").value) {
                 alert("Password confirmation does not match");
-            } else if(!document.getElementById("privacy-reg").checked) {
+            } else if(!update && !document.getElementById("privacy-reg").checked) {
                 alert("Consent to the processing of personal data doesn't received");
             } else {
                 post({
@@ -1601,7 +1660,8 @@
                         name: encodeURIComponent(document.getElementById("name-reg").value),
                         country: encodeURIComponent(document.getElementById("country-reg").value),
                         city: encodeURIComponent(document.getElementById("city-reg").value),
-                        privacy: document.getElementById("privacy-reg").checked
+                        privacy: document.getElementById("privacy-reg").checked,
+                        token: (window.token ? window.token : "")
                     }
                 }, function(data) {
                     if(data.result == "OK") {
@@ -1751,10 +1811,35 @@
     <div style="background: #CCC; width:100%; height: 24px; padding: 4px 0 4px 0;">
         <span style="padding: 0 0 0 8px;">KANGER III Version</span>
         <span id="version-code"></span>
-        <span id="user-name" style="padding: 0 8px 0 8px; float: right;"></span>
+        <span id="user-name" onmouseout="document.getElementById('user-menu').style.display='none'"
+              onmouseover="document.getElementById('user-menu').style.display='block'"
+              style="padding: 0 8px 0 8px; float: right;"
+        ></span>
         <span id="db-name" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;"></span>
         <span id="transaction" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;">
                 Transaction level <span id="transaction-level">0</span></span>
+        <div id="user-menu" onmouseout="this.style.display='none'"
+             onmouseover="this.style.display='block'"
+             style="display: none; position: absolute; top: 20px; right: 0px; width: auto; height: auto; border: 1px solid #777;z-index:100; background-color: #EEE; padding: 8px"
+        >
+            <div onclick="registerForm(true)"
+                 onmouseout="this.style.backgroundColor='#EEE'"
+                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Personal data
+            </div>
+            <div onclick="resendConfirmation()"
+                 onmouseout="this.style.backgroundColor='#EEE'"
+                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Resend
+                confirmation e-mail
+            </div>
+            <div onclick="changePassword()"
+                 onmouseout="this.style.backgroundColor='#EEE'"
+                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Change password
+            </div>
+            <div onclick="command('quit')"
+                 onmouseout="this.style.backgroundColor='#EEE'"
+                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Quit
+            </div>
+        </div>
     </div>
     <div id="container"
          style="width: 100%; height:100%; position:fixed; top: 24px; vertical-align:top; background-color: #FFF; ;">

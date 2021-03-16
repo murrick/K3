@@ -42,10 +42,7 @@ import org.kanger.units.Operation;
 import org.kanger.units.Predicate;
 import org.kanger.units.Rule;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.mail.*;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
@@ -54,62 +51,62 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 
-
 public class QueryProcessor implements IReactor<JSONObject> {
 
-    @Override
-    public Object run(JSONObject o) throws Exception {
-        JSONObject result = null;
-        String context = null;
-        JSONObject parameters = null;
-        try {
-            context = o.getJSONObject("body").getString("context");
-            parameters = o.getJSONObject("body").getJSONObject("parameters");
-        } catch (JSONException ex) {
-            try {
-                context = o.getJSONObject("query").getString("context");
-                parameters = o.getJSONObject("query").getJSONObject("parameters");
-            } catch (JSONException exx) {
-                result = new JSONObject();
-                result.put("result", "error");
-                result.put("description", exx.toString());
-            }
-        }
-        if (context != null) {
-            try {
-                if ("login".equalsIgnoreCase(context)) {
-                    result = processLogin(parameters);
-                } else if ("version".equalsIgnoreCase(context)) {
-                    result = new JSONObject();
-                    result.put("result", "OK");
-                    result.put("version", Version.VERSION_S);
-                } else if (!parameters.isNull("token")) {
-                    String token = parameters.getString("token");
-                    IUser user = UserFactory.getUser(token);
-                    if (user.getCurrentMind() == null) {
-                        IMind mind = new Mind(user);
-                        user.setCurrentMind(mind);
-                    }
+    public static void sendEmail(String[] addressTo,
+                                 String subject,
+                                 String text,
+                                 String from,
+                                 String charset,
+                                 String login,
+                                 String password,
+                                 String host,
+                                 String port) throws Exception {
 
-                    if ("command".equalsIgnoreCase(context)) {
-                        result = processCommand(parameters, user);
-                    } else if ("query".equalsIgnoreCase(context)) {
-                        result = processQuery(parameters, user);
-                    } else if ("history".equalsIgnoreCase(context)) {
-                        result = processHistory(parameters, user);
-                    }
-                } else {
-                    result = new JSONObject();
-                    result.put("result", "error");
-                    result.put("description", "User not logged in");
-                }
-            } catch (Exception ex) {
-                result = new JSONObject();
-                result.put("result", "error");
-                result.put("description", ex.toString());
+        try {
+
+            if (addressTo.length == 0 || addressTo[0].length() == 0) {
+                throw new AddressException("Receiver address not defined");
             }
+            Properties props = new Properties();
+            props.put("mail.transport.protocol", "smtp");
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.starttls.required", "true");
+            props.put("mail.debug", "true");
+            props.put("mail.smtp.ssl.enable", "true");
+
+            props.put("mail.smtp.host", host);
+            props.put("mail.smtp.port", port);
+
+            Session session = Session.getInstance(props,
+                    new Authenticator() {
+                        @Override
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(login, password);
+                        }
+                    });
+
+            MimeMessage msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress(from));
+            for (String to : addressTo) {
+                try {
+                    new InternetAddress(to).validate();
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+                } catch (AddressException ex) {
+                    ex.printStackTrace(System.err);
+                }
+            }
+            msg.setSentDate(new Date());
+            msg.addHeader("Reply-To", from);
+
+            msg.setSubject(subject, charset);
+            msg.setContent(text, "text/plain; charset=" + charset);
+            Transport.send(msg, login, password);
+        } catch (MessagingException ex) {
+            ex.printStackTrace(System.err);
+            throw new Exception(ex);
         }
-        return result;
     }
 
     private JSONObject processHelp() {
@@ -135,56 +132,67 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
-    public static void sendEmail(String[] addressTo, String subject, String text, String from, String charset, String login, String password, String host, int port) throws Exception {
-
+    @Override
+    public Object run(JSONObject o) throws Exception {
+        JSONObject result = null;
+        String context = null;
+        JSONObject parameters = null;
         try {
-
-            if (addressTo.length == 0 || addressTo[0].length() == 0) {
-                throw new AddressException("Receiver address not defined");
-            }
-
-            Properties props = new Properties();
-
-            props.put("mail.transport.protocol", "smtp");
-            props.put("mail.host", host);
-            props.put("mail.user", login);
-            props.put("mail.password", password);
-            props.put("mail.port", port);
-
-            //props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.EnableSSL.enable", "true");
-
-            Session session = Session.getInstance(props, null);
-            //Transport tr = session.getTransport("smtp");
-
-            MimeMessage msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress(from));
-            for (String to : addressTo) {
-                try {
-                    new InternetAddress(to).validate();
-                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-                } catch (AddressException ex) {
-                }
-            }
-            msg.setSentDate(new Date());
-            msg.addHeader("Reply-To", from);
-
-            msg.setSubject(subject, charset);
-            msg.setContent(text,
-                    "text/plain; charset=" + charset);
-
-            Transport transport = session.getTransport();
+            context = o.getJSONObject("body").getString("context");
+            parameters = o.getJSONObject("body").getJSONObject("parameters");
+        } catch (JSONException ex) {
             try {
-                transport.connect(host, port, login, password);
-                transport.sendMessage(msg, msg.getAllRecipients());
-            } finally {
-                transport.close();
+                context = o.getJSONObject("query").getString("context");
+                parameters = o.getJSONObject("query").getJSONObject("parameters");
+            } catch (JSONException exx) {
+                result = new JSONObject();
+                result.put("result", "error");
+                result.put("description", exx.toString());
+                exx.printStackTrace(System.err);
             }
-        } catch (MessagingException ex) {
-            ex.printStackTrace(System.err);
-            throw new Exception(ex);
         }
+        if (context != null) {
+            try {
+                if ("login".equalsIgnoreCase(context)) {
+                    result = processLogin(parameters);
+                } else if ("version".equalsIgnoreCase(context)) {
+                    result = new JSONObject();
+                    result.put("result", "OK");
+                    result.put("version", Version.VERSION_S);
+                } else if (!parameters.isNull("token")) {
+                    try {
+                        String token = parameters.getString("token");
+                        IUser user = UserFactory.getUser(token);
+                        if (user.getCurrentMind() == null) {
+                            IMind mind = new Mind(user);
+                            user.setCurrentMind(mind);
+                        }
+
+                        if ("command".equalsIgnoreCase(context)) {
+                            result = processCommand(parameters, user);
+                        } else if ("query".equalsIgnoreCase(context)) {
+                            result = processQuery(parameters, user);
+                        } else if ("history".equalsIgnoreCase(context)) {
+                            result = processHistory(parameters, user);
+                        }
+                    } catch (AuthenticationErrorException e) {
+                        result = new JSONObject();
+                        result.put("result", "error");
+                        result.put("description", e.toString());
+                    }
+                } else {
+                    result = new JSONObject();
+                    result.put("result", "error");
+                    result.put("description", "User not logged in");
+                }
+            } catch (Exception ex) {
+                result = new JSONObject();
+                result.put("result", "error");
+                result.put("description", ex.toString());
+                ex.printStackTrace(System.err);
+            }
+        }
+        return result;
     }
 
     private JSONObject processHistory(JSONObject parameters, IUser user) throws Exception {
@@ -438,23 +446,77 @@ public class QueryProcessor implements IReactor<JSONObject> {
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                e.printStackTrace(System.err);
             }
         } else if (!parameters.isNull("confirm")) {
             try {
-                IUser user = UserFactory.getUserByToken(parameters.getString("confirm"));
+                String userToken = parameters.getString("confirm");
+                IUser user = UserFactory.getUserByToken(userToken);
+                String token = UserFactory.addUser(user);
                 if (Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
-                    result.put("result", "error");
+                    result.put("result", "OK");
                     result.put("description", "E-mail " + user.getProperty("reg.email", "") + " already confirmed");
+                    result.put("token", token);
                     Watchdog.log(user, "E-mail " + user.getProperty("reg.email", "") + " already confirmed");
                 } else {
                     user.setProperty("reg.agreed", true + "");
                     result.put("result", "OK");
                     result.put("description", "E-mail " + user.getProperty("reg.email", "") + " confirmed");
+                    result.put("token", token);
                     Watchdog.log(user, "E-mail " + user.getProperty("reg.email", "") + " confirmed");
                 }
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                e.printStackTrace(System.err);
+            }
+        } else if (!parameters.isNull("resend") && !parameters.isNull("token")) {
+            try {
+                IUser user = UserFactory.getUser(parameters.getString("token"));
+                String userToken = UserFactory.getUserToken(user);
+
+                if (!user.getProperty("reg.email", "").isEmpty()) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                sendConfirmation(user, userToken);
+                            } catch (Exception e) {
+                                e.printStackTrace(System.err);
+                            }
+                        }
+
+                    }).start();
+                    result.put("result", "OK");
+                    result.put("description", "Sending e-mail to " + user.getProperty("reg.email", "") + " queued");
+                } else {
+                    result.put("result", "error");
+                    result.put("description", "E-mail address not defined");
+                }
+
+            } catch (Exception e) {
+                result.put("result", "error");
+                result.put("description", e.toString());
+                e.printStackTrace(System.err);
+            }
+        } else if (!parameters.isNull("info") && !parameters.isNull("token")) {
+            try {
+                String token = parameters.getString("token");
+                IUser user = UserFactory.getUser(token);
+
+                result.put("login", user.getProperty("reg.login", ""));
+                result.put("email", user.getProperty("reg.email", ""));
+                result.put("name", URLEncoder.encode(user.getProperty("reg.name", ""), "utf-8"));
+                result.put("country", URLEncoder.encode(user.getProperty("reg.country", ""), "utf-8"));
+                result.put("city", URLEncoder.encode(user.getProperty("reg.city", ""), "utf-8"));
+
+                result.put("result", "OK");
+                result.put("token", token);
+
+            } catch (Exception e) {
+                result.put("result", "error");
+                result.put("description", e.toString());
+                e.printStackTrace(System.err);
             }
         } else if (!parameters.isNull("register") && !parameters.isNull("password")) {
             try {
@@ -463,9 +525,20 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 result.put("description", "User " + parameters.getString("register") + " already registered");
             } catch (AuthenticationErrorException ex) {
                 try {
-                    String mainToken = UserFactory.token(parameters.getString("register"), parameters.getString("password"));
-                    IUser user = UserFactory.createUser(parameters.getString("register"), parameters.getString("password"));
-                    user.setProperty("reg.agreed", false + "");
+                    String userToken;
+                    IUser user;
+                    String token = parameters.getString("token");
+                    boolean newUser = true;
+                    if (token.isEmpty()) {
+                        userToken = UserFactory.token(parameters.getString("register"), parameters.getString("password"));
+                        user = UserFactory.createUser(parameters.getString("register"), parameters.getString("password"));
+                        user.setProperty("reg.agreed", false + "");
+                    } else {
+                        newUser = false;
+                        user = UserFactory.getUser(token);
+                        userToken = UserFactory.getUserToken(user);
+                    }
+
                     if (!parameters.isNull("register")) {
                         user.setProperty("reg.login", parameters.getString("register"));
                     }
@@ -481,65 +554,75 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     if (!parameters.isNull("city")) {
                         user.setProperty("reg.city", URLDecoder.decode(parameters.getString("city"), "utf-8"));
                     }
-                    if (!parameters.isNull("privacy")) {
+                    if (newUser && !parameters.isNull("privacy")) {
                         user.setProperty("reg.privacy", parameters.getBoolean("privacy") + "");
                     }
-                    if (user.containsProperty("reg.agreed") && Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
-                        try {
-                            ((User) user).getData();
-                        } catch (RuntimeErrorException e) {
-                            new DB().init(user);
+                    if (newUser) {
+                        if (user.containsProperty("reg.agreed") && Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
+                            try {
+                                ((User) user).getData();
+                            } catch (RuntimeErrorException e) {
+                                new DB().init(user);
+                            }
+                            try {
+                                ((User) user).getUdf();
+                            } catch (RuntimeErrorException e) {
+                                new UDF().init(user);
+                            }
                         }
-                        try {
-                            ((User) user).getUdf();
-                        } catch (RuntimeErrorException e) {
-                            new UDF().init(user);
-                        }
+                        token = UserFactory.addUser(user);
+                        Watchdog.log(user, "New user registered");
+                    } else {
+                        Watchdog.log(user, "User data updated");
                     }
-
-                    String token = UserFactory.addUser(user);
                     result.put("result", "OK");
                     result.put("token", token);
 
-                    Watchdog.log(user, "New user registered");
-
-                    if (!parameters.isNull("email") && !parameters.getString("email").isEmpty()) {
+                    if (newUser && !parameters.isNull("email") && !parameters.getString("email").isEmpty()) {
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 try {
-                                    Watchdog.log(user, "Sending confirmation email to " + parameters.getString("email"));
-                                    sendEmail(new String[]{parameters.getString("email")},
-                                            "KANGER: Registration confirmation",
-                                            "You are just registered on site kanger.org. Please confirm your e-mail by following link: " +
-                                                    "https://x.kanger.org:1964/login?confirm=" + mainToken,
-                                            Settings.getProperty("server.email.from", "murray@kanger.org"),
-                                            "utf-8",
-                                            Settings.getProperty("server.email.login", "murray@kanger.org"),
-                                            Settings.getProperty("server.email.password", "nhb3rjnf64"),
-                                            Settings.getProperty("server.email.host", "smtp.yandex.ru"),
-                                            Integer.parseInt(Settings.getProperty("server.email.port", 993 + "")));
-                                    Watchdog.log(user, "Confirmation email to " + parameters.getString("email") + " sent");
+                                    sendConfirmation(user, userToken);
                                 } catch (Exception e) {
                                     e.printStackTrace(System.err);
                                 }
                             }
+
                         }).start();
                     }
 
                 } catch (Exception e) {
                     result.put("result", "error");
                     result.put("description", e.toString());
+                    e.printStackTrace(System.err);
                 }
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                e.printStackTrace(System.err);
             }
         } else {
             result.put("result", "error");
             result.put("description", "Login request format error");
         }
         return result;
+    }
+
+    private void sendConfirmation(IUser user, String userToken) throws Exception {
+        String email = user.getProperty("reg.email", "");
+        Watchdog.log(user, "Sending confirmation email to " + email);
+        sendEmail(new String[]{email},
+                "KANGER: Registration confirmation",
+                "You are just registered on site kanger.org. Please confirm your e-mail by following link: " +
+                        "https://kanger.org/?confirm=" + userToken,
+                Settings.getProperty("server.email.from", ""),
+                "utf-8",
+                Settings.getProperty("server.email.login", ""),
+                Settings.getProperty("server.email.password", ""),
+                Settings.getProperty("server.email.host", ""),
+                Settings.getProperty("server.email.port", "465"));
+        Watchdog.log(user, "Confirmation email to " + email + " sent");
     }
 
     private JSONObject processCommand(JSONObject parameters, IUser user) throws Exception {

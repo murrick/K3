@@ -1,13 +1,14 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="kanger-server:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/kanger_server_jar</output-path>
+    <output-path>$PROJECT_DIR$/out/artifacts/dist/modules</output-path>
     <root id="archive" name="kanger-server.jar">
       <element id="module-output" name="kanger-server" />
       <element id="module-output" name="kanger-udf" />
       <element id="module-output" name="kanger-data-dumb" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/mail.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/json-20201115.jar" path-in-jar="/" />
-      <element id="module-output" name="kanger" />
+      <element id="module-output" name="$project_name$" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/javax.activation-1.2.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/javax.mail.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
