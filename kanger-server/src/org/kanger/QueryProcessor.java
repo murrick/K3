@@ -424,7 +424,29 @@ public class QueryProcessor implements IReactor<JSONObject> {
 
     private JSONObject processLogin(JSONObject parameters) throws JSONException {
         JSONObject result = new JSONObject();
-        if (!parameters.isNull("login") && !parameters.isNull("password")) {
+        if (!parameters.isNull("currentpassword") && !parameters.isNull("currentlogin")) {
+            try {
+                IUser user = UserFactory.getUser(parameters.getString("currentlogin"), parameters.getString("currentpassword"));
+                UserFactory.dropUser(user);
+                String login = parameters.getString("login");
+                String password = parameters.getString("password");
+                if (password.isEmpty()) {
+                    password = parameters.getString("currentpassword");
+                }
+                UserFactory.updateUserToken(user, login, password);
+                String token = UserFactory.addUser(user);
+                user.setProperty("reg.login", login);
+
+                result.put("result", "OK");
+                result.put("token", token);
+                result.put("login", login);
+                Watchdog.log(user, "User login ot password changed (" + parameters.getString("currentlogin") + ")");
+            } catch (Exception e) {
+                result.put("result", "error");
+                result.put("description", e.toString());
+                e.printStackTrace(System.err);
+            }
+        } else if (!parameters.isNull("login") && !parameters.isNull("password")) {
             try {
                 IUser user = UserFactory.getUser(parameters.getString("login"), parameters.getString("password"));
                 if (user.containsProperty("reg.agreed") && Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
@@ -577,6 +599,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     }
                     result.put("result", "OK");
                     result.put("token", token);
+                    result.put("login", user.getProperty("reg.login", ""));
 
                     if (newUser && !parameters.isNull("email") && !parameters.getString("email").isEmpty()) {
                         new Thread(new Runnable() {
@@ -611,11 +634,15 @@ public class QueryProcessor implements IReactor<JSONObject> {
 
     private void sendConfirmation(IUser user, String userToken) throws Exception {
         String email = user.getProperty("reg.email", "");
+        String login = user.getProperty("reg.login", "");
         Watchdog.log(user, "Sending confirmation email to " + email);
         sendEmail(new String[]{email},
                 "KANGER: Registration confirmation",
-                "You are just registered on site kanger.org. Please confirm your e-mail by following link: " +
-                        "https://kanger.org/?confirm=" + userToken,
+                "You are just registered on site kanger.org with login " +
+                        login +
+                        ". Please confirm your e-mail by following link: " +
+                        Settings.getProperty("server.url", "https://kanger.org") +
+                        "/?confirm=" + userToken,
                 Settings.getProperty("server.email.from", ""),
                 "utf-8",
                 Settings.getProperty("server.email.login", ""),

@@ -11,5 +11,7 @@
     <orderEntry type="module" module-name="kanger-data-dumb" />
     <orderEntry type="module" module-name="$project_name$" />
     <orderEntry type="library" name="lib" level="project" />
+    <orderEntry type="library" name="javax.mail" level="project" />
+    <orderEntry type="module" module-name="kanger" />
   </component>
 </module>

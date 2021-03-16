@@ -6,8 +6,6 @@
       <element id="module-output" name="kanger-udf" />
       <element id="module-output" name="kanger-data-dumb" />
       <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/json-20201115.jar" path-in-jar="/" />
-      <element id="module-output" name="$project_name$" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/javax.activation-1.2.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/javax.mail.jar" path-in-jar="/" />
     </root>
   </artifact>

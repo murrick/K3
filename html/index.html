@@ -68,18 +68,9 @@
 
                 document.getElementById("super").style.display = "none";
                 document.getElementById("register").style.display = "none";
+                document.getElementById("password").style.display = "none";
                 document.getElementById("login").style.display = "";
                 document.getElementById("login-in").focus();
-                document.getElementById("login-in").onkeypress = function(e){
-                    if(e.keyCode == 13) {
-                        document.getElementById("login-submit").click();
-                    }
-                }
-                document.getElementById("password-in").onkeypress = function(e){
-                    if(e.keyCode == 13) {
-                        document.getElementById("login-submit").click();
-                    }
-                }
 
                 var w = document.getElementById("version-code-login");
                 var r = document.getElementById("version-code-reg");
@@ -94,6 +85,7 @@
                 document.getElementById("super").style.display = "";
                 document.getElementById("register").style.display = "none";
                 document.getElementById("login").style.display = "none";
+                document.getElementById("password").style.display = "none";
 
                 var v = document.getElementById("version-code");
                 var u = document.getElementById("user-name");
@@ -1611,9 +1603,40 @@
             });
         }
 
+        function passwordForm() {
+            document.getElementById("super").style.display = "none";
+            document.getElementById("login").style.display = "none";
+            document.getElementById("password").style.display = "";
+            document.getElementById("register").style.display = "none";
+
+            document.getElementById("login-pass").value = getCookie("login");
+        }
+
+        function password() {
+            post({
+                context: "login",
+                parameters: {
+                    currentpassword: document.getElementById("password-old-pass").value,
+                    currentlogin: getCookie("login"),
+                    login: document.getElementById("login-pass").value,
+                    password: document.getElementById("password-pass").value,
+                    token: window.token
+                }
+            }, function(data) {
+                if(data.result == "OK") {
+                    setCookie("login", data.login);
+                    setCookie("token", data.token);
+                    document.location.reload();
+                } else {
+                    alert(data.description);
+                }
+            });
+        }
+
         function registerForm(init) {
             document.getElementById("super").style.display = "none";
             document.getElementById("login").style.display = "none";
+            document.getElementById("password").style.display = "none";
             document.getElementById("register").style.display = "";
             if(init) {
                 post({
@@ -1624,9 +1647,11 @@
                     }
                 }, function(data){
                     if(data.result == "OK") {
-                        //document.getElementById("password-reg").style.display = "none";
-                        //document.getElementById("password-repeat-reg").style.display = "none";
-                        document.getElementById("privacy-reg").parentNode.style.display = "none";
+                        document.getElementById("password-reg").parentNode.parentNode.style.display = "none";
+                        document.getElementById("password-repeat-reg").parentNode.parentNode.style.display = "none";
+                        document.getElementById("privacy-reg").parentNode.parentNode.style.display = "none";
+                        document.getElementById("login-reg").setAttribute("readonly", true);
+                        document.getElementById("login-reg").setAttribute("disabled", true);
 
                         document.getElementById("login-reg").value = data.login;
                         document.getElementById("email-reg").value = data.email;
@@ -1638,9 +1663,11 @@
                     }
                 });
             } else {
-                //document.getElementById("password-reg").style.display = "";
-                //document.getElementById("password-repeat-reg").style.display = "";
-                document.getElementById("privacy-reg").parentNode.style.display = "";
+                document.getElementById("password-reg").parentNode.parentNode.style.display = "";
+                document.getElementById("password-repeat-reg").parentNode.parentNode.style.display = "";
+                document.getElementById("privacy-reg").parentNode.parentNode.style.display = "";
+                document.getElementById("login-reg").removeAttribute("readonly");
+                document.getElementById("login-reg").removeAttribute("disabled");
             }
         }
 
@@ -1665,11 +1692,8 @@
                     }
                 }, function(data) {
                     if(data.result == "OK") {
-                        var u = document.getElementById("user-name");
-                        setCookie("login", document.getElementById("login-reg").value);
+                        setCookie("login", data.login);
                         setCookie("token", data.token);
-                        window.token = data.token;
-                        u.innerHTML = getCookie("login");
                         document.location.reload();
                     } else {
                         alert(data.description);
@@ -1677,6 +1701,25 @@
                 });
             }
         }
+
+        function onKeyPressLogin(event) {
+            if(event.keyCode == 13) {
+                document.getElementById("login-submit").click();
+            }
+        }
+
+        function onKeyPressReg(event) {
+            if(event.keyCode == 13) {
+                document.getElementById("login-submit-reg").click();
+            }
+        }
+
+        function onKeyPressPass(event) {
+            if(event.keyCode == 13) {
+                document.getElementById("login-submit-pass").click();
+            }
+        }
+
 
     </script>
 
@@ -1698,7 +1741,7 @@
                     <div style="width: 100px; padding: 8px; float: left;">login:</div>
                 </td>
                 <td>
-                    <input id="login-in" style="width: 200px;" type="text">
+                    <input id="login-in" onkeypress="onKeyPressLogin(event)" style="width: 200px;" type="text">
                 </td>
             </tr>
             <tr>
@@ -1706,7 +1749,7 @@
                     <div style="width: 100px; padding: 8px; float: left;">password:</div>
                 </td>
                 <td>
-                    <input id="password-in" style="width: 200px;" type="password">
+                    <input id="password-in" onkeypress="onKeyPressLogin(event)" style="width: 200px;" type="password">
                 </td>
             </tr>
             <tr>
@@ -1736,7 +1779,7 @@
                     <div style="width: 100%; padding: 8px; float: left;">login:</div>
                 </td>
                 <td>
-                    <input id="login-reg" style="width: 200px;" type="text">
+                    <input id="login-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
                 </td>
             </tr>
             <tr>
@@ -1744,7 +1787,7 @@
                     <div style="width: 100%; padding: 8px; float: left;">password:</div>
                 </td>
                 <td>
-                    <input id="password-reg" style="width: 200px;" type="password">
+                    <input id="password-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="password">
                 </td>
             </tr>
             <tr>
@@ -1752,7 +1795,8 @@
                     <div style="width: 100%; padding: 8px; float: left; white-space: nowrap;">repeat password:</div>
                 </td>
                 <td>
-                    <input id="password-repeat-reg" style="width: 200px;" type="password">
+                    <input id="password-repeat-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;"
+                           type="password">
                 </td>
             </tr>
             <tr>
@@ -1760,7 +1804,7 @@
                     <div style="width: 100%; padding: 8px; float: left;">e-mail:</div>
                 </td>
                 <td>
-                    <input id="email-reg" style="width: 200px;" type="text">
+                    <input id="email-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
                 </td>
             </tr>
             <tr>
@@ -1768,7 +1812,7 @@
                     <div style="width: 100%; padding: 8px; float: left;">your name:</div>
                 </td>
                 <td>
-                    <input id="name-reg" style="width: 200px;" type="text">
+                    <input id="name-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
                 </td>
             </tr>
             <tr>
@@ -1776,7 +1820,7 @@
                     <div style="width: 100%; padding: 8px; float: left;">your country:</div>
                 </td>
                 <td>
-                    <input id="country-reg" style="width: 200px;" type="text">
+                    <input id="country-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
                 </td>
             </tr>
             <tr>
@@ -1784,7 +1828,7 @@
                     <div style="width: 100%; padding: 8px; float: left;">your city:</div>
                 </td>
                 <td>
-                    <input id="city-reg" style="width: 200px;" type="text">
+                    <input id="city-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
                 </td>
             </tr>
             <tr>
@@ -1801,13 +1845,64 @@
                     <button id="login-submit-reg" onclick="register()"
                             style="float: right; width: 80px; margin-top:20px;">Ok
                     </button>
+                    <button id="login-cancel-reg" onclick="document.location.reload();"
+                            style="float: right; width: 80px; margin-top:20px; margin-right: 8px;">Cancel
+                    </button>
                 </td>
             </tr>
         </table>
     </div>
 </div>
 
-<div id="super" style="height:100%; width:100%; display: none;">
+<div id="password" style="display: none; height:100%; width:100%">
+    <div style="width: 500px; height: 420px; background-color: #EEE; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
+        <table cellpadding="0" cellspacing="0" style="width:400px; border: none; margin-top: 50px; margin-left: 22px;">
+            <tr>
+                <td colspan="2" style="padding-bottom: 12px;">
+                    <span style="padding: 0 0 0 8px; font-weight: bold">KANGER III</span> Version
+                    <span id="version-code-pass" style="font-weight: bold"></span> registration
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left; white-space: nowrap;">current password:</div>
+                </td>
+                <td>
+                    <input id="password-old-pass" onkeypress="onKeyPressPass(event)" style="width: 200px;"
+                           type="password">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">new login:</div>
+                </td>
+                <td>
+                    <input id="login-pass" onkeypress="onKeyPressPass(event)" style="width: 200px;" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="width: 100%; padding: 8px; float: left;">new password:</div>
+                </td>
+                <td>
+                    <input id="password-pass" onkeypress="onKeyPressPass(event)" style="width: 200px;" type="password">
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button id="login-submit-pass" onclick="password()"
+                            style="float: right; width: 80px; margin-top:20px;">Ok
+                    </button>
+                    <button id="login-cancel-pass" onclick="document.location.reload();"
+                            style="float: right; width: 80px; margin-top:20px; margin-right: 8px;">Cancel
+                    </button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="super" style="display: none; height:100%; width:100%; display: none;">
     <div style="background: #CCC; width:100%; height: 24px; padding: 4px 0 4px 0;">
         <span style="padding: 0 0 0 8px;">KANGER III Version</span>
         <span id="version-code"></span>
@@ -1831,9 +1926,10 @@
                  onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Resend
                 confirmation e-mail
             </div>
-            <div onclick="changePassword()"
+            <div onclick="passwordForm()"
                  onmouseout="this.style.backgroundColor='#EEE'"
-                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Change password
+                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Change login
+                &amp; password
             </div>
             <div onclick="command('quit')"
                  onmouseout="this.style.backgroundColor='#EEE'"
