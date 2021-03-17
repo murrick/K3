@@ -7,6 +7,7 @@
       <element id="module-output" name="kanger-data-dumb" />
       <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/json-20201115.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/kanger-server/lib/javax.mail.jar" path-in-jar="/" />
+      <element id="module-output" name="kanger" />
     </root>
   </artifact>
 </component>

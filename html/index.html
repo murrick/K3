@@ -154,12 +154,17 @@
                                                 div.style.color = color;
                                             }
                                         } else {
-                                            logRequest("help");
-                                            command("help", function(){
-                                                logRequest("use");
-                                                command("use", function(){
-                                                    logRequest("get");
-                                                    command("get");
+                                            logRequest("// KANGER session started at " + new Date(), function(){
+                                                logRequest("help", function(){
+                                                    command("help", function(){
+                                                        logRequest("use", function(){
+                                                            command("use", function(){
+                                                                logRequest("get", function(){
+                                                                    command("get");
+                                                                });
+                                                            });
+                                                        });
+                                                    });
                                                 });
                                             });
                                         }
@@ -253,13 +258,17 @@
             //element.style.height = (element.scrollHeight)+"px";
         }
 
-        function storeHistory(queryText) {
+        function storeHistory(queryText, callback) {
             //var uri = encodeURIComponent(queryText);
             post({
                 context: "history",
                 parameters: {
                     token: window.token,
-                    put: queryText
+                    put: encodeURIComponent(queryText)
+                }
+            }, function(data) {
+                if(callback) {
+                    callback(data);
                 }
             });
         }
@@ -270,22 +279,22 @@
             if (!e.ctrlKey && (e.keyCode == 13 || e.keyCode == 10)) {
                 var queryText = queryInput.value.trim();
 
-                logRequest(queryText);
+                logRequest(queryText, function(){
+                    setTimeout(function() {
+                        queryInput.value = "";
+                        queryInput.style.height = "20px";
+                    }, 100);
 
-                setTimeout(function() {
-                    queryInput.value = "";
-                    queryInput.style.height = "20px";
-                }, 100);
-
-                if(queryText.charAt(0) == '!'
-                    || queryText.charAt(0) == '?'
-                    || queryText.charAt(0) == '+'
-                    || queryText.charAt(0) == '-'
-                    || queryText.charAt(0) == '=') {
-                    query(queryText);
-                } else {
-                    command(queryText);
-                }
+                    if(queryText.charAt(0) == '!'
+                        || queryText.charAt(0) == '?'
+                        || queryText.charAt(0) == '+'
+                        || queryText.charAt(0) == '-'
+                        || queryText.charAt(0) == '=') {
+                        query(queryText);
+                    } else {
+                        command(queryText);
+                    }
+                });
 
                 return false;
             } else {
@@ -294,21 +303,22 @@
         }
 
         function resendConfirmation() {
-            logRequestRaw("// Resend confirmation e-mail");
-            post({
-                context: "login",
-                parameters: {
-                    resend: "",
-                    token: window.token
-                }
-            }, function(data) {
-                logResponseRaw(data);
+            logRequest("// Resend confirmation e-mail", function(){
+                post({
+                    context: "login",
+                    parameters: {
+                        resend: "",
+                        token: window.token
+                    }
+                }, function(data) {
+                    logResponseRaw(data);
+                });
             });
         }
 
-        function logRequest(queryText) {
+        function logRequest(queryText, callback) {
             var div = logRequestRaw(queryText);
-            storeHistory("Q" + div.style.color + "~~~" + div.innerHTML);
+            storeHistory("Q" + div.style.color + "~~~" + div.innerHTML, callback);
         }
 
         function logRequestRaw(queryText) {
@@ -316,6 +326,7 @@
             div.style.padding = "2px 2px 2px 8px";
             div.innerHTML = queryText;
             div.style.fontFamily = "monospace";
+            div.style.fontSize = "13px";
             if(!queryText.startsWith("//")) {
                 div.style.cursor = "pointer";
                 div.onmouseover = function(e){
@@ -373,9 +384,9 @@
             return div;
         }
 
-        function logResponse(data, ln) {
+        function logResponse(data, ln, callback) {
             var div = logResponseRaw(data, ln);
-            storeHistory("R" + div.style.color + "~~~" + div.innerHTML);
+            storeHistory("R" + div.style.color + "~~~" + div.innerHTML, callback);
         }
 
         function command(queryText, callback) {
@@ -553,7 +564,7 @@
                             var ln = "Available sources: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"logRequest(\'get " + data.list[i] + "\'); command(\'get " + data.list[i] + "\')\"" +
+                                    "onclick=\"logRequest(\'get " + data.list[i] + "\', function(){ command(\'get " + data.list[i] + "\'); });\"" +
                                     "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                     "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                     ">" +
@@ -604,7 +615,7 @@
                             var ln = "Save current source to: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"logRequest(\'put " + data.list[i] + "\'); command(\'put " + data.list[i] + "\')\"" +
+                                    "onclick=\"logRequest(\'put " + data.list[i] + "\', function(){ command(\'put " + data.list[i] + "\'); });\"" +
                                     "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                     "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                     ">" +
@@ -655,7 +666,7 @@
                             var ln = "Select file for delete: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"logRequest(\'delete " + data.list[i] + "\'); command(\'delete " + data.list[i] + "\')\"" +
+                                    "onclick=\"logRequest(\'delete " + data.list[i] + "\', function(){ command(\'delete " + data.list[i] + "\'); });\"" +
                                     "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                     "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                     ">" +
@@ -751,7 +762,7 @@
                             var ln = "Available DBs: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                "onclick=\"logRequest(\'use " + data.list[i] + "\'); command(\'use " + data.list[i] + "\')\"" +
+                                "onclick=\"logRequest(\'use " + data.list[i] + "\', function(){ command(\'use " + data.list[i] + "\'); });\"" +
                                 "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                 "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                 ">" + data.list[i] + "</span> ";
@@ -826,7 +837,7 @@
                             var ln = "Select DB for drop: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                "onclick=\"logRequest(\'drop " + data.list[i] + "\'); command(\'drop " + data.list[i] + "\')\"" +
+                                "onclick=\"logRequest(\'drop " + data.list[i] + "\', function(){ command(\'drop " + data.list[i] + "\'); });\"" +
                                 "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                 "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                 ">" + data.list[i] + "</span> ";
@@ -877,7 +888,7 @@
                             var ln = "Select DB for reindex: ";
                             for(var i = 0; i < data.list.length; ++i) {
                                 ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                "onclick=\"logRequest(\'reindex " + data.list[i] + "\'); command(\'reindex " + data.list[i] + "\')\"" +
+                                "onclick=\"logRequest(\'reindex " + data.list[i] + "\', function(){ command(\'reindex " + data.list[i] + "\'); });\"" +
                                 "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
                                 "onmouseout=\"this.style.backgroundColor=\'\'\"" +
                                 ">" + data.list[i] + "</span> ";
@@ -1017,9 +1028,10 @@
                 }
             }, function(data) {
                 if(data.result == "OK" && data.size == 1) {
-                    logRequest("// Inference tree for: <b>" +  data.list[0].origin + "</b>");
-                    var str = recurseTree(data.list[0].causes, 0);
-                    logResponse(null, str);
+                    logRequest("// Inference tree for: <b>" +  data.list[0].origin + "</b>", function(){
+                        var str = recurseTree(data.list[0].causes, 0);
+                        logResponse(null, str);
+                    });
                 }
             });
         }
@@ -1597,9 +1609,10 @@
                     compile: uri
                 }
             }, function(data) {
-                logRequest("// Compile");
-                refreshScreen(data);
-                openConsole();
+                logRequest("// Compile", function(){
+                    refreshScreen(data);
+                    openConsole();
+                });
             });
         }
 

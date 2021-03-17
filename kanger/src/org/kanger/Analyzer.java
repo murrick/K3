@@ -87,6 +87,13 @@ public class Analyzer {
                         Hypothesis tmp = new Hypothesis(r, mind);
                         IRule rx = mind.getRules().find(tmp);
                         if (mind.getHypothesis().find(tmp) == null && (rx == null || rx.isDeleted(mind))) {
+
+                            //TODO: Появляются заведомо противоречащие гипотезы. ?$ x father(x, Peter)l
+//                            tmp.setAntc(!tmp.isAntc());
+//                            rx = mind.getRules().find(tmp);
+//                            tmp.setAntc(!tmp.isAntc());
+
+//                            if (rx == null || rx.isDeleted(mind)) {
 //                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
 //                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
 //                            tmp.setAntc(true);
@@ -95,6 +102,7 @@ public class Analyzer {
                             if (logging) {
                                 log.add(LogMode.ANALYZER, "Hypothesis assumed: " + tmp.toString(mind));
                             }
+//                            }
                         }
                     }
 //                } else if (!r.isDeleted() && r.getTree().size() == 1) {
@@ -124,7 +132,6 @@ public class Analyzer {
         }
         return result;
     }
-
 
     private boolean checkRight(Rule p, Set<Rule> orfans, Set<Long> list, boolean logging) throws Exception {
         boolean result = false;

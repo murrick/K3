@@ -119,26 +119,27 @@ public class Linker {
                 }
             }
 //
-//                ruleSet.add(rule);
-//                ruleSet.addAll(rule.getNatives());
-//                for (Rule r : mind.getRules()) {
-//                    if (!r.isDeleted()) {
-//                        if (r.isUsed(mind)) {
-//                            ruleSet.add(r);
-//                            ruleSet.addAll(r.getNatives());
+            if (rule != null) {
+                ruleSet.add(rule);
+                ruleSet.addAll(rule.getNatives());
+                for (IRule r : mind.getRules()) {
+                    if (!r.isDeleted(mind)) {
+                        if (((Rule) r).isUsed(mind)) {
+                            ruleSet.add(r);
+                            ruleSet.addAll(((Rule) r).getNatives());
 //                        } else if (r.isGenerated() && r.getId() > topId) {
 //                            ruleSet.add(r);
-//                            ruleSet.addAll(r.getNatives());
-//                        }
-//                    }
-//                }
-//            } else {
-            for (IRule r : mind.getRules()) {
-                if (!r.isDeleted(mind)) {
-                    ruleSet.add(r);
+//                            ruleSet.addAll(((Rule) r).getNatives());
+                        }
+                    }
+                }
+            } else {
+                for (IRule r : mind.getRules()) {
+                    if (!r.isDeleted(mind)) {
+                        ruleSet.add(r);
+                    }
                 }
             }
-//            }
 
 //            System.err.println("--------------");
 //            for(Right r : rightSet) {

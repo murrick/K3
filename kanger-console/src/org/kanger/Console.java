@@ -30,6 +30,7 @@ import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.ValuesStore;
 import org.kanger.test.KangerTest;
 import org.kanger.units.Rule;
@@ -1196,7 +1197,7 @@ public class Console {
         if (!mind.getHypothesis().isEmpty()) {
             System.out.printf("Hypothesis list:\n");
             for (i = 0; i < mind.getHypothesis().size(); ++i) {
-                System.out.printf("\t%03d:\t%s\n", i + 1, mind.getHypothesis().get(i).toString());
+                System.out.printf("\t%03d:\t%s\n", i + 1, ((Hypothesis) mind.getHypothesis().get(i)).toString(mind));
             }
 //            System.out.printf("Use APPEND command for select Hypothesis\n");
         } else {

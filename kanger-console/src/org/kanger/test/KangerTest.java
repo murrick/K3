@@ -227,7 +227,7 @@ public class KangerTest {
             System.out.println("Hypothesis (" + mind.getHypothesis().size() + "):");
             int i = 0;
             for (IHypothesis s : mind.getHypothesis()) {
-                System.out.printf("\t%3d:\t%s\n", ++i, s.toString());
+                System.out.printf("\t%3d:\t%s\n", ++i, ((Hypothesis) s).toString(mind));
             }
         }
         System.out.println("----------------------------------------------------");

@@ -207,7 +207,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             result.put("size", list.size());
             result.put("list", list);
         } else if (!parameters.isNull("put")) {
-            String s = parameters.getString("put"); //URLDecoder.decode(parameters.getString("put"), "utf-8");
+            String s = URLDecoder.decode(parameters.getString("put"), "utf-8");
             UserFactory.addHistory(user, s);
             result.put("result", "OK");
         }
