@@ -180,7 +180,7 @@
                                 });
 
                                 placeElements(data);
-                                var queryInput = document.getElementById("query_input");
+                                var queryInput = document.getElementById("query-input");
                                 if(queryInput) {
                                     queryInput.focus();
                                 }
@@ -275,7 +275,7 @@
 
         function check_enter() {
             var e = window.event;
-            var queryInput = document.getElementById("query_input");
+            var queryInput = document.getElementById("query-input");
             if (!e.ctrlKey && (e.keyCode == 13 || e.keyCode == 10)) {
                 var queryText = queryInput.value.trim();
 
@@ -336,8 +336,8 @@
                     this.style.backgroundColor="";
                 };
                 div.onclick = function(e){
-                    var queryInput = document.getElementById("query_input");
-                    document.getElementById("query_input").value = decodeEntities(this.innerHTML);
+                    var queryInput = document.getElementById("query-input");
+                    document.getElementById("query-input").value = decodeEntities(this.innerHTML);
                     queryInput.focus();
                     queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
                 };
@@ -909,6 +909,7 @@
 
         function query(queryText, callback) {
             var uri = encodeURIComponent(queryText);
+            setQueryStatus("Processing query");
             post({
                 context: "query",
                 parameters: {
@@ -916,6 +917,7 @@
                     request: uri
                 }
             }, function(data){
+                dropQueryStatus();
                 refreshScreen(data);
                 if(callback) {
                     callback(data);
@@ -946,55 +948,60 @@
                             if(data.list[i].deleted) {
                                 div.style.color = "#777";
                             }
-                            div.innerHTML = "<div id=\"SN" + data.list[i].id + "\" style=\"width: 10px; height: 10px; float:left\">+</div>&nbsp;" +
+                            div.innerHTML = "<div id=\"SN" + data.list[i].id + "\" style=\"width: 10px; height: 10px; float:left\">" +
+                                (data.list[i].statements.length ? "+" : "-") +
+                                "</div>&nbsp;" +
                                 ("0000" + data.list[i].id).substr(-4) + "&nbsp;<b>" +
                                 data.list[i].name + "</b>(" + data.list[i].range + ")" + " " +
                                 data.list[i].statements.length;
-                            div.onclick = function(e) {
-                                var x = "PRL" + this.id.substr(2);
-                                var y = document.getElementById(x);
-                                var a = "SN" + this.id.substr(2);
-                                var z = document.getElementById(a);
-                                if(y.style.display == "none") {
-                                    y.style.display = "";
-                                    z.innerHTML = "-";
-                                } else {
-                                    y.style.display = "none";
-                                    z.innerHTML = "+";
-                                }
-                            }
                             statements.append(div);
 
-                            div = document.createElement("div");
-                            div.id = "PRL" + data.list[i].id;
-                            div.style.fontSize = "13px";
-                            div.style.fontFamily = "monospace";
-                            div.style.whiteSpace = "nowrap";
-                            div.style.paddingLeft = "16px";
-                            div.style.display = "none";
-
-                            statements.append(div);
-
-                            for(var j = 0; j < data.list[i].statements.length; ++j) {
-                                var d = document.createElement("div");
-                                d.id = "PS" + data.list[i].statements[j].id;
-                                d.style.fontSize = "13px";
-                                d.style.fontFamily = "monospace";
-                                d.style.whiteSpace = "nowrap";
-                                d.style.cursor = "pointer";
-                                if(data.list[i].statements[j].deleted) {
-                                    d.style.color = "#777";
-                                } else if(data.list[i].statements[j].generated) {
-                                    d.style.color = "#282";
-                                } else {
-                                    d.style.color = "#228";
+                            if(data.list[i].statements.length) {
+                                div.onclick = function(e) {
+                                    var x = "PRL" + this.id.substr(2);
+                                    var y = document.getElementById(x);
+                                    var a = "SN" + this.id.substr(2);
+                                    var z = document.getElementById(a);
+                                    if(y.style.display == "none") {
+                                        y.style.display = "";
+                                        z.innerHTML = "-";
+                                    } else {
+                                        y.style.display = "none";
+                                        z.innerHTML = "+";
+                                    }
                                 }
-                                d.onclick = function(e) {
-                                    showTree(e.currentTarget.id.substr(2));
+
+                                div = document.createElement("div");
+                                div.id = "PRL" + data.list[i].id;
+                                div.style.fontSize = "13px";
+                                div.style.fontFamily = "monospace";
+                                div.style.whiteSpace = "nowrap";
+                                div.style.paddingLeft = "16px";
+                                div.style.display = "none";
+
+                                statements.append(div);
+
+                                for(var j = 0; j < data.list[i].statements.length; ++j) {
+                                    var d = document.createElement("div");
+                                    d.id = "PS" + data.list[i].statements[j].id;
+                                    d.style.fontSize = "13px";
+                                    d.style.fontFamily = "monospace";
+                                    d.style.whiteSpace = "nowrap";
+                                    d.style.cursor = "pointer";
+                                    if(data.list[i].statements[j].deleted) {
+                                        d.style.color = "#777";
+                                    } else if(data.list[i].statements[j].generated) {
+                                        d.style.color = "#282";
+                                    } else {
+                                        d.style.color = "#228";
+                                    }
+                                    d.onclick = function(e) {
+                                        showTree(e.currentTarget.id.substr(2));
+                                    }
+                                    d.innerHTML = ("0000" + data.list[i].statements[j].id).substr(-4) + "&nbsp;<b>" +
+                                        data.list[i].statements[j].origin;
+                                    div.append(d);
                                 }
-                                d.innerHTML = ("0000" + data.list[i].statements[j].id).substr(-4) + "&nbsp;<b>" +
-                                    data.list[i].statements[j].origin;
-                                div.append(d);
                             }
                         }
                     }
@@ -1220,7 +1227,7 @@
                                 "</span>";
                             div.origin = data.list[i].origin;
                             div.onclick = function(e){
-                                var queryInput = document.getElementById("query_input");
+                                var queryInput = document.getElementById("query-input");
                                 var s = this.origin.charAt(0) == "?" ? "!~" + this.origin.substr(1) : this.origin;
                                 queryInput.value = decodeEntities(s);
                                 queryInput.focus();
@@ -1733,6 +1740,37 @@
             }
         }
 
+        function setQueryStatus(str) {
+            var queryInput = document.getElementById("query-input");
+            var queryMessage = document.getElementById("query-message");
+            queryInput.style.display = "none";
+            queryMessage.style.display = "";
+            if(str) {
+                queryMessage.innerHTML = str;
+            } else {
+                queryMessage.innerHTML = "Processing query";
+            }
+            window.dots = setInterval(function() {
+                var queryMessage = document.getElementById("query-message");
+                var str = queryMessage.innerHTML;
+                if(str.includes(".......")) {
+                    str = str.replace(".......", "");
+                }
+                str += ".";
+                queryMessage.innerHTML = str;
+            }, 500);
+        }
+
+        function dropQueryStatus() {
+            if(window.dots) {
+                clearInterval(window.dots);
+            }
+            var queryInput = document.getElementById("query-input");
+            var queryMessage = document.getElementById("query-message");
+            queryInput.style.display = "";
+            queryMessage.style.display = "none";
+            queryInput.focus();
+        }
 
     </script>
 
@@ -1991,7 +2029,8 @@
                 </div>
                 <div id="console-input" style="height: 24px; width: 100%; background: #FFF; ">
                     <span style="float: left; position: fixed; ">&nbsp;:&nbsp;</span>
-                    <textarea id="query_input"
+                    <span id="query-message" style="float: left; position: fixed; display: none; margin-left: 32px">Processing query</span>
+                    <textarea id="query-input"
                               oninput="auto_grow(this)"
                               onkeypress="check_enter()"
                               style="font-family: monospace; margin-left: 20px; resize: none; overflow: hidden; min-height: 20px; max-height: 100px; height: 16px; border: none; outline-style: none; width: 95%;"></textarea>
