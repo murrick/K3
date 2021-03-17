@@ -53,11 +53,12 @@ public class Linker {
 
     //TODO: ПРИБИТЬ
 //    int cccc = 0;
+    //TODO: ?$x mother(John,x); - неопределен !!!!!!!!!!!!!!
 
 
     public Linker(Mind mind) {
         this.mind = mind;
-        this.log = (LogStore) mind.getLog();
+        this.log = mind.getLog();
     }
 
     public void link(Rule rule, boolean logging) throws Exception {
@@ -127,9 +128,9 @@ public class Linker {
                         if (((Rule) r).isUsed(mind)) {
                             ruleSet.add(r);
                             ruleSet.addAll(((Rule) r).getNatives());
-//                        } else if (r.isGenerated() && r.getId() > topId) {
-//                            ruleSet.add(r);
-//                            ruleSet.addAll(((Rule) r).getNatives());
+                        } else if (r.isGenerated() && r.getId() > topId) {
+                            ruleSet.add(r);
+                            ruleSet.addAll(((Rule) r).getNatives());
                         }
                     }
                 }
@@ -1203,7 +1204,38 @@ public class Linker {
 //                        }
 ////                    }
 
-                    if (isValid(d) && d.getArguments().getCVariables(mind).isEmpty()) {
+                    boolean block = false;
+//                    for(IArgument a : d.getArguments()) {
+//                        if((a.getType() == ArgumentType.TERM || a.getType() == ArgumentType.TVARIABLE) && a.getValue(mind).isCVariable()) {
+//                            block = true;
+//                            break;
+//                        }
+//                    }
+
+                    int c = 0;
+                    int x = 0;
+                    int z = 0;
+                    for (IArgument a : d.getArguments()) {
+                        if (((Term) a.getValue(mind)).isXVariable()) {
+                            ++x;
+                        } else if (!(a.getValue(mind)).isCVariable()) {
+                            ++c;
+                        } else if (a.getType() == ArgumentType.TERM) {
+                            ++z;
+                        }
+                    }
+////                    for(ITerm t : d.getArguments().getCVariables(mind)) {
+////                        if(((Term) t).isXVariable()) {
+////                            ++x;
+////                        } else {
+////                            ++c;
+////                        }
+////                    }
+//
+                    block = z > 0 || (c == 0 && x > 0); //(c == 0 && x > 0);
+
+//                    if (isValid(d) && d.getArguments().getCVariables(mind).isEmpty()) {
+                    if (!block) {
                         result = true;
                         d.setProduced(mind);
 //                        d.setTag(tag);
