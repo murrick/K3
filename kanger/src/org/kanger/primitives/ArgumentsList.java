@@ -35,10 +35,7 @@ import org.kanger.interfaces.IList;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
 import org.kanger.storage.ByteBuffer;
-import org.kanger.units.FValue;
-import org.kanger.units.Function;
-import org.kanger.units.TValue;
-import org.kanger.units.TVariable;
+import org.kanger.units.*;
 
 import java.util.*;
 
@@ -187,9 +184,13 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                 int i = 0;
                 try {
                     for (; i < arg.size(); ++i) {
-                        if (!get(i).isEmpty(mind)
-                                && !arg.get(i).isEmpty(mind)
-                                && get(i).getValue(mind).getId() != arg.get(i).getValue(mind).getId()) {
+                        if (!get(i).isEmpty(mind) && !arg.get(i).isEmpty(mind)
+                                && ((get(i).getValue(mind).isCVariable() && arg.get(i).getValue(mind).isCVariable()
+                                && (get(i).getValue(mind).getId() == arg.get(i).getValue(mind).getId()
+                                || ((Term) get(i).getValue(mind)).getParentId() == arg.get(i).getValue(mind).getId()
+                                || get(i).getValue(mind).getId() == ((Term) arg.get(i).getValue(mind)).getParentId()))
+                                || get(i).getValue(mind).getId() == arg.get(i).getValue(mind).getId())) {
+                        } else {
                             break;
                         }
                     }

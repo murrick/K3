@@ -490,6 +490,11 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                    && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()
 //                    && !arguments.get(i).getValue(mind).getSlaves().isEmpty() && !o.getArguments().get(i).getValue(mind).getSlaves().isEmpty()                    ) {
 //                return false;
+            } else if (arguments.get(i).getValue(mind).isCVariable() && o.getArguments().get(i).getValue(mind).isCVariable()
+                    && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getId()
+                    && ((Term) arguments.get(i).getValue(mind)).getParentId() != o.getArguments().get(i).getValue(mind).getId()
+                    && arguments.get(i).getValue(mind).getId() != ((Term) o.getArguments().get(i).getValue(mind)).getParentId()) {
+                return false;
             } else if (//id != -1 && o.getId() != -1
                 //&&
                     arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()
@@ -705,19 +710,19 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
     }
 
-    public void setExcluded(Mind mind) {
-        setExcluded(arguments, mind);
-//        if (!mind.getExcludedDomains().containsKey(id)) {
-//            mind.getExcludedDomains().put(id, new HashSet<>());
-//        }
-//        if (!isExcluded()) {
-////            try {
-//            mind.getExcludedDomains().get(id).add(arguments.convertBase());
-////            } catch (ParametersIncompleteException e) {
-//////                e.printStackTrace();
-////            }
-//        }
-    }
+//    public void setExcluded(Mind mind) {
+//        setExcluded(arguments, mind);
+////        if (!mind.getExcludedDomains().containsKey(id)) {
+////            mind.getExcludedDomains().put(id, new HashSet<>());
+////        }
+////        if (!isExcluded()) {
+//////            try {
+////            mind.getExcludedDomains().get(id).add(arguments.convertBase());
+//////            } catch (ParametersIncompleteException e) {
+////////                e.printStackTrace();
+//////            }
+////        }
+//    }
 
     public boolean isProduced(Mind mind) throws Exception {
         if (mind.getProducedDomains().containsKey(this)) {

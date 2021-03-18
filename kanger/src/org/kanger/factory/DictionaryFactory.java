@@ -206,26 +206,26 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return t;
     }
 
-    public ITerm createXVar(ITerm c) throws Exception {
-        ITerm t = null;
-//        for(Term x : this) {
-//            if(x.getParent().getId() == c.getId()) {
-//                t = x;
-//                break;
-//            }
-//        }
-//        if(t == null) {
-        int i = nextVarIndex();
-        String temp = String.format("%c%d", Enums.XVC, i);
-        t = add(temp);
-        ((Term) t).setRule(((Term) c).getRule(mind));
-        ((Term) t).setIndex(i);
-        ((Term) t).setName(((Term) c).getName(mind));
-//            c.getChilds().add(t.getId());
-        ((Term) t).setParent(c);
-//        }
-        return t;
-    }
+//    public ITerm createXVar(ITerm c) throws Exception {
+//        ITerm t = null;
+////        for(Term x : this) {
+////            if(x.getParent().getId() == c.getId()) {
+////                t = x;
+////                break;
+////            }
+////        }
+////        if(t == null) {
+//        int i = nextVarIndex();
+//        String temp = String.format("%c%d", Enums.XVC, i);
+//        t = add(temp);
+//        ((Term) t).setRule(((Term) c).getRule(mind));
+//        ((Term) t).setIndex(i);
+//        ((Term) t).setName(((Term) c).getName(mind));
+////            c.getChilds().add(t.getId());
+//        ((Term) t).setParent(c);
+////        }
+//        return t;
+//    }
 
     public Term get(long id) throws Exception {
         Term t = (Term) cache.get(id);

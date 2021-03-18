@@ -385,17 +385,17 @@ public class Term implements IUnit<Term>, ITerm {
         return equalsTo((Term) term);
     }
 
-    public boolean isXVariable() {
-        return parentId > 0;
-    }
+//    public boolean isXVariable() {
+//        return parentId > 0;
+//    }
 
-    public void toCVariable() {
-        if (isXVariable()) {
-            value = String.format("%c%d", Enums.CVC, index);
-            parentId = -1;
-            getHash();
-        }
-    }
+//    public void toCVariable() {
+//        if (isXVariable()) {
+//            value = String.format("%c%d", Enums.CVC, index);
+//            parentId = -1;
+//            getHash();
+//        }
+//    }
 
     public String formatValue() {
         if (type == DataType.INTERVAL) {

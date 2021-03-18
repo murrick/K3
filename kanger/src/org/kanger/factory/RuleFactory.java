@@ -27,7 +27,6 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
-import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
@@ -35,7 +34,6 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.Solve;
@@ -429,12 +427,14 @@ public class RuleFactory implements IFactory<IRule> {
             Rule r = new Rule(mind);
             register(r);
 
-            for (IArgument a : list) {
-                if (!a.isEmpty(mind) && ((Term) a.getValue(mind)).isXVariable()) {
-                    mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName(mind));
-                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent(mind));
-                }
-            }
+//            for (IArgument a : list) {
+//                if (!a.isEmpty(mind) && ((Term) a.getValue(mind)).isXVariable()) {
+////                    ITerm t = mind.getTerms().add("_" + ((Term) a.getValue(mind)).getIndex());
+////                    ((Argument) a).setValue(mind, t);
+////                    mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName(mind));
+//                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent(mind));
+//                }
+//            }
 
             Domain d = mind.getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
             r.getTree().get(0).add(d);

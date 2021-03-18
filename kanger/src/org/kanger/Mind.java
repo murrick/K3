@@ -100,11 +100,11 @@ public class Mind implements IMind {
     private String compliedLine = "";
 
     private boolean logging = true;
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS);
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private Rule acceptedRule = null;
     private volatile int transactionCounter = 0;
-    private boolean filterHypothesis = true;
+    private boolean optimizeHypothesis = true;
 
     public Mind(IUser user) throws Exception {
         this.user = (User) user;
@@ -1378,6 +1378,20 @@ public class Mind implements IMind {
                     hypothesis.clear();
                 } else {
                     hypothesis.commit(m.getHypothesis());
+                    if (!hypothesis.isEmpty()) {
+                        Set<IHypothesis> toDelete = new HashSet<>();
+                        for (IHypothesis h : hypothesis) {
+                            for (ITerm t : ((ArgumentsList) h.getArguments()).getCVariables(this)) {
+                                if (((Term) t).getRule(this).isQuery()) {
+                                    toDelete.add(h);
+                                }
+                            }
+//                            if (!((ArgumentsList) h.getArguments()).getCVariables(this).isEmpty()) {
+//                                toDelete.add(h);
+//                            }
+                        }
+                        hypothesis.getRoot().removeAll(toDelete);
+                    }
                 }
             }
         } else if (r != null && r.isSecond()) {
@@ -1425,12 +1439,12 @@ public class Mind implements IMind {
                     hypothesis.clear();
                 } else {
                     hypothesis.commit(m.getHypothesis());
-                    if (filterHypothesis) {
-                        hypothesisFilter();
+                    if (optimizeHypothesis) {
+                        optimizeHypothesisList();
                     }
                     if (logging) {
                         if (hypothesis.getRoot() != null && hypothesis.size() > 0) {
-                            m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? %d Hypothesis", hypothesis.size()));
+                            m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? Hypothesis found"));
                         } else {
                             m.getLog().add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
                         }
@@ -2132,7 +2146,7 @@ public class Mind implements IMind {
         return list;
     }
 
-    private void hypothesisFilter() throws Exception {
+    public void optimizeHypothesisList() throws Exception {
         if (!hypothesis.isEmpty()) {
             List<IHypothesis> list = new ArrayList<>();
             List<IHypothesis> success = new ArrayList<>();

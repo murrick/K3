@@ -2020,8 +2020,8 @@ public class KangerTest {
             if (!((HypothesisStore) mind.getHypothesis()).contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            if (mind.getHypothesis().size() != 12) {
-                fail("Expected 12 hypothesis");
+            if (mind.getHypothesis().size() != 16) {
+                fail("Expected 16 hypothesis");
             }
             System.out.println("OK");
             System.out.println("====================================================");
@@ -2153,8 +2153,8 @@ public class KangerTest {
             if (!((HypothesisStore) mind.getHypothesis()).contains(s)) {
                 fail("Expected: " + s.toString());
             }
-            if (mind.getHypothesis().size() != 7) {
-                fail("Expected 7 hypothesis");
+            if (mind.getHypothesis().size() != 9) {
+                fail("Expected 9 hypothesis");
             }
             System.out.println("OK");
             System.out.println("====================================================");
@@ -2181,6 +2181,30 @@ public class KangerTest {
                 "!parent(John,Tom);");
         mind.query("?$x native(Tom,A);");
         showResult(null);
+    }
+
+    public void set_06_0D() throws Exception {
+
+        mind = mind.clearWorkspace();
+        mind.compile("!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!father(John, Tom);" +
+                "!female(Sarah);");
+        mind.query("?$x father(Sarah,x);");
+        showResult(false);
+    }
+
+    public void set_06_0E() throws Exception {
+
+        mind = mind.clearWorkspace();
+        mind.compile("!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!father(John, Tom);" +
+                "!female(Sarah);");
+        mind.query("?$x mother(John,x);");
+        showResult(false);
     }
 
     public void set_07_01() throws Exception {

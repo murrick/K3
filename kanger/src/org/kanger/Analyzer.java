@@ -78,7 +78,7 @@ public class Analyzer {
 //                    }
 //                    Domain d = r.getDomain();
                     for (IArgument a : r.getArguments()) {
-                        if (a.isEmpty(mind) || (a.getValue(mind).isCVariable() /*&& a.getValue(mind).getMindId() != mind.getId()*/)) {
+                        if (a.isEmpty(mind)) { //*|| (a.getValue(mind).isCVariable()*/ /*&& a.getValue(mind).getMindId() != mind.getId()*/)) {
                             r = null;
                             break;
                         }
@@ -205,10 +205,10 @@ public class Analyzer {
                         if (((Rule) q).getMind() == null) {
                             ((Rule) q).setMind(mind);
                         }
-                        if (p.getDomain().isQuery(mind) && p.getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                        if (p.getDomain().isQuery(mind) && !p.isAbstractive()) { //.getDomain().getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(q);
                             mind.getValues().add(p.getSolves());
-                        } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                        } else if (((Rule) q).getDomain().isQuery(mind) && !q.isAbstractive()) { //((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
                         }

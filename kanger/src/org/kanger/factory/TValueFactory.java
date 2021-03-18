@@ -169,35 +169,32 @@ public class TValueFactory implements IFactory<TValue> {
         return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
     }
 
-    public TValue getXValue(TVariable tv, final Term parent) throws Exception {
-        final TValue[] result = new TValue[]{null};
-        mind.getTValues().forEach(tv, new IReactor<TValue>() {
-            @Override
-            public Object run(TValue o) throws Exception {
-                if (((Term) o.getValue(mind)).isXVariable()
-                        && (((Term) o.getValue(mind)).getParentId() == parent.getId()
-                        || ((Term) o.getValue(mind)).getParentId() == parent.getParentId())) {
-                    result[0] = o;
-                }
-                return true;
+    public TValue findCVariable(TVariable tv, final Term parent) throws Exception {
+        for (TValue o : mind.getTValues()) {
+            if (o.getTVarId() == tv.getId()
+                    && o.getValue(mind).isCVariable()
+                    && (o.getId() == parent.getId()
+//                    || parent.getParentId() == o.getId()
+                    || ((Term) o.getValue(mind)).getParentId() == parent.getId())) {
+                return o;
             }
-        });
-        return result[0];
+        }
+        return null;
     }
 
     public TValue find(TVariable tv, ITerm v) throws Exception {
-        if (((Term) v).isXVariable()) {
-            return getXValue(tv, (Term) ((Term) v).getParent(mind));
-        } else {
-            TValue temp = new TValue(tv, v);
-            for (long id : cache.find(temp.getHash())) {
-                IUnit one = get(id);
-                //TODO: Осознанно нет проверки на Deleted. Вообще надо понять нужен ли этот стек
-                if (one.equalsTo(temp)) {
-                    return (TValue) one;
-                }
+//        if (((Term) v).isXVariable()) {
+//            return findCVariable(tv, (Term) ((Term) v).getParent(mind));
+//        } else {
+        TValue temp = new TValue(tv, v);
+        for (long id : cache.find(temp.getHash())) {
+            IUnit one = get(id);
+            //TODO: Осознанно нет проверки на Deleted. Вообще надо понять нужен ли этот стек
+            if (one.equalsTo(temp)) {
+                return (TValue) one;
             }
         }
+//        }
         return null;
     }
 
