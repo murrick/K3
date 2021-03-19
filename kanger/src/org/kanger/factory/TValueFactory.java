@@ -172,10 +172,10 @@ public class TValueFactory implements IFactory<TValue> {
     public TValue findCVariable(TVariable tv, final Term parent) throws Exception {
         for (TValue o : mind.getTValues()) {
             if (o.getTVarId() == tv.getId()
-                    && o.getValue(mind).isCVariable()
-                    && (o.getId() == parent.getId()
-//                    || parent.getParentId() == o.getId()
-                    || ((Term) o.getValue(mind)).getParentId() == parent.getId())) {
+                    && o.getValue(mind).isCVariable()) {
+//                    && (o.getValue(mind).getId() == parent.getId()
+//                    || parent.getParentId() == o.getValue(mind).getId()
+//                    || ((Term) o.getValue(mind)).getParentId() == parent.getId())) {
                 return o;
             }
         }

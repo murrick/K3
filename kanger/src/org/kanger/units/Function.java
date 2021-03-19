@@ -213,7 +213,7 @@ public class Function implements IUnit<Function> {
         this.nameId = name.getId();
     }
 
-    private String formatParam(IArgument t, Mind mind) throws Exception {
+    private String formatParam(IArgument t, Mind mind, boolean asRight) throws Exception {
         Operation op = Parser.getOp(getName(mind).toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
@@ -230,14 +230,18 @@ public class Function implements IUnit<Function> {
 //
 //            }
         } else if (!t.isEmpty(mind)) {
-            s += t.getValue(mind).toString();
+            if (asRight && t.getValue(mind).isCVariable()) {
+                s += ((Term) t.getValue(mind)).getName(mind).getValue();
+            } else {
+                s += t.getValue(mind).toString();
+            }
         } else {
             s += "_";
         }
         return s;
     }
 
-    public String toString(IMind mind) {
+    public String toString(IMind mind, boolean asRight) {
         try {
             if (!isCalculable() && getValue((Mind) mind) != null) {
                 return getValue((Mind) mind).toString();
@@ -247,7 +251,7 @@ public class Function implements IUnit<Function> {
                 if (op == null || op.getRange() != range) {
                     s = String.format("%s(", getName((Mind) mind).toString());
                     for (int i = 0; i < range; ++i) {
-                        s += formatParam(arguments.get(i), (Mind) mind);
+                        s += formatParam(arguments.get(i), (Mind) mind, asRight);
                         if (i + 1 < range) {
                             s += (char) Enums.COMMA;
                         }
@@ -255,13 +259,13 @@ public class Function implements IUnit<Function> {
                     s += ")";
                 } else if (op.getRange() == 1) {
                     if (op.isPost()) {
-                        s = formatParam(arguments.get(0), (Mind) mind) + op.getName();
+                        s = formatParam(arguments.get(0), (Mind) mind, asRight) + op.getName();
                     } else {
-                        s = op.getName() + formatParam(arguments.get(0), (Mind) mind);
+                        s = op.getName() + formatParam(arguments.get(0), (Mind) mind, asRight);
                     }
                 } else {
                     for (int i = 0; i < op.getRange(); ++i) {
-                        s += formatParam(arguments.get(i), (Mind) mind);
+                        s += formatParam(arguments.get(i), (Mind) mind, asRight);
                         if (i + 1 < op.getRange()) {
                             s += " " + op.getName() + " ";
                         }

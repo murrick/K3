@@ -719,12 +719,20 @@ public class Linker {
                                                     TVariable t = (TVariable) master.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && tm.getParentId() == -1 && slave.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        s = mind.getTValues().findCVariable(t, tm);
-                                                        if (s == null) {
-                                                            Term tn = (Term) mind.getTerms().createCVar(tm.getRule(mind), tm);
+
+//                                                        s = mind.getTValues().findCVariable(t, tm);
+//                                                        if (s == null) {
+//                                                            Term tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind));
+//                                                            tn.setParent(tm);
+//                                                            tm = tn;
+//                                                        }
+                                                        Term tn = (Term) tm.getChild(mind);
+                                                        if (tn == null) {
+                                                            tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind));
                                                             tn.setParent(tm);
-                                                            tm = tn;
+                                                            tm.setChild(tn);
                                                         }
+                                                        tm = tn;
                                                     } else {
                                                         s = mind.getTValues().find(t, tm);
                                                     }
@@ -773,12 +781,19 @@ public class Linker {
                                                     TVariable t = (TVariable) slave.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && tm.getParentId() == -1 && master.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        s = mind.getTValues().findCVariable(t, tm);
-                                                        if (s == null) {
-                                                            Term tn = (Term) mind.getTerms().createCVar(tm.getRule(mind), tm);
+//                                                        s = mind.getTValues().findCVariable(t, tm);
+//                                                        if (s == null) {
+//                                                            Term tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind));
+//                                                            tn.setParent(tm);
+//                                                            tm = tn;
+//                                                        }
+                                                        Term tn = (Term) tm.getChild(mind);
+                                                        if (tn == null) {
+                                                            tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind));
                                                             tn.setParent(tm);
-                                                            tm = tn;
+                                                            tm.setChild(tn);
                                                         }
+                                                        tm = tn;
                                                     } else {
                                                         s = mind.getTValues().find(t, tm);
                                                     }
@@ -1198,7 +1213,7 @@ public class Linker {
 //                }
 //            }
 
-            if (!candidates.isEmpty() && (candidates.size() == 1 /*|| candidates.size() == tree.size()*/)) {
+            if (candidates.size() == 1) {
                 for (Domain d : candidates) {
 //                    Domain d = candidates.toArray(new Domain[]{})[0];
                     occurs = true;
@@ -1233,22 +1248,30 @@ public class Linker {
 ////                    }
 //
 //                    block = z > 0 || (c == 0 && x > 0); //(c == 0 && x > 0);
+                        boolean skip = d.getRange() == 1 && d.getArguments().get(0).getValue(mind).isCVariable();
+//                        for(IArgument a : d.getArguments()) {
+//                            if(!a.getValue(mind).isCVariable()) {
+//                                skip = false;
+//                            }
+//                        }
 
-//                    if (d.getArguments().getCVariables(mind).isEmpty()) {
+//
+                        // Нет смысла записывать в базу утверждение единственный параметр в котором - c-переменная
+                        if (!skip) {
 //                    if (!block) {
 
 //                        if (d.getArguments().getCVariables(mind).size() != d.getArguments().size()) {
-                        result = true;
-                        d.setProduced(mind);
+                            result = true;
+                            d.setProduced(mind);
 //                        d.setTag(tag);
 //                    d.setCauses(causes.get(d.getRight()));
-                        d.setSolves(solve, mind);
-                        if (logging) {
+                            d.setSolves(solve, mind);
+                            if (logging) {
 //                            logBranch(tree, logging);
                             log.add(LogMode.STORAGE, "DB assumed record: " + d);
                             logCauses(LogMode.STORAGE, d);
                         }
-//                        }
+                        }
                     }
 //                    }
                 }

@@ -450,7 +450,7 @@ public class RuleFactory implements IFactory<IRule> {
 ////                    ((Argument) a).setValue(mind, t);
 ////                    mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName(mind));
 ////                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent(mind));
-//                    ((Term)a.getValue(mind)).setParent(null);
+//                    ((Term)a.getValue(mind)).setChild(null);
 //                }
 //            }
 

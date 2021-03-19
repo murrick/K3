@@ -39,7 +39,7 @@ import java.util.*;
 public class Data implements Closeable, Iterable<IStep> {
 
     private static long MAX_CACHE_SIZE = 1024L * 1024;
-    private static final int VERSION_CODE = 0x0101;
+    private static final int VERSION_CODE = 0x0102;
 
     private int version = VERSION_CODE;
 

@@ -410,4 +410,12 @@ public class DictionaryFactory implements IFactory<ITerm> {
         cache.release();
     }
 
+//    public ITerm findChild(ITerm x) {
+//        for(ITerm t : this) {
+//            if(((Term) t).getParentId() == x.getId() && ((Term) t).getRuleId() == ((Term) x).getRuleId()) {
+//                return t;
+//            }
+//        }
+//        return null;
+//    }
 }

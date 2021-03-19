@@ -32,6 +32,7 @@ import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.ITerm;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
@@ -130,7 +131,7 @@ public class Solve {
 //    s += ");";
 //    return s;
 
-    protected String formatParam(IMind mind, IArgument t) throws Exception {
+    protected String formatParam(IMind mind, IArgument t, boolean asRight) throws Exception {
         String s = "";
         //TODO: Костыль
 //        t.setUser(user);
@@ -139,7 +140,7 @@ public class Solve {
 //        }
 
         if (t.getType() == ArgumentType.FUNCTION) {
-            s += ((Function) t.getObject(mind)).toString(mind);
+            s += ((Function) t.getObject(mind)).toString(mind, asRight);
         } else if (t.getType() == ArgumentType.TVARIABLE) {
             s += ((TVariable) t.getObject(mind)).toString(mind);
         } else if (t.getType() == ArgumentType.TVALUE) {
@@ -147,7 +148,11 @@ public class Solve {
         } else if (t.getType() == ArgumentType.FVALUE) {
             s += ((FValue) t.getObject(mind)).toString(mind);
         } else if (!t.isEmpty((Mind) mind)) {
-            s += t.getValue(mind).toString();
+            if (asRight && t.getValue(mind).isCVariable()) {
+                s += ((Term) t.getValue(mind)).getName((Mind) mind).getValue();
+            } else {
+                s += t.getValue(mind).toString();
+            }
         } else {
             s += "_";
         }
@@ -167,24 +172,31 @@ public class Solve {
     //	Row 001: x=%2
 
     public String toString(Mind mind) {
-        return toString(mind, arguments);
+        return toString(mind, arguments, false);
     }
 
-    public String toString(Mind mind, ArgumentsList arguments) {
+    public String toString(Mind mind, ArgumentsList arguments, boolean asRight) {
         try {
             String s = String.format("%c", antc ? Enums.ANT : Enums.SUC);
 
-//            List<Term> cVars = new ArrayList<>();
-//            for (Term t : arguments.getCVariables(mind)) {
-//                //TODO: Костыль
-////                t.setMind(mind);
-//                if (!cVars.contains(t)) {
-//                    cVars.add(t);
-//                }
-//            }
-//            for (Term t : cVars) {
-//                s += "$" + t.getName() + " ";
-//            }
+            if (asRight) {
+                char name = 'x';
+                List<ITerm> cVars = new ArrayList<>();
+                for (ITerm t : arguments.getCVariables(mind)) {
+                    if (t.isCVariable()) {
+                        ((Term) t).setName(mind.getTerms().add(name + ""));
+                        if (++name == 'z' + 1) {
+                            name = 'a';
+                        }
+                        if (!cVars.contains(t)) {
+                            cVars.add(t);
+                        }
+                    }
+                }
+                for (ITerm t : cVars) {
+                    s += "$" + ((Term) t).getName(mind) + " ";
+                }
+            }
 
             Operation op = Parser.getOp(getPredicate(mind).getName(mind), getRange());
 
@@ -196,7 +208,7 @@ public class Solve {
                 s += getPredicate(mind).getName(mind) + "(";
                 int i = 0;
                 for (IArgument t : arguments) {
-                    s += formatParam(mind, t);
+                    s += formatParam(mind, t, asRight);
                     if (i + 1 != getRange()) {
                         s += (char) Enums.COMMA;
                     }
@@ -205,13 +217,13 @@ public class Solve {
                 s += ")";
             } else if (op.getRange() == 1) {
                 if (op.isPost()) {
-                    s += formatParam(mind, arguments.get(0)) + op.getName();
+                    s += formatParam(mind, arguments.get(0), asRight) + op.getName();
                 } else {
-                    s += op.getName() + formatParam(mind, arguments.get(0));
+                    s += op.getName() + formatParam(mind, arguments.get(0), asRight);
                 }
             } else {
                 for (int i = 0; i < op.getRange(); ++i) {
-                    s += formatParam(mind, arguments.get(i));
+                    s += formatParam(mind, arguments.get(i), asRight);
                     if (i + 1 < op.getRange()) {
                         if (i == 0) {
                             s += " " + op.getName() + " ";

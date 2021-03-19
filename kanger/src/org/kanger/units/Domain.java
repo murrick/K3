@@ -405,13 +405,27 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //    }
 //    s += ");";
 //    return s;
-    private String formatParam(Argument t) throws Exception {
-        return super.formatParam(mind, t);
-//        String s = "";
-//        //TODO: Костыль
-////        t.setUser(user);
-////        if(!t.isEmpty(mind)) {
-////            t.getValue(mind).setMind(mind);
+//    private String formatParam(Argument t) throws Exception {
+//        return super.formatParam(mind, t);
+////        String s = "";
+////        //TODO: Костыль
+//////        t.setUser(user);
+//////        if(!t.isEmpty(mind)) {
+//////            t.getValue(mind).setMind(mind);
+//////        }
+////
+////        if (t.isFSet()) {
+////            s += t.getF(mind).toString();
+////        } else if (t.getType() == ArgumentType.TVARIABLE) {
+////            s += t.getT(mind).toString();
+////        } else if (t.getType() == ArgumentType.TVALUE) {
+////            s += t.getV(mind).toString();
+////        } else if (t.getType() == ArgumentType.FVALUE) {
+////            s += t.getR(mind).toString();
+////        } else if (!t.isEmpty(mind)) {
+////            s += t.getValue(mind).toString();
+////        } else {
+////            s += "_";
 ////        }
 //
 //        if (t.isFSet()) {
@@ -428,7 +442,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //            s += "_";
 //        }
 //        return s;
-    }
+//    }
 
     @Override
     public String toString() {
@@ -444,7 +458,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     public String toString(ArgumentsList arguments) {
         try {
-            String s = super.toString(mind, arguments);
+            String s = super.toString(mind, arguments, false);
 
             String suffix = "";
 //            if ((mind.getDebugLevel() & 0x00FF) == Enums.DEBUG_LEVEL_DEBUG) {
@@ -1273,7 +1287,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                } else if (arguments.get(i).getValue(mind).isXVariable() && arguments.get(i).getValue(mind).getParent().getRightId() == rightId) {
 //                    ix = arguments.get(i).getValue(mind).getParent().getIndex();
 //                    ++plains;
-                } else if (!arguments.get(i).isEmpty(mind)
+                } else if (arguments.get(i).getType() == ArgumentType.TERM
+                        && !arguments.get(i).isEmpty(mind)
                         && arguments.get(i).getValue(mind).isCVariable()
                         && ((Term) arguments.get(i).getValue(mind)).getRuleId() == ruleId) {
                     ix = ((Term) arguments.get(i).getValue(mind)).getIndex();

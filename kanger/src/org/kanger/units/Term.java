@@ -64,6 +64,7 @@ public class Term implements IUnit<Term>, ITerm {
     private ITerm name = null;             // Оригинальное имя c-переменной
     private IRule rule = null;          // Ссылка на правило
     private ITerm parent = null;
+    private ITerm child = null;
     //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
 
     //    private Term next = null;      // Следующая запись
@@ -75,6 +76,7 @@ public class Term implements IUnit<Term>, ITerm {
     private transient long nameId = -1;
     private transient long ruleId = -1;
     private transient long parentId = -1;
+    private transient long childId = -1;
 
     public Term() {
     }
@@ -131,6 +133,7 @@ public class Term implements IUnit<Term>, ITerm {
             packet.putLong(nameId);
             packet.putLong(ruleId);
             packet.putLong(parentId);
+            packet.putLong(childId);
             packet.putWord(slaves.size());
             for (long sid : slaves) {
                 packet.putLong(sid);
@@ -194,6 +197,7 @@ public class Term implements IUnit<Term>, ITerm {
             nameId = packet.getLong();
             ruleId = packet.getLong();
             parentId = packet.getLong();
+            childId = packet.getLong();
             slaves.clear();
             int cnt = packet.getWord();
             while (cnt-- > 0) {
@@ -684,6 +688,16 @@ public class Term implements IUnit<Term>, ITerm {
     @Override
     public void setDeleted(boolean on, Mind mind) {
         mind.setUnitDeleted(this, on);
+        if (on) {
+            if (child != null) {
+                ((Term) child).setParent(null);
+                child = null;
+            }
+            if (parent != null) {
+                ((Term) parent).setChild(null);
+                parent = null;
+            }
+        }
     }
 
     @Override
@@ -733,6 +747,22 @@ public class Term implements IUnit<Term>, ITerm {
             this.parentId = parent.getId();
         } else {
             this.parentId = -1;
+        }
+    }
+
+    public ITerm getChild(Mind mind) throws Exception {
+        if (child == null && childId > 0) {
+            child = mind.getTerms().get(childId);
+        }
+        return child;
+    }
+
+    public void setChild(ITerm child) {
+        this.child = child;
+        if (child != null) {
+            this.childId = child.getId();
+        } else {
+            this.childId = -1;
         }
     }
 

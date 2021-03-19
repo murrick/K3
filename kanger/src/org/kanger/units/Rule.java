@@ -304,7 +304,7 @@ public class Rule implements IUnit<IRule>, IRule {
     @Override
     public String toString() {
         try {
-            return getOrigin().toString()
+            return getOrigin()
                     + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
                     ? " " + mindId + " " +
                     (isGenerated() ? "G" : "") +
