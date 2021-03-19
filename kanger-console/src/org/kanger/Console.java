@@ -1195,7 +1195,9 @@ public class Console {
     public static void showHypo(IMind mind) throws Exception {
         int i;
         if (!mind.getHypothesis().isEmpty()) {
-            System.out.printf("Hypothesis list:\n");
+            System.out.printf("Optimizing hypothesis list...");
+            mind.optimizeHypothesis();
+            System.out.printf("\nHypothesis list (%d):\n", mind.getHypothesis().size());
             for (i = 0; i < mind.getHypothesis().size(); ++i) {
                 System.out.printf("\t%03d:\t%s\n", i + 1, ((Hypothesis) mind.getHypothesis().get(i)).toString(mind));
             }

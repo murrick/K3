@@ -34,7 +34,6 @@ import org.kanger.factory.*;
 import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
-import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.TVariableSet;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
@@ -100,7 +99,7 @@ public class Mind implements IMind {
     private String compliedLine = "";
 
     private boolean logging = true;
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES /*| Enums.DEBUG_OPTION_STATUS*/);
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private Rule acceptedRule = null;
     private volatile int transactionCounter = 0;
@@ -1390,7 +1389,7 @@ public class Mind implements IMind {
 //                                toDelete.add(h);
 //                            }
                         }
-                        hypothesis.getRoot().removeAll(toDelete);
+                        hypothesis.removeAll(toDelete);
                     }
                 }
             }
@@ -1439,11 +1438,11 @@ public class Mind implements IMind {
                     hypothesis.clear();
                 } else {
                     hypothesis.commit(m.getHypothesis());
-                    if (optimizeHypothesis) {
-                        optimizeHypothesisList();
-                    }
+//                    if (optimizeHypothesis) {
+//                        optimizeHypothesisList();
+//                    }
                     if (logging) {
-                        if (hypothesis.getRoot() != null && hypothesis.size() > 0) {
+                        if (!hypothesis.isEmpty()) {
                             m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? Hypothesis found"));
                         } else {
                             m.getLog().add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
@@ -2106,6 +2105,11 @@ public class Mind implements IMind {
         log.clear();
     }
 
+    @Override
+    public void optimizeHypothesis() throws Exception {
+        hypothesis.optimize();
+    }
+
     public List<List<String>> formatTree(IRule r) throws Exception {
 //        int save = mind.getDebugLevel();
 //        mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_VALUES);
@@ -2146,26 +2150,6 @@ public class Mind implements IMind {
         return list;
     }
 
-    public void optimizeHypothesisList() throws Exception {
-        if (!hypothesis.isEmpty()) {
-            List<IHypothesis> list = new ArrayList<>();
-            List<IHypothesis> success = new ArrayList<>();
-            list.addAll(hypothesis.getRoot());
-            for (IHypothesis h : list) {
-                Mind m = new Mind(this);
-                Rule r = (Rule) m.compileLine(((Hypothesis) h).toString(m), false, null);
-                m.link(r, logging);
-                Boolean ar = m.analyze(null, logging);
-                release(m);
-                if (!ar) {
-                    success.add(h);
-                }
-                release(m);
-            }
-            hypothesis.getRoot().clear();
-            hypothesis.getRoot().addAll(success);
-        }
-    }
 
 
 }

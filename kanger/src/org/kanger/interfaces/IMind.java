@@ -576,4 +576,12 @@ public interface IMind {
      * Полностью очистить протокол вывода.
      */
     void clearLog();
+
+    /**
+     * Оптимизировать список гипотез. Из списка исключаются заведомо ложные
+     * гипотезы.
+     *
+     * @throws Exception
+     */
+    void optimizeHypothesis() throws Exception;
 }

@@ -31,8 +31,10 @@ import org.kanger.interfaces.IHypothesis;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
+import org.kanger.units.Rule;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -43,30 +45,26 @@ public class HypothesisStore implements IFactory<IHypothesis> {
 
     private final transient Mind mind;
     private List<IHypothesis> root = null;
-    private boolean enableStore = true;
+    private boolean optimized = false;
 
     public HypothesisStore(Mind mind) {
         this.mind = mind;
     }
 
     public void commit(HypothesisStore base) throws Exception {
-        if (!enableStore) {
-            return;
-        }
         if (!base.isEmpty()) {
             if (root == null) {
                 root = new ArrayList<>();
             }
-            for (IHypothesis h : base.getRoot()) {
-                add(h);
+            if (!base.isEmpty()) {
+                for (IHypothesis h : base) {
+                    add(h);
+                }
             }
         }
     }
 
     public IHypothesis add(boolean antc, boolean isQuery, Predicate pred, ArgumentsList arg) throws Exception {
-        if (!enableStore) {
-            return null;
-        }
         if (root == null) {
             root = new ArrayList<>();
         }
@@ -96,9 +94,6 @@ public class HypothesisStore implements IFactory<IHypothesis> {
 
 
     public IHypothesis add(IHypothesis hypothesis) throws Exception {
-        if (!enableStore) {
-            return null;
-        }
         if (root == null) {
             root = new ArrayList<>();
         }
@@ -121,14 +116,6 @@ public class HypothesisStore implements IFactory<IHypothesis> {
 //            root.addAll(list);
 //        }
 //    }
-
-    public void enable(boolean enable) {
-        enableStore = enable;
-    }
-
-    public boolean isEnabled() {
-        return enableStore;
-    }
 
     @Override
     public IHypothesis get(long index) {
@@ -170,14 +157,13 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         return find(h) != null;
     }
 
-    public List<IHypothesis> getRoot() {
-        return root;
-    }
-
+    //    public List<IHypothesis> getRoot() {
+//        return root;
+//    }
+//
     public void clear() {
-        if (enableStore) {
-            root = null;
-        }
+        optimized = false;
+        root = null;
     }
 
     public int size() {
@@ -224,4 +210,31 @@ public class HypothesisStore implements IFactory<IHypothesis> {
 ////            }
 //        }
 //    }
+
+    public void optimize() throws Exception {
+        if (root != null && !root.isEmpty() && !optimized) {
+            List<IHypothesis> list = new ArrayList<>();
+            List<IHypothesis> success = new ArrayList<>();
+            list.addAll(root);
+            for (IHypothesis h : list) {
+                Mind m = new Mind(mind);
+                Rule r = (Rule) m.compileLine(((Hypothesis) h).toString(m), false, null);
+                m.link(r, false);
+                Boolean ar = m.analyze(null, false);
+                mind.release(m);
+                if (!ar) {
+                    success.add(h);
+                }
+            }
+            root.clear();
+            root.addAll(success);
+            optimized = true;
+        }
+    }
+
+    public void removeAll(Collection<IHypothesis> toDelete) {
+        if (root != null) {
+            root.removeAll(toDelete);
+        }
+    }
 }

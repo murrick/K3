@@ -484,9 +484,18 @@ public class Term implements IUnit<Term>, ITerm {
                         hash = 47 * hash + (int) (date ^ (date >>> 32));
                         break;
                     case SET:
-                        for (ITerm t : (List<ITerm>) value) {
-                            hash = 47 * hash + ((Term) t).getHash();
+                        long sum = 0;
+                        try {
+                            for (ITerm t : mind.getCalculator().expand(this, null, false)) {
+                                sum += t.getId();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace(System.err);
+                            for (ITerm t : (List<ITerm>) value) {
+                                sum += t.getId();
+                            }
                         }
+                        hash = 47 * hash + (int) (sum ^ (sum >>> 32));
                         break;
                     case BLOB:
                         hash = Arrays.hashCode((byte[]) value);
@@ -509,14 +518,21 @@ public class Term implements IUnit<Term>, ITerm {
                 case BLOB:
                     return Arrays.equals((byte[]) value, (byte[]) to.getValue());
                 case SET:
-                    if (((List<ITerm>) value).size() == ((List<ITerm>) to.getValue()).size()) {
-                        for (ITerm t : (List<ITerm>) value) {
-                            if (!((List<ITerm>) to.getValue()).contains(t)) {
-                                return false;
+                    try {
+                        List<ITerm> l1 = mind.getCalculator().expand(this, null, false);
+                        List<ITerm> l2 = mind.getCalculator().expand(to, null, false);
+                        if (l1.size() == l2.size()) {
+                            for (ITerm t : l1) {
+                                if (!l2.contains(t)) {
+                                    return false;
+                                }
                             }
+                            return true;
+                        } else {
+                            return false;
                         }
-                        return true;
-                    } else {
+                    } catch (Exception e) {
+                        e.printStackTrace(System.err);
                         return false;
                     }
                 case TERM:
@@ -713,7 +729,11 @@ public class Term implements IUnit<Term>, ITerm {
 
     public void setParent(ITerm parent) {
         this.parent = parent;
-        this.parentId = parent.getId();
+        if (parent != null) {
+            this.parentId = parent.getId();
+        } else {
+            this.parentId = -1;
+        }
     }
 
     public long getParentId() {

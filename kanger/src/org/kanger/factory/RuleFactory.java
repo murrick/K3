@@ -159,6 +159,9 @@ public class RuleFactory implements IFactory<IRule> {
 //                    r.setMind(mind);
                     } else {
                         ((Rule) s.getData()).packCauses(base.mind);
+//                        if(mind.getNext() == null) {
+//                            finalize();
+//                        }
                     }
                 } else {
                     break;
@@ -217,6 +220,20 @@ public class RuleFactory implements IFactory<IRule> {
         action = base.isAction();
         return list;
     }
+
+//    public void finalize() throws Exception {
+//        for (IRule r : this) {
+//            for (List<Domain> row : ((Rule) r).getTree()) {
+//                for (Domain d : row) {
+//                    for (IArgument a : d.getArguments()) {
+//                        if (!a.isEmpty(mind) && (a.getValue(mind)).isCVariable()) {
+//                            ((Term) a.getValue(mind)).setParent(null);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     public void update() throws Exception {
         if (cache.update()) {
@@ -428,11 +445,12 @@ public class RuleFactory implements IFactory<IRule> {
             register(r);
 
 //            for (IArgument a : list) {
-//                if (!a.isEmpty(mind) && ((Term) a.getValue(mind)).isXVariable()) {
+//                if (!a.isEmpty(mind) && (a.getValue(mind)).isCVariable()) {
 ////                    ITerm t = mind.getTerms().add("_" + ((Term) a.getValue(mind)).getIndex());
 ////                    ((Argument) a).setValue(mind, t);
 ////                    mind.getTerms().createCVar(r, ((Term) a.getValue(mind)).getName(mind));
-//                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent(mind));
+////                    ((Argument) a).setValue(mind, ((Term) a.getValue(mind)).getParent(mind));
+//                    ((Term)a.getValue(mind)).setParent(null);
 //                }
 //            }
 

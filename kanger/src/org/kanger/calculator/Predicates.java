@@ -230,7 +230,7 @@ public class Predicates {
                                 || arg.get(1).getValue(mind).getType() == DataType.STRING
                                 || arg.get(1).getValue(mind).getType() == DataType.BLOB) {
                             ITerm top = null;
-                            for (ITerm cur : expand(arg.get(1).getValue(mind), null, true)) {
+                            for (ITerm cur : mind.getCalculator().expand(arg.get(1).getValue(mind), null, true)) {
                                 if (top == null) top = cur;
                                 mind.getCalculator().getFunctions().addTValue(arg.get(0), cur);
                                 i = 1;
@@ -270,7 +270,7 @@ public class Predicates {
 //                                mind.getCalculator().calculate(arg.get(1).getF(mind), mind.isLogging());
 //                            }
                             ITerm top = null;
-                            for (ITerm cur : expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind), true)) {
+                            for (ITerm cur : mind.getCalculator().expand(arg.get(1).getValue(mind), arg.get(2).getValue(mind), true)) {
                                 if (top == null) top = cur;
                                 mind.getCalculator().getFunctions().addTValue(arg.get(0), cur);
                                 i = 1;
@@ -348,7 +348,7 @@ public class Predicates {
 
             } else if (cur.getType() == DataType.SET) {
 
-                for (ITerm t : expand(cur, step, false)) {
+                for (ITerm t : mind.getCalculator().expand(cur, step, false)) {
                     rcmin = t.compareTo(min);
                     rcmax = t.compareTo(max);
                     if (cmp(rc, rcmin, rcmax, min, cur, step)) {
@@ -366,7 +366,7 @@ public class Predicates {
             }
         } else if (interval.getType() == DataType.SET) {
 
-            for (ITerm c : expand(cur, step, false)) {
+            for (ITerm c : mind.getCalculator().expand(cur, step, false)) {
                 res = false;
                 for (Term t : (Collection<Term>) interval.getValue()) {
                     if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
@@ -429,116 +429,6 @@ public class Predicates {
             }
         }
         return -1;
-    }
-
-    public List<ITerm> expand(ITerm source, ITerm step, boolean expandString) throws Exception {
-        List<ITerm> list = new ArrayList<>();
-        Term top = null;
-        if (source.getType() == DataType.INTERVAL) {
-            Term min = (Term) ((Collection) source.getValue()).toArray()[0];
-            Term max = (Term) ((Collection) source.getValue()).toArray()[1];
-            Term cur = min;
-            int rc = min.compareTo(max);
-            while (true) {
-                list.add(cur);
-                if (top == null) top = cur;
-                if (rc == 0) {
-                    break;
-                }
-                Term next;
-                if (step != null) {
-                    next = (Term) (rc < 0
-                            ? mind.getCalculator().getFunctions()._add(cur, step)
-                            : mind.getCalculator().getFunctions()._sub(cur, step));
-                } else {
-                    next = (Term) (rc < 0
-                            ? mind.getCalculator().getFunctions()._inc(cur)
-                            : mind.getCalculator().getFunctions()._dec(cur));
-                }
-                if (next.getId() == cur.getId()) {
-                    list.add(max);
-                    break;
-                } else if (rc < 0 && next.compareTo(max) > 0) {
-                    break;
-                } else if (rc > 0 && next.compareTo(max) < 0) {
-                    break;
-                } else {
-                    cur = next;
-                }
-            }
-        } else if (source.getType() == DataType.SET) {
-
-            for (Term t : (Collection<Term>) source.getValue()) {
-                if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
-                    list.addAll(expand(t, null, expandString));
-                } else {
-                    list.add(t);
-                }
-            }
-        } else if (source.getType() == DataType.STRING) {
-            if (step == null) {
-                if (expandString) {
-                    for (int k = 0; k < source.getValue().toString().length(); ++k) {
-                        Term x = (Term) mind.getTerms().add(source.getValue().toString().charAt(k) + "");
-                        list.add(x);
-                    }
-                } else {
-                    list.add(source);
-                }
-            } else {
-                Pattern pt = Pattern.compile(step.getValue().toString());
-                Matcher mt = pt.matcher(source.getValue().toString());
-                while (mt.find()) {
-                    for (int k = 0; k < mt.groupCount(); ++k) {
-                        Term t = (Term) mind.getTerms().add(mt.group(k + 1) + "");
-                        list.add(t);
-                    }
-                }
-            }
-        } else if (source.getType() == DataType.BLOB) {
-            if (step == null) {
-                if (expandString) {
-                    for (int k = 0; k < ((byte[]) source.getValue()).length; ++k) {
-                        Term x = (Term) mind.getTerms().add(new byte[]{((byte[]) source.getValue())[k]});
-                        list.add(x);
-                    }
-                } else {
-                    list.add(source);
-                }
-            } else {
-                int bytes = ((Double) step.getValue()).intValue();
-                byte[] cell = null;
-                int pos = 0;
-                int len = 0;
-                int k = 0;
-                while (k < ((byte[]) source.getValue()).length) {
-                    if (cell == null) {
-                        len = Math.min(bytes, ((byte[]) source.getValue()).length - k);
-                        if (len > 0) {
-                            cell = new byte[len];
-                            pos = 0;
-                        } else {
-                            break;
-                        }
-                    }
-                    if (pos < len) {
-                        cell[pos++] = ((byte[]) source.getValue())[k++];
-                    } else {
-                        Term x = (Term) mind.getTerms().add(cell);
-                        list.add(x);
-                        cell = null;
-                    }
-                }
-                if (cell != null) {
-                    Term x = (Term) mind.getTerms().add(cell);
-                    list.add(x);
-                }
-            }
-        } else {
-            list.add(source);
-        }
-
-        return list;
     }
 
 

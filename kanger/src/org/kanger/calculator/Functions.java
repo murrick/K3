@@ -105,7 +105,6 @@ public class Functions {
                             ret = 0;
                         }
                     } else {
-//                        arg.createCVar(1).delValue(o.getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -137,7 +136,6 @@ public class Functions {
                             ret = 0;
                         }
                     } else {
-//                        arg.createCVar(1).delValue(o.getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -169,7 +167,6 @@ public class Functions {
                             ret = 0;
                         }
                     } else {
-//                        arg.createCVar(1).delValue(o.getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -201,7 +198,6 @@ public class Functions {
                             ret = 0;
                         }
                     } else {
-//                        arg.createCVar(1).delValue(o.getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -381,7 +377,6 @@ public class Functions {
                             ret = 0;
                         }
                     } else {
-//                        arg.createCVar(2).delValue(o.getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -414,7 +409,6 @@ public class Functions {
                             && mind.getTerms().add(new ITerm[]{arg.get(0).getValue(mind), arg.get(1).getValue(mind)}).equalsTo(arg.get(2).getValue(mind))) {
                         ret = 2;
                     } else {
-//                        arg.createCVar(2).delValue(o.getOwner());
                         ret = 0;
                     }
                     return ret;
@@ -441,9 +435,18 @@ public class Functions {
                         if (!o.setParameter(arg.size() - 1, mind.getTerms().add(tmp))) {
                             ret = 0;
                         }
-                    } else if (ret != 0) {
-                        //TODO: Сравнить два массива сетов
-                        ret = 0;
+                    } else if (ret != 0 && !arg.get(arg.size() - 1).isEmpty(mind)) {
+                        List<ITerm> list = mind.getCalculator().expand(arg.get(arg.size() - 1).getValue(mind), null, false);
+                        if (tmp.size() == list.size()) {
+                            for (IArgument a : tmp) {
+                                if (!list.contains(a.getValue(mind))) {
+                                    ret = 0;
+                                    break;
+                                }
+                            }
+                        } else {
+                            ret = 0;
+                        }
                     } else {
                         ret = 0;
                     }
@@ -2043,13 +2046,13 @@ public class Functions {
         } else if (a.getType() == DataType.SET) {
             ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) a.getValue()) {
-                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().expand(t, null, false)) {
                     if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm t : mind.getCalculator().expand(b, null, false)) {
                 if (!list.contains(t, mind)) {
                     list.add(new Argument(t));
                 }
@@ -2058,13 +2061,13 @@ public class Functions {
         } else if (b.getType() == DataType.SET) {
             ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) b.getValue()) {
-                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().expand(t, null, false)) {
                     if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            for (ITerm t : mind.getCalculator().expand(a, null, false)) {
                 if (!list.contains(t, mind)) {
                     list.add(new Argument(t));
                 }
@@ -2085,7 +2088,7 @@ public class Functions {
                 res = list;
             } else {
                 ArgumentsList list = new ArgumentsList();
-                for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
+                for (ITerm t : mind.getCalculator().expand(a, null, false)) {
                     if (!list.contains(t, mind)) {
                         list.add(new Argument(t));
                     }
@@ -2108,7 +2111,7 @@ public class Functions {
                 res = list;
             } else {
                 ArgumentsList list = new ArgumentsList();
-                for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+                for (ITerm t : mind.getCalculator().expand(b, null, false)) {
                     if (!list.contains(t, mind)) {
                         list.add(new Argument(t));
                     }
@@ -2179,27 +2182,27 @@ public class Functions {
             res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
         } else if (a.getType() == DataType.INTERVAL && b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
             ArgumentsList list = new ArgumentsList();
-            for (ITerm n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            for (ITerm n : mind.getCalculator().expand(a, null, false)) {
                 list.add(new Argument(n));
             }
             list.remove(b, mind);
             res = list;
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.INTERVAL) {
             ArgumentsList list = new ArgumentsList();
-            for (ITerm n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            for (ITerm n : mind.getCalculator().expand(a, null, false)) {
                 list.add(new Argument(n));
             }
-            for (ITerm n : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm n : mind.getCalculator().expand(b, null, false)) {
                 list.remove(n, mind);
             }
             res = list;
         } else if (a.getType() == DataType.INTERVAL && b.getType() == DataType.SET) {
             ArgumentsList list = new ArgumentsList();
-            for (ITerm n : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            for (ITerm n : mind.getCalculator().expand(a, null, false)) {
                 list.add(new Argument(n));
             }
             for (Term t : (Collection<Term>) b.getValue()) {
-                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().expand(t, null, false)) {
                     list.remove(n, mind);
                 }
             }
@@ -2207,13 +2210,13 @@ public class Functions {
         } else if (a.getType() == DataType.SET) {
             ArgumentsList list = new ArgumentsList();
             for (Term t : (Collection<Term>) a.getValue()) {
-                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().expand(t, null, false)) {
                     if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm t : mind.getCalculator().expand(b, null, false)) {
                 list.remove(t, mind);
             }
             res = list;
@@ -2252,13 +2255,13 @@ public class Functions {
             ArgumentsList list = new ArgumentsList();
             ArgumentsList result = new ArgumentsList();
             for (ITerm t : (Collection<Term>) a.getValue()) {
-                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().expand(t, null, false)) {
                     if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (ITerm t : mind.getCalculator().getPredicates().expand(b, null, false)) {
+            for (ITerm t : mind.getCalculator().expand(b, null, false)) {
                 if (list.contains(t, mind)) {
                     result.add(new Argument(t));
                 }
@@ -2268,13 +2271,13 @@ public class Functions {
             ArgumentsList list = new ArgumentsList();
             ArgumentsList result = new ArgumentsList();
             for (ITerm t : (Collection<Term>) b.getValue()) {
-                for (ITerm n : mind.getCalculator().getPredicates().expand(t, null, false)) {
+                for (ITerm n : mind.getCalculator().expand(t, null, false)) {
                     if (!list.contains(n, mind)) {
                         list.add(new Argument(n));
                     }
                 }
             }
-            for (ITerm t : mind.getCalculator().getPredicates().expand(a, null, false)) {
+            for (ITerm t : mind.getCalculator().expand(a, null, false)) {
                 if (list.contains(t, mind)) {
                     result.add(new Argument(t));
                 }
@@ -2790,9 +2793,9 @@ public class Functions {
         } else if (a.getType() == DataType.BLOB) {
             res = ((byte[]) a.getValue()).length;
         } else if (a.getType() == DataType.INTERVAL) {
-            res = mind.getCalculator().getPredicates().expand(a, step, false).size();
+            res = mind.getCalculator().expand(a, step, false).size();
         } else if (a.getType() == DataType.SET) {
-            res = mind.getCalculator().getPredicates().expand(a, step, false).size();
+            res = mind.getCalculator().expand(a, step, false).size();
         }
         return mind.getTerms().add(res);
     }
@@ -2800,7 +2803,7 @@ public class Functions {
     private ITerm _step(ITerm a, ITerm size) throws Exception {
         Object res = null;
         if (a.getType() == DataType.INTERVAL) {
-            List<ITerm> list = mind.getCalculator().getPredicates().expand(a, null, false);
+            List<ITerm> list = mind.getCalculator().expand(a, null, false);
             if (list.size() > 1) {
                 ITerm dif;
                 if (list.get(0).compareTo(list.get(list.size() - 1)) > 0) {

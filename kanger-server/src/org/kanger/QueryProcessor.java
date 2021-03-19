@@ -759,6 +759,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
+        mind.optimizeHypothesis();
         List<JSONObject> list = new ArrayList<>();
         for (IHypothesis h : mind.getHypothesis()) {
             JSONObject op = new JSONObject(((Hypothesis) h).createMap(mind));

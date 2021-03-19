@@ -27,12 +27,22 @@ package org.kanger.calculator;
 
 import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
-import org.kanger.enums.Enums;
+import org.kanger.enums.DataType;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IPredicate;
-import org.kanger.units.*;
+import org.kanger.interfaces.ITerm;
+import org.kanger.units.Domain;
+import org.kanger.units.Function;
+import org.kanger.units.Operation;
+import org.kanger.units.Term;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.15.
@@ -60,7 +70,6 @@ public class Calculator {
 
         boolean result = false;
 
-//        if(fu.isEmpty()) {
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).getType() == ArgumentType.FUNCTION
                     && ((Function) fu.getArguments().get(i).getObject(mind)).isEmpty(mind)) {
@@ -68,7 +77,6 @@ public class Calculator {
                 calculate((Function) fu.getArguments().get(i).getObject(mind), logging);
             }
         }
-//        }
 
         if (fu.isEmpty(mind) || !((Term) fu.getResult().getValue(mind)).equalsTo((Term) fu.getValue(mind))) {
             int k = execute(fu);
@@ -79,17 +87,11 @@ public class Calculator {
                     if (logging) {
                         mind.getLog().add(LogMode.ANALYZER, "Calculated function:");
                         mind.getLog().add(LogMode.ANALYZER, String.format("\t%s", fu.toString()));
-//                    mind.getLog().add(LogMode.ANALIZER, "-------------------------------------------");
                     }
                 }
             }
         }
 
-//        for (int i = 0; i < fu.getRange(); ++i) {
-//            if (fu.getArguments().get(i).isFSet() && fu.getArguments().get(i).getF(mind).isEmpty()) {
-//                calculate(fu.getArguments().get(i).getF(mind), logging);
-//            }
-//        }
         return result;
     }
 
@@ -110,24 +112,7 @@ public class Calculator {
                 : mind.getLibrary().find(n);
         if (op != null) {
 
-//            for (Argument a : d.getArguments()) {
-//                if (a.isEmpty() && !a.isTVariable() && !a.isFunction()/*&& "$$".equals(a.getValue().toString())*/) {
-//                    return -1;
-//                }
-//            }
-
             k = (Integer) op.getProc().run(d);
-
-//            if (k == 1 && "_eq".equals(op.getName())) {
-//                for(Argument a : d.getArguments()) {
-//                    if (a.isFunction()) {
-//                        Function f = a.getFunction();
-//                        if (calculate(f) <= 0) {
-//                            k = -1;
-//                        }
-//                    }
-//                }
-//            }
         }
         return k;
     }
@@ -147,24 +132,12 @@ public class Calculator {
         }
 
         if (op != null) {
-
-//            if (op.getRange() + 1 > fu.getArguments().size()) {
-//                fu.getArguments().add(new Argument());
-//            }
-
             for (IArgument a : fu.getArguments()) {
                 if (!a.isEmpty(mind) && a.getValue(mind).isCVariable()) {
-//                    fu.setResult(mind.getTerms().add("$$"));
                     return -1;
                 }
             }
-
-//            if ("$$".equals(fu.getResult())) {
-//                return -1;
-//            }
-
             k = (Integer) op.getProc().run(fu);
-//            fu.getArguments().remove(op.getRange());
         }
         return k;
     }
@@ -177,69 +150,6 @@ public class Calculator {
         return op != null && op.getMode() == LibMode.PREDICATE;
     }
 
-    public boolean exists(Function f) throws Exception {
-        String n = f.getName(mind) + "(" + f.getRange() + ")";
-        Operation op = functions.getSysOps().get(n) != null
-                ? functions.getSysOps().get(n)
-                : mind.getLibrary().find(n);
-        return op != null && functions.getSysOps().get(n).getMode() == LibMode.FUNCTION;
-    }
-
-
-    private Operation findOp(String n) throws Exception {
-        if (predicates.getSysOps().containsKey(n))
-            return predicates.getSysOps().get(n);
-        else if (functions.getSysOps().containsKey(n))
-            return functions.getSysOps().get(n);
-        else
-            return mind.getLibrary().find(n);
-    }
-
-    public Operation find(Object o) throws Exception {
-        if (o instanceof Predicate) {
-            String n = ((Predicate) o).getName(mind) + "(" + ((Predicate) o).getRange() + ")";
-            return predicates.getSysOps().get(n) != null ? predicates.getSysOps().get(n) : mind.getLibrary().find(n);
-        } else if (o instanceof Function) {
-            String n = ((Function) o).getName(mind) + "(" + ((Function) o).getRange() + ")";
-            return functions.getSysOps().get(n) != null ? functions.getSysOps().get(n) : mind.getLibrary().find(n);
-        } else {
-            String key = o.toString();
-            Operation op = findOp(key);
-            if (op != null) {
-                return op;
-            } else {
-                key = key.trim();
-                if (!key.isEmpty() && key.charAt(0) == Enums.ANT || key.charAt(0) == Enums.SUC || key.charAt(0) == Enums.DEL || key.charAt(0) == Enums.INS /*|| key.charAt(0) == Enums.WIPE*/) {
-                    key = key.substring(1);
-                }
-                if (!key.isEmpty() && key.charAt(key.length() - 1) == Enums.EOLN) {
-                    key = key.substring(0, key.length() - 1);
-                }
-                op = findOp(key);
-                if (op != null) {
-                    return op;
-                } else if (key.contains("(") && key.contains(")") && key.split("\\(").length > 0) {
-                    String n = key.split("\\(")[0];
-                    int range = key.split("\\(")[1].split("\\)")[0].split(",").length;
-                    if (range == 1 && key.split("\\(")[1].split("\\)")[0].split(",")[0].trim().isEmpty()) {
-                        range = 0;
-                    }
-                    return findOp(n + "(" + range + ")");
-                } else {
-                    return findOp(key + "(0)");
-                }
-            }
-        }
-    }
-
-//    public void register(SysOp op) {
-//        mind.getLibrary().add(op);
-//    }
-
-//    public boolean unregister(String key) {
-//        return mind.getLibrary().remove(key);
-//    }
-
     public Functions getFunctions() {
         return functions;
     }
@@ -247,6 +157,117 @@ public class Calculator {
     public Predicates getPredicates() {
         return predicates;
     }
+
+    public List<ITerm> expand(ITerm source, ITerm step, boolean expandString) throws Exception {
+        List<ITerm> list = new ArrayList<>();
+        Term top = null;
+        if (source.getType() == DataType.INTERVAL) {
+            Term min = (Term) ((Collection) source.getValue()).toArray()[0];
+            Term max = (Term) ((Collection) source.getValue()).toArray()[1];
+            Term cur = min;
+            int rc = min.compareTo(max);
+            while (true) {
+                list.add(cur);
+                if (top == null) top = cur;
+                if (rc == 0) {
+                    break;
+                }
+                Term next;
+                if (step != null) {
+                    next = (Term) (rc < 0
+                            ? getFunctions()._add(cur, step)
+                            : getFunctions()._sub(cur, step));
+                } else {
+                    next = (Term) (rc < 0
+                            ? getFunctions()._inc(cur)
+                            : getFunctions()._dec(cur));
+                }
+                if (next.getId() == cur.getId()) {
+                    list.add(max);
+                    break;
+                } else if (rc < 0 && next.compareTo(max) > 0) {
+                    break;
+                } else if (rc > 0 && next.compareTo(max) < 0) {
+                    break;
+                } else {
+                    cur = next;
+                }
+            }
+        } else if (source.getType() == DataType.SET) {
+
+            for (Term t : (Collection<Term>) source.getValue()) {
+                if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
+                    list.addAll(expand(t, null, expandString));
+                } else {
+                    list.add(t);
+                }
+            }
+        } else if (source.getType() == DataType.STRING) {
+            if (step == null) {
+                if (expandString) {
+                    for (int k = 0; k < source.getValue().toString().length(); ++k) {
+                        Term x = (Term) mind.getTerms().add(source.getValue().toString().charAt(k) + "");
+                        list.add(x);
+                    }
+                } else {
+                    list.add(source);
+                }
+            } else {
+                Pattern pt = Pattern.compile(step.getValue().toString());
+                Matcher mt = pt.matcher(source.getValue().toString());
+                while (mt.find()) {
+                    for (int k = 0; k < mt.groupCount(); ++k) {
+                        Term t = (Term) mind.getTerms().add(mt.group(k + 1) + "");
+                        list.add(t);
+                    }
+                }
+            }
+        } else if (source.getType() == DataType.BLOB) {
+            if (step == null) {
+                if (expandString) {
+                    for (int k = 0; k < ((byte[]) source.getValue()).length; ++k) {
+                        Term x = (Term) mind.getTerms().add(new byte[]{((byte[]) source.getValue())[k]});
+                        list.add(x);
+                    }
+                } else {
+                    list.add(source);
+                }
+            } else {
+                int bytes = ((Double) step.getValue()).intValue();
+                byte[] cell = null;
+                int pos = 0;
+                int len = 0;
+                int k = 0;
+                while (k < ((byte[]) source.getValue()).length) {
+                    if (cell == null) {
+                        len = Math.min(bytes, ((byte[]) source.getValue()).length - k);
+                        if (len > 0) {
+                            cell = new byte[len];
+                            pos = 0;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (pos < len) {
+                        cell[pos++] = ((byte[]) source.getValue())[k++];
+                    } else {
+                        Term x = (Term) mind.getTerms().add(cell);
+                        list.add(x);
+                        cell = null;
+                    }
+                }
+                if (cell != null) {
+                    Term x = (Term) mind.getTerms().add(cell);
+                    list.add(x);
+                }
+            }
+        } else {
+            list.add(source);
+        }
+
+        return list;
+    }
+
 
 }
 
