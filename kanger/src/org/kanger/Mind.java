@@ -68,7 +68,6 @@ public class Mind implements IMind {
     private final Map<Domain, Map<ArgumentsList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
-    private final Map<Long, Set<Long>> usedTerms = new HashMap<>();
     private long id = 0;
     private IMind next = null;
     //    private volatile boolean blockCommit = false;
@@ -961,10 +960,6 @@ public class Mind implements IMind {
         return cvarParents;
     }
 
-    public Map<Long, Set<Long>> getUsedTerms() {
-        return usedTerms;
-    }
-
     //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
 //        return domainTags;
 //    }
@@ -1485,7 +1480,8 @@ public class Mind implements IMind {
         Boolean res = null;
         acceptedRule = null;
 
-        log.clear();
+        getQueryValues().clear();
+        getLog().clear();
         getSolutions().clear();
         getValues().clear();
         getHypothesis().clear();
