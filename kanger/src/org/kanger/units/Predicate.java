@@ -36,10 +36,7 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 20.05.15.
@@ -222,6 +219,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         try {
             return getName(mind) + "(" + range + ")";
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }

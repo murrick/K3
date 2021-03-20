@@ -37,10 +37,7 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
@@ -193,7 +190,7 @@ public class Base implements IBase {
 //                    try {
 //                        ((Identifiable) step.getData()).linkExternal(user);
 //                    } catch (Exception e) {
-//                        e.printStackTrace(System.err);
+//                        System.err.println(new Date()); e.printStackTrace(System.err);
 //                    }
 ////                cache.remove(id);
 //                }
@@ -226,6 +223,7 @@ public class Base implements IBase {
         try {
             return size() == 0;
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return true;
         }
@@ -304,6 +302,7 @@ public class Base implements IBase {
 //                }
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return null;
         }
@@ -324,6 +323,7 @@ public class Base implements IBase {
 //                }
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return null;
         }

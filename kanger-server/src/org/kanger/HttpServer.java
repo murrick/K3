@@ -208,6 +208,7 @@ public class HttpServer {
                                 socket.close();
                             } catch (Exception e) {
                                 Watchdog.err("Exception while creating response");
+                                System.err.println(new Date());
                                 e.printStackTrace(System.err);
                             }
                         });
@@ -217,6 +218,7 @@ public class HttpServer {
                 } catch (IOException e) {
                     if (active) {
                         Watchdog.err("Exception while handling connection");
+                        System.err.println(new Date());
                         e.printStackTrace(System.err);
                     } else {
                         Watchdog.log("Server socket closed");
@@ -225,6 +227,7 @@ public class HttpServer {
             }
         } catch (Exception e) {
             Watchdog.err("Could not create socket at port " + port);
+            System.err.println(new Date());
             e.printStackTrace(System.err);
         } finally {
             threadPool.shutdown();
@@ -270,6 +273,7 @@ public class HttpServer {
             try {
                 serverSocket.close();
             } catch (IOException e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         }

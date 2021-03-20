@@ -36,6 +36,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.Map;
 import java.util.Timer;
 
@@ -107,10 +108,12 @@ public class Kanger {
                     System.out.println("BUILT-IN-WRAPPER: Shutdown server");
                 }
             } while (!serviceTerminate);
-        } catch (InterruptedException ex) {
-            ex.printStackTrace(System.err);
-        } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+        } catch (InterruptedException e) {
+            System.err.println(new Date());
+            e.printStackTrace(System.err);
+        } catch (IOException e) {
+            System.err.println(new Date());
+            e.printStackTrace(System.err);
         }
     }
 
@@ -131,10 +134,12 @@ public class Kanger {
                 System.out.println("BUILT-IN-WRAPPER: Process done");
             }
 
-        } catch (InterruptedException ex) {
-            ex.printStackTrace(System.err);
-        } catch (Exception ex) {
-            ex.printStackTrace(System.err);
+        } catch (InterruptedException e) {
+            System.err.println(new Date());
+            e.printStackTrace(System.err);
+        } catch (Exception e) {
+            System.err.println(new Date());
+            e.printStackTrace(System.err);
         }
     }
 
@@ -174,11 +179,13 @@ public class Kanger {
                         System.out.write(buffer, 0, r);
                     }
                 } catch (IOException e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     try {
                         in.close();
                     } catch (IOException e) {
+                        System.err.println(new Date());
                         e.printStackTrace(System.err);
                     }
                 }
@@ -203,11 +210,13 @@ public class Kanger {
                         System.err.write(buffer, 0, r);
                     }
                 } catch (IOException e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     try {
                         er.close();
                     } catch (IOException e) {
+                        System.err.println(new Date());
                         e.printStackTrace(System.err);
                     }
                 }
@@ -227,6 +236,7 @@ public class Kanger {
                 return classLocation.substring(0, classLocation.lastIndexOf(File.separatorChar));
             }
         } catch (UnsupportedEncodingException e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
         }
         return new File("").getAbsolutePath();
@@ -300,8 +310,9 @@ public class Kanger {
             reader = null;
             return page;
 
-        } catch (NoSuchFieldError ex) {
-            ex.printStackTrace(System.err);
+        } catch (NoSuchFieldError e) {
+            System.err.println(new Date());
+            e.printStackTrace(System.err);
             return "";
         } finally {
             if (reader != null) {

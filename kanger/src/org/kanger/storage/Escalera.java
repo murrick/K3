@@ -300,6 +300,7 @@ public class Escalera implements ICache {
                     root.setData(((User) mind.getUser()).getStorage(schema).get(root.getId()).getData(mind));
                 }
             } catch (Exception e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
 
@@ -324,6 +325,7 @@ public class Escalera implements ICache {
                 o = step.getData(mind);
                 step = step.getNext();
             } catch (Exception e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
             return o;

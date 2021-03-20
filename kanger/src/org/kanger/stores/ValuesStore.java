@@ -170,6 +170,7 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
                     return ((TValue) get(0).getObject(mind)).getValue(mind).compareTo(((TValue) arguments.get(0).getObject(mind)).getValue(mind));
                 }
             } catch (Exception e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
                 return 0;
             }
@@ -196,6 +197,7 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
 //                            : v.getV(mind).getValue().getValue();
                     row.put(((TValue) v.getObject(mind)).getTVar(mind).getName(mind).toString(), ((TValue) v.getObject(mind)).getValue(mind));
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 }
             }

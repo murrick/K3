@@ -39,10 +39,7 @@ import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
@@ -293,6 +290,7 @@ public class Console {
             } catch (RuntimeErrorException ex) {
                 System.err.println(ex.toString());
             } catch (Exception e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
 
@@ -300,6 +298,7 @@ public class Console {
         try {
             mind = mind.closeStorage();
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
         }
         System.out.println("KANGER III Session closed");

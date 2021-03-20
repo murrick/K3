@@ -298,6 +298,7 @@ public class Linker {
 
 
                         } catch (Exception e) {
+                            System.err.println(new Date());
                             e.printStackTrace(System.err);
                             result = false;
                         }
@@ -718,7 +719,7 @@ public class Linker {
                                                     Term tm = (Term) slave.get(i).getValue(mind);
                                                     TVariable t = (TVariable) master.get(i).getObject(mind);
                                                     TValue s = null;
-                                                    if (tm.isCVariable() && tm.getParentId() == -1 && slave.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
 
 //                                                        s = mind.getTValues().findCVariable(t, tm);
 //                                                        if (s == null) {
@@ -751,11 +752,13 @@ public class Linker {
                                                     slave.setUsed(mind);
                                                     master.setUsed(mind);
                                                     applied = true;
+
                                                 }
+                                            }
 //                                            } else if(slave.isQuery()){
 //                                                success = false;
 //                                                break;
-                                            }
+
                                         }
 //                                        }
 //                                        }
@@ -780,7 +783,7 @@ public class Linker {
                                                     Term tm = (Term) master.get(i).getValue(mind);
                                                     TVariable t = (TVariable) slave.get(i).getObject(mind);
                                                     TValue s = null;
-                                                    if (tm.isCVariable() && tm.getParentId() == -1 && master.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && tm.getSlaves().isEmpty() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
 //                                                        s = mind.getTValues().findCVariable(t, tm);
 //                                                        if (s == null) {
 //                                                            Term tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind));
@@ -814,6 +817,7 @@ public class Linker {
                                                     master.setUsed(mind);
                                                     slave.setUsed(mind);
                                                     applied = true;
+
                                                 }
 //                                            } else if(master.isQuery()){
 //                                                success = false;
@@ -1268,9 +1272,9 @@ public class Linker {
                             d.setSolves(solve, mind);
                             if (logging) {
 //                            logBranch(tree, logging);
-                            log.add(LogMode.STORAGE, "DB assumed record: " + d);
-                            logCauses(LogMode.STORAGE, d);
-                        }
+                                log.add(LogMode.STORAGE, "DB assumed record: " + d);
+                                logCauses(LogMode.STORAGE, d);
+                            }
                         }
                     }
 //                    }

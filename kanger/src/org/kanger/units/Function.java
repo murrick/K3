@@ -40,10 +40,7 @@ import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 26.05.15.
@@ -164,6 +161,7 @@ public class Function implements IUnit<Function> {
         try {
             return getValue(mind) == null;
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return true;
         }
@@ -285,6 +283,7 @@ public class Function implements IUnit<Function> {
                 return s + res;
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }

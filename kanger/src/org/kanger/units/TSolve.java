@@ -190,6 +190,7 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
             }
             return str;
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }

@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
+import java.util.Date;
 
 /**
  * Created by Dmitry G. Quznetsov on 20.05.15.
@@ -101,8 +102,9 @@ public class Kanger {
                 UserFactory.createUser(newlogin, password);
                 System.out.println("New user created: " + newlogin);
                 System.exit(0);
-            } catch (Exception ex) {
-                ex.printStackTrace(System.err);
+            } catch (Exception e) {
+                System.err.println(new Date());
+                e.printStackTrace(System.err);
             }
         }
 

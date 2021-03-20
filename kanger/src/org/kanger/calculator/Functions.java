@@ -2780,8 +2780,9 @@ public class Functions {
                 sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100), 1, 3);
             }
             res = mind.getTerms().add(sb.toString());
-        } catch (java.security.NoSuchAlgorithmException ex) {
-            ex.printStackTrace(System.err);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            System.err.println(new Date());
+            e.printStackTrace(System.err);
         }
         return res;
     }

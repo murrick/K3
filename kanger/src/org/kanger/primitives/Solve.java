@@ -236,6 +236,7 @@ public class Solve {
 
             return s + ";";
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }

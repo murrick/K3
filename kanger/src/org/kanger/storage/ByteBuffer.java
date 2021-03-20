@@ -30,6 +30,7 @@ import org.kanger.exception.OutOfBufferException;
 import java.io.ObjectInput;
 import java.io.UnsupportedEncodingException;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Stack;
 
 /**
@@ -607,8 +608,9 @@ public class ByteBuffer {
                 System.arraycopy(buffer, i, dst, 0, len);
                 str = len > 0 ? new String(dst, "windows-1251") : "";
                 i += len;
-            } catch (UnsupportedEncodingException ex) {
-                ex.printStackTrace(System.err);
+            } catch (UnsupportedEncodingException e) {
+                System.err.println(new Date());
+                e.printStackTrace(System.err);
             }
         }
         return str;

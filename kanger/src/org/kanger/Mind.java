@@ -51,6 +51,10 @@ public class Mind implements IMind {
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
     private static final int FLOOD_CONTROL_LIMIT = 10000;
 
+    private final Object locker = new Object();
+    private final Map<ITerm, ITerm> cvarChilds = new HashMap<>();
+    private final Map<ITerm, ITerm> cvarParents = new HashMap<>();
+
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
     private final Map<UnitType, Set<Long>> restored = new HashMap<>();
     private final Stack<Integer> debugLevelStack = new Stack<>();
@@ -64,10 +68,10 @@ public class Mind implements IMind {
     private final Map<Domain, Map<ArgumentsList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
-    private final Object locker = new Object();
-    //    private volatile boolean blockCommit = false;
+    private final Map<Long, Set<Long>> usedTerms = new HashMap<>();
     private long id = 0;
     private IMind next = null;
+    //    private volatile boolean blockCommit = false;
     private final Map<TVariable, long[]> floodControl = new HashMap<>();
 
     private DictionaryFactory terms = null;                    // Словарь констант
@@ -949,7 +953,19 @@ public class Mind implements IMind {
         return restored;
     }
 
-//    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
+    public Map<ITerm, ITerm> getCvarChilds() {
+        return cvarChilds;
+    }
+
+    public Map<ITerm, ITerm> getCvarParents() {
+        return cvarParents;
+    }
+
+    public Map<Long, Set<Long>> getUsedTerms() {
+        return usedTerms;
+    }
+
+    //    public Map<Domain, Map<ArgList, Set<Long>>> getDomainTags() {
 //        return domainTags;
 //    }
 

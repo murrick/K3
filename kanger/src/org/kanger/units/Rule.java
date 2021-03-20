@@ -313,6 +313,7 @@ public class Rule implements IUnit<IRule>, IRule {
                     (isQuery() ? "Q" : "")
                     : "");
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }
@@ -832,4 +833,6 @@ public class Rule implements IUnit<IRule>, IRule {
 //            }
 //        }
 //    }
+
+
 }

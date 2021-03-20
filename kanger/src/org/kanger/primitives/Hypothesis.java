@@ -40,10 +40,7 @@ import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Predicate;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
@@ -244,6 +241,7 @@ public class Hypothesis implements IHypothesis {
             tmp += ");";
             line += tmp;
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
         }
         return line;
@@ -305,7 +303,7 @@ public class Hypothesis implements IHypothesis {
 //        try {
 //            return getPredicate().getName().compareTo(o.getPredicate().getName());
 //        } catch (Exception e) {
-//            e.printStackTrace(System.err);
+//            System.err.println(new Date()); e.printStackTrace(System.err);
 //            return 0;
 //        }
 //    }

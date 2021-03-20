@@ -27,6 +27,8 @@ package org.kanger;
 
 import org.kanger.interfaces.IUser;
 
+import java.util.Date;
+
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
  */
@@ -46,6 +48,7 @@ public class ShutdownHook extends Thread {
                 user.close(null);
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
         }
     }

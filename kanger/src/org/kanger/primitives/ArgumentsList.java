@@ -95,7 +95,7 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
 //                }
 //            }
 //        } catch (Exception e) {
-//            e.printStackTrace(System.err);
+//            System.err.println(new Date()); e.printStackTrace(System.err);
 //        }
 //
 //        return hashCode;
@@ -113,6 +113,7 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                 }
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
         }
         return hashCode;
@@ -162,6 +163,7 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                         }
                     }
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 }
                 if (i == arg.size()) {
@@ -187,14 +189,15 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                         if (!get(i).isEmpty(mind) && !arg.get(i).isEmpty(mind)
                                 && ((get(i).getValue(mind).isCVariable() && arg.get(i).getValue(mind).isCVariable()
                                 && (get(i).getValue(mind).getId() == arg.get(i).getValue(mind).getId()
-                                || ((Term) get(i).getValue(mind)).getParentId() == arg.get(i).getValue(mind).getId()
-                                || get(i).getValue(mind).getId() == ((Term) arg.get(i).getValue(mind)).getParentId()))
+                                || ((Term) get(i).getValue(mind)).getParentId(mind) == arg.get(i).getValue(mind).getId()
+                                || get(i).getValue(mind).getId() == ((Term) arg.get(i).getValue(mind)).getParentId(mind)))
                                 || get(i).getValue(mind).getId() == arg.get(i).getValue(mind).getId())) {
                         } else {
                             break;
                         }
                     }
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 }
                 if (i == arg.size()) {
@@ -393,7 +396,7 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
 //            try {
 //                str += a.getType() == ArgumentType.TVALUE ? a.getObject(mind).toString() : a.toString(mind);
 //            } catch (Exception e) {
-//                e.printStackTrace(System.err);
+//                System.err.println(new Date()); e.printStackTrace(System.err);
 //            }
 //        }
 //        str += "]";

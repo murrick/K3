@@ -43,10 +43,7 @@ import org.kanger.units.Predicate;
 import org.kanger.units.Term;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -103,6 +100,7 @@ public class KangerTest {
                     ++successCount;
                 } catch (Exception e) {
                     fails.add(name);
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 }
             }
@@ -123,6 +121,7 @@ public class KangerTest {
             System.out.println("  Fails: " + fails.size());
 
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
         } finally {
             //TODO: Включть!
@@ -133,6 +132,7 @@ public class KangerTest {
                 try {
                     mind = mind.useStorage(dbName);
                 } catch (RuntimeErrorException e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 }
             }
@@ -2381,6 +2381,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 1 STOP: " + a.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2405,6 +2406,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 2 STOP: " + b.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2429,6 +2431,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 3 STOP: " + c.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2525,6 +2528,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 1 STOP: " + m1.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2550,6 +2554,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 2 STOP: " + m2.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2575,6 +2580,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 3 STOP: " + m3.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2599,6 +2605,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 4 STOP: " + m4.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2678,6 +2685,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 1 STOP: " + m1.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2699,6 +2707,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 2 STOP: " + m2.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();
@@ -2719,6 +2728,7 @@ public class KangerTest {
                     }
                     System.out.println("PROCESS 3 STOP: " + m3.getRules().size() + "/" + mind.getRules().size());
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 } finally {
                     latchEnd.countDown();

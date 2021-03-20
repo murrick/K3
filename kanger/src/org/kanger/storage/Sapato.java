@@ -34,6 +34,7 @@ import org.kanger.units.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -141,6 +142,7 @@ public class Sapato implements IStep {
         try {
             return base.get(next);
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return null;
         }
@@ -156,7 +158,7 @@ public class Sapato implements IStep {
 //        try {
 //            return base.get(prev);
 //        } catch (Exception e) {
-//            e.printStackTrace(System.err);
+//            System.err.println(new Date()); e.printStackTrace(System.err);
 //            return null;
 //        }
 //    }

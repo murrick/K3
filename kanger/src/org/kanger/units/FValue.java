@@ -40,10 +40,7 @@ import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class FValue implements IUnit<FValue> {
 
@@ -253,6 +250,7 @@ public class FValue implements IUnit<FValue> {
                 return false;
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return false;
         }
@@ -333,11 +331,13 @@ public class FValue implements IUnit<FValue> {
                     //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
                     return s + res;
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                     return "";
                 }
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }

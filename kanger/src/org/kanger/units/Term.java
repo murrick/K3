@@ -63,8 +63,8 @@ public class Term implements IUnit<Term>, ITerm {
     private int index = 0;              // Индекс c-переменной
     private ITerm name = null;             // Оригинальное имя c-переменной
     private IRule rule = null;          // Ссылка на правило
-    private ITerm parent = null;
-    private ITerm child = null;
+//    private ITerm parent = null;
+//    private ITerm child = null;
     //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
 
     //    private Term next = null;      // Следующая запись
@@ -75,8 +75,8 @@ public class Term implements IUnit<Term>, ITerm {
 
     private transient long nameId = -1;
     private transient long ruleId = -1;
-    private transient long parentId = -1;
-    private transient long childId = -1;
+//    private transient long parentId = -1;
+//    private transient long childId = -1;
 
     public Term() {
     }
@@ -132,8 +132,6 @@ public class Term implements IUnit<Term>, ITerm {
         if (index > 0) {
             packet.putLong(nameId);
             packet.putLong(ruleId);
-            packet.putLong(parentId);
-            packet.putLong(childId);
             packet.putWord(slaves.size());
             for (long sid : slaves) {
                 packet.putLong(sid);
@@ -196,8 +194,6 @@ public class Term implements IUnit<Term>, ITerm {
         if (index > 0) {
             nameId = packet.getLong();
             ruleId = packet.getLong();
-            parentId = packet.getLong();
-            childId = packet.getLong();
             slaves.clear();
             int cnt = packet.getWord();
             while (cnt-- > 0) {
@@ -450,6 +446,7 @@ public class Term implements IUnit<Term>, ITerm {
                         try {
                             return getName(mind).toString();
                         } catch (Exception e) {
+                            System.err.println(new Date());
                             e.printStackTrace(System.err);
                             return "";
                         }
@@ -494,6 +491,7 @@ public class Term implements IUnit<Term>, ITerm {
                                 sum += t.getId();
                             }
                         } catch (Exception e) {
+                            System.err.println(new Date());
                             e.printStackTrace(System.err);
                             for (ITerm t : (List<ITerm>) value) {
                                 sum += t.getId();
@@ -536,6 +534,7 @@ public class Term implements IUnit<Term>, ITerm {
                             return false;
                         }
                     } catch (Exception e) {
+                        System.err.println(new Date());
                         e.printStackTrace(System.err);
                         return false;
                     }
@@ -689,13 +688,13 @@ public class Term implements IUnit<Term>, ITerm {
     public void setDeleted(boolean on, Mind mind) {
         mind.setUnitDeleted(this, on);
         if (on) {
-            if (child != null) {
-                ((Term) child).setParent(null);
-                child = null;
+            ITerm t = mind.getCvarChilds().remove(this);
+            if (t != null) {
+                mind.getCvarParents().remove(t);
             }
-            if (parent != null) {
-                ((Term) parent).setChild(null);
-                parent = null;
+            t = mind.getCvarParents().remove(this);
+            if (t != null) {
+                mind.getCvarChilds().remove(t);
             }
         }
     }
@@ -734,40 +733,30 @@ public class Term implements IUnit<Term>, ITerm {
 //        return childs;
 //    }
 //
-    public ITerm getParent(Mind mind) throws Exception {
-        if (parent == null && parentId > 0) {
-            parent = mind.getTerms().get(parentId);
+    public ITerm getParent(Mind mind) {
+        ITerm t = mind.getCvarParents().get(this);
+        if (t == null && mind.getNext() != null) {
+            return getParent((Mind) mind.getNext());
+        } else {
+            return t;
         }
-        return parent;
     }
 
     public void setParent(ITerm parent) {
-        this.parent = parent;
-        if (parent != null) {
-            this.parentId = parent.getId();
-        } else {
-            this.parentId = -1;
-        }
+        mind.getCvarParents().put(this, parent);
     }
 
-    public ITerm getChild(Mind mind) throws Exception {
-        if (child == null && childId > 0) {
-            child = mind.getTerms().get(childId);
+    public ITerm getChild(Mind mind) {
+        ITerm t = mind.getCvarChilds().get(this);
+        if (t == null && mind.getNext() != null) {
+            return getChild((Mind) mind.getNext());
+        } else {
+            return t;
         }
-        return child;
     }
 
     public void setChild(ITerm child) {
-        this.child = child;
-        if (child != null) {
-            this.childId = child.getId();
-        } else {
-            this.childId = -1;
-        }
-    }
-
-    public long getParentId() {
-        return parentId;
+        mind.getCvarChilds().put(this, child);
     }
 
     @Override
@@ -787,16 +776,12 @@ public class Term implements IUnit<Term>, ITerm {
         map.put("index", index);
         map.put("name_id", nameId);
         map.put("rule_id", ruleId);
-        map.put("parent_id", parentId);
 
         if (nameId != -1) {
             map.put("name", getName((Mind) mind).getValue());
         }
         if (ruleId != -1) {
             map.put("rule", getRule((Mind) mind).getOrigin());
-        }
-        if (parentId != -1) {
-            map.put("parent", getParent((Mind) mind).getValue());
         }
 
         return map;
@@ -815,13 +800,18 @@ public class Term implements IUnit<Term>, ITerm {
         index = Integer.parseInt(map.get("index") + "");
         nameId = Long.parseLong(map.get("name_id") + "");
         ruleId = Long.parseLong(map.get("rule_id") + "");
-        parentId = Long.parseLong(map.get("parent_id") + "");
         name = null;
         rule = null;
-        parent = null;
 
         return this;
     }
 
+    public long getParentId(Mind mind) {
+        if (getParent(mind) == null) {
+            return -1;
+        } else {
+            return getParent(mind).getId();
+        }
+    }
 }
 

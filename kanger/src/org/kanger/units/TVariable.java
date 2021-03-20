@@ -34,6 +34,7 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -237,6 +238,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         try {
             return getVarName((Mind) mind) + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }

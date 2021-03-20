@@ -476,11 +476,13 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             (isCalculated(arguments, mind) ? "S" : "") +
                             "";
                 } catch (Exception e) {
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 }
             }
             return s + suffix;
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return "";
         }
@@ -506,8 +508,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 //                return false;
             } else if (arguments.get(i).getValue(mind).isCVariable() && o.getArguments().get(i).getValue(mind).isCVariable()
                     && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getId()
-                    && ((Term) arguments.get(i).getValue(mind)).getParentId() != o.getArguments().get(i).getValue(mind).getId()
-                    && arguments.get(i).getValue(mind).getId() != ((Term) o.getArguments().get(i).getValue(mind)).getParentId()) {
+                    && ((Term) arguments.get(i).getValue(mind)).getParentId(mind) != o.getArguments().get(i).getValue(mind).getId()
+                    && arguments.get(i).getValue(mind).getId() != ((Term) o.getArguments().get(i).getValue(mind)).getParentId(mind)) {
                 return false;
             } else if (//id != -1 && o.getId() != -1
                 //&&
@@ -1331,6 +1333,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             break;
                         }
                     } catch (Exception e) {
+                        System.err.println(new Date());
                         e.printStackTrace(System.err);
                     }
                 }
@@ -1339,6 +1342,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 return false;
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return false;
         }

@@ -35,6 +35,8 @@ import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
+import java.util.Date;
+
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
  */
@@ -162,6 +164,7 @@ public class Cause implements ICause {
 //                    && acceptor.equals(((Cause) o).getAcceptor())
 //                    && ((result == null && ((Cause) o).getResult() == null) || (result.equals(((Cause) o).getResult())));
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return false;
         }

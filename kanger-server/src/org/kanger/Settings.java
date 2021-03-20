@@ -73,8 +73,10 @@ public class Settings {
             try (BufferedReader br = new BufferedReader(new FileReader(configName))) {
                 settings.load(br);
             } catch (FileNotFoundException e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             } catch (IOException e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         }

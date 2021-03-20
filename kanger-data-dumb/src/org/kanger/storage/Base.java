@@ -213,6 +213,7 @@ public class Base implements IBase, Iterable<IStep> {
                 return get(index.lastKey());
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return null;
         }
@@ -227,6 +228,7 @@ public class Base implements IBase, Iterable<IStep> {
                 return get(index.firstKey());
             }
         } catch (Exception e) {
+            System.err.println(new Date());
             e.printStackTrace(System.err);
             return null;
         }
@@ -397,6 +399,7 @@ public class Base implements IBase, Iterable<IStep> {
             try {
                 return data.get(one.getLong());
             } catch (Exception e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
                 return null;
             }

@@ -93,6 +93,7 @@ public class Watchdog extends TimerTask {
                 rotator("kanger-main.log");
                 rotator("kanger-errors.log");
             } catch (Exception e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
             lastRotatorEvent = System.currentTimeMillis();

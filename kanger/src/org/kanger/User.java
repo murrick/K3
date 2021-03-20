@@ -317,6 +317,7 @@ public class User implements IUser {
                     userSettings.store(bw, new Date().toString());
                 }
             } catch (IOException e) {
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         }

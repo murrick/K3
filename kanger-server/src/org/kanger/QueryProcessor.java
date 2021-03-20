@@ -93,8 +93,9 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 try {
                     new InternetAddress(to).validate();
                     msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-                } catch (AddressException ex) {
-                    ex.printStackTrace(System.err);
+                } catch (AddressException e) {
+                    System.err.println(new Date());
+                    e.printStackTrace(System.err);
                 }
             }
             msg.setSentDate(new Date());
@@ -103,9 +104,10 @@ public class QueryProcessor implements IReactor<JSONObject> {
             msg.setSubject(subject, charset);
             msg.setContent(text, "text/plain; charset=" + charset);
             Transport.send(msg, login, password);
-        } catch (MessagingException ex) {
-            ex.printStackTrace(System.err);
-            throw new Exception(ex);
+        } catch (MessagingException e) {
+            System.err.println(new Date());
+            e.printStackTrace(System.err);
+            throw new Exception(e);
         }
     }
 
@@ -185,11 +187,12 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     result.put("result", "error");
                     result.put("description", "User not logged in");
                 }
-            } catch (Exception ex) {
+            } catch (Exception e) {
                 result = new JSONObject();
                 result.put("result", "error");
-                result.put("description", ex.toString());
-                ex.printStackTrace(System.err);
+                result.put("description", e.toString());
+                System.err.println(new Date());
+                e.printStackTrace(System.err);
             }
         }
         return result;
@@ -444,6 +447,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         } else if (!parameters.isNull("login") && !parameters.isNull("password")) {
@@ -468,6 +472,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         } else if (!parameters.isNull("confirm")) {
@@ -490,6 +495,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         } else if (!parameters.isNull("resend") && !parameters.isNull("token")) {
@@ -504,6 +510,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                             try {
                                 sendConfirmation(user, userToken);
                             } catch (Exception e) {
+                                System.err.println(new Date());
                                 e.printStackTrace(System.err);
                             }
                         }
@@ -519,6 +526,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         } else if (!parameters.isNull("info") && !parameters.isNull("token")) {
@@ -538,6 +546,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         } else if (!parameters.isNull("register") && !parameters.isNull("password")) {
@@ -608,6 +617,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                                 try {
                                     sendConfirmation(user, userToken);
                                 } catch (Exception e) {
+                                    System.err.println(new Date());
                                     e.printStackTrace(System.err);
                                 }
                             }
@@ -618,11 +628,13 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 } catch (Exception e) {
                     result.put("result", "error");
                     result.put("description", e.toString());
+                    System.err.println(new Date());
                     e.printStackTrace(System.err);
                 }
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
+                System.err.println(new Date());
                 e.printStackTrace(System.err);
             }
         } else {
