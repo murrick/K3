@@ -215,7 +215,7 @@ public class Compiler {
                 }
             }
             if (c != null) {
-                ((Term) c).getSlaves().add(t.getId());
+                ((Term) c).setDomini(true);
             }
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName)));

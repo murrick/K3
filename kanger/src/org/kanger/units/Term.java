@@ -63,20 +63,11 @@ public class Term implements IUnit<Term>, ITerm {
     private int index = 0;              // Индекс c-переменной
     private ITerm name = null;             // Оригинальное имя c-переменной
     private IRule rule = null;          // Ссылка на правило
-//    private ITerm parent = null;
-//    private ITerm child = null;
-    //    private final Set<Long> childs = new HashSet<>();      // Список дочерних c-переменных
+    private boolean domini = false;
 
-    //    private Term next = null;      // Следующая запись
-    private transient final Set<Long> slaves = new HashSet<>();      // Список подчиненных t-переменных
     private transient Mind mind = null;
-
-//    private transient boolean deleted = false;
-
     private transient long nameId = -1;
     private transient long ruleId = -1;
-//    private transient long parentId = -1;
-//    private transient long childId = -1;
 
     public Term() {
     }
@@ -132,10 +123,7 @@ public class Term implements IUnit<Term>, ITerm {
         if (index > 0) {
             packet.putLong(nameId);
             packet.putLong(ruleId);
-            packet.putWord(slaves.size());
-            for (long sid : slaves) {
-                packet.putLong(sid);
-            }
+            packet.putByte(domini ? 1 : 0);
         }
         return packet.createMarked();
     }
@@ -194,13 +182,7 @@ public class Term implements IUnit<Term>, ITerm {
         if (index > 0) {
             nameId = packet.getLong();
             ruleId = packet.getLong();
-            slaves.clear();
-            int cnt = packet.getWord();
-            while (cnt-- > 0) {
-                long id = packet.getLong();
-                slaves.add(id);
-            }
-
+            domini = packet.getByte() > 0;
         }
         return this;
     }
@@ -725,14 +707,14 @@ public class Term implements IUnit<Term>, ITerm {
         return ruleId;
     }
 
-    public Set<Long> getSlaves() {
-        return slaves;
+    public boolean isDomini() {
+        return domini;
     }
 
-    //    public Set<Long> getChilds() {
-//        return childs;
-//    }
-//
+    public void setDomini(boolean domini) {
+        this.domini = domini;
+    }
+
     public ITerm getParent(Mind mind) {
         ITerm t = mind.getCvarParents().get(this);
         if (t == null && mind.getNext() != null) {
