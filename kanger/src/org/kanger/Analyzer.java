@@ -71,19 +71,27 @@ public class Analyzer {
 
             boolean occurs = false;
             for (IRule r : mind.getRules()) {
-                if (r.isStored() && !r.isDeleted(mind) && (((Rule) r).getMindId() == mind.getId() || r.isRestored(mind))) {
+                if (r.isStored()
+                        && !r.isQuery()
+                        && !r.isDeleted(mind)
+                        && ((Rule) r).getDomain().isComplete()
+                        && (((Rule) r).getMindId() == mind.getId() || r.isRestored(mind))) {
 
 //                    if (r.getMindId() != mind.getId() && !r.isRestored(mind)) {
 //                        continue;
 //                    }
 //                    Domain d = r.getDomain();
-                    for (IArgument a : r.getArguments()) {
-                        if (a.isEmpty(mind)) { //*|| (a.getValue(mind).isCVariable()*/ /*&& a.getValue(mind).getMindId() != mind.getId()*/)) {
-                            r = null;
-                            break;
+
+                    if (!mind.includeAbstractiveHypothesis()) {
+                        for (IArgument a : r.getArguments()) {
+                            if (a.getValue(mind).isCVariable()) {
+                                r = null;
+                                break;
+                            }
                         }
                     }
-                    if (r != null && !r.isQuery()) { //d.isQuery(mind)) {
+
+                    if (r != null /*&& !r.isQuery()*/) { //d.isQuery(mind)) {
                         Hypothesis tmp = new Hypothesis(r, mind);
                         IRule rx = mind.getRules().find(tmp);
                         if (mind.getHypothesis().find(tmp) == null && (rx == null || rx.isDeleted(mind))) {

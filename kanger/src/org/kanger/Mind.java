@@ -101,6 +101,7 @@ public class Mind implements IMind {
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private Rule acceptedRule = null;
     private volatile int transactionCounter = 0;
+    private boolean includeAbstractiveHypothesis = false;
 
     public Mind(IUser user) throws Exception {
         this.user = (User) user;
@@ -2156,7 +2157,13 @@ public class Mind implements IMind {
         return list;
     }
 
+    public boolean includeAbstractiveHypothesis() {
+        return includeAbstractiveHypothesis;
+    }
 
+    public void includeAbstractiveHypothesis(boolean includeAbstractiveHypothesis) {
+        this.includeAbstractiveHypothesis = includeAbstractiveHypothesis;
+    }
 }
 
 

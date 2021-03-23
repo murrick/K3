@@ -2021,8 +2021,8 @@ public class KangerTest {
             if (!((HypothesisStore) mind.getHypothesis()).contains(s)) {
                 fail("Expected: " + s.toString(mind));
             }
-            if (mind.getHypothesis().size() != 16) {
-                fail("Expected 16 hypothesis");
+            if (mind.getHypothesis().size() != 12) {
+                fail("Expected 12 hypothesis");
             }
             System.out.println("OK");
             System.out.println("====================================================");
@@ -2154,8 +2154,8 @@ public class KangerTest {
             if (!((HypothesisStore) mind.getHypothesis()).contains(s)) {
                 fail("Expected: " + s.toString(mind));
             }
-            if (mind.getHypothesis().size() != 9) {
-                fail("Expected 9 hypothesis");
+            if (mind.getHypothesis().size() != 7) {
+                fail("Expected 7 hypothesis");
             }
             System.out.println("OK");
             System.out.println("====================================================");

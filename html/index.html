@@ -1198,6 +1198,7 @@
             var queryHypothesis = document.getElementById("query-hypothesis");
             if(queryHypothesis) {
                 queryHypothesis.innerHTML = "";
+                setQueryStatus("Analyzing hypothesis...");
                 post({
                     context: "query",
                     parameters: {
@@ -1205,6 +1206,7 @@
                         hypothesis: ""
                     }
                 }, function(data){
+                    dropQueryStatus();
                     if(data.result == "OK") {
                         for(var i = 0; i < data.list.length; ++i) {
                             var div = document.createElement("div");

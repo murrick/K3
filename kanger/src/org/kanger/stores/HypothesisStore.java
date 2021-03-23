@@ -28,6 +28,7 @@ package org.kanger.stores;
 import org.kanger.Mind;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IHypothesis;
+import org.kanger.interfaces.IList;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
@@ -145,13 +146,28 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         for (IHypothesis h : root) {
             if (h.getPredicate().getId() == hy.getPredicate().getId()
                     && h.isAntc() == hy.isAntc()
-                    && ((ArgumentsList) hy.getArguments()).equalsBase(mind, h.getArguments())) {
+                    && equalsBase(hy.getArguments(), h.getArguments())) {
                 return h;
             }
         }
         return null;
     }
 
+
+    private boolean equalsBase(IList a, IList b) throws Exception {
+        if (a.size() == b.size()) {
+            for (int i = 0; i < a.size(); ++i) {
+                if (a.get(i).getValue(mind).getId() == b.get(i).getValue(mind).getId()
+                        || (a.get(i).getValue(mind).isCVariable() && b.get(i).getValue(mind).isCVariable())) {
+
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 
     public boolean contains(Hypothesis h) throws Exception {
         return find(h) != null;
