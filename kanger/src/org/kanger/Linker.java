@@ -1252,11 +1252,29 @@ public class Linker {
 ////                    }
 //
 //                    block = z > 0 || (c == 0 && x > 0); //(c == 0 && x > 0);
-                        boolean skip = d.getRange() == 1 && d.getArguments().get(0).getValue(mind).isCVariable();
-//                        for(IArgument a : d.getArguments()) {
-//                            if(!a.getValue(mind).isCVariable()) {
-//                                skip = false;
+                        boolean skip = false; //d.getRange() == 1 && d.getArguments().get(0).getValue(mind).isCVariable();
+                        boolean term = false;
+                        boolean abst = false;
+                        Set<ITerm> cs = new HashSet<>();
+                        for (IArgument a : d.getArguments()) {
+                            if (a.getValue(mind).isCVariable() && !((Term) a.getValue(mind)).isDomini()) {
+                                abst = true;
+                            } else {
+                                term = true;
+                            }
+                        }
+                        skip = !term && abst;
+//                                break;
+//                            } else {
+//                                if(((Term) a.getValue(mind)).getParent(mind) != null) {
+//                                    cs.add(((Term) a.getValue(mind)).getParent(mind));
+//                                } else {
+//                                    cs.add(a.getValue(mind));
+//                                }
 //                            }
+//                        }
+//                        if(skip && cs.size() > 1) {
+//                            skip = false;
 //                        }
 
 //
