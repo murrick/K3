@@ -505,17 +505,18 @@ public class Solve {
         return terms;
     }
 
-    protected Map<String, Object> createMap(IMind mind) throws Exception {
+    public Map<String, Object> createMap(IMind mind) throws Exception {
         Map<String, Object> map = new HashMap<>();
         map.put("predicate_id", predicateId);
         map.put("predicate", getPredicate((Mind) mind).getName(mind));
         map.put("range", range);
         map.put("antc", antc);
         map.put("arguments", arguments.createMap(mind));
+        map.put("origin", toString((Mind) mind));
         return map;
     }
 
-    protected Solve applyMap(Map<String, Object> map) throws Exception {
+    public Solve applyMap(Map<String, Object> map) throws Exception {
         predicateId = Long.parseLong(map.get("predicate_id") + "");
         range = Integer.parseInt(map.get("tange") + "");
         antc = Boolean.parseBoolean(map.get("antc") + "");

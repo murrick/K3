@@ -33,6 +33,7 @@ import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
+import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
 import org.kanger.storage.DB;
@@ -854,6 +855,21 @@ public class QueryProcessor implements IReactor<JSONObject> {
             }
         }
 
+        if (id != -1 && list.isEmpty()) {
+            for (IRule r : mind.getSolutions()) {
+                if (!r.isDeleted(mind)
+                        && r.isStored()
+                        && (id == -1 || id == r.getId())
+                        && (predicateId == -1 || r.getPredicate().getId() == predicateId)) {
+                    JSONObject jr = new JSONObject(((Rule) r).createMap(mind));
+                    if (causes) {
+                        jr.put("causes", recurseCauses(r, mind));
+                    }
+                    list.add(jr);
+                }
+            }
+        }
+
         result.put("result", "OK");
         result.put("size", list.size());
         result.put("list", list);
@@ -980,12 +996,14 @@ public class QueryProcessor implements IReactor<JSONObject> {
 
     private List<JSONObject> recurseCauses(IRule r, IMind mind) throws Exception {
         List<JSONObject> list = new ArrayList<>();
-        for (ICause cause : r.getCauses()) {
-            JSONObject c = new JSONObject()
-                    .put("rule", ((Rule) cause.getRule(mind)).createMap(mind))
-                    .put("donor", ((Rule) cause.getDonor(mind)).createMap(mind))
-                    .put("causes", recurseCauses(cause.getDonor(mind), mind));
-            list.add(c);
+        if (r != null) {
+            for (ICause cause : r.getCauses()) {
+                JSONObject c = new JSONObject()
+                        .put("rule", ((Rule) cause.getRule(mind)).createMap(mind))
+                        .put("donor", cause.getDonor(mind) != null ? ((Rule) cause.getDonor(mind)).createMap(mind) : ((Cause) cause).getDonor().createMap(mind))
+                        .put("causes", recurseCauses(cause.getDonor(mind), mind));
+                list.add(c);
+            }
         }
         return list;
     }

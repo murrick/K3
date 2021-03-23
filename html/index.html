@@ -1016,8 +1016,9 @@
                 prefix += "&nbsp;&nbsp;&nbsp;&nbsp;";
             }
             for(var i = 0; i < causes.length; ++i) {
+                var color = causes[i].donor.generated == null || causes[i].donor.generated ? "#3A3" : "#33A";
                 str += prefix + "<span style=\"font-weight: bold;\">" + causes[i].rule.origin + "</span><br>" +
-                        prefix + "<span style=\"color: #3A3;\">" + causes[i].donor.origin + "</span><br>" +
+                        prefix + "<span style=\"color: " + color + ";\">" + causes[i].donor.origin + "</span><br>" +
                         recurseTree(causes[i].causes, level + 1);
 
             }

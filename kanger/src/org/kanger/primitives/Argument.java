@@ -350,7 +350,7 @@ public class Argument implements IArgument {
         map.put("id", id);
         map.put("type", type.name());
         map.put("var_order", varOrder);
-        map.put("object", o.createMap(mind));
+        map.put("object", o != null ? o.createMap(mind) : "_");
         return map;
     }
 
