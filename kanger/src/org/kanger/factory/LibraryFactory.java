@@ -46,19 +46,11 @@ import java.util.List;
 public class LibraryFactory implements IFactory<IOperation> {
     public static final String SCHEMA = "library";
 
-//    private long lastId = 0;
-//    private long firstId = 0;
-
     private ICache cache;
     private IStep top = null;
-    private transient Mind mind = null;
     private IBase connection = null;
 
-
-//    private SysOp root = null;
-//    private SysOp save = null;
-//    private Map<String, SysOp> index = new HashMap<>();
-//    private User user = null;
+    private final Mind mind;
 
     public LibraryFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -67,31 +59,13 @@ public class LibraryFactory implements IFactory<IOperation> {
 
     public void transaction(LibraryFactory base) throws Exception {
         if (mind.getNext() == null && mind.isStorageUsed()) {
-//            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
-//            } else {
-//                connection = mind.getUser().connect(SCHEMA);
-//            }
         }
 
         if (base != null) {
-//            lastId = base.lastId;
-//            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
-
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                ((IUnit) s.getData()).setMind(mind);
-//            }
-
         } else {
             cache = new Escalera(mind, SCHEMA, null);
-//            if (!cache.isEmpty()) {
-//                lastId = cache.getRoot().getId() + 1;
-//                firstId = lastId;
-//            } else {
-//                lastId = 0;
-//                firstId = 0;
-//            }
         }
     }
 
@@ -108,25 +82,10 @@ public class LibraryFactory implements IFactory<IOperation> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-
-//        if (cache.getRoot() != null) {
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-//                    ((IUnit) s.getData()).setMind(mind);
-//                    ((IUnit) s.getData()).setMindId(mind.getId());
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
-//        pack();
-//        update();
     }
 
     public void update() throws Exception {
         if (cache.update()) {
-//            firstId = lastId;
-//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 
@@ -136,14 +95,10 @@ public class LibraryFactory implements IFactory<IOperation> {
             x.setDeleted(false, mind);
             x.setMode(s.getMode());
             x.setProc(((Operation) s).getProc());
-//            if (s.isDeleted()) {
-//                x.setDeleted(true);
-//            }
             x.getScripts().clear();
             x.getScripts().addAll(s.getScripts());
             x.getParams().clear();
             x.getParams().addAll(s.getParams());
-//            update();
         } else {
             ((Operation) s).setId(((User) mind.getUser()).nextId(SCHEMA));
             ((Operation) s).setMindId(mind.getId());
@@ -175,21 +130,10 @@ public class LibraryFactory implements IFactory<IOperation> {
             IStep s = connection.get(id);
             if (s != null) {
                 t = (Operation) s.getData(mind);
-//                t.setMind(mind);
-//                t.setUser(user);
             }
         }
         return t;
     }
-
-//    private SysOp get(long id) throws Exception {
-//        SysOp t = (SysOp) cache.get(id);
-//        return t;
-//    }
-
-//    public void delete(SysOp x) {
-//        x.setDeleted(true, mind);
-//    }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
@@ -201,38 +145,7 @@ public class LibraryFactory implements IFactory<IOperation> {
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
         }
-//        update();
-
-//        if (!cache.isEmpty()) {
-//            lastId = cache.getRoot().getId() + 1;
-//            firstId = lastId;
-//        } else {
-//            lastId = 0;
-//            firstId = 0;
-//        }
     }
-
-//    public SysOp find(String key) {
-//        if (index.containsKey(key)) {
-//            return index.get(key);
-//        } else {
-//            return null;
-//        }
-//    }
-
-    //    public void mark() {
-//        save = root;
-//    }
-//
-//    public void release() {
-//        root = save;
-//    }
-//
-//    public void reset() {
-//        root = null;
-//        save = null;
-//        index.clear();
-//    }
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -243,35 +156,9 @@ public class LibraryFactory implements IFactory<IOperation> {
         }
     }
 
-//    public void unlink() throws Exception {
-//        cache.unlink();
-//    }
-
     public int size() {
         return cache.size();
     }
-
-
-//    public LibraryStore clone(Mind mind) {
-//        LibraryStore stores = new LibraryStore(mind);
-//        stores.root = root;
-//        stores.save = root;
-//        for(String key : index.keySet()) {
-//            stores.index.put(key, index.createCVar(key));
-//        }
-//        return stores;
-//    }
-//
-//    public void commit() {
-//        LibraryStore parent = mind.getParent().getLibrary();
-//        for(SysOp op = root; op != null && op != save; op = op.getNext()) {
-//            parent.createTVar(op);
-//        }
-//    }
-
-//    public Map<String, SysOp> getRoot() {
-//        return index;
-//    }
 
     @Override
     public Iterator iterator() {
@@ -291,7 +178,6 @@ public class LibraryFactory implements IFactory<IOperation> {
     public void mark() throws Exception {
         cache.mark();
     }
-
 
     public void commit() throws Exception {
         cache.commit();

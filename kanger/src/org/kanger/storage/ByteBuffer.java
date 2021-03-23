@@ -120,19 +120,6 @@ public class ByteBuffer {
         }
     }
 
-//    public static byte[] copy(byte[] str, int offset, int len) {
-//        byte[] dst = new byte[len];
-//        System.arraycopy(str, offset, dst, 0, len);
-//        return dst;
-//    }
-//
-//    public static byte[] copy(byte[] str, int offset) {
-//        int len = str.length - offset;
-//        byte[] dst = new byte[len];
-//        System.arraycopy(str, offset, dst, 0, len);
-//        return dst;
-//    }
-
     public static ByteBuffer fromHex(String hex) {
         return new ByteBuffer(hex);
     }
@@ -177,11 +164,6 @@ public class ByteBuffer {
         length = i;
         return this;
     }
-
-//    public ByteBuffer cut(int pos) {
-//        length = pos;
-//        return this;
-//    }
 
     public byte[] getBytes() throws OutOfBufferException {
         if (rest() < 2) {
@@ -626,16 +608,6 @@ public class ByteBuffer {
         return this;
     }
 
-//    public ByteBuffer append(byte[] packet, int start, int length) {
-//        buffer = _append(buffer, packet, start, length);
-//        return this;
-//    }
-//
-//    public ByteBuffer append(ByteBuffer tail, int start, int length) {
-//        buffer = _append(buffer, tail.buffer, start, length);
-//        return this;
-//    }
-
     public byte[] getBuffer() {
         if (!reverse) {
             return buffer;
@@ -684,7 +656,7 @@ public class ByteBuffer {
         }
     }
 
-    public String toHexFormated() {
+    public String toHexFormatted() {
         String s = "";
         int pos = 0;
         for (byte x : buffer) {
@@ -732,22 +704,6 @@ public class ByteBuffer {
         System.arraycopy(tail, 0, buffer, length, tail.length);
         length = length + tail.length;
     }
-
-
-//    private byte[] _append(byte[] src, byte[] tail) {
-//        byte[] dst = new byte[src.length + tail.length];
-//        System.arraycopy(src, 0, dst, 0, src.length);
-//        System.arraycopy(tail, 0, dst, src.length, tail.length);
-//        return dst;
-//    }
-//
-//    private byte[] _append(byte[] src, byte[] tail, int start, int length) {
-//        length = tail.length > length ? length : tail.length;
-//        byte[] dst = new byte[src.length + length];
-//        System.arraycopy(src, 0, dst, 0, src.length);
-//        System.arraycopy(tail, start, dst, src.length, length);
-//        return dst;
-//    }
 
     public byte[] getRest() {
         if (length - i > 0) {

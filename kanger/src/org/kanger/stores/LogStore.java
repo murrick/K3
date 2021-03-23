@@ -44,18 +44,14 @@ import java.util.List;
 public class LogStore implements IFactory<ILogEntry> {
 
     private List<ILogEntry> root = null;
-    private boolean enableLogging = true;
-    private final transient Mind mind;
+
+    private final Mind mind;
 
     public LogStore(Mind mind) {
         this.mind = mind;
     }
 
-
     public void commit(LogStore base) {
-        if (!enableLogging) {
-            return;
-        }
         if (!base.isEmpty()) {
             if (root == null) {
                 root = new ArrayList<>();
@@ -74,9 +70,6 @@ public class LogStore implements IFactory<ILogEntry> {
     }
 
     public LogEntry add(LogMode m, IRule r) throws Exception {
-        if (!enableLogging) {
-            return null;
-        }
         if (root == null) {
             root = new ArrayList<>();
             root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
@@ -110,9 +103,6 @@ public class LogStore implements IFactory<ILogEntry> {
     }
 
     public LogEntry add(LogMode m, String s) {
-        if (!enableLogging) {
-            return null;
-        }
         if (root == null) {
             root = new ArrayList<>();
             root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
@@ -124,14 +114,6 @@ public class LogStore implements IFactory<ILogEntry> {
             System.out.println(log.getRecord());
         }
         return log;
-    }
-
-    public void enable(boolean enableLogging) {
-        this.enableLogging = enableLogging;
-    }
-
-    public boolean isEnabled() {
-        return enableLogging;
     }
 
     public ILogEntry get(int index) {
@@ -164,9 +146,7 @@ public class LogStore implements IFactory<ILogEntry> {
     }
 
     public void clear() {
-        if (enableLogging) {
-            root = null;
-        }
+        root = null;
     }
 
     @Override

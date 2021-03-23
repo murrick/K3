@@ -46,15 +46,12 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
     private static final long serialVersionUID = 196402070004L;
 
     private long id = -1;                   // Идентификатор
-    private long mindId = -1;                                   // id транзакции
-    private ITerm name = null;               // Имя предиката
+    private long mindId = -1;               // id транзакции
+    private ITerm name = null;              // Имя предиката
     private int range = 0;                  // К-во параметров
 
-    private transient Mind mind = null;
-
-    private transient long nameId = -1;
-
-//    private transient boolean deleted = false;
+    private Mind mind = null;
+    private long nameId = -1;
 
     public Predicate() {
     }
@@ -135,86 +132,6 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return set;
     }
 
-//    public Set<Domain> getRelates() {
-//        Set<Domain> set = new HashSet<>();
-//        for (Domain d : mind.getDomains()) {
-//            if (getId() == d.getPredicate().getId()) {
-//                set.add(d);
-//            }
-//        }
-//        return set;
-//    }
-
-//    public Set<Tree> getLinkedTrees() {
-//        Set<Tree> set = new HashSet<>();
-//        for (Tree t : mind.getTrees()) {
-//            for (Domain d : t.getSequence()) {
-//                if (getId() == d.getPredicate().getId()) {
-//                    set.add(t);
-//                    break;
-//                }
-//            }
-//        }
-//        return set;
-//    }
-//
-//    public Set<Right> getLinkedRights() {
-//        Set<Right> set = new HashSet<>();
-//        for (Domain d : getRelates()) {
-//            set.add(d.getRight());
-//        }
-//        return set;
-//    }
-//
-//    public Set<TVariable> getTVariables(boolean full) {
-//        Set<TVariable> set = new HashSet<>();
-//        for (Domain d : mind.getDomains()) {
-//            if (getId() == d.getPredicate().getId()) {
-//                set.addAll(d.getArguments().getTVariables(full));
-//                break;
-//            }
-//        }
-//        return set;
-//    }
-//
-//    public Domain containsSolve(Domain d) {
-//        for (Domain x : getSolves()) {
-//            if (x.isStored() && d.equalsBase(x)) {
-//                return x;
-//            }
-//        }
-//        return null;
-//    }
-//
-//    public boolean checkSolves() {
-//        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-//            if(getId() == d.getPredicate().getId()) {
-//                for(Domain q = mind.getDomains().getRoot(); q != null; q = d.getNext()) {
-//                    if(getId() == q.getPredicate().getId()) {
-//                        for(int i=0; i<d.getPredicate().getRange(); ++i) {
-//                            if(!d.getArguments().get(i).isEmpty()
-//                                && !q.getArguments().get(i).isEmpty()
-//                            && d.getArguments().get(i).getValue().getId() == q.getArguments().get(i).getValue().getId()) {
-//                                return true;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return false;
-//    }
-
-//    public Set<Right> getRights() {
-//        Set<Right> set = new HashSet<>();
-//        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-//            if(d.getPredicate().getId() == id) {
-//                set.add(d.getRight());
-//            }
-//        }
-//        return set;
-//    }
-
     public String toString(IMind mind) {
         try {
             return getName(mind) + "(" + range + ")";
@@ -224,25 +141,6 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
             return "";
         }
     }
-
-//    @Override
-//    public boolean equals(Object t) {
-//        return !(t == null || !(t instanceof Predicate)) && ((Predicate) t).id == id;
-//    }
-
-//    public List<TVariable> getTVariables(boolean full) {
-//        List<TVariable> list = new ArrayList<>();
-//        for(Domain d = mind.getDomains().getRoot(); d != null; d = d.getNext()) {
-//            if(d.getPredicate().id == id) {
-//                for(TVariable t : d.getTVariables(full)) {
-//                    if(!list.contains(t)) {
-//                        list.add(t);
-//                    }
-//                }
-//            }
-//        }
-//        return list;
-//    }
 
     @Override
     public int getHash() {
@@ -283,7 +181,6 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         return hash;
-//        return ("" + id).hashCode();
     }
 
     public long getNameId() {
@@ -335,16 +232,6 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         name = null;
         return this;
     }
-
-//    public Predicate commit(Mind m) throws Exception {
-//        setName(name.commit(m));
-//        Predicate predicate = m.getPredicates().find(name, range);
-//        if (predicate == null) {
-//            predicate = m.getPredicates().add(name, range);
-//        }
-//        predicate.setMind(m);
-//        return predicate;
-//    }
 
     @Override
     public boolean isEmpty(IMind mind) throws Exception {

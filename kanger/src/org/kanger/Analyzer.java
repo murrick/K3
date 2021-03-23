@@ -48,13 +48,12 @@ public class Analyzer {
 
     public Analyzer(Mind mind) {
         this.mind = mind;
-        this.log = (LogStore) mind.getLog();
+        this.log = mind.getLog();
     }
 
 
     public boolean analyze(Rule rule, boolean logging) throws Exception {
         boolean result = false;
-        int counter = 0;
 
         long start = System.currentTimeMillis();
 
@@ -65,7 +64,7 @@ public class Analyzer {
         mind.getSolutions().clear();
         mind.getValues().clear();
 
-        result = checkDatabase(null /*right*/, logging);
+        result = checkDatabase(null, logging);
 
         if (!result) {
 
@@ -77,11 +76,6 @@ public class Analyzer {
                         && ((Rule) r).getDomain().isComplete()
                         && (((Rule) r).getMindId() == mind.getId() || r.isRestored(mind))) {
 
-//                    if (r.getMindId() != mind.getId() && !r.isRestored(mind)) {
-//                        continue;
-//                    }
-//                    Domain d = r.getDomain();
-
                     if (!mind.includeAbstractiveHypothesis()) {
                         for (IArgument a : r.getArguments()) {
                             if (a.getValue(mind).isCVariable()) {
@@ -91,42 +85,18 @@ public class Analyzer {
                         }
                     }
 
-                    if (r != null /*&& !r.isQuery()*/) { //d.isQuery(mind)) {
+                    if (r != null) {
                         Hypothesis tmp = new Hypothesis(r, mind);
                         IRule rx = mind.getRules().find(tmp);
                         if (mind.getHypothesis().find(tmp) == null && (rx == null || rx.isDeleted(mind))) {
 
-                            //TODO: Появляются заведомо противоречащие гипотезы. ?$ x father(x, Peter)l
-//                            tmp.setAntc(!tmp.isAntc());
-//                            rx = mind.getRules().find(tmp);
-//                            tmp.setAntc(!tmp.isAntc());
-
-//                            if (rx == null || rx.isDeleted(mind)) {
-//                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-//                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
-//                            tmp.setAntc(true);
                             mind.getHypothesis().add(tmp);
                             occurs = true;
                             if (logging) {
                                 log.add(LogMode.ANALYZER, "Hypothesis assumed: " + tmp.toString(mind));
                             }
-//                            }
                         }
                     }
-//                } else if (!r.isDeleted() && r.getTree().size() == 1) {
-//                    for(Domain d : r.getTree().get(0)) {
-//                        Hypothesis tmp = new Hypothesis(d, mind);
-//                        if (mind.getHypothesisStore().find(tmp) == null && mind.getRights().find(tmp) == null) {
-////                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-////                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
-////                            tmp.setAntc(true);
-//                            mind.getHypothesisStore().add(tmp);
-//                            occurs = true;
-//                            if (logging) {
-//                                log.add(LogMode.ANALIZER, "Hypothesis assumed: " + tmp.toString());
-//                            }
-//                        }
-//                    }
                 }
             }
 
@@ -166,19 +136,7 @@ public class Analyzer {
             }
             result = true;
         } else {
-//            if (p.getDomain().getArguments().get(2).getValue(mind).getType() == DataType.NUMERIC &&
-//                    (1011.0 == (double) p.getDomain().getArguments().get(2).getValue(mind).getValue())) {
-//                System.err.println("!");
-//            }
-
-//            boolean trigger = false;
             for (IRule q : mind.getRules()) {
-
-//                if (p.getDomain().equalsBase(q.getDomain())
-//                        && p.getDomain().isAntc() != q.getDomain().isAntc()) {
-//                    System.err.println("!!");
-//                }
-
                 if (q.isDeleted(mind) || q.getId() == p.getId()) {
                     continue;
                 }
@@ -199,24 +157,12 @@ public class Analyzer {
                     if (!q.isStored() || (list == null && q.getId() > p.getId()) || (list != null && list.contains(q.getId()))) {
                         continue;
                     }
-
-//                System.err.println(p.getId() + " --- " + q.getId());
-//                if(q.getId() == p.getId()) {
-//                    trigger = true;
-//                }
-
                     if (p.getDomain().equalsBase(((Rule) q).getDomain())
                             && p.getDomain().isAntc() != ((Rule) q).getDomain().isAntc()) {
-                        //&& p.getDomain().getArguments().getCVariables(mind).size() != p.getDomain().getRange()) {
-
-                        //TODO: Костыль
-                        if (((Rule) q).getMind() == null) {
-                            ((Rule) q).setMind(mind);
-                        }
-                        if (p.getDomain().isQuery(mind) && !p.isAbstractive()) { //.getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                        if (p.getDomain().isQuery(mind) && !p.isAbstractive()) {
                             mind.getSolutions().add(q);
                             mind.getValues().add(p.getSolves());
-                        } else if (((Rule) q).getDomain().isQuery(mind) && !q.isAbstractive()) { //((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
+                        } else if (((Rule) q).getDomain().isQuery(mind) && !q.isAbstractive()) {
                             mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
                         }
@@ -239,18 +185,6 @@ public class Analyzer {
         return result;
     }
 
-//    private boolean equalsCVars(Domain p, Domain q) throws Exception {
-//        for (int i = 0; i < p.getArguments().size(); ++i) {
-//            if(p.get(i).isCVar(mind) && q.get(i).isCVar(mind)) {
-//                if(p.get(i).getValue(mind).getRightId() == q.get(i).getValue(mind).getRightId()) {
-//
-//                }
-//            } else {
-//                return true;
-//            }
-//        }
-//    }
-
     public boolean checkDatabase(Set<Long> list, boolean logging) throws Exception {
 
         boolean result = false;
@@ -270,21 +204,6 @@ public class Analyzer {
         // Контроль закрытия всех веток запроса
         if (!orfans.isEmpty() && !calculated) {
             result = false;
-//            for(Right r : orfans) {
-//                if(r.isStored()) {
-//                    Hypothesis tmp = new Hypothesis(r.getDomain(), mind);
-//                    tmp.setAntc(!tmp.isAntc());
-//                    if (mind.getHypothesisStore().find(tmp) == null /*&& mind.getRights().find(tmp) == null*/) {
-////                            && mind.getHypothesisStore().find(/*null,*/ !d.isAntc(), d.getPredicate(), d.getArguments()) == null) {
-////                            Hypothesis h = mind.getHypothesisStore().add(/*true,*/ !d.isAntc(), d.isQuery(mind), d.getPredicate(), d.getArguments());
-////                            tmp.setAntc(true);
-//                        mind.getHypothesisStore().add(tmp);
-//                        if (logging) {
-//                            log.add(LogMode.ANALIZER, "Hypothesis assumed: " + tmp.toString());
-//                        }
-//                    }
-//                }
-//            }
             if (logging) {
                 for (Rule r : orfans) {
                     log.add(LogMode.ANALYZER, "Unresolved: \t" + r.getDomain().toString());

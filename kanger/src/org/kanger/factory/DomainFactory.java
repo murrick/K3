@@ -46,18 +46,13 @@ import java.util.*;
  */
 public class DomainFactory implements IFactory<Domain> {
 
-    //    private long lastId = 0;
-//    private long firstId = 0;
     public static final String SCHEMA = "domains";
-
-    private Set<Domain> waiters = new HashSet<>();
-
 
     private ICache cache;
     private IStep top = null;
-    //    private Cache load = new Cache();
-    private transient Mind mind = null;
     private IBase connection = null;
+    private final Mind mind;
+    private Set<Domain> waiters = new HashSet<>();
 
     public DomainFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -66,33 +61,15 @@ public class DomainFactory implements IFactory<Domain> {
 
     public void transaction(DomainFactory base) throws Exception {
         if (mind.getNext() == null && mind.isStorageUsed()) {
-//            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
-//            } else {
-//                connection = mind.getUser().connect(SCHEMA);
-//            }
         }
 
         waiters.clear();
         if (base != null) {
-//            lastId = base.lastId;
-//            firstId = base.lastId;
             waiters.addAll(base.waiters);
             cache = new Escalera(mind, SCHEMA, base.cache);
-
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                ((IUnit) s.getData()).setMind(mind);
-//            }
-
         } else {
             cache = new Escalera(mind, SCHEMA, null);
-//            if (!cache.isEmpty()) {
-//                lastId = cache.getRoot().getId() + 1;
-//                firstId = lastId;
-//            } else {
-//                lastId = 0;
-//                firstId = 0;
-//            }
         }
     }
 
@@ -109,42 +86,13 @@ public class DomainFactory implements IFactory<Domain> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-
-//        if (cache.getRoot() != null) {
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-//                    ((IUnit) s.getData()).setMind(mind);
-//                    ((IUnit) s.getData()).setMindId(mind.getId());
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
-//        pack();
-//        update();
         waiters.addAll(base.waiters);
     }
 
     public void update() throws Exception {
         if (cache.update()) {
-//            firstId = lastId;
-//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
-
-//    public Domain add(Domain d) throws IOException, ClassNotFoundException {
-//        cache.add(d);
-//        return d;
-//    }
-
-//    public Domain add(Right r) throws Exception {
-//        Domain p = new Domain(user);
-//        p.setRight(r);
-//        p.setId(lastId++);
-//        cache.add(p);
-//        return p;
-//    }
-
 
     public synchronized Domain add(Predicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
         Domain p = find(pred, antc, arg, r);
@@ -185,7 +133,6 @@ public class DomainFactory implements IFactory<Domain> {
     public Domain find(Predicate pred, boolean antc, ArgumentsList arg, IRule r) throws Exception {
         Domain temp = new Domain(pred, antc, arg, r);
         return find(temp);
-//        temp.setUser(user);
     }
 
     public Domain find(Domain d) throws Exception {
@@ -205,18 +152,10 @@ public class DomainFactory implements IFactory<Domain> {
             IStep s = connection.get(id);
             if (s != null) {
                 t = (Domain) s.getData(mind);
-//                t.setMind(mind);
-//                t.setUser(user);
-//                t.linkExternal(user);
             }
         }
         return t;
     }
-
-//    private Domain get(long id) throws Exception {
-//        Domain t = (Domain) cache.get(id);
-//        return t;
-//    }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
@@ -229,70 +168,7 @@ public class DomainFactory implements IFactory<Domain> {
             waiters.remove(o);
             cache.delete(((IUnit) o).getId());
         }
-//        update();
-
-//        if (!cache.isEmpty()) {
-//            lastId = cache.getRoot().getId() + 1;
-//            firstId = lastId;
-//        } else {
-//            lastId = 0;
-//            firstId = 0;
-//        }
-
     }
-
-//    public void delete(Domain d) throws Exception {
-//        d.setDeleted(true, mind);
-//        for (TVariable t : d.getArguments().getTVariables(mind)) {
-//            mind.getTVars().delete(t);
-//        }
-//        for (Function f : d.getArguments().getFunctions(mind)) {
-//            mind.getFunctions().delete(f);
-//        }
-//        for (TValue v : d.getArguments().getTValues(mind, true)) {
-//            if (v.getMindId() == mind.getId()) {
-//                mind.getTValues().delete(v);
-//            }
-//        }
-//
-////            for (TValue v : mind.getTValues()) {
-////                Set<Cause> toDelete = new HashSet<>();
-////                for (Cause c : v.getCauses()) {
-////                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
-////                        toDelete.add(c);
-////                    }
-////                }
-////                if (!toDelete.isEmpty()) {
-////                    v.getCauses().removeAll(toDelete);
-////                }
-////            }
-////            mind.getTValues().update();
-////            waiters.remove(d);
-////            cache.delete(id);
-//    }
-
-//    public void delete(long id) throws IOException, ClassNotFoundException {
-//        Domain d = get(id);
-//        if (d != null) {
-//            for (TVariable t : d.getArguments().getTVariables(true)) {
-//                mind.getTVars().delete(t.getId());
-//            }
-//            for (TValue v : mind.getTValues()) {
-//                Set<Cause> toDelete = new HashSet<>();
-//                for (Cause c : v.getCauses()) {
-//                    if (c.getSrcId() == d.getId() || c.getDstId() == d.getId()) {
-//                        toDelete.add(c);
-//                    }
-//                }
-//                if (!toDelete.isEmpty()) {
-//                    v.getCauses().removeAll(toDelete);
-//                }
-//            }
-//            mind.getTValues().update();
-//            waiters.remove(d);
-//            cache.delete(id);
-//        }
-//    }
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -303,14 +179,9 @@ public class DomainFactory implements IFactory<Domain> {
         }
     }
 
-//    public void unlink() throws Exception {
-//        cache.unlink();
-//    }
-
     public void mark() throws Exception {
         cache.mark();
     }
-
 
     public void commit() throws Exception {
         cache.commit();

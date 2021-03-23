@@ -44,23 +44,19 @@ import java.util.*;
  */
 public class Operation implements IUnit<Operation>, IOperation {
 
-    protected final List<String> params = new ArrayList<>();
-    protected final List<String> scripts = new ArrayList<>();
-    protected LibMode mode = LibMode.UNKNOWN;
-    protected String name = "";                   /* predefined name */
-    protected IReactor proc = null;              /* called procedure */
-    protected int range = 0;
-    protected transient Mind mind = null;
-    //    protected transient boolean deleted = false;
-    protected long id = -1;                                       // id домена
+    protected final List<String> params = new ArrayList<>();    // Список параметров UDF
     private long mindId = -1;                                   // id транзакции
-
+    protected final List<String> scripts = new ArrayList<>();   // Исходный код UDF
+    protected long id = -1;                                     // id операции
+    protected LibMode mode = LibMode.UNKNOWN;                   // Тип операции
+    protected String name = "";                                 // Имя
+    protected int range = 0;                                    // Количесиво параметров
+    protected IReactor proc = null;                             // Вызываемая функция
+    protected Mind mind = null;
 
     public Operation(Mind mind) {
-
         this.mind = mind;
     }
-
 
     public Operation(LibMode mode, String name, int range, IReactor proc) {
         this.mode = mode;
@@ -191,14 +187,6 @@ public class Operation implements IUnit<Operation>, IOperation {
         return UnitType.SYSOP;
     }
 
-//    @Override
-//    public SysOp commit(Mind m) throws Exception {
-//        m.getLibrary().add(this);
-//        this.setMind(m);
-//        return this;
-//    }
-
-
     @Override
     public long getId() {
         return id;
@@ -300,5 +288,4 @@ public class Operation implements IUnit<Operation>, IOperation {
         }
         return this;
     }
-
 }

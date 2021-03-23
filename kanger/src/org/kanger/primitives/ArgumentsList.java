@@ -44,9 +44,7 @@ import java.util.*;
  */
 public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
-    private transient Mind mind = null;
-//    private List<TVariable> tVariables = null;
-//    private List<Long> tVariablesIds = new ArrayList<>();
+    private Mind mind = null;
 
     public ArgumentsList() {
         super();
@@ -75,7 +73,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
             try {
                 packet.mark();
                 Argument a = new Argument().apply(packet);
-//                a.setUser(user);
                 add(a);
             } finally {
                 packet.release();
@@ -84,32 +81,12 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         return this;
     }
 
-//    public int getHash(Mind mind) {
-//        int hashCode = 1;
-//        try {
-//            for (Argument a : this) {
-//                if (!a.isEmpty(mind)) {
-//                    long id = a.getValue(mind).getId();
-////                    hashCode = 31 * hashCode + a.getValue(mind).hashCode();
-//                    hashCode = 31 * hashCode + (int) (id ^ (id >>> 32));
-//                }
-//            }
-//        } catch (Exception e) {
-//            System.err.println(new Date()); e.printStackTrace(System.err);
-//        }
-//
-//        return hashCode;
-//
-//    }
-
     public int getHash(Mind mind) {
         int hashCode = 1;
         try {
             for (IArgument a : this) {
                 if (!a.isEmpty(mind)) {
-//                    long id = a.getValue(mind).getId();
                     hashCode = 31 * hashCode + a.getValue(mind).hashCode();
-//                    hashCode = 31 * hashCode + (int) (id ^ (id >>> 32));
                 }
             }
         } catch (Exception e) {
@@ -248,10 +225,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         return list;
     }
 
-//    public void setMind(Mind mind) {
-//        this.mind = mind;
-//    }
-
     public List<Function> getFunctions(IMind mind) throws Exception {
         List<Function> list = new ArrayList<>();
         for (IArgument a : this) {
@@ -259,14 +232,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                 if (!list.contains(a.getObject(mind))) {
                     list.add((Function) a.getObject(mind));
                 }
-//                if (full) {
-//                    List<Function> temp = a.getF().getArguments().getFunctions(full);
-//                    for (Function t : temp) {
-//                        if (!list.contains(t)) {
-//                            list.add(t);
-//                        }
-//                    }
-//                }
             }
         }
         return list;
@@ -274,19 +239,8 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
 
     public List<TVariable> getTVariables(IMind mind) throws Exception {
-//        if(tVariables == null || tVariables.size() != tVariablesIds.size()) {
-//            tVariables = new ArrayList<>();
-//            for(long id : tVariablesIds) {
-//                TVariable t = mind.getTVars().load(id);
-//                tVariables.add(t);
-//            }
-//        }
-//        return  tVariables;
-//
         List<TVariable> list = new ArrayList<>();
         for (IArgument a : this) {
-            //TODO: Костыль
-//            a.setUser(user);
             if (a.getType() == ArgumentType.TVARIABLE
                     && !a.isDeleted(mind)
                     && !a.isDeleted(mind)
@@ -300,7 +254,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                     }
                 }
             }
-
         }
         return list;
     }
@@ -308,19 +261,13 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
     public List<ITerm> getCVariables(Mind mind) throws Exception {
         List<ITerm> list = new ArrayList<>();
         for (IArgument a : this) {
-            //TODO: Костыль
-//            a.setUser(user);
             if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && !a.getValue(mind).isDeleted(mind) && !list.contains(a.getValue(mind))) {
                 ITerm t = a.getValue(mind);
-                //TODO: Костыль
-//                t.setMind(mind);
                 list.add(t);
             } else if (a.getType() == ArgumentType.FUNCTION) {
                 List<ITerm> temp = ((Function) a.getObject(mind)).getArguments().getCVariables(mind);
                 for (ITerm t : temp) {
                     if (!list.contains(t)) {
-                        //TODO: Костыль
-//                        t.setMind(mind);
                         list.add(t);
                     }
                 }
@@ -387,33 +334,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         return list;
     }
 
-//    public String asString(Mind mind) {
-//        String str = "[";
-//        for (IArgument a : this) {
-//            if (str.length() > 1) {
-//                str += ", ";
-//            }
-//            try {
-//                str += a.getType() == ArgumentType.TVALUE ? a.getObject(mind).toString() : a.toString(mind);
-//            } catch (Exception e) {
-//                System.err.println(new Date()); e.printStackTrace(System.err);
-//            }
-//        }
-//        str += "]";
-//        return str;
-//    }
-
-//    public IUser getUser() {
-//        return user;
-//    }
-
-//    public void setUser(IUser user) {
-//        this.user = user;
-//        for (Argument a : this) {
-//            a.setUser(user);
-//        }
-//    }
-
     public List<ITerm> getStamp(Mind mind) throws Exception {
         List<ITerm> list = new ArrayList<>();
         for (TVariable t : getTVariables(mind)) {
@@ -443,13 +363,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         }
     }
 
-//    public void applyArguments(Mind mind, ArgumentsList arguments) throws Exception {
-//        for (int i = 0; i < this.size(); ++i) {
-//            this.get(i).setValue(mind, arguments.get(i).getValue(mind));
-//        }
-////        this.setMind(mind);
-//    }
-
     public void applyStamp(Mind mind, List<ITerm> list) throws Exception {
         List<TVariable> curr = getTVariables(mind);
         for (int i = 0; i < curr.size(); ++i) {
@@ -459,7 +372,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         }
     }
 
-    //    @Override
     public boolean contains(ITerm t, IMind mind) throws Exception {
         for (IArgument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
@@ -469,7 +381,6 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         return false;
     }
 
-    //    @Override
     public IArgument remove(ITerm t, IMind mind) throws Exception {
         for (IArgument a : this) {
             if (a.getValue(mind).getId() == t.getId()) {
@@ -499,42 +410,5 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
             add(argument);
         }
     }
-
-//    @Override
-//    public boolean add(Argument argument) {
-//        if (argument.getType() == ArgumentType.TVARIABLE) {
-//            if (!tVariablesIds.contains(argument.getId())) {
-//                tVariablesIds.add(argument.getId());
-//            }
-//        }
-//        return super.add(argument);
-//    }
-
-//    public boolean isOverlaps(ArgumentsList arg) throws Exception {
-//
-////        for (Argument a : this) {
-////            boolean found = false;
-////            for (Argument b : arg) {
-////                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-////                    found = true;
-////                    break;
-////                }
-////            }
-////            if (!found) {
-////                return false;
-////            }
-////        }
-////        return true;
-//
-//        for (IArgument a : this) {
-//            for (IArgument b : arg) {
-//                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//
-//    }
 
 }

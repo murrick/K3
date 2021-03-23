@@ -33,9 +33,6 @@ import org.kanger.units.Domain;
  * Узел
  */
 public class Node {
-    public static final int RIGHT = 0;         /* Direction of temporary */
-    public static final int DOWN = 1;          /* tree growing const */
-    public static final int STILL = 2;
 
     private Domain d = null;            /* Предикат */
     private Node right = null;          /* Правый элемент */
@@ -73,16 +70,5 @@ public class Node {
     public void setBranch(Node branch) {
         this.branch = branch;
     }
-
-//    public Node clone() {
-//        Node n = null;
-//        for (Node p = this; p != null; p = p.getDown()) {
-//            Node x = new Node();
-//            x.setD(p.getD());
-//            x.setDown(n);
-//            n = x;
-//        }
-//        return n;
-//    }
 
 }

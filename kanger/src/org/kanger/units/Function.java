@@ -51,20 +51,16 @@ public class Function implements IUnit<Function> {
 
     private static final long serialVersionUID = 196402070002L;
 
-    private long id = -1;
+    private long id = -1;                                       // id функции
     private long mindId = -1;                                   // id транзакции
-    private ITerm name = null;
-    private int range = 0;
-    private ArgumentsList arguments = new ArgumentsList();     // Параметры
-
-    private transient Mind mind = null;
+    private ITerm name = null;                                  // имя
+    private int range = 0;                                      // количество параметров
+    private ArgumentsList arguments = new ArgumentsList();      // Параметры
 
     private transient long nameId = -1;
-
-//    private transient boolean deleted = false;
+    private Mind mind = null;
 
     public Function() {
-
     }
 
     public Function(Mind mind) {
@@ -93,7 +89,6 @@ public class Function implements IUnit<Function> {
         try {
             packet.mark();
             arguments = new ArgumentsList().apply(packet);
-//            arguments.setUser(user);
         } finally {
             packet.release();
         }
@@ -168,36 +163,17 @@ public class Function implements IUnit<Function> {
     }
 
     public boolean setParameter(int i, ITerm r) throws Exception {
-//        if(i == range) {
-//            TSubst s = setResult(r);
-//            s.setSolves(owner, owner);
-//            return true;
-//        } else {
-
         if (((Argument) arguments.get(i)).setValue(mind, r)) {
-
             if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
                 List<TValue> list = new ArrayList<>();
                 list.add(((TVariable) arguments.get(i).getObject(mind)).getCurrent());
                 mind.addTSolve(list);
             }
             return true;
-
         } else {
             return false;
         }
     }
-
-//    public boolean isCalculated() {
-//        int i = 0;
-//        for (; i <= range; ++i) {
-//            if (arguments.createCVar(i) == null || !arguments.createCVar(i).isCSet()) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-
 
     public ITerm getName(Mind mind) throws Exception {
         if (name == null) {
@@ -218,15 +194,7 @@ public class Function implements IUnit<Function> {
         if (t.getType() == ArgumentType.FUNCTION) {
             s += (isOp ? "(" : "") + t.getObject(mind).toString() + (isOp ? ")" : "");
         } else if (t.getType() == ArgumentType.TVARIABLE) {
-//            if (v == null) {
             s += t.getObject(mind).toString();
-//            } else {
-//                TValue tv = v.getValue(t.getTVariable());
-//                s += t.getTVariable().getVarName()
-//                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (tv == null ? "" : (":" + tv.getValue().toString())) : "")
-//                        + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && tv != null && tv.isBlocked() ? " (B)" : "");
-//
-//            }
         } else if (!t.isEmpty(mind)) {
             if (asRight && t.getValue(mind).isCVariable()) {
                 s += ((Term) t.getValue(mind)).getName(mind).getValue();
@@ -272,14 +240,12 @@ public class Function implements IUnit<Function> {
 
                 String res = "";
                 if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
-                    //                if (getResult() != null) {
                     if (getCurrent() != null) {
                         res = " {= " + getValue((Mind) mind) + "}";
                     } else if (arguments.size() > range && !arguments.get(range).isEmpty((Mind) mind)) {
                         res = " [= " + arguments.get(range).getValue(mind) + "]";
                     }
                 }
-                //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
                 return s + res;
             }
         } catch (Exception e) {
@@ -289,61 +255,6 @@ public class Function implements IUnit<Function> {
         }
     }
 
-
-    //    public void setResult(Term c) {
-//        if(f != null) {
-//            while(f.getRange() >= arguments.size()) {
-//                arguments.createTVar(new TList());
-//            }
-//            arguments.createCVar(f.getRange()).setC(c);
-//        }
-//
-//    }
-//    @Override
-//    public boolean equals(Object o) {
-//        if (o == null || !(o instanceof Function)) {
-//            return false;
-//        } else {
-//            Function fo = (Function) o;
-//            if (!fo.name.equals(name)) {
-//                return false;
-//            }
-//            if (range != fo.getRange()) {
-//                return false;
-//            }
-//            if (fo.arguments.size() != arguments.size()) {
-//                return false;
-//            }
-//            for (int i = 0; i < arguments.size(); ++i) {
-//                if (!fo.arguments.createCVar(i).equals(arguments.createCVar(i))) {
-//                    return false;
-//                }
-//            }
-//            return true;
-//        }
-//    }
-
-//    public void clear() throws Exception {
-//        setResult(null);
-//    }
-
-//    public List<TVariable> getTVariables() {
-//        return Tools.getTVariables(arguments, true);
-//    }
-
-    //    public boolean isCalculated() {
-//        FValue f = mind.getFValues().get(this);
-//        if (f != null) {
-//            for (int i = 0; i < getRange(); ++i) {
-//                if (getArguments().get(i).getValue() == null
-//                        || getArguments().get(i).getValue().getId() != f.getCondition(i).getValue().getId()) {
-//                    return false;
-//                }
-//            }
-//        }
-//        return f != null && f.isActual(this); // && getCalculatedResult() != null && f.getValue() == getCalculatedResult(); //!= null; //&& !isCalculable();//(getCalculatedResult() == null || f.getValue() == getCalculatedResult()); //mind.getFValues().createCVar(this) != null /*|| mind.getCalculated().contains(this)*/;
-//    }
-//
     public boolean isComplete() throws Exception {
         for (IArgument a : arguments) {
             if (a.getValue(mind) == null) {
@@ -353,23 +264,9 @@ public class Function implements IUnit<Function> {
         return true;
     }
 
-//    public boolean isDirtyComplete() {
-//        for (Argument a : arguments) {
-//            if (a.getDirtyValue() == null) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-
     public boolean isCalculable() throws Exception {
         return arguments.getTVariables(mind).size() > 0;
     }
-
-//    public boolean isCalculated() {
-//        return getCurrent() != null;
-//    }
-
 
     public FValue getCurrent() throws Exception {
         return mind.getFValues().find(this);
@@ -396,7 +293,6 @@ public class Function implements IUnit<Function> {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
-//        arguments.setMind(mind);
         hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
     }
@@ -414,7 +310,6 @@ public class Function implements IUnit<Function> {
     @Override
     public Function setMind(Mind mind) {
         this.mind = mind;
-//        arguments.setUser(user);
         return this;
     }
 
@@ -423,7 +318,6 @@ public class Function implements IUnit<Function> {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         return hash;
-//        return ("" + id).hashCode();
     }
 
     public int getHashStruct(IRule r) throws Exception {
@@ -501,21 +395,6 @@ public class Function implements IUnit<Function> {
     public UnitType getUnitType() {
         return UnitType.FUNCTION;
     }
-
-//    @Override
-//    public Function commit(Mind m) throws Exception {
-//        setName(name.commit(m));
-//        for (int i = 0; i < range; ++i) {
-//            arguments.get(i).setO((IUnit) arguments.get(i).getO(mind).commit(m));
-//        }
-//        setMind(m);
-//        for (FValue v : mind.getFValues()) {
-//            if (v.getFunctionId() == id) {
-//                v.commit(m);
-//            }
-//        }
-//        return this;
-//    }
 
     @Override
     public long getMindId() {

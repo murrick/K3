@@ -39,7 +39,6 @@ import org.kanger.storage.Escalera;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
-import org.kanger.units.Term;
 
 import java.util.*;
 
@@ -50,19 +49,12 @@ public class TValueFactory implements IFactory<TValue> {
 
     public static final String SCHEMA = "tvalues";
 
-    //    private long lastId = 0;
-//    private long firstId = 0;
-    private long tag = 0;
-
-    private Map<TVariable, TValue> current = new HashMap<>();
-
     private ICache cache;
+    private final Mind mind;
     private IStep top = null;
-    private transient Mind mind = null;
     private IBase connection = null;
-
-    private transient boolean action = false;
-
+    private Map<TVariable, TValue> current = new HashMap<>();
+    private boolean action = false;
 
     public TValueFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -71,31 +63,14 @@ public class TValueFactory implements IFactory<TValue> {
 
     public void transaction(TValueFactory base) throws Exception {
         if (mind.getNext() == null && mind.isStorageUsed()) {
-//            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
-//            } else {
-//                connection = mind.getUser().connect(SCHEMA);
-//            }
         }
 
         current.clear();
         if (base != null) {
-//            lastId = base.lastId;
-//            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                ((IUnit) s.getData()).setMind(mind);
-//            }
-
         } else {
             cache = new Escalera(mind, SCHEMA, null);
-//            if (!cache.isEmpty()) {
-//                lastId = cache.getRoot().getId() + 1;
-//                firstId = lastId;
-//            } else {
-//                lastId = 0;
-//                firstId = 0;
-//            }
         }
     }
 
@@ -112,27 +87,11 @@ public class TValueFactory implements IFactory<TValue> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-
-//        if (cache.getRoot() != null) {
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-//                    ((IUnit) s.getData()).setMind(mind);
-//                    ((IUnit) s.getData()).setMindId(mind.getId());
-//
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
-//        pack();
-//        update();
         action = base.isAction();
     }
 
     public void update() throws Exception {
         if (cache.update()) {
-//            firstId = lastId;
-//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 
@@ -147,13 +106,11 @@ public class TValueFactory implements IFactory<TValue> {
             if (top == null) {
                 top = cache.getRoot();
             }
-            action = true; //!o.isCVariable() || !o.getSlaves().isEmpty();
-
+            action = true;
             tv.incFloodControl(o);
         } else {
             t.setDeleted(false, mind);
         }
-
         return t;
     }
 
@@ -166,26 +123,10 @@ public class TValueFactory implements IFactory<TValue> {
     }
 
     public boolean isEmpty(TVariable tv) {
-        return /*(cache.isEmpty() && load.isEmpty() &&  ||*/ !current.containsKey(tv);
-    }
-
-    public TValue findCVariable(TVariable tv, final Term parent) throws Exception {
-        for (TValue o : mind.getTValues()) {
-            if (o.getTVarId() == tv.getId()
-                    && o.getValue(mind).isCVariable()) {
-//                    && (o.getValue(mind).getId() == parent.getId()
-//                    || parent.getParentId() == o.getValue(mind).getId()
-//                    || ((Term) o.getValue(mind)).getParentId() == parent.getId())) {
-                return o;
-            }
-        }
-        return null;
+        return !current.containsKey(tv);
     }
 
     public TValue find(TVariable tv, ITerm v) throws Exception {
-//        if (((Term) v).isXVariable()) {
-//            return findCVariable(tv, (Term) ((Term) v).getParent(mind));
-//        } else {
         TValue temp = new TValue(tv, v);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = get(id);
@@ -194,7 +135,6 @@ public class TValueFactory implements IFactory<TValue> {
                 return (TValue) one;
             }
         }
-//        }
         return null;
     }
 
@@ -204,18 +144,10 @@ public class TValueFactory implements IFactory<TValue> {
             IStep s = connection.get(id);
             if (s != null) {
                 t = (TValue) s.getData(mind);
-//                t.setMind(mind);
-//                t.setUser(user);
-//                t.linkExternal(user);
             }
         }
         return t;
     }
-
-//    private TValue get(long id) throws Exception {
-//        TValue t = (TValue) cache.get(id);
-//        return t;
-//    }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
@@ -230,35 +162,6 @@ public class TValueFactory implements IFactory<TValue> {
                         break;
                     }
                 }
-//                if(!found) {
-//                    for (IRule r : mind.getSolutions()) {
-//                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((TValue) o).getValue().getId(), mind)) {
-//                            found = true;
-//                            break;
-//                        }
-//                    }
-//                    if (!found) {
-//                        for (IHypothesis r : mind.getHypothesis()) {
-//                            if (((Hypothesis) r).containsTerm(((TValue) o).getValue().getId(), mind)) {
-//                                found = true;
-//                                break;
-//                            }
-//                        }
-//                        if(!found) {
-//                            for(Map<String, ITerm> row : mind.getValues()) {
-//                                for(ITerm t : row.values()) {
-//                                    if(t.getId() == ((TValue) o).getValue().getId()) {
-//                                        found = true;
-//                                        break;
-//                                    }
-//                                    if(found) {
-//                                        break;
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
                 if (!found) {
                     toDelete.add(o);
                 }
@@ -271,28 +174,7 @@ public class TValueFactory implements IFactory<TValue> {
                 current.remove(((TValue) o).getTVar(mind));
             }
         }
-//        update();
-
-//        if (!cache.isEmpty()) {
-//            lastId = cache.getRoot().getId() + 1;
-//            firstId = lastId;
-//        } else {
-//            lastId = 0;
-//            firstId = 0;
-//        }
-
     }
-
-//    public void delete(TValue v) throws IOException, ClassNotFoundException {
-//        v.setDeleted(true, mind);
-//    }
-
-//    public void delete(long id) throws IOException, ClassNotFoundException {
-//        TValue r = get(id);
-//        if (r != null) {
-//            cache.delete(id);
-//        }
-//    }
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -330,10 +212,6 @@ public class TValueFactory implements IFactory<TValue> {
         return cache.size();
     }
 
-//    public void unlink() throws Exception {
-//        cache.unlink();
-//    }
-
     public boolean isAction() {
         return action;
     }
@@ -341,7 +219,6 @@ public class TValueFactory implements IFactory<TValue> {
     public void dropAction() {
         action = false;
     }
-
 
     @Override
     public Iterator iterator() {
@@ -355,10 +232,6 @@ public class TValueFactory implements IFactory<TValue> {
             }
         }
         return null;
-    }
-
-    public long incTag() {
-        return ++tag;
     }
 
     public Map<TVariable, TValue> getCurrent() {
@@ -400,61 +273,6 @@ public class TValueFactory implements IFactory<TValue> {
             } while (root != cache.getRoot());
         }
     }
-
-//    public boolean isCVariabled(TVariable t, Term tm) throws Exception {
-//        boolean found = false;
-//        for (IStep root = cache.getRoot(); root != null; root = root.getNext()) {
-//            TValue v = (TValue) root.getData(mind);
-//            if (v.isCVariable()) { // && (v.getTVarId() == t.getId() || v.getParentId() == t.getId()) {
-//                found = true;
-//                break;
-//            }
-//        }
-//        return found;
-//    }
-
-//    public Iterator<TValue> iterator(TVariable tVariable) {
-//        return new TValueIterator(true, tVariable);
-//    }
-//
-//
-//    public class TValueIterator implements Iterator {
-//
-//        private TVariable tVariable;
-//        private TValue next = null;
-//        private Iterator iterator = null;
-//
-//        public TValueIterator(boolean backward, TVariable tVariable) {
-//            this.tVariable = tVariable;
-//            iterator = cache.iterator(backward, -1);
-//        }
-//
-//        @Override
-//        public boolean hasNext() {
-//            if (tVariable != null) {
-//                while (iterator.hasNext()) {
-//                    next = (TValue) iterator.next();
-//                    if (next.getTVarId() == tVariable.getId()) {
-//                        return true;
-//                    }
-//                }
-//                next = null;
-//            } else {
-//                if (iterator.hasNext()) {
-//                    next = (TValue) iterator.next();
-//                    return true;
-//                }
-//            }
-//            return false;
-//        }
-//
-//        @Override
-//        public IUnit next() {
-//            return next;
-//        }
-//    }
-//
-
 
     public void closeConnection() throws Exception {
         if (connection != null) {

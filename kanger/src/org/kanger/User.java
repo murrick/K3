@@ -58,15 +58,6 @@ public class User implements IUser {
         return storage.get(schema);
     }
 
-//    @Override
-//    public IBase connect(String schema) throws Exception {
-//        if (data != null && !data.isClosed()) {
-//            return data.connect(schema);
-//        } else {
-//            return null;
-//        }
-//    }
-
     protected IMind clear(IMind mind) throws Exception {
         if (data != null && !data.isClosed()) {
             for (Map.Entry<String, IBase> e : storage.entrySet()) {
@@ -112,29 +103,6 @@ public class User implements IUser {
         }
         return mind;
     }
-
-//    public long getUsedCacheSize() {
-//        long sz = 0;
-//        for (Map.Entry<String, IBase> e : storage.entrySet()) {
-//            sz += e.getValue().getUsedCacheSize();
-//        }
-//        return sz;
-//    }
-//
-//    public long getMaxCacheSize() {
-//        long sz = 0;
-//        for (Map.Entry<String, IBase> e : storage.entrySet()) {
-//            sz += e.getValue().getMaxCacheSize();
-//        }
-//        return sz;
-//    }
-
-//    @Override
-//    public void clearCache() {
-//        for (Map.Entry<String, IBase> e : storage.entrySet()) {
-//            e.getValue().clearCache();
-//        }
-//    }
 
     public long lastId(String schema) {
         if (isClosed()) {

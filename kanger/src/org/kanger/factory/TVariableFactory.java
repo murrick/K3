@@ -48,13 +48,11 @@ public class TVariableFactory implements IFactory<TVariable> {
 
     public static final String SCHEMA = "tvariables";
 
-//    private long lastId = 0;
-//    private long firstId = 0;
-
     private ICache cache;
     private IStep top = null;
-    private transient Mind mind = null;
     private IBase connection = null;
+
+    private final Mind mind;
 
     public TVariableFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -63,30 +61,13 @@ public class TVariableFactory implements IFactory<TVariable> {
 
     public void transaction(TVariableFactory base) throws Exception {
         if (mind.getNext() == null && mind.isStorageUsed()) {
-//            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
-//            } else {
-//                connection = mind.getUser().connect(SCHEMA);
-//            }
         }
 
         if (base != null) {
-//            lastId = base.lastId;
-//            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                ((IUnit) s.getData()).setMind(mind);
-//            }
-
         } else {
             cache = new Escalera(mind, SCHEMA, null);
-//            if (!cache.isEmpty()) {
-//                lastId = cache.getRoot().getId() + 1;
-//                firstId = lastId;
-//            } else {
-//                lastId = 0;
-//                firstId = 0;
-//            }
         }
     }
 
@@ -103,25 +84,10 @@ public class TVariableFactory implements IFactory<TVariable> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-
-//        if (cache.getRoot() != null) {
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-//                    ((IUnit) s.getData()).setMind(mind);
-//                    ((IUnit) s.getData()).setMindId(mind.getId());
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
-//        pack();
-//        update();
     }
 
     public void update() throws Exception {
         if (cache.update()) {
-//            firstId = lastId;
-//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 
@@ -145,18 +111,10 @@ public class TVariableFactory implements IFactory<TVariable> {
             IStep s = connection.get(id);
             if (s != null) {
                 t = (TVariable) s.getData(mind);
-//                t.setMind(mind);
-//                t.setUser(user);
-//                t.linkExternal(user);
             }
         }
         return t;
     }
-
-//    private TVariable get(long id) throws Exception {
-//        TVariable t = (TVariable) cache.get(id);
-//        return t;
-//    }
 
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
@@ -169,42 +127,7 @@ public class TVariableFactory implements IFactory<TVariable> {
             cache.delete(((IUnit) o).getId());
             mind.getTValues().getCurrent().remove(o);
         }
-//        update();
-
-//        if (!cache.isEmpty()) {
-//            lastId = cache.getRoot().getId() + 1;
-//            firstId = lastId;
-//        } else {
-//            lastId = 0;
-//            firstId = 0;
-//        }
-
     }
-
-//    public void delete(TVariable t) throws Exception {
-//        t.setDeleted(true, mind);
-//        for (TValue v : mind.getTValues()) {
-//            if (v.getTVar().getId() == t.getId()) {
-//                mind.getTValues().delete(v);
-//            }
-//        }
-//    }
-
-//    public void delete(long id) throws IOException, ClassNotFoundException {
-//        TVariable t = get(id);
-//        if (t != null) {
-//            List<TValue> list = new ArrayList<>();
-//            for (TValue v : mind.getTValues()) {
-//                if (v.getTVarId() == t.getId()) {
-//                    list.add(v);
-//                }
-//            }
-//            for (TValue v : list) {
-//                mind.getTValues().delete(v.getId());
-//            }
-//            cache.delete(id);
-//        }
-//    }
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -219,7 +142,6 @@ public class TVariableFactory implements IFactory<TVariable> {
         cache.mark();
     }
 
-
     public void commit() throws Exception {
         cache.commit();
     }
@@ -231,10 +153,6 @@ public class TVariableFactory implements IFactory<TVariable> {
     public int size() throws Exception {
         return cache.size();
     }
-
-//    public void unlink() throws Exception {
-//        cache.unlink();
-//    }
 
     @Override
     public Iterator iterator() {

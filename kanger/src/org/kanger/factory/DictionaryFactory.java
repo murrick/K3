@@ -54,22 +54,11 @@ public class DictionaryFactory implements IFactory<ITerm> {
 
     public static final String SCHEMA = "dictionary";
 
-    //    private Term root = null;
-//    private long lastId = 0;
-//    private long firstId = 0;
-    private int varIndex = 0;           // Счетчик C-переменных
-
-    //    private Stack<Object[]> stack = new Stack<>();
     private ICache cache;
     private IStep top = null;
-    //    private Cache load = new Cache();
-    private transient Mind mind = null;
     private IBase connection = null;
-
-//    private Map<Integer, Set<Long>> hashCache = new HashMap<>();
-//    private Map<Long, Term> idCache = new HashMap<>();
-//    private DictionaryFactory base = null;
-
+    private final Mind mind;
+    private int varIndex = 0;           // Счетчик C-переменных
 
     public DictionaryFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -77,31 +66,15 @@ public class DictionaryFactory implements IFactory<ITerm> {
     }
 
     public void transaction(DictionaryFactory base) throws Exception {
-//        cache.clear();
-//        load.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
-//            if (mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
-//            } else {
-//                connection = mind.getUser().connect(SCHEMA);
-//            }
         }
-
         if (base != null) {
-//            lastId = base.lastId;
-//            firstId = base.lastId;
             varIndex = base.varIndex;
             cache = new Escalera(mind, SCHEMA, base.cache);
-
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                ((IUnit) s.getData()).setMind(mind);
-//            }
-
         } else {
             cache = new Escalera(mind, SCHEMA, null);
             if (!cache.isEmpty()) {
-//                lastId = cache.getRoot().getId() + 1;
-//                firstId = lastId;
                 for (ITerm t : this) {
                     if (t.isCVariable()) {
                         varIndex = ((Term) t).getIndex();
@@ -109,12 +82,9 @@ public class DictionaryFactory implements IFactory<ITerm> {
                     }
                 }
             } else {
-//                lastId = 0;
-//                firstId = 0;
                 varIndex = 0;           // Счетчик C-переменных
             }
         }
-//        firstId = user.lastId(SCHEMA);
     }
 
     public void commit(DictionaryFactory base) throws Exception {
@@ -123,16 +93,6 @@ public class DictionaryFactory implements IFactory<ITerm> {
         } else if (base.top != null) {
             base.top.setNext(cache.getRoot());
         }
-//        if (cache.getRoot() != null) {
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-//                    ((IUnit) s.getData()).setMind(mind);
-//                    ((IUnit) s.getData()).setMindId(mind.getId());
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
         cache.setRoot(base.cache.getRoot());
         for (Object s : cache) {
             if (((IUnit) s).getMindId() == base.mind.getId()) {
@@ -140,21 +100,12 @@ public class DictionaryFactory implements IFactory<ITerm> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-
-//        pack();
-//        update();
         varIndex = Math.max(base.varIndex, varIndex);
 
     }
 
-//    public void unlink() throws Exception {
-//        cache.unlink();
-//    }
-
     public void update() throws Exception {
         if (cache.update()) {
-//            firstId = user.lastId(SCHEMA);
-//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 
@@ -178,7 +129,6 @@ public class DictionaryFactory implements IFactory<ITerm> {
             return p;
         }
     }
-
 
     public Term find(Object o) throws Exception {
         Term t;
@@ -206,86 +156,20 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return t;
     }
 
-//    public ITerm createXVar(ITerm c) throws Exception {
-//        ITerm t = null;
-////        for(Term x : this) {
-////            if(x.getParent().getId() == c.getId()) {
-////                t = x;
-////                break;
-////            }
-////        }
-////        if(t == null) {
-//        int i = nextVarIndex();
-//        String temp = String.format("%c%d", Enums.XVC, i);
-//        t = add(temp);
-//        ((Term) t).setRule(((Term) c).getRule(mind));
-//        ((Term) t).setIndex(i);
-//        ((Term) t).setName(((Term) c).getName(mind));
-////            c.getChilds().add(t.getId());
-//        ((Term) t).setParent(c);
-////        }
-//        return t;
-//    }
-
     public Term get(long id) throws Exception {
         Term t = (Term) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
             if (s != null) {
                 t = (Term) s.getData(mind);
-//                t.setMind(mind);
-//                t.setUser(user);
-//                t.linkExternal(user);
             }
         }
         return t;
     }
 
-//    private Term get(long id) throws Exception {
-//        Term t = (Term) cache.get(id);
-//        return t;
-//    }
-
-//    public Term load(long id) throws RuntimeErrorException {
-//        Term t = null;
-//        if (!user.isClosed()) {
-//            t = (Term) user.getStorage(SCHEMA).get(id);
-//            if (t != null) {
-//                load.add(t);
-//            }
-//        }
-//        return t;
-//    }
-
-//    public Term getRoot() {
-//        return root;
-//    }
-
-//    public void setRoot(Term o) {
-//        root = o;
-//    }
-
-//    private void mark() {
-//        stack.push(new Object[]{root, lastId, varIndex});
-//    }
-//
-//    private void release() {
-//        if (!stack.empty()) {
-//            Object[] pop = stack.pop();
-//            Term saved = (Term) pop[0];
-//            lastId = (long) pop[1];
-//            varIndex = (int) pop[2];
-//            root = saved;
-//        }
-//        if (stack.empty()) {
-//            mark();
-//        }
-//    }
-
     public int size() throws Exception {
         return cache.size();
     }
-
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -303,10 +187,6 @@ public class DictionaryFactory implements IFactory<ITerm> {
     public int getVarIndex() {
         return varIndex;
     }
-
-//    public long getFirstId() {
-//        return firstId;
-//    }
 
     @Override
     public Iterator iterator() {
@@ -352,18 +232,6 @@ public class DictionaryFactory implements IFactory<ITerm> {
                                     break;
                                 }
                             }
-//                            if(!found) {
-//                                for(Function f : mind.getFunctions()) {
-//                                    if (!f.isDeleted(mind) && !f.isEmpty() && f.getValue().getId() == ((IUnit) o).getId()) {
-//                                        found = true;
-//                                        break;
-//                                    }
-//                                    if(!f.isDeleted(mind) && f.getResult().getValue(mind).getId() == ((IUnit) o).getId()) {
-//                                        found = true;
-//                                        break;
-//                                    }
-//                                }
-//                            }
                         }
                     }
                 }
@@ -401,7 +269,6 @@ public class DictionaryFactory implements IFactory<ITerm> {
         cache.mark();
     }
 
-
     public void commit() throws Exception {
         cache.commit();
     }
@@ -409,13 +276,4 @@ public class DictionaryFactory implements IFactory<ITerm> {
     public void release() throws Exception {
         cache.release();
     }
-
-//    public ITerm findChild(ITerm x) {
-//        for(ITerm t : this) {
-//            if(((Term) t).getParentId() == x.getId() && ((Term) t).getRuleId() == ((Term) x).getRuleId()) {
-//                return t;
-//            }
-//        }
-//        return null;
-//    }
 }

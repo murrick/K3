@@ -43,9 +43,9 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
 
     private Set<ComparableArgumentsList> root = new LinkedHashSet<>();
 
-    private final transient Mind mind;
-    private String order = "";
-    private boolean ascending = true;
+    private final Mind mind;
+    private String order = "";              // Порядок сортировки - имя переменной
+    private boolean ascending = true;       // Вперед/назад
 
     public ValuesStore(Mind mind) {
         this.mind = mind;
@@ -191,10 +191,6 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
             SortedMap<String, ITerm> row = new TreeMap<>();
             for (IArgument v : iterator.next()) {
                 try {
-//                    Object val = (v.getV(mind).getValue().getType() == DataType.INTERVAL
-//                            || v.getV(mind).getValue().getType() == DataType.SET)
-//                            ? v.getV(mind).getValue()
-//                            : v.getV(mind).getValue().getValue();
                     row.put(((TValue) v.getObject(mind)).getTVar(mind).getName(mind).toString(), ((TValue) v.getObject(mind)).getValue(mind));
                 } catch (Exception e) {
                     System.err.println(new Date());

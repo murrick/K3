@@ -55,19 +55,19 @@ public class Term implements IUnit<Term>, ITerm {
     private static final long serialVersionUID = 196402070008L;
 
 
-    private long id = -1;                // Идентификатор
-    private long mindId = -1;                                   // id транзакции
-    private DataType type = DataType.VOID;
-    private Object value = null;
-    private int hash = 0;
-    private int index = 0;              // Индекс c-переменной
-    private ITerm name = null;             // Оригинальное имя c-переменной
-    private IRule rule = null;          // Ссылка на правило
-    private boolean domini = false;
+    private long id = -1;                       // Идентификатор
+    private long mindId = -1;                   // id транзакции
+    private DataType type = DataType.VOID;      // Тип данных
+    private Object value = null;                // Значение
+    private int hash = 0;                       // Хэш
+    private int index = 0;                      // Индекс c-переменной
+    private ITerm name = null;                  // Оригинальное имя c-переменной
+    private IRule rule = null;                  // Ссылка на правило для c-переменной
+    private boolean domini = false;             // Признак доминирующей c-переменной
 
-    private transient Mind mind = null;
-    private transient long nameId = -1;
-    private transient long ruleId = -1;
+    private Mind mind = null;
+    private long nameId = -1;
+    private long ruleId = -1;
 
     public Term() {
     }
@@ -367,18 +367,6 @@ public class Term implements IUnit<Term>, ITerm {
         return equalsTo((Term) term);
     }
 
-//    public boolean isXVariable() {
-//        return parentId > 0;
-//    }
-
-//    public void toCVariable() {
-//        if (isXVariable()) {
-//            value = String.format("%c%d", Enums.CVC, index);
-//            parentId = -1;
-//            getHash();
-//        }
-//    }
-
     public String formatValue() {
         if (type == DataType.INTERVAL) {
             if (value instanceof Collection && ((Collection) value).size() == 2) {
@@ -403,15 +391,6 @@ public class Term implements IUnit<Term>, ITerm {
                 s += String.format("%02X", x & 0xFF);
             }
             return s;
-//        } else if (type == DataType.STRING) {
-//            if( ((String) value).contains(" ") || ((String) value).contains("\t") || ((String) value).contains("\n") || ((String) value).contains("\r")) {
-//                return "\"" + value + "\"";
-//            } else
-//            if (value.toString().trim().isEmpty()) {
-//                return "\"" + value + "\"";
-//            } else {
-//                return value.toString();
-//            }
         } else {
             return value.toString();
         }
@@ -540,7 +519,6 @@ public class Term implements IUnit<Term>, ITerm {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         return hash;
-//        return ("" + id).hashCode();
     }
 
     @Override
@@ -552,11 +530,6 @@ public class Term implements IUnit<Term>, ITerm {
     public Object getValue() {
         return value;
     }
-
-//    public void setValue(Object value) {
-//        this.value = value;
-//        getHash();
-//    }
 
     public ITerm getName(Mind mind) throws Exception {
         if (name == null) {
@@ -615,8 +588,6 @@ public class Term implements IUnit<Term>, ITerm {
                     return ((Comparable) value).compareTo(o.getValue());
                 }
             } else if (type == DataType.BLOB) {
-                //TODO: Для совместимости с 8 ???
-//                return -1; //Arrays.compare((byte[]) value, (byte[]) o.getValue());
                 return compareBytes((byte[]) value, (byte[]) o.getValue());
             } else {
                 return ((Comparable) value).compareTo(o.getValue());
@@ -695,13 +666,6 @@ public class Term implements IUnit<Term>, ITerm {
     public void setMindId(long mindId) {
         this.mindId = mindId;
     }
-
-//    public Term commit(Mind m) throws Exception {
-//        Term term = m.getTerms().add(this);
-//        term.setMind(m);
-//        return term;
-//    }
-
 
     public long getRuleId() {
         return ruleId;

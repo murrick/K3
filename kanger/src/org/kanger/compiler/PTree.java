@@ -29,15 +29,14 @@ package org.kanger.compiler;
  * Created by Dmitry G. Quznetsov on 04.06.15.
  */
 public class PTree {
-    private String name = null;     // Token name
+    private String name = null;         // Token name
     private int post = 0;               // Postfix or Prefix form (POST || PRED */
     private int dir = 0;                // Saved direction
     private int prior = 0;              // Operation priority
-    //private int mode;               // ID Mode (FUNC | ARRAY | CAST
     private boolean system = false;
-    private int range = 0;                 // Parameters count
-    private PTree left = null;             // Left branch ptr
-    private PTree rule = null;            // Right branch ptr
+    private int range = 0;              // Parameters count
+    private PTree left = null;          // Left branch ptr
+    private PTree rule = null;          // Right branch ptr
 
     private int next = 0;               // Actual branch for insert (&left || &compiler)
     private int pos = 0;

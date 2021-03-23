@@ -47,15 +47,12 @@ public class FValueFactory implements IFactory<FValue> {
 
     public static final String SCHEMA = "fvalues";
 
-//    private long lastId = 0;
-//    private long firstId = 0;
-
     private ICache cache;
     private IStep top = null;
-    private transient Mind mind = null;
     private IBase connection = null;
 
-    private transient boolean action = false;
+    private final Mind mind;
+    private boolean action = false;
 
     public FValueFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -64,35 +61,14 @@ public class FValueFactory implements IFactory<FValue> {
 
     public void transaction(FValueFactory base) throws Exception {
         if (mind.getNext() == null && mind.isStorageUsed()) {
-//            if(mind.getNext() == null) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
-//            } else {
-//                connection = mind.getUser().connect(SCHEMA);
-//            }
         }
 
-
-//        cache.clear();
         if (base != null) {
-//            lastId = base.lastId;
-//            firstId = base.lastId;
             cache = new Escalera(mind, SCHEMA, base.cache);
-
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                ((IUnit) s.getData()).setMind(mind);
-//            }
-
         } else {
             cache = new Escalera(mind, SCHEMA, null);
-//            if (!cache.isEmpty()) {
-//                lastId = cache.getRoot().getId() + 1;
-//                firstId = lastId;
-//            } else {
-//                lastId = 0;
-//                firstId = 0;
-//            }
         }
-//        lastId = user.lastId(SCHEMA);
     }
 
     public void commit(FValueFactory base) throws Exception {
@@ -108,26 +84,11 @@ public class FValueFactory implements IFactory<FValue> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-
-//        if (cache.getRoot() != null) {
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-//                    ((IUnit) s.getData()).setMind(mind);
-//                    ((IUnit) s.getData()).setMindId(mind.getId());
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
-//        pack();
-//        update();
         action = base.isAction();
     }
 
     public void update() throws Exception {
         if (cache.update()) {
-//            firstId = lastId;
-//            mind.getUser().getStorage(SCHEMA).flush();
         }
     }
 
@@ -169,19 +130,10 @@ public class FValueFactory implements IFactory<FValue> {
             IStep s = connection.get(id);
             if (s != null) {
                 t = (FValue) s.getData(mind);
-//                t.setMind(mind);
-//                t.setUser(user);
-//                t.linkExternal(user);
             }
         }
         return t;
     }
-
-//    private FValue get(long id) throws Exception {
-//        FValue t = (FValue) cache.get(id);
-//        return t;
-//    }
-
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -196,7 +148,6 @@ public class FValueFactory implements IFactory<FValue> {
         cache.mark();
     }
 
-
     public void commit() throws Exception {
         cache.commit();
     }
@@ -204,10 +155,6 @@ public class FValueFactory implements IFactory<FValue> {
     public void release() throws Exception {
         cache.release();
     }
-
-//    public void unlink() throws Exception {
-//        cache.unlink();
-//    }
 
     public int size() {
         return cache.size();
@@ -227,22 +174,7 @@ public class FValueFactory implements IFactory<FValue> {
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
         }
-
-//        update();
-
-//        if (!cache.isEmpty()) {
-//            lastId = cache.getRoot().getId() + 1;
-//            firstId = lastId;
-//        } else {
-//            lastId = 0;
-//            firstId = 0;
-//        }
-
     }
-
-//    public void delete(FValue v) {
-//        v.setDeleted(true, mind);
-//    }
 
     public boolean isAction() {
         return action;

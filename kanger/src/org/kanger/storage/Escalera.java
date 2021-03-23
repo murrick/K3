@@ -41,13 +41,12 @@ public class Escalera implements ICache {
 
     private IStep root = null;
 
-    //    private ICache parent = null;
-    private Stack<IStep> stack = new Stack<>();
-    private transient Mind mind = null;
     private String schema = "";
+    private Stack<IStep> stack = new Stack<>();
+
+    private Mind mind = null;
 
     public Escalera(Mind mind, String schema, ICache parent) {
-//        this.parent = parent;
         this.mind = mind;
         this.schema = schema;
 
@@ -60,7 +59,6 @@ public class Escalera implements ICache {
         }
     }
 
-
     @Override
     public void add(IUnit one) throws Exception {
         Step s = new Step();
@@ -71,53 +69,13 @@ public class Escalera implements ICache {
         root = s;
     }
 
-//    @Override
-//    public void update(IUnit one) throws Exception {
-//        IStep s = mind.getUser().getStorage(schema).get(one.getId());
-//        if (s != null) {
-//            s.setData(one);
-//            s.update();
-//        }
-//
-////        for (IStep s = root; s != null; s = s.getNext()) {
-////            if (s.getId() == one.getId()) {
-////                s.setData(one);
-////                s.update();
-////                break;
-////            }
-////        }
-//    }
-
-//    @Override
-//    public void add(long id, Object one) throws IOException {
-//        Step s = new Step();
-//        s.setData(one);
-//        s.setId(id);
-//        s.setHash(one.hashCode());
-//        s.setNext(root);
-//        root = s;
-//    }
-
     @Override
     public Object get(long id) throws Exception {
-//        if (root instanceof Sapato) {
-//            IStep e = mind.getUser().getStorage(schema).get(root.getId());
-//            root.setData(e.getData(mind));
-//        }
         for (IStep s = root; s != null; s = s.getNext()) {
             if (s.getId() == id) {
-//                if(s.getData() != null && s.getData() instanceof IUnit && ((IUnit) s.getData()).getUser() == null) {
-//                    ((IUnit) s.getData()).setUser(user);
-//                }
-//                if (!((IUnit)s.getData()).isLoaded()) {
-//                    IStep e = mind.getUser().getStorage(schema).get(s.getId());
-//                    s.setData(e.getData(mind));
-//                }
                 return s.getData(mind);
             }
         }
-        // Прямое обращение к БД имеет значение только в начальной загрузке
-//        return user.isClosed() ? null : user.getStorage(schema).get(id).getData();
         return null;
     }
 
@@ -235,7 +193,6 @@ public class Escalera implements ICache {
     @Override
     public boolean update() throws Exception {
         // Это самый низ
-
         if (mind.isStorageUsed()) {
 
             IBase base = ((User) mind.getUser()).getStorage(schema);
@@ -243,10 +200,8 @@ public class Escalera implements ICache {
 
                 List<IStep> list = new ArrayList<>();
                 for (IStep s = root; s != null; s = s.getNext()) {
-                    if (!base.containsKey(s.getId())/*s instanceof Step*/ /*&& !((IUnit)s.getData()).isDeleted()*//*!mind.getUser().getStorage(schema).containsKey(s.getId())*/) {
+                    if (!base.containsKey(s.getId())) {
                         list.add(0, s);
-//                    } else {
-//                        break;
                     }
                 }
 
@@ -255,28 +210,9 @@ public class Escalera implements ICache {
                     p.append();
                     IStep e = ((User) mind.getUser()).getStorage(schema).get(s.getId());
                     p.setData(e.getData(mind));
-
-//                    p.getData(mind);
                     root = p;
                 }
-
-
-//            long lastId = mind.getUser().getStorage(schema).isEmpty() ? -1 : mind.getUser().getStorage(schema).getRoot().getId();
-//            List<IStep> list = new ArrayList<>();
-//            for (IStep s = root; s != null; s = s.getNext()) {
-//                if (s.getId() < lastId) {
-//                    break;
-//                }
-//                list.add(s);
-//            }
-//            for (IStep p : list) {
-//                Sapato s = new Sapato(mind.getUser().getStorage(schema), p);
-//                s.append();
-//            }
-
-//                root = base.getRoot();
                 stack.clear();
-
                 return true;
             }
         } else {
@@ -288,7 +224,6 @@ public class Escalera implements ICache {
 
         @Override
         public void remove() {
-            // TODO: Implement this method
         }
 
         private IStep step;

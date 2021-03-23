@@ -33,10 +33,11 @@ import org.kanger.interfaces.internal.IUnit;
  * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Step implements IStep {
-    private Object data = null;
-    private IStep next = null;
-    private long id = -1;
-    private int hash = 0;
+
+    private long id = -1;           // id записи
+    private int hash = 0;           // хэш записи
+    private Object data = null;     // данные записи
+    private IStep next = null;      // следующая запись
 
     private long size = 0;
 
@@ -100,35 +101,11 @@ public class Step implements IStep {
 
     @Override
     public void update() {
-
     }
 
     @Override
     public void append() {
-
     }
-
-//    @Override
-//    public IBase getBase() {
-//        return null;
-//    }
-//
-//    @Override
-//    public void setBase(IBase base) {
-//
-//    }
-
-//    @Override
-//    public void delete() throws IOException {
-//        if (getPrev() != null) {
-//            getPrev().setNext(getNext());
-//            getPrev().update();
-//        }
-//        if (getNext() != null) {
-//            getNext().setPrev(getPrev());
-//            getNext().update();
-//        }
-//    }
 
     @Override
     public long getSize() {

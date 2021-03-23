@@ -44,9 +44,10 @@ import java.util.List;
  */
 public class HypothesisStore implements IFactory<IHypothesis> {
 
-    private final transient Mind mind;
     private List<IHypothesis> root = null;
-    private boolean optimized = false;
+
+    private final Mind mind;
+    private boolean optimized = false;      // Признак того что текущий список оптимизирован
 
     public HypothesisStore(Mind mind) {
         this.mind = mind;
@@ -76,32 +77,23 @@ public class HypothesisStore implements IFactory<IHypothesis> {
             }
             return h;
         } else {
-//            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? antc : !antc;
             h = new Hypothesis();
             ((Hypothesis) h).setAntc(antc);
             ((Hypothesis) h).setPredicate(pred);
             h.getArguments().addAll(arg.convertBase(mind));
             ((Hypothesis) h).setQuery(isQuery);
-
-//            if (mind.getRights().find(antc, pred, arg) == null) {
             root.add(h);
             return h;
-//            } else {
-//                return null;
-//            }
         }
 
     }
-
 
     public IHypothesis add(IHypothesis hypothesis) throws Exception {
         if (root == null) {
             root = new ArrayList<>();
         }
         IHypothesis h = find(hypothesis);
-        if (h == null /*|| h.isAntc() != hypothesis.isAntc()*/) {
-//            h = hypothesis;
-//            h.setAntc(true);
+        if (h == null) {
             root.add(hypothesis);
             return hypothesis;
         } else {
@@ -109,27 +101,16 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         }
     }
 
-//    public void addAll(Collection<Hypotese> list) {
-//        if (list != null && !list.isEmpty()) {
-//            if (root == null) {
-//                root = new ArrayList<>();
-//            }
-//            root.addAll(list);
-//        }
-//    }
-
     @Override
     public IHypothesis get(long index) {
         return root.get((int) index);
     }
-
 
     public IHypothesis find(Boolean antc, Predicate pred, ArgumentsList arg) throws Exception {
         if (root == null) {
             return null;
         }
         for (IHypothesis h : root) {
-//            boolean ca = user.getMind().getQueryPass() == QueryPass.CHECKFALSE ? h.isAntc() : !h.isAntc();
             if (h.getPredicate().getId() == pred.getId()
                     && (antc == null || h.isAntc() == antc)
                     && ((ArgumentsList) h.getArguments()).equalsBase(mind, arg)) {
@@ -153,13 +134,11 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         return null;
     }
 
-
     private boolean equalsBase(IList a, IList b) throws Exception {
         if (a.size() == b.size()) {
             for (int i = 0; i < a.size(); ++i) {
                 if (a.get(i).getValue(mind).getId() == b.get(i).getValue(mind).getId()
                         || (a.get(i).getValue(mind).isCVariable() && b.get(i).getValue(mind).isCVariable())) {
-
                 } else {
                     return false;
                 }
@@ -173,10 +152,6 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         return find(h) != null;
     }
 
-    //    public List<IHypothesis> getRoot() {
-//        return root;
-//    }
-//
     public void clear() {
         optimized = false;
         root = null;
@@ -190,11 +165,6 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         return root == null || root.isEmpty();
     }
 
-
-//    public int compareTo(HypothesisStore o) {
-//        return Integer.valueOf(size()).compareTo(Integer.valueOf(o.size()));
-//    }
-
     @Override
     public Iterator<IHypothesis> iterator() {
         if (root != null) {
@@ -203,29 +173,6 @@ public class HypothesisStore implements IFactory<IHypothesis> {
             return new ArrayList<IHypothesis>().iterator();
         }
     }
-
-//    public void exclude(HypothesisStore exclude) throws Exception {
-//        if (!isEmpty() && !exclude.isEmpty()) {
-//            Set<Hypothesis> toDelete = new HashSet<>();
-//            for (Hypothesis h : root) {
-//                if (exclude.find(h) != null) {
-//                    toDelete.add(h);
-//                }
-//            }
-//            //Если не остается гипотез кроме базовых - оставляем базовые
-//            if (toDelete.size() < root.size()) {
-//                for (Hypothesis h : toDelete) {
-//                    if (!h.isQuery()) {
-//                        root.remove(h);
-//                    }
-//                }
-//            }
-////        } else if (isEmpty() && !exclude.isEmpty()) {
-////            for (Hypotese h : exclude.getRoot()) {
-////                add(h);
-////            }
-//        }
-//    }
 
     public void optimize() throws Exception {
         if (root != null && !root.isEmpty() && !optimized) {

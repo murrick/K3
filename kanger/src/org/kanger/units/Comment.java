@@ -37,10 +37,11 @@ import java.util.Map;
 
 public class Comment implements IUnit<Comment> {
 
-    private long id = -1;
-    private String comment = "";
-    private long mindId = -1;
-    private transient Mind mind;
+    private long id = -1;           // id правила
+    private long mindId = -1;       // id транзакции
+    private String comment = "";    // текст коментария
+
+    private Mind mind;
 
     public Comment() {
     }

@@ -47,13 +47,12 @@ public class Solve {
 
     private static final long serialVersionUID = 196402070001L;
 
-    protected boolean antc = true;                                // ! или ?
-    protected int range = 0;
-    protected Predicate predicate = null;                         // Ссылка на описатель предиката
-    protected ArgumentsList arguments = new ArgumentsList();       // Массив подстановочных переменных
+    protected boolean antc = true;                                  // ! или ?
+    protected int range = 0;                                        // количество параметров
+    protected Predicate predicate = null;                           // Ссылка на описатель предиката
+    protected ArgumentsList arguments = new ArgumentsList();        // Параметры
 
     protected transient long predicateId = -1;
-//    protected transient long rightId = -1;
 
     public Solve() {
     }
@@ -77,18 +76,6 @@ public class Solve {
         this.range = predicate.getRange();
     }
 
-//    public Right getRight(Mind mind) throws Exception {
-//        if (right == null) {
-//            right = mind.getRights().load(rightId);
-//        }
-//        return right;
-//    }
-//
-//    public void setRight(Right r) {
-//        this.rightId = r.getId();
-//        right = r;
-//    }
-
     public ArgumentsList getArguments() {
         return arguments;
     }
@@ -101,44 +88,8 @@ public class Solve {
         this.antc = antc;
     }
 
-//    public Set<TVariable> getRelatedTVariables(boolean full) {
-//        Set<TVariable> set = new HashSet<>();
-//        for (Domain d : predicate.getRelates()) {
-//            set.addAll(d.getArguments().getTVariables(full));
-//        }
-//        return set;
-//    }
-
-//    public Set<Domain> getParents() {
-//        return parents;
-//    }
-
-
-    //    String s = String.format("%c%s(", d.isAntc() ? Enums.ANT : Enums.SUC, d.getPredicate().getName());
-//    int i = 0;
-//    for (TList t : d.getArguments()) {
-//        String name = "_";
-//        if (t.isCSet()) name = t.getC().toString();
-//        else if (t.isFunction() && t.getFunction().getResult() != null)
-//            name = t.getFunction().toString(); // + "=" + t.getFunction().getResult().toString();
-//        else if (t.isTVariable() && t.getTVariable().getOwner() != 0) name = t.getTVariable().getValue().getTerm().getName();
-//        s += name;
-//        if (i + 1 != d.getPredicate().getRange()) {
-//            s += String.format("%c", Enums.COMMA);
-//        }
-//        ++i;
-//    }
-//    s += ");";
-//    return s;
-
     protected String formatParam(IMind mind, IArgument t, boolean asRight) throws Exception {
         String s = "";
-        //TODO: Костыль
-//        t.setUser(user);
-//        if(!t.isEmpty(mind)) {
-//            t.getValue(mind).setMind(mind);
-//        }
-
         if (t.getType() == ArgumentType.FUNCTION) {
             s += ((Function) t.getObject(mind)).toString(mind, asRight);
         } else if (t.getType() == ArgumentType.TVARIABLE) {
@@ -158,18 +109,6 @@ public class Solve {
         }
         return s;
     }
-
-//    @Override
-//    public String toString() {
-//        return toString(arguments);
-//    }
-
-
-    //TODO ?$x parent(x,Jack); выводит рещшение Result: TRUE...
-    //Solves (1):
-    //	Solution 001: !parent(y,Jack); GB
-    //Values (1):
-    //	Row 001: x=%2
 
     public String toString(Mind mind) {
         return toString(mind, arguments, false);
@@ -253,16 +192,6 @@ public class Solve {
         return hash;
     }
 
-//    public int getHashBase(Mind mind) {
-//        int hash = 3;
-//        hash = 47 * hash + (antc ? 1 : 0);
-//        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-//        //TODO: ---
-//        hash = 47 * hash + arguments.getHash(mind);
-////        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
-//        return hash;
-//    }
-
     @Override
     public boolean equals(Object d) {
         if (d != null) {
@@ -277,45 +206,6 @@ public class Solve {
         }
         return false;
     }
-
-//    public boolean isComplete() {
-//        boolean complete = true;
-//        for (Argument a : arguments) {
-//            if (a.isEmpty(mind)) {
-//                complete = false;
-//                break;
-//            }
-//        }
-//        return complete;
-//    }
-
-    //    public Set<Tree> getParentTrees() {
-//        Set<Tree> set = new HashSet<>();
-//        for (Tree t : mind.getTrees()) {
-//            if (t.getSequence().contains(this)) {
-//                set.add(t);
-//            }
-//        }
-//        return set;
-//    }
-//
-//    public void pushValues() {
-//        List<TValue> list = new ArrayList<>();
-//        for (TVariable t : arguments.getTVariables(true)) {
-//            list.add(t.getCurrent());
-//        }
-//        tStack.push(list);
-//    }
-//
-//    public void popValues() {
-//        List<TValue> list = tStack.pop();
-//        List<TVariable> ts = arguments.getTVariables(true);
-//        for (int i = 0; i < ts.size(); ++i) {
-//            if (list.get(i) != null) {
-//                ts.get(i).setCurrent(list.get(i));
-//            }
-//        }
-//    }
 
     public long getPredicateId() {
         return predicateId;
@@ -351,155 +241,18 @@ public class Solve {
         return this;
     }
 
-//    public boolean isIntersected(Domain d) {
-//        List<TValue> tValues = arguments.getTValues(true);
-//        if (tValues.isEmpty()) {
-//            return false;
-//        } else {
-//            boolean found = false;
-//            for (TValue v : tValues) {
-//                for (int i = 0; i < d.getPredicate().getRange(); ++i) {
-//                    Argument a = d.get(i);
-//                    if (a.isEmpty()) {
-//                        return false;
-//                    } else {
-//                        if (a.getValue().getId() == v.getValue().getId()) {
-//                            for (Cause s : v.getCauses()) {
-//                                if (s.getSrc().getPredicate().getId() == d.getPredicate().getId() && s.getIndex() == i) {
-//                                    found = true;
-//                                    return true;
-//                                }
-//                            }
-//                        }
-//                    }
-////                    if (found) {
-////                        break;
-////                    }
-//                }
-//            }
-////            if (!found) {
-////                return false;
-////            }
-//            return true;
-//        }
-//    }
-//    public int getValOrder(int i) {
-//    }
-
-//    public int getHashStruct(Mind mind) throws Exception {
-//        int hash = 3;
-//        hash = 47 * hash + (antc ? 1 : 0);
-//        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-//        hash = 47 * hash + range;
-//        for (int i = 0; i < range; ++i) {
-//            hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
-//            switch (arguments.get(i).getType()) {
-//                case TVARIABLE:
-//                    hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
-//                    break;
-//                case TERM:
-//                    long id = arguments.get(i).getValue(mind).getId();
-//                    hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
-//                    break;
-//                case FUNCTION:
-//                    hash = 47 * hash + (i + 1) * arguments.get(i).getF(mind).getHashStruct(getRight(mind));
-//                    break;
-//            }
-//        }
-//        return hash;
-//    }
-//
-//    public boolean equalsToStruct(Mind mind, Solve to) throws Exception {
-//        if (to.isAntc() == antc
-//                && to.getRange() == range
-//                && to.getPredicateId() == predicateId) {
-//            int i = 0;
-//            for (; i < range; ++i) {
-//                if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
-//                    switch (arguments.get(i).getType()) {
-//                        case TVARIABLE:
-//                            if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
-//                                return false;
-//                            }
-//                            break;
-//                        case TVALUE:
-//                        case TERM:
-//                            if (arguments.get(i).getValue(mind).getId() != to.getArguments().get(i).getValue(mind).getId()) {
-//                                return false;
-//                            }
-//                            break;
-//                        case FUNCTION:
-//                            if (!arguments.get(i).getF(mind).equalsToStruct(to.getArguments().get(i).getF(mind), getRight(mind), to.getRight(mind))) {
-//                                return false;
-//                            }
-//                            break;
-//                    }
-//                } else {
-//                    return false;
-//                }
-//            }
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
-
-//    @Override
-//    public boolean isDeleted() {
-//        return deleted;
-//    }
-//
-//    @Override
-//    public void setDeleted() {
-//        this.deleted = true;
-//    }
-//
-//    @Override
-//    public long getMindId() {
-//        return mindId;
-//    }
-//
-//    @Override
-//    public void setMindId(long mindId) {
-//        this.mindId = mindId;
-//    }
-//
-//    @Override
-//    public int compareTo(Solve domain) {
-//        return (int) (rightId == domain.rightId ? id - domain.id : rightId - domain.rightId);
-//    }
-
-//    public int compareVars(Domain slave, int pos) throws Exception {
-//        if(arguments.get(pos).getType() == ArgumentType.TVARIABLE && slave.get(pos).isCVar() && rightId == slave.get(pos).getValue(mind).getRightId()) {
-//            return arguments.get(pos).getT(mind).getIndex() - slave.get(pos).getValue(mind).getIndex();
-//        } else {
-//            return 0;
-//        }
-//    }
-
-//    public Domain commit(Mind m) throws Exception {
-//        setPredicate(predicate.commit(m));
-//        for (Argument a : arguments) {
-//            a.setO((IUnit) a.getO(mind).commit(m));
-//        }
-//        setMind(m);
-//        return this;
-//    }
-
     public int getHash(IMind mind) {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-        //TODO: ---
         hash = 47 * hash + arguments.getHash((Mind) mind);
-//        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
         return hash;
     }
 
     public Collection<Long> getTerms(Mind mind, boolean total) throws Exception {
         Set<Long> terms = new HashSet<>();
         if (total) {
-            terms.add(((Predicate) getPredicate(mind)).getNameId());
+            terms.add(getPredicate(mind).getNameId());
         }
         terms.addAll(arguments.getTerms(mind, total));
         return terms;

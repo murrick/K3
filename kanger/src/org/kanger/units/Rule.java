@@ -48,30 +48,25 @@ public class Rule implements IUnit<IRule>, IRule {
     private static final long serialVersionUID = 196402070007L;
 
     private long id = -1;                                   // ID Правила
-    private long mindId = -1;                                   // id транзакции
-    private ITerm origin = null;                               // Оригинальная строка
+    private long mindId = -1;                               // id транзакции
+    private ITerm origin = null;                            // Оригинальная строка
     private boolean query = false;                          // Вновь введенное правило
     private boolean generated = false;                      // Правило добавлено в процессе выводс
     private boolean stored = false;                         // Правило добавлено в процессе выводс
     private boolean substitutable = false;                  // Правило содержит t-переменные
     private boolean abstractive = false;                    // Правило содержит c-переменные
-    private boolean second = false;
+    private boolean second = false;                         // Такое правило уже содержится в программе
+    private int varIndex = 0;                               // Граниченое значение счетчика переменных
     private List<List<Domain>> tree = new ArrayList<>();    // Ссылка на дерево правила
-    private Set<ICause> causes = new HashSet<>();
+    private Set<ICause> causes = new HashSet<>();           // Список причин появления правила
 
-    private transient List<TValue> solves = new ArrayList();
-    private transient Set<Long> predicates = new HashSet<>();
-    private transient Set<Long> terms = new HashSet<>();
+    private List<TValue> solves = new ArrayList();
+    private Set<Long> predicates = new HashSet<>();         // Список используемых предикатов
+    private Set<Long> terms = new HashSet<>();              // Список используемых термов
 
-    private int varIndex = 0;
-
-    private transient long originId = -1;
-    private transient List<List<Long>> treeIds = new ArrayList<>();
-
-    //    private transient IUser user = null;
-    private transient Mind mind = null;
-
-//    private transient boolean deleted = false;
+    private long originId = -1;
+    private List<List<Long>> treeIds = new ArrayList<>();
+    private Mind mind = null;
 
     public Rule() {
     }
@@ -137,7 +132,6 @@ public class Rule implements IUnit<IRule>, IRule {
             try {
                 packet.mark();
                 ICause c = new Cause().apply(packet);
-//                c.setUser(user);
                 causes.add(c);
             } finally {
                 packet.release();
@@ -159,25 +153,6 @@ public class Rule implements IUnit<IRule>, IRule {
             }
         }
     }
-
-
-//    @Override
-//    public void linkExternal(User user) throws IOException, ClassNotFoundException {
-//        this.user = user;
-//        orig = mind.getTerms().load(origId);
-//        for (List<Long> ids : treeIds) {
-//            List<Domain> branch = new ArrayList<>();
-//            for (long id : ids) {
-//                Domain domain = mind.getDomains().load(id);
-//                branch.add(domain);
-//                predicates.add(domain.getPredicate());
-//            }
-//            tree.add(branch);
-//        }
-//        for (Cause c : causes) {
-////            c.linkExternal(user);
-//        }
-//    }
 
     public Domain getDomain() throws Exception {
         return getTree().get(0).get(0);
@@ -207,7 +182,6 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     public void setStored(Mind mind) throws Exception {
-//        setDeleted(false, mind);
         this.stored = true;
     }
 
@@ -263,15 +237,6 @@ public class Rule implements IUnit<IRule>, IRule {
     public String getOrigin() throws Exception {
         if (origin == null && originId != -1) {
             origin = mind.getTerms().get(originId);
-
-            //TODO: Кастыль
-//            if (origin == null && isStored()) {
-//                int save = mind.getDebugLevel();
-//                mind.setDebugLevel(0);
-//                origin = mind.getTerms().add(getDomain().toString());
-//                mind.setDebugLevel(save);
-//            }
-
         }
         return origin == null ? null : (String) origin.getValue();
     }
@@ -333,11 +298,8 @@ public class Rule implements IUnit<IRule>, IRule {
         mind.getComments().add(id, comment);
     }
 
-    //TODO: 5  !~b(z); ?b(z) -> c(z);  => TRUE - Не верно
-
     @Override
     public int getHash() throws Exception {
-        //TODO: 4
         if (stored || (tree.size() == 1 && tree.get(0).size() == 1 && !getDomain().isSubstitutable())) {
             return getDomain().getHashBase(mind);
         } else {
@@ -369,9 +331,6 @@ public class Rule implements IUnit<IRule>, IRule {
 
     @Override
     public boolean equalsTo(IRule to) throws Exception {
-//        if (stored || (tree.size() == 1 && tree.get(0).size() == 1)) {
-//            return equalsTo(to.getDomain());
-//        } else
         if (getTree().size() == ((Rule) to).getTree().size()) {
             List<List<Domain>> tmp = new ArrayList<>();
             tmp.addAll(((Rule) to).getTree());
@@ -397,10 +356,6 @@ public class Rule implements IUnit<IRule>, IRule {
     @Override
     public Rule setMind(Mind mind) throws Exception {
         this.mind = mind;
-//        for (Cause c : getCauses()) {
-//            c.setUser(user);
-//        }
-
         for (List<Domain> list : getTree()) {
             for (Domain d : list) {
                 d.setMind(mind);
@@ -423,18 +378,15 @@ public class Rule implements IUnit<IRule>, IRule {
     public boolean equalsTo(Solve x) throws Exception {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
-                && ((Solve) x).getPredicateId() == domain.getPredicateId()
+                && x.getPredicateId() == domain.getPredicateId()
                 && x.getRange() == domain.getRange()) {
             int i = 0;
             for (; i < domain.getRange(); ++i) {
-                //TODO: Костыль!
-//                    x.get(i).setUser(user);
                 if (!x.getArguments().get(i).isEmpty(mind)
                         && !domain.getArguments().get(i).isEmpty(mind)
                         && x.getArguments().get(i).getValue(mind).getId() != domain.getArguments().get(i).getValue(mind).getId()) {
                     break;
                 }
-
                 TValue a = null;
                 switch (x.getArguments().get(i).getType()) {
                     case TVARIABLE:
@@ -476,7 +428,6 @@ public class Rule implements IUnit<IRule>, IRule {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         return hash;
-//        return ("" + id).hashCode();
     }
 
     @Override
@@ -534,53 +485,6 @@ public class Rule implements IUnit<IRule>, IRule {
         this.abstractive = abstractive;
     }
 
-//    public TSolve addTSolve(List<TValue> list) {
-//        TSolve tmp = findTSolve(list);
-//        if (tmp != null) {
-//            return tmp;
-//        } else {
-//            if (!mind.getRightSolves().containsKey(this)) {
-//                mind.getRightSolves().put(this, new ArrayList<>());
-//            }
-//            tmp = new TSolve(list, mind);
-//            mind.getRightSolves().get(this).add(tmp);
-//            return tmp;
-//        }
-//    }
-//
-//    public TSolve findTSolve(List<TValue> list) {
-//        TSolve tmp = new TSolve(list, mind);
-//        if (mind.getRightSolves().containsKey(this)) {
-//            for (TSolve t : mind.getRightSolves().get(this)) {
-//                if (tmp.equalsTo(t)) {
-//                    return t;
-//                }
-//            }
-//        }
-//        return null;
-//    }
-//
-//    public List<TSolve> getTSolves() {
-//        if (!mind.getRightSolves().containsKey(this)) {
-//            mind.getRightSolves().put(this, new ArrayList<>());
-//        }
-//        return mind.getRightSolves().get(this);
-//    }
-
-//    public Set<TVariable> setTSlolve(TSolve s) throws Exception {
-//        final SortedSet<TVariable> tvars = new TreeSet<>();
-//        for (List<Domain> tree : getTree()) {
-//            for (Domain d : tree) {
-//                tvars.addAll(d.getArguments().getTVariables(mind, true));
-//            }
-//        }
-//        for (TVariable t : tvars) {
-//            t.setCurrent(s == null ? null : s.getValue(t));
-////            mind.getTValues().set(t, s == null ? null : s.getValue(t));
-//        }
-//        return tvars;
-//    }
-
     @Override
     public UnitType getUnitType() {
         return UnitType.RULE;
@@ -631,68 +535,6 @@ public class Rule implements IUnit<IRule>, IRule {
         this.mindId = mindId;
     }
 
-//    public Right commit(Mind m) throws Exception {
-//        m.compile(orig.toString());
-//        if (m.getRights().find(this) == null) {
-//            setOrig(orig.commit(m));
-//            predicates.clear();
-//            for (List<Domain> list : tree) {
-//                for (Domain d : list) {
-//                    d.commit(m);
-//                    predicates.add(d.getPredicateId());
-//                }
-//            }
-//            for (TVariable t : mind.getTVars()) {
-//                if (t.getRight().getId() == id) {
-//                    t.commit(m);
-//                }
-//            }
-//            for (Cause c : causes) {
-//                c.commit(mind, m);
-//            }
-//            for (TValue t : solves) {
-//                t.commit(m);
-//            }
-//            m.getRights().register(this);
-//            m.getRights().add(this);
-//            this.setMind(m);
-//        } else {
-//            mind.getRights().delete(this);
-//        }
-//        return this;
-//    }
-
-    //    public Right commit(Mind m) throws Exception {
-//        if (m.getRights().find(this) == null) {
-//            setOrig(orig.commit(m));
-//            predicates.clear();
-//            for (List<Domain> list : tree) {
-//                for (Domain d : list) {
-//                    d.commit(m);
-//                    predicates.add(d.getPredicateId());
-//                }
-//            }
-//            for (TVariable t : mind.getTVars()) {
-//                if (t.getRight().getId() == id) {
-//                    t.commit(m);
-//                }
-//            }
-//            for (Cause c : causes) {
-//                c.commit(mind, m);
-//            }
-//            for (TValue t : solves) {
-//                t.commit(m);
-//            }
-//            m.getRights().register(this);
-//            m.getRights().add(this);
-//            this.setMind(m);
-//        } else {
-//            mind.getRights().delete(this);
-//        }
-//        return this;
-//    }
-
-
     @Override
     public boolean isLoaded() {
         return origin != null && originId == origin.getId();
@@ -713,22 +555,6 @@ public class Rule implements IUnit<IRule>, IRule {
         map.put("second", second);
 
         map.put("origin", getOrigin());
-
-//        List<List<String>> mt = new ArrayList<>();
-//        for(List<Domain> branch : tree) {
-//            List<String> b = new ArrayList<>();
-//            mt.add(b);
-//            for(Domain d : branch ) {
-//                b.add(d.toString());
-//            }
-//        }
-//        map.put("tree", mt);
-
-//        List<Map<String, Object>> mc = new ArrayList<>();
-//        for(ICause cause : causes) {
-//            mc.add(((Cause) cause).createMap(mind));
-//        }
-//        map.put("causes", mc);
 
         return map;
     }
@@ -800,39 +626,5 @@ public class Rule implements IUnit<IRule>, IRule {
     public void setSecond(boolean second) {
         this.second = second;
     }
-
-//    public void washCauses() throws Exception {
-//        if (isStored()) {
-//            SortedMap<Integer, Set<Cause>> map = new TreeMap<>();
-//            for (Cause c : causes) {
-//                int weight = 0;
-//                for (Argument a : getDomain().getArguments()) {
-//                    for (Argument b : c.getDonor().getArguments()) {
-//                        if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
-//                            ++weight;
-//                            break;
-//                        }
-//                    }
-//                }
-//
-////                if(weight == getDomain().getRange() && getDomain().getPredicateId() == c.getDonor().getPredicateId()) {
-////                    weight = 0;
-////                }
-//
-//                if (!map.containsKey(weight)) {
-//                    map.put(weight, new HashSet<>());
-//                }
-//                map.get(weight).add(c);
-//            }
-//            if (map.size() > 1) {
-//                int weight = map.firstKey();
-//                for (Cause c : map.get(weight)) {
-//                    causes.remove(c);
-//                }
-//                map.remove(weight);
-//            }
-//        }
-//    }
-
 
 }

@@ -46,23 +46,14 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     private static final long serialVersionUID = 196402070009L;
 
-    private long id = -1;                   // Идентификатор значения переменной
-    private long mindId = -1;                                   // id транзакции
-    private ITerm value = null;
-    private TVariable tVar = null;
-//    private long tag = 0;
-//    private Set<Cause> causes = new HashSet<>();
+    private long id = -1;               // Идентификатор значения переменной
+    private long mindId = -1;           // id транзакции
+    private ITerm value = null;         // Подставленное значение донор
+    private TVariable tVar = null;      // t-переменная аксептор
 
-//    private boolean cVariable = false;        // Родительская c-переменная
-//    private long parentId = -1;               // Родительская c-переменная
-
-    //    private TValue next = null;          // Следующая переменная
-    private transient long valueId = -1;
-    private transient long tVarId = -1;
-    private transient Mind mind = null;
-
-    //    private transient boolean deleted = false;
-//    private transient boolean calculated = false;
+    private long valueId = -1;
+    private long tVarId = -1;
+    private Mind mind = null;
 
     public TValue() {
     }
@@ -72,7 +63,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         value = val;
         tVarId = tVar.getId();
         valueId = value.getId();
-//        cVariable = val.isCVariable();
     }
 
     public TValue(Mind mind) {
@@ -85,7 +75,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.value = t;
         tVarId = tVar.getId();
         valueId = value.getId();
-//        cVariable = t.isCVariable();
     }
 
     public ByteBuffer pack() {
@@ -95,13 +84,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
                 .putByte(isDeleted(mind) ? 1 : 0)
                 .putLong(valueId)
                 .putLong(tVarId);
-//                .putByte(cVariable ? 1 : 0);
-//                .putLong(parentId);
-
-//                .putInt(causes.size());
-//        for (Cause c : causes) {
-//            packet.append(c.pack());
-//        }
         return packet.createMarked();
     }
 
@@ -113,19 +95,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         }
         valueId = packet.getLong();
         tVarId = packet.getLong();
-//        cVariable = packet.getByte() != 0;
-//        parentId = packet.getLong();
-//        int count = packet.getInt();
-//        while (count-- > 0) {
-//            try {
-//                packet.mark();
-//                Cause c = new Cause().apply(packet);
-////                c.setUser(user);
-//                causes.add(c);
-//            } finally {
-//                packet.release();
-//            }
-//        }
         return this;
     }
 
@@ -139,13 +108,7 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     public void setValue(Term value) {
         this.value = value;
         valueId = value.getId();
-//        cVariable = value.isCVariable();
     }
-
-//    public Set<Cause> getCauses() {
-//        return causes;
-//    }
-
 
     @Override
     public long getId() {
@@ -169,14 +132,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.tVarId = tVar.getId();
     }
 
-//    public long getTag() {
-//        return tag;
-//    }
-//
-//    public void setTag(long tag) {
-//        this.tag = tag;
-//    }
-
     public String toString(IMind mind) {
         try {
             return ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0
@@ -195,33 +150,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         }
         mind.getQueryValues().get(getTVar(mind)).add(this);
     }
-
-    //    public void setBlocked() {
-//        if (!mind.getBlockedValues().containsKey(tVar.getId())) {
-//            mind.getBlockedValues().put(tVar.getId(), new HashSet<>());
-//        }
-//        mind.getBlockedValues().get(tVar.getId()).add(id);
-//    }
-//
-//    public boolean isBlocked() {
-//        return mind.getBlockedValues().containsKey(tVar.getId()) && mind.getBlockedValues().get(tVar.getId()).contains(id);
-//    }
-//
-    //    public boolean isRelativeFor(TValue slave) {
-//        for (Domain m : dstSolves) {
-//            if (slave.getSrcSolves().contains(m)) {
-//                return true;
-//            }
-//        }
-//        for (Domain m : srcSolves) {
-//            if (slave.getDstSolves().contains(m)) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-//
-//
 
     @Override
     public int getHash() {
@@ -244,9 +172,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     @Override
     public TValue setMind(Mind mind) {
         this.mind = mind;
-//        for (Cause c : causes) {
-//            c.setUser(user);
-//        }
         return this;
     }
 
@@ -255,7 +180,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         return hash;
-//        return ("" + id).hashCode();
     }
 
     @Override
@@ -301,32 +225,6 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.mindId = mindId;
     }
 
-//    public TValue commit(Mind m) throws Exception {
-//        setMind(m);
-//        setValue(value.commit(m));
-////        for (Cause c : causes) {
-////            c.commit(mind, m);
-////        }
-//        return this;
-//    }
-
-
-    //    public long getParentId() {
-//        return parentId;
-//    }
-//
-//    public void setParentId(long parentId) {
-//        this.parentId = parentId;
-//    }
-//
-//    public boolean isCVariable() {
-//        return cVariable;
-//    }
-//
-//    public void setCVariable(boolean cVariable) {
-//        this.cVariable = cVariable;
-//    }
-
     @Override
     public boolean isLoaded() {
         return value != null && valueId == value.getId();
@@ -361,13 +259,4 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         tVar = null;
         return this;
     }
-
-//    public boolean isCalculated() {
-//        return calculated;
-//    }
-//
-//    public void setCalculated(boolean calculated) {
-//        this.calculated = calculated;
-//    }
-
 }

@@ -91,7 +91,6 @@ public class Parser {
             new org.kanger.compiler.Operation("<>", "_ne", 5, 2, 0, false, false),
 
             /* 6 */
-//            new Operation("..", "", 11, 2, 0, false, false),
             new org.kanger.compiler.Operation(",", "", 6, 2, 0, false, false),
             new org.kanger.compiler.Operation("&&", "&", 6, 2, 0, false, true),
 
@@ -140,8 +139,6 @@ public class Parser {
             ret[i] = list.get(i);
         }
         return ret;
-
-        //"//.*|(\"(?:\\\\[^\"]|\\\\\"|.)*?\")|(?s)/\\*.*?\\*/"
     }
 
     public static Object[] getToken(String ln, int pos) throws ParseErrorException {
@@ -234,7 +231,6 @@ public class Parser {
             while (pos < ln.length() && isHex(ch = ln.charAt(pos++))) {
                 line += (char) ch;
             }
-//            c = ln.charAt(pos++);
             --pos;
         } else {
             line += (char) ch;
@@ -334,8 +330,6 @@ public class Parser {
             if (line.charAt(0) == Enums.RB || line.charAt(0) == ']') {
                 if (root != null) {
                     root.setPos(pos);
-//                } else if (line.charAt(0) == Enums.EOLN) {
-//                    throw new ParseErrorException(ParseError.EMPTY);
                 }
                 return root;
             }
@@ -352,7 +346,6 @@ public class Parser {
                 if (line.equals(ops[i].getName())) {
 
                     if (term == 0 && ops[i].getRange() > 1) {
-                        //continue;
                         throw new ParseErrorException(pos, ParseError.EMPTY);
                     }
                     if (term != 0 && ops[i].getRange() == 1) {
@@ -360,20 +353,8 @@ public class Parser {
                         if (ops[i].getName().equals("~") || ops[i].getName().equals("-") || ops[i].getName().equals("+")) {
                             continue;
                         }
-
                         throw new ParseErrorException(pos, ParseError.EMPTY);
-                        //continue;
                     }
-
-                    if (term == 0 && ops[i].getName().equals("[")) {
-//                        p.setRight(parse(ln, pos /*, term + mode*/));
-//                        if (p.getRight() != null) {
-//                            pos = p.getRight().getPos();
-//                        } else {
-//                            ++pos;
-//                        }
-                    }
-
 
                     /* WAS QUANTOR flag and pointer. Need for correct
                      * definition non-standard quantor syntax
@@ -383,7 +364,7 @@ public class Parser {
                     p.setPrior(ops[i].getPrior());
                     p.setNext(ops[i].getRange() > 1 && !ops[i].isPost() ? DIR_RIGHT : DIR_LEFT);
                     p.setDir(ops[i].getDir());
-                    p.setRange(ops[i].getRange()); //TODO: Calc range
+                    p.setRange(ops[i].getRange());
 
                     if (term == 0 && ops[i].getName().equals("[")) {
                         p.setNext(DIR_RIGHT);
@@ -391,91 +372,45 @@ public class Parser {
                     /* System predicates or functions */
                     if (ops[i].getSubst().length() > 0) {
                         if (!ops[i].isRepl()) {
-                            p.setSystem(true); //.setMode(MODE_FUNCTION);
+                            p.setSystem(true);
                         }
                         p.setName(ops[i].getSubst());
                     }
                     break;
                 }
             }
-
-            /*
-             if(!mode && i >= count){
-             for(i=0; i<oper_count; ++i){
-             if(!strcmp(line,oper_ops[i].name)){
-             count = oper_count;
-             ops = oper_ops;
-             mode = 1;
-             goto REPEAT;
-             }
-             }
-             }
-
-             else if(mode && i >= count){
-             for(i=0; i<glob_count; ++i){
-             if(!strcmp(line,glob_ops[i].name)){
-             count = glob_count;
-             ops = glob_ops;
-             mode = 0;
-             goto REPEAT;
-             }
-             }
-             }
-             */
             if (p.getName() == null) {
                 p.setName(line);
             }
-
-
 
             /* Check () Calculate
              * recursively. Detect predicate. Define 'term' flag == 1 if this
              * is just a name, and == 0 if this is
              * databased operation.
              */
-//            if (p.getName().charAt(0) == Enums.COMMA) {
-//                p.setPrior(17);
-//            } else
-
             if (p.getName().charAt(0) == Enums.LB || p.getName().equals("_is")) {
-//                if (wasq != null /*was == WasWhat.QNT*/ /*|| was == WasWhat.TERM*/) {
-//                    throw new ParseErrorException(pos, ParseError.LBRACK);
-//                }
-
                 if (p.getName().equals("_is")) {
                     PTree x = new PTree();
                     x.setNext(DIR_LEFT);
                     x.setLeft(p);
                     x.setName("(");
-//                    x.setPrior(p.getPrior());
                     p = x;
                 } else {
                     p.setPrior(0);
                 }
 
-                //if(term)
                 p.setRule(parse(ln.trim(), pos /*, term + mode*/));
                 if (p.getRight() != null) {
                     pos = p.getRight().getPos();
                 } else {
                     ++pos;
                 }
-//                else if (ln.charAt(pos) == Enums.RB) {
-//                    // Функция ранга 0
-//                    ++pos;
-//                }
                 if (pos + 1 == ln.length() && ln.charAt(pos) != Enums.EOLN) {
                     throw new ParseErrorException(pos, ParseError.EOLN);
                 } else if (ln.charAt(pos - 1) != Enums.RB && ln.charAt(pos - 1) != ']') {
                     throw new ParseErrorException(pos, ParseError.BRACKET);
                 }
 
-                /* Set predicate or function for undefined */
-//                if (term != 0) {
-//                    p.setSystem(true); //.setMode(MODE_FUNCTION);
-//                } else {
-//                    term = 1;
-//                }
                 if (term == 0) {
                     term = 1;
                 }
@@ -491,7 +426,6 @@ public class Parser {
             } else {
                 term = p.getPrior() == 0 ? 1 : 0;
             }
-
 
             /* Inserting new node (maybe with sub-tree) into
              * main expression tree. Function scan tree on 'right'
@@ -523,7 +457,6 @@ public class Parser {
                  */
                 if (q == root) {
                     if (wasq == null) {
-//                    if (p.getNext() == DIR_LEFT) {
                         p.setLeft(root);
                     } else {
                         p.setRule(root);
@@ -532,7 +465,6 @@ public class Parser {
                 } else {
                     if (q != null) {
                         if (wasq == null) {
-//                    if (p.getNext() == DIR_LEFT) {
                             p.setLeft(q);
                         } else {
                             p.setRule(q);
@@ -555,7 +487,6 @@ public class Parser {
                     term = 0;
                 }
 
-
                 // Обработка интервалов
                 if (Enums.INTERVALS.containsKey(p.getName().toLowerCase())
                         && p.getLeft() != null
@@ -568,19 +499,12 @@ public class Parser {
                     }
                     p.setLeft(null);
                 }
-
-
-
                 /* If node is first in tree -
                  * just place'em as root of tree.
                  */
             } else {
                 root = p;
             }
-
-//            wasn = ops[i].getName().charAt(0) == Enums.NOT ? p : null;
-
-
         } while (pos < ln.length());
         return root;
     }
@@ -597,7 +521,6 @@ public class Parser {
             if (t == null) {
                 break;
             }
-
             pos = (Integer) t[1];
             line = (String) t[0];
 
@@ -649,93 +572,11 @@ public class Parser {
     }
 
     public static PTree parser(String ln) throws ParseErrorException {
-        char lastch;
-
         if (!ln.isEmpty() && ln.trim().charAt(ln.trim().length() - 1) != Enums.EOLN) {
             throw new ParseErrorException(ln.trim().length() - 1, ParseError.EOLN);
         }
         return squeeze(parse(ln.trim(), 0 /*, 0*/));
-//        return parse(ln, 0, 0);
     }
-
-    //    String recursePtree(PTree root, int mode) {
-//        String str = "";
-//        if(root != null){
-//            if(root.isSystem() /*->mode == FUNCTION || root->mode == PREDICAT*/){
-//                if(root.getName().charAt(0) == Enums.LB){
-//                    str += recursePtree(root.getLeft(), mode);
-//                    str += "(";
-//                    str += recursePtree(root.getRight(), 1);
-//                    str += ")";
-//                }
-//                else{
-//                    str += String.format("%s(", root.getName());
-//                    str += recursePtree(root.getLeft(), 1);
-//                    if(root.getRight() != null){
-//                        str += ",";
-//                        str += recursePtree(root.getRight(), 1);
-//                    }
-//                    str += ")";
-//                }
-//            }
-//            else if(root.getName().charAt(0) == Enums.AQN || root.getName().charAt(0) == Enums.PQN){
-//                str += root.getName();
-//                str += recursePtree(root.getLeft(), mode);
-//                str += " ";
-//                str += recursePtree(root.getRight(), mode);
-//            }
-//            else if(root.getRange() == 1){
-//                str += root.getName();
-//                str += recursePtree(root.getLeft(), mode);
-//            }
-//            else if(root.getName().charAt(0) == Enums.LB){
-//                if(mode == 0 || root.getLeft() != null){
-//                    str += recursePtree(root.getLeft(), mode);
-//                    str += "(";
-//                    str += recursePtree(root.getRight(), mode);
-//                    str += ")";
-//                }
-//                else
-//                    str += recursePtree(root.getRight(), mode);
-//            }
-//            else{
-//                if(root.getPrior() == 0 || root.getName().charAt(0) == Enums.COMMA){
-//                    str += recursePtree(root.getLeft(), mode);
-//                    str += root.getName();
-//                    str += recursePtree(root.getRight(), mode);
-//                }
-//                else{
-//                    if(root.getLeft() != null && !root.getLeft().isSystem()){
-//                        str += "(";
-//                        str += recursePtree(root.getLeft(), mode);
-//                        str += ")";
-//                    }     else {
-//                        str += recursePtree(root.getLeft(), mode);
-//                    }
-//
-//                    str += root.getName();
-//
-//                    if(root.getRight() != null && !root.getRight().isSystem()){
-//                        str += "(";
-//                        str += recursePtree(root.getRight(), mode);
-//                        str += ")";
-//                    }                    else {
-//                        str += recursePtree(root.getRight(), mode);
-//                    }
-//                }
-//            }
-//        }
-//        return str;
-//    }
-//    String reformatLine(String ln) {
-//        ln = skipSpaces(ln);
-//        int antc = ln.charAt(0);
-//
-//        PTree p = parser(ln.substring(1));
-//        String line = ((char)antc) + recursePtree(p, 0) + ";";
-//        return line;
-//    }
-
 
     public static org.kanger.compiler.Operation getOp(String o, int range) {
         for (org.kanger.compiler.Operation op : ops) {
@@ -754,5 +595,3 @@ public class Parser {
     }
 
 }
-
-//TODO: : ?a=4; //Result: FALSE

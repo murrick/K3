@@ -46,26 +46,18 @@ public class FValue implements IUnit<FValue> {
 
     private static final long serialVersionUID = 196402070003L;
 
-    private long id = -1;
-    private long mindId = -1;                                   // id транзакции
-    private Function function = null;
-    private Term value = null;
-    private ArgumentsList condition = new ArgumentsList();
-    private List<Long> stamp = new ArrayList<>();
-
-    //    private FValue next = null;
-    private transient Mind mind = null;
+    private long id = -1;                                   // id решения
+    private long mindId = -1;                               // id транзакции
+    private Function function = null;                       // ссылка на функцию
+    private Term value = null;                              // результат решения
+    private ArgumentsList condition = new ArgumentsList();  // список значений параметров
+    private List<Long> stamp = new ArrayList<>();           // список t-подстановок в порядке слдедования t-перем.
 
     private transient long functionId = -1;
     private transient long valueId = -1;
-
-//    private transient boolean deleted = false;
+    private transient Mind mind = null;
 
     public FValue() {
-    }
-
-    public FValue(Mind mind) {
-        this.mind = mind;
     }
 
     public FValue(Function f, Mind mind) throws Exception {
@@ -75,7 +67,6 @@ public class FValue implements IUnit<FValue> {
         if (value != null) {
             valueId = value.getId();
         }
-//        condition.setUser(user);
         for (IArgument a : f.getArguments()) {
             if (a.getType() == ArgumentType.TVARIABLE) {
                 condition.add(new Argument(((TVariable) a.getObject(mind)).getCurrent()));
@@ -126,7 +117,6 @@ public class FValue implements IUnit<FValue> {
         try {
             packet.mark();
             condition = new ArgumentsList().apply(packet);
-//            condition.setUser(user);
         } finally {
             packet.release();
         }
@@ -155,27 +145,6 @@ public class FValue implements IUnit<FValue> {
         return value;
     }
 
-//    @Override
-//    public Term getDirtyValue() {
-//        return getValue();
-//    }
-
-//    public TValue getValue(TVariable t) {
-//        if (condition.containsKey(t.getId())) {
-//            return mind.getTValues().get(condition.get(t.getId()));
-//        } else {
-//            return null;
-//        }
-//    }
-
-//    public void setCondition(Map<Long, Long> condition) {
-//        this.condition = condition;
-//    }
-//
-//    public Map<Long, Long> getCondition() {
-//        return condition;
-//    }
-
     public Function getFunction() throws Exception {
         if (function == null) {
             function = mind.getFunctions().get(functionId);
@@ -187,10 +156,6 @@ public class FValue implements IUnit<FValue> {
         this.function = function;
         this.functionId = function.getId();
     }
-
-//    public Argument getCondition(int index) {
-//        return condition.get(index);
-//    }
 
     public ArgumentsList getCondition() {
         return condition;
@@ -264,7 +229,6 @@ public class FValue implements IUnit<FValue> {
     @Override
     public FValue setMind(Mind mind) {
         this.mind = mind;
-//        this.condition.setUser(user);
         return this;
     }
 
@@ -283,8 +247,6 @@ public class FValue implements IUnit<FValue> {
         int hash = 3;
         hash = 47 * hash + (int) (id ^ (id >>> 32));
         return hash;
-
-//        return ("" + id).hashCode();
     }
 
     public String toString(IMind mind) {
@@ -328,7 +290,6 @@ public class FValue implements IUnit<FValue> {
                             res = " [= " + condition.get(function.getRange()).getValue(mind) + "]";
                         }
                     }
-                    //Argument r = range < arguments.size() ? arguments.createCVar(range) : null;
                     return s + res;
                 } catch (Exception e) {
                     System.err.println(new Date());
@@ -347,26 +308,6 @@ public class FValue implements IUnit<FValue> {
     public UnitType getUnitType() {
         return UnitType.FVALUE;
     }
-
-//    @Override
-//    public FValue commit(Mind m) throws Exception {
-//        setValue(value.commit(m));
-//        for (Argument a : condition) {
-//            a.setO((IUnit) a.getO(mind).commit(m));
-//        }
-//        List<Long> temp = new ArrayList<>();
-//        for (long id : stamp) {
-//            Term x = mind.getTerms().load(id);
-//            if (x != null) {
-//                temp.add(m.getTerms().add(x).getId());
-//            } else {
-//                temp.add(0L);
-//            }
-//        }
-//        stamp = temp;
-//        setMind(m);
-//        return this;
-//    }
 
     @Override
     public long getMindId() {

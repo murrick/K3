@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class Compiler {
 
-    private final transient Mind mind;
+    private final Mind mind;
 
     public Compiler(Mind mind) {
         this.mind = mind;
@@ -57,16 +57,6 @@ public class Compiler {
         ((Rule) r).setOrigin(mind.getTerms().add(orig));
         construct((Rule) r, ((Rule) r).getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
 
-        // Если есть с-переменные и нет t-переменных - то все c-переменные это просто термы
-//        if(r.isAbstractable() && !r.isSubstitutable()) {
-//            for(Term t : mind.getTerms()) {
-//                if(t.getRightId() == r.getId() && t.getIndex() > 0) {
-//                    t.setIndex(0);
-//                }
-//            }
-//        }
-
-//        Rule x
         long id = r.getId();
         r = mind.getRules().add(r);
 
@@ -78,16 +68,6 @@ public class Compiler {
         }
         return r;
     }
-
-//    private Map<String, Argument> incReplacements(Map<String, Argument> replacements, Right r) throws Exception {
-//        for(Map.Entry<String, Argument> e : replacements.entrySet()) {
-//            if(e.getValue().isCVar()) {
-//                Argument p = new Argument(mind.getTerms().createCVar(r, e.getKey()));
-//                e.setValue(p);
-//            }
-//        }
-//        return replacements;
-//    }
 
     private Domain construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<ITerm> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
@@ -107,15 +87,6 @@ public class Compiler {
                 construct(r, t, root.getRight(), antc, replacements, list, externals);
             }
             break;
-
-//            case Enums.COMMA: {
-//                Tree x = r.cloneTree(t, false);
-//                list.add(x);
-//                construct(r, t, root.getLeft(), antc, replacements, list);
-//                construct(r, x, root.getRight(), antc, replacements, list);
-//            }
-//            break;
-
             case Enums.COMMA:
                 if ("_in".equals(root.getLeft().getName()) && root.getRight() != null && root.getRight().getRight() == null && root.getRight().getLeft() == null) {
                     PTree left = root.getLeft();
@@ -226,8 +197,6 @@ public class Compiler {
     }
 
     private Domain compilePredicate(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
-//        Domain d = mind.getDomains().add(mind.getRights().getRoot());
-
         Domain d = new Domain(mind);
         d.setRule(r);
 
@@ -251,20 +220,6 @@ public class Compiler {
                 }
             }
             parseArgs(d, arg, root, 0, replacements, externals);
-
-//            if (arg.size() > 2 && ("_in".equals(root.getName()) || "_eq".equals(root.getName()))) {
-//                ArgList tmp = arg;
-//                arg = new ArgList();
-//                if(tmp.get(tmp.size()-1).getType() == ArgumentType.TVARIABLE) {
-//                    arg.add(tmp.get(tmp.size()-1));
-//                    tmp.remove(tmp.size()-1);
-//                    arg.add(0, new Argument(mind.getTerms().add(tmp)));
-//                } else {
-//                    arg.add(tmp.get(0));
-//                    tmp.remove(0);
-//                    arg.add(new Argument(mind.getTerms().add(tmp)));
-//                }
-//            }
             pred = mind.getPredicates().add(mind.getTerms().add(root.getName()), arg.size());
         } else if (root.getLeft() == null) {
             pred = mind.getPredicates().add(mind.getTerms().add(root.getName()), 0);
@@ -283,18 +238,11 @@ public class Compiler {
     }
 
     private void parseArgs(Domain d, ArgumentsList arg, PTree root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
-//        int s;
-
         if (root == null) {
         } else if (root.isSystem()) {
             if (level == 0) {
                 parseArgs(d, arg, root.getLeft(), level + 1, replacements, externals);
                 parseArgs(d, arg, root.getRight(), level + 1, replacements, externals);
-//            } else if (root.getName().equals("_neg")
-//                    && root.getRight() == null
-//                    && root.getLeft().getName().charAt(0) != Enums.LB
-//                    && new Term(root.getLeft().getName(), mind).getType() != DataType.NUMERIC) {
-//                throw new ParseErrorException(root.getPos(), ParseError.ENEG);
             } else {
                 // системная функция
                 ArgumentsList arguments = new ArgumentsList();
@@ -321,11 +269,6 @@ public class Compiler {
             Function f = mind.getFunctions().add(mind.getTerms().add(root.getLeft().getName()), arguments);
             Argument t = new Argument(f);
             arg.add(t);
-//        } else if (root.getName().equals("_neg")
-//                && root.getRight() == null
-//                && root.getLeft().getName().charAt(0) != Enums.LB
-//                && new Term(root.getLeft().getName(), mind).getType() != DataType.NUMERIC) {
-//            throw new ParseErrorException(root.getPos(), ParseError.ENEG);
         } else if (root.getName().equals("..")) {
             Argument t = new Argument(mind.getTerms().add(root));
             arg.add(t);
@@ -354,16 +297,6 @@ public class Compiler {
             Argument t;
             if ((t = replacements.get(root.getName())) == null) {
                 t = new Argument(mind.getTerms().add(root.getName()));
-//            } else {
-//                if(t.isCVar()) {
-//                    t = new Argument(mind.getTerms().createCVar(d.getRight(), t.getValue(mind).getName().toString()));
-//                }
-//            } else {
-//                if (t.getType() == ArgumentType.TVARIABLE) {
-//                    d.setSubstitutable();
-//                } else if (t.getValue(mind).isCVariable()) {
-//                    d.setAbstractive();
-//                }
             }
             arg.add(t);
         }

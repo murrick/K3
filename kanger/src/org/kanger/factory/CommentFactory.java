@@ -50,8 +50,9 @@ public class CommentFactory {
 
     private ICache cache;
     private IStep top = null;
-    private transient Mind mind = null;
     private IBase connection = null;
+
+    private final Mind mind;
 
     public CommentFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -62,7 +63,6 @@ public class CommentFactory {
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
-
         if (base != null) {
             cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
@@ -76,16 +76,6 @@ public class CommentFactory {
         } else if (base.top != null) {
             base.top.setNext(cache.getRoot());
         }
-//        if (cache.getRoot() != null) {
-//            for (IStep s = cache.getRoot(); s != null; s = s.getNext()) {
-//                if (((IUnit) s.getData()).getMindId() == base.mind.getId()) {
-//                    ((IUnit) s.getData()).setMind(mind);
-//                    ((IUnit) s.getData()).setMindId(mind.getId());
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
         cache.setRoot(base.cache.getRoot());
         for (Object s : cache) {
             if (((IUnit) s).getMindId() == base.mind.getId()) {
@@ -131,7 +121,6 @@ public class CommentFactory {
     }
 
     public Comment get(long id) throws Exception {
-//        Comment t = get(id);
         Comment t = (Comment) cache.get(id);
         if (t == null && connection != null) {
             IStep s = connection.get(id);
@@ -141,52 +130,9 @@ public class CommentFactory {
         }
         return t;
     }
-
-//    public Comment get(long id) throws Exception {
-//        Comment t = (Comment) cache.get(id);
-//        return t;
-//    }
-
-//    public Term load(long id) throws RuntimeErrorException {
-//        Term t = null;
-//        if (!user.isClosed()) {
-//            t = (Term) user.getStorage(SCHEMA).get(id);
-//            if (t != null) {
-//                load.add(t);
-//            }
-//        }
-//        return t;
-//    }
-
-//    public Term getRoot() {
-//        return root;
-//    }
-
-//    public void setRoot(Term o) {
-//        root = o;
-//    }
-
-//    private void mark() {
-//        stack.push(new Object[]{root, lastId, varIndex});
-//    }
-//
-//    private void release() {
-//        if (!stack.empty()) {
-//            Object[] pop = stack.pop();
-//            Term saved = (Term) pop[0];
-//            lastId = (long) pop[1];
-//            varIndex = (int) pop[2];
-//            root = saved;
-//        }
-//        if (stack.empty()) {
-//            mark();
-//        }
-//    }
-
     public int size() throws Exception {
         return cache.size();
     }
-
 
     public void clear() throws Exception {
         if (mind.getNext() != null) {
@@ -217,7 +163,6 @@ public class CommentFactory {
         cache.mark();
     }
 
-
     public void commit() throws Exception {
         cache.commit();
     }
@@ -231,13 +176,6 @@ public class CommentFactory {
             connection.close();
         }
     }
-
-//    public void delete(long id) throws Exception {
-//        Comment c = get(id);
-//        if (c != null) {
-//            c.setDeleted(true, mind);
-//        }
-//    }
 
     public boolean isEmpty() {
         return cache == null || cache.isEmpty();

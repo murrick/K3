@@ -65,19 +65,6 @@ public abstract class Tools {
         return i /= k;
     }
 
-//    public static boolean isKey(int ch) {
-//        return (ch == Enums.LB || ch == Enums.RB || ch == Enums.NOT || ch == Enums.CON || ch == Enums.DIS
-//                || ch == Enums.IMP || ch == Enums.PQN || ch == Enums.AQN || ch == Enums.SUC || ch == Enums.ANT
-//                || ch == Enums.CVC || ch == Enums.TVC || ch == Enums.COMMA || ch == Enums.EOLN || ch == ' ');
-//    }
-
-    //    public static String cutBraces(String a) {
-//        if (a.length() > 1 && ((a.charAt(0) == '\"' && a.charAt(a.length() - 1) == '\"') || (a.charAt(0) == '\'' && a.charAt(a.length() - 1) == '\''))) {
-//            a = a.substring(1, a.length() - 1);
-//        }
-//        return a;
-//    }
-
     public static boolean isBlob(String ch) {
         if (!ch.isEmpty() && ch.charAt(0) == '#') {
             return true;
@@ -100,31 +87,15 @@ public abstract class Tools {
         return isNum(ch) && !ch.contains(".");
     }
 
-    //TODO !!!добавить численные/произвольные интервалы и множества. Операции IN, ~IN, +, -, ()
-    //
     public static boolean isInterval(String ch) {
         if (ch.contains("..") && ch.charAt(0) != Enums.ANT && ch.charAt(0) != Enums.SUC) {
             return ch.split("\\.\\.").length == 2;
         } else {
             return false;
         }
-//        else {
-//            String[] s = ch.split(" ");
-//            for (int i = 0; i < s.length; ++i) {
-//                if (i + 1 < s.length && isInt(s[i]) && Enums.INTERVALS.keySet().contains(s[i + 1].toLowerCase())) {
-//                    ++i;
-//                } else {
-//                    return false;
-//                }
-//            }
-//        }
-//        return true;
     }
 
     public static boolean isPeriod(String ch) {
-//        if (ch.contains("..") && ch.charAt(0) != Enums.ANT && ch.charAt(0) != Enums.SUC) {
-//            return ch.split("\\.\\.").length == 2;
-//        } else {
         String[] s = ch.split(" ");
         if (s.length > 1) {
             for (int i = 0; i < s.length; ++i) {
@@ -134,7 +105,6 @@ public abstract class Tools {
                     return false;
                 }
             }
-//        }
             return true;
         } else {
             return false;
@@ -246,60 +216,6 @@ public abstract class Tools {
         return dateDiff(d, a);
     }
 
-//    public static long intervalToTime(String interval) {
-//        String[] s = interval.split(" ");
-//        for (int i = 0; i < s.length; ++i) {
-//            if (i + 1 < s.length && isInt(s[i]) && Enums.INTERVALS.keySet().contains(s[i + 1].toLowerCase())) {
-//                long val = Long.parseLong(s[i]) * invertor;
-//                long inv = Enums.INTERVALS.get(s[i + 1].toLowerCase());
-//                if (inv > 0) {
-//                    c.add(Calendar.MILLISECOND, (int) (inv * val));
-//                } else if (inv == Enums.INTERVAL_MONTH) {
-//                    c.add(Calendar.MONTH, (int) val);
-//                } else if (inv == Enums.INTERVAL_YEAR) {
-//                    c.add(Calendar.YEAR, (int) val);
-//                }
-//            }
-//        }
-//    }
-
-//    public static String timeToInterval(long diff) {
-//        int days = 0;
-//        int hours = 0;
-//        int minutes = 0;
-//        int seconds = 0;
-//        int ms = 0;
-//
-//        days = (int) (diff / Enums.INTERVALS.get("days"));
-//        diff -= days * Enums.INTERVALS.get("days");
-//        hours = (int) (diff / Enums.INTERVALS.get("hours"));
-//        diff -= hours * Enums.INTERVALS.get("hours");
-//        minutes = (int) (diff / Enums.INTERVALS.get("minutes"));
-//        diff -= minutes * Enums.INTERVALS.get("minutes");
-//        seconds = (int) (diff / Enums.INTERVALS.get("seconds"));
-//        diff -= seconds * Enums.INTERVALS.get("seconds");
-//        ms = (int) diff;
-//
-//        String ret = "";
-//        if (days > 0) {
-//            ret += "" + days + (days > 1 ? " days " : " day ");
-//        }
-//        if (hours > 0) {
-//            ret += "" + hours + (hours > 1 ? " hours " : " hour ");
-//        }
-//        if (minutes > 0) {
-//            ret += "" + minutes + (minutes > 1 ? " minutes " : " minute ");
-//        }
-//        if (seconds > 0) {
-//            ret += "" + seconds + (seconds > 1 ? " seconds " : " second ");
-//        }
-//        if (ms > 0) {
-//            ret += "" + ms + " ms";
-//        }
-//
-//        return ret.trim();
-//    }
-
     public static String dateDiff(Date a, Date b) {
         int months = 0;
         int years = 0;
@@ -380,7 +296,6 @@ public abstract class Tools {
     }
 
     public static Object[] extractLine(String line, int pos) throws ParseErrorException {
-//        pos = Parser.skipSpaces(line, pos);
         int start = -1;
         if (line.length() <= pos) {
             return null;
@@ -404,74 +319,4 @@ public abstract class Tools {
         String s = line.substring(start, pos);
         return new Object[]{s, pos};
     }
-
-//    public static List<TVariable> getTVariables(ArgList arg, boolean full) {
-//        List<TVariable> list = new ArrayList<>();
-//        for (Argument a : arg) {
-//            if (a.getType() == ArgumentType.TVARIABLE && !list.contains(a.getT())) {
-//                list.add(a.getT());
-//            } else if (full && a.isFSet()) {
-//                List<TVariable> temp = getTVariables(a.getF().getArguments(), full);
-//                for (TVariable t : temp) {
-//                    if (!list.contains(t)) {
-//                        list.add(t);
-//                    }
-//                }
-//            }
-//
-//        }
-//        return list;
-//    }
-//
-//    public static List<TValue> getTValues(ArgList arg, boolean full) {
-//        List<TValue> list = new ArrayList<>();
-//        for (Argument a : arg) {
-//            if (a.getType() == ArgumentType.TVARIABLE && !a.isEmpty() && !list.contains(a.getT().getCurrent())) {
-//                list.add(a.getT().getCurrent());
-//            } else if (a.getType() == ArgumentType.TVALUE && !list.contains(a.getV())) {
-//                list.add(a.getV());
-//            } else if (full && a.isFSet()) {
-//                List<TValue> temp = getTValues(a.getF().getArguments(), full);
-//                for (TValue t : temp) {
-//                    if (!list.contains(t)) {
-//                        list.add(t);
-//                    }
-//                }
-//            } else if (full && a.getType() == ArgumentType.FVALUE) {
-//                List<TValue> temp = getTValues(a.getR().getCondition(), full);
-//                for (TValue t : temp) {
-//                    if (!list.contains(t)) {
-//                        list.add(t);
-//                    }
-//                }
-//            }
-//
-//        }
-//        return list;
-//    }
-
-//    public static List<Function> getFunctions(ArgList arg) {
-//        List<Function> list = new ArrayList<>();
-//        for (Argument a : arg) {
-//            if (a.isFunction() && !list.contains(a.getFunction())) {
-//                list.createTVar(a.getFunction());
-//            }
-//        }
-//        return list;
-//    }
-
-//    public static String getModuleWorkingDir(Object o) {
-//        URL location = o.getClass().getProtectionDomain().getCodeSource().getLocation();
-//        try {
-//            String sub = location.getFile().substring(2, 3).equals(":") && location.getFile().substring(0, 1).equals("/") ? location.getFile().substring(1) : location.getFile();
-//            String classLocation = URLDecoder.decode(sub.replace('/', File.separatorChar), Charset.defaultCharset().name());
-//            int pos = classLocation.indexOf(".jar");
-//            if (pos != -1) {
-//                return classLocation.substring(0, classLocation.lastIndexOf(File.separatorChar));
-//            }
-//        } catch (UnsupportedEncodingException e) {
-//        }
-//        return new File("").getAbsolutePath();
-//    }
-
 }

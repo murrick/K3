@@ -49,14 +49,10 @@ public class Argument implements IArgument {
 
     private static final long serialVersionUID = -7113328096110690461L; //196402070011L;
 
-    private IUnit o = null;
-
     private transient long id = -1;
     private transient ArgumentType type = ArgumentType.EMPTY;
-
-    private transient int varOrder = -1;
-
-//    private transient IUser user = null;
+    private IUnit o = null;
+    private int varOrder = -1;
 
     public Argument() {
     }
@@ -70,7 +66,6 @@ public class Argument implements IArgument {
         if (o != null) {
             id = o.getId();
             type = detectObjectType();
-//            user = d.getUser();
         }
     }
 
@@ -111,7 +106,6 @@ public class Argument implements IArgument {
         }
     }
 
-
     private ArgumentType detectObjectType() {
         if (o instanceof Term) {
             return ArgumentType.TERM;
@@ -146,30 +140,7 @@ public class Argument implements IArgument {
         }
     }
 
-//    public TValue addTValue(Mind mind, ITerm t) throws Exception {
-////        Mind mind = t.getUser().getMind();
-//        switch (type) {
-//            case TVARIABLE:
-//                TVariable tv = (TVariable) getO(mind);
-//                TValue s = mind.getTValues().find(tv, t);
-//                if (s == null) {
-//                    s = mind.getTValues().add(tv, t);
-//
-//                    List<TValue> list = new ArrayList<>();
-//                    list.add(s);
-//                    mind.addTSolve(list);
-//
-//                } else {
-//                    s = null;
-//                }
-//                return s;
-//            default:
-//                return null;
-//        }
-//    }
-
     public boolean setValue(Mind mind, ITerm t) throws Exception {
-//        Mind mind = t.getUser().getMind();
         switch (type) {
             case EMPTY:
                 o = (IUnit) t;
@@ -185,16 +156,6 @@ public class Argument implements IArgument {
             case TVARIABLE:
                 TVariable tv = (TVariable) getObject((Mind) mind);
                 TValue s = tv.setValue(t);
-//                mind.addTSolve(s);
-
-
-//                TValue s = mind.getTValues().find(tv, t);
-//                if (s == null) {
-//                    s = mind.getTValues().add(tv, t);
-//                }
-//                if (tv.getCurrent() == null) {
-//                    tv.setCurrent(s);
-//                }
                 return true;
             case FUNCTION:
                 Function f = (Function) getObject(mind);
@@ -226,22 +187,6 @@ public class Argument implements IArgument {
         }
     }
 
-//    public TVariable getT(IMind mind) throws Exception {
-//        return type == ArgumentType.TVARIABLE ? (TVariable) getObject(mind) : null;
-//    }
-//
-//    public TValue getV(IMind mind) throws Exception {
-//        return type == ArgumentType.TVALUE ? (TValue) getObject(mind) : null;
-//    }
-//
-//    public Function getF(IMind mind) throws Exception {
-//        return type == ArgumentType.FUNCTION ? (Function) getObject(mind) : null;
-//    }
-//
-//    public FValue getR(IMind mind) throws Exception {
-//        return type == ArgumentType.FVALUE ? (FValue) getObject(mind) : null;
-//    }
-
     public void clear() {
         o = null;
         type = ArgumentType.EMPTY;
@@ -268,31 +213,6 @@ public class Argument implements IArgument {
         }
     }
 
-//    @Override
-//    public IMind getMind() {
-//        if(o == null) {
-//            return null;
-//        } else {
-//            return o.getMind();
-//        }
-//    }
-
-//    public boolean isTSet() {
-//        return type == ArgumentType.TVARIABLE;
-//    }
-//
-//    public boolean isVSet() {
-//        return type == ArgumentType.TVALUE;
-//    }
-//
-//    public boolean isRSet() {
-//        return type == ArgumentType.FVALUE;
-//    }
-//
-//    public boolean isFSet() {
-//        return type == ArgumentType.FUNCTION;
-//    }
-
     @Override
     public String toString(IMind mind) throws Exception {
         Object val = getValue(mind);
@@ -303,26 +223,6 @@ public class Argument implements IArgument {
         }
     }
 
-
-//    public boolean isDefined(Mind mind) throws Exception {
-//        Term t = (Term) getValue(mind);
-//        return t != null && !t.isCVariable(); //isCVar(mind); //type != ArgumentType.CVARIABLE;
-//    }
-
-
-//    public boolean isCVar(Mind mind) throws Exception {
-//        return type == ArgumentType.CVARIABLE; //
-//        return !isEmpty(mind) && getValue(mind).isCVariable();
-//    }
-
-    //    public IUser getUser() {
-//        return user;
-//    }
-//
-//    public void setUser(IUser user) {
-//        this.user = user;
-//    }
-//
     @Override
     public long getId() {
         return id;
