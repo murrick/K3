@@ -27,7 +27,6 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
-import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IHypothesis;
@@ -146,13 +145,17 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return null;
     }
 
-    public ITerm createCVar(IRule r, ITerm name) throws Exception {
+    public ITerm createCVar(IRule r, ITerm name, ITerm parent) throws Exception {
         int i = nextVarIndex();
-        String temp = String.format("%c%d", Enums.CVC, i);
+        String temp = String.format("%c%d", parent == null ? '%' : '*', i);
         ITerm t = add(temp);
         ((Term) t).setRule(r);
         ((Term) t).setIndex(i);
         ((Term) t).setName(name);
+        if (parent != null) {
+            ((Term) t).setParent(parent);
+            ((Term) parent).setChild(t);
+        }
         return t;
     }
 

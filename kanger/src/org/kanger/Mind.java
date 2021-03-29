@@ -503,6 +503,12 @@ public class Mind implements IMind {
     public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
         this.logging = logging;
 
+        getQueryValues().clear();
+        getLog().clear();
+        getSolutions().clear();
+        getValues().clear();
+        getHypothesis().clear();
+
         int pos = 0;
         Object[] t = null;
         Mind m = new Mind(this);

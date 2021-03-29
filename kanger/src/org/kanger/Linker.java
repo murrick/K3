@@ -356,9 +356,7 @@ public class Linker {
                                                     if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         Term tn = (Term) tm.getChild(mind);
                                                         if (tn == null) {
-                                                            tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind));
-                                                            tn.setParent(tm);
-                                                            tm.setChild(tn);
+                                                            tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind), tm);
                                                         }
                                                         tm = tn;
                                                     } else {
@@ -388,9 +386,7 @@ public class Linker {
                                                     if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         Term tn = (Term) tm.getChild(mind);
                                                         if (tn == null) {
-                                                            tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind));
-                                                            tn.setParent(tm);
-                                                            tm.setChild(tn);
+                                                            tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind), tm);
                                                         }
                                                         tm = tn;
                                                     } else {

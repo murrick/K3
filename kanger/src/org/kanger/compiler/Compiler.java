@@ -189,7 +189,7 @@ public class Compiler {
                 ((Term) c).setDomini(true);
             }
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
-            p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName)));
+            p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName), null));
             r.setAbstractive(true);
         }
         replacements.put(varName, p);

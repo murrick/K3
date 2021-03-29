@@ -342,6 +342,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
 
         String query = parameters.getString("compile");
         query = URLDecoder.decode(query, "utf-8");
+        mind = mind.clearWorkspace();
         boolean res = mind.compile(query);
         if (res) {
             result.put("result", "OK");
