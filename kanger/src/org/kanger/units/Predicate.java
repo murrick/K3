@@ -94,7 +94,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
-        return (String) name.getValue();
+        return name.getValue() + "";
     }
 
     public void setName(ITerm name) {

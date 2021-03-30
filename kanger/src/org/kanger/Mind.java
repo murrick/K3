@@ -34,6 +34,7 @@ import org.kanger.factory.*;
 import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.TVariableSet;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
@@ -85,10 +86,13 @@ public class Mind implements IMind {
     private ValuesStore values = null;                               // Список значений
     private LogStore log = null;                                        // Протокол вывода
     private HypothesisStore hypothesis = null;                                // Список гипотез
+    private HypothesisStore tempHypothesis = null;                                // Список гипотез
+
     private Calculator calculator = null;                             // Калькулятор
     private Analyzer analyzer = null;                                   // Анализатор
     private Compiler compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
+
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
@@ -97,7 +101,7 @@ public class Mind implements IMind {
     private String compliedLine = "";
     //
     private boolean logging = true;
-    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES /*| Enums.DEBUG_OPTION_STATUS*/);
+    private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS);
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private Rule acceptedRule = null;
     private volatile int transactionCounter = 0;
@@ -152,6 +156,7 @@ public class Mind implements IMind {
         fValues = new FValueFactory(this);                          // Решения функций
 
         hypothesis = new HypothesisStore(this);                                // Список гипотез
+        tempHypothesis = new HypothesisStore(this);                                // Список гипотез
         solves = new SolutionsStore(this);                         // Список решений
         values = new ValuesStore(this);                               // Список значений
 
@@ -329,6 +334,7 @@ public class Mind implements IMind {
             solves.clear();
             values.clear();
             hypothesis.clear();
+            tempHypothesis.clear();
 
             ruleSolves.clear();
 
@@ -454,6 +460,10 @@ public class Mind implements IMind {
     @Override
     public HypothesisStore getHypothesis() {
         return hypothesis;
+    }
+
+    public HypothesisStore getTempHypothesis() {
+        return tempHypothesis;
     }
 
     @Override
@@ -821,6 +831,7 @@ public class Mind implements IMind {
         }
 
         hypothesis.clear();
+        tempHypothesis.clear();
         return res;
     }
 
@@ -876,6 +887,7 @@ public class Mind implements IMind {
         }
 
         hypothesis.clear();
+        tempHypothesis.clear();
         return res;
     }
 
@@ -917,6 +929,7 @@ public class Mind implements IMind {
                 removeResult(set, logging);
                 res = true;
                 hypothesis.clear();
+                tempHypothesis.clear();
             } else {
                 if (logging) {
                     x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
@@ -964,6 +977,7 @@ public class Mind implements IMind {
             res = true;
         }
         hypothesis.clear();
+        tempHypothesis.clear();
         return res;
     }
 
@@ -986,6 +1000,7 @@ public class Mind implements IMind {
                 }
                 res = false;
                 hypothesis.clear();
+                tempHypothesis.clear();
             } else {
                 m.link(r, logging);
                 ar = m.analyze(r, logging);
@@ -996,8 +1011,23 @@ public class Mind implements IMind {
                     }
                     res = false;
                     hypothesis.clear();
+                    tempHypothesis.clear();
                 } else {
                     hypothesis.commit(m.getHypothesis());
+                    tempHypothesis.commit(m.getTempHypothesis());
+//                    if(!m.getTempHypothesis().isEmpty()) {
+//                        for (IHypothesis tmp : m.getTempHypothesis()) {
+//                            IRule rx = getRules().find((Hypothesis) tmp);
+//                            if (hypothesis.find(tmp) == null && (rx == null || rx.isDeleted(this))) {
+//                                hypothesis.add(tmp);
+//                                if (logging) {
+//                                    log.add(LogMode.ANALYZER, "Hypothesis moved: " + ((Hypothesis) tmp).toString(this));
+//                                }
+//                            }
+//                        }
+//                        tempHypothesis.clear();
+//                    }
+
                     if (!hypothesis.isEmpty()) {
                         Set<IHypothesis> toDelete = new HashSet<>();
                         for (IHypothesis h : hypothesis) {
@@ -1009,6 +1039,17 @@ public class Mind implements IMind {
                         }
                         hypothesis.removeAll(toDelete);
                     }
+                    if (!tempHypothesis.isEmpty()) {
+                        Set<IHypothesis> toDelete = new HashSet<>();
+                        for (IHypothesis h : tempHypothesis) {
+                            for (ITerm t : ((ArgumentsList) h.getArguments()).getCVariables(this)) {
+                                if (((Term) t).getRule(this).isQuery()) {
+                                    toDelete.add(h);
+                                }
+                            }
+                        }
+                        tempHypothesis.removeAll(toDelete);
+                    }
                 }
             }
         } else if (r != null && r.isSecond()) {
@@ -1019,6 +1060,7 @@ public class Mind implements IMind {
             }
             res = true;
             hypothesis.clear();
+            tempHypothesis.clear();
         }
         release(m);
         return res;
@@ -1044,6 +1086,7 @@ public class Mind implements IMind {
                 }
                 res = true;
                 hypothesis.clear();
+                tempHypothesis.clear();
             } else {
                 m.link(r, logging);
                 ar = m.analyze(r, logging);
@@ -1054,8 +1097,25 @@ public class Mind implements IMind {
                     }
                     res = true;
                     hypothesis.clear();
+                    tempHypothesis.clear();
                 } else {
                     hypothesis.commit(m.getHypothesis());
+                    if (hypothesis.isEmpty()) {
+//                        hypothesis.commit(m.getTempHypothesis());
+//                    }
+                        if (!m.getTempHypothesis().isEmpty()) {
+                            for (IHypothesis tmp : m.getTempHypothesis()) {
+                                IRule rx = getRules().find((Hypothesis) tmp);
+                                if (hypothesis.find(tmp) == null && (rx == null || rx.isDeleted(this))) {
+                                    hypothesis.add(tmp);
+                                    if (logging) {
+                                        log.add(LogMode.ANALYZER, "Hypothesis moved: " + ((Hypothesis) tmp).toString(this));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (logging) {
                         if (!hypothesis.isEmpty()) {
                             m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? Hypothesis found"));
@@ -1073,6 +1133,7 @@ public class Mind implements IMind {
             }
             res = false;
             hypothesis.clear();
+            tempHypothesis.clear();
         }
         release(m);
         return res;
@@ -1128,6 +1189,7 @@ public class Mind implements IMind {
 
             case Enums.SUC:
                 hypothesis.clear();
+                tempHypothesis.clear();
                 if (line.length() == 1) {
                     res = queryCheck(logging);
                 } else {

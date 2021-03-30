@@ -141,7 +141,7 @@ public class Analyzer {
                     continue;
                 }
 
-                if ("rule(1)".equals(p.getDomain().getPredicate().toString()) && p.getDomain().get(0).getValue(mind).getType() == DataType.NUMERIC) {
+                if ("rule(1)".equals(p.getDomain().getPredicate(mind).toString(mind)) && p.getDomain().get(0).getValue(mind).getType() == DataType.NUMERIC) {
                     if (q.getId() == ((Double) p.getDomain().get(0).getValue(mind).getValue()).longValue()) {
                         mind.getSolutions().add(q);
                         if (logging) {
@@ -159,10 +159,10 @@ public class Analyzer {
                     }
                     if (p.getDomain().equalsBase(((Rule) q).getDomain())
                             && p.getDomain().isAntc() != ((Rule) q).getDomain().isAntc()) {
-                        if (p.getDomain().isQuery(mind) && !p.isAbstractive()) {
+                        if (p.getDomain().isQuery(mind) && p.getArguments().getCVariables(mind).isEmpty() /*.isAbstractive()*/) {
                             mind.getSolutions().add(q);
                             mind.getValues().add(p.getSolves());
-                        } else if (((Rule) q).getDomain().isQuery(mind) && !q.isAbstractive()) {
+                        } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty() /*!q.isAbstractive()*/) {
                             mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
                         }

@@ -48,6 +48,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
 
     private final Mind mind;
     private boolean optimized = false;      // Признак того что текущий список оптимизирован
+    private boolean action = false;
 
     public HypothesisStore(Mind mind) {
         this.mind = mind;
@@ -63,6 +64,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
                     add(h);
                 }
             }
+            action = base.isAction();
         }
     }
 
@@ -83,6 +85,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
             h.getArguments().addAll(arg.convertBase(mind));
             ((Hypothesis) h).setQuery(isQuery);
             root.add(h);
+            action = true;
             return h;
         }
 
@@ -95,6 +98,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         IHypothesis h = find(hypothesis);
         if (h == null) {
             root.add(hypothesis);
+            action = true;
             return hypothesis;
         } else {
             return h;
@@ -199,5 +203,13 @@ public class HypothesisStore implements IFactory<IHypothesis> {
         if (root != null) {
             root.removeAll(toDelete);
         }
+    }
+
+    public void dropAction() {
+        action = false;
+    }
+
+    public boolean isAction() {
+        return action;
     }
 }

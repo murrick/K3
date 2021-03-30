@@ -32,6 +32,7 @@ import org.kanger.enums.LogMode;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Cause;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.Solve;
 import org.kanger.primitives.TVariableSet;
 import org.kanger.stores.LogStore;
@@ -86,13 +87,15 @@ public class Linker {
             mind.getRules().dropAction();
             mind.getTValues().dropAction();
             mind.getFValues().dropAction();
+            mind.getHypothesis().dropAction();
+            mind.getTempHypothesis().dropAction();
 
             Set<IRule> ruleSet = new HashSet<>();
             if (rule != null) {
 
                 for (List<Domain> list : rule.getTree()) {
                     for (Domain d : list) {
-                        if ("rule(1)".equals(d.getPredicate().toString()) && d.get(0).getType() == ArgumentType.TVARIABLE) {
+                        if ("rule(1)".equals(d.getPredicate(mind).toString(mind)) && d.get(0).getType() == ArgumentType.TVARIABLE) {
                             for (IRule r : mind.getRules()) {
                                 if (!r.isDeleted(mind) && r.getId() < d.getRuleId()) {
                                     TValue s = null;
@@ -149,12 +152,15 @@ public class Linker {
                 }
             });
 
+
             rotator(leftList, causes, logging);
             rotator(ruleList, causes, logging);
 
         } while (mind.getRules().isAction()
                 || mind.getTValues().isAction()
                 || mind.getFValues().isAction()
+                || mind.getTempHypothesis().isAction()
+                || mind.getHypothesis().isAction()
         );
 
         if (logging) {
@@ -556,7 +562,7 @@ public class Linker {
             }
 
             for (Domain d : tree) {
-                if ("rule(1)".equals(d.getPredicate().toString()) && !d.get(0).isEmpty(mind) && d.get(0).getValue(mind).getType() == DataType.NUMERIC) {
+                if ("rule(1)".equals(d.getPredicate(mind).toString(mind)) && !d.get(0).isEmpty(mind) && d.get(0).getValue(mind).getType() == DataType.NUMERIC) {
                     d.setProduced(mind);
                     log.add(LogMode.STORAGE, "DB assumed record (r): " + d);
                     occurs = true;
@@ -637,6 +643,7 @@ public class Linker {
                 excluded.clear();
                 for (Domain d : tree) {
                     if (d.isComplete() && !d.isCalculated(mind) && !d.isSystem(mind) && !assumed.contains(d)) {
+                        occurs = true;
                         if (!d.isExcluded(mind)) {
                             candidates.add(d);
                         } else {
@@ -647,6 +654,7 @@ public class Linker {
                 if (candidates.size() == 1 && !excluded.isEmpty()) {
                     Domain d = candidates.toArray(new Domain[]{})[0];
                     if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
+                        occurs = true;
                         result = true;
                         d.setProduced(mind);
                         d.setSolves(solve, mind);
@@ -657,6 +665,34 @@ public class Linker {
                     }
                 }
             }
+
+            if (!occurs && candidates.size() > 1) {
+                for (Domain d : candidates) {
+                    if (!d.isStored(mind) && d.isComplete() && !d.isUsed(mind)) {
+
+                        if (!mind.includeAbstractiveHypothesis()) {
+                            for (IArgument a : d.getArguments()) {
+                                if (a.getValue(mind).isCVariable()) {
+                                    d = null;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (d != null) {
+                            Hypothesis tmp = new Hypothesis(d, mind);
+//                            IRule rx = mind.getRules().find(tmp);
+                            if (mind.getTempHypothesis().find(tmp) == null /*&& (rx == null || rx.isDeleted(mind))*/) {
+                                mind.getTempHypothesis().add(tmp);
+                                if (logging) {
+                                    log.add(LogMode.ANALYZER, "Hypothesis alternate assumed: " + tmp.toString(mind));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             if (result) {
                 if (logging) {
                     log.add(LogMode.STORAGE, "-------------------------------------------");
