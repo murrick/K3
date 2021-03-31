@@ -33,8 +33,11 @@ import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.LogStore;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
+import org.kanger.units.TVariable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -165,6 +168,21 @@ public class Analyzer {
                         } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty() /*!q.isAbstractive()*/) {
                             mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
+                        } else {
+                            List<TValue> vList = new ArrayList<>();
+                            for(TVariable t : mind.getTVars()) {
+                                if(t.isQuery(mind)) {
+                                    if(!t.isEmpty()) {
+                                        vList.add(t.getCurrent());
+                                    } else {
+                                        vList.clear();
+                                        break;
+                                    }
+                                }
+                            }
+                            if(!vList.isEmpty()) {
+                                mind.getValues().add(vList);
+                            }
                         }
 
                         if (logging) {

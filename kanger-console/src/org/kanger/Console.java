@@ -31,6 +31,7 @@ import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Hypothesis;
+import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.ValuesStore;
 import org.kanger.test.KangerTest;
 import org.kanger.units.Rule;
@@ -355,24 +356,43 @@ public class Console {
     private static void processQuery(String line, IMind mind) throws Exception {
         int pos = 0;
         Object[] t = null;
+        mind.clearLog();
+        ((HypothesisStore) mind.getHypothesis()).clear();
+        Mind m = new Mind(mind);
+        boolean succ = false;
+        Boolean res = null;
         while ((t = Tools.extractLine(line, pos)) != null) {
             pos = (int) t[1];
             String ln = (String) t[0];
 
-            Boolean res = mind.query(ln);
-            if (!lastComments.isEmpty() && mind.getAcceptedRule() != null) {
-                mind.getAcceptedRule().setComment(lastComments);
+            if(!ln.isEmpty() && ln.endsWith(",")) {
+                ln = ln.substring(0, ln.length()-1) + ";";
+            }
+            if(ln.charAt(0) == '?') {
+                succ = true;
+            }
+            res = m.query(ln);
+            if (!lastComments.isEmpty() && m.getAcceptedRule() != null) {
+                m.getAcceptedRule().setComment(lastComments);
                 lastComments = "";
             }
-            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-                if (res != null) {
-                    showLog(mind, LogMode.SOLVES, null, null);
-                    showLog(mind, LogMode.VALUES, null, null);
-                }
-                if (res == null && line.trim().charAt(0) == Enums.SUC) {
-                    showHypo(mind);
-                }
+        }
+        if(!succ) {
+            mind.commit(m);
+        } else {
+            mind.release(m);
+            if(res == null) {
+                ((HypothesisStore) mind.getHypothesis()).commit(m.getHypothesis());
+            }
+        }
+        if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+            System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+            if (res != null) {
+                showLog(mind, LogMode.SOLVES, null, null);
+                showLog(mind, LogMode.VALUES, null, null);
+            }
+            if (res == null && line.trim().charAt(0) == Enums.SUC) {
+                showHypo(mind);
             }
         }
     }

@@ -29,6 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.enums.Tools;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.RuntimeErrorException;
@@ -37,6 +38,7 @@ import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
 import org.kanger.storage.DB;
+import org.kanger.stores.HypothesisStore;
 import org.kanger.udf.UDF;
 import org.kanger.units.Domain;
 import org.kanger.units.Operation;
@@ -356,10 +358,41 @@ public class QueryProcessor implements IReactor<JSONObject> {
     private JSONObject query(JSONObject parameters, IUser user) throws Exception {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
-
+        int pos = 0;
+        Object[] t = null;
+        mind.clearLog();
+        ((HypothesisStore) mind.getHypothesis()).clear();
         String query = parameters.getString("request");
         query = URLDecoder.decode(query, "utf-8");
-        Boolean res = mind.query(query);
+
+        Mind m = new Mind(mind);
+        boolean succ = false;
+        Boolean res = null;
+        while ((t = Tools.extractLine(query, pos)) != null) {
+            pos = (int) t[1];
+            String ln = (String) t[0];
+
+            if(!ln.isEmpty() && ln.endsWith(",")) {
+                ln = ln.substring(0, ln.length()-1) + ";";
+            }
+            if (ln.trim().charAt(0) == '?') {
+                succ = true;
+            }
+
+            res = m.query(ln);
+        }
+        if(res != null) {
+
+        }
+        if(!succ) {
+            mind.commit(m);
+        } else {
+            mind.release(m);
+            if(res == null) {
+                ((HypothesisStore) mind.getHypothesis()).commit(m.getHypothesis());
+            }
+        }
+
         if (res == null) {
             result.put("response", "unknown");
         } else {

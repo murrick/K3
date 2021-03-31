@@ -301,16 +301,25 @@ public abstract class Tools {
             return null;
         } else {
             Object[] t;
+            char c = 0;
+            int xpos = 0, ypos = 0;
             while ((t = Parser.getToken(line, pos)) != null && ((String) t[0]).charAt(0) != Enums.EOLN) {
+                ypos = xpos;
+                xpos = pos;
                 pos = (int) t[1];
                 if (start == -1) {
                     start = pos - ((String) t[0]).length();
                 }
+                if(c == ',' && ("!".equals(t[0]) || "?".equals(t[0]))) {
+                    pos = ypos;
+                    break;
+                }
+                c = ((String) t[0]).charAt(0);
             }
             if (t == null && start == -1) {
                 return null;
             }
-            if (line.length() < pos || (line.length() != 1 && line.charAt(pos) != Enums.EOLN)) {
+            if (line.length() < pos || (line.length() != 1 && line.charAt(pos) != Enums.EOLN && line.charAt(pos) != ',')) {
                 throw new ParseErrorException(pos, ParseError.EOLN);
             } else if (line.length() > 1) {
                 ++pos;

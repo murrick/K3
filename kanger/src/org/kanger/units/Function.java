@@ -192,9 +192,9 @@ public class Function implements IUnit<Function> {
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
         if (t.getType() == ArgumentType.FUNCTION) {
-            s += (isOp ? "(" : "") + t.getObject(mind).toString() + (isOp ? ")" : "");
+            s += (isOp ? "(" : "") + ((Function) t.getObject(mind)).toString(mind, asRight) + (isOp ? ")" : "");
         } else if (t.getType() == ArgumentType.TVARIABLE) {
-            s += t.getObject(mind).toString();
+            s += ((TVariable) t.getObject(mind)).toString(mind);
         } else if (!t.isEmpty(mind)) {
             if (asRight && t.getValue(mind).isCVariable()) {
                 s += ((Term) t.getValue(mind)).getName(mind).getValue();

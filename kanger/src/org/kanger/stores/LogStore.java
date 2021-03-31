@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
@@ -54,7 +55,7 @@ public class LogStore implements IFactory<ILogEntry> {
     public void commit(LogStore base) {
         if (!base.isEmpty()) {
             if (root == null) {
-                root = new ArrayList<>();
+                root = new CopyOnWriteArrayList<>();
                 root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
             }
             if (base.getRoot() != null) {
@@ -71,7 +72,7 @@ public class LogStore implements IFactory<ILogEntry> {
 
     public LogEntry add(LogMode m, IRule r) throws Exception {
         if (root == null) {
-            root = new ArrayList<>();
+            root = new CopyOnWriteArrayList<>();
             root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
         }
         LogEntry log = null;
@@ -104,7 +105,7 @@ public class LogStore implements IFactory<ILogEntry> {
 
     public LogEntry add(LogMode m, String s) {
         if (root == null) {
-            root = new ArrayList<>();
+            root = new CopyOnWriteArrayList<>();
             root.add(new LogEntry(LogMode.TIMING, "* LOG START AT " + new Date(System.currentTimeMillis()) + " --"));
         }
         LogEntry log = null;

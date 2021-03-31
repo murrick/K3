@@ -267,6 +267,9 @@ public class Mind implements IMind {
 
                     library.commit();
 
+//                    solves.commit((SolutionsStore) m.getSolutions());
+//                    values.commit((ValuesStore) m.getValues());
+
                 }
             }
             --transactionCounter;
@@ -276,7 +279,9 @@ public class Mind implements IMind {
             }
 
             log.commit((LogStore) m.getLog());
-            queryResult = (Boolean) m.getQueryResult();
+            queryResult = m.getQueryResult();
+            compliedLine = m.getCompliedString();
+
 
         }
         return result;
@@ -303,11 +308,11 @@ public class Mind implements IMind {
         synchronized (locker) {
 
             log.commit((LogStore) m.getLog());
-
             solves.commit((SolutionsStore) m.getSolutions());
             values.commit((ValuesStore) m.getValues());
 
             queryResult = m.getQueryResult();
+            compliedLine = m.getCompliedString();
 
             --transactionCounter;
             if (next == null && transactionCounter == 0) {
@@ -989,8 +994,8 @@ public class Mind implements IMind {
             m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
         }
 
-        setCompliedLine(line);
         Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
+        setCompliedLine(line);
         if (r != null && !r.isSecond()) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
@@ -1066,7 +1071,6 @@ public class Mind implements IMind {
         return res;
     }
 
-
     public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
         Mind m = new Mind(this);
@@ -1075,8 +1079,8 @@ public class Mind implements IMind {
             m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
         }
 
-        setCompliedLine(line);
         Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+        setCompliedLine(line);
         if (r != null && !r.isSecond()) {
             boolean ar = m.analyze(r, logging);
             if (ar) {
@@ -1101,8 +1105,7 @@ public class Mind implements IMind {
                 } else {
                     hypothesis.commit(m.getHypothesis());
                     if (hypothesis.isEmpty()) {
-//                        hypothesis.commit(m.getTempHypothesis());
-//                    }
+
                         if (!m.getTempHypothesis().isEmpty()) {
                             for (IHypothesis tmp : m.getTempHypothesis()) {
                                 IRule rx = getRules().find((Hypothesis) tmp);
