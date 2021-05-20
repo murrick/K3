@@ -34,10 +34,7 @@ import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.

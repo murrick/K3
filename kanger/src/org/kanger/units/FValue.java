@@ -36,8 +36,6 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
-import org.kanger.primitives.Argument;
-import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
 import java.util.*;
@@ -50,7 +48,7 @@ public class FValue implements IUnit<FValue> {
     private long mindId = -1;                               // id транзакции
     private Function function = null;                       // ссылка на функцию
     private Term value = null;                              // результат решения
-    private ArgumentsList condition = new ArgumentsList();  // список значений параметров
+//    private ArgumentsList condition = new ArgumentsList();  // список значений параметров
     private List<Long> stamp = new ArrayList<>();           // список t-подстановок в порядке слдедования t-перем.
 
     private transient long functionId = -1;
@@ -67,15 +65,15 @@ public class FValue implements IUnit<FValue> {
         if (value != null) {
             valueId = value.getId();
         }
-        for (IArgument a : f.getArguments()) {
-            if (a.getType() == ArgumentType.TVARIABLE) {
-                condition.add(new Argument(((TVariable) a.getObject(mind)).getCurrent()));
-            } else if (a.getType() == ArgumentType.FUNCTION) {
-                condition.add(new Argument(((Function) a.getObject(mind)).getCurrent()));
-            } else {
-                condition.add(new Argument(a.getValue(mind)));
-            }
-        }
+//        for (IArgument a : f.getArguments()) {
+//            if (a.getType() == ArgumentType.TVARIABLE) {
+//                condition.add(new Argument(((TVariable) a.getObject(mind)).getCurrent()));
+//            } else if (a.getType() == ArgumentType.FUNCTION) {
+//                condition.add(new Argument(((Function) a.getObject(mind)).getCurrent()));
+//            } else {
+//                condition.add(new Argument(a.getValue(mind)));
+//            }
+//        }
         for (TVariable t : f.getArguments().getTVariables(mind)) {
             if (t.isEmpty()) {
                 stamp.add(0L);
@@ -98,7 +96,7 @@ public class FValue implements IUnit<FValue> {
         for (long id : stamp) {
             packet.putLong(id);
         }
-        packet.append(condition.pack());
+//        packet.append(condition.pack());
         return packet.createMarked();
     }
 
@@ -114,12 +112,12 @@ public class FValue implements IUnit<FValue> {
         while (cnt-- > 0) {
             stamp.add(packet.getLong());
         }
-        try {
-            packet.mark();
-            condition = new ArgumentsList().apply(packet);
-        } finally {
-            packet.release();
-        }
+//        try {
+//            packet.mark();
+//            condition = new ArgumentsList().apply(packet);
+//        } finally {
+//            packet.release();
+//        }
         return this;
     }
 
@@ -157,20 +155,25 @@ public class FValue implements IUnit<FValue> {
         this.functionId = function.getId();
     }
 
-    public ArgumentsList getCondition() {
-        return condition;
-    }
+//    public ArgumentsList getCondition() {
+//        return condition;
+//    }
+
+//    private TValue getTValue(TVariable t) throws Exception {
+//        for(TValue v : getCondition(mind)) {
+//            if(v.getTVarId() == t.getId()) {
+//                return v;
+//            }
+//        }
+//        return null;
+//    }
 
     private String formatParam(IArgument t, Mind mind) throws Exception {
         Operation op = Parser.getOp(getFunction().getName(mind).toString(), getFunction().getRange());
         boolean isOp = op != null && op.getRange() == getFunction().getRange();
         String s = "";
-        if (t.getType() == ArgumentType.FUNCTION) {
+        if (t.getType() == ArgumentType.FVALUE) {
             s += (isOp ? "(" : "") + t.getObject(mind).toString() + (isOp ? ")" : "");
-        } else if (t.getType() == ArgumentType.FVALUE) {
-            s += (isOp ? "(" : "") + t.getObject(mind).toString() + (isOp ? ")" : "");
-        } else if (t.getType() == ArgumentType.TVARIABLE) {
-            s += t.getObject(mind).toString();
         } else if (t.getType() == ArgumentType.TVALUE) {
             s += t.getObject(mind).toString();
         } else if (!t.isEmpty(mind)) {
@@ -200,8 +203,9 @@ public class FValue implements IUnit<FValue> {
     public boolean equalsTo(Function f) {
         try {
             if (f.getId() == getFunction().getId()
-                    && !f.getResult().isEmpty(mind)
-                    && valueId == f.getResult().getValue(mind).getId()) {
+//                    && !f.getResult().isEmpty(mind)
+//                    && valueId == f.getResult().getValue(mind).getId()
+            ) {
                 boolean complete = true;
                 List<TVariable> list = f.getArguments().getTVariables(mind);
                 for (int i = 0; i < list.size(); ++i) {
@@ -255,26 +259,27 @@ public class FValue implements IUnit<FValue> {
                 return getValue((Mind) mind).toString();
             } else {
                 try {
-                    Operation op = Parser.getOp(getFunction().getName((Mind) mind).toString(), getFunction().getRange());
+                    Function f = getFunction();
+                    Operation op = Parser.getOp(f.getName((Mind) mind).toString(), f.getRange());
                     String s = "";
-                    if (op == null || op.getRange() != getFunction().getRange()) {
-                        s = String.format("%s(", getFunction().getName((Mind) mind).toString());
-                        for (int i = 0; i < getFunction().getRange(); ++i) {
-                            s += formatParam(condition.get(i), (Mind) mind);
-                            if (i + 1 < getFunction().getRange()) {
+                    if (op == null || op.getRange() != f.getRange()) {
+                        s = String.format("%s(", f.getName((Mind) mind).toString());
+                        for (int i = 0; i < f.getRange(); ++i) {
+                            s += formatParam(f.getArguments().get(i), (Mind) mind);
+                            if (i + 1 < f.getRange()) {
                                 s += (char) Enums.COMMA;
                             }
                         }
                         s += ")";
                     } else if (op.getRange() == 1) {
                         if (op.isPost()) {
-                            s = formatParam(condition.get(0), (Mind) mind) + op.getName();
+                            s = formatParam(f.getArguments().get(0), (Mind) mind) + op.getName();
                         } else {
-                            s = op.getName() + formatParam(condition.get(0), (Mind) mind);
+                            s = op.getName() + formatParam(f.getArguments().get(0), (Mind) mind);
                         }
                     } else {
                         for (int i = 0; i < op.getRange(); ++i) {
-                            s += formatParam(condition.get(i), (Mind) mind);
+                            s += formatParam(f.getArguments().get(i), (Mind) mind);
                             if (i + 1 < op.getRange()) {
                                 s += " " + op.getName() + " ";
                             }
@@ -286,8 +291,8 @@ public class FValue implements IUnit<FValue> {
                         //                if (getResult() != null) {
                         if (getValue((Mind) mind) != null) {
                             res = " {= " + getValue((Mind) mind) + "}";
-                        } else if (condition.size() > function.getRange() && !condition.get(function.getRange()).isEmpty((Mind) mind)) {
-                            res = " [= " + condition.get(function.getRange()).getValue(mind) + "]";
+                        } else if (f.getArguments().size() > function.getRange() && !f.getArguments().get(function.getRange()).isEmpty((Mind) mind)) {
+                            res = " [= " + f.getArguments().get(function.getRange()).getValue(mind) + "]";
                         }
                     }
                     return s + res;
@@ -336,7 +341,7 @@ public class FValue implements IUnit<FValue> {
         map.put("deleted", isDeleted(mind));
         map.put("function_id", functionId);
         map.put("value_id", valueId);
-        map.put("condition", condition.createMap(mind));
+//        map.put("condition", condition.createMap(mind));
         map.put("function", function.createMap(mind));
         map.put("value", value.createMap(mind));
         return map;
@@ -352,10 +357,17 @@ public class FValue implements IUnit<FValue> {
         }
         functionId = Long.parseLong(map.get("function_id") + "");
         valueId = Long.parseLong(map.get("value_id") + "");
-        condition.applyMap((List<Map<String, Object>>) map.get("condition"));
+//        condition.applyMap((List<Map<String, Object>>) map.get("condition"));
         function = null;
         value = null;
         return this;
     }
 
+//    public List<TValue> getCondition(Mind mind) throws Exception {
+//        List<TValue> list = new ArrayList<>();
+//        for(long id : stamp) {
+//            list.add(mind.getTValues().get(id));
+//        }
+//        return list;
+//    }
 }

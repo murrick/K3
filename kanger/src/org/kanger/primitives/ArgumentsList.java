@@ -295,13 +295,13 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                         list.add(t);
                     }
                 }
-            } else if (total && a.getType() == ArgumentType.FVALUE) {
-                List<TValue> temp = ((FValue) a.getObject(mind)).getCondition().getTValues(mind, total);
-                for (TValue t : temp) {
-                    if (!list.contains(t)) {
-                        list.add(t);
-                    }
-                }
+//            } else if (total && a.getType() == ArgumentType.FVALUE) {
+//                List<TValue> temp = ((FValue) a.getObject(mind)).getCondition(mind) /*.getTValues(mind, total)*/;
+//                for (TValue t : temp) {
+//                    if (!list.contains(t)) {
+//                        list.add(t);
+//                    }
+//                }
             }
 
         }
