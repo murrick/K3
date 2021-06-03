@@ -55,7 +55,7 @@ public class Compiler {
         IRule r = new Rule(mind);
         mind.getRules().register(r);
         ((Rule) r).setOrigin(mind.getTerms().add(orig));
-        construct((Rule) r, ((Rule) r).getTree().get(0), root, antc, new HashMap<String, Argument>(), new ArrayList<List<Domain>>(), externals);
+        construct((Rule) r, ((Rule) r).getTree().get(0), root, antc, new HashMap<String, Argument>(), externals);
 
         long id = r.getId();
         r = mind.getRules().add(r);
@@ -69,7 +69,7 @@ public class Compiler {
         return r;
     }
 
-    private Domain construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, List<List<Domain>> clones, Queue<ITerm> externals) throws Exception {
+    private List<List<Domain>> construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
         List<List<Domain>> tmp = new ArrayList<>();
         Domain d = null;
@@ -78,36 +78,37 @@ public class Compiler {
         }
         switch (root.getName().charAt(0)) {
             case Enums.NOT:
-                construct(r, t, root.getLeft(), !antc, replacements, list, externals);
+                list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals));
                 break;
 
             case Enums.AQN:
             case Enums.PQN: {
                 antc = compileQuantor(r, root, antc, replacements);
-                construct(r, t, root.getRight(), antc, replacements, list, externals);
+                list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
             }
             break;
             case Enums.COMMA:
                 if ("_in".equals(root.getLeft().getName()) && root.getRight() != null && root.getRight().getRight() == null && root.getRight().getLeft() == null) {
                     PTree left = root.getLeft();
                     root.setLeft(left.getRight());
-                    left.setRule(root);
+                    left.setRight(root);
                     root = left;
-                    d = compilePredicate(r, t, root, antc, replacements, externals);
+                    d = compilePredicate(r, root, antc, replacements, externals);
+                    t.add(d);
                     break;
                 }
             case Enums.CON: {
                 if (antc) {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
-                    construct(r, t, root.getLeft(), antc, replacements, list, externals);
-                    construct(r, x, root.getRight(), antc, replacements, list, externals);
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
+                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
                 } else {
-                    construct(r, t, root.getLeft(), antc, replacements, list, externals);
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
                     for (List<Domain> x : list) {
-                        construct(r, x, root.getRight(), antc, replacements, tmp, externals);
+                        tmp.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
                     }
-                    construct(r, t, root.getRight(), antc, replacements, tmp, externals);
+                    tmp.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
                     list.addAll(tmp);
                 }
             }
@@ -115,53 +116,55 @@ public class Compiler {
 
             case Enums.DIS: {
                 if (antc) {
-                    construct(r, t, root.getLeft(), antc, replacements, list, externals);
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
                     for (List<Domain> x : list) {
-                        construct(r, x, root.getRight(), antc, replacements, tmp, externals);
+                        tmp.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
                     }
-                    construct(r, t, root.getRight(), antc, replacements, tmp, externals);
+                    tmp.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
                     list.addAll(tmp);
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
-                    construct(r, t, root.getLeft(), antc, replacements, list, externals);
-                    construct(r, x, root.getRight(), antc, replacements, list, externals);
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
+                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
                 }
             }
             break;
 
             case Enums.IMP: {
                 if (antc) {
-                    construct(r, t, root.getLeft(), !antc, replacements, list, externals);
+                    list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals));
                     for (List<Domain> z : list) {
-                        construct(r, z, root.getRight(), antc, replacements, tmp, externals);
+                        tmp.addAll(construct(r, z, root.getRight(), antc, replacements, externals));
                     }
-                    construct(r, t, root.getRight(), antc, replacements, tmp, externals);
+                    tmp.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
                     list.addAll(tmp);
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
-                    construct(r, t, root.getLeft(), !antc, replacements, list, externals);
-                    construct(r, x, root.getRight(), antc, replacements, list, externals);
+                    list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals));
+                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
                 }
             }
             break;
 
             case Enums.LB: {
                 if (root.getLeft() == null) {
-                    construct(r, t, root.getRight(), antc, replacements, list, externals);
+                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
                 } else {
-                    d = compilePredicate(r, t, root, antc, replacements, externals);
+                    d = compilePredicate(r, root, antc, replacements, externals);
+                    t.add(d);
                 }
             }
             break;
 
             default: {
-                d = compilePredicate(r, t, root, antc, replacements, externals);
+                d = compilePredicate(r, root, antc, replacements, externals);
+                t.add(d);
             }
         }
-        clones.addAll(list);
-        return d;
+//        clones.addAll(list);
+        return list;
     }
 
     private boolean compileQuantor(Rule r, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
@@ -196,7 +199,7 @@ public class Compiler {
         return antc;
     }
 
-    private Domain compilePredicate(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
+    private Domain compilePredicate(Rule r, /*List<Domain> t, */PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
         Domain d = new Domain(mind);
         d.setRule(r);
 
@@ -211,7 +214,7 @@ public class Compiler {
                     antc = !antc;
                 }
                 if (root.getRight() != null && "_neg".equals(root.getRight().getName()) && root.getRight().getLeft() != null && !"_iv".equals(root.getRight().getLeft().getName())) {
-                    root.setRule(root.getRight().getLeft());
+                    root.setRight(root.getRight().getLeft());
                     root.getRight().setName("-" + root.getRight().getName());
                 }
                 if (root.getLeft() != null && "_neg".equals(root.getLeft().getName()) && root.getLeft().getLeft().getName().contains("..")) {
@@ -232,7 +235,7 @@ public class Compiler {
         d.getArguments().addAll(arg);
 
         d = mind.getDomains().add(d.getPredicate(), d.isAntc(), d.getArguments(), d.getRule());
-        t.add(d);
+//        t.add(d);
 
         return d;
     }

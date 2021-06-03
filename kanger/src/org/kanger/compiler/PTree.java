@@ -36,7 +36,7 @@ public class PTree {
     private boolean system = false;
     private int range = 0;              // Parameters count
     private PTree left = null;          // Left branch ptr
-    private PTree rule = null;          // Right branch ptr
+    private PTree right = null;          // Right branch ptr
 
     private int next = 0;               // Actual branch for insert (&left || &compiler)
     private int pos = 0;
@@ -90,11 +90,11 @@ public class PTree {
     }
 
     public PTree getRight() {
-        return rule;
+        return right;
     }
 
-    public void setRule(PTree rule) {
-        this.rule = rule;
+    public void setRight(PTree right) {
+        this.right = right;
     }
 
     public int getNext() {
@@ -122,6 +122,6 @@ public class PTree {
     }
 
     public String toString() {
-        return (left != null ? "[" + left.toString() + "] <- " : "") + name + (rule != null ? " -> [" + rule.toString() + "]" : "");
+        return (left != null ? "[" + left.toString() + "] <- " : "") + name + (right != null ? " -> [" + right.toString() + "]" : "");
     }
 }

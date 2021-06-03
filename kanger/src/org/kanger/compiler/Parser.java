@@ -304,11 +304,11 @@ public class Parser {
      */
     private static PTree parse(String ln, int pos /*, int mode*/) throws ParseErrorException {
         String line = "";
-        PTree p, q, r, root, wasq, wasn;
+        PTree p, q, r, root, wasq;
         int i, term;
 
         term = 0;
-        root = wasq = wasn = null;
+        root = wasq = null;
         do {
             Object[] t = getToken(ln, pos);
             if (t == null) {
@@ -347,36 +347,32 @@ public class Parser {
 
                     if (term == 0 && ops[i].getRange() > 1) {
                         throw new ParseErrorException(pos, ParseError.EMPTY);
-                    }
-                    if (term != 0 && ops[i].getRange() == 1) {
-                        //Заглушка на унарные операции +/-
-                        if (ops[i].getName().equals("~") || ops[i].getName().equals("-") || ops[i].getName().equals("+")) {
-                            continue;
-                        }
+                    } else if (term != 0 && ops[i].getRange() == 1 && !ops[i].getName().equals("~") && !ops[i].getName().equals("-") && !ops[i].getName().equals("+")) {
                         throw new ParseErrorException(pos, ParseError.EMPTY);
-                    }
+                    } else if (term == 0 || ops[i].getRange() > 1) {
 
-                    /* WAS QUANTOR flag and pointer. Need for correct
-                     * definition non-standard quantor syntax
-                     */
-                    wasq = ops[i].getName().charAt(0) == Enums.PQN || ops[i].getName().charAt(0) == Enums.AQN ? p : null;
+                        /* WAS QUANTOR flag and pointer. Need for correct
+                         * definition non-standard quantor syntax
+                         */
+                        wasq = ops[i].getName().charAt(0) == Enums.PQN || ops[i].getName().charAt(0) == Enums.AQN ? p : null;
 
-                    p.setPrior(ops[i].getPrior());
-                    p.setNext(ops[i].getRange() > 1 && !ops[i].isPost() ? DIR_RIGHT : DIR_LEFT);
-                    p.setDir(ops[i].getDir());
-                    p.setRange(ops[i].getRange());
+                        p.setPrior(ops[i].getPrior());
+                        p.setNext(ops[i].getRange() > 1 && !ops[i].isPost() ? DIR_RIGHT : DIR_LEFT);
+                        p.setDir(ops[i].getDir());
+                        p.setRange(ops[i].getRange());
 
-                    if (term == 0 && ops[i].getName().equals("[")) {
-                        p.setNext(DIR_RIGHT);
-                    }
-                    /* System predicates or functions */
-                    if (ops[i].getSubst().length() > 0) {
-                        if (!ops[i].isRepl()) {
-                            p.setSystem(true);
+                        if (term == 0 && ops[i].getName().equals("[")) {
+                            p.setNext(DIR_RIGHT);
                         }
-                        p.setName(ops[i].getSubst());
+                        /* System predicates or functions */
+                        if (ops[i].getSubst().length() > 0) {
+                            if (!ops[i].isRepl()) {
+                                p.setSystem(true);
+                            }
+                            p.setName(ops[i].getSubst());
+                        }
+                        break;
                     }
-                    break;
                 }
             }
             if (p.getName() == null) {
@@ -399,7 +395,7 @@ public class Parser {
                     p.setPrior(0);
                 }
 
-                p.setRule(parse(ln.trim(), pos /*, term + mode*/));
+                p.setRight(parse(ln.trim(), pos /*, term + mode*/));
                 if (p.getRight() != null) {
                     pos = p.getRight().getPos();
                 } else {
@@ -459,7 +455,7 @@ public class Parser {
                     if (wasq == null) {
                         p.setLeft(root);
                     } else {
-                        p.setRule(root);
+                        p.setRight(root);
                     }
                     root = p;
                 } else {
@@ -467,13 +463,13 @@ public class Parser {
                         if (wasq == null) {
                             p.setLeft(q);
                         } else {
-                            p.setRule(q);
+                            p.setRight(q);
                         }
                     }
                     if (r.getNext() == DIR_LEFT) {
                         r.setLeft(p);
                     } else {
-                        r.setRule(p);
+                        r.setRight(p);
                     }
                 }
 
@@ -563,7 +559,7 @@ public class Parser {
             return null;
         }
         t.setLeft(squeeze(t.getLeft()));
-        t.setRule(squeeze(t.getRight()));
+        t.setRight(squeeze(t.getRight()));
         if (t.getName().charAt(0) == Enums.LB && t.getLeft() == null) {
             return squeeze(t.getRight());
         } else {
@@ -587,11 +583,11 @@ public class Parser {
         return null;
     }
 
-    public static int skipSpaces(String line, int pos) {
-        while (pos < line.length() && isDelimiter(line.charAt(pos))) {
-            ++pos;
-        }
-        return pos;
-    }
+//    public static int skipSpaces(String line, int pos) {
+//        while (pos < line.length() && isDelimiter(line.charAt(pos))) {
+//            ++pos;
+//        }
+//        return pos;
+//    }
 
 }

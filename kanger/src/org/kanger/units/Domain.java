@@ -665,29 +665,30 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     private void calcVarOrders(Mind mind) throws Exception {
+        List<Integer> list = new ArrayList<>();
+        SortedMap<Integer, Integer> sort = new TreeMap<>();
+        int plains = 0;
+        for (int i = 0; i < arguments.size(); ++i) {
+            int ix = 0;
+            if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
+                ix = ((TVariable) arguments.get(i).getObject(mind)).getIndex();
+            } else if (arguments.get(i).getType() == ArgumentType.TERM
+                    && !arguments.get(i).isEmpty(mind)
+                    && arguments.get(i).getValue(mind).isCVariable()
+                    && ((Term) arguments.get(i).getValue(mind)).getRuleId() == ruleId) {
+                ix = ((Term) arguments.get(i).getValue(mind)).getIndex();
+            } else {
+                ++plains;
+            }
+            list.add(ix);
+            sort.put(ix, ix);
+        }
+        int i = sort.firstKey() == 0 ? 0 : 1;
+        for (Integer e : sort.keySet()) {
+            sort.put(e, i++);
+        }
+
         for (int pos = 0; pos < getRange(); ++pos) {
-            List<Integer> list = new ArrayList<>();
-            SortedMap<Integer, Integer> sort = new TreeMap<>();
-            int plains = 0;
-            for (int i = 0; i < arguments.size(); ++i) {
-                int ix = 0;
-                if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
-                    ix = ((TVariable) arguments.get(i).getObject(mind)).getIndex();
-                } else if (arguments.get(i).getType() == ArgumentType.TERM
-                        && !arguments.get(i).isEmpty(mind)
-                        && arguments.get(i).getValue(mind).isCVariable()
-                        && ((Term) arguments.get(i).getValue(mind)).getRuleId() == ruleId) {
-                    ix = ((Term) arguments.get(i).getValue(mind)).getIndex();
-                } else {
-                    ++plains;
-                }
-                list.add(ix);
-                sort.put(ix, ix);
-            }
-            int i = sort.firstKey() == 0 ? 0 : 1;
-            for (Integer e : sort.keySet()) {
-                sort.put(e, i++);
-            }
             ((Argument) arguments.get(pos)).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
         }
     }
