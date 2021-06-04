@@ -71,7 +71,7 @@ public class Compiler {
 
     private List<List<Domain>> construct(Rule r, List<Domain> t, PTree root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
-        List<List<Domain>> tmp = new ArrayList<>();
+//        List<List<Domain>> tmp = new ArrayList<>();
         Domain d = null;
         if (root == null) {
             throw new ParseErrorException(0, ParseError.EMPTY);
@@ -83,7 +83,7 @@ public class Compiler {
 
             case Enums.AQN:
             case Enums.PQN: {
-                antc = compileQuantor(r, root, antc, replacements);
+                antc = compileQuainter(r, root, antc, replacements);
                 list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
             }
             break;
@@ -105,11 +105,12 @@ public class Compiler {
                     list.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
                 } else {
                     list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
-                    for (List<Domain> x : list) {
-                        tmp.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
+                    int size = list.size();
+                    for (int i = 0; i < size; ++i) {
+                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals));
                     }
-                    tmp.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
-                    list.addAll(tmp);
+                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
+//                    list.addAll(tmp);
                 }
             }
             break;
@@ -117,11 +118,12 @@ public class Compiler {
             case Enums.DIS: {
                 if (antc) {
                     list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
-                    for (List<Domain> x : list) {
-                        tmp.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
+                    int size = list.size();
+                    for (int i = 0; i < size; ++i) {
+                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals));
                     }
-                    tmp.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
-                    list.addAll(tmp);
+                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
+//                    list.addAll(tmp);
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
@@ -134,11 +136,12 @@ public class Compiler {
             case Enums.IMP: {
                 if (antc) {
                     list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals));
-                    for (List<Domain> z : list) {
-                        tmp.addAll(construct(r, z, root.getRight(), antc, replacements, externals));
+                    int size = list.size();
+                    for (int i = 0; i < size; ++i) {
+                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals));
                     }
-                    tmp.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
-                    list.addAll(tmp);
+                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
+//                    list.addAll(tmp);
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
@@ -167,7 +170,7 @@ public class Compiler {
         return list;
     }
 
-    private boolean compileQuantor(Rule r, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
+    private boolean compileQuainter(Rule r, PTree root, boolean antc, Map<String, Argument> replacements) throws Exception {
         String varName = root.getLeft().getName();
 
         if (replacements.containsKey(varName)) {
@@ -184,13 +187,14 @@ public class Compiler {
              */
             ITerm c = null;
             for (Argument a : replacements.values()) {
-                if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() && (c == null || ((Term) c).getIndex() < ((Term) a.getValue(mind)).getIndex())) {
+                if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() /*&& (c == null || ((Term) c).getIndex() < ((Term) a.getValue(mind)).getIndex())*/) {
                     c = a.getValue(mind);
+                    ((Term) c).setDomini(true);
                 }
             }
-            if (c != null) {
-                ((Term) c).setDomini(true);
-            }
+//            if (c != null) {
+//                ((Term) c).setDomini(true);
+//            }
         } else if ((root.getName().charAt(0) == Enums.AQN && !antc) || (root.getName().charAt(0) == Enums.PQN && antc)) {
             p = new Argument(mind.getTerms().createCVar(r, mind.getTerms().add(varName), null));
             r.setAbstractive(true);
@@ -222,12 +226,12 @@ public class Compiler {
                     root.getLeft().setName("-" + root.getLeft().getName());
                 }
             }
-            parseArgs(d, arg, root, 0, replacements, externals);
+            parseArgs(arg, root, 0, replacements, externals);
             pred = mind.getPredicates().add(mind.getTerms().add(root.getName()), arg.size());
         } else if (root.getLeft() == null) {
             pred = mind.getPredicates().add(mind.getTerms().add(root.getName()), 0);
         } else {
-            parseArgs(d, arg, root.getRight(), 1, replacements, externals);
+            parseArgs(arg, root.getRight(), 1, replacements, externals);
             pred = mind.getPredicates().add(mind.getTerms().add(root.getLeft().getName()), arg.size());
         }
         d.setPredicate(pred);
@@ -240,17 +244,17 @@ public class Compiler {
         return d;
     }
 
-    private void parseArgs(Domain d, ArgumentsList arg, PTree root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
+    private void parseArgs(ArgumentsList arg, PTree root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
         if (root == null) {
         } else if (root.isSystem()) {
             if (level == 0) {
-                parseArgs(d, arg, root.getLeft(), level + 1, replacements, externals);
-                parseArgs(d, arg, root.getRight(), level + 1, replacements, externals);
+                parseArgs(arg, root.getLeft(), level + 1, replacements, externals);
+                parseArgs(arg, root.getRight(), level + 1, replacements, externals);
             } else {
                 // системная функция
                 ArgumentsList arguments = new ArgumentsList();
-                parseArgs(d, arguments, root.getLeft(), level + 1, replacements, externals);
-                parseArgs(d, arguments, root.getRight(), level + 1, replacements, externals);
+                parseArgs(arguments, root.getLeft(), level + 1, replacements, externals);
+                parseArgs(arguments, root.getRight(), level + 1, replacements, externals);
                 if (root.getName().equals("_neg")
                         && arguments.size() == 1
                         && !arguments.get(0).isEmpty(mind)
@@ -263,12 +267,12 @@ public class Compiler {
                 arg.add(t);
             }
         } else if (root.getName().charAt(0) == Enums.COMMA) {
-            parseArgs(d, arg, root.getLeft(), level + 1, replacements, externals);
-            parseArgs(d, arg, root.getRight(), level + 1, replacements, externals);
+            parseArgs(arg, root.getLeft(), level + 1, replacements, externals);
+            parseArgs(arg, root.getRight(), level + 1, replacements, externals);
         } else if (root.getName().charAt(0) == Enums.LB) {
             // вложенная функция
             ArgumentsList arguments = new ArgumentsList();
-            parseArgs(d, arguments, root.getRight(), level + 1, replacements, externals);
+            parseArgs(arguments, root.getRight(), level + 1, replacements, externals);
             Function f = mind.getFunctions().add(mind.getTerms().add(root.getLeft().getName()), arguments);
             Argument t = new Argument(f);
             arg.add(t);
