@@ -385,7 +385,7 @@ public class Functions {
         }
 
         {
-            put("_iv(2)", new Operation(LibMode.FUNCTION, "_iv", 2, new IReactor<Function>() {
+            put("_interval(2)", new Operation(LibMode.FUNCTION, "_interval", 2, new IReactor<Function>() {
                 public Object run(Function o) throws Exception {
                     int ret = 1;
                     ArgumentsList arg = o.getArguments();
@@ -417,7 +417,7 @@ public class Functions {
         }
 
         {
-            put("_is(0)", new Operation(LibMode.FUNCTION, "_is", 2, new IReactor<Function>() {
+            put("_set(0)", new Operation(LibMode.FUNCTION, "_set", 0, new IReactor<Function>() {
                 public Object run(Function o) throws Exception {
                     int ret = 1;
                     ArgumentsList arg = o.getArguments();
@@ -614,6 +614,8 @@ public class Functions {
                 }
             }));
         }
+
+        //////////////////////////////////////////////////////////////////////////////////////
 
         {
             put("log(1)", new Operation(LibMode.FUNCTION, "log", 1, new IReactor<Function>() {

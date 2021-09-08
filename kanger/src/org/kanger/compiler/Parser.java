@@ -48,18 +48,17 @@ public class Parser {
     private static final int DIR_RIGHT = 1;
     private static final org.kanger.compiler.Operation[] ops = {
 
+            //Функции
+
             /*  1 */
-            new org.kanger.compiler.Operation("..", "_iv", 1, 2, 0, false, false),
-            new org.kanger.compiler.Operation("[", "_is", 1, 0, 0, false, false),
+            new org.kanger.compiler.Operation("..", "_interval", 1, 2, 0, false, false),
+            new org.kanger.compiler.Operation("[", "_set", 1, 0, 0, false, false),
 
             new org.kanger.compiler.Operation("++", "_inc", 1, 1, 1, false, false),
             new org.kanger.compiler.Operation("--", "_dec", 1, 1, 1, false, false),
             new org.kanger.compiler.Operation("-", "_neg", 1, 1, 1, false, false),
             new org.kanger.compiler.Operation("+", "_val", 1, 1, 1, false, false),
             new org.kanger.compiler.Operation("~~", "_bitnot", 1, 1, 1, false, false),
-
-            new org.kanger.compiler.Operation("~", "", 1, 1, 1, false, false),
-
 
             /*  2 */
             new org.kanger.compiler.Operation("*", "_mul", 2, 2, 0, false, false),
@@ -75,34 +74,39 @@ public class Parser {
             new org.kanger.compiler.Operation("^", "_bitxor", 3, 2, 0, false, false),
             new org.kanger.compiler.Operation("|", "_bitor", 3, 2, 0, false, false),
 
-            /* 4 */
-            new org.kanger.compiler.Operation(":", "_in", 4, 2, 0, false, false),
-            new org.kanger.compiler.Operation(":", "_in", 4, 3, 0, false, false),
+            //Предикаты
 
-            new org.kanger.compiler.Operation("<=", "_le", 4, 2, 0, false, false),
-            new org.kanger.compiler.Operation("<", "_lr", 4, 2, 0, false, false),
-            new org.kanger.compiler.Operation(">=", "_ge", 4, 2, 0, false, false),
-            new org.kanger.compiler.Operation(">", "_gr", 4, 2, 0, false, false),
+            /* 1 */
+            new org.kanger.compiler.Operation("~", "", 4, 1, 1, false, false),
+
+            /* 4 */
+            new org.kanger.compiler.Operation(":", "_in", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation(":", "_in", 5, 3, 0, false, false),
+
+            new org.kanger.compiler.Operation("<=", "_le", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation("<", "_lr", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation(">=", "_ge", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation(">", "_gr", 5, 2, 0, false, false),
 
             /* 5 */
-            new org.kanger.compiler.Operation("==", "_eq", 5, 2, 0, false, false),
-            new org.kanger.compiler.Operation("=", "_eq", 5, 2, 0, false, false),
-            new org.kanger.compiler.Operation("!=", "_ne", 5, 2, 0, false, false),
-            new org.kanger.compiler.Operation("<>", "_ne", 5, 2, 0, false, false),
+            new org.kanger.compiler.Operation("==", "_eq", 6, 2, 0, false, false),
+            new org.kanger.compiler.Operation("=", "_eq", 6, 2, 0, false, false),
+            new org.kanger.compiler.Operation("!=", "_ne", 6, 2, 0, false, false),
+            new org.kanger.compiler.Operation("<>", "_ne", 6, 2, 0, false, false),
 
             /* 6 */
-            new org.kanger.compiler.Operation(",", "", 6, 2, 0, false, false),
-            new org.kanger.compiler.Operation("&&", "&", 6, 2, 0, false, true),
+            new org.kanger.compiler.Operation(",", "", 7, 2, 0, false, false),
+            new org.kanger.compiler.Operation("&&", "&", 7, 2, 0, false, true),
 
             /* 7 */
-            new org.kanger.compiler.Operation("||", "|", 7, 2, 0, false, true),
+            new org.kanger.compiler.Operation("||", "|", 8, 2, 0, false, true),
 
             /* 8 */
-            new org.kanger.compiler.Operation("->", "}", 8, 2, 0, false, true),
+            new org.kanger.compiler.Operation("->", "}", 9, 2, 0, false, true),
 
             /* 9 */
-            new org.kanger.compiler.Operation("@", "", 9, 1, 1, true, false),
-            new org.kanger.compiler.Operation("$", "", 9, 1, 1, true, false)
+            new org.kanger.compiler.Operation("@", "", 10, 1, 1, true, false),
+            new org.kanger.compiler.Operation("$", "", 10, 1, 1, true, false)
 
     };
 
@@ -357,9 +361,9 @@ public class Parser {
                         wasq = ops[i].getName().charAt(0) == Enums.PQN || ops[i].getName().charAt(0) == Enums.AQN ? p : null;
 
                         p.setPrior(ops[i].getPrior());
-                        p.setNext(ops[i].getRange() > 1 && !ops[i].isPost() ? DIR_RIGHT : DIR_LEFT);
                         p.setDir(ops[i].getDir());
                         p.setRange(ops[i].getRange());
+                        p.setNext(ops[i].getRange() > 1 && !ops[i].isPost() ? DIR_RIGHT : DIR_LEFT);
 
                         if (term == 0 && ops[i].getName().equals("[")) {
                             p.setNext(DIR_RIGHT);
@@ -384,8 +388,8 @@ public class Parser {
              * is just a name, and == 0 if this is
              * databased operation.
              */
-            if (p.getName().charAt(0) == Enums.LB || p.getName().equals("_is")) {
-                if (p.getName().equals("_is")) {
+            if (p.getName().charAt(0) == Enums.LB || p.getName().equals("_set")) {
+                if (p.getName().equals("_set")) {
                     PTree x = new PTree();
                     x.setNext(DIR_LEFT);
                     x.setLeft(p);

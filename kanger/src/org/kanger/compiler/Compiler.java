@@ -217,7 +217,7 @@ public class Compiler {
                     root.setLeft(root.getLeft().getLeft());
                     antc = !antc;
                 }
-                if (root.getRight() != null && "_neg".equals(root.getRight().getName()) && root.getRight().getLeft() != null && !"_iv".equals(root.getRight().getLeft().getName())) {
+                if (root.getRight() != null && "_neg".equals(root.getRight().getName()) && root.getRight().getLeft() != null && !"_interval".equals(root.getRight().getLeft().getName())) {
                     root.setRight(root.getRight().getLeft());
                     root.getRight().setName("-" + root.getRight().getName());
                 }
