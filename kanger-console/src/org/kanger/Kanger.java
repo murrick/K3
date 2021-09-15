@@ -46,6 +46,37 @@ public class Kanger {
 
     public static void main(String[] args) throws Exception {
 
+//        User ux = new User();
+//        Mind mx = new Mind(ux);
+//        Compiller c = new Compiller(mx);
+//
+//        String s = "!!(@x 1+x : mid(x-5, 12+2), (x > 0, x - 10 < 7));";
+//        s = "!mid(x-5, -12+2)";
+//        s = "!x,12+2";
+//        s = "!@x x : 1..10 -> zzz(x,4,5)";
+//        s = "!@x x : [4,-8,1+2] -> zzz(\"asdf asdf \\\"asd fasd f\")";
+//        s = "!@x (male(x) || female(x)) && ~(male(x) && female(x));";
+////        s = "!x, -5";
+////        s = "!a -> b";
+////        s = "?$x x : -1..-10 2*x, ~(x <> 15)";
+//
+//        boolean antc = s.startsWith("!");
+//        Leaf t = Parser.parse(s.substring(1));
+//        IRule r = c.compileLine(t, antc, s, false, null);
+////        System.err.println(r);
+//        Console.showTree(mx, r);
+
+//        Token t = null;
+//        do {
+//            t = Parser.nextToken(s, t);
+//            if(t != null) {
+//                System.err.println(t.getToken(s));
+//            } else {
+//                break;
+//            }
+//        } while(t != null);
+
+
         String newlogin = null;
         String login = null;
         String password = null;

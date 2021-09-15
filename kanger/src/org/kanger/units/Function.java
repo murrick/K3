@@ -26,7 +26,6 @@
 package org.kanger.units;
 
 import org.kanger.Mind;
-import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
@@ -188,7 +187,7 @@ public class Function implements IUnit<Function> {
     }
 
     private String formatParam(IArgument t, Mind mind, boolean asRight) throws Exception {
-        Operation op = Parser.getOp(getName(mind).toString(), range);
+        Parser.Op op = Parser.getOp(getName(mind).toString(), range);
         boolean isOp = op != null && op.getRange() == range;
         String s = "";
         if (t.getType() == ArgumentType.FUNCTION) {
@@ -212,7 +211,7 @@ public class Function implements IUnit<Function> {
             if (!isCalculable() && getValue((Mind) mind) != null) {
                 return getValue((Mind) mind).toString();
             } else {
-                Operation op = Parser.getOp(getName((Mind) mind).toString(), range);
+                Parser.Op op = Parser.getOp(getName((Mind) mind).toString(), range);
                 String s = "";
                 if (op == null || op.getRange() != range) {
                     s = String.format("%s(", getName((Mind) mind).toString());

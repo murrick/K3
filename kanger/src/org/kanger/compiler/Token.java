@@ -25,50 +25,27 @@
 
 package org.kanger.compiler;
 
-import org.kanger.units.Domain;
+public class Token {
+    private int pos = 0;
+    private int len = 0;
 
-/**
- * Created by Dmitry G. Quznetsov on 25.05.15.
- * <p/>
- * Узел
- */
-public class Node {
-
-    private Domain d = null;            /* Предикат */
-    private Node right = null;          /* Правый элемент */
-    private Node down = null;           /* Нижний элемент */
-    private Node branch = null;         /* Вложенный элемент */
-
-    public Domain getD() {
-        return d;
+    public String getToken(String ln) {
+        return len > 0 ? ln.substring(pos, pos + len) : "";
     }
 
-    public void setD(Domain d) {
-        this.d = d;
+    public int getPos() {
+        return pos;
     }
 
-    public Node getRight() {
-        return right;
+    public void setPos(int pos) {
+        this.pos = pos;
     }
 
-    public void setRight(Node right) {
-        this.right = right;
+    public int getLen() {
+        return len;
     }
 
-    public Node getDown() {
-        return down;
+    public void setLen(int len) {
+        this.len = len;
     }
-
-    public void setDown(Node down) {
-        this.down = down;
-    }
-
-    public Node getBranch() {
-        return branch;
-    }
-
-    public void setBranch(Node branch) {
-        this.branch = branch;
-    }
-
 }

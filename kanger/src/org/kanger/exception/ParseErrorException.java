@@ -32,12 +32,14 @@ import org.kanger.enums.ParseError;
  */
 public class ParseErrorException extends Exception {
     String exceptionMessage = "Parse error";
+    String pureMessage = "";
     ParseError code = ParseError.SUCCESS;
 
     public ParseErrorException() {
     }
 
     public ParseErrorException(String msg) {
+        pureMessage = msg;
         exceptionMessage += ": " + msg;
     }
 
@@ -125,6 +127,18 @@ public class ParseErrorException extends Exception {
 
     public ParseError getCode() {
         return code;
+    }
+
+    public String getPureMessage() {
+        return pureMessage;
+    }
+
+    public int getExceptionPosition() {
+        return Integer.parseInt(pureMessage.split("@")[0]);
+    }
+
+    public String getExceptionMessage() {
+        return pureMessage.split("@")[1];
     }
 
     @Override

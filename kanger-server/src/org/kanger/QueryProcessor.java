@@ -27,6 +27,7 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kanger.compiler.Token;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
@@ -358,33 +359,26 @@ public class QueryProcessor implements IReactor<JSONObject> {
     private JSONObject query(JSONObject parameters, IUser user) throws Exception {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
-        int pos = 0;
-        Object[] t = null;
         mind.clearLog();
         ((HypothesisStore) mind.getHypothesis()).clear();
         String query = parameters.getString("request");
         query = URLDecoder.decode(query, "utf-8");
+        Token t = null;
 
         Mind m = new Mind(mind);
         boolean succ = false;
         Boolean res = null;
-        while ((t = Tools.extractLine(query, pos)) != null) {
-            pos = (int) t[1];
-            String ln = (String) t[0];
-
-            if(!ln.isEmpty() && ln.endsWith(",")) {
-                ln = ln.substring(0, ln.length()-1) + ";";
-            }
-            if (ln.trim().charAt(0) == '?') {
+        while ((t = Tools.extractLine(query, t)) != null) {
+            if (t.getToken(query).charAt(0) == '?') {
                 succ = true;
             }
 
-            res = m.query(ln);
+            res = m.query(t.getToken(query));
         }
-        if(res != null) {
+        if (res != null) {
 
         }
-        if(!succ) {
+        if (!succ) {
             mind.commit(m);
         } else {
             mind.release(m);

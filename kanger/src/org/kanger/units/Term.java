@@ -26,7 +26,6 @@
 package org.kanger.units;
 
 import org.kanger.Mind;
-import org.kanger.compiler.PTree;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.Tools;
@@ -198,14 +197,14 @@ public class Term implements IUnit<Term>, ITerm {
         } else if (o instanceof byte[]) {
             type = DataType.BLOB;
             value = o;
-        } else if (o instanceof PTree) {
-            if ("..".equals(((PTree) o).getName())) {
-                List<ITerm> list = new ArrayList<>();
-                list.add(mind.getTerms().add(((PTree) o).getLeft().getName()));
-                list.add(mind.getTerms().add(((PTree) o).getRight().getName()));
-                type = DataType.INTERVAL;
-                value = list;
-            }
+//        } else if (o instanceof PTree) {
+//            if ("..".equals(((PTree) o).getName())) {
+//                List<ITerm> list = new ArrayList<>();
+//                list.add(mind.getTerms().add(((PTree) o).getLeft().getName()));
+//                list.add(mind.getTerms().add(((PTree) o).getRight().getName()));
+//                type = DataType.INTERVAL;
+//                value = list;
+//            }
         } else if (o instanceof ITerm[]) {
             List<ITerm> list = new ArrayList<>();
             list.add(((ITerm[]) o)[0]);

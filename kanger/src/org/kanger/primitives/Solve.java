@@ -26,7 +26,6 @@
 package org.kanger.primitives;
 
 import org.kanger.Mind;
-import org.kanger.compiler.Operation;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
@@ -137,7 +136,7 @@ public class Solve {
                 }
             }
 
-            Operation op = Parser.getOp(getPredicate(mind).getName(mind), getRange());
+            Parser.Op op = Parser.getOp(getPredicate(mind).getName(mind), getRange());
 
             if (op == null) {
                 op = Parser.getOp(getPredicate(mind).getName(mind), 0);

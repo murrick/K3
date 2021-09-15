@@ -2049,7 +2049,7 @@ public class KangerTest {
                 "!age(Tom, 12);" +
                 "!age(Sarah, 4);"
         );
-        mind.query("?$x $y age(x,y), y : {10..37};");
+        mind.query("?$x $y age(x,y), y : [10..37];");
         showResult(true);
         if (!exists("x", "John")) {
             fail("Expected x: John");
@@ -2089,7 +2089,7 @@ public class KangerTest {
                 "!age(Tom, 12);" +
                 "!age(Sarah, 4);"
         );
-        mind.query("?$x $y age(x,y), y : {10,37};");
+        mind.query("?$x $y age(x,y), y : [10,37];");
         showResult(true);
         if (!exists("x", "John")) {
             fail("Expected x: John");
@@ -2211,7 +2211,7 @@ public class KangerTest {
     public void set_07_01() throws Exception {
 
         mind = mind.clearWorkspace();
-        mind.query("?$x x : '2018-03-01'..'2018-04-19', 38 hours 40 minutes, x > '2018-03-07';");
+        mind.query("?$x x : '2018-03-01'..'2018-04-19' '38 hours 40 minutes', x > '2018-03-07';");
         showResult(true);
         if (mind.getValues().size() != 27) {
             fail("Expected 27 values");
@@ -2262,7 +2262,7 @@ public class KangerTest {
     public void set_07_06() throws Exception {
 
         mind = mind.clearWorkspace();
-        mind.query("?$x x : qwerty,'(.*)er(.*)';");
+        mind.query("?$x x : qwerty '(.*)er(.*)';");
         showResult(true);
         if (mind.getValues().size() != 2) {
             fail("Expected 2 values");
@@ -2274,7 +2274,7 @@ public class KangerTest {
     public void set_07_07() throws Exception {
 
         mind = mind.clearWorkspace();
-        mind.query("?$x x : qwerty,'(.*)er(.*)', x=qw;");
+        mind.query("?$x x : qwerty '(.*)er(.*)', x=qw;");
         showResult(true);
         if (mind.getValues().size() != 1) {
             fail("Expected 1 values");
@@ -2286,7 +2286,7 @@ public class KangerTest {
     public void set_07_08() throws Exception {
 
         mind = mind.clearWorkspace();
-        mind.query("?$x x : qwerty,'(.*)er(.*)', x=ty;");
+        mind.query("?$x x : qwerty '(.*)er(.*)', x=ty;");
         showResult(true);
         if (mind.getValues().size() != 1) {
             fail("Expected 1 values");
@@ -2298,7 +2298,7 @@ public class KangerTest {
     public void set_07_09() throws Exception {
 
         mind = mind.clearWorkspace();
-        mind.query("?$x x : qwerty,'(.*)er(.*)', x != ty;");
+        mind.query("?$x x : qwerty '(.*)er(.*)', x != ty;");
         showResult(true);
         if (mind.getValues().size() != 1) {
             fail("Expected 1 values");
@@ -2335,7 +2335,7 @@ public class KangerTest {
     public void set_07_0C() throws Exception {
 
         mind = mind.clearWorkspace();
-        mind.query("?$x x : 1..10, 3;");
+        mind.query("?$x x : 1..10  3;");
         showResult(true);
         if (mind.getValues().size() != 4) {
             fail("Expected 4 rows");

@@ -27,10 +27,7 @@ package org.kanger.compiler;
 
 import org.kanger.Mind;
 import org.kanger.User;
-import org.kanger.enums.Enums;
 import org.kanger.enums.LibMode;
-import org.kanger.enums.ParseError;
-import org.kanger.enums.Tools;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.units.Operation;
 
@@ -39,76 +36,92 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by Dmitry G. Quznetsov on 20.05.15.
- */
 public class Parser {
 
-    private static final int DIR_LEFT = 0;
-    private static final int DIR_RIGHT = 1;
-    private static final org.kanger.compiler.Operation[] ops = {
+    private static final Op[] ops = {
 
             //Функции
 
             /*  1 */
-            new org.kanger.compiler.Operation("..", "_interval", 1, 2, 0, false, false),
-            new org.kanger.compiler.Operation("[", "_set", 1, 0, 0, false, false),
+            new Op("..", "_interval", 2, 2, 0, false, false),
+            new Op("[", "_set", 1, 1, 0, false, false),
 
-            new org.kanger.compiler.Operation("++", "_inc", 1, 1, 1, false, false),
-            new org.kanger.compiler.Operation("--", "_dec", 1, 1, 1, false, false),
-            new org.kanger.compiler.Operation("-", "_neg", 1, 1, 1, false, false),
-            new org.kanger.compiler.Operation("+", "_val", 1, 1, 1, false, false),
-            new org.kanger.compiler.Operation("~~", "_bitnot", 1, 1, 1, false, false),
+            new Op("++", "_inc", 1, 1, 1, false, false),
+            new Op("--", "_dec", 1, 1, 1, false, false),
+            new Op("-", "_neg", 1, 1, 1, false, false),
+            new Op("+", "_val", 1, 1, 1, false, false),
+            new Op("~~", "_bitnot", 1, 1, 1, false, false),
 
             /*  2 */
-            new org.kanger.compiler.Operation("*", "_mul", 2, 2, 0, false, false),
-            new org.kanger.compiler.Operation("/", "_div", 2, 2, 0, false, false),
-            new org.kanger.compiler.Operation("%", "_rem", 2, 2, 0, false, false),
+            new Op("*", "_mul", 2, 2, 0, false, false),
+            new Op("/", "_div", 2, 2, 0, false, false),
+            new Op("%", "_rem", 2, 2, 0, false, false),
 
             /*  3 */
-            new org.kanger.compiler.Operation("+", "_add", 3, 2, 0, false, false),
-            new org.kanger.compiler.Operation("-", "_sub", 3, 2, 0, false, false),
-            new org.kanger.compiler.Operation("<<", "_bitleft", 3, 2, 0, false, false),
-            new org.kanger.compiler.Operation(">>", "_bitright", 3, 2, 0, false, false),
-            new org.kanger.compiler.Operation("&", "_bitand", 3, 2, 0, false, false),
-            new org.kanger.compiler.Operation("^", "_bitxor", 3, 2, 0, false, false),
-            new org.kanger.compiler.Operation("|", "_bitor", 3, 2, 0, false, false),
+            new Op("+", "_add", 3, 2, 0, false, false),
+            new Op("-", "_sub", 3, 2, 0, false, false),
+            new Op("<<", "_bitleft", 3, 2, 0, false, false),
+            new Op(">>", "_bitright", 3, 2, 0, false, false),
+            new Op("&", "_bitand", 3, 2, 0, false, false),
+            new Op("^", "_bitxor", 3, 2, 0, false, false),
+            new Op("|", "_bitor", 3, 2, 0, false, false),
 
             //Предикаты
 
             /* 1 */
-            new org.kanger.compiler.Operation("~", "", 4, 1, 1, false, false),
+            new Op("~", "", 4, 1, 1, false, false),
+            new Op("!", "", 4, 1, 1, false, false),
 
             /* 4 */
-            new org.kanger.compiler.Operation(":", "_in", 5, 2, 0, false, false),
-            new org.kanger.compiler.Operation(":", "_in", 5, 3, 0, false, false),
+            new Op(":", "_in", 5, 2, 0, false, false),
+            new Op(":", "_in", 5, 3, 0, false, false),
 
-            new org.kanger.compiler.Operation("<=", "_le", 5, 2, 0, false, false),
-            new org.kanger.compiler.Operation("<", "_lr", 5, 2, 0, false, false),
-            new org.kanger.compiler.Operation(">=", "_ge", 5, 2, 0, false, false),
-            new org.kanger.compiler.Operation(">", "_gr", 5, 2, 0, false, false),
+            new Op("<=", "_le", 5, 2, 0, false, false),
+            new Op("<", "_lr", 5, 2, 0, false, false),
+            new Op(">=", "_ge", 5, 2, 0, false, false),
+            new Op(">", "_gr", 5, 2, 0, false, false),
 
             /* 5 */
-            new org.kanger.compiler.Operation("==", "_eq", 6, 2, 0, false, false),
-            new org.kanger.compiler.Operation("=", "_eq", 6, 2, 0, false, false),
-            new org.kanger.compiler.Operation("!=", "_ne", 6, 2, 0, false, false),
-            new org.kanger.compiler.Operation("<>", "_ne", 6, 2, 0, false, false),
+            new Op("==", "_eq", 6, 2, 0, false, false),
+            new Op("=", "_eq", 6, 2, 0, false, false),
+            new Op("!=", "_ne", 6, 2, 0, false, false),
+            new Op("<>", "_ne", 6, 2, 0, false, false),
+            new Op("~=", "_ne", 6, 2, 0, false, false),
 
             /* 6 */
-            new org.kanger.compiler.Operation(",", "", 7, 2, 0, false, false),
-            new org.kanger.compiler.Operation("&&", "&", 7, 2, 0, false, true),
+            new Op(",", "", 7, 2, 0, false, false),
+            new Op("&&", "&", 7, 2, 0, false, true),
 
             /* 7 */
-            new org.kanger.compiler.Operation("||", "|", 8, 2, 0, false, true),
+            new Op("||", "|", 8, 2, 0, false, true),
 
             /* 8 */
-            new org.kanger.compiler.Operation("->", "}", 9, 2, 0, false, true),
+            new Op("->", "}", 9, 2, 0, false, true),
 
             /* 9 */
-            new org.kanger.compiler.Operation("@", "", 10, 1, 1, true, false),
-            new org.kanger.compiler.Operation("$", "", 10, 1, 1, true, false)
+            new Op("@", "", 10, 1, 1, true, false),
+            new Op("$", "", 10, 1, 1, true, false)
 
     };
+
+    private static Op getOp(String line, int pos, int range) {
+        Op found = null;
+        for (Op x : ops) {
+            if (line.startsWith(x.name, pos)) {
+                if (found == null || found.name.length() < x.name.length()) {
+                    found = x;
+                }
+            }
+        }
+        if (found != null && range > 0 && found.range != range) {
+            for (Op x : ops) {
+                if (x != found && x.range == range && x.name.equals(found.name)) {
+                    found = x;
+                }
+            }
+        }
+        return found;
+    }
 
     public static boolean isDelimiter(int ch) {
         return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
@@ -124,6 +137,323 @@ public class Parser {
 
     public static boolean isHex(int ch) {
         return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+
+    public static Token nextToken(String line, Token current) throws ParseErrorException {
+        if (current == null) {
+            current = new Token();
+        }
+        if (current.getPos() + current.getLen() >= line.length()) {
+            return null;
+        }
+        current.setPos(current.getPos() + current.getLen());
+        current.setLen(0);
+
+        while (current.getPos() < line.length() && isDelimiter(line.charAt(current.getPos()))) {
+            current.setPos(current.getPos() + 1);
+        }
+
+        Op op = getOp(line, current.getPos(), 0);
+        if (line.startsWith("/*", current.getPos())) {
+            while (current.getPos() + current.getLen() < line.length()
+                    && !line.startsWith("*/", current.getPos() + current.getLen())) {
+                current.setLen(current.getLen() + 1);
+            }
+            if (current.getPos() + current.getLen() < line.length()) {
+                current.setLen(current.getLen() + 2);
+            }
+            if (current.getPos() + current.getLen() >= line.length()) {
+                throw new ParseErrorException(current.getPos() + "@Unclosed comment");
+            }
+        } else if (line.startsWith("//", current.getPos())) {
+            while (current.getPos() + current.getLen() < line.length()
+                    && line.charAt(current.getPos() + current.getLen()) != '\r'
+                    && line.charAt(current.getPos() + current.getLen()) != '\n') {
+                current.setLen(current.getLen() + 1);
+            }
+            while (current.getPos() + current.getLen() < line.length()
+                    && line.charAt(current.getPos() + current.getLen()) == '\r'
+                    && line.charAt(current.getPos() + current.getLen()) == '\n') {
+                current.setLen(current.getLen() + 1);
+            }
+        } else if (op != null) {
+            current.setLen(op.name.length());
+        } else if (line.charAt(current.getPos()) == '\"' || line.charAt(current.getPos()) == '\'') {
+            char stop = line.charAt(current.getPos());
+            char before;
+            do {
+                before = 0;
+                current.setLen(current.getLen() + 1);
+                while (current.getPos() + current.getLen() < line.length()
+                        && line.charAt(current.getPos() + current.getLen()) != stop) {
+                    before = line.charAt(current.getPos() + current.getLen());
+                    current.setLen(current.getLen() + 1);
+                }
+                if (current.getPos() + current.getLen() >= line.length()) {
+                    throw new ParseErrorException(current.getPos() + "@Unclosed quotes");
+                }
+            } while (before == '\\');
+            if (current.getPos() + current.getLen() < line.length()) {
+                current.setLen(current.getLen() + 1);
+            }
+        } else if (line.charAt(current.getPos()) == '{') {
+            int counter = 0;
+            do {
+                while (current.getPos() + current.getLen() < line.length()
+                        && line.charAt(current.getPos() + current.getLen()) != '}') {
+                    if (line.charAt(current.getPos() + current.getLen()) == '{') {
+                        ++counter;
+                    }
+                    current.setLen(current.getLen() + 1);
+                }
+                if (current.getPos() + current.getLen() >= line.length()) {
+                    throw new ParseErrorException(current.getPos() + "@Unclosed brackets");
+                }
+                --counter;
+                current.setLen(current.getLen() + 1);
+            } while (counter > 0);
+        } else if (isAlpha(line.charAt(current.getPos()))) {
+            while (current.getPos() + current.getLen() < line.length()
+                    && (isAlpha(line.charAt(current.getPos() + current.getLen()))
+                    || (isNumeric(line.charAt(current.getPos() + current.getLen())) && line.charAt(current.getPos() + current.getLen()) != '.'))) {
+                current.setLen(current.getLen() + 1);
+            }
+        } else if (isNumeric(line.charAt(current.getPos()))) {
+            while (current.getPos() + current.getLen() < line.length()
+                    && isNumeric(line.charAt(current.getPos() + current.getLen()))
+                    && !line.startsWith("..", current.getPos() + current.getLen())) {
+                current.setLen(current.getLen() + 1);
+            }
+        } else {
+            current.setLen(current.getLen() + 1);
+        }
+        return current;
+    }
+
+    private static Leaf getParent(Leaf root, Leaf current) {
+        if (current != null) {
+            Leaf parent = root;
+            for (; parent != null && parent.getRight() != current; parent = parent.getRight()) ;
+            return parent;
+        } else {
+            return null;
+        }
+    }
+
+    private static Leaf parse(String line, Token token) throws ParseErrorException {
+        Leaf current = null;
+        Leaf root = null;
+        while ((token = nextToken(line, token)) != null) {
+
+            if (token.getToken(line).startsWith("//") || token.getToken(line).startsWith("/*")) {
+                continue;
+            }
+            if (token.getToken(line).startsWith("{")) {
+                throw new ParseErrorException(current.getPos() + "@Unexpected functional block");
+            }
+            if (")".equals(token.getToken(line)) || "]".equals(token.getToken(line)) || ";".equals(token.getToken(line))) {
+                break;
+            }
+
+            Leaf leaf = new Leaf();
+            leaf.setValue(token.getToken(line));
+            leaf.setPos(token.getPos());
+
+            int range = (current == null || (current.getPriority() > 0 && !"(".equals(current.getValue()))) ? 1 : 2;
+            Op op = getOp(line, token.getPos(), range);
+            if (op != null) {
+                leaf.setRange(op.getRange());
+                leaf.setPriority(op.getPrior());
+                if (!op.getSubst().isEmpty()) {
+                    leaf.setValue(op.getSubst());
+                }
+            }
+
+            if ("@".equals(leaf.getValue()) || "$".equals(leaf.getValue())) {
+                if ((token = nextToken(line, token)) == null) {
+                    throw new ParseErrorException(leaf.getPos() + "@No quantifier variable defined");
+                }
+                Leaf tmp = new Leaf();
+                tmp.setValue(token.getToken(line));
+                tmp.setPos(token.getPos());
+                leaf.setLeft(tmp);
+            } else if ("_set".equals(leaf.getValue())) {
+                Leaf tmp = new Leaf();
+                tmp.setValue("(");
+                tmp.setPos(token.getPos());
+                tmp.setPriority(1);
+                tmp.setRange(2);
+                tmp.setLeft(leaf);
+                leaf = tmp;
+                leaf.setRight(parse(line, token));
+                if (!"]".equals(token.getToken(line))) {
+                    throw new ParseErrorException(leaf.getPos() + "@Expected closing bracket");
+                }
+            } else if ("(".equals(leaf.getValue())) {
+                leaf.setPriority(1);
+                leaf.setRight(parse(line, token));
+                if (!")".equals(token.getToken(line))) {
+                    throw new ParseErrorException(leaf.getPos() + "@Expected closing bracket");
+                }
+            }
+
+            if (root == null) {
+                root = leaf;
+//            } else if (root.getPriority() < leaf.getPriority()) {
+//                if(("$".equals(leaf.getValue()) || "@".equals(leaf.getValue())) && root.getRight() == null) {
+//                    root.setRight(leaf);
+//                } else if (leaf.getLeft() != null) {
+//                    throw new ParseErrorException(leaf.getPos() + "@Unexpected operation");
+//                } else {
+//                    leaf.setLeft(root);
+//                    root = leaf;
+//                }
+            } else if (current.getPriority() < leaf.getPriority()) {
+
+                if (current.getRange() == 1 && ("@".equals(leaf.getValue()) || "$".equals(leaf.getValue()))) {
+                    if (current.getRight() == null) {
+                        current.setRight(leaf);
+                    } else {
+                        throw new ParseErrorException(leaf.getPos() + "@Misplaced quantifier");
+                    }
+                } else {
+                    while (current != null && current.getPriority() < leaf.getPriority()) {
+                        current = getParent(root, current);
+                    }
+                    if (current == null) {
+                        leaf.setLeft(root);
+                        root = leaf;
+
+//                    throw new ParseErrorException(leaf.getPos() + "@Syntax error");
+                    } else {
+                        if (leaf.getLeft() != null) {
+                            throw new ParseErrorException(leaf.getPos() + "@Unexpected operation");
+                        } else {
+                            leaf.setLeft(current.getRight());
+                            current.setRight(leaf);
+                        }
+                    }
+                }
+            } else if (current.getRight() == null && current.getPriority() > 0) {
+                current.setRight(leaf);
+            } else {
+//                Leaf parent = getParent(root, current);
+                Leaf parentOp = current;
+                while (parentOp != null && !"_in".equals(parentOp.getValue())) {
+                    parentOp = getParent(root, parentOp);
+                }
+                if (parentOp != null && parentOp.getPriority() > 0) {
+                    Leaf tmp = new Leaf();
+                    tmp.setValue(",");
+                    tmp.setPos(token.getPos());
+                    tmp.setPriority(7);
+                    tmp.setRange(2);
+                    tmp.setLeft(parentOp.getRight());
+                    tmp.setRight(leaf);
+                    parentOp.setRight(tmp);
+                    parentOp.setRange(parentOp.getRange() + 1);
+                    leaf = parentOp;
+                    if (getOp(parentOp.getValue(), parentOp.getRange()) == null) {
+                        throw new ParseErrorException(leaf.getPos() + "@Unexpected parameter");
+                    }
+                } else {
+                    throw new ParseErrorException(leaf.getPos() + "@Misplaced term");
+                }
+            }
+            current = leaf;
+        }
+        return root;
+    }
+
+    public static Op getOp(String name, int range) {
+        for (Op op : ops) {
+            if ((name.equals(op.name) || name.equals(op.getSubst())) && range == op.getRange()) {
+                return op;
+            }
+        }
+        return null;
+    }
+
+    private static int getRange(Leaf t) {
+        if (t == null) {
+            return 0;
+        } else {
+            int counter = 0;
+            if (",".equals(t.getValue())) {
+                counter += getRange(t.getLeft());
+                counter += getRange(t.getRight());
+            } else {
+                counter = 1;
+            }
+            return counter;
+        }
+    }
+
+    private static Leaf squeeze(Leaf t) {
+        if (t == null) {
+            return null;
+        }
+        t.setLeft(squeeze(t.getLeft()));
+        t.setRight(squeeze(t.getRight()));
+        if ("(".equals(t.getValue())) {
+            if (t.getLeft() == null) {
+                return squeeze(t.getRight());
+            } else {
+                t.setValue(t.getLeft().getValue());
+                t.setRange(t.getLeft().getRange());
+                t.setPriority(t.getLeft().getPriority());
+                t.setLeft(null);
+                if (t.getRight() != null && ",".equals(t.getRight().getValue())) {
+                    t.setLeft(squeeze(t.getRight().getLeft()));
+                    t.setRight(squeeze(t.getRight().getRight()));
+                }
+                int range = getRange(t.getLeft()) + getRange(t.getRight());
+                t.setRange(range);
+                return t;
+            }
+        } else {
+            return t;
+        }
+    }
+
+    public static Leaf parse(String line) throws ParseErrorException {
+        Leaf tree = parse(line, null);
+        return squeeze(tree);
+    }
+
+    public static Operation implement(String line, Mind mind, Token token) throws Exception {
+        boolean waitParams = false;
+        boolean waitScript = false;
+        int pos = 1;
+        Operation f = ((User) mind.getUser()).getUdf();
+        f.setMind(mind);
+        while ((token = nextToken(line, token)) != null) {
+            String ln = token.getToken(line);
+            if (";".equals(ln)) {
+                break;
+            }
+            if ("(".equals(ln)) {
+                waitParams = true;
+            } else if (")".equals(ln)) {
+                waitParams = false;
+                waitScript = true;
+            } else if (",".equals(ln)) {
+            } else if (waitParams) {
+                f.getParams().add(ln);
+            } else if (waitScript) {
+                if (!ln.startsWith("{")) {
+                    throw new ParseErrorException(pos + "@Functional block expected");
+                }
+                f.getScripts().add(ln.substring(0, ln.length() - 1).substring(1));
+            } else {
+                f.setName(ln);
+            }
+
+        }
+        f.setMode(LibMode.FUNCTION);
+        f.setRange(f.getParams().size());
+        f.getParams().add(f.getName());
+        return f;
     }
 
     public static String[] extractComments(String text) {
@@ -145,453 +475,80 @@ public class Parser {
         return ret;
     }
 
-    public static Object[] getToken(String ln, int pos) throws ParseErrorException {
-        int ch, c, i;
-        String line = "";
+    public static class Op {
+        private String name;            // Operation name
+        private String subst;           // Substitution name
+        private int prior;              // Operation pryority
+        private int range;              // Number of parameters
+        private int dir;                // Direction: L->R or R->L
+        private boolean post;           // Allow postfix form
+        private boolean repl;           // Must be just replaced w/o making function syntax
 
-        if (ln.isEmpty()) {
-            return null;
+        public Op(String name, String subst, int prior, int cp, int dir, boolean post, boolean repl) {
+            this.name = name;
+            this.subst = subst;
+            this.prior = prior;
+            this.range = cp;
+            this.dir = dir;
+            this.post = post;
+            this.repl = repl;
         }
 
-        while (true) {
-            if (pos >= ln.length()) {
-                return null;
-            }
-            ch = ln.charAt(pos);
-            while (pos < ln.length() && isDelimiter(ch = ln.charAt(pos++))) ;
-            if (pos >= ln.length()) {
-                if (ch == '?') {
-                    line += (char) ch;
-                    return new Object[]{line, pos};
-                } else {
-                    return null;
-                }
-            }
-            c = ln.charAt(pos++);
-
-            if (ch == 0) {
-                return null;
-            }
-            /*
-             * Skip comments
-             */
-
-            if (ch == '/' && c == '*') {
-                do {
-                    while (pos < ln.length() && ln.charAt(pos) != '*') ++pos;
-                    if (pos < ln.length()) {
-                        c = ln.charAt(++pos);
-                    } else {
-                        throw new ParseErrorException(pos, ParseError.COMMENT);
-                    }
-                } while (c != '/');
-                ++pos;
-            } else if (ch == '/' && c == '/') {
-                while (pos < ln.length() && ln.charAt(pos) != '\n' && ln.charAt(pos) != '\r') ++pos;
-                if (pos > ln.length()) {
-                    return null;
-                }
-            } else {
-                break;
-            }
+        public String getName() {
+            return name;
         }
 
-        /*
-         * Accept string and character expressions
-         */
-        if (ch == '\"' || ch == '\'') {
-            line += (char) ch;
-            line += (char) c;
-            while (c != ch && pos < ln.length()) {
-                for (i = (c == '\\' ? 1 : 0) + 1; i != 0; --i) {
-                    if (pos < ln.length()) {
-                        c = ln.charAt(pos++);
-                        line += (char) c;
-                    }
-                }
-            }
-            if (c != ch) {
-                throw new ParseErrorException(pos, ParseError.QUOTESR);
-            }
-        } else if (ch == '{') {
-            line += (char) ch;
-            line += (char) c;
-            int counter = 1;
-            while (counter > 0 && pos < ln.length()) {
-                c = ln.charAt(pos++);
-                line += (char) c;
-                if (c == '{') {
-                    ++counter;
-                } else if (c == '}') {
-                    --counter;
-                }
-            }
-            if (counter != 0) {
-                throw new ParseErrorException(pos, ParseError.RBRACES);
-            }
-        } else if (ch == '#' /*&& c != '#'*/) {
-            line += (char) ch;
-            line += (char) c;
-            while (pos < ln.length() && isHex(ch = ln.charAt(pos++))) {
-                line += (char) ch;
-            }
-            --pos;
-        } else {
-            line += (char) ch;
-
-            /* double character operators */
-            for (i = 0; i < ops.length; ++i) {
-                if (ops[i].getName().length() == 2 && ops[i].getName().charAt(0) == ch && ops[i].getName().charAt(1) == c) {
-                    line += (char) c;
-                    break;
-                }
-            }
-            if (i == ops.length) {
-
-                /* single character operations */
-                for (i = 0; i < ops.length; ++i) {
-                    if (ops[i].getName().length() == 2 && ops[i].getName().charAt(0) == ch) {
-                        --pos;
-                        break;
-                    }
-                }
-
-                if (i == ops.length) {
-
-                    --pos;
-                    if (isAlpha(ch)) {
-                        while (pos < ln.length() && (isAlpha(ch = ln.charAt(pos++)) || (isNumeric(ch) && ch != '.'))) {
-                            line += (char) ch;
-                        }
-                        --pos;
-                    } else if (isNumeric(ch)) {
-                        int p = ch;
-                        while (pos < ln.length() && isNumeric(ch = ln.charAt(pos++))) {
-                            //Блок на две точки
-                            if (p == ch && p == '.') {
-                                --pos;
-                                line = line.substring(0, line.length() - 1);
-                                break;
-                            } else {
-                                line += (char) ch;
-                                p = ch;
-                            }
-                        }
-                        --pos;
-                    }
-                }
-            }
+        public void setName(String name) {
+            this.name = name;
         }
-        return new Object[]{line, pos};
-    }
 
-    /*
-     * --------------------------------------------------------
-     *
-     * Parsing expression recursively.
-     * Builds expression tree with priority and
-     * direction correcting. For example:
-     *                         +
-     *      a * b + c;	->   /   \
-     *                     *       c
-     *					 /   \
-     *				   a       b
-     *
-     * Returns root of expression tree.
-     *
-     * If construction like a(x) found in top level, or
-     * operator definition for glob_ops has substitution - this
-     * expression marked as PREDICATE. Inside predicate braces this
-     * construction or operators oper_ops with substitutions
-     * marked as FUNCTION.
-     * --------------------------------------------------------
-     */
-    private static PTree parse(String ln, int pos /*, int mode*/) throws ParseErrorException {
-        String line = "";
-        PTree p, q, r, root, wasq;
-        int i, term;
-
-        term = 0;
-        root = wasq = null;
-        do {
-            Object[] t = getToken(ln, pos);
-            if (t == null) {
-                if (root != null) {
-                    root.setPos(pos);
-                } else {
-                    throw new ParseErrorException(pos, ParseError.EMPTY);
-                }
-                return root;
-            }
-
-            line = (String) t[0];
-            pos = (Integer) t[1];
-
-            if (line.isEmpty()) {
-                continue;
-            }
-
-            if (line.charAt(0) == Enums.RB || line.charAt(0) == ']') {
-                if (root != null) {
-                    root.setPos(pos);
-                }
-                return root;
-            }
-
-            /* Save previous node in 'last' and make new node for
-             * every token. Finds token in operations database and if
-             * presend - fills information fields. If not - set priority
-             * for node as 0
-             */
-            p = new PTree();
-            p.setNext(DIR_LEFT);
-
-            for (i = 0; i < ops.length; ++i) {
-                if (line.equals(ops[i].getName())) {
-
-                    if (term == 0 && ops[i].getRange() > 1) {
-                        throw new ParseErrorException(pos, ParseError.EMPTY);
-                    } else if (term != 0 && ops[i].getRange() == 1 && !ops[i].getName().equals("~") && !ops[i].getName().equals("-") && !ops[i].getName().equals("+")) {
-                        throw new ParseErrorException(pos, ParseError.EMPTY);
-                    } else if (term == 0 || ops[i].getRange() > 1) {
-
-                        /* WAS QUANTOR flag and pointer. Need for correct
-                         * definition non-standard quantor syntax
-                         */
-                        wasq = ops[i].getName().charAt(0) == Enums.PQN || ops[i].getName().charAt(0) == Enums.AQN ? p : null;
-
-                        p.setPrior(ops[i].getPrior());
-                        p.setDir(ops[i].getDir());
-                        p.setRange(ops[i].getRange());
-                        p.setNext(ops[i].getRange() > 1 && !ops[i].isPost() ? DIR_RIGHT : DIR_LEFT);
-
-                        if (term == 0 && ops[i].getName().equals("[")) {
-                            p.setNext(DIR_RIGHT);
-                        }
-                        /* System predicates or functions */
-                        if (ops[i].getSubst().length() > 0) {
-                            if (!ops[i].isRepl()) {
-                                p.setSystem(true);
-                            }
-                            p.setName(ops[i].getSubst());
-                        }
-                        break;
-                    }
-                }
-            }
-            if (p.getName() == null) {
-                p.setName(line);
-            }
-
-            /* Check () Calculate
-             * recursively. Detect predicate. Define 'term' flag == 1 if this
-             * is just a name, and == 0 if this is
-             * databased operation.
-             */
-            if (p.getName().charAt(0) == Enums.LB || p.getName().equals("_set")) {
-                if (p.getName().equals("_set")) {
-                    PTree x = new PTree();
-                    x.setNext(DIR_LEFT);
-                    x.setLeft(p);
-                    x.setName("(");
-                    p = x;
-                } else {
-                    p.setPrior(0);
-                }
-
-                p.setRight(parse(ln.trim(), pos /*, term + mode*/));
-                if (p.getRight() != null) {
-                    pos = p.getRight().getPos();
-                } else {
-                    ++pos;
-                }
-                if (pos + 1 == ln.length() && ln.charAt(pos) != Enums.EOLN) {
-                    throw new ParseErrorException(pos, ParseError.EOLN);
-                } else if (ln.charAt(pos - 1) != Enums.RB && ln.charAt(pos - 1) != ']') {
-                    throw new ParseErrorException(pos, ParseError.BRACKET);
-                }
-
-                if (term == 0) {
-                    term = 1;
-                }
-
-            } else if (p.getName().charAt(0) == Enums.NOT) {
-                Object[] nextToken = getToken(ln, pos);
-                if (nextToken != null) {
-                    String nextLine = (String) nextToken[0];
-                    if (!nextLine.isEmpty() && (nextLine.charAt(0) == Enums.PQN || nextLine.charAt(0) == Enums.AQN)) {
-                        p.setPrior(17);
-                    }
-                }
-            } else {
-                term = p.getPrior() == 0 ? 1 : 0;
-            }
-
-            /* Inserting new node (maybe with sub-tree) into
-             * main expression tree. Function scan tree on 'right'
-             * branch and recognize node with priorirty value
-             * <= then inserting node priority. If fount - chech
-             * for operation direction. If direction is R->L then
-             * skips all node with same priority value.
-             * Inserting node after node which found.
-             */
-
-            if (root != null) {
-
-                /* Find point for insertion.
-                 */
-                for (r = q = root; q != null; q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRight()) {
-                    if (q.getPrior() <= p.getPrior()) {
-                        break;
-                    }
-                    r = q;
-                }
-                if (p.getDir() != 0) {
-                    while (q != null && q.getPrior() == p.getPrior()) {
-                        r = q;
-                        q = q.getNext() == DIR_LEFT ? q.getLeft() : q.getRight();
-                    }
-                }
-
-                /* Insert new node
-                 */
-                if (q == root) {
-                    if (wasq == null) {
-                        p.setLeft(root);
-                    } else {
-                        p.setRight(root);
-                    }
-                    root = p;
-                } else {
-                    if (q != null) {
-                        if (wasq == null) {
-                            p.setLeft(q);
-                        } else {
-                            p.setRight(q);
-                        }
-                    }
-                    if (r.getNext() == DIR_LEFT) {
-                        r.setLeft(p);
-                    } else {
-                        r.setRight(p);
-                    }
-                }
-
-                /* Correction for quantor expression. Just up one level
-                 * and switch direction
-                 */
-                if (term != 0 && wasq != null) {
-                    p = wasq;
-                    p.setNext(DIR_RIGHT);
-                    wasq = null;
-                    term = 0;
-                }
-
-                // Обработка интервалов
-                if (Enums.INTERVALS.containsKey(p.getName().toLowerCase())
-                        && p.getLeft() != null
-                        && !p.getLeft().getName().isEmpty()
-                        && Tools.isInt(p.getLeft().getName())
-                        && p.getRight() == null) {
-                    p.setName(p.getLeft().getName() + " " + p.getName());
-                    if (p.getLeft().getLeft() != null && Tools.isPeriod(p.getLeft().getLeft().getName())) {
-                        p.setName(p.getLeft().getLeft().getName() + " " + p.getName());
-                    }
-                    p.setLeft(null);
-                }
-                /* If node is first in tree -
-                 * just place'em as root of tree.
-                 */
-            } else {
-                root = p;
-            }
-        } while (pos < ln.length());
-        return root;
-    }
-
-    public static Operation implement(String ln, Mind mind) throws Exception {
-        String line = "";
-        boolean waitParams = false;
-        boolean waitScript = false;
-        int pos = 1;
-        Operation f = ((User) mind.getUser()).getUdf();
-        f.setMind(mind);
-        do {
-            Object[] t = getToken(ln, pos);
-            if (t == null) {
-                break;
-            }
-            pos = (Integer) t[1];
-            line = (String) t[0];
-
-            if (line.isEmpty()) {
-                continue;
-            }
-
-            if (line.charAt(0) == Enums.EOLN) {
-                break;
-            }
-
-            if (line.charAt(0) == Enums.LB) {
-                waitParams = true;
-            } else if (line.charAt(0) == Enums.RB) {
-                waitParams = false;
-                waitScript = true;
-            } else if (line.charAt(0) == Enums.COMMA) {
-                //
-            } else if (waitParams) {
-                f.getParams().add(line);
-            } else if (waitScript) {
-                if (line.charAt(0) != '{') {
-                    throw new ParseErrorException(pos, ParseError.RBRACES);
-                }
-                f.getScripts().add(line.substring(0, line.length() - 1).substring(1));
-            } else {
-                f.setName(line);
-            }
-
-        } while (pos < ln.length());
-
-        f.setMode(LibMode.FUNCTION);
-        f.setRange(f.getParams().size());
-        f.getParams().add(f.getName());
-        return f;
-    }
-
-    private static PTree squeeze(PTree t) {
-        if (t == null) {
-            return null;
+        public String getSubst() {
+            return subst;
         }
-        t.setLeft(squeeze(t.getLeft()));
-        t.setRight(squeeze(t.getRight()));
-        if (t.getName().charAt(0) == Enums.LB && t.getLeft() == null) {
-            return squeeze(t.getRight());
-        } else {
-            return t;
+
+        public void setSubst(String subst) {
+            this.subst = subst;
+        }
+
+        public int getPrior() {
+            return prior;
+        }
+
+        public void setPrior(int prior) {
+            this.prior = prior;
+        }
+
+        public int getRange() {
+            return range;
+        }
+
+        public void setRange(int range) {
+            this.range = range;
+        }
+
+        public int getDir() {
+            return dir;
+        }
+
+        public void setDir(int dir) {
+            this.dir = dir;
+        }
+
+        public boolean isPost() {
+            return post;
+        }
+
+        public void setPost(boolean post) {
+            this.post = post;
+        }
+
+        public boolean isRepl() {
+            return repl;
+        }
+
+        public void setRepl(boolean repl) {
+            this.repl = repl;
         }
     }
-
-    public static PTree parser(String ln) throws ParseErrorException {
-        if (!ln.isEmpty() && ln.trim().charAt(ln.trim().length() - 1) != Enums.EOLN) {
-            throw new ParseErrorException(ln.trim().length() - 1, ParseError.EOLN);
-        }
-        return squeeze(parse(ln.trim(), 0 /*, 0*/));
-    }
-
-    public static org.kanger.compiler.Operation getOp(String o, int range) {
-        for (org.kanger.compiler.Operation op : ops) {
-            if (op.getSubst().equals(o) && (op.getRange() == 0 || op.getRange() == range)) {
-                return op;
-            }
-        }
-        return null;
-    }
-
-//    public static int skipSpaces(String line, int pos) {
-//        while (pos < line.length() && isDelimiter(line.charAt(pos))) {
-//            ++pos;
-//        }
-//        return pos;
-//    }
 
 }

@@ -26,9 +26,10 @@
 package org.kanger;
 
 import org.kanger.calculator.Calculator;
-import org.kanger.compiler.Compiler;
-import org.kanger.compiler.PTree;
+import org.kanger.compiler.Compiller;
+import org.kanger.compiler.Leaf;
 import org.kanger.compiler.Parser;
+import org.kanger.compiler.Token;
 import org.kanger.enums.*;
 import org.kanger.factory.*;
 import org.kanger.interfaces.*;
@@ -90,7 +91,7 @@ public class Mind implements IMind {
 
     private Calculator calculator = null;                             // Калькулятор
     private Analyzer analyzer = null;                                   // Анализатор
-    private Compiler compiler = null;                                   // Компилятор
+    private Compiller compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
 
     private boolean changed = false;
@@ -163,7 +164,7 @@ public class Mind implements IMind {
         log = new LogStore(this);                                        // Протокол вывода
 
         calculator = new Calculator(this);                             // Калькулятор
-        compiler = new Compiler(this);                                   // Компилятор
+        compiler = new Compiller(this);                                   // Компилятор
         analyzer = new Analyzer(this);                                   // Анализатор
         linker = new Linker(this);                                         // Линкер
 
@@ -524,17 +525,14 @@ public class Mind implements IMind {
         getValues().clear();
         getHypothesis().clear();
 
-        int pos = 0;
-        Object[] t = null;
+        Token t = null;
         Mind m = new Mind(this);
         m.setQueryPass(QueryPass.ACCEPT);
         int previousPos = 0;
         Queue<ITerm> externals = convertExternals(ext);
 
-        while ((t = Tools.extractLine(src, pos)) != null) {
-            pos = (int) t[1];
-            String line = (String) t[0];
-            String comment = src.substring(previousPos, pos - ((String) t[0]).length()).trim();
+        while ((t = Tools.extractLine(src, t)) != null) {
+            String comment = src.substring(previousPos, t.getPos()).trim();
             if (previousPos == 0) {
                 String[] cc = Parser.extractComments(comment);
                 if (cc.length > 1 && !cc[0].isEmpty()) {
@@ -542,16 +540,16 @@ public class Mind implements IMind {
                     comment = comment.substring(cc[0].length()).trim();
                 }
             }
-            previousPos = pos;
+            previousPos = t.getPos() + t.getLen();
 
-            Object r = m.compileLine(line, false, externals);
+            Object r = m.compileLine(t.getToken(src), false, externals);
             if (!comment.isEmpty() && r instanceof Rule) {
                 m.getComments().add(((Rule) r).getId(), comment);
             }
         }
 
-        if (src.length() > pos) {
-            String comment = src.substring(pos).trim();
+        if (t != null && src.length() > t.getPos() + t.getLen()) {
+            String comment = src.substring(t.getPos() + t.getLen()).trim();
             if (!comment.isEmpty()) {
                 m.getComments().add(CommentFactory.FOOTER_ID, comment);
             }
@@ -583,7 +581,7 @@ public class Mind implements IMind {
 
         switch (line.charAt(0)) {
             case Enums.FOO:
-                r = Parser.implement(line, this);
+                r = Parser.implement(line.substring(1), this, null);
                 if (r != null) {
                     library.add((Operation) r);
                 }
@@ -600,10 +598,10 @@ public class Mind implements IMind {
         if (suc != null) {
             Mind x = new Mind(this);
 
-            PTree p = Parser.parser(line.substring(1));
+            Leaf p = Parser.parse(line.substring(1));
 
             r = x.compiler.compileLine(p, suc, orig, query, externals);
-            x.setCompliedLine(line);
+            x.setCompliedLine(compliedLine);
             if (r instanceof Rule && ((Rule) r).isSecond()) {
                 release(x);
                 log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
@@ -1173,7 +1171,7 @@ public class Mind implements IMind {
 
             case Enums.FOO:
                 Mind m = new Mind(this);
-                IOperation o = Parser.implement(line, m);
+                IOperation o = Parser.implement(line, m, null);
                 if (o != null) {
                     IOperation x = m.getLibrary().add(o);
                     if (x.getId() == o.getId()) {

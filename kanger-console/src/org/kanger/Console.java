@@ -25,6 +25,7 @@
 
 package org.kanger;
 
+import org.kanger.compiler.Token;
 import org.kanger.enums.*;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
@@ -118,7 +119,11 @@ public class Console {
             }
 
         } while (repeat);
-        line = currentLine + line;
+        if (!currentLine.isEmpty() && !line.isEmpty()) {
+            currentLine += Enums.LINE_SEPARATOR;
+        }
+        currentLine += line;
+        line = currentLine;
         currentLine = "";
         return line;
     }
@@ -277,15 +282,35 @@ public class Console {
                     showCopyrigt();
                 }
             } catch (ParseErrorException ex) {
-                String x = ex.toString();
-                int pos = Integer.parseInt(x.split("@")[0]);
-                String msg = x.split("@")[1];
+                int pos = ex.getExceptionPosition();
+                String msg = ex.getExceptionMessage();
                 System.out.println("ERROR: " + msg);
-                System.out.println(mind.getCompliedString());
-                while (pos-- > 0) {
-                    System.out.print(" ");
+                String ps = "";
+                for (int i = 0; i < lastQuery.trim().length(); ++i) {
+                    char c = lastQuery.trim().charAt(i);
+                    System.out.print(c);
+                    if (i == pos) {
+                        ps += '^';
+                    }
+                    if (c == '\n') {
+                        if (ps.endsWith("^")) {
+                            System.out.println(ps);
+                        }
+                        ps = "";
+                    } else if (i < pos) {
+                        ps += c == '\t' ? c : ' ';
+                    }
                 }
-                System.out.println("^");
+                System.out.println();
+                if (ps.endsWith("^")) {
+                    System.out.println(ps);
+                }
+
+//                System.out.println(lastQuery);
+//                while (pos-- > 0) {
+//                    System.out.print(" ");
+//                }
+//                System.out.println("^");
             } catch (CommandErrorException ex) {
                 System.err.println(ex.toString());
             } catch (RuntimeErrorException ex) {
@@ -354,30 +379,23 @@ public class Console {
 //    }
 
     private static void processQuery(String line, IMind mind) throws Exception {
-        int pos = 0;
-        Object[] t = null;
         mind.clearLog();
         ((HypothesisStore) mind.getHypothesis()).clear();
+        Token t = null;
         Mind m = new Mind(mind);
         boolean succ = false;
         Boolean res = null;
-        while ((t = Tools.extractLine(line, pos)) != null) {
-            pos = (int) t[1];
-            String ln = (String) t[0];
-
-            if(!ln.isEmpty() && ln.endsWith(",")) {
-                ln = ln.substring(0, ln.length()-1) + ";";
-            }
-            if(ln.charAt(0) == '?') {
+        while ((t = Tools.extractLine(line, t)) != null) {
+            if (t.getToken(line).charAt(0) == '?') {
                 succ = true;
             }
-            res = m.query(ln);
+            res = m.query(t.getToken(line));
             if (!lastComments.isEmpty() && m.getAcceptedRule() != null) {
                 m.getAcceptedRule().setComment(lastComments);
                 lastComments = "";
             }
         }
-        if(!succ) {
+        if (!succ) {
             mind.commit(m);
         } else {
             mind.release(m);

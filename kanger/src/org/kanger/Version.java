@@ -35,9 +35,9 @@ import java.util.Date;
 public abstract class Version {
 
     public static final int VERSION = 3;
-    public static final int RELEASE = 2;
-    public static final String REVISION = "7030";
-    public static final String DATE = "2021-09-08_10:19:19";
+    public static final int RELEASE = 3;
+    public static final String REVISION = "7308";
+    public static final String DATE = "2021-09-15_15:23:14";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
     public static final String VERSION_S = String.format("%d.%d.%s", VERSION, RELEASE, REVISION);
