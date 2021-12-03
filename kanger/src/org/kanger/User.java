@@ -281,6 +281,7 @@ public class User implements IUser {
         if (userSettings.containsKey("user.dir")) {
             String confName = userSettings.getProperty("user.dir") + "kanger.conf";
             try {
+                new File(confName).getParentFile().mkdirs();
                 try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName))) {
                     userSettings.store(bw, new Date().toString());
                 }
