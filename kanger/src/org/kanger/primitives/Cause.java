@@ -51,7 +51,7 @@ public class Cause implements ICause {
     }
 
     public Cause(Domain dst, Domain src, Mind mind) throws Exception {
-        this.donor = new Solve(dst.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
+        this.donor = new Solve(src.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
         this.rule = (Rule) dst.getRule();
         this.ruleId = dst.getRuleId();
     }

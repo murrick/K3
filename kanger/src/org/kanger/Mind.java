@@ -55,6 +55,9 @@ public class Mind implements IMind {
 
     private final Object locker = new Object();
     //
+    private long id = 0;
+    private IMind next = null;
+    //
     private final Map<ITerm, ITerm> cvarChilds = new HashMap<>();
     private final Map<ITerm, ITerm> cvarParents = new HashMap<>();
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
@@ -71,8 +74,7 @@ public class Mind implements IMind {
     //
     private final Map<TVariable, long[]> floodControl = new HashMap<>();
     private final Stack<Integer> debugLevelStack = new Stack<>();
-    private long id = 0;
-    private IMind next = null;
+    //
     private DictionaryFactory terms = null;                    // Словарь констант
     private PredicateFactory predicates = null;                 // Предикаты
     private DomainFactory domains = null;                          // Список доменов
@@ -83,11 +85,13 @@ public class Mind implements IMind {
     private FValueFactory fValues = null;                          // Решения функций
     private CommentFactory comments = null;
     private LibraryFactory library = null;                            // Системная библиотека функций и предикатов
+    //
+    private HypothesisStore hypothesis = null;                                // Список гипотез
+    private HypothesisStore tempHypothesis = null;                                // Список гипотез
+    //
     private SolutionsStore solves = null;                         // Список решений
     private ValuesStore values = null;                               // Список значений
     private LogStore log = null;                                        // Протокол вывода
-    private HypothesisStore hypothesis = null;                                // Список гипотез
-    private HypothesisStore tempHypothesis = null;                                // Список гипотез
 
     private Calculator calculator = null;                             // Калькулятор
     private Analyzer analyzer = null;                                   // Анализатор
