@@ -69,12 +69,13 @@ public class Calculator {
     public boolean calculate(Function fu, boolean logging) throws Exception {
 
         boolean result = false;
+        boolean recursed = false;
 
         for (int i = 0; i < fu.getRange(); ++i) {
             if (fu.getArguments().get(i).getType() == ArgumentType.FUNCTION
                     && ((Function) fu.getArguments().get(i).getObject(mind)).isEmpty(mind)) {
                 ((Function) fu.getArguments().get(i).getObject(mind)).clear();
-                calculate((Function) fu.getArguments().get(i).getObject(mind), logging);
+                recursed = calculate((Function) fu.getArguments().get(i).getObject(mind), logging);
             }
         }
 
@@ -92,7 +93,7 @@ public class Calculator {
             }
         }
 
-        return result;
+        return result || recursed;
     }
 
     /**

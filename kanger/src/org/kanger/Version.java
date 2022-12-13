@@ -37,8 +37,8 @@ public abstract class Version {
     public static final int VERSION = 3;
     public static final int RELEASE = 3;
     public static final int MODIFICATION = 1;
-    public static final String REVISION = "0";
-    public static final String DATE = "2022-12-13_15:25:23";
+    public static final String REVISION = "3";
+    public static final String DATE = "2022-12-13_16:36:11";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final String VERSION_S = String.format("%d.%d.%d.%s", VERSION, RELEASE, MODIFICATION, REVISION);
     public static final String DATE_S = formatDate(parseDate(DATE));
