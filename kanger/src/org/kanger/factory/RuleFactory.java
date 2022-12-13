@@ -153,10 +153,19 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
 
+    /**
+     * Анализ ветвей дерева. Если в ветви только один домен<br>
+     * - Если этот домен содержит t-переменные - то добавляем его в список "ждунов" - кандидатов для подстановки.<br>
+     * - Если домен НЕ содержит t-переменных и ветка является единственной в дереве - помечаем его как утверждение.<br>
+     * - Если домен НЕ содержит t-переменных, но в дереве есть другие ветки - создаем утверждение как отдельное правило.
+     *
+     * @param r Анализируемое правило
+     * @throws Exception
+     */
     public void expand(Rule r) throws Exception {
         for (List<Domain> tree : r.getTree()) {
             if (tree.size() == 1) {
-                if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {
+                if (tree.get(0).isSubstitutable()) {
                     mind.getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
                     IRule rx = tree.get(0).setStored(mind);

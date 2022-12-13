@@ -36,11 +36,11 @@ public abstract class Version {
 
     public static final int VERSION = 3;
     public static final int RELEASE = 3;
-    public static final String REVISION = "7318";
-    public static final String DATE = "2021-12-28_13:28:12";
+    public static final int MODIFICATION = 1;
+    public static final String REVISION = "0";
+    public static final String DATE = "2022-12-13_15:25:23";
     public static final int YEAR = getYear(parseDate(DATE));
-    public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
-    public static final String VERSION_S = String.format("%d.%d.%s", VERSION, RELEASE, REVISION);
+    public static final String VERSION_S = String.format("%d.%d.%d.%s", VERSION, RELEASE, MODIFICATION, REVISION);
     public static final String DATE_S = formatDate(parseDate(DATE));
 
     private static String formatDate(Date date) {

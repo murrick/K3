@@ -315,14 +315,14 @@ public abstract class Tools {
                     break;
                 }
             }
-            if (t == null || start == -1) {
+            if (start == -1) {
                 return null;
             } else {
                 if (token == null) {
                     token = new Token();
                 }
                 token.setPos(start);
-                token.setLen(t.getPos() - start + 1);
+                token.setLen(t == null ? 1 : t.getPos() - start + 1);
                 return token;
             }
         }

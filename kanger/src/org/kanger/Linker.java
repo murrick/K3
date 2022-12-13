@@ -470,7 +470,6 @@ public class Linker {
         IRule r = null;
         boolean occurrs = false;
 
-
         List<TValue> list = new ArrayList<>();
         for (int i = 0; i < slave.getRange(); ++i) {
             if (subst[i] != null) {
@@ -518,6 +517,36 @@ public class Linker {
         return r != null;
     }
 
+    /**
+     * Список предполагаемых "ждунов" для ветви. Определяет для каждого домена ветви есть ли в списке "ждунов"
+     * подходящий для подстановки элемент, т.е. параметры которого либо совпадают по значениям, лиюо имеют одну или
+     * несколько t-переменных.
+     *
+     * @param tree анализируемая ветвь
+     * @return список "ждунов" для ветви
+     * @throws Exception
+     */
+    private Set<Domain> getAssumedList(List<Domain> tree) throws Exception {
+        Set<Domain> assumed = new HashSet<>();
+        for (Domain d : tree) {
+            for (Domain waiter : mind.getDomains().getWaiters()) {
+                if (waiter.getPredicateId() == d.getPredicateId() && waiter.isAntc() != d.isAntc() && d.isComplete()) {
+                    boolean success = true;
+                    for (int i = 0; i < d.getRange(); ++i) {
+                        if (waiter.get(i).getType() != ArgumentType.TVARIABLE
+                                && waiter.get(i).getValue(mind).getId() != d.get(i).getValue(mind).getId()) {
+                            success = false;
+                            break;
+                        }
+                    }
+                    if (success) {
+                        assumed.add(d);
+                    }
+                }
+            }
+        }
+        return assumed;
+    }
 
     private boolean linkDatabase(List<Domain> tree, Map<IRule, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
 
@@ -536,30 +565,9 @@ public class Linker {
             Set<Domain> excluded = new HashSet<>();
             Set<Domain> calculated = new HashSet<>();
             Set<Domain> candidates = new HashSet<>();
-            Set<Domain> assumed = new HashSet<>();
             Set<Domain> stored = new HashSet<>();
 
-            for (Domain d : tree) {
-
-                for (Domain master : mind.getDomains().getWaiters()) {
-                    if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
-                        boolean success = true;
-                        for (int i = 0; i < d.getRange(); ++i) {
-                            if (master.get(i).getType() == ArgumentType.TVARIABLE) {
-                            } else if (master.get(i).getValue(mind).getId() == d.get(i).getValue(mind).getId()) {
-                            } else {
-                                success = false;
-                                break;
-                            }
-                        }
-                        if (success) {
-                            assumed.add(d);
-                        }
-                    }
-                }
-
-
-            }
+            Set<Domain> assumed = getAssumedList(tree);
 
             for (Domain d : tree) {
                 if ("rule(1)".equals(d.getPredicate(mind).toString(mind)) && !d.get(0).isEmpty(mind) && d.get(0).getValue(mind).getType() == DataType.NUMERIC) {
@@ -681,8 +689,7 @@ public class Linker {
 
                         if (d != null) {
                             Hypothesis tmp = new Hypothesis(d, mind);
-//                            IRule rx = mind.getRules().find(tmp);
-                            if (mind.getTempHypothesis().find(tmp) == null /*&& (rx == null || rx.isDeleted(mind))*/) {
+                            if (mind.getTempHypothesis().find(tmp) == null) {
                                 mind.getTempHypothesis().add(tmp);
                                 if (logging) {
                                     log.add(LogMode.ANALYZER, "Hypothesis alternate assumed: " + tmp.toString(mind));
