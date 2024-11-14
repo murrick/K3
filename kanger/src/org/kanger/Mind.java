@@ -36,6 +36,7 @@ import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
+import org.kanger.primitives.LogEntry;
 import org.kanger.primitives.TVariableSet;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.stores.LogStore;
@@ -1538,7 +1539,11 @@ public class Mind implements IMind {
 
     @Override
     public ILogEntry getCurrentLogRecord(LogMode mode) {
-        return log.getCurrent(mode);
+        ILogEntry e = log.getCurrent(mode);
+        if(e == null) {
+            e = new LogEntry(mode, "No events was recorded");
+        }
+        return e;
     }
 
     @Override

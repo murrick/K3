@@ -1405,7 +1405,7 @@ public class Console {
         --i;
         try {
 //            mind.getHypothesisStore().get(i).setAntc(antc);
-            String temp = mind.getHypothesis().get(i).toString();
+            String temp = ((Hypothesis) mind.getHypothesis().get(i)).toString(mind);
             String h = String.format("%s;", temp.replaceAll(String.format("%c", Enums.EOLN), ""));
 
             if (h != null) {

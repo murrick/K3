@@ -104,7 +104,7 @@ public class Hypothesis implements IHypothesis {
         try {
             int i, j;
             int cnum[] = new int[getPredicate().getRange()];
-            int cptr[] = new int[getPredicate().getRange()];
+            int cptr[] = new int[getPredicate().getRange()];    
 
             int ccnt = 0;
             line += String.format("%c", antc ? Enums.ANT : Enums.SUC);
