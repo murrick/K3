@@ -169,7 +169,7 @@ public class Compiller {
             for (Argument a : replacements.values()) {
                 if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() /*&& (c == null || ((Term) c).getIndex() < ((Term) a.getValue(mind)).getIndex())*/) {
                     c = a.getValue(mind);
-                    ((Term) c).setDomini(true);
+                    ((Term) c).addDominatedFor(t);
                 }
             }
         } else if (("@".equals(root.getValue()) && !antc) || ("$".equals(root.getValue()) && antc)) {

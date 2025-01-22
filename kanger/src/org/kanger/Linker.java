@@ -359,7 +359,7 @@ public class Linker {
                                                     Term tm = (Term) slave.get(i).getValue(mind);
                                                     TVariable t = (TVariable) master.get(i).getObject(mind);
                                                     TValue s = null;
-                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && !tm.isDominatedFor(t) /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         Term tn = (Term) tm.getChild(mind);
                                                         if (tn == null) {
                                                             tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind), tm);
@@ -389,7 +389,7 @@ public class Linker {
                                                     Term tm = (Term) master.get(i).getValue(mind);
                                                     TVariable t = (TVariable) slave.get(i).getObject(mind);
                                                     TValue s = null;
-                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && !tm.isDominatedFor(t) /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
                                                         Term tn = (Term) tm.getChild(mind);
                                                         if (tn == null) {
                                                             tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind), tm);

@@ -31,12 +31,10 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.Tools;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
-import org.kanger.interfaces.IArgument;
-import org.kanger.interfaces.IMind;
-import org.kanger.interfaces.IRule;
-import org.kanger.interfaces.ITerm;
+import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
+import org.kanger.primitives.Cause;
 import org.kanger.storage.ByteBuffer;
 
 import java.text.SimpleDateFormat;
@@ -62,7 +60,7 @@ public class Term implements IUnit<Term>, ITerm {
     private int index = 0;                      // Индекс c-переменной
     private ITerm name = null;                  // Оригинальное имя c-переменной
     private IRule rule = null;                  // Ссылка на правило для c-переменной
-    private boolean domini = false;             // Признак доминирующей c-переменной
+    private Set<Long> dominatedFor = new HashSet<>();
 
     private Mind mind = null;
     private long nameId = -1;
@@ -122,7 +120,10 @@ public class Term implements IUnit<Term>, ITerm {
         if (index > 0) {
             packet.putLong(nameId);
             packet.putLong(ruleId);
-            packet.putByte(domini ? 1 : 0);
+            packet.putInt(dominatedFor.size());
+            for (Long id : dominatedFor) {
+                packet.putLong(id);
+            }
         }
         return packet.createMarked();
     }
@@ -181,7 +182,11 @@ public class Term implements IUnit<Term>, ITerm {
         if (index > 0) {
             nameId = packet.getLong();
             ruleId = packet.getLong();
-            domini = packet.getByte() > 0;
+            int cnt = packet.getInt();
+            dominatedFor.clear();
+            for (int i = 0; i < cnt; ++i) {
+                dominatedFor.add(packet.getLong());
+            }
         }
         return this;
     }
@@ -670,14 +675,6 @@ public class Term implements IUnit<Term>, ITerm {
         return ruleId;
     }
 
-    public boolean isDomini() {
-        return domini;
-    }
-
-    public void setDomini(boolean domini) {
-        this.domini = domini;
-    }
-
     public ITerm getParent(Mind mind) {
         ITerm t = mind.getCvarParents().get(this);
         if (t == null && mind.getNext() != null) {
@@ -758,5 +755,32 @@ public class Term implements IUnit<Term>, ITerm {
             return getParent(mind).getId();
         }
     }
+
+    public void addDominatedFor(TVariable t) {
+        dominatedFor.add(t.getId());
+    }
+
+    public void setDominatedFor(Collection<Long> dominatedFor) {
+        dominatedFor.clear();
+        dominatedFor.addAll(dominatedFor);
+    }
+
+    public Set<Long> getDominatedFor() {
+        return dominatedFor;
+    }
+
+    public boolean isDominatedFor(TVariable t) {
+        if(ruleId == t.getRuleId()) {
+            return dominatedFor.contains(t.getId());
+        } else {
+            return !dominatedFor.isEmpty();
+        }
+    }
+
+    public boolean isDomini() {
+        return !dominatedFor.isEmpty();
+    }
+
+
 }
 

@@ -60,6 +60,7 @@ public class Mind implements IMind {
     //
     private final Map<ITerm, ITerm> cvarChilds = new HashMap<>();
     private final Map<ITerm, ITerm> cvarParents = new HashMap<>();
+//    private final Map<Long, Set<Integer>> cvarDominatedFor = new HashMap<>();
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
     private final Map<UnitType, Set<Long>> restored = new HashMap<>();
     private final Map<Long, Set<IRule>> usedRules = new HashMap<>();
@@ -128,6 +129,9 @@ public class Mind implements IMind {
         terms = (DictionaryFactory) root.getTerms();
         predicates = (PredicateFactory) root.getPredicates();
 
+//        cvarDominatedFor.clear();
+//        cvarDominatedFor.putAll(((Mind) root).getCvarDominatedFor());
+
         library.transaction((LibraryFactory) root.getLibrary());
 
         domains.transaction(((Mind) root).getDomains());
@@ -149,7 +153,7 @@ public class Mind implements IMind {
         terms = new DictionaryFactory(this);                    // Словарь констант
         predicates = new PredicateFactory(this);                 // Предикаты
         functions = new FunctionFactory(this);                    // Функции
-        library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов
+        library = new LibraryFactory(this);                       // Пользовательсткая библиотека функций и предикатов
 
         domains = new DomainFactory(this);                          // Список доменов
         rules = new RuleFactory(this);                             // Список правил
@@ -171,6 +175,8 @@ public class Mind implements IMind {
         compiler = new Compiller(this);                                   // Компилятор
         analyzer = new Analyzer(this);                                   // Анализатор
         linker = new Linker(this);                                         // Линкер
+
+//        cvarDominatedFor.clear();
 
         floodControlLimit = Integer.parseInt(user.getProperty("flood.limit", FLOOD_CONTROL_LIMIT + ""));
         transactionCounter = 0;
@@ -236,6 +242,8 @@ public class Mind implements IMind {
                 }
             }
 
+//            cvarDominatedFor.clear();
+//            cvarDominatedFor.putAll(((Mind) m).getCvarDominatedFor());
 
             if (!sequencedBy) {
                 Boolean res = analyzer.checkDatabase(list, false);
@@ -272,10 +280,12 @@ public class Mind implements IMind {
 
                     library.commit();
 
+
 //                    solves.commit((SolutionsStore) m.getSolutions());
 //                    values.commit((ValuesStore) m.getValues());
 
                 }
+
             }
             --transactionCounter;
             if (next == null && transactionCounter == 0) {
@@ -332,6 +342,8 @@ public class Mind implements IMind {
             terms.clear();
             predicates.clear();
             library.clear();
+
+//            cvarDominatedFor.clear();
 
             domains.clear();
             tVars.clear();
@@ -712,6 +724,10 @@ public class Mind implements IMind {
         return cvarParents;
     }
 
+//    public Map<Long, Set<Integer>> getCvarDominatedFor() {
+//        return cvarDominatedFor;
+//    }
+
     public Map<TVariable, Set<TValue>> getQueryValues() {
         return queryValues;
     }
@@ -747,8 +763,7 @@ public class Mind implements IMind {
         return calculator.execute(d);
     }
 
-
-    /////////////////////////////////////
+    /// //////////////////////////////////
     private String invert(String line) {
         if (line.charAt(0) == Enums.SUC) {
             return String.format("%c%s", Enums.ANT, line.substring(1));
