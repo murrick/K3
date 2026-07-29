@@ -66,7 +66,13 @@ public class TValueFactory implements IFactory<TValue> {
      */
     private TValueFactory parentIndex = null;
     private final Map<Long, LinkedHashSet<Long>> localByVariable = new HashMap<>();
-    private final Stack<Map<Long, LinkedHashSet<Long>>> indexStack = new Stack<>();
+
+    /**
+     * Nested Linker marks are extremely frequent. Recording only values added
+     * since a mark keeps rollback proportional to the delta instead of copying
+     * the complete index for every candidate pair.
+     */
+    private final Stack<List<TValue>> additionsStack = new Stack<>();
     private boolean indexInitialized = false;
 
     public TValueFactory(Mind mind) throws Exception {
@@ -88,16 +94,8 @@ public class TValueFactory implements IFactory<TValue> {
 
         parentIndex = base;
         localByVariable.clear();
-        indexStack.clear();
+        additionsStack.clear();
         indexInitialized = base != null;
-    }
-
-    private Map<Long, LinkedHashSet<Long>> copyIndex() {
-        Map<Long, LinkedHashSet<Long>> copy = new HashMap<>();
-        for (Map.Entry<Long, LinkedHashSet<Long>> entry : localByVariable.entrySet()) {
-            copy.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
-        }
-        return copy;
     }
 
     private void index(TValue value) {
@@ -199,6 +197,9 @@ public class TValueFactory implements IFactory<TValue> {
             t.setMindId(mind.getId());
             cache.add(t);
             index(t);
+            if (!additionsStack.isEmpty()) {
+                additionsStack.peek().add(t);
+            }
             if (top == null) {
                 top = cache.getRoot();
             }
@@ -281,25 +282,28 @@ public class TValueFactory implements IFactory<TValue> {
     }
 
     public long mark() throws Exception {
-        ensureIndex();
-        indexStack.push(copyIndex());
+        additionsStack.push(new ArrayList<TValue>());
         return cache.mark();
     }
 
 
     public long commit() throws Exception {
-        if (!indexStack.isEmpty()) {
-            indexStack.pop();
+        if (!additionsStack.isEmpty()) {
+            List<TValue> additions = additionsStack.pop();
+            if (!additionsStack.isEmpty()) {
+                additionsStack.peek().addAll(additions);
+            }
         }
         return cache.commit();
     }
 
     public long release() throws Exception {
         long result = cache.release();
-        if (!indexStack.isEmpty()) {
-            localByVariable.clear();
-            localByVariable.putAll(indexStack.pop());
-            indexInitialized = true;
+        if (!additionsStack.isEmpty()) {
+            List<TValue> additions = additionsStack.pop();
+            for (int i = additions.size() - 1; i >= 0; --i) {
+                unindex(additions.get(i));
+            }
         }
         return result;
     }
