@@ -58,6 +58,7 @@ public class Linker {
      * to those existing tuples and is cleared at the start of every link().
      */
     private final Map<TVariableSet, Map<Long, Map<Long, List<TSolve>>>> solveIndex = new HashMap<>();
+    private final Map<TVariableSet, Integer> indexedSolveCounts = new HashMap<>();
     private final Set<TVariableSet> unarySolveKeys = new HashSet<>();
     private final Set<TSolve> indexedSolves = Collections.newSetFromMap(
             new IdentityHashMap<TSolve, Boolean>());
@@ -69,6 +70,7 @@ public class Linker {
 
     private void clearSolveIndex() {
         solveIndex.clear();
+        indexedSolveCounts.clear();
         unarySolveKeys.clear();
         indexedSolves.clear();
     }
@@ -103,6 +105,18 @@ public class Linker {
                 byValue.put(value.getId(), candidates);
             }
             candidates.add(solve);
+        }
+    }
+
+    private void synchronizeSolveIndex() throws Exception {
+        for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.getRuleSolves().entrySet()) {
+            int indexed = indexedSolveCounts.containsKey(entry.getKey())
+                    ? indexedSolveCounts.get(entry.getKey()) : 0;
+            List<TSolve> solves = entry.getValue();
+            for (int i = indexed; i < solves.size(); ++i) {
+                indexSolve(solves.get(i));
+            }
+            indexedSolveCounts.put(entry.getKey(), solves.size());
         }
     }
 
@@ -406,6 +420,7 @@ public class Linker {
     }
 
     private boolean isValidFor(SortedSet<TVariable> tail) throws Exception {
+        synchronizeSolveIndex();
         final TVariable t = tail.first();
         boolean found = false;
         boolean result = false;
@@ -600,8 +615,7 @@ public class Linker {
                             list.add((TValue) x);
                         }
                     }
-                    TSolve s = mind.addTSolve(list);
-                    indexSolve(s);
+                    mind.addTSolve(list);
                 }
             }
 
