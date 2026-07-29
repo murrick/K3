@@ -1344,6 +1344,10 @@ public class Mind implements IMind {
         return calculator;
     }
 
+    public LinkerStatistics getLinkerStatistics() {
+        return linker.snapshotStatistics();
+    }
+
     public TSolve findTSolve(List<TValue> list) throws Exception {
         TVariableSet ts = new TVariableSet(list, this);
         if (getRuleSolves().containsKey(ts)) {

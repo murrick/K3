@@ -51,6 +51,7 @@ public class Linker {
     private int solvedPasses = 0;
     private int dumpedPasses = 0;
     private int skippedPasses = 0;
+    private final LinkerStatistics statistics = new LinkerStatistics();
 
     /**
      * Query-local tuple index used only while Linker rotates substitutions.
@@ -66,6 +67,10 @@ public class Linker {
     public Linker(Mind mind) {
         this.mind = mind;
         this.log = mind.getLog();
+    }
+
+    public LinkerStatistics snapshotStatistics() {
+        return statistics.snapshot();
     }
 
     private void clearSolveIndex() {
@@ -235,6 +240,7 @@ public class Linker {
         solvedPasses = 0;
         dumpedPasses = 0;
         skippedPasses = 0;
+        statistics.reset();
 
         final Map<IRule, Set<Cause>> causes = new HashMap<>();
 
@@ -243,8 +249,10 @@ public class Linker {
 
         do {
 
+            ++passCounter;
+            statistics.incrementPasses();
             if (logging) {
-                log.add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
+                log.add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", passCounter));
             }
 
             mind.getRules().dropAction();
@@ -341,6 +349,7 @@ public class Linker {
 
         for (IRule r : ruleList) {
 
+            statistics.incrementRuleVisits();
             mind.getProducedDomains().clear();
             mind.getDomainSolves().clear();
             mind.getDomainCauses().clear();
@@ -356,19 +365,23 @@ public class Linker {
 
             for (List<Domain> tree : ((Rule) r).getTree()) {
 
+                statistics.incrementBranchVisits();
                 final List<Domain> t = tree;
 
                 rotateVariables(tvars, tvars, new IReactor() {
                     @Override
                     public Object run(Object o) {
+                        statistics.incrementTerminalRotations();
                         boolean result = false;
                         try {
                             if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging)) {
                                 result = true;
                             }
+                            statistics.incrementFunctionEvaluations();
                             if (calcFunctions(t, causes, logging)) {
                                 result = true;
                             }
+                            statistics.incrementDatabaseEvaluations();
                             if (linkDatabase(t, causes, tvars, logging)) {
                                 result = true;
                             }
@@ -477,9 +490,12 @@ public class Linker {
         if (treeSlave.size() == 1) {
             for (Domain slave : treeSlave) {
                 for (IRule rule : ruleList) {
+                    statistics.incrementCandidateRuleVisits();
                     for (List<Domain> treeMaster : ((Rule) rule).getTree()) {
                         for (Domain master : treeMaster) {
+                            statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
+                                statistics.incrementUnificationAttempts();
                                 TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
 
@@ -533,6 +549,7 @@ public class Linker {
                                                     }
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
+                                                        statistics.incrementNewTValues();
                                                         result = true;
                                                     }
                                                     substMaster[i] = s;
@@ -564,6 +581,7 @@ public class Linker {
 
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
+                                                        statistics.incrementNewTValues();
                                                         result = true;
                                                     }
 
