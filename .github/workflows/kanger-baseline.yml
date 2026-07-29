@@ -3,47 +3,85 @@ name: KANGER III baseline
 on:
   push:
     branches:
-      - "perf/3.3.6-linker-agenda"
+      - "stabilization/**"
+      - "perf/**"
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-p4-query-local-filter:
-    if: github.event_name == 'pull_request' && github.head_ref == 'perf/3.3.6-linker-agenda'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out P4 branch
-        uses: actions/checkout@v4
-        with:
-          ref: perf/3.3.6-linker-agenda
+  build-and-regression:
+    name: ${{ matrix.id }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu-java-8
+            os: ubuntu-latest
+            java: "8"
+          - id: ubuntu-java-21
+            os: ubuntu-latest
+            java: "21"
+          - id: macos-java-21
+            os: macos-latest
+            java: "21"
 
-      - name: Set up Java 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "8"
+          java-version: ${{ matrix.java }}
           cache: maven
 
-      - name: Apply and test query-local fallback filtering
+      - name: Build and run all KANGER test corpora
+        shell: bash
         run: |
-          if grep -q 'mayMatchCurrent' kanger/src/org/kanger/Linker.java; then
-            echo 'P4 query-local filter already applied'
-            exit 0
-          fi
-          python3 scripts/apply_p4_query_local_filter.py
-          mvn -B clean verify
+          set -o pipefail
+          mvn -B -V clean verify 2>&1 | tee "kanger-test-${{ matrix.id }}.log"
 
-      - name: Commit product change when needed
+      - name: Verify historical and stabilization corpora
+        shell: bash
         run: |
-          if git diff --quiet; then
-            echo 'No changes to commit'
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add kanger/src/org/kanger/Linker.java
-          git commit -m "P4: filter transient candidates by current substitutions"
-          git push origin HEAD:perf/3.3.6-linker-agenda
+          grep -Eq 'Success:[[:space:]]+101' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'Stabilization Success:[[:space:]]+7' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'Stabilization Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C1 Success:[[:space:]]+5' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C1 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C4 Success:[[:space:]]+3' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C4 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C3 Success:[[:space:]]+6' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C3 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+
+      - name: Capture Linker operation curve
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.linker.profile.sizes=100,500 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerLinkerProfileRunner \
+            2>&1 | tee kanger-linker-profile-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-linker-profile-ubuntu-java-21.log \
+            > kanger-linker-profile-ubuntu-java-21.csv
+
+      - name: Upload P4 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-p4-${{ matrix.id }}
+          path: |
+            kanger-test-${{ matrix.id }}.log
+            kanger-linker-profile-${{ matrix.id }}.log
+            kanger-linker-profile-${{ matrix.id }}.csv
+            target/*.jar
+          if-no-files-found: warn
