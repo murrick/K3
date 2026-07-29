@@ -200,14 +200,20 @@ public class Linker {
 
     private void addOppositeNatives(Set<IRule> ruleSet,
                                     IRule source,
-                                    Set<DomainKey> expanded) throws Exception {
+                                    Set<DomainKey> expanded,
+                                    boolean positional) throws Exception {
         for (List<Domain> branch : ((Rule) source).getTree()) {
             for (Domain domain : branch) {
                 DomainKey candidateKey = new DomainKey(
                         domain.getPredicateId(), !domain.isAntc());
                 if (expanded.add(candidateKey)) {
-                    ruleSet.addAll(mind.getRules().findByDomain(
-                            candidateKey.predicateId, candidateKey.antc));
+                    if (positional) {
+                        ruleSet.addAll(mind.getRules().findByDomain(
+                                domain, candidateKey.antc));
+                    } else {
+                        ruleSet.addAll(mind.getRules().findByDomain(
+                                candidateKey.predicateId, candidateKey.antc));
+                    }
                 }
             }
         }
@@ -272,15 +278,15 @@ public class Linker {
             if (rule != null) {
                 Set<DomainKey> expanded = new HashSet<>();
                 ruleSet.add(rule);
-                addOppositeNatives(ruleSet, rule, expanded);
+                addOppositeNatives(ruleSet, rule, expanded, true);
                 for (IRule r : mind.getRules()) {
                     if (!r.isDeleted(mind)) {
                         if (((Rule) r).isUsed(mind)) {
                             ruleSet.add(r);
-                            addOppositeNatives(ruleSet, r, expanded);
+                            addOppositeNatives(ruleSet, r, expanded, false);
                         } else if (r.isGenerated() && r.getId() > topId) {
                             ruleSet.add(r);
-                            addOppositeNatives(ruleSet, r, expanded);
+                            addOppositeNatives(ruleSet, r, expanded, false);
                         }
                     }
                 }

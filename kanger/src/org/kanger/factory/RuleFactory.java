@@ -110,6 +110,7 @@ public class RuleFactory implements IFactory<IRule> {
     private final Stack<Map<DomainKey, LinkedHashSet<Long>>> domainIndexStack = new Stack<>();
     private final Stack<Map<Long, LinkedHashSet<Long>>> termIndexStack = new Stack<>();
     private boolean domainIndexInitialized = false;
+    private final RuleCandidateIndex candidateIndex = new RuleCandidateIndex();
 
     /**
      * Transaction-local overrides that make an already canonical generated
@@ -138,6 +139,7 @@ public class RuleFactory implements IFactory<IRule> {
         parentIndex = base;
         localDomainIndex.clear();
         localTermIndex.clear();
+        candidateIndex.clear();
         domainIndexStack.clear();
         termIndexStack.clear();
         domainIndexInitialized = base != null;
@@ -170,6 +172,7 @@ public class RuleFactory implements IFactory<IRule> {
         }
         localDomainIndex.clear();
         localTermIndex.clear();
+        candidateIndex.clear();
         for (Object value : cache) {
             indexRule((Rule) value);
         }
@@ -204,6 +207,7 @@ public class RuleFactory implements IFactory<IRule> {
             }
             ids.add(rule.getId());
         }
+        candidateIndex.indexRule(rule);
     }
 
     private void unindexRule(Rule rule) throws Exception {
@@ -234,6 +238,7 @@ public class RuleFactory implements IFactory<IRule> {
                 }
             }
         }
+        candidateIndex.unindexRule(rule);
     }
 
     private void collectDomainIds(DomainKey key, LinkedHashSet<Long> result) throws Exception {
@@ -277,11 +282,40 @@ public class RuleFactory implements IFactory<IRule> {
             }
             ids.addAll(entry.getValue());
         }
+        candidateIndex.mergeFrom(child.candidateIndex);
     }
 
     public List<IRule> findByDomain(long predicateId, boolean antc) throws Exception {
         LinkedHashSet<Long> ids = new LinkedHashSet<>();
         collectDomainIds(new DomainKey(predicateId, antc), ids);
+        List<IRule> result = new ArrayList<>();
+        for (long id : ids) {
+            IRule rule = get(id);
+            if (rule != null && !rule.isDeleted(mind)) {
+                result.add(rule);
+            }
+        }
+        return result;
+    }
+
+
+    private void collectCandidateIds(Domain source,
+                                     boolean candidateAntc,
+                                     LinkedHashSet<Long> result) throws Exception {
+        if (parentIndex != null) {
+            parentIndex.collectCandidateIds(source, candidateAntc, result);
+        }
+        ensureDomainIndex();
+        candidateIndex.collectLocal(source, candidateAntc, result);
+    }
+
+    /**
+     * Select by predicate/polarity/arity and direct TERM positions before any
+     * Rule is hydrated. Dynamic candidate arguments are indexed as wildcards.
+     */
+    public List<IRule> findByDomain(Domain source, boolean candidateAntc) throws Exception {
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        collectCandidateIds(source, candidateAntc, ids);
         List<IRule> result = new ArrayList<>();
         for (long id : ids) {
             IRule rule = get(id);
@@ -524,6 +558,7 @@ public class RuleFactory implements IFactory<IRule> {
         ensureDomainIndex();
         domainIndexStack.push(copyDomainIndex());
         termIndexStack.push(copyTermIndex());
+        candidateIndex.mark();
         promotionStack.push(new HashSet<>(primaryPromotions));
     }
 
@@ -535,6 +570,7 @@ public class RuleFactory implements IFactory<IRule> {
         if (!termIndexStack.isEmpty()) {
             termIndexStack.pop();
         }
+        candidateIndex.commit();
         if (!promotionStack.isEmpty()) {
             promotionStack.pop();
         }
@@ -552,6 +588,7 @@ public class RuleFactory implements IFactory<IRule> {
             localTermIndex.putAll(termIndexStack.pop());
             domainIndexInitialized = true;
         }
+        candidateIndex.release();
         if (!promotionStack.isEmpty()) {
             primaryPromotions.clear();
             primaryPromotions.addAll(promotionStack.pop());
