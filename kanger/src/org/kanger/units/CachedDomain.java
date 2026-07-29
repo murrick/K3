@@ -6,6 +6,7 @@
 package org.kanger.units;
 
 import org.kanger.Mind;
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.ICause;
 import org.kanger.interfaces.IRule;
 import org.kanger.primitives.ArgumentsList;
@@ -13,7 +14,10 @@ import org.kanger.primitives.Cause;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Hydrated Domain with a one-entry, query-local memo for cause selection.
@@ -68,7 +72,40 @@ public class CachedDomain extends Domain {
             return new HashSet<>(cachedCauses);
         }
 
-        Set<ICause> selected = super.getCauses(mind);
+        Set<ICause> selected = new HashSet<>();
+        Map<ArgumentsList, Set<ICause>> byArguments =
+                mind.getDomainCauses().get(this);
+        Set<ICause> source = byArguments == null
+                ? null : byArguments.get(current);
+        if (source != null) {
+            selected.addAll(source);
+            SortedMap<Integer, Set<ICause>> byWeight = new TreeMap<>();
+            for (ICause cause : selected) {
+                int weight = 0;
+                for (IArgument own : getArguments()) {
+                    for (IArgument donor :
+                            ((Cause) cause).getDonor().getArguments()) {
+                        if (!own.isEmpty(mind)
+                                && !donor.isEmpty(mind)
+                                && own.getValue(mind).getId()
+                                == donor.getValue(mind).getId()) {
+                            ++weight;
+                            break;
+                        }
+                    }
+                }
+                Set<ICause> weighted = byWeight.get(weight);
+                if (weighted == null) {
+                    weighted = new HashSet<>();
+                    byWeight.put(weight, weighted);
+                }
+                weighted.add(cause);
+            }
+            if (byWeight.size() > 1) {
+                selected.removeAll(byWeight.get(byWeight.firstKey()));
+            }
+        }
+
         cachedCauseMind = mind;
         cachedCauseArguments = current;
         cachedCauses = new HashSet<>(selected);
