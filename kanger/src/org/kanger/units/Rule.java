@@ -605,19 +605,11 @@ public class Rule implements IUnit<IRule>, IRule {
         }
     }
 
-    /**
-     * RuleFactory normally populates the term set when a Rule is registered.
-     * A Rule loaded from persistent storage starts with an empty transient set,
-     * so rebuild it lazily once. Re-scanning the complete Domain tree for every
-     * TValue reachability check created the dominant post-query CPU hotspot.
-     */
     public boolean containsTerm(long id, Mind mind) throws Exception {
-        if (terms.isEmpty()) {
-            terms.add(originId);
-            for (List<Domain> row : getTree()) {
-                for (Domain d : row) {
-                    terms.addAll(d.getTerms(mind, true));
-                }
+        terms.add(originId);
+        for (List<Domain> row : getTree()) {
+            for (Domain d : row) {
+                terms.addAll(d.getTerms(mind, true));
             }
         }
         return terms.contains(id);

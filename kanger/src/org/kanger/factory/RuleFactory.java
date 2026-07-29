@@ -297,9 +297,7 @@ public class RuleFactory implements IFactory<IRule> {
         collectTermIds(termId, ids);
         for (long id : ids) {
             Rule rule = get(id);
-            if (rule != null
-                    && !rule.isDeleted(mind)
-                    && rule.containsTerm(termId, mind)) {
+            if (rule != null && !rule.isDeleted(mind)) {
                 return true;
             }
         }
