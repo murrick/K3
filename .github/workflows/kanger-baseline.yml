@@ -48,11 +48,11 @@ jobs:
           if ! grep -q '\[KANGER-TVALUE\]' kanger/src/org/kanger/factory/TValueFactory.java; then
             python3 scripts/apply_tvalue_identity_diagnostics.py
           fi
-          if ! grep -q 'Unlink only edges incident to the deleted term' kanger/src/org/kanger/Mind.java; then
-            python3 scripts/apply_cvar_unlink_fix.py
-          fi
           if ! grep -q '\[KANGER-CVAR\]' kanger/src/org/kanger/factory/DictionaryFactory.java; then
             python3 scripts/apply_cvar_ownership_diagnostics.py
+          fi
+          if ! grep -q 'mind.linkCVar(parent, t)' kanger/src/org/kanger/factory/DictionaryFactory.java; then
+            python3 scripts/apply_cvar_context_fix.py
           fi
           mvn -B clean verify
 
@@ -74,7 +74,7 @@ jobs:
             kanger/src/org/kanger/factory/TValueFactory.java \
             kanger/src/org/kanger/factory/DictionaryFactory.java \
             kanger/src/org/kanger/Mind.java
-          git commit -m "D2: trace C-variable link ownership"
+          git commit -m "D2: bind C-variable links to the active Mind"
           git push origin HEAD:debug/3.3.4-diagnostics
 
       - name: Run database and persistence diagnostics
