@@ -8,6 +8,13 @@ def replace_once(source: str, old: str, new: str, label: str) -> str:
     return source.replace(old, new, 1)
 
 
+def replace_exact(source: str, old: str, new: str, expected: int, label: str) -> str:
+    count = source.count(old)
+    if count != expected:
+        raise RuntimeError(f"{label}: expected {expected} matches, found {count}")
+    return source.replace(old, new)
+
+
 linker_path = Path("kanger/src/org/kanger/Linker.java")
 linker = linker_path.read_text(encoding="utf-8")
 
@@ -47,17 +54,12 @@ linker = replace_once(
     "                addOppositeNatives(ruleSet, rule, expanded, true);\n",
     "initial positional call",
 )
-linker = replace_once(
+linker = replace_exact(
     linker,
     "                            addOppositeNatives(ruleSet, r, expanded);\n",
     "                            addOppositeNatives(ruleSet, r, expanded, false);\n",
-    "used-rule predicate call",
-)
-linker = replace_once(
-    linker,
-    "                            addOppositeNatives(ruleSet, r, expanded);\n",
-    "                            addOppositeNatives(ruleSet, r, expanded, false);\n",
-    "generated-rule predicate call",
+    2,
+    "secondary predicate calls",
 )
 linker_path.write_text(linker, encoding="utf-8")
 
