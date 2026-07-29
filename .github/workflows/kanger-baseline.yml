@@ -59,7 +59,7 @@ jobs:
           grep -Eq 'C3 Success:[[:space:]]+6' "kanger-test-${{ matrix.id }}.log"
           grep -Eq 'C3 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
 
-      - name: Capture P0 performance baseline
+      - name: Capture in-memory performance baseline
         if: matrix.id == 'ubuntu-java-21'
         shell: bash
         run: |
@@ -72,6 +72,21 @@ jobs:
           grep -E '^(mode,|memory,|storage,)' \
             kanger-perf-ubuntu-java-21.log \
             > kanger-perf-ubuntu-java-21.csv
+
+      - name: Capture persistent storage reopen baseline
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.perf.storage=true \
+            -Dkanger.perf.sizes=100 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerPerformanceRunner \
+            2>&1 | tee kanger-perf-storage-ubuntu-java-21.log
+          grep -E '^(mode,|memory,|storage,)' \
+            kanger-perf-storage-ubuntu-java-21.log \
+            > kanger-perf-storage-ubuntu-java-21.csv
 
       - name: Capture P1 execution profile
         if: matrix.id == 'ubuntu-java-21'
@@ -103,6 +118,8 @@ jobs:
             kanger-test-${{ matrix.id }}.log
             kanger-perf-${{ matrix.id }}.log
             kanger-perf-${{ matrix.id }}.csv
+            kanger-perf-storage-${{ matrix.id }}.log
+            kanger-perf-storage-${{ matrix.id }}.csv
             kanger-perf-profile-run.log
             kanger-perf-execution-samples.txt
             kanger-perf-hotspots.txt
