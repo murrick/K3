@@ -86,18 +86,18 @@ public final class LinkerStatistics {
                                        boolean generated) {
         ++unificationAttempts;
         if (firstPass) {
-            if (query) {
-                ++firstPassQueryUnifications;
-            } else if (generated) {
+            if (generated) {
                 ++firstPassGeneratedUnifications;
+            } else if (query) {
+                ++firstPassQueryUnifications;
             } else {
                 ++firstPassDurableUnifications;
             }
         } else {
-            if (query) {
-                ++laterPassQueryUnifications;
-            } else if (generated) {
+            if (generated) {
                 ++laterPassGeneratedUnifications;
+            } else if (query) {
+                ++laterPassQueryUnifications;
             } else {
                 ++laterPassDurableUnifications;
             }
