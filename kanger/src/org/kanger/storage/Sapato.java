@@ -201,7 +201,7 @@ public class Sapato implements IStep {
             case COMMENT:
                 return new Comment();
             case DOMAIN:
-                return new Domain();
+                return new CachedDomain();
             case FVALUE:
                 return new FValue();
             case TVALUE:
