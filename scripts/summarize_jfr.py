@@ -2,12 +2,13 @@
 
 import collections
 import re
+import sys
 from pathlib import Path
 
-SOURCE = Path("kanger-perf-execution-samples.txt")
-TARGET = Path("kanger-perf-hotspots.txt")
+source = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("kanger-perf-execution-samples.txt")
+target = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("kanger-perf-hotspots.txt")
 
-text = SOURCE.read_text(encoding="utf-8")
+text = source.read_text(encoding="utf-8")
 blocks = text.split("jdk.ExecutionSample {")[1:]
 leaf = collections.Counter()
 kanger = collections.Counter()
@@ -23,7 +24,7 @@ for block in blocks:
             kanger[frame.strip()] += 1
             break
 
-with TARGET.open("w", encoding="utf-8") as output:
+with target.open("w", encoding="utf-8") as output:
     output.write("Top sampled leaf frames\n")
     for frame, count in leaf.most_common(40):
         output.write(f"{count:6d}  {frame}\n")
