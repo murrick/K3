@@ -10,17 +10,16 @@
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *  IN THE SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 package org.kanger.storage;
@@ -34,15 +33,17 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class Base implements IBase, Iterable<IStep> {
 
-    private static long MAX_CACHE_SIZE = 2048L * 2048L;
-    private static boolean CACHE_ENABLE = true;
+    private static final long DEFAULT_MAX_CACHE_SIZE = 2048L * 2048L;
 
     private Index index = null;
     private Data data = null;
@@ -51,9 +52,20 @@ public class Base implements IBase, Iterable<IStep> {
 
     private String name = "";
     private int baseCode = -1;
-    private final Map<Long, IStep> cache = new HashMap<>();
-    private final Queue<Long> timing = new LinkedList<>();
-    private volatile long cacheSize = 0L;
+
+    /**
+     * Access-ordered map gives O(1) cache hits and O(1) eldest eviction.
+     * Semantic data remains owned by storage; this map only retains a bounded
+     * set of hydrated IStep records.
+     */
+    private final LinkedHashMap<Long, IStep> cache =
+            new LinkedHashMap<Long, IStep>(16, 0.75f, true);
+    private final long maxCacheSize;
+    private final boolean cacheEnabled;
+    private long cacheSize = 0L;
+    private long cacheHits = 0L;
+    private long cacheMisses = 0L;
+    private long cacheEvictions = 0L;
 
     private long lastId = -1;
 
@@ -64,11 +76,13 @@ public class Base implements IBase, Iterable<IStep> {
             ((User) user).getUdf();
             this.udf = ((User) user).getUdf().getClass();
         } catch (RuntimeErrorException e) {
-            //
+            // UDF module is optional.
         }
 
-        MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.size", (2048L * 2048L) + ""));
-        CACHE_ENABLE = Boolean.parseBoolean(user.getProperty("cache.enable", "true"));
+        maxCacheSize = Math.max(0L, Long.parseLong(
+                user.getProperty("cache.size", DEFAULT_MAX_CACHE_SIZE + "")));
+        cacheEnabled = Boolean.parseBoolean(
+                user.getProperty("cache.enable", "true")) && maxCacheSize > 0L;
 
         index = new Index(baseCode, locker, user);
         index.open(name + ".index", readonly);
@@ -82,11 +96,56 @@ public class Base implements IBase, Iterable<IStep> {
         } else {
             lastId = 0;
         }
+    }
 
+    private long cacheWeight(IStep one) {
+        return one == null ? 0L : Math.max(1L, one.getSize());
+    }
+
+    private void removeCached(long id, boolean eviction) {
+        IStep removed = cache.remove(id);
+        if (removed != null) {
+            cacheSize -= cacheWeight(removed);
+            if (cacheSize < 0L) {
+                cacheSize = 0L;
+            }
+            if (eviction) {
+                ++cacheEvictions;
+            }
+        }
+    }
+
+    private void cacheRecord(long id, IStep one) {
+        if (!cacheEnabled || one == null) {
+            return;
+        }
+        synchronized (cache) {
+            removeCached(id, false);
+            cache.put(id, one);
+            cacheSize += cacheWeight(one);
+
+            Iterator<Map.Entry<Long, IStep>> iterator = cache.entrySet().iterator();
+            while (cacheSize > maxCacheSize && iterator.hasNext()) {
+                Map.Entry<Long, IStep> eldest = iterator.next();
+                cacheSize -= cacheWeight(eldest.getValue());
+                iterator.remove();
+                ++cacheEvictions;
+            }
+            if (cacheSize < 0L) {
+                cacheSize = 0L;
+            }
+        }
+    }
+
+    private void invalidateCached(long id) {
+        synchronized (cache) {
+            removeCached(id, false);
+        }
     }
 
     @Override
     public void close() throws IOException {
+        clearCache();
         if (index != null && !index.isClosed()) {
             index.close();
         }
@@ -110,13 +169,14 @@ public class Base implements IBase, Iterable<IStep> {
                 index.set(one.getId(), offset);
             }
         }
+        // Never expose a pre-update hydrated record after the storage write.
+        invalidateCached(one.getId());
     }
 
     @Override
     public void update(IStep one) throws Exception {
         add(one);
     }
-
 
     public void flush() throws Exception {
         synchronized (locker) {
@@ -127,13 +187,14 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public IStep get(long id) throws Exception {
-        if (CACHE_ENABLE) {
+        if (cacheEnabled) {
             synchronized (cache) {
-                if (cache.containsKey(id)) {
-                    timing.remove(id);
-                    timing.add(id);
-                    return cache.get(id);
+                IStep cached = cache.get(id);
+                if (cached != null) {
+                    ++cacheHits;
+                    return cached;
                 }
+                ++cacheMisses;
             }
         }
 
@@ -141,25 +202,10 @@ public class Base implements IBase, Iterable<IStep> {
             Index.IndexOne x = index.getOne(id);
             if (x != null) {
                 IStep one = data.get(x.getLong());
-                if (one != null && CACHE_ENABLE) {
-                    synchronized (cache) {
-                        if (!cache.containsKey(id)) {
-                            cache.put(id, one);
-                            timing.add(id);
-                            cacheSize += one.getSize();
-                            while (cacheSize > MAX_CACHE_SIZE && timing.size() > 1) {
-                                long topId = timing.poll();
-                                IStep top = cache.remove(topId);
-                                cacheSize -= top.getSize();
-                            }
-                        }
-                    }
-                }
-
+                cacheRecord(id, one);
                 return one;
-            } else {
-                return null;
             }
+            return null;
         }
     }
 
@@ -209,9 +255,8 @@ public class Base implements IBase, Iterable<IStep> {
         try {
             if (isEmpty()) {
                 return null;
-            } else {
-                return get(index.lastKey());
             }
+            return get(index.lastKey());
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -224,9 +269,8 @@ public class Base implements IBase, Iterable<IStep> {
         try {
             if (isEmpty()) {
                 return null;
-            } else {
-                return get(index.firstKey());
             }
+            return get(index.firstKey());
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -234,61 +278,11 @@ public class Base implements IBase, Iterable<IStep> {
         }
     }
 
-//    public long reindex() throws Exception {
-//        if (!isClosed()) {
-//            flush();
-//            long size = index.getFile().length()
-//                    + hash.getFile().length()
-//                    + data.getFile().length();
-//            File tempFile = new File(name + ".data.temp");
-//            Data tempData = new Data(this);
-//            tempData.open(tempFile, false);
-//
-//            index.clear();
-//            hash.clear();
-//
-//            for (IStep one : data) {
-//                if (one != null) {
-//                    long offset = tempData.add(one);
-//                    index.set(one.getId(), offset);
-//                    hash.add(one.getHash(), offset);
-//                }
-//            }
-//
-//            tempData.close();
-//            data.close();
-//            data.getFile().getAbsoluteFile().delete();
-//            tempFile.renameTo(data.getFile().getAbsoluteFile());
-//            data.open(data.getFile(), false);
-//            flush();
-//
-//            return index.getFile().length()
-//                    + hash.getFile().length()
-//                    + data.getFile().length()
-//                    - size;
-//
-//        } else {
-//            return 0;
-//        }
-//    }
-
-//    @Override
-//    public int size() throws Exception {
-//        if (!isClosed()) {
-//            return index.size();
-//        } else {
-//            return 0;
-//        }
-//    }
-
     @Override
     public void clearCache() {
-        if (CACHE_ENABLE) {
-            synchronized (cache) {
-                cache.clear();
-                timing.clear();
-                cacheSize = 0;
-            }
+        synchronized (cache) {
+            cache.clear();
+            cacheSize = 0L;
         }
     }
 
@@ -299,15 +293,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void delete(long id) throws Exception {
-        if (CACHE_ENABLE) {
-            synchronized (cache) {
-                if (cache.containsKey(id)) {
-                    timing.remove(id);
-                    IStep top = cache.remove(id);
-                    cacheSize -= top.getSize();
-                }
-            }
-        }
+        invalidateCached(id);
         synchronized (locker) {
             Index.IndexOne current = index.getOne(id);
             if (current != null) {
@@ -320,12 +306,47 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public long getUsedCacheSize() {
-        return cacheSize;
+        synchronized (cache) {
+            return cacheSize;
+        }
     }
 
     @Override
     public long getMaxCacheSize() {
-        return MAX_CACHE_SIZE;
+        return maxCacheSize;
+    }
+
+    @Override
+    public long getCacheHits() {
+        synchronized (cache) {
+            return cacheHits;
+        }
+    }
+
+    @Override
+    public long getCacheMisses() {
+        synchronized (cache) {
+            return cacheMisses;
+        }
+    }
+
+    @Override
+    public long getCacheEvictions() {
+        synchronized (cache) {
+            return cacheEvictions;
+        }
+    }
+
+    @Override
+    public long getCachedEntryCount() {
+        synchronized (cache) {
+            return cache.size();
+        }
+    }
+
+    @Override
+    public boolean isCacheEnabled() {
+        return cacheEnabled;
     }
 
     @Override
@@ -342,29 +363,6 @@ public class Base implements IBase, Iterable<IStep> {
     public Class getUdf() {
         return udf;
     }
-
-//    public void remove() throws IOException {
-//        boolean wasOpened = false;
-//        if (index != null && !index.isClosed()) {
-//            index.close();
-//            wasOpened = true;
-//        }
-//        if (hash != null && !hash.isClosed()) {
-//            hash.close();
-//            wasOpened = true;
-//        }
-//        if (data != null && !data.isClosed()) {
-//            data.close();
-//            wasOpened = true;
-//        }
-//
-//        if (wasOpened) {
-//            index.getFile().getAbsoluteFile().delete();
-//            hash.getFile().getAbsoluteFile().delete();
-//            data.getFile().getAbsoluteFile().delete();
-//        }
-//    }
-
 
     @Override
     public Iterator<IStep> iterator() {
@@ -385,7 +383,6 @@ public class Base implements IBase, Iterable<IStep> {
 
         @Override
         public void remove() {
-
         }
 
         @Override
@@ -397,6 +394,8 @@ public class Base implements IBase, Iterable<IStep> {
         public IStep next() {
             Index.IndexOne one = (Index.IndexOne) iterator.next();
             try {
+                // Sequential scans deliberately bypass the LRU so a full walk
+                // cannot evict the caller's hot random-access working set.
                 return data.get(one.getLong());
             } catch (Exception e) {
                 System.err.println(new Date());
