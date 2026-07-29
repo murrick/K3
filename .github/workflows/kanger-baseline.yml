@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "debug/3.3.4-diagnostics"
-  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -16,7 +15,6 @@ permissions:
 
 jobs:
   apply-diagnostics:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/debug/3.3.4-diagnostics'
     runs-on: ubuntu-latest
     steps:
       - name: Check out diagnostics branch
