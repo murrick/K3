@@ -30,6 +30,7 @@ import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
