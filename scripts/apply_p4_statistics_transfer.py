@@ -21,8 +21,10 @@ source = replace_once(
 
 source = replace_once(
     source,
+    "            log.commit((LogStore) m.getLog());\n"
     "            queryResult = m.getQueryResult();\n"
     "            compliedLine = m.getCompliedString();\n",
+    "            log.commit((LogStore) m.getLog());\n"
     "            queryResult = m.getQueryResult();\n"
     "            compliedLine = m.getCompliedString();\n"
     "            lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();\n",
@@ -31,13 +33,15 @@ source = replace_once(
 
 source = replace_once(
     source,
+    "            solves.commit((SolutionsStore) m.getSolutions());\n"
+    "            values.commit((ValuesStore) m.getValues());\n\n"
     "            queryResult = m.getQueryResult();\n"
-    "            compliedLine = m.getCompliedString();\n\n"
-    "            --transactionCounter;\n",
+    "            compliedLine = m.getCompliedString();\n",
+    "            solves.commit((SolutionsStore) m.getSolutions());\n"
+    "            values.commit((ValuesStore) m.getValues());\n\n"
     "            queryResult = m.getQueryResult();\n"
     "            compliedLine = m.getCompliedString();\n"
-    "            lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();\n\n"
-    "            --transactionCounter;\n",
+    "            lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();\n",
     "release transfer",
 )
 
