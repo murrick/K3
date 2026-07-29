@@ -6,8 +6,11 @@
 package org.kanger.test;
 
 import org.kanger.Mind;
+import org.kanger.compiler.Compiller;
+import org.kanger.compiler.Parser;
 import org.kanger.enums.FunctionBinding;
 import org.kanger.enums.LibMode;
+import org.kanger.enums.QueryPass;
 import org.kanger.factory.LibraryFactory;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
@@ -16,10 +19,12 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.Function;
 import org.kanger.units.Operation;
+import org.kanger.units.Rule;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -107,9 +112,43 @@ public final class KangerC3BindingTest {
         ((LibraryFactory) mind.getLibrary()).add(constantOperation(name, range, value));
     }
 
-    private void installInfrastructure(String name, int range, double value) {
-        ((Mind) mind).getCalculator().getFunctions().getSysOps()
+    private void installInfrastructure(Mind context, String name, int range, double value) {
+        context.getCalculator().getFunctions().getSysOps()
                 .put(name + "(" + range + ")", constantOperation(name, range, value));
+    }
+
+    private void installInfrastructure(String name, int range, double value) {
+        installInfrastructure((Mind) mind, name, range, value);
+    }
+
+    private void acceptWithInfrastructure(String line, String name, int range, double value) throws Exception {
+        Mind parent = (Mind) mind;
+        Mind child = new Mind(parent);
+        boolean completed = false;
+        try {
+            child.setQueryPass(QueryPass.ACCEPT);
+            installInfrastructure(child, name, range, value);
+            Rule rule = (Rule) new Compiller(child).compileLine(
+                    Parser.parse(line.substring(1)),
+                    true,
+                    line,
+                    false,
+                    new LinkedList<ITerm>());
+            require(rule != null && !rule.isSecond(), "Infrastructure test rule was not compiled: " + line);
+            boolean conflict = child.analyze(rule, false);
+            if (!conflict) {
+                child.link(rule, false);
+                conflict = child.analyze(rule, false);
+            }
+            require(!conflict, "Infrastructure test rule caused a conflict: " + line);
+            boolean committed = parent.commit(child);
+            completed = true;
+            require(committed, "Infrastructure test transaction was rejected: " + line);
+        } finally {
+            if (!completed) {
+                parent.release(child);
+            }
+        }
     }
 
     private void deleteUdf(String name, int range) throws Exception {
@@ -198,9 +237,9 @@ public final class KangerC3BindingTest {
         requireTrue("?", "Reinitialization after infrastructure registration failed");
         requireTrue("?c3_old_result(10);", "Late infrastructure captured an existing dynamic occurrence");
 
-        requireTrue("!@x c3_new_source(x) -> c3_new_result(c3_late(x));",
-                "New infrastructure-bound rule was not accepted");
-        requireTrue("!c3_new_source(value);", "New infrastructure source was not accepted");
+        acceptWithInfrastructure("!@x c3_new_source(x) -> c3_new_result(c3_late(x));",
+                "c3_late", 1, 99.0);
+        acceptWithInfrastructure("!c3_new_source(value);", "c3_late", 1, 99.0);
         requireTrue("?c3_new_result(99);", "New occurrence was not bound to infrastructure");
         requireFunction("c3_late", FunctionBinding.INFRASTRUCTURE);
     }
