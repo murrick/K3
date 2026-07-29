@@ -36,6 +36,7 @@ import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.Escalera;
+import org.kanger.units.CachedDomain;
 import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
 
@@ -100,7 +101,7 @@ public class DomainFactory implements IFactory<Domain> {
             p.setDeleted(false, mind);
             return p;
         } else {
-            p = new Domain(mind);
+            p = new CachedDomain(mind);
             p.setPredicate(pred);
             p.setAntc(antc);
             p.setRule(r);
