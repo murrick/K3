@@ -24,9 +24,6 @@ import java.util.Stack;
  * Compact in-memory candidate metadata. Only Rule IDs are retained; Rules and
  * Domains remain owned by Escalera/IBase and are hydrated after candidate
  * selection.
- *
- * Positional pruning is deliberately restricted to durable simple one-domain
- * Rules. Complex, query and generated Rules remain in a signature fallback.
  */
 final class RuleCandidateIndex {
 
@@ -45,16 +42,10 @@ final class RuleCandidateIndex {
 
         @Override
         public boolean equals(Object value) {
-            if (this == value) {
-                return true;
-            }
-            if (!(value instanceof SignatureKey)) {
-                return false;
-            }
+            if (this == value) return true;
+            if (!(value instanceof SignatureKey)) return false;
             SignatureKey other = (SignatureKey) value;
-            return predicateId == other.predicateId
-                    && antc == other.antc
-                    && arity == other.arity;
+            return predicateId == other.predicateId && antc == other.antc && arity == other.arity;
         }
 
         @Override
@@ -78,16 +69,10 @@ final class RuleCandidateIndex {
 
         @Override
         public boolean equals(Object value) {
-            if (this == value) {
-                return true;
-            }
-            if (!(value instanceof PositionKey)) {
-                return false;
-            }
+            if (this == value) return true;
+            if (!(value instanceof PositionKey)) return false;
             PositionKey other = (PositionKey) value;
-            return position == other.position
-                    && termId == other.termId
-                    && signature.equals(other.signature);
+            return position == other.position && termId == other.termId && signature.equals(other.signature);
         }
 
         @Override
@@ -126,12 +111,8 @@ final class RuleCandidateIndex {
 
         private boolean removeInternal(K key, long id) {
             LinkedHashSet<Long> ids = values.get(key);
-            if (ids == null || !ids.remove(id)) {
-                return false;
-            }
-            if (ids.isEmpty()) {
-                values.remove(key);
-            }
+            if (ids == null || !ids.remove(id)) return false;
+            if (ids.isEmpty()) values.remove(key);
             return true;
         }
 
@@ -152,39 +133,24 @@ final class RuleCandidateIndex {
             return ids == null ? new LinkedHashSet<Long>() : new LinkedHashSet<>(ids);
         }
 
-        void clear() {
-            values.clear();
-            journals.clear();
-        }
-
-        void mark() {
-            journals.push(new ArrayList<Change<K>>());
-        }
+        void clear() { values.clear(); journals.clear(); }
+        void mark() { journals.push(new ArrayList<Change<K>>()); }
 
         void commit() {
-            if (journals.isEmpty()) {
-                return;
-            }
+            if (journals.isEmpty()) return;
             List<Change<K>> committed = journals.pop();
-            if (!journals.isEmpty()) {
-                journals.peek().addAll(committed);
-            }
+            if (!journals.isEmpty()) journals.peek().addAll(committed);
         }
 
         void release() {
-            if (journals.isEmpty()) {
-                return;
-            }
+            if (journals.isEmpty()) return;
             List<Change<K>> changes = journals.pop();
             replaying = true;
             try {
                 for (int i = changes.size() - 1; i >= 0; --i) {
                     Change<K> change = changes.get(i);
-                    if (change.addition) {
-                        removeInternal(change.key, change.id);
-                    } else {
-                        addInternal(change.key, change.id);
-                    }
+                    if (change.addition) removeInternal(change.key, change.id);
+                    else addInternal(change.key, change.id);
                 }
             } finally {
                 replaying = false;
@@ -193,9 +159,7 @@ final class RuleCandidateIndex {
 
         void mergeFrom(IdIndex<K> child) {
             for (Map.Entry<K, LinkedHashSet<Long>> entry : child.values.entrySet()) {
-                for (long id : entry.getValue()) {
-                    add(entry.getKey(), id);
-                }
+                for (long id : entry.getValue()) add(entry.getKey(), id);
             }
         }
     }
@@ -204,29 +168,10 @@ final class RuleCandidateIndex {
     private final IdIndex<SignatureKey> fallbackSignatures = new IdIndex<>();
     private final IdIndex<PositionKey> positions = new IdIndex<>();
 
-    void clear() {
-        signatures.clear();
-        fallbackSignatures.clear();
-        positions.clear();
-    }
-
-    void mark() {
-        signatures.mark();
-        fallbackSignatures.mark();
-        positions.mark();
-    }
-
-    void commit() {
-        signatures.commit();
-        fallbackSignatures.commit();
-        positions.commit();
-    }
-
-    void release() {
-        signatures.release();
-        fallbackSignatures.release();
-        positions.release();
-    }
+    void clear() { signatures.clear(); fallbackSignatures.clear(); positions.clear(); }
+    void mark() { signatures.mark(); fallbackSignatures.mark(); positions.mark(); }
+    void commit() { signatures.commit(); fallbackSignatures.commit(); positions.commit(); }
+    void release() { signatures.release(); fallbackSignatures.release(); positions.release(); }
 
     void mergeFrom(RuleCandidateIndex child) {
         signatures.mergeFrom(child.signatures);
@@ -242,9 +187,7 @@ final class RuleCandidateIndex {
     }
 
     void indexRule(Rule rule) throws Exception {
-        if (rule == null) {
-            return;
-        }
+        if (rule == null) return;
         boolean positional = positionalEligible(rule);
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
@@ -257,23 +200,15 @@ final class RuleCandidateIndex {
                 for (int position = 0; position < domain.getRange(); ++position) {
                     IArgument argument = domain.get(position);
                     long termId = argument.getType() == ArgumentType.TERM
-                            ? argument.getId()
-                            : WILDCARD_TERM_ID;
+                            ? argument.getId() : WILDCARD_TERM_ID;
                     positions.add(new PositionKey(signature, position, termId), rule.getId());
                 }
             }
         }
     }
 
-    /**
-     * Rule flags are mutable across query/generated/promotion lifecycle. Remove
-     * the ID from every possible bucket instead of recomputing the admission
-     * mode from its current flags.
-     */
     void unindexRule(Rule rule) throws Exception {
-        if (rule == null) {
-            return;
-        }
+        if (rule == null) return;
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 SignatureKey signature = signature(domain, domain.isAntc());
@@ -282,84 +217,102 @@ final class RuleCandidateIndex {
                 for (int position = 0; position < domain.getRange(); ++position) {
                     IArgument argument = domain.get(position);
                     long exactOrWildcard = argument.getType() == ArgumentType.TERM
-                            ? argument.getId()
-                            : WILDCARD_TERM_ID;
-                    positions.remove(
-                            new PositionKey(signature, position, exactOrWildcard), rule.getId());
+                            ? argument.getId() : WILDCARD_TERM_ID;
+                    positions.remove(new PositionKey(signature, position, exactOrWildcard), rule.getId());
                     if (exactOrWildcard != WILDCARD_TERM_ID) {
-                        positions.remove(
-                                new PositionKey(signature, position, WILDCARD_TERM_ID), rule.getId());
+                        positions.remove(new PositionKey(signature, position, WILDCARD_TERM_ID), rule.getId());
                     }
                 }
             }
         }
     }
 
-    void collectLocal(Domain source,
-                      boolean candidateAntc,
-                      LinkedHashSet<Long> result) throws Exception {
+    void collectLocal(Domain source, boolean candidateAntc, LinkedHashSet<Long> result) throws Exception {
         SignatureKey signature = signature(source, candidateAntc);
         LinkedHashSet<Long> selected = signatures.get(signature);
-        if (selected.isEmpty()) {
-            return;
-        }
+        if (selected.isEmpty()) return;
         LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
-
         for (int position = 0; position < source.getRange(); ++position) {
             IArgument argument = source.get(position);
-            if (argument.getType() != ArgumentType.TERM) {
-                continue;
-            }
-
-            LinkedHashSet<Long> compatible = positions.get(
-                    new PositionKey(signature, position, argument.getId()));
-            compatible.addAll(positions.get(
-                    new PositionKey(signature, position, WILDCARD_TERM_ID)));
+            if (argument.getType() != ArgumentType.TERM) continue;
+            LinkedHashSet<Long> compatible = positions.get(new PositionKey(signature, position, argument.getId()));
+            compatible.addAll(positions.get(new PositionKey(signature, position, WILDCARD_TERM_ID)));
             compatible.addAll(fallback);
             selected.retainAll(compatible);
-            if (selected.isEmpty()) {
-                return;
-            }
+            if (selected.isEmpty()) return;
         }
         result.addAll(selected);
     }
 
+    private boolean batchGeneratedNonSubstitutablePair(Domain source,
+                                                         Rule candidate,
+                                                         boolean candidateAntc,
+                                                         Mind mind) throws Exception {
+        if (source.isSubstitutable()) {
+            return false;
+        }
+        Rule sourceRule = (Rule) source.getRule();
+        if (!sourceRule.isGenerated() && !candidate.isGenerated()) {
+            return false;
+        }
 
-    void collectResolvedLocal(Domain source,
-                              boolean candidateAntc,
-                              Mind mind,
+        Domain matched = null;
+        for (List<Domain> branch : candidate.getTree()) {
+            for (Domain domain : branch) {
+                if (domain.getPredicateId() == source.getPredicateId()
+                        && domain.isAntc() == candidateAntc
+                        && domain.getRange() == source.getRange()) {
+                    if (domain.isSubstitutable()) {
+                        return false;
+                    }
+                    matched = domain;
+                }
+            }
+        }
+        if (matched == null) {
+            return false;
+        }
+
+        source.setUsed(mind);
+        sourceRule.setUsed(mind);
+        matched.setUsed(mind);
+        candidate.setUsed(mind);
+        return true;
+    }
+
+    void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
                               LinkedHashSet<Long> result) throws Exception {
         SignatureKey signature = signature(source, candidateAntc);
         LinkedHashSet<Long> selected = signatures.get(signature);
-        if (selected.isEmpty()) {
-            return;
-        }
+        if (selected.isEmpty()) return;
         LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
-
         for (int position = 0; position < source.getRange(); ++position) {
             IArgument argument = source.get(position);
             Long termId = resolvedTermId(argument, mind);
-            if (termId == null) {
-                continue;
-            }
-
-            LinkedHashSet<Long> compatible = positions.get(
-                    new PositionKey(signature, position, termId));
-            compatible.addAll(positions.get(
-                    new PositionKey(signature, position, WILDCARD_TERM_ID)));
+            if (termId == null) continue;
+            LinkedHashSet<Long> compatible = positions.get(new PositionKey(signature, position, termId));
+            compatible.addAll(positions.get(new PositionKey(signature, position, WILDCARD_TERM_ID)));
             compatible.addAll(fallback);
             selected.retainAll(compatible);
-            if (selected.isEmpty()) {
-                return;
+            if (selected.isEmpty()) return;
+        }
+        if (!source.isSubstitutable()) {
+            LinkedHashSet<Long> remaining = new LinkedHashSet<>();
+            for (long id : selected) {
+                Rule candidate = (Rule) mind.getRules().get(id);
+                if (candidate == null
+                        || !batchGeneratedNonSubstitutablePair(
+                                source, candidate, candidateAntc, mind)) {
+                    remaining.add(id);
+                }
             }
+            selected = remaining;
         }
         result.addAll(selected);
     }
 
     private Long resolvedTermId(IArgument argument, Mind mind) throws Exception {
-        if (argument.getType() == ArgumentType.TERM) {
-            return argument.getId();
-        }
+        if (argument.getType() == ArgumentType.TERM) return argument.getId();
         if (argument.getType() == ArgumentType.TVARIABLE) {
             TVariable variable = (TVariable) argument.getObject(mind);
             TValue current = variable.getCurrent();
