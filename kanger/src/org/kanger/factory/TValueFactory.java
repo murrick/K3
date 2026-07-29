@@ -29,18 +29,22 @@ import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IReactor;
-import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
-import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 /**
  * Created by Dmitry G. Quznetsov on 25.05.15.
@@ -55,6 +59,15 @@ public class TValueFactory implements IFactory<TValue> {
     private IBase connection = null;
     private Map<TVariable, TValue> current = new HashMap<>();
     private boolean action = false;
+
+    /**
+     * Transaction-layered acceleration metadata. Buckets contain TValue IDs
+     * only; values are hydrated through Escalera/IBase on demand.
+     */
+    private TValueFactory parentIndex = null;
+    private final Map<Long, LinkedHashSet<Long>> localByVariable = new HashMap<>();
+    private final Stack<Map<Long, LinkedHashSet<Long>>> indexStack = new Stack<>();
+    private boolean indexInitialized = false;
 
     public TValueFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -72,6 +85,87 @@ public class TValueFactory implements IFactory<TValue> {
         } else {
             cache = new Escalera(mind, SCHEMA, null);
         }
+
+        parentIndex = base;
+        localByVariable.clear();
+        indexStack.clear();
+        indexInitialized = base != null;
+    }
+
+    private Map<Long, LinkedHashSet<Long>> copyIndex() {
+        Map<Long, LinkedHashSet<Long>> copy = new HashMap<>();
+        for (Map.Entry<Long, LinkedHashSet<Long>> entry : localByVariable.entrySet()) {
+            copy.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
+        }
+        return copy;
+    }
+
+    private void index(TValue value) {
+        if (value == null) {
+            return;
+        }
+        LinkedHashSet<Long> ids = localByVariable.get(value.getTVarId());
+        if (ids == null) {
+            ids = new LinkedHashSet<>();
+            localByVariable.put(value.getTVarId(), ids);
+        }
+        ids.add(value.getId());
+    }
+
+    private void unindex(TValue value) {
+        if (value == null || !indexInitialized) {
+            return;
+        }
+        LinkedHashSet<Long> ids = localByVariable.get(value.getTVarId());
+        if (ids != null) {
+            ids.remove(value.getId());
+            if (ids.isEmpty()) {
+                localByVariable.remove(value.getTVarId());
+            }
+        }
+    }
+
+    private void ensureIndex() throws Exception {
+        if (indexInitialized) {
+            return;
+        }
+        localByVariable.clear();
+
+        // Escalera iterates newest first, while the historical forward()
+        // traversal delivered oldest values first. Reversing here preserves
+        // the observable substitution order.
+        List<TValue> values = new ArrayList<>();
+        for (Object value : cache) {
+            values.add((TValue) value);
+        }
+        for (int i = values.size() - 1; i >= 0; --i) {
+            index(values.get(i));
+        }
+        indexInitialized = true;
+    }
+
+    private void collectIds(long variableId, LinkedHashSet<Long> result) throws Exception {
+        if (parentIndex != null) {
+            parentIndex.collectIds(variableId, result);
+        }
+        ensureIndex();
+        LinkedHashSet<Long> local = localByVariable.get(variableId);
+        if (local != null) {
+            result.addAll(local);
+        }
+    }
+
+    private void mergeIndex(TValueFactory child) throws Exception {
+        ensureIndex();
+        child.ensureIndex();
+        for (Map.Entry<Long, LinkedHashSet<Long>> entry : child.localByVariable.entrySet()) {
+            LinkedHashSet<Long> ids = localByVariable.get(entry.getKey());
+            if (ids == null) {
+                ids = new LinkedHashSet<>();
+                localByVariable.put(entry.getKey(), ids);
+            }
+            ids.addAll(entry.getValue());
+        }
     }
 
     public void commit(TValueFactory base) throws Exception {
@@ -87,6 +181,7 @@ public class TValueFactory implements IFactory<TValue> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
+        mergeIndex(base);
         action = base.isAction();
     }
 
@@ -103,6 +198,7 @@ public class TValueFactory implements IFactory<TValue> {
             t.setId(((User) mind.getUser()).nextId(SCHEMA));
             t.setMindId(mind.getId());
             cache.add(t);
+            index(t);
             if (top == null) {
                 top = cache.getRoot();
             }
@@ -163,6 +259,7 @@ public class TValueFactory implements IFactory<TValue> {
             }
         }
         for (Object o : toDelete) {
+            unindex((TValue) o);
             cache.delete(((IUnit) o).getId());
         }
         Iterator<Map.Entry<TVariable, TValue>> iterator = current.entrySet().iterator();
@@ -184,16 +281,27 @@ public class TValueFactory implements IFactory<TValue> {
     }
 
     public long mark() throws Exception {
+        ensureIndex();
+        indexStack.push(copyIndex());
         return cache.mark();
     }
 
 
     public long commit() throws Exception {
+        if (!indexStack.isEmpty()) {
+            indexStack.pop();
+        }
         return cache.commit();
     }
 
     public long release() throws Exception {
-        return cache.release();
+        long result = cache.release();
+        if (!indexStack.isEmpty()) {
+            localByVariable.clear();
+            localByVariable.putAll(indexStack.pop());
+            indexInitialized = true;
+        }
+        return result;
     }
 
 
@@ -236,22 +344,14 @@ public class TValueFactory implements IFactory<TValue> {
         return current;
     }
 
-    private void forward(IStep root, TVariable t, IReactor reactor) throws Exception {
-        if (root.getNext() != null) {
-            forward(root.getNext(), t, reactor);
-            if (((TValue) root.getData()).getTVarId() == t.getId()) {
-                reactor.run(root.getData(mind));
-            }
-        } else {
-            if (((TValue) root.getData()).getTVarId() == t.getId()) {
-                reactor.run(root.getData(mind));
-            }
-        }
-    }
-
     public void forEach(TVariable t, IReactor reactor) throws Exception {
-        if (cache.size() > 0) {
-            forward(cache.getRoot(), t, reactor);
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        collectIds(t.getId(), ids);
+        for (long id : ids) {
+            TValue value = get(id);
+            if (value != null) {
+                reactor.run(value);
+            }
         }
     }
 
