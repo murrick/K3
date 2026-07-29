@@ -717,22 +717,24 @@ public class Mind implements IMind {
         return cvarParents;
     }
 
+    /** Bind C-variable links to an explicit active Mind context. */
+    public void linkCVar(ITerm parent, ITerm child) {
+        if (parent != null && child != null) {
+            cvarParents.put(child, parent);
+            cvarChilds.put(parent, child);
+        }
+    }
+
     public void unlinkCVar(ITerm term) {
         if (term == null) {
             return;
         }
-
         Set<ITerm> linked = new HashSet<>();
         linked.add(term);
-
         ITerm child = cvarChilds.get(term);
-        if (child != null) {
-            linked.add(child);
-        }
+        if (child != null) linked.add(child);
         ITerm parent = cvarParents.get(term);
-        if (parent != null) {
-            linked.add(parent);
-        }
+        if (parent != null) linked.add(parent);
         for (Map.Entry<ITerm, ITerm> entry : cvarChilds.entrySet()) {
             if (entry.getKey().equals(term) || entry.getValue().equals(term)) {
                 linked.add(entry.getKey());
@@ -745,9 +747,8 @@ public class Mind implements IMind {
                 linked.add(entry.getValue());
             }
         }
-
-        cvarChilds.entrySet().removeIf(entry -> linked.contains(entry.getKey()) || linked.contains(entry.getValue()));
-        cvarParents.entrySet().removeIf(entry -> linked.contains(entry.getKey()) || linked.contains(entry.getValue()));
+        cvarChilds.entrySet().removeIf(e -> linked.contains(e.getKey()) || linked.contains(e.getValue()));
+        cvarParents.entrySet().removeIf(e -> linked.contains(e.getKey()) || linked.contains(e.getValue()));
     }
 
     private void clearCVarLinks() {

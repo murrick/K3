@@ -153,8 +153,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
         ((Term) t).setIndex(i);
         ((Term) t).setName(name);
         if (parent != null) {
-            ((Term) t).setParent(parent);
-            ((Term) parent).setChild(t);
+            mind.linkCVar(parent, t);
         }
         return t;
     }

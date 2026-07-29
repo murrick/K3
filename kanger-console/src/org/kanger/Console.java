@@ -519,6 +519,9 @@ public class Console {
                     System.out.println("Order for sorting values: " +
                             (mind.getOrder().isEmpty() ? "natural" : (mind.getOrder() + " " + (mind.isAscending() ? "ASCEND" : "DESCEND"))));
                     break;
+                case 'X':
+                    System.out.println(Diagnostics.snapshot(mind, "console"));
+                    break;
                 case 'T':
                     String prefix = "";
                     if (line.split(" ").length > 2) {

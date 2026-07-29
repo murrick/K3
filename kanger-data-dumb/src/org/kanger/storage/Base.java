@@ -63,6 +63,14 @@ public class Base implements IBase, Iterable<IStep> {
     private long cacheMisses = 0L;
     private long cacheEvictions = 0L;
 
+    private volatile long readRequestCount = 0L;
+    private volatile long cacheHitCount = 0L;
+    private volatile long cacheMissCount = 0L;
+    private volatile long storageReadCount = 0L;
+    private volatile long writeCount = 0L;
+    private volatile long deleteCount = 0L;
+    private volatile long flushCount = 0L;
+
     private long lastId = -1;
 
     public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
@@ -152,6 +160,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void add(IStep one) throws Exception {
+        ++writeCount;
         synchronized (locker) {
             Index.IndexOne current = index.getOne(one.getId());
             if (current != null) {
@@ -174,6 +183,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     public void flush() throws Exception {
+        ++flushCount;
         synchronized (locker) {
             index.flush();
             data.flush();
@@ -193,9 +203,11 @@ public class Base implements IBase, Iterable<IStep> {
             }
         }
 
+        ++cacheMissCount;
         synchronized (locker) {
             Index.IndexOne x = index.getOne(id);
             if (x != null) {
+                ++storageReadCount;
                 IStep one = data.get(x.getLong());
                 cacheRecord(id, one);
                 return one;

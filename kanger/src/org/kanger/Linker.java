@@ -348,6 +348,7 @@ public class Linker {
             rotator(leftList, causes, logging);
             rotator(ruleList, causes, logging);
 
+
         } while (mind.getRules().isAction()
                 || mind.getTValues().isAction()
                 || mind.getFValues().isAction()
