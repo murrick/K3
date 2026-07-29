@@ -22,6 +22,13 @@ public final class LinkerStatistics {
     private long databaseEvaluations;
     private long functionEvaluations;
 
+    private long firstPassDurableUnifications;
+    private long firstPassQueryUnifications;
+    private long firstPassGeneratedUnifications;
+    private long laterPassDurableUnifications;
+    private long laterPassQueryUnifications;
+    private long laterPassGeneratedUnifications;
+
     public LinkerStatistics() {
     }
 
@@ -36,6 +43,12 @@ public final class LinkerStatistics {
         newTValues = source.newTValues;
         databaseEvaluations = source.databaseEvaluations;
         functionEvaluations = source.functionEvaluations;
+        firstPassDurableUnifications = source.firstPassDurableUnifications;
+        firstPassQueryUnifications = source.firstPassQueryUnifications;
+        firstPassGeneratedUnifications = source.firstPassGeneratedUnifications;
+        laterPassDurableUnifications = source.laterPassDurableUnifications;
+        laterPassQueryUnifications = source.laterPassQueryUnifications;
+        laterPassGeneratedUnifications = source.laterPassGeneratedUnifications;
     }
 
     void reset() {
@@ -49,6 +62,12 @@ public final class LinkerStatistics {
         newTValues = 0L;
         databaseEvaluations = 0L;
         functionEvaluations = 0L;
+        firstPassDurableUnifications = 0L;
+        firstPassQueryUnifications = 0L;
+        firstPassGeneratedUnifications = 0L;
+        laterPassDurableUnifications = 0L;
+        laterPassQueryUnifications = 0L;
+        laterPassGeneratedUnifications = 0L;
     }
 
     LinkerStatistics snapshot() {
@@ -61,7 +80,30 @@ public final class LinkerStatistics {
     void incrementTerminalRotations() { ++terminalRotations; }
     void incrementCandidateRuleVisits() { ++candidateRuleVisits; }
     void incrementDomainPairs() { ++domainPairs; }
-    void incrementUnificationAttempts() { ++unificationAttempts; }
+
+    void incrementUnificationAttempts(boolean firstPass,
+                                       boolean query,
+                                       boolean generated) {
+        ++unificationAttempts;
+        if (firstPass) {
+            if (query) {
+                ++firstPassQueryUnifications;
+            } else if (generated) {
+                ++firstPassGeneratedUnifications;
+            } else {
+                ++firstPassDurableUnifications;
+            }
+        } else {
+            if (query) {
+                ++laterPassQueryUnifications;
+            } else if (generated) {
+                ++laterPassGeneratedUnifications;
+            } else {
+                ++laterPassDurableUnifications;
+            }
+        }
+    }
+
     void incrementNewTValues() { ++newTValues; }
     void incrementDatabaseEvaluations() { ++databaseEvaluations; }
     void incrementFunctionEvaluations() { ++functionEvaluations; }
@@ -76,6 +118,12 @@ public final class LinkerStatistics {
     public long getNewTValues() { return newTValues; }
     public long getDatabaseEvaluations() { return databaseEvaluations; }
     public long getFunctionEvaluations() { return functionEvaluations; }
+    public long getFirstPassDurableUnifications() { return firstPassDurableUnifications; }
+    public long getFirstPassQueryUnifications() { return firstPassQueryUnifications; }
+    public long getFirstPassGeneratedUnifications() { return firstPassGeneratedUnifications; }
+    public long getLaterPassDurableUnifications() { return laterPassDurableUnifications; }
+    public long getLaterPassQueryUnifications() { return laterPassQueryUnifications; }
+    public long getLaterPassGeneratedUnifications() { return laterPassGeneratedUnifications; }
 
     public void add(LinkerStatistics other) {
         if (other == null) {
@@ -91,5 +139,11 @@ public final class LinkerStatistics {
         newTValues += other.newTValues;
         databaseEvaluations += other.databaseEvaluations;
         functionEvaluations += other.functionEvaluations;
+        firstPassDurableUnifications += other.firstPassDurableUnifications;
+        firstPassQueryUnifications += other.firstPassQueryUnifications;
+        firstPassGeneratedUnifications += other.firstPassGeneratedUnifications;
+        laterPassDurableUnifications += other.laterPassDurableUnifications;
+        laterPassQueryUnifications += other.laterPassQueryUnifications;
+        laterPassGeneratedUnifications += other.laterPassGeneratedUnifications;
     }
 }

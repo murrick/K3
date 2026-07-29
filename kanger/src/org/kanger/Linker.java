@@ -52,6 +52,7 @@ public class Linker {
     private int dumpedPasses = 0;
     private int skippedPasses = 0;
     private final LinkerStatistics statistics = new LinkerStatistics();
+    private int currentPass = 0;
 
     /**
      * Query-local tuple index used only while Linker rotates substitutions.
@@ -261,6 +262,7 @@ public class Linker {
         dumpedPasses = 0;
         skippedPasses = 0;
         statistics.reset();
+        currentPass = 0;
 
         final Map<IRule, Set<Cause>> causes = new HashMap<>();
 
@@ -270,6 +272,7 @@ public class Linker {
         do {
 
             ++passCounter;
+            currentPass = passCounter;
             statistics.incrementPasses();
             if (logging) {
                 log.add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", passCounter));
@@ -516,7 +519,8 @@ public class Linker {
                         for (Domain master : treeMaster) {
                             statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
-                                statistics.incrementUnificationAttempts();
+                                statistics.incrementUnificationAttempts(
+                                        currentPass == 1, rule.isQuery(), rule.isGenerated());
                                 TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
 

@@ -30,7 +30,10 @@ public final class KangerLinkerProfileRunner {
 
             System.out.println("size,operation,millis,rows,passes,rule_visits,branch_visits,"
                     + "terminal_rotations,candidate_rule_visits,domain_pairs,unification_attempts,"
-                    + "new_tvalues,database_evaluations,function_evaluations");
+                    + "new_tvalues,database_evaluations,function_evaluations,"
+                    + "first_pass_durable_unifications,first_pass_query_unifications,"
+                    + "first_pass_generated_unifications,later_pass_durable_unifications,"
+                    + "later_pass_query_unifications,later_pass_generated_unifications");
             for (int size : sizes) {
                 runCase(size);
             }
@@ -91,7 +94,7 @@ public final class KangerLinkerProfileRunner {
                               LinkerStatistics statistics) {
         double millis = (System.nanoTime() - started) / 1_000_000.0;
         System.out.printf(
-                "%d,%s,%.3f,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d%n",
+                "%d,%s,%.3f,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d%n",
                 size,
                 operation,
                 millis,
@@ -105,7 +108,13 @@ public final class KangerLinkerProfileRunner {
                 statistics.getUnificationAttempts(),
                 statistics.getNewTValues(),
                 statistics.getDatabaseEvaluations(),
-                statistics.getFunctionEvaluations());
+                statistics.getFunctionEvaluations(),
+                statistics.getFirstPassDurableUnifications(),
+                statistics.getFirstPassQueryUnifications(),
+                statistics.getFirstPassGeneratedUnifications(),
+                statistics.getLaterPassDurableUnifications(),
+                statistics.getLaterPassQueryUnifications(),
+                statistics.getLaterPassGeneratedUnifications());
     }
 
     private static int[] parseSizes(String[] args) {
