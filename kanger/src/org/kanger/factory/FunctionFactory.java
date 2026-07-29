@@ -27,6 +27,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.enums.FunctionBinding;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IBase;
@@ -87,15 +88,18 @@ public class FunctionFactory implements IFactory<Function> {
     }
 
     public void update() throws Exception {
-        if (cache.update()) {
-        }
+        cache.update();
     }
 
-
     public synchronized Function add(ITerm name, ArgumentsList arguments) throws Exception {
+        return add(name, arguments, FunctionBinding.LEGACY_AUTO);
+    }
+
+    public synchronized Function add(ITerm name, ArgumentsList arguments, FunctionBinding binding) throws Exception {
         Function f = new Function(mind);
         f.setName(name);
         f.setRange(arguments.size());
+        f.setBinding(binding);
         f.getArguments().clear();
         f.getArguments().addAll(arguments);
         f.getArguments().add(new Argument());
@@ -173,5 +177,4 @@ public class FunctionFactory implements IFactory<Function> {
     public boolean isEmpty() {
         return cache == null || cache.isEmpty();
     }
-
 }
