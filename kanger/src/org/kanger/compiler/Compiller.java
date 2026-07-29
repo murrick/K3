@@ -26,6 +26,7 @@
 package org.kanger.compiler;
 
 import org.kanger.Mind;
+import org.kanger.enums.FunctionBinding;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
@@ -51,9 +52,19 @@ public class Compiller {
         this.mind = mind;
     }
 
+    private String functionSignature(Leaf root) {
+        return root.getValue() + "(" + root.getRange() + ")";
+    }
+
     private boolean isFunction(Leaf root) throws Exception {
-        String name = root.getValue() + "(" + root.getRange() + ")";
+        String name = functionSignature(root);
         return mind.getCalculator().getFunctions().getSysOps().containsKey(name) || mind.getLibrary().find(name) != null;
+    }
+
+    private FunctionBinding getFunctionBinding(Leaf root) {
+        return mind.getCalculator().getFunctions().getSysOps().containsKey(functionSignature(root))
+                ? FunctionBinding.INFRASTRUCTURE
+                : FunctionBinding.UDF_DYNAMIC;
     }
 
     private boolean isPredicate(Leaf root) {
@@ -208,7 +219,10 @@ public class Compiller {
             ArgumentsList arguments = new ArgumentsList();
             parseArgs(arguments, root.getLeft(), level + 1, replacements, externals);
             parseArgs(arguments, root.getRight(), level + 1, replacements, externals);
-            Function f = mind.getFunctions().add(mind.getTerms().add(root.getValue()), arguments);
+            Function f = mind.getFunctions().add(
+                    mind.getTerms().add(root.getValue()),
+                    arguments,
+                    getFunctionBinding(root));
             arg.add(new Argument(f));
         } else if ("_set".equals(root.getValue())) {
             ArgumentsList arguments = new ArgumentsList();
