@@ -1,0 +1,55 @@
+name: KANGER III baseline
+
+on:
+  push:
+    branches:
+      - "stabilization/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-regression:
+    name: Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+          - "8"
+          - "21"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build and run the full KangerTest corpus
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn -B -V clean verify 2>&1 | tee "kanger-test-java-${{ matrix.java }}.log"
+
+      - name: Verify expected corpus size and zero failures
+        shell: bash
+        run: |
+          grep -Eq 'Success:[[:space:]]+101' "kanger-test-java-${{ matrix.java }}.log"
+          grep -Eq 'Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
+
+      - name: Upload baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-baseline-java-${{ matrix.java }}
+          path: |
+            kanger-test-java-${{ matrix.java }}.log
+            target/*.jar
+          if-no-files-found: warn
