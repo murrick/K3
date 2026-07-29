@@ -33,7 +33,7 @@ jobs:
           if grep -q 'resetDiagnosticCounters' kanger-data-dumb/src/org/kanger/storage/Base.java; then
             echo 'Diagnostics already applied'
           else
-            python3 scripts/apply_diagnostics.py
+            python3 scripts/run_apply_diagnostics.py
           fi
           mvn -B clean verify
           java \
