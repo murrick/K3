@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   apply-p4-metrics:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/perf/3.3.6-linker-agenda'
+    if: github.event_name == 'pull_request' && github.head_ref == 'perf/3.3.6-linker-agenda'
     runs-on: ubuntu-latest
     steps:
       - name: Check out P4 branch
