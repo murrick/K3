@@ -3,12 +3,12 @@
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -53,11 +53,7 @@ public class Base implements IBase, Iterable<IStep> {
     private String name = "";
     private int baseCode = -1;
 
-    /**
-     * Access-ordered map gives O(1) cache hits and O(1) eldest eviction.
-     * Semantic data remains owned by storage; this map only retains a bounded
-     * set of hydrated IStep records.
-     */
+    /** Bounded access-ordered cache of hydrated persistent records. */
     private final LinkedHashMap<Long, IStep> cache =
             new LinkedHashMap<Long, IStep>(16, 0.75f, true);
     private final long maxCacheSize;
@@ -169,7 +165,6 @@ public class Base implements IBase, Iterable<IStep> {
                 index.set(one.getId(), offset);
             }
         }
-        // Never expose a pre-update hydrated record after the storage write.
         invalidateCached(one.getId());
     }
 
@@ -225,7 +220,6 @@ public class Base implements IBase, Iterable<IStep> {
                 data.clear();
                 index.clear();
                 flush();
-
                 clearCache();
                 lastId = 0;
             }
@@ -237,9 +231,9 @@ public class Base implements IBase, Iterable<IStep> {
         if (!index.isEmpty()) {
             for (Index.IndexOne one : index) {
                 if (!one.isDeleted()) {
-                    IStep o = get(one.getId());
-                    o.getData((Mind) mind);
-                    base.add(o);
+                    IStep stored = get(one.getId());
+                    stored.getData((Mind) mind);
+                    base.add(stored);
                 }
             }
         }
@@ -253,10 +247,7 @@ public class Base implements IBase, Iterable<IStep> {
     @Override
     public IStep getRoot() {
         try {
-            if (isEmpty()) {
-                return null;
-            }
-            return get(index.lastKey());
+            return isEmpty() ? null : get(index.lastKey());
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -267,10 +258,7 @@ public class Base implements IBase, Iterable<IStep> {
     @Override
     public IStep getTop() {
         try {
-            if (isEmpty()) {
-                return null;
-            }
-            return get(index.firstKey());
+            return isEmpty() ? null : get(index.firstKey());
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -298,8 +286,7 @@ public class Base implements IBase, Iterable<IStep> {
             Index.IndexOne current = index.getOne(id);
             if (current != null) {
                 index.remove(id);
-                long currentOffset = current.getLong();
-                data.remove(currentOffset);
+                data.remove(current.getLong());
             }
         }
     }
@@ -307,46 +294,46 @@ public class Base implements IBase, Iterable<IStep> {
     @Override
     public long getUsedCacheSize() {
         synchronized (cache) {
-            return cacheSize;
+            return cacheSize + data.getUsedCacheSize();
         }
     }
 
     @Override
     public long getMaxCacheSize() {
-        return maxCacheSize;
+        return maxCacheSize + data.getMaxCacheSize();
     }
 
     @Override
     public long getCacheHits() {
         synchronized (cache) {
-            return cacheHits;
+            return cacheHits + data.getCacheHits();
         }
     }
 
     @Override
     public long getCacheMisses() {
         synchronized (cache) {
-            return cacheMisses;
+            return cacheMisses + data.getCacheMisses();
         }
     }
 
     @Override
     public long getCacheEvictions() {
         synchronized (cache) {
-            return cacheEvictions;
+            return cacheEvictions + data.getCacheEvictions();
         }
     }
 
     @Override
     public long getCachedEntryCount() {
         synchronized (cache) {
-            return cache.size();
+            return cache.size() + data.getCachedEntryCount();
         }
     }
 
     @Override
     public boolean isCacheEnabled() {
-        return cacheEnabled;
+        return cacheEnabled || data.getMaxCacheSize() > 0L;
     }
 
     @Override
@@ -374,8 +361,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     public class StorageIterator implements Iterator<IStep> {
-
-        Iterator iterator;
+        private final Iterator iterator;
 
         public StorageIterator(boolean backward) {
             iterator = index.iterator(backward);
@@ -394,9 +380,7 @@ public class Base implements IBase, Iterable<IStep> {
         public IStep next() {
             Index.IndexOne one = (Index.IndexOne) iterator.next();
             try {
-                // Sequential scans deliberately bypass the LRU so a full walk
-                // cannot evict the caller's hot random-access working set.
-                return data.get(one.getLong());
+                return data.getUncached(one.getLong());
             } catch (Exception e) {
                 System.err.println(new Date());
                 e.printStackTrace(System.err);
