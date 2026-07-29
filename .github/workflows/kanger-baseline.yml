@@ -22,43 +22,18 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           linker_path = Path('kanger/src/org/kanger/Linker.java')
           linker = linker_path.read_text(encoding='utf-8')
-          old = '            rotator(leftList, causes, logging);\n            rotator(ruleList, causes, logging);\n\n\n        } while'
-          new = '            rotator(leftList, causes, logging);\n            rotator(ruleList, causes, logging);\n\n        } while'
-          if old not in linker:
-              raise RuntimeError('Linker whitespace anchor not found')
-          linker_path.write_text(linker.replace(old, new, 1), encoding='utf-8')
+          linker = linker.replace(
+              '            rotator(leftList, causes, logging);\n            rotator(ruleList, causes, logging);\n\n\n        } while',
+              '            rotator(leftList, causes, logging);\n            rotator(ruleList, causes, logging);\n\n        } while',
+              1)
+          linker_path.write_text(linker, encoding='utf-8')
 
           mind_path = Path('kanger/src/org/kanger/Mind.java')
           mind = mind_path.read_text(encoding='utf-8')
-          current = '''    public void unlinkCVar(ITerm term) {
-              if (term == null) {
-                  return;
-              }
-              Set<ITerm> linked = new HashSet<>();
-              linked.add(term);
-              ITerm child = cvarChilds.get(term);
-              if (child != null) linked.add(child);
-              ITerm parent = cvarParents.get(term);
-              if (parent != null) linked.add(parent);
-              for (Map.Entry<ITerm, ITerm> entry : cvarChilds.entrySet()) {
-                  if (entry.getKey().equals(term) || entry.getValue().equals(term)) {
-                      linked.add(entry.getKey());
-                      linked.add(entry.getValue());
-                  }
-              }
-              for (Map.Entry<ITerm, ITerm> entry : cvarParents.entrySet()) {
-                  if (entry.getKey().equals(term) || entry.getValue().equals(term)) {
-                      linked.add(entry.getKey());
-                      linked.add(entry.getValue());
-                  }
-              }
-              cvarChilds.entrySet().removeIf(e -> linked.contains(e.getKey()) || linked.contains(e.getValue()));
-              cvarParents.entrySet().removeIf(e -> linked.contains(e.getKey()) || linked.contains(e.getValue()));
-          }
-          '''
           baseline = '''    public void unlinkCVar(ITerm term) {
               if (term == null) {
                   return;
@@ -91,10 +66,13 @@ jobs:
               cvarChilds.entrySet().removeIf(entry -> linked.contains(entry.getKey()) || linked.contains(entry.getValue()));
               cvarParents.entrySet().removeIf(entry -> linked.contains(entry.getKey()) || linked.contains(entry.getValue()));
           }
-          '''
-          if current not in mind:
-              raise RuntimeError('Mind unlinkCVar formatting anchor not found')
-          mind_path.write_text(mind.replace(current, baseline, 1), encoding='utf-8')
+
+'''
+          pattern = r'    public void unlinkCVar\(ITerm term\) \{.*?\n    \}\n\n(?=    private void clearCVarLinks\(\))'
+          mind, count = re.subn(pattern, baseline, mind, count=1, flags=re.S)
+          if count != 1:
+              raise RuntimeError('Mind unlinkCVar structural anchor not found')
+          mind_path.write_text(mind, encoding='utf-8')
           PY
 
           git config user.name "github-actions[bot]"
