@@ -36,6 +36,7 @@ import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -114,6 +115,20 @@ public class Analyzer {
         return result;
     }
 
+    private Collection<IRule> candidatesFor(Rule p, boolean selectById) throws Exception {
+        if (!selectById) {
+            return mind.getRules().findByDomain(
+                    p.getDomain().getPredicateId(),
+                    !p.getDomain().isAntc());
+        }
+
+        List<IRule> result = new ArrayList<>();
+        for (IRule rule : mind.getRules()) {
+            result.add(rule);
+        }
+        return result;
+    }
+
     private boolean checkRight(Rule p, Set<Rule> orfans, Set<Long> list, boolean logging) throws Exception {
         boolean result = false;
         if (p.getDomain().isCalculated(mind)) {
@@ -139,12 +154,16 @@ public class Analyzer {
             }
             result = true;
         } else {
-            for (IRule q : mind.getRules()) {
+            boolean selectById = "rule(1)".equals(
+                    p.getDomain().getPredicate(mind).toString(mind))
+                    && p.getDomain().get(0).getValue(mind).getType() == DataType.NUMERIC;
+
+            for (IRule q : candidatesFor(p, selectById)) {
                 if (q.isDeleted(mind) || q.getId() == p.getId()) {
                     continue;
                 }
 
-                if ("rule(1)".equals(p.getDomain().getPredicate(mind).toString(mind)) && p.getDomain().get(0).getValue(mind).getType() == DataType.NUMERIC) {
+                if (selectById) {
                     if (q.getId() == ((Double) p.getDomain().get(0).getValue(mind).getValue()).longValue()) {
                         mind.getSolutions().add(q);
                         if (logging) {
@@ -162,17 +181,17 @@ public class Analyzer {
                     }
                     if (p.getDomain().equalsBase(((Rule) q).getDomain())
                             && p.getDomain().isAntc() != ((Rule) q).getDomain().isAntc()) {
-                        if (p.getDomain().isQuery(mind) && p.getArguments().getCVariables(mind).isEmpty() /*.isAbstractive()*/) {
+                        if (p.getDomain().isQuery(mind) && p.getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(q);
                             mind.getValues().add(p.getSolves());
-                        } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty() /*!q.isAbstractive()*/) {
+                        } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
                         } else {
                             List<TValue> vList = new ArrayList<>();
-                            for(TVariable t : mind.getTVars()) {
-                                if(t.isQuery(mind)) {
-                                    if(!t.isEmpty()) {
+                            for (TVariable t : mind.getTVars()) {
+                                if (t.isQuery(mind)) {
+                                    if (!t.isEmpty()) {
                                         vList.add(t.getCurrent());
                                     } else {
                                         vList.clear();
@@ -180,7 +199,7 @@ public class Analyzer {
                                     }
                                 }
                             }
-                            if(!vList.isEmpty()) {
+                            if (!vList.isEmpty()) {
                                 mind.getValues().add(vList);
                             }
                         }
