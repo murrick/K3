@@ -6,6 +6,7 @@ on:
       - "perf/3.3.3-indexed-linker"
     paths:
       - ".github/workflows/apply-p1b-rule-index.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
