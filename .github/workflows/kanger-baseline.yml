@@ -51,6 +51,9 @@ jobs:
           if ! grep -q 'Unlink only edges incident to the deleted term' kanger/src/org/kanger/Mind.java; then
             python3 scripts/apply_cvar_unlink_fix.py
           fi
+          if ! grep -q '\[KANGER-CVAR\]' kanger/src/org/kanger/factory/DictionaryFactory.java; then
+            python3 scripts/apply_cvar_ownership_diagnostics.py
+          fi
           mvn -B clean verify
 
       - name: Commit product changes
@@ -69,8 +72,9 @@ jobs:
             kanger-console/src/org/kanger/KangerDiagnosticRunner.java \
             kanger/src/org/kanger/Linker.java \
             kanger/src/org/kanger/factory/TValueFactory.java \
+            kanger/src/org/kanger/factory/DictionaryFactory.java \
             kanger/src/org/kanger/Mind.java
-          git commit -m "D2: preserve current C-variable child edge"
+          git commit -m "D2: trace C-variable link ownership"
           git push origin HEAD:debug/3.3.4-diagnostics
 
       - name: Run database and persistence diagnostics
