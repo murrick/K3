@@ -162,8 +162,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
             ITerm childBeforeFactory = parentTerm.getChild(mind);
             ITerm childBeforeOwner = parentMind == null ? null : parentTerm.getChild(parentMind);
 
-            childTerm.setParent(parent);
-            parentTerm.setChild(t);
+            mind.linkCVar(parent, t);
 
             if (Boolean.parseBoolean(System.getProperty("kanger.diagnostics", "false"))
                     && (diagnosticCVarCount <= 20L || diagnosticCVarCount % 100L == 0L)) {
