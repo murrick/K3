@@ -109,12 +109,10 @@ final class RuleCandidateIndex {
     }
 
     private static final class BatchSummary {
-        private final LinkedHashSet<Long> remaining;
-        private final boolean batched;
+        private final LinkedHashSet<Long> batchedIds;
 
-        private BatchSummary(LinkedHashSet<Long> remaining, boolean batched) {
-            this.remaining = remaining;
-            this.batched = batched;
+        private BatchSummary(LinkedHashSet<Long> batchedIds) {
+            this.batchedIds = batchedIds;
         }
     }
 
@@ -342,21 +340,18 @@ final class RuleCandidateIndex {
         }
         BatchSummary summary = byKey.get(key);
         if (summary == null) {
-            LinkedHashSet<Long> remaining = new LinkedHashSet<>();
-            boolean batched = false;
+            LinkedHashSet<Long> batchedIds = new LinkedHashSet<>();
             for (long id : selected) {
                 Rule candidate = (Rule) activeMind.getRules().get(id);
                 if (candidate != null
                         && batchGeneratedNonSubstitutablePair(
                                 source, candidate, candidateAntc, activeMind)) {
-                    batched = true;
-                } else {
-                    remaining.add(id);
+                    batchedIds.add(id);
                 }
             }
-            summary = new BatchSummary(remaining, batched);
+            summary = new BatchSummary(batchedIds);
             byKey.put(key, summary);
-        } else if (summary.batched) {
+        } else if (!summary.batchedIds.isEmpty()) {
             source.setUsed(activeMind);
             sourceRule.setUsed(activeMind);
         }
@@ -380,8 +375,8 @@ final class RuleCandidateIndex {
             if (selected.isEmpty()) return;
         }
         if (!source.isSubstitutable()) {
-            selected = new LinkedHashSet<>(
-                    batchSummary(source, candidateAntc, mind, selected).remaining);
+            BatchSummary summary = batchSummary(source, candidateAntc, mind, selected);
+            selected.removeAll(summary.batchedIds);
         }
         result.addAll(selected);
     }
