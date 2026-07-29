@@ -162,6 +162,12 @@ public class Calculator {
         List<ITerm> list = new ArrayList<>();
         Term top = null;
         if (source.getType() == DataType.INTERVAL) {
+            if (step != null
+                    && step.getValue() instanceof Number
+                    && ((Number) step.getValue()).doubleValue() == 0.0d) {
+                return list;
+            }
+
             Term min = (Term) ((Collection) source.getValue()).toArray()[0];
             Term max = (Term) ((Collection) source.getValue()).toArray()[1];
             Term cur = min;
@@ -183,7 +189,7 @@ public class Calculator {
                             : getFunctions()._dec(cur));
                 }
                 if (next.getId() == cur.getId()) {
-                    list.add(max);
+                    list.clear();
                     break;
                 } else if (rc < 0 && next.compareTo(max) > 0) {
                     break;
@@ -270,4 +276,3 @@ public class Calculator {
 
 
 }
-
