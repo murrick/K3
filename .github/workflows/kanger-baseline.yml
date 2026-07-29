@@ -27,7 +27,7 @@ jobs:
           java-version: "8"
           cache: maven
 
-      - name: Apply and verify diagnostics
+      - name: Apply diagnostic product changes
         shell: bash
         run: |
           if grep -q 'resetDiagnosticCounters' kanger-data-dumb/src/org/kanger/storage/Base.java; then
@@ -35,12 +35,10 @@ jobs:
           else
             python3 scripts/run_apply_diagnostics.py
           fi
+          if ! grep -q 'A write may replace the serialized state' kanger-data-dumb/src/org/kanger/storage/Base.java; then
+            python3 scripts/apply_diagnostic_cache_invalidation.py
+          fi
           mvn -B clean verify
-          java \
-            -Dkanger.diagnostics=true \
-            -Dkanger.diagnostics.timeout.ms=5000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
-            org.kanger.KangerDiagnosticRunner
 
       - name: Commit product changes
         shell: bash
@@ -55,5 +53,14 @@ jobs:
             kanger-data-dumb/src/org/kanger/storage/Base.java \
             kanger-console/src/org/kanger/test/KangerTest.java \
             kanger-console/src/org/kanger/Console.java
-          git commit -m "D1-D3: instrument storage and fix test context binding"
+          git commit -m "D1-D3: instrument storage and repair test/cache lifecycle"
           git push origin HEAD:debug/3.3.4-diagnostics
+
+      - name: Run database and persistence diagnostics
+        shell: bash
+        run: |
+          java \
+            -Dkanger.diagnostics=true \
+            -Dkanger.diagnostics.timeout.ms=5000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDiagnosticRunner
