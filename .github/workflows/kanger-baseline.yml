@@ -8,41 +8,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-p1f:
-    name: apply-p1f
-    if: github.event_name == 'pull_request' && github.head_ref == 'perf/3.3.3-indexed-linker'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out optimization branch
-        uses: actions/checkout@v4
-        with:
-          ref: perf/3.3.3-indexed-linker
-
-      - name: Apply and compile semantic-safe P1f patch
-        run: |
-          python3 scripts/apply_p1f_semantic_fix.py
-          mvn -B -DskipTests compile
-
-      - name: Commit patched sources
-        shell: bash
-        run: |
-          if git diff --quiet -- \
-            kanger/src/org/kanger/units/Rule.java \
-            kanger/src/org/kanger/factory/RuleFactory.java; then
-            echo "P1f patch already applied"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            kanger/src/org/kanger/units/Rule.java \
-            kanger/src/org/kanger/factory/RuleFactory.java
-          git commit -m "P1f: trust active rule-term index in pack"
-          git push origin HEAD:perf/3.3.3-indexed-linker
-
   build-and-regression:
     name: ${{ matrix.id }}
     runs-on: ${{ matrix.os }}
