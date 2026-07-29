@@ -25,6 +25,7 @@
 
 package org.kanger.test;
 
+import org.kanger.Diagnostics;
 import org.kanger.Mind;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.DictionaryFactory;
@@ -65,7 +66,6 @@ public class KangerTest {
 
     public static boolean test(IMind mind, String prefix) throws Exception {
         System.out.println("Init test system...");
-        KangerTest cls = new KangerTest(mind);
         int successCount = 0;
         long startTime = System.currentTimeMillis();
         List<String> fails = new ArrayList<>();
@@ -78,7 +78,11 @@ public class KangerTest {
                 mind = mind = mind.clearWorkspace();
             }
 
-            mind = mind = mind.clearWorkspace();
+            mind = mind.clearWorkspace();
+
+            // Storage lifecycle operations may return a different root Mind.
+            // Bind the test instance only after the final context is selected.
+            KangerTest cls = new KangerTest(mind);
 
             Method setUp = cls.getClass().getDeclaredMethod("setUp");
             setUp.setAccessible(true);
@@ -97,9 +101,18 @@ public class KangerTest {
                 try {
                     System.out.println("Testing: " + name);
                     long t = System.currentTimeMillis();
+                    Diagnostics.resetStorageCounters(cls.mind);
+                    if (Diagnostics.isEnabled(cls.mind)) {
+                        System.out.println(Diagnostics.snapshot(cls.mind, "before " + name));
+                    }
                     Method method = cls.getClass().getDeclaredMethod(name);
                     method.setAccessible(true);
-                    method.invoke(cls);
+                    try (Diagnostics.Watchdog watchdog = Diagnostics.watch(name, cls.mind)) {
+                        method.invoke(cls);
+                    }
+                    if (Diagnostics.isEnabled(cls.mind)) {
+                        System.out.println(Diagnostics.snapshot(cls.mind, "after " + name));
+                    }
                     System.out.println("Timing: " + ((System.currentTimeMillis() - t) / 1000.0) + " sec");
                     System.out.println("====================================================");
                     list.put(name, ((System.currentTimeMillis() - t) / 1000.0));

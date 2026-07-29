@@ -55,6 +55,14 @@ public class Base implements IBase, Iterable<IStep> {
     private final Queue<Long> timing = new LinkedList<>();
     private volatile long cacheSize = 0L;
 
+    private volatile long readRequestCount = 0L;
+    private volatile long cacheHitCount = 0L;
+    private volatile long cacheMissCount = 0L;
+    private volatile long storageReadCount = 0L;
+    private volatile long writeCount = 0L;
+    private volatile long deleteCount = 0L;
+    private volatile long flushCount = 0L;
+
     private long lastId = -1;
 
     public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
@@ -97,6 +105,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void add(IStep one) throws Exception {
+        ++writeCount;
         synchronized (locker) {
             Index.IndexOne current = index.getOne(one.getId());
             if (current != null) {
@@ -110,6 +119,22 @@ public class Base implements IBase, Iterable<IStep> {
                 index.set(one.getId(), offset);
             }
         }
+
+        // A write may replace the serialized state of an existing ID. Keeping
+        // the old hydrated IStep makes subsequent reads observe stale Rule,
+        // TVariable and lifecycle flags.
+        if (CACHE_ENABLE) {
+            synchronized (cache) {
+                IStep stale = cache.remove(one.getId());
+                timing.remove(one.getId());
+                if (stale != null) {
+                    cacheSize -= stale.getSize();
+                    if (cacheSize < 0L) {
+                        cacheSize = 0L;
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -119,6 +144,7 @@ public class Base implements IBase, Iterable<IStep> {
 
 
     public void flush() throws Exception {
+        ++flushCount;
         synchronized (locker) {
             index.flush();
             data.flush();
@@ -127,9 +153,11 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public IStep get(long id) throws Exception {
+        ++readRequestCount;
         if (CACHE_ENABLE) {
             synchronized (cache) {
                 if (cache.containsKey(id)) {
+                    ++cacheHitCount;
                     timing.remove(id);
                     timing.add(id);
                     return cache.get(id);
@@ -137,9 +165,11 @@ public class Base implements IBase, Iterable<IStep> {
             }
         }
 
+        ++cacheMissCount;
         synchronized (locker) {
             Index.IndexOne x = index.getOne(id);
             if (x != null) {
+                ++storageReadCount;
                 IStep one = data.get(x.getLong());
                 if (one != null && CACHE_ENABLE) {
                     synchronized (cache) {
@@ -299,6 +329,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void delete(long id) throws Exception {
+        ++deleteCount;
         if (CACHE_ENABLE) {
             synchronized (cache) {
                 if (cache.containsKey(id)) {
@@ -365,6 +396,24 @@ public class Base implements IBase, Iterable<IStep> {
 //        }
 //    }
 
+
+    public long getReadRequestCount() { return readRequestCount; }
+    public long getCacheHitCount() { return cacheHitCount; }
+    public long getCacheMissCount() { return cacheMissCount; }
+    public long getStorageReadCount() { return storageReadCount; }
+    public long getWriteCount() { return writeCount; }
+    public long getDeleteCount() { return deleteCount; }
+    public long getFlushCount() { return flushCount; }
+
+    public void resetDiagnosticCounters() {
+        readRequestCount = 0L;
+        cacheHitCount = 0L;
+        cacheMissCount = 0L;
+        storageReadCount = 0L;
+        writeCount = 0L;
+        deleteCount = 0L;
+        flushCount = 0L;
+    }
 
     @Override
     public Iterator<IStep> iterator() {
