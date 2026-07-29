@@ -59,6 +59,20 @@ jobs:
           grep -Eq 'C3 Success:[[:space:]]+6' "kanger-test-${{ matrix.id }}.log"
           grep -Eq 'C3 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
 
+      - name: Capture P0 performance baseline
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.perf.sizes=100,500 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerPerformanceRunner \
+            2>&1 | tee kanger-perf-ubuntu-java-21.log
+          grep -E '^(mode,|memory,|storage,)' \
+            kanger-perf-ubuntu-java-21.log \
+            > kanger-perf-ubuntu-java-21.csv
+
       - name: Upload baseline evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,5 +80,7 @@ jobs:
           name: kanger-baseline-${{ matrix.id }}
           path: |
             kanger-test-${{ matrix.id }}.log
+            kanger-perf-${{ matrix.id }}.log
+            kanger-perf-${{ matrix.id }}.csv
             target/*.jar
           if-no-files-found: warn
