@@ -8,6 +8,7 @@ package org.kanger;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
+import org.kanger.test.KangerC1PromotionTest;
 import org.kanger.test.KangerStabilizationTest;
 import org.kanger.test.KangerTest;
 import org.kanger.udf.UDF;
@@ -45,7 +46,11 @@ public final class KangerTestRunner {
             IMind stabilizationMind = new Mind(stabilizationUser);
             boolean stabilizationSuccess = KangerStabilizationTest.test(stabilizationMind, prefix);
 
-            exitCode = legacySuccess && stabilizationSuccess ? 0 : 1;
+            IUser c1User = createUser("autotest-c1-promotion");
+            IMind c1Mind = new Mind(c1User);
+            boolean c1Success = KangerC1PromotionTest.test(c1Mind, prefix);
+
+            exitCode = legacySuccess && stabilizationSuccess && c1Success ? 0 : 1;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
         }
