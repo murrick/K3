@@ -24,6 +24,8 @@ jobs:
       - name: Apply and compile P1b patch
         run: |
           python3 scripts/apply_p1b_rule_index.py
+          sed -i '/import java.util.List;/a import java.util.LinkedHashSet;' \
+            kanger/src/org/kanger/factory/RuleFactory.java
           mvn -B -DskipTests compile
 
       - name: Commit patched sources
