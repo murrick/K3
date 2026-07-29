@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "stabilization/**"
+      - "perf/**"
   pull_request:
   workflow_dispatch:
 
@@ -73,13 +74,14 @@ jobs:
             kanger-perf-ubuntu-java-21.log \
             > kanger-perf-ubuntu-java-21.csv
 
-      - name: Capture persistent storage reopen baseline
+      - name: Capture bounded persistent storage reopen baseline
         if: matrix.id == 'ubuntu-java-21'
         shell: bash
         run: |
           set -o pipefail
           java \
             -Dkanger.perf.storage=true \
+            -Dkanger.perf.cache.size=4096 \
             -Dkanger.perf.sizes=100 \
             -cp "target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerPerformanceRunner \
@@ -87,6 +89,13 @@ jobs:
           grep -E '^(mode,|memory,|storage,)' \
             kanger-perf-storage-ubuntu-java-21.log \
             > kanger-perf-storage-ubuntu-java-21.csv
+          awk -F, '
+            NR > 1 {
+              if ($15 > $16) exit 1;
+              evictions += $13;
+            }
+            END { if (evictions <= 0) exit 1; }
+          ' kanger-perf-storage-ubuntu-java-21.csv
 
       - name: Capture P1 execution profile
         if: matrix.id == 'ubuntu-java-21'
