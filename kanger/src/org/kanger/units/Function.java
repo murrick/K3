@@ -29,6 +29,7 @@ import org.kanger.Mind;
 import org.kanger.compiler.Parser;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.Enums;
+import org.kanger.enums.FunctionBinding;
 import org.kanger.enums.UnitType;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
@@ -39,7 +40,11 @@ import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Dmitry G. Quznetsov on 26.05.15.
@@ -55,6 +60,7 @@ public class Function implements IUnit<Function> {
     private ITerm name = null;                                  // имя
     private int range = 0;                                      // количество параметров
     private ArgumentsList arguments = new ArgumentsList();      // Параметры
+    private FunctionBinding binding = FunctionBinding.LEGACY_AUTO;
 
     private transient long nameId = -1;
     private Mind mind = null;
@@ -73,7 +79,8 @@ public class Function implements IUnit<Function> {
                 .putByte(isDeleted(mind) ? 1 : 0)
                 .putLong(nameId)
                 .putInt(range)
-                .append(arguments.pack());
+                .append(arguments.pack())
+                .putByte(binding.ordinal());
         return packet.createMarked();
     }
 
@@ -91,6 +98,9 @@ public class Function implements IUnit<Function> {
         } finally {
             packet.release();
         }
+        binding = packet.rest() > 0
+                ? FunctionBinding.fromCode(packet.getByte())
+                : FunctionBinding.LEGACY_AUTO;
         return this;
     }
 
@@ -114,6 +124,14 @@ public class Function implements IUnit<Function> {
 
     public void setRange(int range) {
         this.range = range;
+    }
+
+    public FunctionBinding getBinding() {
+        return binding;
+    }
+
+    public void setBinding(FunctionBinding binding) {
+        this.binding = binding == null ? FunctionBinding.LEGACY_AUTO : binding;
     }
 
     public ArgumentsList getArguments() {
@@ -292,7 +310,8 @@ public class Function implements IUnit<Function> {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
-        hash = 47 * hash + arguments.hashCode(); //.getHash(mind);
+        hash = 47 * hash + binding.ordinal();
+        hash = 47 * hash + arguments.hashCode();
         return hash;
     }
 
@@ -323,6 +342,7 @@ public class Function implements IUnit<Function> {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
+        hash = 47 * hash + binding.ordinal();
         for (int i = 0; i < range; ++i) {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
@@ -342,7 +362,7 @@ public class Function implements IUnit<Function> {
     }
 
     public boolean equalsToStruct(Function f, IRule left, IRule rule) throws Exception {
-        if (nameId == f.nameId && range == f.getRange()) {
+        if (nameId == f.nameId && range == f.getRange() && binding == f.getBinding()) {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
@@ -418,6 +438,7 @@ public class Function implements IUnit<Function> {
         map.put("deleted", isDeleted(mind));
         map.put("name_id", nameId);
         map.put("range", range);
+        map.put("binding", binding.name());
         map.put("name", getName((Mind) mind).getValue());
         map.put("arguments", arguments.createMap(mind));
         return map;
@@ -432,10 +453,12 @@ public class Function implements IUnit<Function> {
             setDeleted(true, mind);
         }
         nameId = Long.parseLong(map.get("name_id") + "");
-        range = Integer.parseInt(map.get("tange") + "");
+        range = Integer.parseInt(map.get("range") + "");
+        binding = map.containsKey("binding")
+                ? FunctionBinding.valueOf(map.get("binding") + "")
+                : FunctionBinding.LEGACY_AUTO;
         arguments.applyMap((List<Map<String, Object>>) map.get("arguments"));
         name = null;
         return this;
     }
-
 }
