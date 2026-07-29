@@ -202,23 +202,18 @@ public class DictionaryFactory implements IFactory<ITerm> {
             if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             } else {
-                boolean found = false;
-                for (IRule r : mind.getRules()) {
-                    if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((IUnit) o).getId(), mind)) {
-                        found = true;
-                        break;
-                    }
-                }
+                long termId = ((IUnit) o).getId();
+                boolean found = mind.getRules().hasActiveRuleWithTerm(termId);
                 if (!found) {
                     for (IRule r : mind.getSolutions()) {
-                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((IUnit) o).getId(), mind)) {
+                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(termId, mind)) {
                             found = true;
                             break;
                         }
                     }
                     if (!found) {
                         for (IHypothesis r : mind.getHypothesis()) {
-                            if (((Hypothesis) r).containsTerm(((IUnit) o).getId(), mind)) {
+                            if (((Hypothesis) r).containsTerm(termId, mind)) {
                                 found = true;
                                 break;
                             }
@@ -226,7 +221,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
                         if (!found) {
                             for (Map<String, ITerm> row : mind.getValues()) {
                                 for (ITerm t : row.values()) {
-                                    if (t.getId() == ((IUnit) o).getId()) {
+                                    if (t.getId() == termId) {
                                         found = true;
                                         break;
                                     }
