@@ -35,6 +35,7 @@ jobs:
             exit 0
           fi
           python3 scripts/apply_p3_positional_index.py
+          python3 scripts/apply_p3_safety_boundary.py
           mvn -B -DskipTests package
 
       - name: Commit product changes when needed
