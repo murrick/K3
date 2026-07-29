@@ -57,6 +57,66 @@ public class Linker {
         this.log = mind.getLog();
     }
 
+    private static final class DomainKey {
+        private final long predicateId;
+        private final boolean antc;
+
+        private DomainKey(long predicateId, boolean antc) {
+            this.predicateId = predicateId;
+            this.antc = antc;
+        }
+
+        @Override
+        public boolean equals(Object value) {
+            if (this == value) {
+                return true;
+            }
+            if (!(value instanceof DomainKey)) {
+                return false;
+            }
+            DomainKey other = (DomainKey) value;
+            return predicateId == other.predicateId && antc == other.antc;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.valueOf(predicateId).hashCode();
+            return 31 * result + (antc ? 1 : 0);
+        }
+    }
+
+    private Map<DomainKey, List<IRule>> buildDomainIndex(Collection<IRule> ruleList) throws Exception {
+        Map<DomainKey, List<IRule>> index = new HashMap<>();
+        for (IRule candidate : ruleList) {
+            Set<DomainKey> indexedKeys = new HashSet<>();
+            for (List<Domain> branch : ((Rule) candidate).getTree()) {
+                for (Domain domain : branch) {
+                    DomainKey key = new DomainKey(domain.getPredicateId(), domain.isAntc());
+                    if (indexedKeys.add(key)) {
+                        List<IRule> bucket = index.get(key);
+                        if (bucket == null) {
+                            bucket = new ArrayList<>();
+                            index.put(key, bucket);
+                        }
+                        bucket.add(candidate);
+                    }
+                }
+            }
+        }
+        return index;
+    }
+
+    private Collection<IRule> selectDomainCandidates(List<Domain> tree,
+                                                      Map<DomainKey, List<IRule>> index) {
+        if (tree.size() != 1) {
+            return Collections.emptyList();
+        }
+        Domain slave = tree.get(0);
+        List<IRule> candidates = index.get(
+                new DomainKey(slave.getPredicateId(), !slave.isAntc()));
+        return candidates == null ? Collections.<IRule>emptyList() : candidates;
+    }
+
     public void link(Rule rule, boolean logging) throws Exception {
 
         mind.getExcludedDomains().clear();
@@ -173,6 +233,7 @@ public class Linker {
     private boolean rotator(final Collection<IRule> ruleList, final Map<IRule, Set<Cause>> causes, final boolean logging) throws Exception {
 
         boolean used = false;
+        final Map<DomainKey, List<IRule>> domainIndex = buildDomainIndex(ruleList);
 
         for (IRule r : ruleList) {
 
@@ -198,7 +259,7 @@ public class Linker {
                     public Object run(Object o) {
                         boolean result = false;
                         try {
-                            if (linkDomains(t, ruleList, causes, logging)) {
+                            if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging)) {
                                 result = true;
                             }
                             if (calcFunctions(t, causes, logging)) {
