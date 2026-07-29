@@ -49,6 +49,8 @@ jobs:
           grep -Eq 'C1 Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
           grep -Eq 'C4 Success:[[:space:]]+3' "kanger-test-java-${{ matrix.java }}.log"
           grep -Eq 'C4 Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
+          grep -Eq 'C3 Success:[[:space:]]+6' "kanger-test-java-${{ matrix.java }}.log"
+          grep -Eq 'C3 Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
 
       - name: Upload baseline evidence
         if: always()
