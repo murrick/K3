@@ -9,6 +9,7 @@ import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.test.KangerC1PromotionTest;
+import org.kanger.test.KangerC3BindingTest;
 import org.kanger.test.KangerC4IntervalTest;
 import org.kanger.test.KangerStabilizationTest;
 import org.kanger.test.KangerTest;
@@ -55,7 +56,15 @@ public final class KangerTestRunner {
             IMind c4Mind = new Mind(c4User);
             boolean c4Success = KangerC4IntervalTest.test(c4Mind, prefix);
 
-            exitCode = legacySuccess && stabilizationSuccess && c1Success && c4Success ? 0 : 1;
+            IUser c3User = createUser("autotest-c3-binding");
+            IMind c3Mind = new Mind(c3User);
+            boolean c3Success = KangerC3BindingTest.test(c3Mind, prefix);
+
+            exitCode = legacySuccess
+                    && stabilizationSuccess
+                    && c1Success
+                    && c4Success
+                    && c3Success ? 0 : 1;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
         }
