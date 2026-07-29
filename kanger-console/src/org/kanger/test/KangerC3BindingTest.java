@@ -92,7 +92,7 @@ public final class KangerC3BindingTest {
                 if (result.isEmpty(context)) {
                     return function.setParameter(function.getRange(), expected) ? 1 : 0;
                 }
-                return result.getValue(context).equalsTo(expected) ? 2 : 0;
+                return result.getValue(context).getId() == expected.getId() ? 2 : 0;
             }
         });
         for (int i = 0; i < range; ++i) {
@@ -123,7 +123,7 @@ public final class KangerC3BindingTest {
 
     private List<Function> functions(String name) throws Exception {
         List<Function> result = new ArrayList<>();
-        for (Object value : (Mind) mind.getFunctions()) {
+        for (Object value : ((Mind) mind).getFunctions()) {
             Function function = (Function) value;
             if (name.equals(function.getName((Mind) mind).toString())) {
                 result.add(function);
@@ -145,12 +145,14 @@ public final class KangerC3BindingTest {
         require(Boolean.TRUE.equals(mind.query(query)), message + ": " + query);
     }
 
+    @SuppressWarnings("unchecked")
     public void set_c3_01_infrastructure_binding_precedence() throws Exception {
         resetWorkspace();
         installUdf("_add", 2, 999.0);
 
         requireTrue("?$x x=1+2;", "Infrastructure addition was not selected");
-        require(((Double) mind.getValues().iterator().next().get("x").getValue()) == 3.0,
+        Map<String, ITerm> row = (Map<String, ITerm>) mind.getValues().iterator().next();
+        require(Double.valueOf(3.0).equals(row.get("x").getValue()),
                 "UDF intercepted the infrastructure addition occurrence");
         requireFunction("_add", FunctionBinding.INFRASTRUCTURE);
     }
