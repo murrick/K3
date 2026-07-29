@@ -29,10 +29,12 @@ import org.kanger.Mind;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.factory.DictionaryFactory;
 import org.kanger.factory.PredicateFactory;
+import org.kanger.factory.TValueFactory;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
+import org.kanger.interfaces.internal.IStep;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
@@ -40,8 +42,12 @@ import org.kanger.stores.SolutionsStore;
 import org.kanger.stores.ValuesStore;
 import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
+import org.kanger.units.Rule;
 import org.kanger.units.Term;
+import org.kanger.units.TValue;
+import org.kanger.units.TVariable;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -2206,6 +2212,128 @@ public class KangerTest {
                 "!female(Sarah);");
         mind.query("?$x mother(John,x);");
         showResult(false);
+    }
+
+    public void set_b7_1_delete_child() throws Exception {
+        Mind current = (Mind) mind.clearWorkspace();
+        Term parent = (Term) current.getTerms().add("b7-parent");
+        Term child = (Term) current.getTerms().add("b7-child");
+        parent.setChild(child);
+        child.setParent(parent);
+
+        child.setDeleted(true, current);
+
+        assertCVarLinksEmpty(current, "deleting child");
+    }
+
+    public void set_b7_1_delete_parent() throws Exception {
+        Mind current = (Mind) mind.clearWorkspace();
+        Term parent = (Term) current.getTerms().add("b7-parent");
+        Term child = (Term) current.getTerms().add("b7-child");
+        parent.setChild(child);
+        child.setParent(parent);
+
+        parent.setDeleted(true, current);
+
+        assertCVarLinksEmpty(current, "deleting parent");
+    }
+
+    public void set_b7_1_damaged_pair() throws Exception {
+        Mind current = (Mind) mind.clearWorkspace();
+        Term parent = (Term) current.getTerms().add("b7-parent");
+        Term child = (Term) current.getTerms().add("b7-child");
+        current.getCvarParents().put(child, parent);
+
+        current.unlinkCVar(parent);
+
+        assertCVarLinksEmpty(current, "unlinking one-sided pair");
+    }
+
+    public void set_b7_1_pack_drops_child_and_top() throws Exception {
+        Mind current = (Mind) mind.clearWorkspace();
+        current.compile("!@x b7_rule(x);");
+        Rule rule = (Rule) current.getRules().iterator().next();
+        TVariable variable = rule.getTVariables().get(0);
+        ITerm name = current.getTerms().add("b7-name");
+        ITerm parent = current.getTerms().createCVar(rule, name, null);
+        ITerm child = current.getTerms().createCVar(rule, name, parent);
+        TValue value = current.getTValues().add(variable, child);
+        current.getTValues().set(variable, value);
+
+        IStep oldTop = getTValueTop(current.getTValues());
+        if (oldTop == null
+                || ((TValue) oldTop.getData(current)).getValue(current).getId() != child.getId()) {
+            fail("Test fixture does not reproduce top -> TValue -> child");
+        }
+
+        current.pack();
+
+        assertCVarLinksEmpty(current, "packing transient child");
+        if (current.getTerms().get(child.getId()) != null) {
+            fail("Transient child remains in dictionary after pack");
+        }
+        if (current.getTValues().get(value.getId()) != null || !current.getTValues().getCurrent().isEmpty()) {
+            fail("Transient TValue remains after pack");
+        }
+        if (getTValueTop(current.getTValues()) != null) {
+            fail("TValueFactory.top retains a removed TValue");
+        }
+    }
+
+    public void set_b7_1_linker_pack_cycles() throws Exception {
+        Mind current = (Mind) mind.clearWorkspace();
+        current.compile("!@x (male(x) || female(x)) && ~(male(x) && female(x));" +
+                "!@x @y father(x,y) -> male(x), parent(x,y);" +
+                "!@x @y mother(x,y) -> female(x), parent(x,y);" +
+                "!father(John, Tom);" +
+                "!female(Sarah);");
+
+        for (int i = 0; i < 5; ++i) {
+            current.query("?$x mother(John,x);");
+            if (current.getQueryResult() != Boolean.FALSE) {
+                fail("Expected false for mother(John,x), cycle " + i);
+            }
+            assertCVarLinksEmpty(current, "Linker/pack cycle " + i);
+        }
+    }
+
+    public void set_b7_1_keep_regular_tvalue() throws Exception {
+        Mind current = (Mind) mind.clearWorkspace();
+        current.compile("!@x b7_variable(x); !b7_fact(kept);");
+        Rule variableRule = null;
+        for (IRule candidate : current.getRules()) {
+            if (!((Rule) candidate).getTVariables().isEmpty()) {
+                variableRule = (Rule) candidate;
+                break;
+            }
+        }
+        if (variableRule == null) {
+            fail("Test fixture has no TVariable");
+        }
+        TVariable variable = variableRule.getTVariables().get(0);
+        ITerm kept = current.getTerms().find("kept");
+        TValue value = current.getTValues().add(variable, kept);
+
+        current.pack();
+
+        if (current.getTValues().get(value.getId()) == null) {
+            fail("TValue referenced by an active rule was removed");
+        }
+        if (getTValueTop(current.getTValues()) == null) {
+            fail("TValueFactory.top lost a retained TValue");
+        }
+    }
+
+    private static void assertCVarLinksEmpty(Mind mind, String stage) throws RuntimeErrorException {
+        if (!mind.getCvarChilds().isEmpty() || !mind.getCvarParents().isEmpty()) {
+            fail("Stale CVar links after " + stage);
+        }
+    }
+
+    private static IStep getTValueTop(TValueFactory factory) throws Exception {
+        Field field = TValueFactory.class.getDeclaredField("top");
+        field.setAccessible(true);
+        return (IStep) field.get(factory);
     }
 
     public void set_07_01() throws Exception {

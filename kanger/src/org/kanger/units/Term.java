@@ -640,14 +640,7 @@ public class Term implements IUnit<Term>, ITerm {
     public void setDeleted(boolean on, Mind mind) {
         mind.setUnitDeleted(this, on);
         if (on) {
-            ITerm t = mind.getCvarChilds().remove(this);
-            if (t != null) {
-                mind.getCvarParents().remove(t);
-            }
-            t = mind.getCvarParents().remove(this);
-            if (t != null) {
-                mind.getCvarChilds().remove(t);
-            }
+            mind.unlinkCVar(this);
         }
     }
 
@@ -759,4 +752,3 @@ public class Term implements IUnit<Term>, ITerm {
         }
     }
 }
-

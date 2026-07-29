@@ -169,11 +169,14 @@ public class TValueFactory implements IFactory<TValue> {
         }
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
-            if (current.containsKey(((TValue) o).getTVar(mind))
-                    && current.get(((TValue) o).getTVar(mind)).getId() == ((TValue) o).getId()) {
-                current.remove(((TValue) o).getTVar(mind));
+        }
+        Iterator<Map.Entry<TVariable, TValue>> iterator = current.entrySet().iterator();
+        while (iterator.hasNext()) {
+            if (!cache.containsKey(iterator.next().getValue().getId())) {
+                iterator.remove();
             }
         }
+        top = cache.getRoot();
     }
 
     public void clear() throws Exception {

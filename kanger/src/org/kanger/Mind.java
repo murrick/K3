@@ -367,6 +367,7 @@ public class Mind implements IMind {
         tValues.pack();
 
         terms.pack();
+        clearCVarLinks();
         predicates.pack();
 
         deleted.clear();
@@ -711,6 +712,44 @@ public class Mind implements IMind {
 
     public Map<ITerm, ITerm> getCvarParents() {
         return cvarParents;
+    }
+
+    public void unlinkCVar(ITerm term) {
+        if (term == null) {
+            return;
+        }
+
+        Set<ITerm> linked = new HashSet<>();
+        linked.add(term);
+
+        ITerm child = cvarChilds.get(term);
+        if (child != null) {
+            linked.add(child);
+        }
+        ITerm parent = cvarParents.get(term);
+        if (parent != null) {
+            linked.add(parent);
+        }
+        for (Map.Entry<ITerm, ITerm> entry : cvarChilds.entrySet()) {
+            if (entry.getKey().equals(term) || entry.getValue().equals(term)) {
+                linked.add(entry.getKey());
+                linked.add(entry.getValue());
+            }
+        }
+        for (Map.Entry<ITerm, ITerm> entry : cvarParents.entrySet()) {
+            if (entry.getKey().equals(term) || entry.getValue().equals(term)) {
+                linked.add(entry.getKey());
+                linked.add(entry.getValue());
+            }
+        }
+
+        cvarChilds.entrySet().removeIf(entry -> linked.contains(entry.getKey()) || linked.contains(entry.getValue()));
+        cvarParents.entrySet().removeIf(entry -> linked.contains(entry.getKey()) || linked.contains(entry.getValue()));
+    }
+
+    private void clearCVarLinks() {
+        cvarChilds.clear();
+        cvarParents.clear();
     }
 
     public Map<TVariable, Set<TValue>> getQueryValues() {
@@ -1598,4 +1637,3 @@ public class Mind implements IMind {
         this.includeAbstractiveHypothesis = includeAbstractiveHypothesis;
     }
 }
-

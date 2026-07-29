@@ -245,6 +245,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
         }
         for (Object o : toDelete) {
             mind.getLog().add(LogMode.STORAGE, "Unused term wiped: " + o.toString());
+            mind.unlinkCVar((ITerm) o);
             cache.delete(((IUnit) o).getId());
         }
     }
