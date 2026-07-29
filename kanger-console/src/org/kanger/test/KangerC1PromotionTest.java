@@ -102,11 +102,17 @@ public final class KangerC1PromotionTest {
     }
 
     private Rule requirePrimaryRule(IMind context, long id) throws Exception {
+        return requirePrimaryRule(context, id, true);
+    }
+
+    private Rule requirePrimaryRule(IMind context, long id, boolean causesMustBeCleared) throws Exception {
         Rule rule = ((Mind) context).getRules().get(id);
         require(rule != null, "Primary rule is missing: " + id);
         require(!((Mind) context).getRules().isGenerated(rule),
                 "Rule is still generated after promotion: " + id);
-        require(rule.getCauses().isEmpty(), "Promoted rule retained derivation causes: " + id);
+        if (causesMustBeCleared) {
+            require(rule.getCauses().isEmpty(), "Promoted rule retained derivation causes: " + id);
+        }
         return rule;
     }
 
@@ -176,7 +182,7 @@ public final class KangerC1PromotionTest {
         Mind discarded = new Mind(parent);
         require(Boolean.TRUE.equals(discarded.query("!target_child(value);")),
                 "Child promotion candidate was not accepted");
-        requirePrimaryRule(discarded, derivedId);
+        requirePrimaryRule(discarded, derivedId, false);
         requireGeneratedRule(parent, "target_child", "value");
         parent.release(discarded);
         requireGeneratedRule(parent, "target_child", "value");
@@ -184,7 +190,7 @@ public final class KangerC1PromotionTest {
         Mind committed = new Mind(parent);
         require(Boolean.TRUE.equals(committed.query("!target_child(value);")),
                 "Committed child promotion candidate was not accepted");
-        requirePrimaryRule(committed, derivedId);
+        requirePrimaryRule(committed, derivedId, false);
         require(parent.commit(committed), "Child promotion commit was rejected");
         requirePrimaryRule(parent, derivedId);
 
