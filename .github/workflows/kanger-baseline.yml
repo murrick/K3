@@ -32,17 +32,19 @@ jobs:
           java-version: ${{ matrix.java }}
           cache: maven
 
-      - name: Build and run the full KangerTest corpus
+      - name: Build and run all KANGER test corpora
         shell: bash
         run: |
           set -o pipefail
           mvn -B -V clean verify 2>&1 | tee "kanger-test-java-${{ matrix.java }}.log"
 
-      - name: Verify expected corpus size and zero failures
+      - name: Verify historical and stabilization corpora
         shell: bash
         run: |
           grep -Eq 'Success:[[:space:]]+101' "kanger-test-java-${{ matrix.java }}.log"
           grep -Eq 'Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
+          grep -Eq 'Stabilization Success:[[:space:]]+3' "kanger-test-java-${{ matrix.java }}.log"
+          grep -Eq 'Stabilization Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
 
       - name: Upload baseline evidence
         if: always()
