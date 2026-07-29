@@ -4,4 +4,3 @@ obj/
 target/
 libs/*/*.so
 .DS_Store
-# temporary normalization trigger
