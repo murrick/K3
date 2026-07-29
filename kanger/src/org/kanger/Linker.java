@@ -193,14 +193,34 @@ public class Linker {
     }
 
     private Collection<IRule> selectDomainCandidates(List<Domain> tree,
-                                                      Map<DomainKey, List<IRule>> index) {
+                                                       Map<DomainKey, List<IRule>> index) throws Exception {
         if (tree.size() != 1) {
             return Collections.emptyList();
         }
         Domain slave = tree.get(0);
         List<IRule> candidates = index.get(
                 new DomainKey(slave.getPredicateId(), !slave.isAntc()));
-        return candidates == null ? Collections.<IRule>emptyList() : candidates;
+        if (candidates == null || candidates.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<IRule> resolved = mind.getRules().findByResolvedDomain(
+                slave, !slave.isAntc());
+        if (resolved.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> allowedIds = new HashSet<>();
+        for (IRule candidate : resolved) {
+            allowedIds.add(candidate.getId());
+        }
+        List<IRule> filtered = new ArrayList<>();
+        for (IRule candidate : candidates) {
+            if (allowedIds.contains(candidate.getId())) {
+                filtered.add(candidate);
+            }
+        }
+        return filtered;
     }
 
     private void addOppositeNatives(Set<IRule> ruleSet,

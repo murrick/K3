@@ -326,6 +326,35 @@ public class RuleFactory implements IFactory<IRule> {
         return result;
     }
 
+
+    private void collectResolvedCandidateIds(Domain source,
+                                             boolean candidateAntc,
+                                             LinkedHashSet<Long> result) throws Exception {
+        if (parentIndex != null) {
+            parentIndex.collectResolvedCandidateIds(source, candidateAntc, result);
+        }
+        ensureDomainIndex();
+        candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
+    }
+
+    /**
+     * Resolve current query TValue assignments to term IDs before selecting
+     * candidates. The returned Rules are still checked by normal unification.
+     */
+    public List<IRule> findByResolvedDomain(Domain source,
+                                            boolean candidateAntc) throws Exception {
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        collectResolvedCandidateIds(source, candidateAntc, ids);
+        List<IRule> result = new ArrayList<>();
+        for (long id : ids) {
+            IRule rule = get(id);
+            if (rule != null && !rule.isDeleted(mind)) {
+                result.add(rule);
+            }
+        }
+        return result;
+    }
+
     public boolean hasActiveRuleWithTerm(long termId) throws Exception {
         LinkedHashSet<Long> ids = new LinkedHashSet<>();
         collectTermIds(termId, ids);

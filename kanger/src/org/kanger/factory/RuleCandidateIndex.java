@@ -5,10 +5,13 @@
  */
 package org.kanger.factory;
 
+import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.interfaces.IArgument;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
+import org.kanger.units.TValue;
+import org.kanger.units.TVariable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -319,6 +322,50 @@ final class RuleCandidateIndex {
             }
         }
         result.addAll(selected);
+    }
+
+
+    void collectResolvedLocal(Domain source,
+                              boolean candidateAntc,
+                              Mind mind,
+                              LinkedHashSet<Long> result) throws Exception {
+        SignatureKey signature = signature(source, candidateAntc);
+        LinkedHashSet<Long> selected = signatures.get(signature);
+        if (selected.isEmpty()) {
+            return;
+        }
+        LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
+
+        for (int position = 0; position < source.getRange(); ++position) {
+            IArgument argument = source.get(position);
+            Long termId = resolvedTermId(argument, mind);
+            if (termId == null) {
+                continue;
+            }
+
+            LinkedHashSet<Long> compatible = positions.get(
+                    new PositionKey(signature, position, termId));
+            compatible.addAll(positions.get(
+                    new PositionKey(signature, position, WILDCARD_TERM_ID)));
+            compatible.addAll(fallback);
+            selected.retainAll(compatible);
+            if (selected.isEmpty()) {
+                return;
+            }
+        }
+        result.addAll(selected);
+    }
+
+    private Long resolvedTermId(IArgument argument, Mind mind) throws Exception {
+        if (argument.getType() == ArgumentType.TERM) {
+            return argument.getId();
+        }
+        if (argument.getType() == ArgumentType.TVARIABLE) {
+            TVariable variable = (TVariable) argument.getObject(mind);
+            TValue current = variable.getCurrent();
+            return current == null ? null : current.getValueId();
+        }
+        return null;
     }
 
     private SignatureKey signature(Domain domain, boolean antc) throws Exception {
