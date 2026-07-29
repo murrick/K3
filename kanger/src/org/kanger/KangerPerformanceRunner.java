@@ -5,7 +5,6 @@
  */
 package org.kanger;
 
-import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
@@ -25,6 +24,10 @@ import java.util.List;
  * configured persistent storage backend. Persistent data remains behind the
  * normal KANGER storage/cache API; this class never preloads semantic objects
  * or assumes a particular database engine.</p>
+ *
+ * <p>Storage mode closes and reopens the database after loading the facts, so
+ * all query measurements exercise index reconstruction and normal on-demand
+ * hydration rather than the insertion-time object graph.</p>
  *
  * <p>Examples:</p>
  * <pre>
@@ -95,6 +98,13 @@ public final class KangerPerformanceRunner {
                 }
             }
             report(mind, storage, size, "insert-sequential", started, Boolean.TRUE);
+
+            if (storage) {
+                long reopenStarted = System.nanoTime();
+                mind = (Mind) mind.closeStorage();
+                mind = (Mind) mind.useStorage(storageName);
+                report(mind, true, size, "reopen-storage", reopenStarted, Boolean.TRUE);
+            }
 
             int key = Math.max(1, size / 2);
             measureQuery(mind, storage, size, "query-exact",
