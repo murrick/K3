@@ -23,9 +23,7 @@ import java.util.Stack;
  * selection.
  *
  * Positional pruning is deliberately restricted to durable simple one-domain
- * Rules. Complex, query and generated Rules participate in inference through
- * lifecycle-dependent paths and therefore remain in a signature-level
- * fallback bucket. They can never be excluded by direct constant positions.
+ * Rules. Complex, query and generated Rules remain in a signature fallback.
  */
 final class RuleCandidateIndex {
 
@@ -97,7 +95,6 @@ final class RuleCandidateIndex {
         }
     }
 
-    /** Journaled ID index: mark/release cost is proportional to mutations. */
     private static final class IdIndex<K> {
         private static final class Change<K> {
             private final K key;
@@ -265,25 +262,31 @@ final class RuleCandidateIndex {
         }
     }
 
+    /**
+     * Rule flags are mutable across query/generated/promotion lifecycle. Remove
+     * the ID from every possible bucket instead of recomputing the admission
+     * mode from its current flags.
+     */
     void unindexRule(Rule rule) throws Exception {
         if (rule == null) {
             return;
         }
-        boolean positional = positionalEligible(rule);
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 SignatureKey signature = signature(domain, domain.isAntc());
                 signatures.remove(signature, rule.getId());
-                if (!positional) {
-                    fallbackSignatures.remove(signature, rule.getId());
-                    continue;
-                }
+                fallbackSignatures.remove(signature, rule.getId());
                 for (int position = 0; position < domain.getRange(); ++position) {
                     IArgument argument = domain.get(position);
-                    long termId = argument.getType() == ArgumentType.TERM
+                    long exactOrWildcard = argument.getType() == ArgumentType.TERM
                             ? argument.getId()
                             : WILDCARD_TERM_ID;
-                    positions.remove(new PositionKey(signature, position, termId), rule.getId());
+                    positions.remove(
+                            new PositionKey(signature, position, exactOrWildcard), rule.getId());
+                    if (exactOrWildcard != WILDCARD_TERM_ID) {
+                        positions.remove(
+                                new PositionKey(signature, position, WILDCARD_TERM_ID), rule.getId());
+                    }
                 }
             }
         }
