@@ -8,6 +8,7 @@ package org.kanger;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
+import org.kanger.test.KangerStabilizationTest;
 import org.kanger.test.KangerTest;
 import org.kanger.udf.UDF;
 
@@ -16,11 +17,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Headless entry point for the existing KangerTest regression corpus.
+ * Headless entry point for the historical and stabilization test corpora.
  *
- * <p>This class deliberately reuses the normal KANGER bootstrap path and the
- * existing reflection-based test harness. It adds only process-level isolation
- * and a reliable exit status for scripts and CI.</p>
+ * <p>This class deliberately reuses the normal KANGER bootstrap path. It adds
+ * only process-level isolation and a reliable exit status for scripts and CI.</p>
  */
 public final class KangerTestRunner {
 
@@ -37,18 +37,27 @@ public final class KangerTestRunner {
             System.out.println("KANGER test home: " + testHome.toAbsolutePath());
             System.out.println("KANGER test prefix: " + prefix);
 
-            IUser user = UserFactory.createUser("autotest", "autotest");
-            new UDF().init(user);
-            new DB().init(user);
+            IUser legacyUser = createUser("autotest");
+            IMind legacyMind = new Mind(legacyUser);
+            boolean legacySuccess = KangerTest.test(legacyMind, prefix);
 
-            IMind mind = new Mind(user);
-            boolean success = KangerTest.test(mind, prefix);
-            exitCode = success ? 0 : 1;
+            IUser stabilizationUser = createUser("autotest-stabilization");
+            IMind stabilizationMind = new Mind(stabilizationUser);
+            boolean stabilizationSuccess = KangerStabilizationTest.test(stabilizationMind, prefix);
+
+            exitCode = legacySuccess && stabilizationSuccess ? 0 : 1;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
         }
 
         System.exit(exitCode);
+    }
+
+    private static IUser createUser(String name) throws Exception {
+        IUser user = UserFactory.createUser(name, name);
+        new UDF().init(user);
+        new DB().init(user);
+        return user;
     }
 
     private static Path createTestHome() throws Exception {
