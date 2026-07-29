@@ -1,51 +1,107 @@
-name: KANGER III P4 origin metrics
+name: KANGER III 3.3.5 optimization
 
 on:
+  push:
+    branches:
+      - "perf/3.3.6-linker-agenda"
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: kanger-3.3.5-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-origin-metrics:
-    if: github.event_name == 'pull_request' && github.head_ref == 'perf/3.3.6-linker-agenda'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out P4 branch
-        uses: actions/checkout@v4
-        with:
-          ref: perf/3.3.6-linker-agenda
+  build-and-regression:
+    name: ${{ matrix.id }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu-java-8
+            os: ubuntu-latest
+            java: "8"
+          - id: ubuntu-java-21
+            os: ubuntu-latest
+            java: "21"
+          - id: macos-java-21
+            os: macos-latest
+            java: "21"
 
-      - name: Set up Java 21
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: ${{ matrix.java }}
           cache: maven
 
-      - name: Apply and verify origin metrics
+      - name: Build and run all KANGER test corpora
         shell: bash
         run: |
-          set -euo pipefail
-          python3 scripts/apply_p4_origin_metrics.py
-          mvn -B clean verify
+          set -o pipefail
+          mvn -B -V clean verify 2>&1 | tee "kanger-3.3.5-${{ matrix.id }}.log"
+
+      - name: Verify historical and stabilization corpora
+        shell: bash
+        run: |
+          log="kanger-3.3.5-${{ matrix.id }}.log"
+          grep -Eq 'Success:[[:space:]]+101' "$log"
+          grep -Eq 'Fails:[[:space:]]+0' "$log"
+          grep -Eq 'Stabilization Success:[[:space:]]+7' "$log"
+          grep -Eq 'Stabilization Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C1 Success:[[:space:]]+5' "$log"
+          grep -Eq 'C1 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C4 Success:[[:space:]]+3' "$log"
+          grep -Eq 'C4 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C3 Success:[[:space:]]+6' "$log"
+          grep -Eq 'C3 Fails:[[:space:]]+0' "$log"
+
+      - name: Verify persistent lifecycle diagnostics
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
           java \
-            -Dkanger.linker.profile.sizes=500 \
+            -Dkanger.diagnostics=true \
+            -Dkanger.diagnostics.timeout.ms=5000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDiagnosticRunner \
+            2>&1 | tee kanger-3.3.5-db.log
+          grep -F 'D2 set_03_01 with storage: PASS' kanger-3.3.5-db.log
+          grep -F 'explicit closeStorage: true' kanger-3.3.5-db.log
+          grep -F 'normal JVM shutdown hook: true' kanger-3.3.5-db.log
+
+      - name: Capture Linker operation curve
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.linker.profile.sizes=100,500 \
             -cp "target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerLinkerProfileRunner \
-            2>&1 | tee kanger-p4-origin-profile.log
-          grep -F '500,query-all-variables' kanger-p4-origin-profile.log
+            2>&1 | tee kanger-linker-profile-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-linker-profile-ubuntu-java-21.log \
+            > kanger-linker-profile-ubuntu-java-21.csv
 
-      - name: Commit product instrumentation
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            kanger/src/org/kanger/Linker.java \
-            kanger/src/org/kanger/LinkerStatistics.java \
-            kanger/src/org/kanger/KangerLinkerProfileRunner.java
-          git rm scripts/apply_p4_origin_metrics.py
-          git commit -m "P4c: classify unifications by pass and candidate origin"
-          git push origin HEAD:perf/3.3.6-linker-agenda
+      - name: Upload 3.3.5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-3.3.5-${{ matrix.id }}
+          path: |
+            kanger-3.3.5-${{ matrix.id }}.log
+            kanger-3.3.5-db.log
+            kanger-linker-profile-${{ matrix.id }}.log
+            kanger-linker-profile-${{ matrix.id }}.csv
+            target/*.jar
+          if-no-files-found: warn
