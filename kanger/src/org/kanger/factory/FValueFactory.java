@@ -27,6 +27,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.enums.FunctionBinding;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
@@ -37,8 +38,11 @@ import org.kanger.units.FValue;
 import org.kanger.units.Function;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
@@ -53,6 +57,8 @@ public class FValueFactory implements IFactory<FValue> {
 
     private final Mind mind;
     private boolean action = false;
+    private final Set<Long> invalidated = new HashSet<>();
+    private final Stack<Set<Long>> invalidatedStack = new Stack<>();
 
     public FValueFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -60,12 +66,15 @@ public class FValueFactory implements IFactory<FValue> {
     }
 
     public void transaction(FValueFactory base) throws Exception {
+        invalidated.clear();
+        invalidatedStack.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
 
         if (base != null) {
             cache = new Escalera(mind, SCHEMA, base.cache);
+            invalidated.addAll(base.invalidated);
         } else {
             cache = new Escalera(mind, SCHEMA, null);
         }
@@ -84,6 +93,7 @@ public class FValueFactory implements IFactory<FValue> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
+        invalidated.addAll(base.invalidated);
         action = base.isAction();
     }
 
@@ -113,15 +123,46 @@ public class FValueFactory implements IFactory<FValue> {
         return t;
     }
 
-
     public FValue find(Function f) throws Exception {
         for (long id : cache.find(f.getHashBase(mind))) {
             FValue one = get(id);
-            if (one.equalsTo(f)) {
+            if (!invalidated.contains(id) && one.equalsTo(f)) {
                 return one;
             }
         }
         return null;
+    }
+
+    public void invalidateUdf(String name, int range) throws Exception {
+        for (Object object : cache) {
+            if (object instanceof FValue) {
+                FValue value = (FValue) object;
+                Function function = value.getFunction();
+                if (usesUdf(function, name, range)) {
+                    invalidated.add(value.getId());
+                }
+            }
+        }
+    }
+
+    private boolean usesUdf(Function function, String name, int range) throws Exception {
+        if (!name.equals(function.getName(mind).toString())) {
+            return false;
+        }
+        if (range != 0 && function.getRange() != range) {
+            return false;
+        }
+        if (function.getBinding() == FunctionBinding.UDF_DYNAMIC) {
+            return true;
+        }
+        if (function.getBinding() != FunctionBinding.LEGACY_AUTO) {
+            return false;
+        }
+
+        String signature = name + "(" + function.getRange() + ")";
+        String fallback = name + "(0)";
+        return !mind.getCalculator().getFunctions().getSysOps().containsKey(signature)
+                && !mind.getCalculator().getFunctions().getSysOps().containsKey(fallback);
     }
 
     public FValue get(long id) throws Exception {
@@ -136,6 +177,8 @@ public class FValueFactory implements IFactory<FValue> {
     }
 
     public void clear() throws Exception {
+        invalidated.clear();
+        invalidatedStack.clear();
         if (mind.getNext() != null) {
             transaction(((Mind) mind.getNext()).getFValues());
         } else {
@@ -146,14 +189,22 @@ public class FValueFactory implements IFactory<FValue> {
 
     public void mark() throws Exception {
         cache.mark();
+        invalidatedStack.push(new HashSet<>(invalidated));
     }
 
     public void commit() throws Exception {
         cache.commit();
+        if (!invalidatedStack.isEmpty()) {
+            invalidatedStack.pop();
+        }
     }
 
     public void release() throws Exception {
         cache.release();
+        if (!invalidatedStack.isEmpty()) {
+            invalidated.clear();
+            invalidated.addAll(invalidatedStack.pop());
+        }
     }
 
     public int size() {
@@ -167,13 +218,15 @@ public class FValueFactory implements IFactory<FValue> {
     public void pack() throws Exception {
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted(mind)) {
+            IUnit unit = (IUnit) o;
+            if (unit.isDeleted(mind) || invalidated.contains(unit.getId())) {
                 toDelete.add(o);
             }
         }
         for (Object o : toDelete) {
             cache.delete(((IUnit) o).getId());
         }
+        invalidated.clear();
     }
 
     public boolean isAction() {
@@ -198,5 +251,4 @@ public class FValueFactory implements IFactory<FValue> {
     public boolean isEmpty() {
         return cache == null || cache.isEmpty();
     }
-
 }
