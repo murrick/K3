@@ -5,16 +5,22 @@
  */
 package org.kanger.test;
 
+import org.kanger.Console;
 import org.kanger.Mind;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
+import org.kanger.primitives.ArgumentsList;
+import org.kanger.primitives.Hypothesis;
+import org.kanger.stores.HypothesisStore;
+import org.kanger.units.Predicate;
 import org.kanger.units.Rule;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.TreeMap;
 
 /**
@@ -116,6 +122,14 @@ public final class KangerC1PromotionTest {
         return rule;
     }
 
+    private long createDerived(String suffix) throws Exception {
+        require(Boolean.TRUE.equals(mind.query("!@x seed_" + suffix + "(x) -> target_" + suffix + "(x);")),
+                "Producer rule was not accepted: " + suffix);
+        require(Boolean.TRUE.equals(mind.query("!seed_" + suffix + "(value);")),
+                "Producer fact was not accepted: " + suffix);
+        return requireGeneratedRule(mind, "target_" + suffix, "value").getId();
+    }
+
     public void set_c1_01_direct_primary_promotion() throws Exception {
         resetWorkspace();
 
@@ -195,5 +209,68 @@ public final class KangerC1PromotionTest {
         requirePrimaryRule(parent, derivedId);
 
         mind = parent;
+    }
+
+    public void set_c1_04_append_primary_promotion() throws Exception {
+        resetWorkspace();
+        long derivedId = createDerived("append");
+        Rule derived = requireGeneratedRule(mind, "target_append", "value");
+
+        Hypothesis hypothesis = new Hypothesis();
+        hypothesis.setAntc(true);
+        hypothesis.setPredicate((Predicate) derived.getPredicate());
+        hypothesis.getArguments().addAll(((ArgumentsList) derived.getArguments()).convertBase(mind));
+        ((HypothesisStore) mind.getHypothesis()).add(hypothesis);
+
+        Console.makeHypo(mind, "append 1", new Scanner(""));
+        requirePrimaryRule(mind, derivedId);
+        require(Boolean.TRUE.equals(mind.query("?target_append(value);")),
+                "Appended primary statement is not logically visible");
+    }
+
+    public void set_c1_05_promotion_persistence_reopen() throws Exception {
+        resetWorkspace();
+        final String storageName = "data/c1-promotion-persistence";
+
+        try {
+            if (mind.isStorageUsed()) {
+                mind = mind.closeStorage();
+            }
+            if (mind.isStorageExists(storageName)) {
+                mind = mind.removeStorage(storageName);
+            }
+
+            mind = mind.useStorage(storageName);
+            mind = mind.clearWorkspace();
+
+            require(Boolean.TRUE.equals(mind.query("!@x seed_persist(x) -> target_persist(x);")),
+                    "Persistent producer rule was not accepted");
+            long producerId = mind.getAcceptedRule().getId();
+            require(Boolean.TRUE.equals(mind.query("!seed_persist(value);")),
+                    "Persistent producer fact was not accepted");
+            long derivedId = requireGeneratedRule(mind, "target_persist", "value").getId();
+
+            require(Boolean.TRUE.equals(mind.query("!target_persist(value);")),
+                    "Persistent promotion was not accepted");
+            requirePrimaryRule(mind, derivedId);
+
+            mind = mind.closeStorage();
+            mind = mind.useStorage(storageName);
+
+            requirePrimaryRule(mind, derivedId);
+            require(Boolean.TRUE.equals(mind.query("-rule(" + producerId + ");")),
+                    "Persistent producer rule was not deleted after reopen");
+            require(Boolean.TRUE.equals(mind.query("?")), "Persistent program reinitialization failed");
+            require(Boolean.TRUE.equals(mind.query("?target_persist(value);")),
+                    "Promoted persistent rule did not survive reopen and producer deletion");
+            requirePrimaryRule(mind, derivedId);
+        } finally {
+            if (mind.isStorageUsed()) {
+                mind = mind.closeStorage();
+            }
+            if (mind.isStorageExists(storageName)) {
+                mind = mind.removeStorage(storageName);
+            }
+        }
     }
 }
