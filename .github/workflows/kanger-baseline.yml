@@ -79,19 +79,22 @@ jobs:
           grep -F 'explicit closeStorage: true' kanger-3.3.5-db.log
           grep -F 'normal JVM shutdown hook: true' kanger-3.3.5-db.log
 
-      - name: Capture Linker operation curve
+      - name: Capture final linear Linker curve
         if: matrix.id == 'ubuntu-java-21'
         shell: bash
         run: |
           set -o pipefail
           java \
-            -Dkanger.linker.profile.sizes=100,500 \
+            -Dkanger.linker.profile.sizes=100,500,1000 \
             -cp "target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerLinkerProfileRunner \
             2>&1 | tee kanger-linker-profile-ubuntu-java-21.log
           grep -E '^(size,|[0-9]+,)' \
             kanger-linker-profile-ubuntu-java-21.log \
             > kanger-linker-profile-ubuntu-java-21.csv
+          grep -F '100,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
+          grep -F '500,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
 
       - name: Upload 3.3.5 evidence
         if: always()
