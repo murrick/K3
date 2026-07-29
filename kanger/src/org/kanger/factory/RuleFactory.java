@@ -245,12 +245,28 @@ public class RuleFactory implements IFactory<IRule> {
         }
         Rule view = promotionViews.get(rule.getId());
         if (view == null) {
-            view = new Rule(mind).apply(rule.pack());
-            view.setGenerated(false);
-            view.setQuery(false);
-            view.setSecond(false);
+            view = new Rule(mind);
+            view.setId(rule.getId());
             view.setMindId(mind.getId());
-            view.getCauses().clear();
+            if (rule.getOriginId() != -1) {
+                view.setOrigin(mind.getTerms().get(rule.getOriginId()));
+            }
+            view.setVarIndex(rule.getVarIndex());
+            view.setQuery(false);
+            view.setGenerated(false);
+            if (rule.isStored()) {
+                view.setStored(mind);
+            }
+            view.setSubstitutable(rule.isSubstitutable());
+            view.setAbstractive(rule.isAbstractive());
+            view.setSecond(false);
+            view.getTree().clear();
+            for (List<Domain> branch : rule.getTree()) {
+                view.getTree().add(new ArrayList<>(branch));
+            }
+            view.getSolves().addAll(rule.getSolves());
+            view.getPredicates().addAll(rule.getPredicates());
+            view.getTerms().addAll(rule.getTerms());
             promotionViews.put(rule.getId(), view);
         } else {
             view.setMind(mind);
