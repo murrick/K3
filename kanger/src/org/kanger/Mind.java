@@ -98,6 +98,7 @@ public class Mind implements IMind {
     private Analyzer analyzer = null;                                   // Анализатор
     private Compiller compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
+    private LinkerStatistics lastLinkerStatistics = new LinkerStatistics();
 
     private boolean changed = false;
     private Boolean queryResult = null;
@@ -287,6 +288,7 @@ public class Mind implements IMind {
             log.commit((LogStore) m.getLog());
             queryResult = m.getQueryResult();
             compliedLine = m.getCompliedString();
+            lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
 
 
         }
@@ -319,6 +321,7 @@ public class Mind implements IMind {
 
             queryResult = m.getQueryResult();
             compliedLine = m.getCompliedString();
+            lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
 
             --transactionCounter;
             if (next == null && transactionCounter == 0) {
@@ -1345,7 +1348,7 @@ public class Mind implements IMind {
     }
 
     public LinkerStatistics getLinkerStatistics() {
-        return linker.snapshotStatistics();
+        return lastLinkerStatistics;
     }
 
     public TSolve findTSolve(List<TValue> list) throws Exception {
