@@ -22,10 +22,10 @@ import java.util.Stack;
  * Domains remain owned by Escalera/IBase and are hydrated after candidate
  * selection.
  *
- * Positional pruning is deliberately restricted to simple one-domain Rules.
- * Complex Rules participate in inference through their other Domains and must
- * remain candidates even when one visible constant position differs. They are
- * therefore held in a signature-level fallback bucket.
+ * Positional pruning is deliberately restricted to durable simple one-domain
+ * Rules. Complex, query and generated Rules participate in inference through
+ * lifecycle-dependent paths and therefore remain in a signature-level
+ * fallback bucket. They can never be excluded by direct constant positions.
  */
 final class RuleCandidateIndex {
 
@@ -201,51 +201,57 @@ final class RuleCandidateIndex {
     }
 
     private final IdIndex<SignatureKey> signatures = new IdIndex<>();
-    private final IdIndex<SignatureKey> complexSignatures = new IdIndex<>();
+    private final IdIndex<SignatureKey> fallbackSignatures = new IdIndex<>();
     private final IdIndex<PositionKey> positions = new IdIndex<>();
 
     void clear() {
         signatures.clear();
-        complexSignatures.clear();
+        fallbackSignatures.clear();
         positions.clear();
     }
 
     void mark() {
         signatures.mark();
-        complexSignatures.mark();
+        fallbackSignatures.mark();
         positions.mark();
     }
 
     void commit() {
         signatures.commit();
-        complexSignatures.commit();
+        fallbackSignatures.commit();
         positions.commit();
     }
 
     void release() {
         signatures.release();
-        complexSignatures.release();
+        fallbackSignatures.release();
         positions.release();
     }
 
     void mergeFrom(RuleCandidateIndex child) {
         signatures.mergeFrom(child.signatures);
-        complexSignatures.mergeFrom(child.complexSignatures);
+        fallbackSignatures.mergeFrom(child.fallbackSignatures);
         positions.mergeFrom(child.positions);
+    }
+
+    private boolean positionalEligible(Rule rule) throws Exception {
+        return !rule.isGenerated()
+                && !rule.isQuery()
+                && rule.getTree().size() == 1
+                && rule.getTree().get(0).size() == 1;
     }
 
     void indexRule(Rule rule) throws Exception {
         if (rule == null) {
             return;
         }
-        boolean simple = rule.getTree().size() == 1
-                && rule.getTree().get(0).size() == 1;
+        boolean positional = positionalEligible(rule);
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 SignatureKey signature = signature(domain, domain.isAntc());
                 signatures.add(signature, rule.getId());
-                if (!simple) {
-                    complexSignatures.add(signature, rule.getId());
+                if (!positional) {
+                    fallbackSignatures.add(signature, rule.getId());
                     continue;
                 }
                 for (int position = 0; position < domain.getRange(); ++position) {
@@ -263,14 +269,13 @@ final class RuleCandidateIndex {
         if (rule == null) {
             return;
         }
-        boolean simple = rule.getTree().size() == 1
-                && rule.getTree().get(0).size() == 1;
+        boolean positional = positionalEligible(rule);
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 SignatureKey signature = signature(domain, domain.isAntc());
                 signatures.remove(signature, rule.getId());
-                if (!simple) {
-                    complexSignatures.remove(signature, rule.getId());
+                if (!positional) {
+                    fallbackSignatures.remove(signature, rule.getId());
                     continue;
                 }
                 for (int position = 0; position < domain.getRange(); ++position) {
@@ -292,7 +297,7 @@ final class RuleCandidateIndex {
         if (selected.isEmpty()) {
             return;
         }
-        LinkedHashSet<Long> complex = complexSignatures.get(signature);
+        LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
 
         for (int position = 0; position < source.getRange(); ++position) {
             IArgument argument = source.get(position);
@@ -304,7 +309,7 @@ final class RuleCandidateIndex {
                     new PositionKey(signature, position, argument.getId()));
             compatible.addAll(positions.get(
                     new PositionKey(signature, position, WILDCARD_TERM_ID)));
-            compatible.addAll(complex);
+            compatible.addAll(fallback);
             selected.retainAll(compatible);
             if (selected.isEmpty()) {
                 return;
