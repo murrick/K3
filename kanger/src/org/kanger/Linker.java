@@ -52,9 +52,76 @@ public class Linker {
     private int dumpedPasses = 0;
     private int skippedPasses = 0;
 
+    /**
+     * Query-local tuple index used only while Linker rotates substitutions.
+     * TSolve is already transient execution state; the index stores references
+     * to those existing tuples and is cleared at the start of every link().
+     */
+    private final Map<TVariableSet, Map<Long, Map<Long, List<TSolve>>>> solveIndex = new HashMap<>();
+    private final Set<TVariableSet> unarySolveKeys = new HashSet<>();
+    private final Set<TSolve> indexedSolves = Collections.newSetFromMap(
+            new IdentityHashMap<TSolve, Boolean>());
+
     public Linker(Mind mind) {
         this.mind = mind;
         this.log = mind.getLog();
+    }
+
+    private void clearSolveIndex() {
+        solveIndex.clear();
+        unarySolveKeys.clear();
+        indexedSolves.clear();
+    }
+
+    private void indexSolve(TSolve solve) throws Exception {
+        if (solve == null || !indexedSolves.add(solve)) {
+            return;
+        }
+
+        TVariableSet key = new TVariableSet(solve, mind);
+        if (solve.size() == 1) {
+            unarySolveKeys.add(key);
+        }
+
+        Map<Long, Map<Long, List<TSolve>>> byVariable = solveIndex.get(key);
+        if (byVariable == null) {
+            byVariable = new HashMap<>();
+            solveIndex.put(key, byVariable);
+        }
+
+        for (TValue value : solve.getSolve()) {
+            long variableId = value.getTVarId();
+            Map<Long, List<TSolve>> byValue = byVariable.get(variableId);
+            if (byValue == null) {
+                byValue = new HashMap<>();
+                byVariable.put(variableId, byValue);
+            }
+
+            List<TSolve> candidates = byValue.get(value.getId());
+            if (candidates == null) {
+                candidates = new ArrayList<>();
+                byValue.put(value.getId(), candidates);
+            }
+            candidates.add(solve);
+        }
+    }
+
+    private List<TSolve> getSolveCandidates(TVariableSet key,
+                                            TVariable variable,
+                                            TValue value) {
+        if (value == null) {
+            return Collections.emptyList();
+        }
+        Map<Long, Map<Long, List<TSolve>>> byVariable = solveIndex.get(key);
+        if (byVariable == null) {
+            return Collections.emptyList();
+        }
+        Map<Long, List<TSolve>> byValue = byVariable.get(variable.getId());
+        if (byValue == null) {
+            return Collections.emptyList();
+        }
+        List<TSolve> candidates = byValue.get(value.getId());
+        return candidates == null ? Collections.<TSolve>emptyList() : candidates;
     }
 
     private static final class DomainKey {
@@ -141,6 +208,7 @@ public class Linker {
         mind.getFloodControl().clear();
 
         mind.getRuleSolves().clear();
+        clearSolveIndex();
 
         int passCounter = 0;
 
@@ -337,7 +405,7 @@ public class Linker {
         return result[0];
     }
 
-    private boolean isValidFor(SortedSet<TVariable> tail) {
+    private boolean isValidFor(SortedSet<TVariable> tail) throws Exception {
         final TVariable t = tail.first();
         boolean found = false;
         boolean result = false;
@@ -345,9 +413,9 @@ public class Linker {
             for (TVariableSet key : mind.getRuleSolves().keySet()) {
                 if (key.contains(t)) {
                     found = true;
-                    boolean success = false;
-                    for (TSolve s : mind.getRuleSolves().get(key)) {
-                        if (s.containsTValue(t.getCurrent())) {
+                    boolean success = unarySolveKeys.contains(key);
+                    if (!success) {
+                        for (TSolve s : getSolveCandidates(key, t, t.getCurrent())) {
                             if (s.size() > 1) {
                                 boolean complete = true;
                                 for (TVariable x : tail) {
@@ -368,9 +436,6 @@ public class Linker {
                                 success = true;
                                 break;
                             }
-                        } else if (s.size() == 1) {
-                            success = true;
-                            break;
                         }
                     }
                     if (success) {
@@ -536,6 +601,7 @@ public class Linker {
                         }
                     }
                     TSolve s = mind.addTSolve(list);
+                    indexSolve(s);
                 }
             }
 
