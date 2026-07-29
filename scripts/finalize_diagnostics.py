@@ -88,7 +88,7 @@ source = replace_once(
         System.exit(Boolean.FALSE.equals(result) ? 0 : 1);
 ''',
     '''        System.out.println(Diagnostics.snapshot(mind, "set_03_01 after query"));
-        int tvalueCount = mind.getTValues().size();
+        int tvalueCount = ((Mind) mind).getTValues().size();
         mind.closeStorage();
         if (tvalueCount > 4) {
             throw new AssertionError("set_03_01 produced runaway TValue state: " + tvalueCount);
@@ -168,11 +168,11 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          java \\
-            -Dkanger.diagnostics=true \\
-            -Dkanger.diagnostics.timeout.ms=5000 \\
-            -cp "target/classes:lib/*:kanger-server/lib/*" \\
-            org.kanger.KangerDiagnosticRunner \\
+          java \
+            -Dkanger.diagnostics=true \
+            -Dkanger.diagnostics.timeout.ms=5000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDiagnosticRunner \
             2>&1 | tee kanger-diagnostics-db.log
           grep -F 'D2 set_03_01 with storage: PASS' kanger-diagnostics-db.log
           grep -F 'explicit closeStorage: true' kanger-diagnostics-db.log
