@@ -42,9 +42,11 @@ import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Quznetsov on 25.05.15.
@@ -195,7 +197,24 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return cache.iterator(-1);
     }
 
+    private Set<Long> collectDynamicRuleTerms() throws Exception {
+        Set<Long> dynamicTerms = new HashSet<>();
+        for (IRule candidate : mind.getRules()) {
+            if (candidate == null || candidate.isDeleted(mind)) {
+                continue;
+            }
+            Rule rule = (Rule) candidate;
+            // Preserve the historical dynamic traversal and its Rule.terms
+            // side effect, but execute it once per Rule instead of once per
+            // candidate Term.
+            rule.containsTerm(Long.MIN_VALUE, mind);
+            dynamicTerms.addAll(rule.getTerms());
+        }
+        return dynamicTerms;
+    }
+
     public void pack() throws Exception {
+        Set<Long> dynamicRuleTerms = collectDynamicRuleTerms();
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted(mind)) {
@@ -233,17 +252,8 @@ public class DictionaryFactory implements IFactory<ITerm> {
                     }
                 }
 
-                // Dynamic function/FValue references are not guaranteed to be
-                // present in the structural term index. Preserve the original
-                // semantic scan only for the small set not found by indexed
-                // rules or current query result stores.
                 if (!found) {
-                    for (IRule r : mind.getRules()) {
-                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(termId, mind)) {
-                            found = true;
-                            break;
-                        }
-                    }
+                    found = dynamicRuleTerms.contains(termId);
                 }
 
                 if (!found) {
