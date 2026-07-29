@@ -113,10 +113,7 @@ public final class KangerC3BindingTest {
     }
 
     private void deleteUdf(String name, int range) throws Exception {
-        Operation operation = ((LibraryFactory) mind.getLibrary()).find(name + "(" + range + ")");
-        require(operation != null, "UDF is missing before deletion: " + name);
-        operation.setDeleted(true, (Mind) mind);
-        ((LibraryFactory) mind.getLibrary()).pack();
+        requireTrue("-" + name + "(" + range + ");", "UDF deletion failed");
         require(((LibraryFactory) mind.getLibrary()).find(name + "(" + range + ")") == null,
                 "Deleted UDF is still resolvable: " + name);
     }
@@ -145,16 +142,15 @@ public final class KangerC3BindingTest {
         require(Boolean.TRUE.equals(mind.query(query)), message + ": " + query);
     }
 
-    @SuppressWarnings("unchecked")
     public void set_c3_01_infrastructure_binding_precedence() throws Exception {
         resetWorkspace();
         installUdf("_add", 2, 999.0);
 
-        requireTrue("?$x x=1+2;", "Infrastructure addition was not selected");
-        Map<String, ITerm> row = (Map<String, ITerm>) mind.getValues().iterator().next();
-        require(Double.valueOf(3.0).equals(row.get("x").getValue()),
-                "UDF intercepted the infrastructure addition occurrence");
+        requireTrue("!@x c3_infra_source(x) -> c3_infra_result(x+2);",
+                "Infrastructure-bound rule was not accepted");
         requireFunction("_add", FunctionBinding.INFRASTRUCTURE);
+        requireTrue("!c3_infra_source(1);", "Infrastructure source was not accepted");
+        requireTrue("?c3_infra_result(3);", "UDF intercepted infrastructure addition");
     }
 
     public void set_c3_02_dynamic_udf_redefinition() throws Exception {
@@ -249,7 +245,8 @@ public final class KangerC3BindingTest {
 
     public void set_c3_06_legacy_packet_defaults_to_auto() throws Exception {
         resetWorkspace();
-        requireTrue("?$x x=abs(-2);", "Infrastructure function query failed");
+        requireTrue("!@x c3_abs_source(x) -> c3_abs_result(abs(x));",
+                "Durable infrastructure occurrence was not accepted");
         Function source = requireFunction("abs", FunctionBinding.INFRASTRUCTURE);
 
         ByteBuffer legacyPacket = new ByteBuffer()
