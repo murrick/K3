@@ -1,9 +1,7 @@
 name: KANGER III 3.3.5 integration
 
 on:
-  push:
-    branches:
-      - "perf/3.3.6-linker-agenda"
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -15,6 +13,7 @@ permissions:
 
 jobs:
   integrate:
+    if: github.event_name == 'pull_request' && github.head_ref == 'perf/3.3.6-linker-agenda'
     runs-on: ubuntu-latest
     steps:
       - name: Check out P4 branch
