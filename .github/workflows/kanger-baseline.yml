@@ -91,33 +91,7 @@ jobs:
             kanger-perf-ubuntu-java-21.jfr \
             > kanger-perf-execution-samples.txt
 
-          python3 - <<'PY'
-          import collections
-          import re
-
-          text = open('kanger-perf-execution-samples.txt', encoding='utf-8').read()
-          blocks = text.split('jdk.ExecutionSample {')[1:]
-          leaf = collections.Counter()
-          kanger = collections.Counter()
-          for block in blocks:
-              match = re.search(r'stackTrace = \[\s*([^\n]+)', block)
-              if match:
-                  leaf[match.group(1).strip()] += 1
-              frames = re.findall(r'^\s+([^\s].*?)$', block, re.MULTILINE)
-              for frame in frames:
-                  if frame.startswith('org.kanger.'):
-                      kanger[frame.strip()] += 1
-                      break
-
-          with open('kanger-perf-hotspots.txt', 'w', encoding='utf-8') as out:
-              out.write('Top sampled leaf frames\n')
-              for frame, count in leaf.most_common(40):
-                  out.write(f'{count:6d}  {frame}\n')
-              out.write('\nTop first KANGER frames\n')
-              for frame, count in kanger.most_common(60):
-                  out.write(f'{count:6d}  {frame}\n')
-          PY
-
+          python3 scripts/summarize_jfr.py
           cat kanger-perf-hotspots.txt
 
       - name: Upload baseline evidence
