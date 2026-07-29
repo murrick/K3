@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -70,6 +71,43 @@ public class RuleFactory implements IFactory<IRule> {
 
     private final Mind mind;
     private boolean action = false;
+
+    private static final class DomainKey {
+        private final long predicateId;
+        private final boolean antc;
+
+        private DomainKey(long predicateId, boolean antc) {
+            this.predicateId = predicateId;
+            this.antc = antc;
+        }
+
+        @Override
+        public boolean equals(Object value) {
+            if (this == value) {
+                return true;
+            }
+            if (!(value instanceof DomainKey)) {
+                return false;
+            }
+            DomainKey other = (DomainKey) value;
+            return predicateId == other.predicateId && antc == other.antc;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.valueOf(predicateId).hashCode();
+            return 31 * result + (antc ? 1 : 0);
+        }
+    }
+
+    /**
+     * A transaction-layered metadata index. It stores Rule IDs only; semantic
+     * objects remain owned by Escalera/IBase and are hydrated through get(id).
+     */
+    private RuleFactory parentIndex = null;
+    private final Map<DomainKey, LinkedHashSet<Long>> localDomainIndex = new HashMap<>();
+    private final Stack<Map<DomainKey, LinkedHashSet<Long>>> domainIndexStack = new Stack<>();
+    private boolean domainIndexInitialized = false;
 
     /**
      * Transaction-local overrides that make an already canonical generated
@@ -95,10 +133,112 @@ public class RuleFactory implements IFactory<IRule> {
         } else {
             cache = new Escalera(mind, SCHEMA, null);
         }
+        parentIndex = base;
+        localDomainIndex.clear();
+        domainIndexStack.clear();
+        domainIndexInitialized = base != null;
+
         primaryPromotions.clear();
         promotionViews.clear();
         promotionStack.clear();
         appliedPromotions.clear();
+    }
+
+    private Map<DomainKey, LinkedHashSet<Long>> copyDomainIndex() {
+        Map<DomainKey, LinkedHashSet<Long>> copy = new HashMap<>();
+        for (Map.Entry<DomainKey, LinkedHashSet<Long>> entry : localDomainIndex.entrySet()) {
+            copy.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
+        }
+        return copy;
+    }
+
+    private void ensureDomainIndex() throws Exception {
+        if (domainIndexInitialized) {
+            return;
+        }
+        localDomainIndex.clear();
+        for (Object value : cache) {
+            indexRule((Rule) value);
+        }
+        domainIndexInitialized = true;
+    }
+
+    private void indexRule(Rule rule) throws Exception {
+        if (rule == null) {
+            return;
+        }
+        Set<DomainKey> indexed = new HashSet<>();
+        for (List<Domain> branch : rule.getTree()) {
+            for (Domain domain : branch) {
+                DomainKey key = new DomainKey(domain.getPredicateId(), domain.isAntc());
+                if (indexed.add(key)) {
+                    LinkedHashSet<Long> ids = localDomainIndex.get(key);
+                    if (ids == null) {
+                        ids = new LinkedHashSet<>();
+                        localDomainIndex.put(key, ids);
+                    }
+                    ids.add(rule.getId());
+                }
+            }
+        }
+    }
+
+    private void unindexRule(Rule rule) throws Exception {
+        if (rule == null || !domainIndexInitialized) {
+            return;
+        }
+        Set<DomainKey> indexed = new HashSet<>();
+        for (List<Domain> branch : rule.getTree()) {
+            for (Domain domain : branch) {
+                DomainKey key = new DomainKey(domain.getPredicateId(), domain.isAntc());
+                if (indexed.add(key)) {
+                    LinkedHashSet<Long> ids = localDomainIndex.get(key);
+                    if (ids != null) {
+                        ids.remove(rule.getId());
+                        if (ids.isEmpty()) {
+                            localDomainIndex.remove(key);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void collectDomainIds(DomainKey key, LinkedHashSet<Long> result) throws Exception {
+        if (parentIndex != null) {
+            parentIndex.collectDomainIds(key, result);
+        }
+        ensureDomainIndex();
+        LinkedHashSet<Long> local = localDomainIndex.get(key);
+        if (local != null) {
+            result.addAll(local);
+        }
+    }
+
+    private void mergeDomainIndex(RuleFactory child) throws Exception {
+        ensureDomainIndex();
+        child.ensureDomainIndex();
+        for (Map.Entry<DomainKey, LinkedHashSet<Long>> entry : child.localDomainIndex.entrySet()) {
+            LinkedHashSet<Long> ids = localDomainIndex.get(entry.getKey());
+            if (ids == null) {
+                ids = new LinkedHashSet<>();
+                localDomainIndex.put(entry.getKey(), ids);
+            }
+            ids.addAll(entry.getValue());
+        }
+    }
+
+    public List<IRule> findByDomain(long predicateId, boolean antc) throws Exception {
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        collectDomainIds(new DomainKey(predicateId, antc), ids);
+        List<IRule> result = new ArrayList<>();
+        for (long id : ids) {
+            IRule rule = get(id);
+            if (rule != null && !rule.isDeleted(mind)) {
+                result.add(rule);
+            }
+        }
+        return result;
     }
 
     public Set<Long> commit(RuleFactory base) throws Exception {
@@ -141,6 +281,7 @@ public class RuleFactory implements IFactory<IRule> {
                 list.add(((IUnit) s).getId());
             }
         }
+        mergeDomainIndex(base);
         action = action || base.isAction();
         return list;
     }
@@ -202,6 +343,7 @@ public class RuleFactory implements IFactory<IRule> {
                     }
                 }
             }
+            indexRule((Rule) r);
             action = true;
             return r;
         }
@@ -316,11 +458,16 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void mark() throws Exception {
         cache.mark();
+        ensureDomainIndex();
+        domainIndexStack.push(copyDomainIndex());
         promotionStack.push(new HashSet<>(primaryPromotions));
     }
 
     public void commit() throws Exception {
         cache.commit();
+        if (!domainIndexStack.isEmpty()) {
+            domainIndexStack.pop();
+        }
         if (!promotionStack.isEmpty()) {
             promotionStack.pop();
         }
@@ -328,6 +475,11 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void release() throws Exception {
         cache.release();
+        if (!domainIndexStack.isEmpty()) {
+            localDomainIndex.clear();
+            localDomainIndex.putAll(domainIndexStack.pop());
+            domainIndexInitialized = true;
+        }
         if (!promotionStack.isEmpty()) {
             primaryPromotions.clear();
             primaryPromotions.addAll(promotionStack.pop());
@@ -502,6 +654,7 @@ public class RuleFactory implements IFactory<IRule> {
             }
         }
         for (Object o : toDelete) {
+            unindexRule((Rule) o);
             cache.delete(((IUnit) o).getId());
         }
     }

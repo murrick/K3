@@ -117,6 +117,21 @@ public class Linker {
         return candidates == null ? Collections.<IRule>emptyList() : candidates;
     }
 
+    private void addOppositeNatives(Set<IRule> ruleSet,
+                                    IRule source,
+                                    Set<DomainKey> expanded) throws Exception {
+        for (List<Domain> branch : ((Rule) source).getTree()) {
+            for (Domain domain : branch) {
+                DomainKey candidateKey = new DomainKey(
+                        domain.getPredicateId(), !domain.isAntc());
+                if (expanded.add(candidateKey)) {
+                    ruleSet.addAll(mind.getRules().findByDomain(
+                            candidateKey.predicateId, candidateKey.antc));
+                }
+            }
+        }
+    }
+
     public void link(Rule rule, boolean logging) throws Exception {
 
         mind.getExcludedDomains().clear();
@@ -173,16 +188,17 @@ public class Linker {
             }
 
             if (rule != null) {
+                Set<DomainKey> expanded = new HashSet<>();
                 ruleSet.add(rule);
-                ruleSet.addAll(rule.getNatives());
+                addOppositeNatives(ruleSet, rule, expanded);
                 for (IRule r : mind.getRules()) {
                     if (!r.isDeleted(mind)) {
                         if (((Rule) r).isUsed(mind)) {
                             ruleSet.add(r);
-                            ruleSet.addAll(((Rule) r).getNatives());
+                            addOppositeNatives(ruleSet, r, expanded);
                         } else if (r.isGenerated() && r.getId() > topId) {
                             ruleSet.add(r);
-                            ruleSet.addAll(((Rule) r).getNatives());
+                            addOppositeNatives(ruleSet, r, expanded);
                         }
                     }
                 }
