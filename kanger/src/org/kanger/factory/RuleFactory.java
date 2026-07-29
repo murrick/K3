@@ -106,7 +106,9 @@ public class RuleFactory implements IFactory<IRule> {
      */
     private RuleFactory parentIndex = null;
     private final Map<DomainKey, LinkedHashSet<Long>> localDomainIndex = new HashMap<>();
+    private final Map<Long, LinkedHashSet<Long>> localTermIndex = new HashMap<>();
     private final Stack<Map<DomainKey, LinkedHashSet<Long>>> domainIndexStack = new Stack<>();
+    private final Stack<Map<Long, LinkedHashSet<Long>>> termIndexStack = new Stack<>();
     private boolean domainIndexInitialized = false;
 
     /**
@@ -135,7 +137,9 @@ public class RuleFactory implements IFactory<IRule> {
         }
         parentIndex = base;
         localDomainIndex.clear();
+        localTermIndex.clear();
         domainIndexStack.clear();
+        termIndexStack.clear();
         domainIndexInitialized = base != null;
 
         primaryPromotions.clear();
@@ -152,11 +156,20 @@ public class RuleFactory implements IFactory<IRule> {
         return copy;
     }
 
+    private Map<Long, LinkedHashSet<Long>> copyTermIndex() {
+        Map<Long, LinkedHashSet<Long>> copy = new HashMap<>();
+        for (Map.Entry<Long, LinkedHashSet<Long>> entry : localTermIndex.entrySet()) {
+            copy.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
+        }
+        return copy;
+    }
+
     private void ensureDomainIndex() throws Exception {
         if (domainIndexInitialized) {
             return;
         }
         localDomainIndex.clear();
+        localTermIndex.clear();
         for (Object value : cache) {
             indexRule((Rule) value);
         }
@@ -168,8 +181,10 @@ public class RuleFactory implements IFactory<IRule> {
             return;
         }
         Set<DomainKey> indexed = new HashSet<>();
+        rule.getTerms().add(rule.getOriginId());
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
+                rule.getTerms().addAll(domain.getTerms(mind, true));
                 DomainKey key = new DomainKey(domain.getPredicateId(), domain.isAntc());
                 if (indexed.add(key)) {
                     LinkedHashSet<Long> ids = localDomainIndex.get(key);
@@ -180,6 +195,14 @@ public class RuleFactory implements IFactory<IRule> {
                     ids.add(rule.getId());
                 }
             }
+        }
+        for (long termId : rule.getTerms()) {
+            LinkedHashSet<Long> ids = localTermIndex.get(termId);
+            if (ids == null) {
+                ids = new LinkedHashSet<>();
+                localTermIndex.put(termId, ids);
+            }
+            ids.add(rule.getId());
         }
     }
 
@@ -202,6 +225,15 @@ public class RuleFactory implements IFactory<IRule> {
                 }
             }
         }
+        for (long termId : rule.getTerms()) {
+            LinkedHashSet<Long> ids = localTermIndex.get(termId);
+            if (ids != null) {
+                ids.remove(rule.getId());
+                if (ids.isEmpty()) {
+                    localTermIndex.remove(termId);
+                }
+            }
+        }
     }
 
     private void collectDomainIds(DomainKey key, LinkedHashSet<Long> result) throws Exception {
@@ -210,6 +242,17 @@ public class RuleFactory implements IFactory<IRule> {
         }
         ensureDomainIndex();
         LinkedHashSet<Long> local = localDomainIndex.get(key);
+        if (local != null) {
+            result.addAll(local);
+        }
+    }
+
+    private void collectTermIds(long termId, LinkedHashSet<Long> result) throws Exception {
+        if (parentIndex != null) {
+            parentIndex.collectTermIds(termId, result);
+        }
+        ensureDomainIndex();
+        LinkedHashSet<Long> local = localTermIndex.get(termId);
         if (local != null) {
             result.addAll(local);
         }
@@ -226,6 +269,14 @@ public class RuleFactory implements IFactory<IRule> {
             }
             ids.addAll(entry.getValue());
         }
+        for (Map.Entry<Long, LinkedHashSet<Long>> entry : child.localTermIndex.entrySet()) {
+            LinkedHashSet<Long> ids = localTermIndex.get(entry.getKey());
+            if (ids == null) {
+                ids = new LinkedHashSet<>();
+                localTermIndex.put(entry.getKey(), ids);
+            }
+            ids.addAll(entry.getValue());
+        }
     }
 
     public List<IRule> findByDomain(long predicateId, boolean antc) throws Exception {
@@ -239,6 +290,20 @@ public class RuleFactory implements IFactory<IRule> {
             }
         }
         return result;
+    }
+
+    public boolean hasActiveRuleWithTerm(long termId) throws Exception {
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        collectTermIds(termId, ids);
+        for (long id : ids) {
+            Rule rule = get(id);
+            if (rule != null
+                    && !rule.isDeleted(mind)
+                    && rule.containsTerm(termId, mind)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Set<Long> commit(RuleFactory base) throws Exception {
@@ -460,6 +525,7 @@ public class RuleFactory implements IFactory<IRule> {
         cache.mark();
         ensureDomainIndex();
         domainIndexStack.push(copyDomainIndex());
+        termIndexStack.push(copyTermIndex());
         promotionStack.push(new HashSet<>(primaryPromotions));
     }
 
@@ -467,6 +533,9 @@ public class RuleFactory implements IFactory<IRule> {
         cache.commit();
         if (!domainIndexStack.isEmpty()) {
             domainIndexStack.pop();
+        }
+        if (!termIndexStack.isEmpty()) {
+            termIndexStack.pop();
         }
         if (!promotionStack.isEmpty()) {
             promotionStack.pop();
@@ -478,6 +547,11 @@ public class RuleFactory implements IFactory<IRule> {
         if (!domainIndexStack.isEmpty()) {
             localDomainIndex.clear();
             localDomainIndex.putAll(domainIndexStack.pop());
+            domainIndexInitialized = true;
+        }
+        if (!termIndexStack.isEmpty()) {
+            localTermIndex.clear();
+            localTermIndex.putAll(termIndexStack.pop());
             domainIndexInitialized = true;
         }
         if (!promotionStack.isEmpty()) {

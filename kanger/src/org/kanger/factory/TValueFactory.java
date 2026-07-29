@@ -155,13 +155,8 @@ public class TValueFactory implements IFactory<TValue> {
             if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             } else {
-                boolean found = false;
-                for (IRule r : mind.getRules()) {
-                    if (!r.isDeleted(mind) && ((Rule) r).containsTerm(((TValue) o).getValue(mind).getId(), mind)) {
-                        found = true;
-                        break;
-                    }
-                }
+                boolean found = mind.getRules().hasActiveRuleWithTerm(
+                        ((TValue) o).getValue(mind).getId());
                 if (!found) {
                     toDelete.add(o);
                 }
