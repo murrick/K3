@@ -99,15 +99,7 @@ public class Base implements IBase, Iterable<IStep> {
     }
 
     private long cacheWeight(IStep one) {
-        if (one == null) {
-            return 0L;
-        }
-        long weight = one.getSize();
-        if (weight <= 0L) {
-            weight = Math.max(1L, one.pack().getBuffer().length);
-            one.setSize(weight);
-        }
-        return weight;
+        return one == null ? 0L : Math.max(1L, one.getSize());
     }
 
     private void removeCached(long id, boolean eviction) {
