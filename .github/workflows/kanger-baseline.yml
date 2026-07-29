@@ -1,20 +1,15 @@
 name: KANGER III diagnostics finalize
 
 on:
-  push:
-    branches:
-      - "debug/3.3.4-diagnostics"
+  pull_request:
   workflow_dispatch:
-
-concurrency:
-  group: kanger-diagnostics-finalize
-  cancel-in-progress: true
 
 permissions:
   contents: write
 
 jobs:
   finalize:
+    if: github.event_name == 'pull_request' && github.head_ref == 'debug/3.3.4-diagnostics'
     runs-on: ubuntu-latest
     steps:
       - name: Check out diagnostics branch
