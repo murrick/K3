@@ -222,4 +222,78 @@ public final class KangerStabilizationTest {
             }
         }
     }
+
+    public void set_s5a_06_sibling_canonicalization() throws Exception {
+        resetWorkspace();
+        Mind parent = (Mind) mind;
+        Mind first = new Mind(parent);
+        Mind second = new Mind(parent);
+
+        require(Boolean.TRUE.equals(first.query("!shared(value);")), "First sibling insertion failed");
+        require(Boolean.TRUE.equals(second.query("!shared(value);")), "Second sibling insertion failed");
+        IRule firstRule = first.getAcceptedRule();
+        IRule secondRule = second.getAcceptedRule();
+        require(firstRule != null && secondRule != null, "Sibling accepted rules are missing");
+        require(firstRule.getId() != secondRule.getId(),
+                "Independent sibling deltas unexpectedly shared a pre-commit rule id");
+
+        require(parent.commit(first), "First sibling commit failed");
+        IRule canonical = parent.getRules().find(secondRule);
+        require(canonical != null && canonical.getId() == firstRule.getId(),
+                "Updated parent does not expose the first sibling as canonical");
+
+        require(parent.commit(second), "Second sibling commit failed");
+        IRule merged = parent.getRules().find(secondRule);
+        require(merged != null && merged.getId() == firstRule.getId(),
+                "Second sibling was not deduplicated to the canonical parent rule");
+        require(parent.getRules().get(secondRule.getId()) == null,
+                "Duplicate sibling rule remained addressable after merge and pack");
+
+        mind = parent;
+    }
+
+    public void set_s5a_07_nested_commit_release() throws Exception {
+        resetWorkspace();
+        Mind parent = (Mind) mind;
+
+        Mind rollbackLevel1 = new Mind(parent);
+        require(Boolean.TRUE.equals(rollbackLevel1.query("!rollback_l1(value);")),
+                "Rollback level 1 insertion failed");
+        long rollbackLevel1Id = rollbackLevel1.getAcceptedRule().getId();
+
+        Mind rollbackLevel2 = new Mind(rollbackLevel1);
+        require(Boolean.TRUE.equals(rollbackLevel2.query("!rollback_l2(value);")),
+                "Rollback level 2 insertion failed");
+        long rollbackLevel2Id = rollbackLevel2.getAcceptedRule().getId();
+
+        require(rollbackLevel1.commit(rollbackLevel2), "Nested child commit into level 1 failed");
+        require(rollbackLevel1.getRules().get(rollbackLevel2Id) != null,
+                "Nested child is not visible in its committed intermediate parent");
+        require(parent.getRules().get(rollbackLevel1Id) == null
+                        && parent.getRules().get(rollbackLevel2Id) == null,
+                "Nested changes leaked into root before outer commit");
+
+        parent.release(rollbackLevel1);
+        require(parent.getRules().get(rollbackLevel1Id) == null
+                        && parent.getRules().get(rollbackLevel2Id) == null,
+                "Outer release did not discard the full nested delta");
+
+        Mind commitLevel1 = new Mind(parent);
+        require(Boolean.TRUE.equals(commitLevel1.query("!commit_l1(value);")),
+                "Commit level 1 insertion failed");
+        long commitLevel1Id = commitLevel1.getAcceptedRule().getId();
+
+        Mind commitLevel2 = new Mind(commitLevel1);
+        require(Boolean.TRUE.equals(commitLevel2.query("!commit_l2(value);")),
+                "Commit level 2 insertion failed");
+        long commitLevel2Id = commitLevel2.getAcceptedRule().getId();
+
+        require(commitLevel1.commit(commitLevel2), "Nested child commit into level 1 failed");
+        require(parent.commit(commitLevel1), "Outer commit into root failed");
+        require(parent.getRules().get(commitLevel1Id) != null
+                        && parent.getRules().get(commitLevel2Id) != null,
+                "Nested commit chain did not publish the complete delta");
+
+        mind = parent;
+    }
 }
