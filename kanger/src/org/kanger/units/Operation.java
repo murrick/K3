@@ -225,6 +225,13 @@ public class Operation implements IUnit<Operation>, IOperation {
 
     @Override
     public void setDeleted(boolean on, Mind mind) {
+        if (on && mode == LibMode.FUNCTION && mind.getFValues() != null) {
+            try {
+                mind.getFValues().invalidateUdf(name, range);
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to invalidate function values for " + toString(), e);
+            }
+        }
         mind.setUnitDeleted(this, on);
     }
 

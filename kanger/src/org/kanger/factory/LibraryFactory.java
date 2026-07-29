@@ -27,6 +27,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.enums.LibMode;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IOperation;
 import org.kanger.interfaces.internal.IBase;
@@ -92,6 +93,9 @@ public class LibraryFactory implements IFactory<IOperation> {
     public synchronized IOperation add(IOperation s) throws Exception {
         Operation x = find(s.toString());
         if (x != null) {
+            if (x.getMode() == LibMode.FUNCTION || s.getMode() == LibMode.FUNCTION) {
+                mind.getFValues().invalidateUdf(x.getName(), x.getRange());
+            }
             x.setDeleted(false, mind);
             x.setMode(s.getMode());
             x.setProc(((Operation) s).getProc());
@@ -186,5 +190,4 @@ public class LibraryFactory implements IFactory<IOperation> {
     public void release() throws Exception {
         cache.release();
     }
-
 }

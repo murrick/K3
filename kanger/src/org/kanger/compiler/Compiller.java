@@ -26,14 +26,23 @@
 package org.kanger.compiler;
 
 import org.kanger.Mind;
+import org.kanger.enums.FunctionBinding;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
-import org.kanger.units.*;
+import org.kanger.units.Domain;
+import org.kanger.units.Function;
+import org.kanger.units.Rule;
+import org.kanger.units.TVariable;
+import org.kanger.units.Term;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 public class Compiller {
 
@@ -43,9 +52,19 @@ public class Compiller {
         this.mind = mind;
     }
 
+    private String functionSignature(Leaf root) {
+        return root.getValue() + "(" + root.getRange() + ")";
+    }
+
     private boolean isFunction(Leaf root) throws Exception {
-        String name = root.getValue() + "(" + root.getRange() + ")";
+        String name = functionSignature(root);
         return mind.getCalculator().getFunctions().getSysOps().containsKey(name) || mind.getLibrary().find(name) != null;
+    }
+
+    private FunctionBinding getFunctionBinding(Leaf root) {
+        return mind.getCalculator().getFunctions().getSysOps().containsKey(functionSignature(root))
+                ? FunctionBinding.INFRASTRUCTURE
+                : FunctionBinding.UDF_DYNAMIC;
     }
 
     private boolean isPredicate(Leaf root) {
@@ -60,11 +79,13 @@ public class Compiller {
         construct((Rule) r, ((Rule) r).getTree().get(0), root, antc, new HashMap<String, Argument>(), externals);
 
         long id = r.getId();
-        r = mind.getRules().add(r);
+        r = mind.getRules().add(r, !query);
 
         if (r.getId() == id) {
             ((Rule) r).setQuery(query);
             mind.getRules().expand((Rule) r);
+        } else if (mind.getRules().isPromotedHere(r)) {
+            ((Rule) r).setSecond(false);
         } else {
             ((Rule) r).setSecond(true);
         }
@@ -73,7 +94,7 @@ public class Compiller {
 
     private List<List<Domain>> construct(Rule r, List<Domain> t, Leaf root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
         List<List<Domain>> list = new ArrayList<>();
-        Domain d = null;
+        Domain d;
         if (root == null) {
             throw new ParseErrorException("0@Term expected");
         }
@@ -115,7 +136,6 @@ public class Compiller {
                         list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals));
                     }
                     list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
-//                    list.addAll(tmp);
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
@@ -163,11 +183,9 @@ public class Compiller {
             p = new Argument(t);
             r.setSubstitutable(true);
 
-            /* Формирование списка подчиненных t-переменных для последней появившейся ранее c-переменной.
-             */
             ITerm c = null;
             for (Argument a : replacements.values()) {
-                if (!a.isEmpty(mind) && a.getValue(mind).isCVariable() /*&& (c == null || ((Term) c).getIndex() < ((Term) a.getValue(mind)).getIndex())*/) {
+                if (!a.isEmpty(mind) && a.getValue(mind).isCVariable()) {
                     c = a.getValue(mind);
                     ((Term) c).setDomini(true);
                 }
@@ -186,7 +204,7 @@ public class Compiller {
         ArgumentsList arg = new ArgumentsList();
         parseArgs(arg, root.getLeft(), 0, replacements, externals);
         parseArgs(arg, root.getRight(), 0, replacements, externals);
-        Predicate pred = mind.getPredicates().add(mind.getTerms().add(root.getValue()), arg.size());
+        org.kanger.units.Predicate pred = mind.getPredicates().add(mind.getTerms().add(root.getValue()), arg.size());
         d.setPredicate(pred);
         d.setAntc(antc);
         d.getArguments().addAll(arg);
@@ -196,20 +214,21 @@ public class Compiller {
 
     private void parseArgs(ArgumentsList arg, Leaf root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
         if (root == null) {
+            return;
         } else if (isFunction(root)) {
             ArgumentsList arguments = new ArgumentsList();
             parseArgs(arguments, root.getLeft(), level + 1, replacements, externals);
             parseArgs(arguments, root.getRight(), level + 1, replacements, externals);
-            Function f = mind.getFunctions().add(mind.getTerms().add(root.getValue()), arguments);
-            Argument t = new Argument(f);
-            arg.add(t);
-//        } else if ("_interval".equals(root.getValue())) {
+            Function f = mind.getFunctions().add(
+                    mind.getTerms().add(root.getValue()),
+                    arguments,
+                    getFunctionBinding(root));
+            arg.add(new Argument(f));
         } else if ("_set".equals(root.getValue())) {
             ArgumentsList arguments = new ArgumentsList();
             parseArgs(arguments, root.getLeft(), level + 1, replacements, externals);
             parseArgs(arguments, root.getRight(), level + 1, replacements, externals);
-            Argument t = new Argument(mind.getTerms().add(arguments));
-            arg.add(t);
+            arg.add(new Argument(mind.getTerms().add(arguments)));
         } else if (",".equals(root.getValue())) {
             parseArgs(arg, root.getLeft(), level + 1, replacements, externals);
             parseArgs(arg, root.getRight(), level + 1, replacements, externals);
@@ -220,8 +239,8 @@ public class Compiller {
                 arg.add(new Argument(externals.poll()));
             }
         } else if (root.getRight() == null && root.getLeft() == null) {
-            Argument t;
-            if ((t = replacements.get(root.getValue())) == null) {
+            Argument t = replacements.get(root.getValue());
+            if (t == null) {
                 t = new Argument(mind.getTerms().add(root.getValue()));
             }
             arg.add(t);
@@ -229,6 +248,4 @@ public class Compiller {
             throw new ParseErrorException(root.getPos() + "@Undefined function");
         }
     }
-
-
 }

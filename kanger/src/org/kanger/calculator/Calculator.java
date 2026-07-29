@@ -28,6 +28,7 @@ package org.kanger.calculator;
 import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
+import org.kanger.enums.FunctionBinding;
 import org.kanger.enums.LibMode;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IArgument;
@@ -117,19 +118,49 @@ public class Calculator {
         return k;
     }
 
+    private Operation findInfrastructure(String name, int range) {
+        Operation operation = functions.getSysOps().get(name + "(" + range + ")");
+        return operation != null ? operation : functions.getSysOps().get(name + "(0)");
+    }
+
+    private Operation findUdf(String name, int range) throws Exception {
+        Operation operation = mind.getLibrary().find(name + "(" + range + ")");
+        return operation != null ? operation : mind.getLibrary().find(name + "(0)");
+    }
+
+    private Operation findLegacy(String name, int range) throws Exception {
+        String signature = name + "(" + range + ")";
+        Operation operation = functions.getSysOps().get(signature);
+        if (operation == null) {
+            operation = mind.getLibrary().find(signature);
+        }
+        if (operation == null) {
+            String fallback = name + "(0)";
+            operation = functions.getSysOps().get(fallback);
+            if (operation == null) {
+                operation = mind.getLibrary().find(fallback);
+            }
+        }
+        return operation;
+    }
+
+    private Operation resolve(Function function) throws Exception {
+        String name = function.getName(mind).toString();
+        FunctionBinding binding = function.getBinding();
+        switch (binding) {
+            case INFRASTRUCTURE:
+                return findInfrastructure(name, function.getRange());
+            case UDF_DYNAMIC:
+                return findUdf(name, function.getRange());
+            case LEGACY_AUTO:
+            default:
+                return findLegacy(name, function.getRange());
+        }
+    }
+
     public int execute(Function fu) throws Exception {
         int k = -1;
-        String n = fu.getName(mind) + "(" + fu.getRange() + ")";
-        Operation op = functions.getSysOps().get(n) != null
-                ? functions.getSysOps().get(n)
-                : mind.getLibrary().find(n);
-
-        if (op == null) {
-            n = fu.getName(mind) + "(0)";
-            op = functions.getSysOps().get(n) != null
-                    ? functions.getSysOps().get(n)
-                    : mind.getLibrary().find(n);
-        }
+        Operation op = resolve(fu);
 
         if (op != null) {
             for (IArgument a : fu.getArguments()) {
@@ -162,6 +193,12 @@ public class Calculator {
         List<ITerm> list = new ArrayList<>();
         Term top = null;
         if (source.getType() == DataType.INTERVAL) {
+            if (step != null
+                    && step.getValue() instanceof Number
+                    && ((Number) step.getValue()).doubleValue() == 0.0d) {
+                return list;
+            }
+
             Term min = (Term) ((Collection) source.getValue()).toArray()[0];
             Term max = (Term) ((Collection) source.getValue()).toArray()[1];
             Term cur = min;
@@ -183,7 +220,7 @@ public class Calculator {
                             : getFunctions()._dec(cur));
                 }
                 if (next.getId() == cur.getId()) {
-                    list.add(max);
+                    list.clear();
                     break;
                 } else if (rc < 0 && next.compareTo(max) > 0) {
                     break;
@@ -270,4 +307,3 @@ public class Calculator {
 
 
 }
-
