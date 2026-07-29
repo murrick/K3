@@ -12,14 +12,21 @@ permissions:
 
 jobs:
   build-and-regression:
-    name: Java ${{ matrix.java }}
-    runs-on: ubuntu-latest
+    name: ${{ matrix.id }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        java:
-          - "8"
-          - "21"
+        include:
+          - id: ubuntu-java-8
+            os: ubuntu-latest
+            java: "8"
+          - id: ubuntu-java-21
+            os: ubuntu-latest
+            java: "21"
+          - id: macos-java-21
+            os: macos-latest
+            java: "21"
 
     steps:
       - name: Check out repository
@@ -36,28 +43,28 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mvn -B -V clean verify 2>&1 | tee "kanger-test-java-${{ matrix.java }}.log"
+          mvn -B -V clean verify 2>&1 | tee "kanger-test-${{ matrix.id }}.log"
 
       - name: Verify historical and stabilization corpora
         shell: bash
         run: |
-          grep -Eq 'Success:[[:space:]]+101' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'Stabilization Success:[[:space:]]+7' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'Stabilization Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'C1 Success:[[:space:]]+5' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'C1 Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'C4 Success:[[:space:]]+3' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'C4 Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'C3 Success:[[:space:]]+6' "kanger-test-java-${{ matrix.java }}.log"
-          grep -Eq 'C3 Fails:[[:space:]]+0' "kanger-test-java-${{ matrix.java }}.log"
+          grep -Eq 'Success:[[:space:]]+101' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'Stabilization Success:[[:space:]]+7' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'Stabilization Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C1 Success:[[:space:]]+5' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C1 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C4 Success:[[:space:]]+3' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C4 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C3 Success:[[:space:]]+6' "kanger-test-${{ matrix.id }}.log"
+          grep -Eq 'C3 Fails:[[:space:]]+0' "kanger-test-${{ matrix.id }}.log"
 
       - name: Upload baseline evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: kanger-baseline-java-${{ matrix.java }}
+          name: kanger-baseline-${{ matrix.id }}
           path: |
-            kanger-test-java-${{ matrix.java }}.log
+            kanger-test-${{ matrix.id }}.log
             target/*.jar
           if-no-files-found: warn
