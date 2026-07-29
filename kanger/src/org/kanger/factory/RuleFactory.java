@@ -397,10 +397,28 @@ public class RuleFactory implements IFactory<IRule> {
         return r;
     }
 
+    private boolean shouldPromoteInsertResult(Solve candidate, IRule existing) throws Exception {
+        if (mind.getQueryPass() != QueryPass.INSERT
+                || !(candidate instanceof Domain)
+                || existing == null
+                || !isGenerated(existing)) {
+            return false;
+        }
+        Domain domain = (Domain) candidate;
+        IRule owner = domain.getRule();
+        return owner != null
+                && owner.isQuery()
+                && domain.isComplete()
+                && !domain.isExcluded(mind);
+    }
+
     public IRule find(Solve domain) throws Exception {
         for (long id : cache.find(domain.getHash(mind))) {
             IRule one = get(id);
             if (((Rule) one).equalsTo(domain)) {
+                if (shouldPromoteInsertResult(domain, one)) {
+                    one = promotePrimary(one);
+                }
                 return one;
             }
         }
