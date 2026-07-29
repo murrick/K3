@@ -123,14 +123,23 @@ public final class KangerDiagnosticRunner {
         new DB().init(user);
         IMind mind = new Mind(user);
         mind = mind.useStorage("diagnostics/set0301");
-        System.out.println(Diagnostics.snapshot(mind, "before set_03_01"));
-        boolean success = KangerTest.test(mind, "set_03_01");
-        System.out.println(Diagnostics.snapshot(mind, "after set_03_01"));
-        try {
-            mind.closeStorage();
-        } finally {
-            System.exit(success ? 0 : 1);
+        mind = mind.clearWorkspace();
+        System.out.println(Diagnostics.snapshot(mind, "set_03_01 after clear"));
+
+        boolean compiled = mind.compile("!@x ~a(x,x); !@x $y a(y,x);");
+        if (!compiled) {
+            throw new IllegalStateException("set_03_01 setup compilation rejected");
         }
+        System.out.println(Diagnostics.snapshot(mind, "set_03_01 after compile"));
+        Diagnostics.resetStorageCounters(mind);
+
+        Boolean result;
+        try (Diagnostics.Watchdog watchdog = Diagnostics.watch("set_03_01 direct query", mind)) {
+            result = mind.query("?$x @y a(x,y);");
+        }
+        System.out.println(Diagnostics.snapshot(mind, "set_03_01 after query"));
+        mind.closeStorage();
+        System.exit(Boolean.FALSE.equals(result) ? 0 : 1);
     }
 
     private static void writeMarker(String scenario,

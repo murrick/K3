@@ -237,8 +237,9 @@ public class Linker {
 
         do {
 
+            ++passCounter;
             if (logging) {
-                log.add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", ++passCounter));
+                log.add(LogMode.ANALYZER, String.format("---------- LINKER PASS %03d ---------------", passCounter));
             }
 
             mind.getRules().dropAction();
@@ -313,6 +314,20 @@ public class Linker {
 
             rotator(leftList, causes, logging);
             rotator(ruleList, causes, logging);
+
+            if (Boolean.parseBoolean(System.getProperty("kanger.diagnostics", "false"))
+                    && (passCounter <= 10 || passCounter % 100 == 0)) {
+                System.err.println("[KANGER-LINKER] pass=" + passCounter
+                        + " ruleSet=" + ruleSet.size()
+                        + " rules=" + mind.getRules().size()
+                        + " tvalues=" + mind.getTValues().size()
+                        + " actions{rules=" + mind.getRules().isAction()
+                        + ",tvalues=" + mind.getTValues().isAction()
+                        + ",fvalues=" + mind.getFValues().isAction()
+                        + ",tempHypothesis=" + mind.getTempHypothesis().isAction()
+                        + ",hypothesis=" + mind.getHypothesis().isAction()
+                        + "}");
+            }
 
         } while (mind.getRules().isAction()
                 || mind.getTValues().isAction()
