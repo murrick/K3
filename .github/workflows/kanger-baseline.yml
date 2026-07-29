@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   apply-diagnostics:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/debug/3.3.4-diagnostics'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/debug/3.3.4-diagnostics') || (github.event_name == 'pull_request' && github.head_ref == 'debug/3.3.4-diagnostics')
     runs-on: ubuntu-latest
     steps:
       - name: Check out diagnostics branch
