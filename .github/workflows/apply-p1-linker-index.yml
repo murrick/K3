@@ -1,0 +1,39 @@
+name: Apply P1 Linker index patch
+
+on:
+  push:
+    branches:
+      - "perf/3.3.3-indexed-linker"
+    paths:
+      - ".github/workflows/apply-p1-linker-index.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out optimization branch
+        uses: actions/checkout@v4
+        with:
+          ref: perf/3.3.3-indexed-linker
+
+      - name: Apply deterministic source patch
+        run: python3 scripts/apply_p1_linker_index.py
+
+      - name: Compile patched source
+        run: mvn -B -DskipTests compile
+
+      - name: Commit patched Linker
+        shell: bash
+        run: |
+          if git diff --quiet -- kanger/src/org/kanger/Linker.java; then
+            echo "Linker patch already applied"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kanger/src/org/kanger/Linker.java
+          git commit -m "P1: index Linker domain candidates"
+          git push origin HEAD:perf/3.3.3-indexed-linker
