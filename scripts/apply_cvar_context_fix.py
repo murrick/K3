@@ -3,7 +3,7 @@ import re
 
 # Temporary compile-before-commit patch for the diagnostic branch. The product
 # change binds C-variable links to the active DictionaryFactory Mind instead of
-# the stale Mind cached by a hydrated Term.
+# the stale Mind cached by a hydrated Term. This file is removed by finalization.
 mind_path = Path("kanger/src/org/kanger/Mind.java")
 mind = mind_path.read_text(encoding="utf-8")
 
