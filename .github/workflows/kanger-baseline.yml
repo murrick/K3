@@ -8,9 +8,37 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  apply-p1h-sync:
+    name: apply-p1h-sync
+    if: github.event_name == 'pull_request' && github.head_ref == 'perf/3.3.3-indexed-linker'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out optimization branch
+        uses: actions/checkout@v4
+        with:
+          ref: perf/3.3.3-indexed-linker
+
+      - name: Apply and compile P1h synchronization patch
+        run: |
+          python3 scripts/apply_p1h_solve_sync.py
+          mvn -B -DskipTests compile
+
+      - name: Commit patched Linker
+        shell: bash
+        run: |
+          if git diff --quiet -- kanger/src/org/kanger/Linker.java; then
+            echo "P1h synchronization already applied"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kanger/src/org/kanger/Linker.java
+          git commit -m "P1h: synchronize transient solve index"
+          git push origin HEAD:perf/3.3.3-indexed-linker
+
   build-and-regression:
     name: ${{ matrix.id }}
     runs-on: ${{ matrix.os }}
