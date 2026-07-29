@@ -5,7 +5,6 @@
  */
 package org.kanger.factory;
 
-import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.interfaces.IArgument;
 import org.kanger.units.Domain;
@@ -13,7 +12,6 @@ import org.kanger.units.Rule;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -229,7 +227,7 @@ final class RuleCandidateIndex {
         positions.mergeFrom(child.positions);
     }
 
-    void indexRule(Rule rule) {
+    void indexRule(Rule rule) throws Exception {
         if (rule == null) {
             return;
         }
@@ -248,7 +246,7 @@ final class RuleCandidateIndex {
         }
     }
 
-    void unindexRule(Rule rule) {
+    void unindexRule(Rule rule) throws Exception {
         if (rule == null) {
             return;
         }
@@ -267,7 +265,9 @@ final class RuleCandidateIndex {
         }
     }
 
-    void collectLocal(Domain source, boolean candidateAntc, LinkedHashSet<Long> result) {
+    void collectLocal(Domain source,
+                      boolean candidateAntc,
+                      LinkedHashSet<Long> result) throws Exception {
         SignatureKey signature = signature(source, candidateAntc);
         LinkedHashSet<Long> selected = signatures.get(signature);
         if (selected.isEmpty()) {
@@ -292,7 +292,7 @@ final class RuleCandidateIndex {
         result.addAll(selected);
     }
 
-    private SignatureKey signature(Domain domain, boolean antc) {
+    private SignatureKey signature(Domain domain, boolean antc) throws Exception {
         return new SignatureKey(domain.getPredicateId(), antc, domain.getRange());
     }
 }
