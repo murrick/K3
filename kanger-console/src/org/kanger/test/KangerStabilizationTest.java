@@ -11,6 +11,7 @@ import org.kanger.factory.DictionaryFactory;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
+import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.lang.reflect.InvocationTargetException;
@@ -127,7 +128,7 @@ public final class KangerStabilizationTest {
 
         IRule published = parent.getRules().get(committedId);
         require(published != null, "Committed rule is not addressable by its runtime id");
-        require(((org.kanger.units.Rule) published).getMindId() == parent.getId(),
+        require(((Rule) published).getMindId() == parent.getId(),
                 "Committed rule was not rebound to the parent Mind");
 
         Mind discarded = new Mind(parent);
@@ -154,5 +155,71 @@ public final class KangerStabilizationTest {
         require(empty.getType() == DataType.SET, "Expected empty SET term");
         require(((java.util.Collection<?>) empty.getValue()).isEmpty(), "Expected empty SET value");
         require(((Term) first).equalsTo((Term) reordered), "SET structural equality is inconsistent");
+    }
+
+    public void set_s5a_04_alpha_equivalent_rule_identity() throws Exception {
+        resetWorkspace();
+
+        require(Boolean.TRUE.equals(mind.query("!@x @y pair(x,y) -> linked(x,y);")),
+                "Initial quantified rule was not accepted");
+        IRule canonical = mind.getAcceptedRule();
+        require(canonical != null, "Initial quantified rule is missing");
+        long canonicalId = canonical.getId();
+        int canonicalSize = mind.getRules().size();
+
+        Boolean duplicate = mind.query("!@left @right pair(left,right) -> linked(left,right);");
+        require(duplicate == null, "Alpha-renamed rule was not classified as a duplicate");
+        require(mind.getRules().size() == canonicalSize,
+                "Alpha-renamed rule created a second canonical object");
+        require(mind.getRules().get(canonicalId) != null,
+                "Canonical rule disappeared after alpha-equivalent input");
+
+        require(Boolean.TRUE.equals(mind.query("!@left @right pair(left,right) -> linked(right,left);")),
+                "Structurally different quantified rule was not accepted");
+        require(mind.getAcceptedRule() != null && mind.getAcceptedRule().getId() != canonicalId,
+                "Different variable-use structure collapsed into the alpha-equivalent rule");
+    }
+
+    public void set_s5a_05_storage_id_reopen() throws Exception {
+        resetWorkspace();
+        final String storageName = "data/s5a-storage-id";
+
+        try {
+            if (mind.isStorageUsed()) {
+                mind = mind.closeStorage();
+            }
+            if (mind.isStorageExists(storageName)) {
+                mind = mind.removeStorage(storageName);
+            }
+
+            mind = mind.useStorage(storageName);
+            mind = mind.clearWorkspace();
+
+            require(Boolean.TRUE.equals(mind.query("!persistent(value);")),
+                    "Persistent rule was not accepted");
+            IRule accepted = mind.getAcceptedRule();
+            require(accepted != null, "Persistent accepted rule is missing");
+            long persistentId = accepted.getId();
+
+            mind = mind.closeStorage();
+            mind = mind.useStorage(storageName);
+
+            IRule loaded = mind.getRules().get(persistentId);
+            require(loaded != null, "Persistent id was not restored after storage reopen");
+            require(Boolean.TRUE.equals(mind.query("?persistent(value);")),
+                    "Reloaded persistent rule is not logically visible");
+
+            require(Boolean.TRUE.equals(mind.query("!next(value);")),
+                    "Post-reopen rule was not accepted");
+            require(mind.getAcceptedRule() != null && mind.getAcceptedRule().getId() > persistentId,
+                    "Persistent allocator did not advance after reopen");
+        } finally {
+            if (mind.isStorageUsed()) {
+                mind = mind.closeStorage();
+            }
+            if (mind.isStorageExists(storageName)) {
+                mind = mind.removeStorage(storageName);
+            }
+        }
     }
 }
