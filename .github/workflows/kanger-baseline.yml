@@ -33,7 +33,8 @@ jobs:
             echo 'P4 resolved candidates already applied'
             exit 0
           fi
-          python3 scripts/apply_p4_resolved_candidates.py
+          python3 scripts/apply_p4_resolved_candidates.py || true
+          python3 scripts/apply_p4_resolved_linker.py
           mvn -B clean verify
 
       - name: Commit product changes when needed
