@@ -38,6 +38,9 @@ jobs:
           if ! grep -q 'A write may replace the serialized state' kanger-data-dumb/src/org/kanger/storage/Base.java; then
             python3 scripts/apply_diagnostic_cache_invalidation.py
           fi
+          if ! grep -q '\[KANGER-LINKER\]' kanger/src/org/kanger/Linker.java; then
+            python3 scripts/apply_linker_diagnostic_progress.py
+          fi
           mvn -B clean verify
 
       - name: Commit product changes
@@ -52,8 +55,10 @@ jobs:
           git add \
             kanger-data-dumb/src/org/kanger/storage/Base.java \
             kanger-console/src/org/kanger/test/KangerTest.java \
-            kanger-console/src/org/kanger/Console.java
-          git commit -m "D1-D3: instrument storage and repair test/cache lifecycle"
+            kanger-console/src/org/kanger/Console.java \
+            kanger-console/src/org/kanger/KangerDiagnosticRunner.java \
+            kanger/src/org/kanger/Linker.java
+          git commit -m "D1-D3: expose fixed-point and storage lifecycle"
           git push origin HEAD:debug/3.3.4-diagnostics
 
       - name: Run database and persistence diagnostics
