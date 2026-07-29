@@ -22,9 +22,10 @@ import java.util.Stack;
  * Domains remain owned by Escalera/IBase and are hydrated after candidate
  * selection.
  *
- * The positional lookup is conservative. A non-TERM argument is indexed as a
- * wildcard, so dynamic variables/functions are never excluded by a constant
- * query argument.
+ * Positional pruning is deliberately restricted to simple one-domain Rules.
+ * Complex Rules participate in inference through their other Domains and must
+ * remain candidates even when one visible constant position differs. They are
+ * therefore held in a signature-level fallback bucket.
  */
 final class RuleCandidateIndex {
 
@@ -200,30 +201,36 @@ final class RuleCandidateIndex {
     }
 
     private final IdIndex<SignatureKey> signatures = new IdIndex<>();
+    private final IdIndex<SignatureKey> complexSignatures = new IdIndex<>();
     private final IdIndex<PositionKey> positions = new IdIndex<>();
 
     void clear() {
         signatures.clear();
+        complexSignatures.clear();
         positions.clear();
     }
 
     void mark() {
         signatures.mark();
+        complexSignatures.mark();
         positions.mark();
     }
 
     void commit() {
         signatures.commit();
+        complexSignatures.commit();
         positions.commit();
     }
 
     void release() {
         signatures.release();
+        complexSignatures.release();
         positions.release();
     }
 
     void mergeFrom(RuleCandidateIndex child) {
         signatures.mergeFrom(child.signatures);
+        complexSignatures.mergeFrom(child.complexSignatures);
         positions.mergeFrom(child.positions);
     }
 
@@ -231,10 +238,16 @@ final class RuleCandidateIndex {
         if (rule == null) {
             return;
         }
+        boolean simple = rule.getTree().size() == 1
+                && rule.getTree().get(0).size() == 1;
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 SignatureKey signature = signature(domain, domain.isAntc());
                 signatures.add(signature, rule.getId());
+                if (!simple) {
+                    complexSignatures.add(signature, rule.getId());
+                    continue;
+                }
                 for (int position = 0; position < domain.getRange(); ++position) {
                     IArgument argument = domain.get(position);
                     long termId = argument.getType() == ArgumentType.TERM
@@ -250,10 +263,16 @@ final class RuleCandidateIndex {
         if (rule == null) {
             return;
         }
+        boolean simple = rule.getTree().size() == 1
+                && rule.getTree().get(0).size() == 1;
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 SignatureKey signature = signature(domain, domain.isAntc());
                 signatures.remove(signature, rule.getId());
+                if (!simple) {
+                    complexSignatures.remove(signature, rule.getId());
+                    continue;
+                }
                 for (int position = 0; position < domain.getRange(); ++position) {
                     IArgument argument = domain.get(position);
                     long termId = argument.getType() == ArgumentType.TERM
@@ -273,6 +292,7 @@ final class RuleCandidateIndex {
         if (selected.isEmpty()) {
             return;
         }
+        LinkedHashSet<Long> complex = complexSignatures.get(signature);
 
         for (int position = 0; position < source.getRange(); ++position) {
             IArgument argument = source.get(position);
@@ -284,6 +304,7 @@ final class RuleCandidateIndex {
                     new PositionKey(signature, position, argument.getId()));
             compatible.addAll(positions.get(
                     new PositionKey(signature, position, WILDCARD_TERM_ID)));
+            compatible.addAll(complex);
             selected.retainAll(compatible);
             if (selected.isEmpty()) {
                 return;
