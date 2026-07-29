@@ -46,6 +46,17 @@ public class Escalera implements ICache {
 
     private Mind mind = null;
 
+    /**
+     * Lightweight acceleration metadata. Persistent semantic objects are not
+     * retained here: persistent entries are represented by IDs and are loaded
+     * through the configured IBase only when get(id) is requested.
+     */
+    private final Map<Long, IStep> memoryById = new HashMap<>();
+    private final Set<Long> persistentIds = new HashSet<>();
+    private final Map<Integer, Set<Long>> idsByHash = new HashMap<>();
+    private boolean indexValid = false;
+    private IStep indexedRoot = null;
+
     public Escalera(Mind mind, String schema, ICache parent) {
         this.mind = mind;
         this.schema = schema;
@@ -59,28 +70,107 @@ public class Escalera implements ICache {
         }
     }
 
+    private void invalidateIndex() {
+        indexValid = false;
+        indexedRoot = null;
+    }
+
+    private void clearIndex() {
+        memoryById.clear();
+        persistentIds.clear();
+        idsByHash.clear();
+    }
+
+    private void indexStep(IStep step) {
+        if (step == null) {
+            return;
+        }
+        long id = step.getId();
+        if (step instanceof Sapato) {
+            persistentIds.add(id);
+            memoryById.remove(id);
+        } else {
+            memoryById.put(id, step);
+            persistentIds.remove(id);
+        }
+        Set<Long> ids = idsByHash.get(step.getHash());
+        if (ids == null) {
+            ids = new HashSet<>();
+            idsByHash.put(step.getHash(), ids);
+        }
+        ids.add(id);
+    }
+
+    private void removeIndexedStep(long id, IStep step) {
+        memoryById.remove(id);
+        persistentIds.remove(id);
+        if (step != null) {
+            Set<Long> ids = idsByHash.get(step.getHash());
+            if (ids != null) {
+                ids.remove(id);
+                if (ids.isEmpty()) {
+                    idsByHash.remove(step.getHash());
+                }
+            }
+        } else {
+            Iterator<Map.Entry<Integer, Set<Long>>> iterator = idsByHash.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Integer, Set<Long>> entry = iterator.next();
+                entry.getValue().remove(id);
+                if (entry.getValue().isEmpty()) {
+                    iterator.remove();
+                }
+            }
+        }
+    }
+
+    private void ensureIndex() {
+        if (indexValid && indexedRoot == root) {
+            return;
+        }
+        clearIndex();
+        for (IStep step = root; step != null; step = step.getNext()) {
+            indexStep(step);
+        }
+        indexedRoot = root;
+        indexValid = true;
+    }
+
     @Override
     public void add(IUnit one) throws Exception {
+        ensureIndex();
         Step s = new Step();
         s.setData(one);
         s.setId(one.getId());
         s.setHash(one.getHash());
         s.setNext(root);
         root = s;
+        indexStep(s);
+        indexedRoot = root;
     }
 
     @Override
     public Object get(long id) throws Exception {
-        for (IStep s = root; s != null; s = s.getNext()) {
-            if (s.getId() == id) {
-                return s.getData(mind);
+        ensureIndex();
+        IStep step = memoryById.get(id);
+        if (step == null && persistentIds.contains(id) && mind.isStorageUsed()) {
+            synchronized (((User) mind.getUser()).getStorage(schema)) {
+                step = ((User) mind.getUser()).getStorage(schema).get(id);
             }
         }
-        return null;
+        return step == null ? null : step.getData(mind);
     }
 
     @Override
     public void delete(long id) throws Exception {
+        ensureIndex();
+        IStep indexed = memoryById.get(id);
+        if (indexed == null && persistentIds.contains(id) && mind.isStorageUsed()) {
+            synchronized (((User) mind.getUser()).getStorage(schema)) {
+                indexed = ((User) mind.getUser()).getStorage(schema).get(id);
+            }
+        }
+
         if (root != null && root.getId() == id) {
             root = root.getNext();
         } else {
@@ -91,6 +181,9 @@ public class Escalera implements ICache {
                 }
             }
         }
+        removeIndexedStep(id, indexed);
+        indexedRoot = root;
+
         if (mind.isStorageUsed()) {
             synchronized (((User) mind.getUser()).getStorage(schema)) {
                 ((User) mind.getUser()).getStorage(schema).delete(id);
@@ -100,11 +193,8 @@ public class Escalera implements ICache {
 
     @Override
     public int size() {
-        int cnt = 0;
-        for (IStep s = root; s != null; s = s.getNext()) {
-            ++cnt;
-        }
-        return cnt;
+        ensureIndex();
+        return memoryById.size() + persistentIds.size();
     }
 
     @Override
@@ -114,22 +204,18 @@ public class Escalera implements ICache {
 
     @Override
     public Set<Long> find(int h) throws Exception {
-        Set<Long> set = new HashSet<>();
-        if (root instanceof Sapato) {
-            root.setData((((User) mind.getUser()).getStorage(schema).get(root.getId())).getData(mind));
-        }
-        for (IStep s = root; s != null; s = s.getNext()) {
-            if (s.getHash() == h) {
-                set.add(s.getId());
-            }
-        }
-        return set;
+        ensureIndex();
+        Set<Long> ids = idsByHash.get(h);
+        return ids == null ? new HashSet<Long>() : new HashSet<>(ids);
     }
 
 
     @Override
     public void clear() throws Exception {
         root = null;
+        clearIndex();
+        indexedRoot = null;
+        indexValid = true;
         if (mind.isStorageUsed()) {
             synchronized (((User) mind.getUser()).getStorage(schema)) {
                 ((User) mind.getUser()).getStorage(schema).clear();
@@ -160,13 +246,15 @@ public class Escalera implements ICache {
     public long release() {
         if (!stack.isEmpty()) {
             root = stack.pop();
+            invalidateIndex();
         }
         return root == null ? -1 : root.getId();
     }
 
     @Override
     public boolean containsKey(long id) throws Exception {
-        return get(id) != null;
+        ensureIndex();
+        return memoryById.containsKey(id) || persistentIds.contains(id);
     }
 
     @Override
@@ -185,9 +273,32 @@ public class Escalera implements ICache {
     }
 
     @Override
-    public void setRoot(IStep root) {
-        this.root = root;
+    public void setRoot(IStep newRoot) {
+        if (!indexValid) {
+            root = newRoot;
+            return;
+        }
 
+        IStep oldRoot = root;
+        root = newRoot;
+        if (oldRoot == newRoot) {
+            indexedRoot = root;
+            return;
+        }
+
+        boolean reachedOldRoot = oldRoot == null;
+        for (IStep step = newRoot; step != null; step = step.getNext()) {
+            if (oldRoot != null && step.getId() == oldRoot.getId()) {
+                reachedOldRoot = true;
+                break;
+            }
+            indexStep(step);
+        }
+        if (reachedOldRoot) {
+            indexedRoot = root;
+        } else {
+            invalidateIndex();
+        }
     }
 
     @Override
@@ -211,6 +322,13 @@ public class Escalera implements ICache {
                     IStep e = ((User) mind.getUser()).getStorage(schema).get(s.getId());
                     p.setData(e.getData(mind));
                     root = p;
+                    if (indexValid) {
+                        memoryById.remove(s.getId());
+                        persistentIds.add(s.getId());
+                    }
+                }
+                if (indexValid) {
+                    indexedRoot = root;
                 }
                 stack.clear();
                 return true;
