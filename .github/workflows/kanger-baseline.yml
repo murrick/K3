@@ -82,6 +82,7 @@ jobs:
           java \
             -Dkanger.perf.storage=true \
             -Dkanger.perf.cache.size=4096 \
+            -Dkanger.perf.data.cache.size=4096 \
             -Dkanger.perf.sizes=100 \
             -cp "target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerPerformanceRunner \
