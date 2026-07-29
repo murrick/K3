@@ -5,7 +5,17 @@
  */
 package org.kanger;
 
-import org.kanger.interfaces.IUser;
+import org.kanger.factory.CommentFactory;
+import org.kanger.factory.DictionaryFactory;
+import org.kanger.factory.DomainFactory;
+import org.kanger.factory.FValueFactory;
+import org.kanger.factory.FunctionFactory;
+import org.kanger.factory.LibraryFactory;
+import org.kanger.factory.PredicateFactory;
+import org.kanger.factory.RuleFactory;
+import org.kanger.factory.TValueFactory;
+import org.kanger.factory.TVariableFactory;
+import org.kanger.interfaces.internal.IBase;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
@@ -16,33 +26,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Black-box performance characterization for the large homogeneous predicate
- * workload that exposed the current all-pairs Linker behaviour.
- *
- * <p>The runner deliberately records observations instead of enforcing timing
- * thresholds. It can exercise either the in-memory workspace or the currently
- * configured persistent storage backend. Persistent data remains behind the
- * normal KANGER storage/cache API; this class never preloads semantic objects
- * or assumes a particular database engine.</p>
- *
- * <p>Storage mode closes and reopens the database after loading the facts, so
- * all query measurements exercise index reconstruction and normal on-demand
- * hydration rather than the insertion-time object graph.</p>
- *
- * <p>Examples:</p>
- * <pre>
- *   java -cp target/classes:lib/*:kanger-server/lib/* \
- *        org.kanger.KangerPerformanceRunner
- *
- *   java -Dkanger.perf.storage=true \
- *        -Dkanger.perf.sizes=100,500,1000 \
- *        -cp target/classes:lib/*:kanger-server/lib/* \
- *        org.kanger.KangerPerformanceRunner
- * </pre>
+ * Black-box performance characterization for large homogeneous predicate
+ * workloads. Timing remains observational; cache bounds and result counts are
+ * deterministic contracts.
  */
 public final class KangerPerformanceRunner {
 
     private static final int[] DEFAULT_SIZES = new int[]{100, 500, 1000};
+    private static final String[] STORAGE_SCHEMAS = new String[]{
+            DictionaryFactory.SCHEMA,
+            DomainFactory.SCHEMA,
+            FunctionFactory.SCHEMA,
+            PredicateFactory.SCHEMA,
+            RuleFactory.SCHEMA,
+            TVariableFactory.SCHEMA,
+            LibraryFactory.SCHEMA,
+            TValueFactory.SCHEMA,
+            FValueFactory.SCHEMA,
+            CommentFactory.SCHEMA
+    };
 
     private KangerPerformanceRunner() {
     }
@@ -58,7 +60,8 @@ public final class KangerPerformanceRunner {
 
             System.out.println("KANGER performance home: " + testHome.toAbsolutePath());
             System.out.println("KANGER performance storage: " + storage);
-            System.out.println("mode,size,operation,millis,result,rows,solutions,rules,domains,tvalues");
+            System.out.println("mode,size,operation,millis,result,rows,solutions,rules,domains,tvalues,"
+                    + "cache_hits,cache_misses,cache_evictions,cache_entries,cache_bytes,cache_max_bytes");
 
             for (int size : sizes) {
                 runCase(size, storage);
@@ -71,7 +74,13 @@ public final class KangerPerformanceRunner {
 
     private static void runCase(int size, boolean storage) throws Exception {
         String suffix = size + "-" + System.nanoTime();
-        IUser user = UserFactory.createUser("perf-" + suffix, "perf-" + suffix);
+        User user = (User) UserFactory.createUser("perf-" + suffix, "perf-" + suffix);
+        String configuredCacheSize = System.getProperty("kanger.perf.cache.size");
+        if (configuredCacheSize != null && !configuredCacheSize.trim().isEmpty()) {
+            user.setProperty("cache.size", configuredCacheSize.trim());
+        }
+        user.setProperty("cache.enable", System.getProperty("kanger.perf.cache.enable", "true"));
+
         new UDF().init(user);
         new DB().init(user);
 
@@ -87,6 +96,7 @@ public final class KangerPerformanceRunner {
             }
             mind = (Mind) mind.clearWorkspace();
 
+            CacheSnapshot beforeInsert = cacheSnapshot(user);
             long started = System.nanoTime();
             for (int i = 1; i <= size; ++i) {
                 Boolean result = mind.query(
@@ -97,23 +107,26 @@ public final class KangerPerformanceRunner {
                     throw new IllegalStateException("Insert failed at row " + i);
                 }
             }
-            report(mind, storage, size, "insert-sequential", started, Boolean.TRUE);
+            report(mind, user, storage, size, "insert-sequential", started,
+                    Boolean.TRUE, beforeInsert);
 
             if (storage) {
                 long reopenStarted = System.nanoTime();
                 mind = (Mind) mind.closeStorage();
                 mind = (Mind) mind.useStorage(storageName);
-                report(mind, true, size, "reopen-storage", reopenStarted, Boolean.TRUE);
+                CacheSnapshot reopened = cacheSnapshot(user);
+                report(mind, user, true, size, "reopen-storage", reopenStarted,
+                        Boolean.TRUE, reopened);
             }
 
             int key = Math.max(1, size / 2);
-            measureQuery(mind, storage, size, "query-exact",
+            measureQuery(mind, user, storage, size, "query-exact",
                     "?value(" + key + "," + (1000 + key) + ",7);");
-            measureQuery(mind, storage, size, "query-two-constants",
+            measureQuery(mind, user, storage, size, "query-two-constants",
                     "?$z value(" + key + "," + (1000 + key) + ",z);");
-            measureQuery(mind, storage, size, "query-one-constant",
+            measureQuery(mind, user, storage, size, "query-one-constant",
                     "?$y $z value(" + key + ",y,z);");
-            measureQuery(mind, storage, size, "query-all-variables",
+            measureQuery(mind, user, storage, size, "query-all-variables",
                     "?$x $y $z value(x,y,z);");
         } finally {
             if (storage && mind.isStorageUsed()) {
@@ -123,24 +136,31 @@ public final class KangerPerformanceRunner {
     }
 
     private static void measureQuery(Mind mind,
+                                     User user,
                                      boolean storage,
                                      int size,
                                      String operation,
                                      String query) throws Exception {
+        CacheSnapshot before = cacheSnapshot(user);
         long started = System.nanoTime();
         Boolean result = mind.query(query, null, false);
-        report(mind, storage, size, operation, started, result);
+        report(mind, user, storage, size, operation, started, result, before);
     }
 
     private static void report(Mind mind,
+                               User user,
                                boolean storage,
                                int size,
                                String operation,
                                long started,
-                               Boolean result) throws Exception {
+                               Boolean result,
+                               CacheSnapshot before) throws Exception {
         double millis = (System.nanoTime() - started) / 1_000_000.0;
+        CacheSnapshot after = cacheSnapshot(user);
+        assertCacheBound(after);
+
         System.out.printf(
-                "%s,%d,%s,%.3f,%s,%d,%d,%d,%d,%d%n",
+                "%s,%d,%s,%.3f,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d%n",
                 storage ? "storage" : "memory",
                 size,
                 operation,
@@ -150,7 +170,62 @@ public final class KangerPerformanceRunner {
                 mind.getSolutions().size(),
                 mind.getRules().size(),
                 mind.getDomains().size(),
-                mind.getTValues().size());
+                mind.getTValues().size(),
+                delta(after.hits, before.hits),
+                delta(after.misses, before.misses),
+                delta(after.evictions, before.evictions),
+                after.entries,
+                after.usedBytes,
+                after.maxBytes);
+    }
+
+    private static long delta(long after, long before) {
+        return after < 0L || before < 0L ? -1L : after - before;
+    }
+
+    private static CacheSnapshot cacheSnapshot(User user) {
+        long hits = 0L;
+        long misses = 0L;
+        long evictions = 0L;
+        long entries = 0L;
+        long usedBytes = 0L;
+        long maxBytes = 0L;
+        boolean telemetry = false;
+
+        for (String schema : STORAGE_SCHEMAS) {
+            IBase base = user.getStorage(schema);
+            if (base == null) {
+                continue;
+            }
+            long baseHits = base.getCacheHits();
+            long baseMisses = base.getCacheMisses();
+            long baseEvictions = base.getCacheEvictions();
+            long baseEntries = base.getCachedEntryCount();
+            if (baseHits >= 0L && baseMisses >= 0L && baseEvictions >= 0L && baseEntries >= 0L) {
+                telemetry = true;
+                hits += baseHits;
+                misses += baseMisses;
+                evictions += baseEvictions;
+                entries += baseEntries;
+            }
+            usedBytes += Math.max(0L, base.getUsedCacheSize());
+            maxBytes += Math.max(0L, base.getMaxCacheSize());
+        }
+
+        return new CacheSnapshot(
+                telemetry ? hits : -1L,
+                telemetry ? misses : -1L,
+                telemetry ? evictions : -1L,
+                telemetry ? entries : -1L,
+                usedBytes,
+                maxBytes);
+    }
+
+    private static void assertCacheBound(CacheSnapshot snapshot) {
+        if (snapshot.maxBytes > 0L && snapshot.usedBytes > snapshot.maxBytes) {
+            throw new IllegalStateException("Cache bound exceeded: "
+                    + snapshot.usedBytes + " > " + snapshot.maxBytes);
+        }
     }
 
     private static int[] parseSizes(String[] args) {
@@ -199,5 +274,28 @@ public final class KangerPerformanceRunner {
         Path path = Paths.get(configuredHome);
         Files.createDirectories(path);
         return path;
+    }
+
+    private static final class CacheSnapshot {
+        private final long hits;
+        private final long misses;
+        private final long evictions;
+        private final long entries;
+        private final long usedBytes;
+        private final long maxBytes;
+
+        private CacheSnapshot(long hits,
+                              long misses,
+                              long evictions,
+                              long entries,
+                              long usedBytes,
+                              long maxBytes) {
+            this.hits = hits;
+            this.misses = misses;
+            this.evictions = evictions;
+            this.entries = entries;
+            this.usedBytes = usedBytes;
+            this.maxBytes = maxBytes;
+        }
     }
 }
