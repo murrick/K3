@@ -38,7 +38,7 @@ import java.util.*;
  */
 public class Data implements Closeable, Iterable<IStep> {
 
-    private static long MAX_CACHE_SIZE = 1024L * 1024;
+    private static final long DEFAULT_MAX_CACHE_SIZE = 1024L * 1024L;
     private static final int VERSION_CODE = 0x0103;
 
     private int version = VERSION_CODE;
@@ -56,7 +56,7 @@ public class Data implements Closeable, Iterable<IStep> {
     private RandomAccessFile ras = null;
     private DataOne currentOne = null;
     private final Queue<Long> timing = new LinkedList<>();
-    private long maxCacheSize = MAX_CACHE_SIZE;
+    private long maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
 //    private long currentOne = -1;
 
     private boolean readonly = false;
@@ -69,7 +69,8 @@ public class Data implements Closeable, Iterable<IStep> {
 
     public Data(IBase base, IUser user) throws Exception {
         this.base = base;
-        MAX_CACHE_SIZE = Long.parseLong(user.getProperty("cache.data.size", (1024L * 1024) + ""));
+        this.maxCacheSize = Math.max(0L, Long.parseLong(
+                user.getProperty("cache.data.size", DEFAULT_MAX_CACHE_SIZE + "")));
     }
 
     public void open(String fileName, boolean readonly) throws Exception {
@@ -184,6 +185,7 @@ public class Data implements Closeable, Iterable<IStep> {
                             packet.mark();
                             IStep data = new Sapato(base);
                             data.apply(packet);
+                            data.setSize(Math.max(1L, dataSize));
                             one = new DataOne();
                             one.setBlockSize(blockSize);
                             one.setDataSize(dataSize);
@@ -251,6 +253,7 @@ public class Data implements Closeable, Iterable<IStep> {
         }
 
         byte[] tmp = o.pack().getBuffer();
+        o.setSize(Math.max(1L, tmp.length));
 
         if (!Arrays.equals(tmp, one.getBuffer())) {
             one.setOffset(offset);
