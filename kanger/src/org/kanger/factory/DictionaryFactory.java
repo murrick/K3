@@ -233,6 +233,20 @@ public class DictionaryFactory implements IFactory<ITerm> {
                         }
                     }
                 }
+
+                // Dynamic function/FValue references are not guaranteed to be
+                // present in the structural term index. Preserve the original
+                // semantic scan only for the small set not found by indexed
+                // rules or current query result stores.
+                if (!found) {
+                    for (IRule r : mind.getRules()) {
+                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(termId, mind)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
                 if (!found) {
                     toDelete.add(o);
                 }
