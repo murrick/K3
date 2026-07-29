@@ -35,7 +35,6 @@ import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.Escalera;
-import org.kanger.units.Term;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
@@ -60,7 +59,6 @@ public class TValueFactory implements IFactory<TValue> {
     private IBase connection = null;
     private Map<TVariable, TValue> current = new HashMap<>();
     private boolean action = false;
-    private long diagnosticAddCount = 0L;
 
     /**
      * Transaction-layered acceleration metadata. Buckets contain TValue IDs
@@ -98,7 +96,6 @@ public class TValueFactory implements IFactory<TValue> {
         localByVariable.clear();
         additionsStack.clear();
         indexInitialized = base != null;
-        diagnosticAddCount = 0L;
     }
 
     private void index(TValue value) {
@@ -194,37 +191,6 @@ public class TValueFactory implements IFactory<TValue> {
     public synchronized TValue add(TVariable tv, ITerm o) throws Exception {
         TValue t = find(tv, o);
         if (t == null) {
-            ++diagnosticAddCount;
-            if (Boolean.parseBoolean(System.getProperty("kanger.diagnostics", "false"))
-                    && (diagnosticAddCount <= 20L || diagnosticAddCount % 100L == 0L)) {
-                StringBuilder diagnostic = new StringBuilder();
-                diagnostic.append("[KANGER-TVALUE] add#").append(diagnosticAddCount)
-                        .append(" mind=").append(mind.getId())
-                        .append(" tvar=").append(tv.getId())
-                        .append(" tvarIndex=").append(tv.getIndex())
-                        .append(" term=").append(o.getId())
-                        .append(" termType=").append(o.getType())
-                        .append(" cvar=").append(o.isCVariable());
-                try {
-                    diagnostic.append(" tvarRule=")
-                            .append(tv.getRule(mind) == null ? -1L : tv.getRule(mind).getId());
-                } catch (Exception error) {
-                    diagnostic.append(" tvarRule=<error>");
-                }
-                if (o instanceof Term) {
-                    Term term = (Term) o;
-                    diagnostic.append(" termIndex=").append(term.getIndex())
-                            .append(" termRule=").append(term.getRuleId())
-                            .append(" parent=").append(term.getParentId(mind))
-                            .append(" child=")
-                            .append(term.getChild(mind) == null ? -1L : term.getChild(mind).getId())
-                            .append(" domini=").append(term.isDomini());
-                }
-                TValue probe = new TValue(tv, o);
-                diagnostic.append(" hash=").append(probe.getHash())
-                        .append(" hashCandidates=").append(cache.find(probe.getHash()).size());
-                System.err.println(diagnostic.toString());
-            }
             t = new TValue(tv, o, mind);
             t.setTVar(tv);
             t.setId(((User) mind.getUser()).nextId(SCHEMA));

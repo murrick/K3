@@ -138,7 +138,11 @@ public final class KangerDiagnosticRunner {
             result = mind.query("?$x @y a(x,y);");
         }
         System.out.println(Diagnostics.snapshot(mind, "set_03_01 after query"));
+        int tvalueCount = ((Mind) mind).getTValues().size();
         mind.closeStorage();
+        if (tvalueCount > 4) {
+            throw new AssertionError("set_03_01 produced runaway TValue state: " + tvalueCount);
+        }
         System.exit(Boolean.FALSE.equals(result) ? 0 : 1);
     }
 
