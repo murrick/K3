@@ -19,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.WeakHashMap;
 
 /**
  * Compact in-memory candidate metadata. Only Rule IDs are retained; Rules and
@@ -80,6 +81,40 @@ final class RuleCandidateIndex {
             int result = signature.hashCode();
             result = 31 * result + position;
             return 31 * result + Long.valueOf(termId).hashCode();
+        }
+    }
+
+    private static final class BatchKey {
+        private final SignatureKey signature;
+        private final boolean sourceGenerated;
+
+        private BatchKey(SignatureKey signature, boolean sourceGenerated) {
+            this.signature = signature;
+            this.sourceGenerated = sourceGenerated;
+        }
+
+        @Override
+        public boolean equals(Object value) {
+            if (this == value) return true;
+            if (!(value instanceof BatchKey)) return false;
+            BatchKey other = (BatchKey) value;
+            return sourceGenerated == other.sourceGenerated
+                    && signature.equals(other.signature);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * signature.hashCode() + (sourceGenerated ? 1 : 0);
+        }
+    }
+
+    private static final class BatchSummary {
+        private final LinkedHashSet<Long> remaining;
+        private final boolean batched;
+
+        private BatchSummary(LinkedHashSet<Long> remaining, boolean batched) {
+            this.remaining = remaining;
+            this.batched = batched;
         }
     }
 
@@ -167,8 +202,14 @@ final class RuleCandidateIndex {
     private final IdIndex<SignatureKey> signatures = new IdIndex<>();
     private final IdIndex<SignatureKey> fallbackSignatures = new IdIndex<>();
     private final IdIndex<PositionKey> positions = new IdIndex<>();
+    private final Map<Mind, Map<BatchKey, BatchSummary>> batchSummaries = new WeakHashMap<>();
 
-    void clear() { signatures.clear(); fallbackSignatures.clear(); positions.clear(); }
+    void clear() {
+        signatures.clear();
+        fallbackSignatures.clear();
+        positions.clear();
+        batchSummaries.clear();
+    }
     void mark() { signatures.mark(); fallbackSignatures.mark(); positions.mark(); }
     void commit() { signatures.commit(); fallbackSignatures.commit(); positions.commit(); }
     void release() { signatures.release(); fallbackSignatures.release(); positions.release(); }
@@ -177,6 +218,7 @@ final class RuleCandidateIndex {
         signatures.mergeFrom(child.signatures);
         fallbackSignatures.mergeFrom(child.fallbackSignatures);
         positions.mergeFrom(child.positions);
+        batchSummaries.clear();
     }
 
     private boolean positionalEligible(Rule rule) throws Exception {
@@ -188,6 +230,7 @@ final class RuleCandidateIndex {
 
     void indexRule(Rule rule) throws Exception {
         if (rule == null) return;
+        batchSummaries.clear();
         boolean positional = positionalEligible(rule);
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
@@ -209,6 +252,7 @@ final class RuleCandidateIndex {
 
     void unindexRule(Rule rule) throws Exception {
         if (rule == null) return;
+        batchSummaries.clear();
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 SignatureKey signature = signature(domain, domain.isAntc());
@@ -256,7 +300,7 @@ final class RuleCandidateIndex {
             return false;
         }
 
-        Domain matched = null;
+        List<Domain> matched = new ArrayList<>();
         for (List<Domain> branch : candidate.getTree()) {
             for (Domain domain : branch) {
                 if (domain.getPredicateId() == source.getPredicateId()
@@ -265,19 +309,58 @@ final class RuleCandidateIndex {
                     if (domain.isSubstitutable()) {
                         return false;
                     }
-                    matched = domain;
+                    matched.add(domain);
                 }
             }
         }
-        if (matched == null) {
+        if (matched.isEmpty()) {
             return false;
         }
 
         source.setUsed(mind);
         sourceRule.setUsed(mind);
-        matched.setUsed(mind);
+        for (Domain domain : matched) {
+            domain.setUsed(mind);
+        }
         candidate.setUsed(mind);
         return true;
+    }
+
+    private BatchSummary batchSummary(Domain source,
+                                      boolean candidateAntc,
+                                      Mind mind,
+                                      LinkedHashSet<Long> selected) throws Exception {
+        Rule sourceRule = (Rule) source.getRule();
+        Mind activeMind = sourceRule.getMind() == null ? mind : sourceRule.getMind();
+        SignatureKey signature = signature(source, candidateAntc);
+        BatchKey key = new BatchKey(signature, sourceRule.isGenerated());
+
+        Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
+        if (byKey == null) {
+            byKey = new HashMap<>();
+            batchSummaries.put(activeMind, byKey);
+        }
+        BatchSummary summary = byKey.get(key);
+        if (summary == null) {
+            LinkedHashSet<Long> remaining = new LinkedHashSet<>();
+            boolean batched = false;
+            for (long id : selected) {
+                Rule candidate = (Rule) activeMind.getRules().get(id);
+                if (candidate != null
+                        && batchGeneratedNonSubstitutablePair(
+                                source, candidate, candidateAntc, activeMind)) {
+                    batched = true;
+                } else {
+                    remaining.add(id);
+                }
+            }
+            summary = new BatchSummary(remaining, batched);
+            byKey.put(key, summary);
+        } else if (summary.batched) {
+            source.setUsed(activeMind);
+            sourceRule.setUsed(activeMind);
+        }
+        return summary;
     }
 
     void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
@@ -297,16 +380,8 @@ final class RuleCandidateIndex {
             if (selected.isEmpty()) return;
         }
         if (!source.isSubstitutable()) {
-            LinkedHashSet<Long> remaining = new LinkedHashSet<>();
-            for (long id : selected) {
-                Rule candidate = (Rule) mind.getRules().get(id);
-                if (candidate == null
-                        || !batchGeneratedNonSubstitutablePair(
-                                source, candidate, candidateAntc, mind)) {
-                    remaining.add(id);
-                }
-            }
-            selected = remaining;
+            selected = new LinkedHashSet<>(
+                    batchSummary(source, candidateAntc, mind, selected).remaining);
         }
         result.addAll(selected);
     }
