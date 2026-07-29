@@ -98,7 +98,7 @@ jobs:
             END { if (evictions <= 0) exit 1; }
           ' kanger-perf-storage-ubuntu-java-21.csv
 
-      - name: Capture P1 execution profile
+      - name: Capture in-memory execution profile
         if: matrix.id == 'ubuntu-java-21'
         shell: bash
         run: |
@@ -116,8 +116,36 @@ jobs:
             kanger-perf-ubuntu-java-21.jfr \
             > kanger-perf-execution-samples.txt
 
-          python3 scripts/summarize_jfr.py
+          python3 scripts/summarize_jfr.py \
+            kanger-perf-execution-samples.txt \
+            kanger-perf-hotspots.txt
           cat kanger-perf-hotspots.txt
+
+      - name: Capture persistent storage execution profile
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -XX:StartFlightRecording=filename=kanger-perf-storage-ubuntu-java-21.jfr,settings=profile,dumponexit=true \
+            -Dkanger.perf.storage=true \
+            -Dkanger.perf.cache.size=4096 \
+            -Dkanger.perf.data.cache.size=4096 \
+            -Dkanger.perf.sizes=100 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerPerformanceRunner \
+            > kanger-perf-storage-profile-run.log 2>&1
+
+          jfr print \
+            --events jdk.ExecutionSample \
+            --stack-depth 40 \
+            kanger-perf-storage-ubuntu-java-21.jfr \
+            > kanger-perf-storage-execution-samples.txt
+
+          python3 scripts/summarize_jfr.py \
+            kanger-perf-storage-execution-samples.txt \
+            kanger-perf-storage-hotspots.txt
+          cat kanger-perf-storage-hotspots.txt
 
       - name: Upload baseline evidence
         if: always()
@@ -133,6 +161,10 @@ jobs:
             kanger-perf-profile-run.log
             kanger-perf-execution-samples.txt
             kanger-perf-hotspots.txt
+            kanger-perf-storage-profile-run.log
+            kanger-perf-storage-execution-samples.txt
+            kanger-perf-storage-hotspots.txt
             kanger-perf-${{ matrix.id }}.jfr
+            kanger-perf-storage-${{ matrix.id }}.jfr
             target/*.jar
           if-no-files-found: warn
