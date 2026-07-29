@@ -75,9 +75,14 @@ public final class KangerPerformanceRunner {
     private static void runCase(int size, boolean storage) throws Exception {
         String suffix = size + "-" + System.nanoTime();
         User user = (User) UserFactory.createUser("perf-" + suffix, "perf-" + suffix);
+
         String configuredCacheSize = System.getProperty("kanger.perf.cache.size");
         if (configuredCacheSize != null && !configuredCacheSize.trim().isEmpty()) {
             user.setProperty("cache.size", configuredCacheSize.trim());
+        }
+        String configuredDataCacheSize = System.getProperty("kanger.perf.data.cache.size");
+        if (configuredDataCacheSize != null && !configuredDataCacheSize.trim().isEmpty()) {
+            user.setProperty("cache.data.size", configuredDataCacheSize.trim());
         }
         user.setProperty("cache.enable", System.getProperty("kanger.perf.cache.enable", "true"));
 
