@@ -11,6 +11,12 @@ package org.kanger;
  */
 public final class LinkerStatistics {
 
+    public static final int EFFECT_NEW_TVALUE = 1;
+    public static final int EFFECT_NEW_CAUSE = 1 << 1;
+    public static final int EFFECT_DEFERRED_SOLVE_CANDIDATE = 1 << 2;
+    public static final int EFFECT_USED_ONLY = 1 << 3;
+    private static final int OPERATION_EFFECT_MASK_COUNT = 1 << 4;
+
     private long passes;
     private long ruleVisits;
     private long branchVisits;
@@ -28,6 +34,8 @@ public final class LinkerStatistics {
     private long laterPassDurableUnifications;
     private long laterPassQueryUnifications;
     private long laterPassGeneratedUnifications;
+
+    private final long[] operationEffectMasks = new long[OPERATION_EFFECT_MASK_COUNT];
 
     public LinkerStatistics() {
     }
@@ -49,6 +57,8 @@ public final class LinkerStatistics {
         laterPassDurableUnifications = source.laterPassDurableUnifications;
         laterPassQueryUnifications = source.laterPassQueryUnifications;
         laterPassGeneratedUnifications = source.laterPassGeneratedUnifications;
+        System.arraycopy(source.operationEffectMasks, 0,
+                operationEffectMasks, 0, operationEffectMasks.length);
     }
 
     void reset() {
@@ -68,6 +78,9 @@ public final class LinkerStatistics {
         laterPassDurableUnifications = 0L;
         laterPassQueryUnifications = 0L;
         laterPassGeneratedUnifications = 0L;
+        for (int i = 0; i < operationEffectMasks.length; ++i) {
+            operationEffectMasks[i] = 0L;
+        }
     }
 
     LinkerStatistics snapshot() {
@@ -104,6 +117,13 @@ public final class LinkerStatistics {
         }
     }
 
+    void recordOperationEffectMask(int mask) {
+        if (mask < 0 || mask >= operationEffectMasks.length) {
+            throw new IllegalArgumentException("Unknown Linker operation effect mask: " + mask);
+        }
+        ++operationEffectMasks[mask];
+    }
+
     void incrementNewTValues() { ++newTValues; }
     void incrementDatabaseEvaluations() { ++databaseEvaluations; }
     void incrementFunctionEvaluations() { ++functionEvaluations; }
@@ -125,6 +145,35 @@ public final class LinkerStatistics {
     public long getLaterPassQueryUnifications() { return laterPassQueryUnifications; }
     public long getLaterPassGeneratedUnifications() { return laterPassGeneratedUnifications; }
 
+    public long getOperationEffectMaskCount(int mask) {
+        if (mask < 0 || mask >= operationEffectMasks.length) {
+            return 0L;
+        }
+        return operationEffectMasks[mask];
+    }
+
+    public long getClassifiedOperations() {
+        long result = 0L;
+        for (long count : operationEffectMasks) {
+            result += count;
+        }
+        return result;
+    }
+
+    public long getOperationsWithEffect(int effect) {
+        long result = 0L;
+        for (int mask = 0; mask < operationEffectMasks.length; ++mask) {
+            if ((mask & effect) != 0) {
+                result += operationEffectMasks[mask];
+            }
+        }
+        return result;
+    }
+
+    public long getNoImmediateEffectOperations() {
+        return operationEffectMasks[0];
+    }
+
     public void add(LinkerStatistics other) {
         if (other == null) {
             return;
@@ -145,5 +194,8 @@ public final class LinkerStatistics {
         laterPassDurableUnifications += other.laterPassDurableUnifications;
         laterPassQueryUnifications += other.laterPassQueryUnifications;
         laterPassGeneratedUnifications += other.laterPassGeneratedUnifications;
+        for (int i = 0; i < operationEffectMasks.length; ++i) {
+            operationEffectMasks[i] += other.operationEffectMasks[i];
+        }
     }
 }
