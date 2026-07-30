@@ -180,14 +180,16 @@ jobs:
             }
             {
               inferred++
-              if ($7 != $3 || $9 != $3) exit 15
+              if ($7 != $3 || $9 != $3 || $11 != $3) exit 15
               if ($8 != 5 * $3 || $10 != 4 * $3) exit 16
-              if ($11 != 0 || $12 != 0) exit 17
+              if ($12 != 0) exit 17
               if ($15 != 2 * $3) exit 18
-              if ($16 != $17 || $19 != $20) exit 19
+              if ($16 != $6 + $12 + $15) exit 19
+              if ($17 != $6 + $7 + $9 + $11) exit 20
+              if ($17 != $16 + $3) exit 21
             }
             END {
-              if (exact != 3 || inferred != 9) exit 20
+              if (exact != 3 || inferred != 9) exit 22
             }
           ' kanger-semantic-yield-ubuntu-java-21.csv
 
@@ -205,16 +207,16 @@ jobs:
             > kanger-generated-rule-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($6 != "solve_candidates" || $7 != "new_tsolves" || $8 != "duplicate_solve_candidates") exit 21
-              if ($10 != "generated_rule_delta" || $11 != "observed_generated_rules" || $13 != "derived_true") exit 22
+              if ($6 != "solve_candidates" || $7 != "new_tsolves" || $8 != "duplicate_solve_candidates") exit 23
+              if ($10 != "generated_rule_delta" || $11 != "observed_generated_rules" || $13 != "derived_true") exit 24
               next
             }
             {
               rows++
-              if ($6 != $7 + $8) exit 23
-              if ($10 != $11 || $13 != "true") exit 24
+              if ($6 != $7 + $8) exit 25
+              if ($10 != $11 || $13 != "true") exit 26
             }
-            END { if (rows != 3) exit 25 }
+            END { if (rows != 3) exit 27 }
           ' kanger-generated-rule-yield-ubuntu-java-21.csv
 
       - name: Upload 3.4.1 evidence
