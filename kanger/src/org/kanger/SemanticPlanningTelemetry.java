@@ -8,9 +8,9 @@ package org.kanger;
 /**
  * Opt-in query-local capture of pre-execution semantic estimates.
  *
- * Normal execution pays only a ThreadLocal null check. The first calibrated
- * estimate is retained; repeated observations are counted so experiments can
- * detect unexpected planning re-entry.
+ * Normal execution pays only a ThreadLocal null check. The final calibrated
+ * estimate is retained because Analyzer may expose intermediate query views
+ * before the candidate set handed to the inference path is complete.
  */
 public final class SemanticPlanningTelemetry {
 
@@ -35,9 +35,7 @@ public final class SemanticPlanningTelemetry {
         ++session.events;
         if (estimate.isCalibrated()) {
             ++session.calibratedEvents;
-            if (session.estimate == null) {
-                session.estimate = estimate;
-            }
+            session.estimate = estimate;
         } else if (session.estimate == null) {
             session.fallback = estimate;
         }
