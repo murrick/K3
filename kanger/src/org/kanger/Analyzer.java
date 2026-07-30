@@ -20,7 +20,6 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  *  IN THE SOFTWARE.
- *
  */
 
 package org.kanger;
@@ -116,16 +115,21 @@ public class Analyzer {
     }
 
     private Collection<IRule> candidatesFor(Rule p, boolean selectById) throws Exception {
+        Collection<IRule> result;
         if (!selectById) {
-            return mind.getRules().findByDomain(
+            result = mind.getRules().findByDomain(
                     p.getDomain().getPredicateId(),
                     !p.getDomain().isAntc());
+        } else {
+            List<IRule> all = new ArrayList<>();
+            for (IRule rule : mind.getRules()) {
+                all.add(rule);
+            }
+            result = all;
         }
 
-        List<IRule> result = new ArrayList<>();
-        for (IRule rule : mind.getRules()) {
-            result.add(rule);
-        }
+        SemanticPlanningTelemetry.record(
+                SemanticYieldPlanner.estimate(p, result, mind, selectById));
         return result;
     }
 
