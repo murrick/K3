@@ -129,6 +129,27 @@ jobs:
           grep -F '100,query-exact' kanger-semantic-yield-ubuntu-java-21.csv
           grep -F '500,query-one-constant' kanger-semantic-yield-ubuntu-java-21.csv
           grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
+          awk -F, '
+            NR == 1 {
+              if ($7 != "new_causes" || $8 != "new_tsolves"
+                  || $14 != "effect_delta" || $17 != "effect_yield") exit 10
+              next
+            }
+            $2 == "query-exact" {
+              exact++
+              if ($5 != 0 || $14 != 0 || $15 != 1) exit 11
+              next
+            }
+            {
+              inferred++
+              if ($7 != $3 || $8 != $3) exit 12
+              if ($12 != 2 * $3) exit 13
+              if ($13 != $14 || $16 != $17) exit 14
+            }
+            END {
+              if (exact != 3 || inferred != 9) exit 15
+            }
+          ' kanger-semantic-yield-ubuntu-java-21.csv
 
       - name: Upload 3.4.1 evidence
         if: always()
