@@ -112,6 +112,22 @@ jobs:
           grep -F '100,query-exact' kanger-semantic-profile-ubuntu-java-21.csv
           grep -F '500,query-one-constant' kanger-semantic-profile-ubuntu-java-21.csv
           grep -F '1000,query-all-variables' kanger-semantic-profile-ubuntu-java-21.csv
+          awk -F, '
+            NR == 1 {
+              if ($7 != "executed_operations" || $14 != "classified_operations") exit 30
+              if ($15 != "operations_new_tvalue" || $16 != "operations_new_cause") exit 31
+              if ($17 != "operations_deferred_solve_candidate" || $18 != "operations_used_only") exit 32
+              if ($19 != "operations_no_immediate_effect") exit 33
+              next
+            }
+            {
+              rows++
+              if ($14 != $7) exit 34
+              if ($15 > $14 || $16 > $14 || $17 > $14 || $18 > $14 || $19 > $14) exit 35
+              if ($2 == "query-exact" && ($7 != 0 || $14 != 0)) exit 36
+            }
+            END { if (rows != 12) exit 37 }
+          ' kanger-semantic-profile-ubuntu-java-21.csv
 
       - name: Capture semantic yield curve
         if: matrix.id == 'ubuntu-java-21'
