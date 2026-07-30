@@ -57,7 +57,7 @@ public class TValueFactory implements IFactory<TValue> {
     private final Mind mind;
     private IStep top = null;
     private IBase connection = null;
-    private Map<TVariable, TValue> current = new HashMap<>();
+    private final Map<TVariable, TValue> current = new HashMap<>();
     private boolean action = false;
 
     /**
@@ -66,6 +66,7 @@ public class TValueFactory implements IFactory<TValue> {
      */
     private TValueFactory parentIndex = null;
     private final Map<Long, LinkedHashSet<Long>> localByVariable = new HashMap<>();
+    private final Object indexLock = new Object();
 
     /**
      * Nested Linker marks are extremely frequent. Recording only values added
@@ -81,6 +82,9 @@ public class TValueFactory implements IFactory<TValue> {
     }
 
     public void transaction(TValueFactory base) throws Exception {
+        top = null;
+        connection = null;
+        action = false;
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -93,12 +97,14 @@ public class TValueFactory implements IFactory<TValue> {
         }
 
         parentIndex = base;
-        localByVariable.clear();
-        additionsStack.clear();
-        indexInitialized = base != null;
+        synchronized (indexLock) {
+            localByVariable.clear();
+            additionsStack.clear();
+            indexInitialized = base != null;
+        }
     }
 
-    private void index(TValue value) {
+    private void indexLocked(TValue value) {
         if (value == null) {
             return;
         }
@@ -110,36 +116,57 @@ public class TValueFactory implements IFactory<TValue> {
         ids.add(value.getId());
     }
 
-    private void unindex(TValue value) {
-        if (value == null || !indexInitialized) {
-            return;
+    private void index(TValue value) {
+        synchronized (indexLock) {
+            indexLocked(value);
         }
-        LinkedHashSet<Long> ids = localByVariable.get(value.getTVarId());
-        if (ids != null) {
-            ids.remove(value.getId());
-            if (ids.isEmpty()) {
-                localByVariable.remove(value.getTVarId());
+    }
+
+    private void unindex(TValue value) {
+        synchronized (indexLock) {
+            if (value == null || !indexInitialized) {
+                return;
+            }
+            LinkedHashSet<Long> ids = localByVariable.get(value.getTVarId());
+            if (ids != null) {
+                ids.remove(value.getId());
+                if (ids.isEmpty()) {
+                    localByVariable.remove(value.getTVarId());
+                }
             }
         }
     }
 
     private void ensureIndex() throws Exception {
-        if (indexInitialized) {
-            return;
-        }
-        localByVariable.clear();
+        synchronized (indexLock) {
+            if (indexInitialized) {
+                return;
+            }
+            localByVariable.clear();
 
-        // Escalera iterates newest first, while the historical forward()
-        // traversal delivered oldest values first. Reversing here preserves
-        // the observable substitution order.
-        List<TValue> values = new ArrayList<>();
-        for (Object value : cache) {
-            values.add((TValue) value);
+            // Escalera iterates newest first, while the historical forward()
+            // traversal delivered oldest values first. Reversing here preserves
+            // the observable substitution order.
+            List<TValue> values = new ArrayList<>();
+            for (Object value : cache) {
+                values.add((TValue) value);
+            }
+            for (int i = values.size() - 1; i >= 0; --i) {
+                indexLocked(values.get(i));
+            }
+            indexInitialized = true;
         }
-        for (int i = values.size() - 1; i >= 0; --i) {
-            index(values.get(i));
+    }
+
+    private Map<Long, LinkedHashSet<Long>> snapshotIndex() throws Exception {
+        ensureIndex();
+        synchronized (indexLock) {
+            Map<Long, LinkedHashSet<Long>> snapshot = new HashMap<>();
+            for (Map.Entry<Long, LinkedHashSet<Long>> entry : localByVariable.entrySet()) {
+                snapshot.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
+            }
+            return snapshot;
         }
-        indexInitialized = true;
     }
 
     private void collectIds(long variableId, LinkedHashSet<Long> result) throws Exception {
@@ -147,22 +174,26 @@ public class TValueFactory implements IFactory<TValue> {
             parentIndex.collectIds(variableId, result);
         }
         ensureIndex();
-        LinkedHashSet<Long> local = localByVariable.get(variableId);
-        if (local != null) {
-            result.addAll(local);
+        synchronized (indexLock) {
+            LinkedHashSet<Long> local = localByVariable.get(variableId);
+            if (local != null) {
+                result.addAll(new LinkedHashSet<>(local));
+            }
         }
     }
 
     private void mergeIndex(TValueFactory child) throws Exception {
+        Map<Long, LinkedHashSet<Long>> childSnapshot = child.snapshotIndex();
         ensureIndex();
-        child.ensureIndex();
-        for (Map.Entry<Long, LinkedHashSet<Long>> entry : child.localByVariable.entrySet()) {
-            LinkedHashSet<Long> ids = localByVariable.get(entry.getKey());
-            if (ids == null) {
-                ids = new LinkedHashSet<>();
-                localByVariable.put(entry.getKey(), ids);
+        synchronized (indexLock) {
+            for (Map.Entry<Long, LinkedHashSet<Long>> entry : childSnapshot.entrySet()) {
+                LinkedHashSet<Long> ids = localByVariable.get(entry.getKey());
+                if (ids == null) {
+                    ids = new LinkedHashSet<>();
+                    localByVariable.put(entry.getKey(), ids);
+                }
+                ids.addAll(entry.getValue());
             }
-            ids.addAll(entry.getValue());
         }
     }
 
@@ -180,7 +211,7 @@ public class TValueFactory implements IFactory<TValue> {
             }
         }
         mergeIndex(base);
-        action = base.isAction();
+        action = action || base.isAction();
     }
 
     public void update() throws Exception {
@@ -197,8 +228,10 @@ public class TValueFactory implements IFactory<TValue> {
             t.setMindId(mind.getId());
             cache.add(t);
             index(t);
-            if (!additionsStack.isEmpty()) {
-                additionsStack.peek().add(t);
+            synchronized (indexLock) {
+                if (!additionsStack.isEmpty()) {
+                    additionsStack.peek().add(t);
+                }
             }
             if (top == null) {
                 top = cache.getRoot();
@@ -215,8 +248,7 @@ public class TValueFactory implements IFactory<TValue> {
         if (isEmpty(tv)) {
             return null;
         }
-        TValue v = current.get(tv);
-        return v;
+        return current.get(tv);
     }
 
     public boolean isEmpty(TVariable tv) {
@@ -227,7 +259,8 @@ public class TValueFactory implements IFactory<TValue> {
         TValue temp = new TValue(tv, v);
         for (long id : cache.find(temp.getHash())) {
             IUnit one = get(id);
-            //TODO: Осознанно нет проверки на Deleted. Вообще надо понять нужен ли этот стек
+            // Intentionally no deleted filter: canonical resurrection reuses the
+            // existing TValue identity and clears its transaction deletion mark.
             if (one.equalsTo(temp)) {
                 return (TValue) one;
             }
@@ -282,16 +315,19 @@ public class TValueFactory implements IFactory<TValue> {
     }
 
     public long mark() throws Exception {
-        additionsStack.push(new ArrayList<TValue>());
+        synchronized (indexLock) {
+            additionsStack.push(new ArrayList<TValue>());
+        }
         return cache.mark();
     }
 
-
     public long commit() throws Exception {
-        if (!additionsStack.isEmpty()) {
-            List<TValue> additions = additionsStack.pop();
+        synchronized (indexLock) {
             if (!additionsStack.isEmpty()) {
-                additionsStack.peek().addAll(additions);
+                List<TValue> additions = additionsStack.pop();
+                if (!additionsStack.isEmpty()) {
+                    additionsStack.peek().addAll(additions);
+                }
             }
         }
         return cache.commit();
@@ -299,15 +335,19 @@ public class TValueFactory implements IFactory<TValue> {
 
     public long release() throws Exception {
         long result = cache.release();
-        if (!additionsStack.isEmpty()) {
-            List<TValue> additions = additionsStack.pop();
+        List<TValue> additions = null;
+        synchronized (indexLock) {
+            if (!additionsStack.isEmpty()) {
+                additions = additionsStack.pop();
+            }
+        }
+        if (additions != null) {
             for (int i = additions.size() - 1; i >= 0; --i) {
                 unindex(additions.get(i));
             }
         }
         return result;
     }
-
 
     public TValue set(TVariable tv, TValue v) {
         if (v == null) {
@@ -361,7 +401,7 @@ public class TValueFactory implements IFactory<TValue> {
 
     public void scan(TVariable t, IReactor reactor) throws Exception {
         if (!cache.isEmpty()) {
-            IStep root = null;
+            IStep root;
             IStep bottom = null;
             do {
                 root = cache.getRoot();
@@ -385,5 +425,4 @@ public class TValueFactory implements IFactory<TValue> {
     public boolean isEmpty() {
         return cache == null || cache.isEmpty();
     }
-
 }
