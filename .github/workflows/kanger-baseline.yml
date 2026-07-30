@@ -167,36 +167,39 @@ jobs:
           grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($11 != "deferred_groups" || $12 != "deferred_contributor_links") exit 10
-              if ($13 != "groups_with_new_tsolve" || $14 != "minimum_contributors_per_group") exit 11
-              if ($15 != "maximum_contributors_per_group" || $16 != "groups_with_generated_rule") exit 12
-              if ($17 != "generated_rule_group_links" || $18 != "ungrouped_generated_rules") exit 13
-              if ($19 != "new_generated_rules" || $25 != "effect_delta" || $28 != "effect_yield") exit 14
+              if ($16 != "groups_with_generated_rule" || $17 != "generated_rule_group_links") exit 10
+              if ($18 != "ungrouped_generated_rules" || $19 != "deferred_group_effects") exit 11
+              if ($20 != "groups_without_contributors" || $21 != "average_deferred_credit_per_contributor") exit 12
+              if ($22 != "minimum_deferred_credit_per_contributor" || $23 != "maximum_deferred_credit_per_contributor") exit 13
+              if ($24 != "new_generated_rules" || $30 != "effect_delta" || $33 != "effect_yield") exit 14
               next
             }
             $2 == "query-exact" {
               exact++
               if ($5 != 0 || $8 != 0 || $9 != 0 || $10 != 0) exit 15
               if ($11 != 0 || $12 != 0 || $13 != 0 || $14 != 0 || $15 != 0) exit 16
-              if ($16 != 0 || $17 != 0 || $18 != 0 || $19 != 0) exit 17
-              if ($25 != 0 || $26 != 1) exit 18
+              if ($16 != 0 || $17 != 0 || $18 != 0 || $19 != 0 || $20 != 0) exit 17
+              if ($21 != "0.000000000" || $22 != "0.000000000" || $23 != "0.000000000") exit 18
+              if ($24 != 0 || $30 != 0 || $31 != 1) exit 19
               next
             }
             {
               inferred++
-              if ($7 != $3 || $9 != $3 || $19 != $3) exit 19
-              if ($8 != 5 * $3 || $10 != 4 * $3) exit 20
-              if ($11 != $3 || $12 != 5 * $3 || $13 != $3) exit 21
-              if ($14 != 5 || $15 != 5) exit 22
-              if ($17 + $18 != $19 || $16 > $17 || $17 > $11) exit 23
-              if ($20 != 0) exit 24
-              if ($23 != 2 * $3) exit 25
-              if ($24 != $6 + $20 + $23) exit 26
-              if ($25 != $6 + $7 + $9 + $19) exit 27
-              if ($25 != $24 + $3) exit 28
+              if ($7 != $3 || $9 != $3 || $24 != $3) exit 20
+              if ($8 != 5 * $3 || $10 != 4 * $3) exit 21
+              if ($11 != $3 || $12 != 5 * $3 || $13 != $3) exit 22
+              if ($14 != 5 || $15 != 5) exit 23
+              if ($16 != $3 || $17 != $3 || $18 != 0) exit 24
+              if ($19 != 2 * $3 || $20 != 0) exit 25
+              if ($21 != "0.400000000" || $22 != "0.400000000" || $23 != "0.400000000") exit 26
+              if ($25 != 0) exit 27
+              if ($28 != 2 * $3) exit 28
+              if ($29 != $6 + $25 + $28) exit 29
+              if ($30 != $6 + $7 + $9 + $24) exit 30
+              if ($30 != $29 + $3) exit 31
             }
             END {
-              if (exact != 3 || inferred != 9) exit 29
+              if (exact != 3 || inferred != 9) exit 32
             }
           ' kanger-semantic-yield-ubuntu-java-21.csv
 
@@ -214,26 +217,36 @@ jobs:
             > kanger-generated-rule-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($9 != "deferred_groups" || $10 != "deferred_contributor_links") exit 40
-              if ($11 != "groups_with_new_tsolve" || $12 != "minimum_contributors_per_group") exit 41
-              if ($13 != "maximum_contributors_per_group" || $14 != "groups_with_generated_rule") exit 42
-              if ($15 != "generated_rule_group_links" || $16 != "ungrouped_generated_rules") exit 43
-              if ($18 != "generated_rule_delta" || $19 != "observed_generated_rules" || $21 != "derived_true") exit 44
+              if ($14 != "groups_with_generated_rule" || $15 != "generated_rule_group_links") exit 40
+              if ($16 != "ungrouped_generated_rules" || $17 != "deferred_group_effects") exit 41
+              if ($18 != "groups_without_contributors" || $19 != "average_deferred_credit_per_contributor") exit 42
+              if ($20 != "minimum_deferred_credit_per_contributor" || $21 != "maximum_deferred_credit_per_contributor") exit 43
+              if ($23 != "generated_rule_delta" || $24 != "observed_generated_rules" || $26 != "derived_true") exit 44
               next
             }
             {
               rows++
               if ($6 != $7 + $8 || $11 != $7) exit 45
-              if ($15 + $16 != $19 || $14 > $15 || $15 > $9) exit 46
-              if ($18 != $19 || $21 != "true") exit 47
+              if ($15 + $16 != $24 || $14 > $15 || $15 > $9) exit 46
+              if ($17 != $11 + $15 || $18 != 0) exit 47
+              if ($23 != $24 || $26 != "true") exit 48
             }
-            $1 == "one-hop" || $1 == "deduplicated-target" {
-              if ($9 != 1 || $10 != 4 || $11 != 1 || $12 != 4 || $13 != 4) exit 48
+            $1 == "one-hop" {
+              if ($9 != 1 || $10 != 4 || $12 != 4 || $13 != 4) exit 49
+              if ($14 != 1 || $15 != 1 || $16 != 0 || $17 != 2) exit 50
+              if ($19 != "0.500000000" || $20 != "0.500000000" || $21 != "0.500000000") exit 51
             }
             $1 == "two-hop" {
-              if ($9 != 2 || $10 != 10 || $11 != 2 || $12 != 4 || $13 != 6) exit 49
+              if ($9 != 2 || $10 != 10 || $12 != 4 || $13 != 6) exit 52
+              if ($14 != 2 || $15 != 2 || $16 != 0 || $17 != 4) exit 53
+              if ($19 != "0.400000000" || $20 != "0.333333333" || $21 != "0.500000000") exit 54
             }
-            END { if (rows != 3) exit 50 }
+            $1 == "deduplicated-target" {
+              if ($9 != 1 || $10 != 4 || $12 != 4 || $13 != 4) exit 55
+              if ($14 != 0 || $15 != 0 || $16 != 0 || $17 != 1) exit 56
+              if ($19 != "0.250000000" || $20 != "0.250000000" || $21 != "0.250000000") exit 57
+            }
+            END { if (rows != 3) exit 58 }
           ' kanger-generated-rule-yield-ubuntu-java-21.csv
 
       - name: Upload 3.4.1 evidence
