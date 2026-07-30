@@ -13,11 +13,14 @@ import org.kanger.interfaces.IOperation;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
+import org.kanger.primitives.Argument;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 import org.kanger.units.FValue;
 import org.kanger.units.Function;
 import org.kanger.units.Operation;
+import org.kanger.units.Rule;
 import org.kanger.units.TVariable;
 
 import java.lang.reflect.Field;
@@ -81,30 +84,29 @@ public final class KangerFactorySafetyRunner {
     private static void testRuntimeOwnership() throws Exception {
         Mind parent = newMind("factory-safety-ownership");
         Mind child = new Mind(parent);
-        require(Boolean.TRUE.equals(child.query("?$x $y x=y*2, (y=4 || y=5);")),
-                "Ownership query did not resolve");
 
-        int variables = 0;
-        for (Object object : child.getTVars()) {
-            TVariable variable = (TVariable) object;
-            require(variable.getMindId() == child.getId(),
-                    "TVariable retained wrong transaction id: " + variable.getMindId());
-            require(variable.getMind() == child,
-                    "TVariable retained another Mind instance");
-            ++variables;
-        }
-        require(variables > 0, "Ownership query did not create TVariables");
+        Rule owner = new Rule(child);
+        child.getRules().register(owner);
+        TVariable variable = child.getTVars().createTVar(
+                owner, child.getTerms().add("factory_owner_variable"));
+        require(variable.getMindId() == child.getId(),
+                "TVariable retained wrong transaction id: " + variable.getMindId());
+        require(variable.getMind() == child,
+                "TVariable retained another Mind instance");
 
-        int values = 0;
-        for (Object object : child.getFValues()) {
-            FValue value = (FValue) object;
-            require(value.getMindId() == child.getId(),
-                    "FValue retained wrong transaction id: " + value.getMindId());
-            require(value.getMind() == child,
-                    "FValue retained another Mind instance");
-            ++values;
-        }
-        require(values > 0, "Ownership query did not create FValues");
+        ArgumentsList arguments = new ArgumentsList();
+        arguments.add(new Argument(child.getTerms().add(1.0)));
+        Function function = child.getFunctions().add(
+                child.getTerms().add("factory_owner_function"), arguments);
+        require(function.setParameter(function.getRange(), child.getTerms().add(2.0)),
+                "Unable to complete ownership Function");
+        FValue value = child.getFValues().add(function);
+        require(value != null, "Ownership Function did not create an FValue");
+        require(value.getMindId() == child.getId(),
+                "FValue retained wrong transaction id: " + value.getMindId());
+        require(value.getMind() == child,
+                "FValue retained another Mind instance");
+
         parent.release(child);
     }
 
@@ -249,7 +251,7 @@ public final class KangerFactorySafetyRunner {
         final ExecutorService executor = Executors.newFixedThreadPool(workers);
 
         for (int i = 0; i < workers; ++i) {
-            final int value = i;
+            final int valueIndex = i;
             final Mind child = new Mind(parent);
             executor.execute(new Runnable() {
                 @Override
@@ -257,9 +259,9 @@ public final class KangerFactorySafetyRunner {
                     ready.countDown();
                     try {
                         start.await();
-                        require(Boolean.TRUE.equals(child.query("!factory_source(v" + value + ");")),
-                                "Child insertion failed: " + value);
-                        require(parent.commit(child), "Child commit failed: " + value);
+                        require(Boolean.TRUE.equals(child.query("!factory_source(v" + valueIndex + ");")),
+                                "Child insertion failed: " + valueIndex);
+                        require(parent.commit(child), "Child commit failed: " + valueIndex);
                     } catch (Throwable error) {
                         failures.add(error);
                     } finally {
