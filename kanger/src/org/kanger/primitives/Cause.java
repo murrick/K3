@@ -26,6 +26,7 @@
 package org.kanger.primitives;
 
 import org.kanger.Mind;
+import org.kanger.SemanticEffectTelemetry;
 import org.kanger.enums.UnitType;
 import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.ICause;
@@ -54,6 +55,7 @@ public class Cause implements ICause {
         this.donor = new Solve(src.getPredicate(), src.isAntc(), src.getArguments().convertBase(mind));
         this.rule = (Rule) dst.getRule();
         this.ruleId = dst.getRuleId();
+        SemanticEffectTelemetry.recordCause(this);
     }
 
     public ByteBuffer pack() {
