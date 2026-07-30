@@ -38,8 +38,11 @@ public final class SemanticEffectTelemetry {
         Session session = CURRENT.get();
         CURRENT.remove();
         return session == null
-                ? new Snapshot(0L, 0L)
-                : new Snapshot(session.causes.size(), session.solveKeys.size());
+                ? new Snapshot(0L, 0L, 0L)
+                : new Snapshot(
+                        session.causes.size(),
+                        session.solveKeys.size(),
+                        session.generatedRules.size());
     }
 
     /**
@@ -74,13 +77,27 @@ public final class SemanticEffectTelemetry {
         }
     }
 
+    /**
+     * Internal instrumentation hook for a generated Rule that survived the
+     * canonical RuleFactory insertion path. Deduplicated candidates must not
+     * call this method.
+     */
+    public static void recordGeneratedRule(Object rule) {
+        Session session = CURRENT.get();
+        if (session != null && rule != null) {
+            session.generatedRules.add(rule);
+        }
+    }
+
     public static final class Snapshot {
         private final long newCauses;
         private final long newTSolves;
+        private final long newGeneratedRules;
 
-        private Snapshot(long newCauses, long newTSolves) {
+        private Snapshot(long newCauses, long newTSolves, long newGeneratedRules) {
             this.newCauses = newCauses;
             this.newTSolves = newTSolves;
+            this.newGeneratedRules = newGeneratedRules;
         }
 
         public long getNewCauses() {
@@ -90,10 +107,15 @@ public final class SemanticEffectTelemetry {
         public long getNewTSolves() {
             return newTSolves;
         }
+
+        public long getNewGeneratedRules() {
+            return newGeneratedRules;
+        }
     }
 
     private static final class Session {
         private final Set<Object> causes = new HashSet<>();
         private final Set<List<Long>> solveKeys = new HashSet<>();
+        private final Set<Object> generatedRules = new HashSet<>();
     }
 }
