@@ -1,4 +1,4 @@
-name: Apply 3.4.4.2.2 unit-state patch
+name: Finalize 3.4.4.2.2 unit-state source
 
 on:
   push:
@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  patch:
-    if: ${{ !contains(github.event.head_commit.message, '[unit-state-lock]') }}
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, '[finalize-unit-state]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +18,7 @@ jobs:
           ref: fix/3.4.4.2.2-rule-context-rendering
           fetch-depth: 0
 
-      - name: Patch Mind unit deletion state synchronization
+      - name: Normalize source and remove temporary workflow
         shell: bash
         run: |
           python3 - <<'PY'
@@ -26,46 +26,11 @@ jobs:
 
           path = Path('kanger/src/org/kanger/Mind.java')
           text = path.read_text(encoding='utf-8')
-          old = '''    public boolean isUnitDeleted(IUnit unit) {
-              for (IMind m = this; m != null; m = m.getNext()) {
-                  if (((Mind) m).getRestored().containsKey(unit.getUnitType()) && ((Mind) m).getRestored().get(unit.getUnitType()).contains(unit.getId())) {
-                      return false;
-                  } else if (((Mind) m).getDeleted().containsKey(unit.getUnitType()) && ((Mind) m).getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
-                      return true;
-                  }
-              }
-              return false;
-          }
-
-          public void setUnitDeleted(IUnit unit, boolean on) {
-              if (on) {
-                  if (!isUnitDeleted(unit)) {
-                      if (getRestored().containsKey(unit.getUnitType()) && getRestored().get(unit.getUnitType()).contains(unit.getId())) {
-                          getRestored().get(unit.getUnitType()).remove(unit.getId());
-                      }
-                      if (!isUnitDeleted(unit)) {
-                          if (!getDeleted().containsKey(unit.getUnitType())) {
-                              getDeleted().put(unit.getUnitType(), new HashSet<>());
-                          }
-                          getDeleted().get(unit.getUnitType()).add(unit.getId());
-                      }
-                  }
-              } else {
-                  if (isUnitDeleted(unit)) {
-                      if (getDeleted().containsKey(unit.getUnitType()) && getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
-                          getDeleted().get(unit.getUnitType()).remove(unit.getId());
-                      }
-                      if (unit.getMindId() != id || isUnitDeleted(unit)) {
-                          if (!getRestored().containsKey(unit.getUnitType())) {
-                              getRestored().put(unit.getUnitType(), new HashSet<>());
-                          }
-                          getRestored().get(unit.getUnitType()).add(unit.getId());
-                      }
-                  }
-              }
-          }
-          '''
-          new = '''    public boolean isUnitDeleted(IUnit unit) {
+          start_marker = '    public boolean isUnitDeleted(IUnit unit) {'
+          end_marker = '    @Override\n    public IMind getTop() {'
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          replacement = '''    public boolean isUnitDeleted(IUnit unit) {
               UnitType unitType = unit.getUnitType();
               long unitId = unit.getId();
               for (IMind level = this; level != null; level = level.getNext()) {
@@ -119,14 +84,14 @@ jobs:
                   }
               }
           }
+
           '''
-          if old not in text:
-              raise SystemExit('target Mind unit-state methods not found exactly')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
           PY
 
+          git rm .github/workflows/patch-3.4.4.2.2-unit-state.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add kanger/src/org/kanger/Mind.java
-          git commit -m "[unit-state-lock] Serialize Mind deletion-state snapshots"
+          git commit -m "[finalize-unit-state] Normalize synchronized unit state"
           git push origin HEAD:fix/3.4.4.2.2-rule-context-rendering
