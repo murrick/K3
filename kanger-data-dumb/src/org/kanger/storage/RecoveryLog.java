@@ -19,20 +19,18 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.CRC32;
 
 /**
  * Per-logical-base undo journal for one physical DUMB storage pair.
  *
- * <p>The journal stores before-images. A successful {@link Base#flush()} is the
- * commit boundary: index, store and integrity state are published first and the
- * journal is removed last. If a process terminates before that boundary,
- * reopening the same logical base replays the before-images in reverse order
- * and restores the last completed flush.</p>
- *
- * <p>Each logical base has its own journal because several base codes share the
- * same physical index/store files and are flushed independently.</p>
+ * <p>Only the first before-image of an ID after a completed flush is needed:
+ * rollback always restores the transaction-entry state. The journal file is
+ * therefore retained as one append session until checkpoint instead of being
+ * reopened for every physical mutation.</p>
  */
 final class RecoveryLog {
 
@@ -50,6 +48,8 @@ final class RecoveryLog {
     private final File file;
     private final int baseCode;
     private final Object locker;
+    private final Set<Long> journaledIds = new HashSet<Long>();
+    private RandomAccessFile output;
 
     RecoveryLog(String storageName, int baseCode, Object locker) {
         this.file = new File(storageName + ".wal." + baseCode);
@@ -65,32 +65,41 @@ final class RecoveryLog {
 
     void prepareUpsert(long id, Index index, Data data) throws Exception {
         synchronized (locker) {
+            Long key = Long.valueOf(id);
+            if (journaledIds.contains(key)) {
+                return;
+            }
             BeforeImage before = capture(id, index, data);
             append(new Record(TYPE_UPSERT,
                     Collections.singletonList(before)));
+            journaledIds.add(key);
         }
     }
 
     void prepareDelete(Collection<Long> ids, Index index, Data data) throws Exception {
         synchronized (locker) {
             List<BeforeImage> before = new ArrayList<BeforeImage>();
+            List<Long> accepted = new ArrayList<Long>();
             for (Long id : ids) {
-                if (id == null) {
+                if (id == null || journaledIds.contains(id)) {
                     continue;
                 }
                 BeforeImage image = capture(id.longValue(), index, data);
                 if (image.existed) {
                     before.add(image);
+                    accepted.add(id);
                 }
             }
             if (!before.isEmpty()) {
                 append(new Record(TYPE_DELETE, before));
+                journaledIds.addAll(accepted);
             }
         }
     }
 
     void rollback(Index index, Data data) throws Exception {
         synchronized (locker) {
+            closeOutput();
             List<Record> records = load();
             for (int recordIndex = records.size() - 1; recordIndex >= 0; --recordIndex) {
                 List<BeforeImage> images = records.get(recordIndex).images;
@@ -108,7 +117,9 @@ final class RecoveryLog {
 
     void checkpoint() throws IOException {
         synchronized (locker) {
+            closeOutput();
             Files.deleteIfExists(file.toPath());
+            journaledIds.clear();
         }
     }
 
@@ -145,23 +156,45 @@ final class RecoveryLog {
         CRC32 crc = new CRC32();
         crc.update(body);
 
+        RandomAccessFile journal = openOutput();
+        long start = journal.length();
+        try {
+            journal.seek(start);
+            journal.writeInt(body.length);
+            journal.write(body);
+            journal.writeInt((int) crc.getValue());
+        } catch (IOException failure) {
+            try {
+                journal.setLength(start);
+            } catch (IOException ignored) {
+            }
+            throw failure;
+        }
+    }
+
+    private RandomAccessFile openOutput() throws Exception {
+        if (output != null) {
+            return output;
+        }
         File parent = file.getAbsoluteFile().getParentFile();
         if (parent != null) {
             parent.mkdirs();
         }
+        output = new RandomAccessFile(file, "rw");
+        if (output.length() == 0L) {
+            output.writeInt(MAGIC);
+            output.writeShort(VERSION);
+            output.writeInt(baseCode);
+        } else {
+            validateHeader(output);
+        }
+        return output;
+    }
 
-        try (RandomAccessFile output = new RandomAccessFile(file, "rw")) {
-            if (output.length() == 0L) {
-                output.writeInt(MAGIC);
-                output.writeShort(VERSION);
-                output.writeInt(baseCode);
-            } else {
-                validateHeader(output);
-            }
-            output.seek(output.length());
-            output.writeInt(body.length);
-            output.write(body);
-            output.writeInt((int) crc.getValue());
+    private void closeOutput() throws IOException {
+        if (output != null) {
+            output.close();
+            output = null;
         }
     }
 
@@ -173,8 +206,6 @@ final class RecoveryLog {
 
         try (RandomAccessFile input = new RandomAccessFile(file, "r")) {
             if (input.length() < HEADER_SIZE) {
-                // A torn first journal write precedes every main-file mutation,
-                // therefore it is equivalent to an empty transaction.
                 return records;
             }
             validateHeader(input);
@@ -193,8 +224,6 @@ final class RecoveryLog {
                 }
                 if (input.length() - input.getFilePointer()
                         < (long) length + Integer.BYTES) {
-                    // The operation cannot have started until append() returned,
-                    // so an incomplete final record is safe to ignore.
                     break;
                 }
 
@@ -205,7 +234,6 @@ final class RecoveryLog {
                 crc.update(body);
                 if (((int) crc.getValue()) != storedCrc) {
                     if (input.getFilePointer() == input.length()) {
-                        // Same reasoning as for a truncated final record.
                         break;
                     }
                     throw corruption("undo record checksum mismatch offset="
