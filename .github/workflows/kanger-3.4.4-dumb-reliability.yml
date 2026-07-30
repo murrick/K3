@@ -5,6 +5,7 @@ on:
     branches:
       - "arch/3.4.4*"
       - "develop/3.4.4*"
+      - "fix/3.4.4*"
   pull_request:
   workflow_dispatch:
 
@@ -50,6 +51,18 @@ jobs:
         run: |
           set -o pipefail
           mvn -B -V clean verify 2>&1 | tee "kanger-3.4.4-${{ matrix.id }}.log"
+
+      - name: Stress RuleCandidateIndex concurrency with DUMB
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.rule.candidate.concurrency.iterations=12 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerRuleCandidateConcurrencyRunner \
+            2>&1 | tee "rule-candidate-concurrency-${{ matrix.id }}.log"
+          grep -F 'RULE_CANDIDATE_CONCURRENCY_OK iterations=12' \
+            "rule-candidate-concurrency-${{ matrix.id }}.log"
 
       - name: Run DUMB integrity lifecycle regressions
         shell: bash
@@ -105,6 +118,7 @@ jobs:
           name: dumb-qualification-${{ matrix.id }}
           path: |
             kanger-3.4.4-${{ matrix.id }}.log
+            rule-candidate-concurrency-${{ matrix.id }}.log
             dumb-integrity-${{ matrix.id }}.log
             dumb-q2-recovery-${{ matrix.id }}.log
             dumb-qualification-${{ matrix.id }}.log
