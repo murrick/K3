@@ -108,7 +108,7 @@ public class Base implements IBase, Iterable<IStep> {
                 DumbFaultInjector.hit("recovery-after-index");
                 data.flush();
                 DumbFaultInjector.hit("recovery-after-data");
-                IntegrityRecovery.rebuild(name + ".integrity", baseCode,
+                IntegrityManifest.recoverSubset(name + ".integrity", baseCode,
                         index, data, locker);
                 DumbFaultInjector.hit("recovery-after-integrity");
                 recovery.checkpoint();
@@ -194,6 +194,7 @@ public class Base implements IBase, Iterable<IStep> {
     public void close() throws IOException {
         try {
             flush();
+            integrity.compact();
         } catch (Exception e) {
             throw new IOException(e.toString());
         }
@@ -299,9 +300,6 @@ public class Base implements IBase, Iterable<IStep> {
     public void clear() throws Exception {
         synchronized (locker) {
             if (!index.isEmpty()) {
-                // Commit earlier journalled operations before entering the
-                // historical whole-storage clear path. Clear itself is outside
-                // the operation-level Q2 contract and is qualified separately.
                 flush();
                 data.clear();
                 index.clear();
