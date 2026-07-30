@@ -45,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Created by Dmitry G. Quznetsov on 25.01.2016.
@@ -68,8 +70,8 @@ public class LibraryFactory implements IFactory<IOperation> {
 
     private final Mind mind;
     private LibraryFactory parentView = null;
-    private final Map<Long, Operation> overrides = new HashMap<>();
-    private final Set<Long> dirtyUpdates = new HashSet<>();
+    private final Map<Long, Operation> overrides = new ConcurrentHashMap<>();
+    private final Set<Long> dirtyUpdates = new CopyOnWriteArraySet<>();
     private final Stack<OverlayState> overlayStack = new Stack<>();
 
     public LibraryFactory(Mind mind) throws Exception {
@@ -148,8 +150,10 @@ public class LibraryFactory implements IFactory<IOperation> {
         }
         Operation copy = overrides.get(source.getId());
         if (copy == null) {
-            copy = copyOperation(source, mind);
-            overrides.put(copy.getId(), copy);
+            Operation candidate = copyOperation(source, mind);
+            Operation previous = ((ConcurrentHashMap<Long, Operation>) overrides)
+                    .putIfAbsent(candidate.getId(), candidate);
+            copy = previous == null ? candidate : previous;
         }
         return copy;
     }
@@ -179,10 +183,11 @@ public class LibraryFactory implements IFactory<IOperation> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-        for (Map.Entry<Long, Operation> entry : base.overrides.entrySet()) {
+        Map<Long, Operation> childOverrides = base.copyOverrides(base.overrides);
+        for (Map.Entry<Long, Operation> entry : childOverrides.entrySet()) {
             overrides.put(entry.getKey(), copyOperation(entry.getValue(), mind));
         }
-        dirtyUpdates.addAll(base.dirtyUpdates);
+        dirtyUpdates.addAll(new HashSet<>(base.dirtyUpdates));
     }
 
     public void update() throws Exception {
