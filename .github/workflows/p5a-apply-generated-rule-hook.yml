@@ -1,0 +1,67 @@
+name: P5a apply generated-rule hook
+
+on:
+  push:
+    branches:
+      - "arch/3.4.1-p5a-semantic-telemetry"
+    paths:
+      - ".github/workflows/p5a-apply-generated-rule-hook.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-hook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out architecture branch
+        uses: actions/checkout@v4
+        with:
+          ref: arch/3.4.1-p5a-semantic-telemetry
+
+      - name: Apply exact RuleFactory hook
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("kanger/src/org/kanger/factory/RuleFactory.java")
+          source = path.read_text(encoding="utf-8")
+
+          old_import = "import org.kanger.Mind;\nimport org.kanger.User;"
+          new_import = "import org.kanger.Mind;\nimport org.kanger.SemanticEffectTelemetry;\nimport org.kanger.User;"
+          if source.count(old_import) != 1:
+              raise SystemExit("Unexpected RuleFactory import shape")
+          source = source.replace(old_import, new_import, 1)
+
+          old_return = """            return add(r);
+              }
+          }
+
+          public IRule store(Domain d) throws Exception {"""
+          new_return = """            IRule inserted = add(r);
+              if (inserted == r) {
+                  SemanticEffectTelemetry.recordGeneratedRule(r);
+              }
+              return inserted;
+          }
+      }
+
+      public IRule store(Domain d) throws Exception {"""
+          if source.count(old_return) != 1:
+              raise SystemExit("Unexpected RuleFactory generated insertion shape")
+          source = source.replace(old_return, new_return, 1)
+
+          path.write_text(source, encoding="utf-8")
+          PY
+          git diff --check
+          git diff -- kanger/src/org/kanger/factory/RuleFactory.java
+
+      - name: Commit canonical hook
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kanger/src/org/kanger/factory/RuleFactory.java
+          git commit -m "P5a: observe canonical generated-rule insertion"
+          git push origin HEAD:arch/3.4.1-p5a-semantic-telemetry
