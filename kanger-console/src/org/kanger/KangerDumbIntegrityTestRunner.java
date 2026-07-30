@@ -13,10 +13,12 @@ import org.kanger.storage.Base;
 import org.kanger.storage.Sapato;
 import org.kanger.storage.Step;
 
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
-/** Direct regression gates for the 3.4.4.1 integrity lifecycle. */
+/** Direct regression gates for the DUMB integrity lifecycle. */
 public final class KangerDumbIntegrityTestRunner {
 
     private static final String LOGIN = "dumb-integrity-regression";
@@ -33,6 +35,8 @@ public final class KangerDumbIntegrityTestRunner {
         System.setProperty("user.home", home.toAbsolutePath().toString());
 
         verifySharedPhysicalManifest(work.resolve("shared/db"));
+        verifyIncrementalDeltaReopenAndCompaction(work.resolve("delta/db"));
+        verifyCorruptedDeltaFails(work.resolve("delta-corrupt/db"));
         verifyMissingManifestFailsAndExplicitBootstrapWorks(
                 work.resolve("bootstrap/db"));
 
@@ -49,7 +53,6 @@ public final class KangerDumbIntegrityTestRunner {
         addLongRecord(first, 0L, 0x1111111111111111L);
         addLongRecord(second, 0L, 0x2222222222222222L);
 
-        // Deliberately publish in the opposite order to prove merge semantics.
         second.flush();
         first.flush();
         second.close();
@@ -62,6 +65,62 @@ public final class KangerDumbIntegrityTestRunner {
         assertLong(second.get(0L), 0x2222222222222222L, "base 2");
         first.close();
         second.close();
+    }
+
+    private static void verifyIncrementalDeltaReopenAndCompaction(Path prefix)
+            throws Exception {
+        Files.createDirectories(prefix.getParent());
+        IUser user = openUser();
+        Base writer = new Base(prefix.toString(), 1, new Object(), false, user);
+        addLongRecord(writer, 0L, 0x4444444444444444L);
+        writer.flush();
+
+        Path delta = Paths.get(prefix.toString() + ".integrity.delta");
+        if (!Files.exists(delta) || Files.size(delta) == 0L) {
+            throw new AssertionError("incremental integrity delta was not published");
+        }
+
+        Base reader = new Base(prefix.toString(), 1, new Object(), false, user);
+        assertLong(reader.get(0L), 0x4444444444444444L, "delta reopen");
+        reader.close();
+        writer.close();
+
+        if (Files.exists(delta)) {
+            throw new AssertionError("integrity delta was not compacted on close");
+        }
+        Base reopened = new Base(prefix.toString(), 1, new Object(), false, user);
+        assertLong(reopened.get(0L), 0x4444444444444444L,
+                "compacted reopen");
+        reopened.close();
+    }
+
+    private static void verifyCorruptedDeltaFails(Path prefix) throws Exception {
+        Files.createDirectories(prefix.getParent());
+        IUser user = openUser();
+        Base writer = new Base(prefix.toString(), 1, new Object(), false, user);
+        addLongRecord(writer, 0L, 0x5555555555555555L);
+        writer.flush();
+
+        Path delta = Paths.get(prefix.toString() + ".integrity.delta");
+        try (RandomAccessFile file = new RandomAccessFile(delta.toFile(), "rw")) {
+            long position = Math.max(0L, file.length() - 1L);
+            file.seek(position);
+            int value = file.readUnsignedByte();
+            file.seek(position);
+            file.writeByte(value ^ 0x5A);
+        }
+
+        boolean rejected = false;
+        try {
+            new Base(prefix.toString(), 1, new Object(), false, user);
+        } catch (DatabaseErrorException expected) {
+            rejected = expected.toString().contains("integrity delta checksum");
+        }
+        if (!rejected) {
+            throw new AssertionError("corrupted integrity delta was not rejected");
+        }
+        // Do not close writer: compaction of the deliberately damaged test
+        // fixture is expected to fail and the temporary directory is disposable.
     }
 
     private static void verifyMissingManifestFailsAndExplicitBootstrapWorks(
