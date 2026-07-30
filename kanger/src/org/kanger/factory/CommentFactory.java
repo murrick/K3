@@ -35,8 +35,13 @@ import org.kanger.storage.Escalera;
 import org.kanger.units.Comment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  * Created by Dmitry G. Quznetsov on 20.12.2020.
@@ -48,11 +53,25 @@ public class CommentFactory {
     public static final long HEADER_ID = -2L;
     public static final long FOOTER_ID = -3L;
 
+    private static final class OverlayState {
+        private final Map<Long, Comment> overrides;
+        private final Set<Long> dirtyUpdates;
+
+        private OverlayState(Map<Long, Comment> overrides, Set<Long> dirtyUpdates) {
+            this.overrides = overrides;
+            this.dirtyUpdates = dirtyUpdates;
+        }
+    }
+
     private ICache cache;
     private IStep top = null;
     private IBase connection = null;
 
     private final Mind mind;
+    private CommentFactory parentView = null;
+    private final Map<Long, Comment> overrides = new HashMap<>();
+    private final Set<Long> dirtyUpdates = new HashSet<>();
+    private final Stack<OverlayState> overlayStack = new Stack<>();
 
     public CommentFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -60,6 +79,12 @@ public class CommentFactory {
     }
 
     public void transaction(CommentFactory base) throws Exception {
+        top = null;
+        connection = null;
+        parentView = base;
+        overrides.clear();
+        dirtyUpdates.clear();
+        overlayStack.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -68,6 +93,58 @@ public class CommentFactory {
         } else {
             cache = new Escalera(mind, SCHEMA, null);
         }
+    }
+
+    private Comment copyComment(Comment source, Mind owner) {
+        Comment copy = new Comment(source.getId(), source.getComment(), owner);
+        copy.setMindId(owner.getId());
+        return copy;
+    }
+
+    private Map<Long, Comment> copyOverrides(Map<Long, Comment> source) {
+        Map<Long, Comment> copy = new HashMap<>();
+        for (Map.Entry<Long, Comment> entry : source.entrySet()) {
+            copy.put(entry.getKey(), copyComment(entry.getValue(), mind));
+        }
+        return copy;
+    }
+
+    private Comment rawGet(long id) throws Exception {
+        Comment value = (Comment) cache.get(id);
+        if (value == null && connection != null) {
+            IStep step = connection.get(id);
+            if (step != null) {
+                value = (Comment) step.getData(mind);
+            }
+        }
+        return value;
+    }
+
+    private Comment effective(long id) throws Exception {
+        Comment value = overrides.get(id);
+        if (value != null) {
+            value.setMind(mind);
+            return value;
+        }
+        if (parentView != null) {
+            Comment inherited = parentView.effective(id);
+            if (inherited != null) {
+                return inherited;
+            }
+        }
+        return rawGet(id);
+    }
+
+    private Comment writable(Comment source) throws Exception {
+        if (source.getMindId() == mind.getId() && source.getMind() == mind) {
+            return source;
+        }
+        Comment copy = overrides.get(source.getId());
+        if (copy == null) {
+            copy = copyComment(source, mind);
+            overrides.put(copy.getId(), copy);
+        }
+        return copy;
     }
 
     public void commit(CommentFactory base) throws Exception {
@@ -83,58 +160,64 @@ public class CommentFactory {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
+        for (Map.Entry<Long, Comment> entry : base.overrides.entrySet()) {
+            overrides.put(entry.getKey(), copyComment(entry.getValue(), mind));
+        }
+        dirtyUpdates.addAll(base.dirtyUpdates);
     }
 
     public void update() throws Exception {
-        if (cache.update()) {
+        cache.update();
+        if (connection != null) {
+            for (long id : new HashSet<>(dirtyUpdates)) {
+                Comment value = rawGet(id);
+                IStep step = connection.get(id);
+                if (value != null && step != null) {
+                    step.setData(value);
+                    step.update();
+                }
+            }
         }
+        dirtyUpdates.clear();
     }
 
     public synchronized Comment add(long ruleId, String comment) throws Exception {
-        Comment p = get(ruleId);
-        if (p != null) {
-            p.setDeleted(false, mind);
-            if (!p.getComment().equals(comment)) {
-                p.setComment(comment);
-                if (connection != null) {
-                    IStep s = connection.get(p.getId());
-                    if (s != null) {
-                        s.setData(p);
-                        s.update();
-                    } else {
-                        System.err.println("!");
-                    }
+        Comment existing = get(ruleId);
+        Comment target;
+        if (existing != null) {
+            target = writable(existing);
+            target.setDeleted(false, mind);
+            if (!target.getComment().equals(comment)) {
+                target.setComment(comment);
+                if (mind.getNext() == null && target == existing) {
+                    dirtyUpdates.add(target.getId());
                 }
-
             }
-            return p;
-        } else {
-            p = new Comment(ruleId, comment, mind);
-            p.setId(ruleId);
-            p.setMindId(mind.getId());
-            cache.add(p);
-            if (top == null) {
-                top = cache.getRoot();
-            }
-            return p;
+            return target;
         }
+
+        target = new Comment(ruleId, comment, mind);
+        target.setId(ruleId);
+        target.setMindId(mind.getId());
+        cache.add(target);
+        if (top == null) {
+            top = cache.getRoot();
+        }
+        return target;
     }
 
     public Comment get(long id) throws Exception {
-        Comment t = (Comment) cache.get(id);
-        if (t == null && connection != null) {
-            IStep s = connection.get(id);
-            if (s != null) {
-                t = (Comment) s.getData(mind);
-            }
-        }
-        return t;
+        return effective(id);
     }
+
     public int size() throws Exception {
         return cache.size();
     }
 
     public void clear() throws Exception {
+        overrides.clear();
+        dirtyUpdates.clear();
+        overlayStack.clear();
         if (mind.getNext() != null) {
             transaction((CommentFactory) ((Mind) mind.getNext()).getComments());
         } else {
@@ -144,10 +227,48 @@ public class CommentFactory {
     }
 
     public Iterator iterator() {
-        return cache.iterator(-1);
+        final Iterator raw = cache.iterator(-1);
+        return new Iterator() {
+            @Override
+            public boolean hasNext() {
+                return raw.hasNext();
+            }
+
+            @Override
+            public Object next() {
+                Object value = raw.next();
+                try {
+                    return get(((IUnit) value).getId());
+                } catch (Exception error) {
+                    throw new IllegalStateException(error);
+                }
+            }
+
+            @Override
+            public void remove() {
+                raw.remove();
+            }
+        };
+    }
+
+    private void applyOverrides() throws Exception {
+        if (mind.getNext() != null || overrides.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<Long, Comment> entry : new HashMap<>(overrides).entrySet()) {
+            Comment raw = rawGet(entry.getKey());
+            if (raw != null) {
+                raw.setMind(mind);
+                raw.setMindId(mind.getId());
+                raw.setComment(entry.getValue().getComment());
+                dirtyUpdates.add(raw.getId());
+            }
+        }
+        overrides.clear();
     }
 
     public void pack() throws Exception {
+        applyOverrides();
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted(mind)) {
@@ -155,20 +276,33 @@ public class CommentFactory {
             }
         }
         for (Object o : toDelete) {
+            overrides.remove(((IUnit) o).getId());
+            dirtyUpdates.remove(((IUnit) o).getId());
             cache.delete(((IUnit) o).getId());
         }
     }
 
     public void mark() throws Exception {
         cache.mark();
+        overlayStack.push(new OverlayState(copyOverrides(overrides), new HashSet<>(dirtyUpdates)));
     }
 
     public void commit() throws Exception {
         cache.commit();
+        if (!overlayStack.isEmpty()) {
+            overlayStack.pop();
+        }
     }
 
     public void release() throws Exception {
         cache.release();
+        if (!overlayStack.isEmpty()) {
+            OverlayState state = overlayStack.pop();
+            overrides.clear();
+            overrides.putAll(state.overrides);
+            dirtyUpdates.clear();
+            dirtyUpdates.addAll(state.dirtyUpdates);
+        }
     }
 
     public void closeConnection() throws Exception {
