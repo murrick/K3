@@ -144,6 +144,16 @@ public class Linker {
         return candidates == null ? Collections.<TSolve>emptyList() : candidates;
     }
 
+    private static final class DeferredSolveCandidate {
+        private final long operationId;
+        private final Object[] substitution;
+
+        private DeferredSolveCandidate(long operationId, Object[] substitution) {
+            this.operationId = operationId;
+            this.substitution = substitution;
+        }
+    }
+
     private static final class DomainKey {
         private final long predicateId;
         private final boolean antc;
@@ -508,7 +518,7 @@ public class Linker {
 
     private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging) throws Exception {
 
-        Map<Solve, List<Object[]>> variants = new HashMap<>();
+        Map<Solve, List<DeferredSolveCandidate>> variants = new HashMap<>();
         boolean result = false;
 
         if (treeSlave.size() == 1) {
@@ -519,7 +529,7 @@ public class Linker {
                         for (Domain master : treeMaster) {
                             statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
-                                statistics.incrementUnificationAttempts(
+                                long operationId = statistics.incrementUnificationAttempts(
                                         currentPass == 1, rule.isQuery(), rule.isGenerated());
                                 int operationEffects = 0;
                                 TValue[] substMaster = new TValue[master.getRange()];
@@ -643,8 +653,8 @@ public class Linker {
                                     } else {
                                         ++dumpedPasses;
                                     }
-                                    operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, logging);
-                                    operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, logging);
+                                    operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, operationId, logging);
+                                    operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, operationId, logging);
 
                                     ((Rule) master.getRule()).setUsed(mind);
                                     ((Rule) slave.getRule()).setUsed(mind);
@@ -660,8 +670,9 @@ public class Linker {
                 }
             }
 
-            for (Map.Entry<Solve, List<Object[]>> variantsList : variants.entrySet()) {
-                for (Object[] subst : variantsList.getValue()) {
+            for (Map.Entry<Solve, List<DeferredSolveCandidate>> variantsList : variants.entrySet()) {
+                for (DeferredSolveCandidate candidate : variantsList.getValue()) {
+                    Object[] subst = candidate.substitution;
                     List<TValue> list = new ArrayList<>();
                     for (Object x : subst) {
                         if (x == null) {
@@ -669,6 +680,8 @@ public class Linker {
                             list.add((TValue) x);
                         }
                     }
+                    SemanticEffectTelemetry.recordDeferredContribution(
+                            list, candidate.operationId);
                     mind.addTSolve(list);
                 }
             }
@@ -677,7 +690,7 @@ public class Linker {
         return result;
     }
 
-    private int markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {
+    private int markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<DeferredSolveCandidate>> variants, long operationId, boolean logging) throws Exception {
         IRule r = null;
         boolean occurrs = false;
         int effects = 0;
@@ -717,7 +730,7 @@ public class Linker {
             if (!variants.containsKey(master)) {
                 variants.put(master, new ArrayList<>());
             }
-            variants.get(master).add(subst);
+            variants.get(master).add(new DeferredSolveCandidate(operationId, subst));
             effects |= LinkerStatistics.EFFECT_DEFERRED_SOLVE_CANDIDATE;
 
             if (occurrs && result && logging) {
