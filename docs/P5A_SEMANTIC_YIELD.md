@@ -111,7 +111,7 @@ effect_yield
 For every inferred `value/3` workload in the 100/500/1000 baseline:
 
 ```
-newCauses           = resultRows
+newCauses            = resultRows
 newTSolves           = resultRows
 materializationDelta = 2 * resultRows
 knowledgeDelta       = effectDelta
