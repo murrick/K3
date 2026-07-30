@@ -50,8 +50,9 @@ public class Base implements IBase, Iterable<IStep> {
     private Index index = null;
     private Data data = null;
     private IntegrityManifest integrity = null;
+    private RecoveryLog recovery = null;
     private Class udf = null;
-    private final Object locker = new Object();
+    private final Object locker;
 
     private String name = "";
     private int baseCode = -1;
@@ -79,6 +80,7 @@ public class Base implements IBase, Iterable<IStep> {
     public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
         this.name = name;
         this.baseCode = baseCode;
+        this.locker = locker;
         try {
             ((User) user).getUdf();
             this.udf = ((User) user).getUdf().getClass();
@@ -97,6 +99,16 @@ public class Base implements IBase, Iterable<IStep> {
 
             data = new Data(this, user);
             data.open(name + ".store", readonly);
+
+            recovery = new RecoveryLog(name, baseCode, locker);
+            if (recovery.hasPending()) {
+                recovery.rollback(index, data);
+                index.flush();
+                data.flush();
+                IntegrityRecovery.rebuild(name + ".integrity", baseCode,
+                        index, data, locker);
+                recovery.checkpoint();
+            }
 
             integrity = new IntegrityManifest(name + ".integrity", baseCode, locker);
             integrity.openOrBootstrap(index, data);
@@ -175,6 +187,11 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void close() throws IOException {
+        try {
+            flush();
+        } catch (Exception e) {
+            throw new IOException(e.toString());
+        }
         clearCache();
         if (index != null && !index.isClosed()) {
             index.close();
@@ -182,19 +199,13 @@ public class Base implements IBase, Iterable<IStep> {
         if (data != null && !data.isClosed()) {
             data.close();
         }
-        if (integrity != null) {
-            try {
-                integrity.flush();
-            } catch (Exception e) {
-                throw new IOException(e.toString());
-            }
-        }
     }
 
     @Override
     public void add(IStep one) throws Exception {
         ++writeCount;
         synchronized (locker) {
+            recovery.prepareUpsert(one.getId(), index, data);
             Index.IndexOne current = index.getOne(one.getId());
             if (current != null) {
                 long currentOffset = current.getLong();
@@ -222,6 +233,7 @@ public class Base implements IBase, Iterable<IStep> {
             index.flush();
             data.flush();
             integrity.flush();
+            recovery.checkpoint();
         }
     }
 
@@ -273,6 +285,10 @@ public class Base implements IBase, Iterable<IStep> {
     public void clear() throws Exception {
         synchronized (locker) {
             if (!index.isEmpty()) {
+                // Commit earlier journalled operations before entering the
+                // historical whole-storage clear path. Clear itself is outside
+                // the operation-level Q2 contract and is qualified separately.
+                flush();
                 data.clear();
                 index.clear();
                 integrity.clear();
@@ -352,6 +368,7 @@ public class Base implements IBase, Iterable<IStep> {
             }
         }
         synchronized (locker) {
+            recovery.prepareDelete(ids, index, data);
             for (Long id : ids) {
                 if (id == null) {
                     continue;
