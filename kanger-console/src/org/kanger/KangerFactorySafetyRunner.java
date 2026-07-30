@@ -58,9 +58,11 @@ public final class KangerFactorySafetyRunner {
             System.out.println("FACTORY_SAFETY_PASS orphan-cleanup");
 
             testCommentOverlay();
+            testPersistentCommentOverlay();
             System.out.println("FACTORY_SAFETY_PASS comment-overlay");
 
             testLibraryOverlay();
+            testPersistentLibraryOverlay();
             System.out.println("FACTORY_SAFETY_PASS library-overlay");
 
             testConcurrentMetadata();
@@ -192,6 +194,34 @@ public final class KangerFactorySafetyRunner {
                 "Committed comment overlay was not published");
     }
 
+    private static void testPersistentCommentOverlay() throws Exception {
+        Mind mind = newMind("factory-safety-comment-persistent");
+        String storageName = "data/factory-safety-comment-overlay";
+        try {
+            mind = (Mind) mind.useStorage(storageName);
+            mind.getComments().add(CommentFactory.HEADER_ID, "persistent-original");
+            require(Boolean.TRUE.equals(mind.query("!factory_comment_persist(value);")),
+                    "Unable to publish initial persistent comment");
+
+            Mind child = new Mind(mind);
+            child.getComments().add(CommentFactory.HEADER_ID, "persistent-committed");
+            require(mind.commit(child), "Persistent comment overlay commit failed");
+
+            mind = (Mind) mind.closeStorage();
+            mind = (Mind) mind.useStorage(storageName);
+            require("persistent-committed".equals(
+                            mind.getComments().get(CommentFactory.HEADER_ID).getComment()),
+                    "Committed comment overlay did not survive reopen");
+        } finally {
+            if (mind.isStorageUsed()) {
+                mind = (Mind) mind.closeStorage();
+            }
+            if (mind.isStorageExists(storageName)) {
+                mind.removeStorage(storageName);
+            }
+        }
+    }
+
     private static Operation constantOperation(final String name, final double value) {
         Operation operation = new Operation(LibMode.FUNCTION, name, 1, new IReactor<Function>() {
             @Override
@@ -231,6 +261,33 @@ public final class KangerFactorySafetyRunner {
         require(parent.commit(committed), "UDF overlay commit failed");
         require(scriptValue(parent.getLibrary().find("factory_policy(1)")).contains("20.0"),
                 "Committed UDF overlay was not published");
+    }
+
+    private static void testPersistentLibraryOverlay() throws Exception {
+        Mind mind = newMind("factory-safety-library-persistent");
+        String storageName = "data/factory-safety-library-overlay";
+        try {
+            mind = (Mind) mind.useStorage(storageName);
+            mind.getLibrary().add(constantOperation("factory_persistent_policy", 10.0));
+            require(Boolean.TRUE.equals(mind.query("!factory_library_persist(value);")),
+                    "Unable to publish initial persistent UDF");
+
+            Mind child = new Mind(mind);
+            child.getLibrary().add(constantOperation("factory_persistent_policy", 20.0));
+            require(mind.commit(child), "Persistent UDF overlay commit failed");
+
+            mind = (Mind) mind.closeStorage();
+            mind = (Mind) mind.useStorage(storageName);
+            require(scriptValue(mind.getLibrary().find("factory_persistent_policy(1)")).contains("20.0"),
+                    "Committed UDF overlay did not survive reopen");
+        } finally {
+            if (mind.isStorageUsed()) {
+                mind = (Mind) mind.closeStorage();
+            }
+            if (mind.isStorageExists(storageName)) {
+                mind.removeStorage(storageName);
+            }
+        }
     }
 
     private static String scriptValue(IOperation operation) {
