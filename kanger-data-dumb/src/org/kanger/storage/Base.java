@@ -103,11 +103,16 @@ public class Base implements IBase, Iterable<IStep> {
             recovery = new RecoveryLog(name, baseCode, locker);
             if (recovery.hasPending()) {
                 recovery.rollback(index, data);
+                DumbFaultInjector.hit("recovery-after-rollback");
                 index.flush();
+                DumbFaultInjector.hit("recovery-after-index");
                 data.flush();
+                DumbFaultInjector.hit("recovery-after-data");
                 IntegrityRecovery.rebuild(name + ".integrity", baseCode,
                         index, data, locker);
+                DumbFaultInjector.hit("recovery-after-integrity");
                 recovery.checkpoint();
+                DumbFaultInjector.hit("recovery-after-checkpoint");
             }
 
             integrity = new IntegrityManifest(name + ".integrity", baseCode, locker);
@@ -206,18 +211,23 @@ public class Base implements IBase, Iterable<IStep> {
         ++writeCount;
         synchronized (locker) {
             recovery.prepareUpsert(one.getId(), index, data);
+            DumbFaultInjector.hit("upsert-after-wal");
             Index.IndexOne current = index.getOne(one.getId());
             if (current != null) {
                 long currentOffset = current.getLong();
                 long newOffset = data.set(currentOffset, one);
+                DumbFaultInjector.hit("upsert-after-data");
                 if (newOffset != currentOffset) {
                     index.set(one.getId(), newOffset);
                 }
             } else {
                 long offset = data.add(one);
+                DumbFaultInjector.hit("upsert-after-data");
                 index.set(one.getId(), offset);
             }
+            DumbFaultInjector.hit("upsert-after-index");
             integrity.put(one);
+            DumbFaultInjector.hit("upsert-after-integrity");
         }
         invalidateCached(one.getId());
     }
@@ -231,9 +241,13 @@ public class Base implements IBase, Iterable<IStep> {
         ++flushCount;
         synchronized (locker) {
             index.flush();
+            DumbFaultInjector.hit("flush-after-index");
             data.flush();
+            DumbFaultInjector.hit("flush-after-data");
             integrity.flush();
+            DumbFaultInjector.hit("flush-after-integrity");
             recovery.checkpoint();
+            DumbFaultInjector.hit("flush-after-checkpoint");
         }
     }
 
@@ -369,6 +383,7 @@ public class Base implements IBase, Iterable<IStep> {
         }
         synchronized (locker) {
             recovery.prepareDelete(ids, index, data);
+            DumbFaultInjector.hit("delete-after-wal");
             for (Long id : ids) {
                 if (id == null) {
                     continue;
@@ -376,8 +391,11 @@ public class Base implements IBase, Iterable<IStep> {
                 Index.IndexOne current = index.getOne(id);
                 if (current != null) {
                     index.remove(id);
+                    DumbFaultInjector.hit("delete-after-index");
                     data.remove(current.getLong());
+                    DumbFaultInjector.hit("delete-after-data");
                     integrity.remove(id.longValue());
+                    DumbFaultInjector.hit("delete-after-integrity");
                 }
             }
         }
