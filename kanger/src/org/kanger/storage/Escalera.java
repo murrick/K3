@@ -54,6 +54,8 @@ public class Escalera implements ICache {
     private final Map<Long, IStep> memoryById = new HashMap<>();
     private final Set<Long> persistentIds = new HashSet<>();
     private final Map<Integer, Set<Long>> idsByHash = new HashMap<>();
+    // target ID -> predecessor ID in the root-to-tail chain.
+    private final Map<Long, Long> predecessorById = new HashMap<>();
     private boolean indexValid = false;
     private IStep indexedRoot = null;
 
@@ -79,6 +81,7 @@ public class Escalera implements ICache {
         memoryById.clear();
         persistentIds.clear();
         idsByHash.clear();
+        predecessorById.clear();
     }
 
     private void indexStep(IStep step) {
@@ -129,11 +132,26 @@ public class Escalera implements ICache {
             return;
         }
         clearIndex();
+        IStep predecessor = null;
         for (IStep step = root; step != null; step = step.getNext()) {
             indexStep(step);
+            if (predecessor != null) {
+                predecessorById.put(step.getId(), predecessor.getId());
+            }
+            predecessor = step;
         }
         indexedRoot = root;
         indexValid = true;
+    }
+
+    private IStep indexedStep(long id) throws Exception {
+        IStep step = memoryById.get(id);
+        if (step == null && persistentIds.contains(id) && mind.isStorageUsed()) {
+            synchronized (((User) mind.getUser()).getStorage(schema)) {
+                step = ((User) mind.getUser()).getStorage(schema).get(id);
+            }
+        }
+        return step;
     }
 
     @Override
@@ -143,9 +161,14 @@ public class Escalera implements ICache {
         s.setData(one);
         s.setId(one.getId());
         s.setHash(one.getHash());
-        s.setNext(root);
+        IStep previousRoot = root;
+        s.setNext(previousRoot);
         root = s;
         indexStep(s);
+        predecessorById.remove(s.getId());
+        if (previousRoot != null) {
+            predecessorById.put(previousRoot.getId(), s.getId());
+        }
         indexedRoot = root;
     }
 
@@ -164,24 +187,39 @@ public class Escalera implements ICache {
     @Override
     public void delete(long id) throws Exception {
         ensureIndex();
-        IStep indexed = memoryById.get(id);
-        if (indexed == null && persistentIds.contains(id) && mind.isStorageUsed()) {
-            synchronized (((User) mind.getUser()).getStorage(schema)) {
-                indexed = ((User) mind.getUser()).getStorage(schema).get(id);
-            }
+        IStep target = indexedStep(id);
+        if (target == null) {
+            return;
         }
 
-        if (root != null && root.getId() == id) {
-            root = root.getNext();
+        IStep successor = target.getNext();
+        Long predecessorId = predecessorById.get(id);
+        if (predecessorId == null) {
+            // No predecessor means that the target is the current root.
+            if (root != null && root.getId() == id) {
+                root = successor;
+            }
         } else {
-            for (IStep s = root; s != null && s.getNext() != null; s = s.getNext()) {
-                if (s.getNext().getId() == id) {
-                    s.setNext(s.getNext().getNext());
-                    break;
+            IStep predecessor = indexedStep(predecessorId);
+            if (predecessor != null) {
+                predecessor.setNext(successor);
+                // A persistent predecessor stores the successor ID in its own
+                // record; persist that one changed link before removing target.
+                if (predecessor instanceof Sapato) {
+                    predecessor.update();
                 }
             }
         }
-        removeIndexedStep(id, indexed);
+
+        predecessorById.remove(id);
+        if (successor != null) {
+            if (predecessorId == null) {
+                predecessorById.remove(successor.getId());
+            } else {
+                predecessorById.put(successor.getId(), predecessorId);
+            }
+        }
+        removeIndexedStep(id, target);
         indexedRoot = root;
 
         if (mind.isStorageUsed()) {
@@ -208,7 +246,6 @@ public class Escalera implements ICache {
         Set<Long> ids = idsByHash.get(h);
         return ids == null ? new HashSet<Long>() : new HashSet<>(ids);
     }
-
 
     @Override
     public void clear() throws Exception {
@@ -287,12 +324,24 @@ public class Escalera implements ICache {
         }
 
         boolean reachedOldRoot = oldRoot == null;
+        IStep predecessor = null;
         for (IStep step = newRoot; step != null; step = step.getNext()) {
             if (oldRoot != null && step.getId() == oldRoot.getId()) {
                 reachedOldRoot = true;
+                if (predecessor == null) {
+                    predecessorById.remove(step.getId());
+                } else {
+                    predecessorById.put(step.getId(), predecessor.getId());
+                }
                 break;
             }
             indexStep(step);
+            if (predecessor == null) {
+                predecessorById.remove(step.getId());
+            } else {
+                predecessorById.put(step.getId(), predecessor.getId());
+            }
+            predecessor = step;
         }
         if (reachedOldRoot) {
             indexedRoot = root;
