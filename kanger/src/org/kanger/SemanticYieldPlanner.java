@@ -10,6 +10,7 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
+import org.kanger.units.TValue;
 
 import java.util.Collection;
 import java.util.List;
@@ -165,6 +166,13 @@ public final class SemanticYieldPlanner {
         if (argument.getType() == ArgumentType.TVARIABLE
                 || argument.isEmpty(mind)) {
             return true;
+        }
+        if (argument.getType() == ArgumentType.TVALUE) {
+            Object value = argument.getObject(mind);
+            if (value instanceof TValue
+                    && ((TValue) value).getTVar(mind).isQuery(mind)) {
+                return true;
+            }
         }
         return argument.getValue(mind).isCVariable();
     }
