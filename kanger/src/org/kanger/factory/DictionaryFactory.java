@@ -213,8 +213,47 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return dynamicTerms;
     }
 
+    private Set<Long> collectSolutionTermIds() throws Exception {
+        Set<Long> solutionTermIds = new HashSet<>();
+        for (IRule candidate : mind.getSolutions()) {
+            if (candidate == null || candidate.isDeleted(mind)) {
+                continue;
+            }
+            Rule rule = (Rule) candidate;
+            rule.containsTerm(Long.MIN_VALUE, mind);
+            solutionTermIds.addAll(rule.getTerms());
+        }
+        return solutionTermIds;
+    }
+
+    private Set<Long> collectHypothesisTermIds() throws Exception {
+        Set<Long> hypothesisTermIds = new HashSet<>();
+        for (IHypothesis candidate : mind.getHypothesis()) {
+            if (candidate == null) {
+                continue;
+            }
+            Hypothesis hypothesis = (Hypothesis) candidate;
+            hypothesisTermIds.add(((org.kanger.units.Predicate) hypothesis.getPredicate()).getNameId());
+            hypothesisTermIds.addAll(hypothesis.getArguments().getTerms(mind, true));
+        }
+        return hypothesisTermIds;
+    }
+
+    private Set<Long> collectValueTermIds() {
+        Set<Long> valueTermIds = new HashSet<>();
+        for (Map<String, ITerm> row : mind.getValues()) {
+            for (ITerm term : row.values()) {
+                valueTermIds.add(term.getId());
+            }
+        }
+        return valueTermIds;
+    }
+
     public void pack() throws Exception {
         Set<Long> dynamicRuleTerms = collectDynamicRuleTerms();
+        Set<Long> solutionTermIds = null;
+        Set<Long> hypothesisTermIds = null;
+        Set<Long> valueTermIds = null;
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
             if (((IUnit) o).isDeleted(mind)) {
@@ -223,35 +262,23 @@ public class DictionaryFactory implements IFactory<ITerm> {
                 long termId = ((IUnit) o).getId();
                 boolean found = dynamicRuleTerms.contains(termId);
                 if (!found) {
-                    for (IRule r : mind.getSolutions()) {
-                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(termId, mind)) {
-                            found = true;
-                            break;
-                        }
+                    if (solutionTermIds == null) {
+                        solutionTermIds = collectSolutionTermIds();
                     }
-                    if (!found) {
-                        for (IHypothesis r : mind.getHypothesis()) {
-                            if (((Hypothesis) r).containsTerm(termId, mind)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            for (Map<String, ITerm> row : mind.getValues()) {
-                                for (ITerm t : row.values()) {
-                                    if (t.getId() == termId) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                if (found) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    found = solutionTermIds.contains(termId);
                 }
-
+                if (!found) {
+                    if (hypothesisTermIds == null) {
+                        hypothesisTermIds = collectHypothesisTermIds();
+                    }
+                    found = hypothesisTermIds.contains(termId);
+                }
+                if (!found) {
+                    if (valueTermIds == null) {
+                        valueTermIds = collectValueTermIds();
+                    }
+                    found = valueTermIds.contains(termId);
+                }
                 if (!found) {
                     toDelete.add(o);
                 }
