@@ -26,6 +26,7 @@
 package org.kanger.factory;
 
 import org.kanger.Mind;
+import org.kanger.SemanticEffectTelemetry;
 import org.kanger.User;
 import org.kanger.enums.QueryPass;
 import org.kanger.interfaces.IFactory;
@@ -673,7 +674,11 @@ public class RuleFactory implements IFactory<IRule> {
             r.getTerms().addAll(d.getTerms(mind, true));
             r.getPredicates().add(d.getPredicateId());
 
-            return add(r);
+            IRule inserted = add(r);
+            if (inserted == r) {
+                SemanticEffectTelemetry.recordGeneratedRule(r);
+            }
+            return inserted;
         }
     }
 
