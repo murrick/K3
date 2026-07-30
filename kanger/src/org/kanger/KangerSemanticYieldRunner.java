@@ -34,9 +34,10 @@ public final class KangerSemanticYieldRunner {
             System.setProperty("user.home", home.toAbsolutePath().toString());
 
             System.out.println("size,operation,result_rows,passes,executed_operations,"
-                    + "new_tvalues,new_causes,new_tsolves,rule_delta,solution_delta,"
-                    + "value_row_delta,materialization_delta,knowledge_delta,effect_delta,"
-                    + "direct_delta,proof_yield,effect_yield");
+                    + "new_tvalues,new_causes,solve_candidates,new_tsolves,"
+                    + "duplicate_solve_candidates,new_generated_rules,rule_delta,"
+                    + "solution_delta,value_row_delta,materialization_delta,"
+                    + "knowledge_delta,effect_delta,direct_delta,proof_yield,effect_yield");
 
             for (int size : parseSizes(args)) {
                 runCase(size);
@@ -85,16 +86,26 @@ public final class KangerSemanticYieldRunner {
         long materializationDelta = solutionDelta + valueRowDelta;
         long newTValues = statistics.getNewTValues();
         long newCauses = effects.getNewCauses();
+        long solveCandidates = effects.getSolveCandidates();
         long newTSolves = effects.getNewTSolves();
+        long duplicateSolveCandidates = effects.getDuplicateSolveCandidates();
+        long newGeneratedRules = effects.getNewGeneratedRules();
+
+        if (solveCandidates != newTSolves + duplicateSolveCandidates) {
+            throw new IllegalStateException(
+                    "TSolve candidate accounting mismatch for " + operation
+                            + ": candidates=" + solveCandidates
+                            + ", new=" + newTSolves
+                            + ", duplicates=" + duplicateSolveCandidates);
+        }
 
         // Coarse historical measure: proof-internal TValue creation plus externally
         // visible rule/result materialization.
         long knowledgeDelta = newTValues + ruleDelta + materializationDelta;
 
-        // Effect inventory: proof-internal semantic objects only. Generated-rule
-        // attribution is still represented by observed ruleDelta until a direct
-        // RuleFactory hook is introduced.
-        long effectDelta = newTValues + newCauses + newTSolves + ruleDelta;
+        // Canonical proof-internal effect inventory. Candidate attempts and duplicate
+        // candidates are diagnostic costs, not additional semantic production.
+        long effectDelta = newTValues + newCauses + newTSolves + newGeneratedRules;
         long executed = statistics.getUnificationAttempts();
         long directDelta = executed == 0L ? knowledgeDelta : 0L;
         double proofYield = executed == 0L
@@ -105,7 +116,7 @@ public final class KangerSemanticYieldRunner {
                 : ((double) effectDelta) / executed;
 
         System.out.printf(Locale.ROOT,
-                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
+                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
                 size,
                 operation,
                 valueRowDelta,
@@ -113,7 +124,10 @@ public final class KangerSemanticYieldRunner {
                 executed,
                 newTValues,
                 newCauses,
+                solveCandidates,
                 newTSolves,
+                duplicateSolveCandidates,
+                newGeneratedRules,
                 ruleDelta,
                 solutionDelta,
                 valueRowDelta,
