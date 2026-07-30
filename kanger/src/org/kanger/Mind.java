@@ -1467,59 +1467,59 @@ public class Mind implements IMind {
     }
 
     public boolean isUnitDeleted(IUnit unit) {
-    UnitType unitType = unit.getUnitType();
-    long unitId = unit.getId();
-    for (IMind level = this; level != null; level = level.getNext()) {
-        Mind current = (Mind) level;
-        synchronized (current.locker) {
-            Set<Long> restoredIds = current.restored.get(unitType);
-            if (restoredIds != null && restoredIds.contains(unitId)) {
-                return false;
-            }
-            Set<Long> deletedIds = current.deleted.get(unitType);
-            if (deletedIds != null && deletedIds.contains(unitId)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-public void setUnitDeleted(IUnit unit, boolean on) {
-    synchronized (locker) {
         UnitType unitType = unit.getUnitType();
         long unitId = unit.getId();
-        if (on) {
-            if (!isUnitDeleted(unit)) {
-                Set<Long> restoredIds = restored.get(unitType);
-                if (restoredIds != null) {
-                    restoredIds.remove(unitId);
+        for (IMind level = this; level != null; level = level.getNext()) {
+            Mind current = (Mind) level;
+            synchronized (current.locker) {
+                Set<Long> restoredIds = current.restored.get(unitType);
+                if (restoredIds != null && restoredIds.contains(unitId)) {
+                    return false;
                 }
+                Set<Long> deletedIds = current.deleted.get(unitType);
+                if (deletedIds != null && deletedIds.contains(unitId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void setUnitDeleted(IUnit unit, boolean on) {
+        synchronized (locker) {
+            UnitType unitType = unit.getUnitType();
+            long unitId = unit.getId();
+            if (on) {
                 if (!isUnitDeleted(unit)) {
-                    Set<Long> deletedIds = deleted.get(unitType);
-                    if (deletedIds == null) {
-                        deletedIds = new HashSet<>();
-                        deleted.put(unitType, deletedIds);
+                    Set<Long> restoredIds = restored.get(unitType);
+                    if (restoredIds != null) {
+                        restoredIds.remove(unitId);
                     }
-                    deletedIds.add(unitId);
+                    if (!isUnitDeleted(unit)) {
+                        Set<Long> deletedIds = deleted.get(unitType);
+                        if (deletedIds == null) {
+                            deletedIds = new HashSet<>();
+                            deleted.put(unitType, deletedIds);
+                        }
+                        deletedIds.add(unitId);
+                    }
                 }
-            }
-        } else if (isUnitDeleted(unit)) {
-            Set<Long> deletedIds = deleted.get(unitType);
-            if (deletedIds != null) {
-                deletedIds.remove(unitId);
-            }
-            if (unit.getMindId() != id || isUnitDeleted(unit)) {
-                Set<Long> restoredIds = restored.get(unitType);
-                if (restoredIds == null) {
-                    restoredIds = new HashSet<>();
-                    restored.put(unitType, restoredIds);
+            } else if (isUnitDeleted(unit)) {
+                Set<Long> deletedIds = deleted.get(unitType);
+                if (deletedIds != null) {
+                    deletedIds.remove(unitId);
                 }
-                restoredIds.add(unitId);
+                if (unit.getMindId() != id || isUnitDeleted(unit)) {
+                    Set<Long> restoredIds = restored.get(unitType);
+                    if (restoredIds == null) {
+                        restoredIds = new HashSet<>();
+                        restored.put(unitType, restoredIds);
+                    }
+                    restoredIds.add(unitId);
+                }
             }
         }
     }
-}
 
     @Override
     public IMind getTop() {
