@@ -39,8 +39,11 @@ public final class KangerSemanticYieldRunner {
                     + "deferred_contributor_links,groups_with_new_tsolve,"
                     + "minimum_contributors_per_group,maximum_contributors_per_group,"
                     + "groups_with_generated_rule,generated_rule_group_links,"
-                    + "ungrouped_generated_rules,new_generated_rules,rule_delta,"
-                    + "solution_delta,value_row_delta,materialization_delta,"
+                    + "ungrouped_generated_rules,deferred_group_effects,"
+                    + "groups_without_contributors,average_deferred_credit_per_contributor,"
+                    + "minimum_deferred_credit_per_contributor,"
+                    + "maximum_deferred_credit_per_contributor,new_generated_rules,"
+                    + "rule_delta,solution_delta,value_row_delta,materialization_delta,"
                     + "knowledge_delta,effect_delta,direct_delta,proof_yield,effect_yield");
 
             for (int size : parseSizes(args)) {
@@ -101,6 +104,11 @@ public final class KangerSemanticYieldRunner {
         long groupsWithGeneratedRule = effects.getGroupsWithGeneratedRule();
         long generatedRuleGroupLinks = effects.getGeneratedRuleGroupLinks();
         long ungroupedGeneratedRules = effects.getUngroupedGeneratedRules();
+        long deferredGroupEffects = effects.getDeferredGroupEffects();
+        long groupsWithoutContributors = effects.getGroupsWithoutContributors();
+        double averageDeferredCredit = effects.getAverageDeferredCreditPerContributor();
+        double minimumDeferredCredit = effects.getMinimumDeferredCreditPerContributor();
+        double maximumDeferredCredit = effects.getMaximumDeferredCreditPerContributor();
         long newGeneratedRules = effects.getNewGeneratedRules();
 
         if (solveCandidates != newTSolves + duplicateSolveCandidates) {
@@ -136,6 +144,21 @@ public final class KangerSemanticYieldRunner {
             throw new IllegalStateException(
                     "Generated-rule causal group bounds failed for " + operation);
         }
+        if (deferredGroupEffects != groupsWithNewTSolve + generatedRuleGroupLinks) {
+            throw new IllegalStateException(
+                    "Deferred group effect accounting mismatch for " + operation);
+        }
+        if (groupsWithoutContributors > deferredGroups) {
+            throw new IllegalStateException(
+                    "Contributorless group count exceeds groups for " + operation);
+        }
+        double expectedAverageCredit = deferredContributorLinks == 0L
+                ? 0.0
+                : ((double) deferredGroupEffects) / deferredContributorLinks;
+        if (Math.abs(averageDeferredCredit - expectedAverageCredit) > 1.0e-12) {
+            throw new IllegalStateException(
+                    "Deferred credit conservation mismatch for " + operation);
+        }
 
         // Coarse historical measure: proof-internal TValue creation plus externally
         // visible rule/result materialization.
@@ -154,7 +177,7 @@ public final class KangerSemanticYieldRunner {
                 : ((double) effectDelta) / executed;
 
         System.out.printf(Locale.ROOT,
-                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
+                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f,%.9f,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
                 size,
                 operation,
                 valueRowDelta,
@@ -173,6 +196,11 @@ public final class KangerSemanticYieldRunner {
                 groupsWithGeneratedRule,
                 generatedRuleGroupLinks,
                 ungroupedGeneratedRules,
+                deferredGroupEffects,
+                groupsWithoutContributors,
+                averageDeferredCredit,
+                minimumDeferredCredit,
+                maximumDeferredCredit,
                 newGeneratedRules,
                 ruleDelta,
                 solutionDelta,
