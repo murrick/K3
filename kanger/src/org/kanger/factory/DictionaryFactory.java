@@ -351,11 +351,13 @@ public class DictionaryFactory implements IFactory<ITerm> {
             }
         }
 
+        List<Long> deleteIds = new ArrayList<>(toDelete.size());
         for (Object o : toDelete) {
             mind.getLog().add(LogMode.STORAGE, "Unused term wiped: " + o.toString());
             mind.unlinkCVar((ITerm) o);
-            cache.delete(((IUnit) o).getId());
+            deleteIds.add(((IUnit) o).getId());
         }
+        cache.deleteAll(deleteIds);
 
         packCandidates.clear();
         packCandidates.addAll(retainedCandidates);
