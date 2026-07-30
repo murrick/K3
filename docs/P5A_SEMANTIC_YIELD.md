@@ -4,6 +4,8 @@ Target line: KANGER III 3.4.1
 
 Baseline: `snapshot/3.3.5-p4-linear-baseline`
 
+Verified CI run: `30515547414`
+
 ## Purpose
 
 Execution cost alone is not sufficient for planning. Planner must estimate both:
