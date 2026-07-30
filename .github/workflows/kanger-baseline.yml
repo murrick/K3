@@ -163,9 +163,15 @@ jobs:
             kanger-generated-rule-yield-ubuntu-java-21.log \
             > kanger-generated-rule-yield-ubuntu-java-21.csv
           awk -F, '
-            NR == 1 { next }
-            { rows++; if ($10 != "true") exit 20 }
-            END { if (rows != 3) exit 21 }
+            NR == 1 {
+              if ($8 != "generated_rule_delta" || $9 != "observed_generated_rules" || $11 != "derived_true") exit 20
+              next
+            }
+            {
+              rows++
+              if ($8 != $9 || $11 != "true") exit 21
+            }
+            END { if (rows != 3) exit 22 }
           ' kanger-generated-rule-yield-ubuntu-java-21.csv
 
       - name: Upload 3.4.1 evidence
