@@ -61,6 +61,20 @@ jobs:
             2>&1 | tee "dumb-integrity-${{ matrix.id }}.log"
           grep -F 'INTEGRITY_REGRESSION_OK' "dumb-integrity-${{ matrix.id }}.log"
 
+      - name: Run DUMB Q2 recovery gate
+        shell: bash
+        run: |
+          set -o pipefail
+          output="target/dumb-q2-recovery-${{ matrix.id }}"
+          java \
+            -Dkanger.dumb.q2.output="$output" \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDumbQ2RecoveryRunner \
+            2>&1 | tee "dumb-q2-recovery-${{ matrix.id }}.log"
+          test -s "$output/q2-recovery.md"
+          grep -F 'Q2_PASS: 6' "dumb-q2-recovery-${{ matrix.id }}.log"
+          grep -F 'Q2_FAIL: 0' "dumb-q2-recovery-${{ matrix.id }}.log"
+
       - name: Run DUMB corruption-detection gate
         shell: bash
         run: |
@@ -93,7 +107,9 @@ jobs:
           path: |
             kanger-3.4.4-${{ matrix.id }}.log
             dumb-integrity-${{ matrix.id }}.log
+            dumb-q2-recovery-${{ matrix.id }}.log
             dumb-qualification-${{ matrix.id }}.log
+            target/dumb-q2-recovery-${{ matrix.id }}/q2-recovery.md
             target/dumb-qualification-${{ matrix.id }}/dumb-qualification.csv
             target/dumb-qualification-${{ matrix.id }}/dumb-qualification.md
           if-no-files-found: warn
