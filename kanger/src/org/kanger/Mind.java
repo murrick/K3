@@ -1467,43 +1467,59 @@ public class Mind implements IMind {
     }
 
     public boolean isUnitDeleted(IUnit unit) {
-        for (IMind m = this; m != null; m = m.getNext()) {
-            if (((Mind) m).getRestored().containsKey(unit.getUnitType()) && ((Mind) m).getRestored().get(unit.getUnitType()).contains(unit.getId())) {
+    UnitType unitType = unit.getUnitType();
+    long unitId = unit.getId();
+    for (IMind level = this; level != null; level = level.getNext()) {
+        Mind current = (Mind) level;
+        synchronized (current.locker) {
+            Set<Long> restoredIds = current.restored.get(unitType);
+            if (restoredIds != null && restoredIds.contains(unitId)) {
                 return false;
-            } else if (((Mind) m).getDeleted().containsKey(unit.getUnitType()) && ((Mind) m).getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
+            }
+            Set<Long> deletedIds = current.deleted.get(unitType);
+            if (deletedIds != null && deletedIds.contains(unitId)) {
                 return true;
             }
         }
-        return false;
     }
+    return false;
+}
 
-    public void setUnitDeleted(IUnit unit, boolean on) {
+public void setUnitDeleted(IUnit unit, boolean on) {
+    synchronized (locker) {
+        UnitType unitType = unit.getUnitType();
+        long unitId = unit.getId();
         if (on) {
             if (!isUnitDeleted(unit)) {
-                if (getRestored().containsKey(unit.getUnitType()) && getRestored().get(unit.getUnitType()).contains(unit.getId())) {
-                    getRestored().get(unit.getUnitType()).remove(unit.getId());
+                Set<Long> restoredIds = restored.get(unitType);
+                if (restoredIds != null) {
+                    restoredIds.remove(unitId);
                 }
                 if (!isUnitDeleted(unit)) {
-                    if (!getDeleted().containsKey(unit.getUnitType())) {
-                        getDeleted().put(unit.getUnitType(), new HashSet<>());
+                    Set<Long> deletedIds = deleted.get(unitType);
+                    if (deletedIds == null) {
+                        deletedIds = new HashSet<>();
+                        deleted.put(unitType, deletedIds);
                     }
-                    getDeleted().get(unit.getUnitType()).add(unit.getId());
+                    deletedIds.add(unitId);
                 }
             }
-        } else {
-            if (isUnitDeleted(unit)) {
-                if (getDeleted().containsKey(unit.getUnitType()) && getDeleted().get(unit.getUnitType()).contains(unit.getId())) {
-                    getDeleted().get(unit.getUnitType()).remove(unit.getId());
+        } else if (isUnitDeleted(unit)) {
+            Set<Long> deletedIds = deleted.get(unitType);
+            if (deletedIds != null) {
+                deletedIds.remove(unitId);
+            }
+            if (unit.getMindId() != id || isUnitDeleted(unit)) {
+                Set<Long> restoredIds = restored.get(unitType);
+                if (restoredIds == null) {
+                    restoredIds = new HashSet<>();
+                    restored.put(unitType, restoredIds);
                 }
-                if (unit.getMindId() != id || isUnitDeleted(unit)) {
-                    if (!getRestored().containsKey(unit.getUnitType())) {
-                        getRestored().put(unit.getUnitType(), new HashSet<>());
-                    }
-                    getRestored().get(unit.getUnitType()).add(unit.getId());
-                }
+                restoredIds.add(unitId);
             }
         }
     }
+}
 
     @Override
     public IMind getTop() {
