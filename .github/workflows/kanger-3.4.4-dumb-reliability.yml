@@ -75,13 +75,13 @@ jobs:
           grep -F 'Q2_PASS: 6' "dumb-q2-recovery-${{ matrix.id }}.log"
           grep -F 'Q2_FAIL: 0' "dumb-q2-recovery-${{ matrix.id }}.log"
 
-      - name: Run DUMB corruption-detection gate
+      - name: Run strict DUMB Q1-Q3 qualification
         shell: bash
         run: |
           set -o pipefail
           output="target/dumb-qualification-${{ matrix.id }}"
           java \
-            -Dkanger.dumb.qualification.requireNoSilentCorruption=true \
+            -Dkanger.dumb.qualification.strict=true \
             -Dkanger.dumb.qualification.output="$output" \
             -cp "target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDumbQualificationRunner \
@@ -89,13 +89,11 @@ jobs:
 
           test -s "$output/dumb-qualification.csv"
           test -s "$output/dumb-qualification.md"
-          grep -F 'PASS: 2' "dumb-qualification-${{ matrix.id }}.log"
-          if grep -F 'GAP_SILENT_CORRUPTION:' "dumb-qualification-${{ matrix.id }}.log"; then
-            echo 'Silent corruption remains in Q3'
-            exit 1
-          fi
-          if grep -F 'GAP_HANG:' "dumb-qualification-${{ matrix.id }}.log"; then
-            echo 'Unexpected qualification hang'
+          grep -F 'PASS: 5' "dumb-qualification-${{ matrix.id }}.log"
+          grep -F 'DETECTED_EXCEPTION: 154' "dumb-qualification-${{ matrix.id }}.log"
+          grep -F 'PASS_OR_IRRELEVANT: 45' "dumb-qualification-${{ matrix.id }}.log"
+          if grep -F 'GAP_' "dumb-qualification-${{ matrix.id }}.log"; then
+            echo 'Qualification gap remains'
             exit 1
           fi
 
