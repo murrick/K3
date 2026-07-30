@@ -1,0 +1,188 @@
+name: P5a apply operation-local masks
+
+on:
+  push:
+    branches:
+      - "arch/3.4.1-p5a-semantic-telemetry"
+    paths:
+      - ".github/workflows/p5a-apply-operation-mask.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-mask:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out architecture branch
+        uses: actions/checkout@v4
+        with:
+          ref: arch/3.4.1-p5a-semantic-telemetry
+
+      - name: Apply exact Linker instrumentation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("kanger/src/org/kanger/Linker.java")
+          source = path.read_text(encoding="utf-8")
+
+          replacements = []
+          replacements.append((
+              "\n".join([
+                  "                                statistics.incrementUnificationAttempts(",
+                  "                                        currentPass == 1, rule.isQuery(), rule.isGenerated());",
+                  "                                TValue[] substMaster = new TValue[master.getRange()];",
+              ]),
+              "\n".join([
+                  "                                statistics.incrementUnificationAttempts(",
+                  "                                        currentPass == 1, rule.isQuery(), rule.isGenerated());",
+                  "                                int operationEffects = 0;",
+                  "                                TValue[] substMaster = new TValue[master.getRange()];",
+              ]),
+              1,
+              "operation scope",
+          ))
+
+          replacements.append((
+              "\n".join([
+                  "                                                        statistics.incrementNewTValues();",
+                  "                                                        result = true;",
+              ]),
+              "\n".join([
+                  "                                                        statistics.incrementNewTValues();",
+                  "                                                        operationEffects |= LinkerStatistics.EFFECT_NEW_TVALUE;",
+                  "                                                        result = true;",
+              ]),
+              2,
+              "new TValue effects",
+          ))
+
+          replacements.append((
+              "\n".join([
+                  "                                    } else if (!master.isSubstitutable() && !slave.isSubstitutable()) {",
+                  "                                        ++solvedPasses;",
+                  "                                        master.setUsed(mind);",
+              ]),
+              "\n".join([
+                  "                                    } else if (!master.isSubstitutable() && !slave.isSubstitutable()) {",
+                  "                                        ++solvedPasses;",
+                  "                                        operationEffects |= LinkerStatistics.EFFECT_USED_ONLY;",
+                  "                                        master.setUsed(mind);",
+              ]),
+              1,
+              "used-only effect",
+          ))
+
+          replacements.append((
+              "\n".join([
+                  "                                    markExcluded(result, substMaster, master, slave, causes, variants, logging);",
+                  "                                    markExcluded(result, substSlave, slave, master, causes, variants, logging);",
+              ]),
+              "\n".join([
+                  "                                    operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, logging);",
+                  "                                    operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, logging);",
+              ]),
+              1,
+              "Cause and deferred solve effects",
+          ))
+
+          replacements.append((
+              "\n".join([
+                  "                                } else {",
+                  "                                    ++skippedPasses;",
+                  "                                    mind.getTValues().release();",
+                  "                                    mind.getFValues().release();",
+                  "                                }",
+                  "                            }",
+              ]),
+              "\n".join([
+                  "                                } else {",
+                  "                                    ++skippedPasses;",
+                  "                                    mind.getTValues().release();",
+                  "                                    mind.getFValues().release();",
+                  "                                }",
+                  "                                statistics.recordOperationEffectMask(operationEffects);",
+                  "                            }",
+              ]),
+              1,
+              "operation mask commit",
+          ))
+
+          replacements.append((
+              "    private boolean markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {",
+              "    private int markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {",
+              1,
+              "markExcluded return type",
+          ))
+
+          replacements.append((
+              "\n".join([
+                  "        IRule r = null;",
+                  "        boolean occurrs = false;",
+              ]),
+              "\n".join([
+                  "        IRule r = null;",
+                  "        boolean occurrs = false;",
+                  "        int effects = 0;",
+              ]),
+              1,
+              "markExcluded accumulator",
+          ))
+
+          replacements.append((
+              "\n".join([
+                  "                if (!causes.containsKey(r)) {",
+                  "                    causes.put(r, new HashSet<>());",
+                  "                }",
+                  "                causes.get(r).add(s);",
+              ]),
+              "\n".join([
+                  "                if (!causes.containsKey(r)) {",
+                  "                    causes.put(r, new HashSet<>());",
+                  "                }",
+                  "                if (causes.get(r).add(s)) {",
+                  "                    effects |= LinkerStatistics.EFFECT_NEW_CAUSE;",
+                  "                }",
+              ]),
+              1,
+              "canonical Cause effect",
+          ))
+
+          replacements.append((
+              "            variants.get(master).add(subst);",
+              "\n".join([
+                  "            variants.get(master).add(subst);",
+                  "            effects |= LinkerStatistics.EFFECT_DEFERRED_SOLVE_CANDIDATE;",
+              ]),
+              1,
+              "deferred solve candidate effect",
+          ))
+
+          replacements.append((
+              "        return r != null;",
+              "        return effects;",
+              1,
+              "markExcluded result",
+          ))
+
+          for old, new, expected, label in replacements:
+              actual = source.count(old)
+              if actual != expected:
+                  raise SystemExit(f"Unexpected Linker shape for {label}: {actual} != {expected}")
+              source = source.replace(old, new, expected)
+
+          path.write_text(source, encoding="utf-8")
+          PY
+          git diff --check
+          git diff -- kanger/src/org/kanger/Linker.java
+
+      - name: Commit operation-local masks
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kanger/src/org/kanger/Linker.java
+          git commit -m "P5a: classify immediate unification effects"
+          git push origin HEAD:arch/3.4.1-p5a-semantic-telemetry
