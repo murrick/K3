@@ -33,6 +33,7 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -293,12 +294,29 @@ public class Base implements IBase, Iterable<IStep> {
 
     @Override
     public void delete(long id) throws Exception {
-        invalidateCached(id);
+        deleteAll(java.util.Collections.singleton(id));
+    }
+
+    @Override
+    public void deleteAll(Collection<Long> ids) throws Exception {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        for (Long id : ids) {
+            if (id != null) {
+                invalidateCached(id);
+            }
+        }
         synchronized (locker) {
-            Index.IndexOne current = index.getOne(id);
-            if (current != null) {
-                index.remove(id);
-                data.remove(current.getLong());
+            for (Long id : ids) {
+                if (id == null) {
+                    continue;
+                }
+                Index.IndexOne current = index.getOne(id);
+                if (current != null) {
+                    index.remove(id);
+                    data.remove(current.getLong());
+                }
             }
         }
     }
