@@ -18,6 +18,10 @@ import java.util.Locale;
  * Observational P5a runner that relates Linker execution cost to externally
  * visible semantic delta. It does not alter planning, proof execution,
  * materialization, transactions, or persistence.
+ *
+ * Each measured operation receives an independent Mind populated with the same
+ * durable fixture. This prevents result materialized by an earlier query from
+ * suppressing solution or value-row deltas in a later query.
  */
 public final class KangerSemanticYieldRunner {
 
@@ -31,7 +35,7 @@ public final class KangerSemanticYieldRunner {
 
             System.out.println("size,operation,result_rows,passes,executed_operations,"
                     + "new_tvalues,rule_delta,solution_delta,value_row_delta,"
-                    + "knowledge_delta,proof_yield");
+                    + "knowledge_delta,direct_delta,proof_yield");
 
             for (int size : parseSizes(args)) {
                 runCase(size);
@@ -43,7 +47,58 @@ public final class KangerSemanticYieldRunner {
     }
 
     private static void runCase(int size) throws Exception {
-        String suffix = size + "-" + System.nanoTime();
+        int key = Math.max(1, size / 2);
+        measure(size, "query-exact",
+                "?value(" + key + "," + (1000 + key) + ",7);");
+        measure(size, "query-two-constants",
+                "?$z value(" + key + "," + (1000 + key) + ",z);");
+        measure(size, "query-one-constant",
+                "?$y $z value(" + key + ",y,z);");
+        measure(size, "query-all-variables",
+                "?$x $y $z value(x,y,z);");
+    }
+
+    private static void measure(int size,
+                                String operation,
+                                String query) throws Exception {
+        Mind mind = createFixture(size, operation);
+        Snapshot before = Snapshot.capture(mind);
+        Boolean result = mind.query(query, null, false);
+        if (!Boolean.TRUE.equals(result)) {
+            throw new IllegalStateException("Query failed: " + query);
+        }
+        Snapshot after = Snapshot.capture(mind);
+
+        LinkerStatistics statistics = mind.getLinkerStatistics();
+        long ruleDelta = nonNegativeDelta(after.rules, before.rules);
+        long solutionDelta = nonNegativeDelta(after.solutions, before.solutions);
+        long valueRowDelta = nonNegativeDelta(after.valueRows, before.valueRows);
+        long newTValues = statistics.getNewTValues();
+        long knowledgeDelta = newTValues + ruleDelta + solutionDelta + valueRowDelta;
+        long executed = statistics.getUnificationAttempts();
+        long directDelta = executed == 0L ? knowledgeDelta : 0L;
+        double proofYield = executed == 0L
+                ? 0.0
+                : ((double) knowledgeDelta) / executed;
+
+        System.out.printf(Locale.ROOT,
+                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f%n",
+                size,
+                operation,
+                valueRowDelta,
+                statistics.getPasses(),
+                executed,
+                newTValues,
+                ruleDelta,
+                solutionDelta,
+                valueRowDelta,
+                knowledgeDelta,
+                directDelta,
+                proofYield);
+    }
+
+    private static Mind createFixture(int size, String operation) throws Exception {
+        String suffix = operation + "-" + size + "-" + System.nanoTime();
         User user = (User) UserFactory.createUser(
                 "semantic-yield-" + suffix,
                 "semantic-yield-" + suffix);
@@ -60,53 +115,7 @@ public final class KangerSemanticYieldRunner {
                 throw new IllegalStateException("Insert failed at row " + i);
             }
         }
-
-        int key = Math.max(1, size / 2);
-        measure(mind, size, "query-exact",
-                "?value(" + key + "," + (1000 + key) + ",7);");
-        measure(mind, size, "query-two-constants",
-                "?$z value(" + key + "," + (1000 + key) + ",z);");
-        measure(mind, size, "query-one-constant",
-                "?$y $z value(" + key + ",y,z);");
-        measure(mind, size, "query-all-variables",
-                "?$x $y $z value(x,y,z);");
-    }
-
-    private static void measure(Mind mind,
-                                int size,
-                                String operation,
-                                String query) throws Exception {
-        Snapshot before = Snapshot.capture(mind);
-        Boolean result = mind.query(query, null, false);
-        if (!Boolean.TRUE.equals(result)) {
-            throw new IllegalStateException("Query failed: " + query);
-        }
-        Snapshot after = Snapshot.capture(mind);
-
-        LinkerStatistics statistics = mind.getLinkerStatistics();
-        long ruleDelta = nonNegativeDelta(after.rules, before.rules);
-        long solutionDelta = nonNegativeDelta(after.solutions, before.solutions);
-        long valueRowDelta = nonNegativeDelta(after.valueRows, before.valueRows);
-        long newTValues = statistics.getNewTValues();
-        long knowledgeDelta = newTValues + ruleDelta + solutionDelta + valueRowDelta;
-        long executed = statistics.getUnificationAttempts();
-        double proofYield = executed == 0L
-                ? 0.0
-                : ((double) knowledgeDelta) / executed;
-
-        System.out.printf(Locale.ROOT,
-                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%.9f%n",
-                size,
-                operation,
-                after.valueRows,
-                statistics.getPasses(),
-                executed,
-                newTValues,
-                ruleDelta,
-                solutionDelta,
-                valueRowDelta,
-                knowledgeDelta,
-                proofYield);
+        return mind;
     }
 
     private static long nonNegativeDelta(long after, long before) {
