@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
@@ -57,7 +58,7 @@ public class FValueFactory implements IFactory<FValue> {
 
     private final Mind mind;
     private boolean action = false;
-    private final Set<Long> invalidated = new HashSet<>();
+    private final Set<Long> invalidated = new CopyOnWriteArraySet<>();
     private final Stack<Set<Long>> invalidatedStack = new Stack<>();
 
     public FValueFactory(Mind mind) throws Exception {
@@ -66,6 +67,10 @@ public class FValueFactory implements IFactory<FValue> {
     }
 
     public void transaction(FValueFactory base) throws Exception {
+        // Drop every anchor into the previous cache/storage generation.
+        top = null;
+        connection = null;
+        action = false;
         invalidated.clear();
         invalidatedStack.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
@@ -108,7 +113,7 @@ public class FValueFactory implements IFactory<FValue> {
             if (f.isComplete()) {
                 t = new FValue(f, mind);
                 t.setId(((User) mind.getUser()).nextId(SCHEMA));
-                f.setMindId(mind.getId());
+                t.setMindId(mind.getId());
                 cache.add(t);
                 if (top == null) {
                     top = cache.getRoot();
