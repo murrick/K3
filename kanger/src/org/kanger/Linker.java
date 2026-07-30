@@ -472,6 +472,43 @@ public class Linker {
         return result[0];
     }
 
+    /**
+     * Checks whether the partial binding currently assembled by
+     * {@link #rotateVariables(SortedSet, SortedSet, IReactor)} is compatible
+     * with the transient {@link TSolve} tuples already registered in
+     * {@code mind.getRuleSolves()}.
+     *
+     * <p>This is not a general validity predicate and it does not choose the
+     * "best" value for a variable. It is a runtime join condition. Variables
+     * are rotated independently, while a TSolve records values that were
+     * produced together. The check prevents the rotation from constructing a
+     * Cartesian combination of individually legal values that never belonged
+     * to one compatible TSolve tuple.</p>
+     *
+     * <p>The {@code tail} contains the current variable and the variables that
+     * have already received current values in the descending rotation. For the
+     * first variable in that tail, the method examines solve keys containing
+     * that variable and accepts the partial binding when at least one such key
+     * can support it:</p>
+     * <ul>
+     *     <li>If no solve key contains the current variable, the binding is not
+     *     constrained here and is accepted.</li>
+     *     <li>A unary solve key is treated as sufficient by the historical
+     *     contract; this method does not re-check its value.</li>
+     *     <li>For a multi-variable key, candidates are first selected by the
+     *     current variable/value pair. Every other already-bound variable that
+     *     occurs in the same TSolve must then have the same current TValue.</li>
+     *     <li>Different solve keys are alternatives: compatibility with one of
+     *     them is sufficient.</li>
+     * </ul>
+     *
+     * <p>The query-local index is only an acceleration structure over existing
+     * TSolve objects. It must not change these acceptance rules. Any future
+     * rewrite should first characterize the correlated, unary, absent-key and
+     * partially-bound cases with regression tests; otherwise a seemingly local
+     * simplification can silently change the set of substitutions explored by
+     * the Linker.</p>
+     */
     private boolean isValidFor(SortedSet<TVariable> tail) throws Exception {
         synchronizeSolveIndex();
         final TVariable t = tail.first();
@@ -747,6 +784,64 @@ public class Linker {
     }
 
 
+    /**
+     * Historical branch-closure and deferred-materialization procedure.
+     *
+     * <p>Despite its name, this method does not write a record directly to the
+     * persistent rule store. It is invoked for one terminal rotation of the
+     * rule variables, after {@link #linkDomains(List, Collection, Map, boolean)}
+     * and {@link #calcFunctions(List, Map, boolean)}. It interprets the current
+     * state of the branch and may:</p>
+     * <ul>
+     *     <li>mark a Domain as produced for later materialization by
+     *     {@link #updateDatabase(boolean)};</li>
+     *     <li>attach the current TValue solution and the available Causes;</li>
+     *     <li>record a calculated or waiter-assisted consequence;</li>
+     *     <li>create temporary alternative Hypotheses when the branch cannot be
+     *     reduced to one consequence.</li>
+     * </ul>
+     *
+     * <p>The method is an old, compact encoding of several semantic rules, not
+     * a conventional storage helper. Its observable processing order is part of
+     * the current behavior:</p>
+     * <ol>
+     *     <li>Execute and validate system Domains through {@code checkSystem}.</li>
+     *     <li>Capture the current non-empty TValue binding as the solve attached
+     *     to any produced Domain.</li>
+     *     <li>Identify Domains that can be provisionally treated as assumed by
+     *     an opposite waiter with compatible constant positions.</li>
+     *     <li>Classify the branch into calculated, excluded, unresolved
+     *     candidates and already stored Domains. A system or incomplete Domain
+     *     clears only part of that classification and terminates the scan.</li>
+     *     <li>Try, in order, the single-candidate closure, the excluded-only
+     *     closure, the calculated-only closure, and the waiter-assisted
+     *     closure.</li>
+     *     <li>If no earlier strategy suppresses fallback and several candidates
+     *     remain, create temporary alternative Hypotheses.</li>
+     * </ol>
+     *
+     * <p>The local booleans must not be reinterpreted from their names:</p>
+     * <ul>
+     *     <li>{@code result} is not a complete "state changed" signal. It is set
+     *     only by the ordinary production paths. For example, the special
+     *     {@code rule(1)} path can call {@code setProduced}, and temporary
+     *     hypotheses can be added, while this method still returns false.</li>
+     *     <li>{@code occurs} is a historical fallback-suppression flag. In
+     *     different branches it means that a special case was recognized, a
+     *     strategy was applicable, or a strategy was attempted. It may become
+     *     true even when no Domain is actually produced.</li>
+     * </ul>
+     *
+     * <p>This method should therefore be treated as a frozen legacy semantic
+     * kernel. Do not reorder independent-looking blocks, merge conditions,
+     * replace {@code occurs} with {@code result}, or extract "clean" helpers on
+     * the assumption that the names describe a formal state machine. A future
+     * replacement should start from an explicit semantic model and a decision
+     * table, using the current implementation and its regression corpus as an
+     * executable historical oracle. Until then, behavioral changes belong here
+     * only when a concrete contradiction is reproduced and protected by a
+     * focused regression test.</p>
+     */
     private boolean linkDatabase(List<Domain> tree, Map<IRule, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
 
         boolean result = false;
@@ -1074,4 +1169,3 @@ public class Linker {
         return !block;
     }
 }
-
