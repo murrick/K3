@@ -25,7 +25,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * parameters. Rule.origin deliberately retains the original '?' template,
  * while IRule.toString(IMind) and Rule.createMap(IMind).text must expose the
  * materialized Domain arguments both after parallel commits and after DUMB
- * close/reopen with lazy hydration.
+ * close/reopen with lazy hydration. Semantic value comparison is independent
+ * of presentation details such as integral versus floating-point formatting.
  */
 public final class KangerRuleRenderingRunner {
 
