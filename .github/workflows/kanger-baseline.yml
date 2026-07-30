@@ -167,22 +167,27 @@ jobs:
           grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($7 != "new_causes" || $8 != "new_tsolves" || $14 != "effect_delta" || $17 != "effect_yield") exit 10
+              if ($7 != "new_causes" || $8 != "solve_candidates") exit 10
+              if ($9 != "new_tsolves" || $10 != "duplicate_solve_candidates") exit 11
+              if ($11 != "new_generated_rules" || $17 != "effect_delta" || $20 != "effect_yield") exit 12
               next
             }
             $2 == "query-exact" {
               exact++
-              if ($5 != 0 || $14 != 0 || $15 != 1) exit 11
+              if ($5 != 0 || $8 != 0 || $9 != 0 || $10 != 0) exit 13
+              if ($17 != 0 || $18 != 1) exit 14
               next
             }
             {
               inferred++
-              if ($7 != $3 || $8 != $3) exit 12
-              if ($12 != 2 * $3) exit 13
-              if ($13 != $14 || $16 != $17) exit 14
+              if ($7 != $3 || $9 != $3) exit 15
+              if ($8 != 5 * $3 || $10 != 4 * $3) exit 16
+              if ($11 != 0 || $12 != 0) exit 17
+              if ($15 != 2 * $3) exit 18
+              if ($16 != $17 || $19 != $20) exit 19
             }
             END {
-              if (exact != 3 || inferred != 9) exit 15
+              if (exact != 3 || inferred != 9) exit 20
             }
           ' kanger-semantic-yield-ubuntu-java-21.csv
 
@@ -200,14 +205,16 @@ jobs:
             > kanger-generated-rule-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($8 != "generated_rule_delta" || $9 != "observed_generated_rules" || $11 != "derived_true") exit 20
+              if ($6 != "solve_candidates" || $7 != "new_tsolves" || $8 != "duplicate_solve_candidates") exit 21
+              if ($10 != "generated_rule_delta" || $11 != "observed_generated_rules" || $13 != "derived_true") exit 22
               next
             }
             {
               rows++
-              if ($8 != $9 || $11 != "true") exit 21
+              if ($6 != $7 + $8) exit 23
+              if ($10 != $11 || $13 != "true") exit 24
             }
-            END { if (rows != 3) exit 22 }
+            END { if (rows != 3) exit 25 }
           ' kanger-generated-rule-yield-ubuntu-java-21.csv
 
       - name: Upload 3.4.1 evidence
