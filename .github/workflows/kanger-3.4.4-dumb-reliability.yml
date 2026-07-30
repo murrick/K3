@@ -64,6 +64,18 @@ jobs:
           grep -F 'RULE_CANDIDATE_CONCURRENCY_OK iterations=12' \
             "rule-candidate-concurrency-${{ matrix.id }}.log"
 
+      - name: Verify contextual solution row rendering
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerRuleRenderingRunner \
+            2>&1 | tee "rule-rendering-${{ matrix.id }}.log"
+          grep -F 'RULE_RENDERING_PASS memory' "rule-rendering-${{ matrix.id }}.log"
+          grep -F 'RULE_RENDERING_PASS persistent' "rule-rendering-${{ matrix.id }}.log"
+          grep -F 'RULE_RENDERING_OK' "rule-rendering-${{ matrix.id }}.log"
+
       - name: Run DUMB integrity lifecycle regressions
         shell: bash
         run: |
@@ -119,6 +131,7 @@ jobs:
           path: |
             kanger-3.4.4-${{ matrix.id }}.log
             rule-candidate-concurrency-${{ matrix.id }}.log
+            rule-rendering-${{ matrix.id }}.log
             dumb-integrity-${{ matrix.id }}.log
             dumb-q2-recovery-${{ matrix.id }}.log
             dumb-qualification-${{ matrix.id }}.log
