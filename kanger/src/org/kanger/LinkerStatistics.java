@@ -94,10 +94,10 @@ public final class LinkerStatistics {
     void incrementCandidateRuleVisits() { ++candidateRuleVisits; }
     void incrementDomainPairs() { ++domainPairs; }
 
-    void incrementUnificationAttempts(boolean firstPass,
-                                       boolean query,
-                                       boolean generated) {
-        ++unificationAttempts;
+    long incrementUnificationAttempts(boolean firstPass,
+                                      boolean query,
+                                      boolean generated) {
+        long operationId = ++unificationAttempts;
         if (firstPass) {
             if (generated) {
                 ++firstPassGeneratedUnifications;
@@ -115,6 +115,7 @@ public final class LinkerStatistics {
                 ++laterPassDurableUnifications;
             }
         }
+        return operationId;
     }
 
     void recordOperationEffectMask(int mask) {
