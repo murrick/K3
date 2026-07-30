@@ -5,6 +5,7 @@
  */
 package org.kanger;
 
+import org.kanger.enums.QueryPass;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
@@ -17,7 +18,7 @@ import java.util.Locale;
 /**
  * P5b.1 calibration runner. It captures a pre-execution estimate at the
  * Analyzer candidate boundary and compares it with the canonical P5a effects
- * observed after the query.
+ * observed after the positive query pass.
  */
 public final class KangerSemanticPredictionRunner {
 
@@ -66,7 +67,7 @@ public final class KangerSemanticPredictionRunner {
         Boolean result;
         SemanticEffectTelemetry.Snapshot effects;
         SemanticPlanningTelemetry.Snapshot planning;
-        SemanticPlanningTelemetry.begin();
+        SemanticPlanningTelemetry.begin(QueryPass.CHECKTRUE);
         SemanticEffectTelemetry.begin();
         try {
             result = mind.query(query, null, false);
@@ -100,6 +101,7 @@ public final class KangerSemanticPredictionRunner {
         if (estimate == null || !estimate.isCalibrated()) {
             throw new IllegalStateException(
                     "Missing calibrated estimate for " + operation
+                            + "; pass=" + planning.getTargetPass()
                             + "; shape=" + planning.getQueryShape());
         }
         if (estimate.getExpectedResultRows() != valueRowDelta
@@ -117,6 +119,7 @@ public final class KangerSemanticPredictionRunner {
                             + "/" + actualEffectDelta
                             + ", direct=" + estimate.getExpectedDirectDelta()
                             + "/" + actualDirectDelta
+                            + "; pass=" + planning.getTargetPass()
                             + "; shape=" + planning.getQueryShape());
         }
         if (estimate.getCandidatePool() != size) {
@@ -124,6 +127,7 @@ public final class KangerSemanticPredictionRunner {
                     "Candidate-pool mismatch for " + operation
                             + ": " + estimate.getCandidatePool()
                             + " != " + size
+                            + "; pass=" + planning.getTargetPass()
                             + "; shape=" + planning.getQueryShape());
         }
 
