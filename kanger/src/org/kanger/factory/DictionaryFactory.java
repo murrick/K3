@@ -221,7 +221,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
                 toDelete.add(o);
             } else {
                 long termId = ((IUnit) o).getId();
-                boolean found = mind.getRules().hasActiveRuleWithTerm(termId);
+                boolean found = dynamicRuleTerms.contains(termId);
                 if (!found) {
                     for (IRule r : mind.getSolutions()) {
                         if (!r.isDeleted(mind) && ((Rule) r).containsTerm(termId, mind)) {
@@ -250,10 +250,6 @@ public class DictionaryFactory implements IFactory<ITerm> {
                             }
                         }
                     }
-                }
-
-                if (!found) {
-                    found = dynamicRuleTerms.contains(termId);
                 }
 
                 if (!found) {
