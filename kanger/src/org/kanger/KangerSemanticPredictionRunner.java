@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * P5b.1 calibration runner. It captures a pre-execution estimate at the
- * Analyzer candidate boundary and compares it with the canonical P5a effects
- * observed after the positive query pass.
+ * P5b.1 calibration runner. It captures the first target-Rule estimate from
+ * the earliest public query pass, before any Linker transformation, and
+ * compares it with the canonical P5a effects observed for the complete query.
  */
 public final class KangerSemanticPredictionRunner {
 
@@ -67,7 +67,7 @@ public final class KangerSemanticPredictionRunner {
         Boolean result;
         SemanticEffectTelemetry.Snapshot effects;
         SemanticPlanningTelemetry.Snapshot planning;
-        SemanticPlanningTelemetry.begin(QueryPass.CHECKTRUE);
+        SemanticPlanningTelemetry.begin(QueryPass.CHECKFALSE);
         SemanticEffectTelemetry.begin();
         try {
             result = mind.query(query, null, false);
@@ -119,6 +119,9 @@ public final class KangerSemanticPredictionRunner {
                             + "/" + actualEffectDelta
                             + ", direct=" + estimate.getExpectedDirectDelta()
                             + "/" + actualDirectDelta
+                            + ", bounds=" + estimate.getBoundPositions()
+                            + ", variables=" + estimate.getQueryVariables()
+                            + ", matches=" + estimate.getMatchedCandidates()
                             + "; pass=" + planning.getTargetPass()
                             + "; shape=" + planning.getQueryShape());
         }
