@@ -4,22 +4,22 @@
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *  IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  *
  */
 
@@ -36,17 +36,20 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
  */
 public class DB implements IData {
 
-    //    String dbPath = "";
     private static final Object locker = new Object();
     private String storageName = "";
-    private Map<String, IBase> bases = new HashMap<>();
+    private Map<String, IBase> bases = new HashMap<String, IBase>();
     private IUser user = null;
 
     @Override
@@ -91,10 +94,9 @@ public class DB implements IData {
         }
 
         String dbPath = user.getDatabaseDir() + tmp;
-
         new File(dbPath + ".index").delete();
         new File(dbPath + ".store").delete();
-
+        new File(dbPath + ".integrity").delete();
     }
 
     @Override
@@ -106,7 +108,6 @@ public class DB implements IData {
 
         IUser u = new User();
         IMind m = new Mind(u);
-
         u.setDatabaseDir(user.getDatabaseDir());
         DB tmpDB = new DB();
         tmpDB.init(u);
@@ -123,12 +124,14 @@ public class DB implements IData {
         m.closeStorage();
 
         String dbPath = user.getDatabaseDir() + tmp;
-
         new File(dbPath + ".index").delete();
         new File(dbPath + ".store").delete();
+        new File(dbPath + ".integrity").delete();
 
         new File(dbPath + "-temporary.index").renameTo(new File(dbPath + ".index"));
         new File(dbPath + "-temporary.store").renameTo(new File(dbPath + ".store"));
+        new File(dbPath + "-temporary.integrity")
+                .renameTo(new File(dbPath + ".integrity"));
 
         use(tmp);
     }
@@ -146,7 +149,8 @@ public class DB implements IData {
     @Override
     public IBase getBase(String context) throws Exception {
         if (!bases.containsKey(context)) {
-            IBase base = new Base(user.getDatabaseDir() + storageName, bases.size() + 1, locker, false, user);
+            IBase base = new Base(user.getDatabaseDir() + storageName,
+                    bases.size() + 1, locker, false, user);
             bases.put(context, base);
         }
         return bases.get(context);
@@ -156,8 +160,6 @@ public class DB implements IData {
     public IBase connect(String context) throws Exception {
         if (!isClosed()) {
             return bases.get(context);
-//            IBase base = new Base(dbPath + context, true);
-//            return base;
         } else {
             return null;
         }
@@ -170,7 +172,7 @@ public class DB implements IData {
 
     @Override
     public Collection<String> list() {
-        List<String> list = new ArrayList<>();
+        List<String> list = new ArrayList<String>();
         recurseList(user.getDatabaseDir(), "", list);
         return list;
     }
@@ -184,7 +186,9 @@ public class DB implements IData {
                         list.add(prefix + f.getName().replaceAll(".store", ""));
                     }
                 } else {
-                    recurseList(path + Enums.FILE_SEPARATOR + f.getName(), prefix + (prefix.isEmpty() ? "" : ".") + f.getName() + ".", list);
+                    recurseList(path + Enums.FILE_SEPARATOR + f.getName(),
+                            prefix + (prefix.isEmpty() ? "" : ".")
+                                    + f.getName() + ".", list);
                 }
             }
         }
