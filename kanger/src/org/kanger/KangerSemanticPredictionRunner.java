@@ -99,7 +99,8 @@ public final class KangerSemanticPredictionRunner {
         SemanticPlanEstimate estimate = planning.getEstimate();
         if (estimate == null || !estimate.isCalibrated()) {
             throw new IllegalStateException(
-                    "Missing calibrated estimate for " + operation);
+                    "Missing calibrated estimate for " + operation
+                            + "; shape=" + planning.getQueryShape());
         }
         if (estimate.getExpectedResultRows() != valueRowDelta
                 || estimate.getExpectedExecutedOperations() != actualExecuted
@@ -115,13 +116,15 @@ public final class KangerSemanticPredictionRunner {
                             + ", effects=" + estimate.getExpectedEffectDelta()
                             + "/" + actualEffectDelta
                             + ", direct=" + estimate.getExpectedDirectDelta()
-                            + "/" + actualDirectDelta);
+                            + "/" + actualDirectDelta
+                            + "; shape=" + planning.getQueryShape());
         }
         if (estimate.getCandidatePool() != size) {
             throw new IllegalStateException(
                     "Candidate-pool mismatch for " + operation
                             + ": " + estimate.getCandidatePool()
-                            + " != " + size);
+                            + " != " + size
+                            + "; shape=" + planning.getQueryShape());
         }
 
         System.out.printf(Locale.ROOT,
