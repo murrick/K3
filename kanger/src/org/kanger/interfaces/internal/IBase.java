@@ -26,6 +26,8 @@ package org.kanger.interfaces.internal;
 
 import org.kanger.interfaces.IMind;
 
+import java.util.Collection;
+
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
  */
@@ -44,6 +46,16 @@ public interface IBase {
     boolean isEmpty();
 
     void delete(long id) throws Exception;
+
+    default void deleteAll(Collection<Long> ids) throws Exception {
+        if (ids != null) {
+            for (Long id : ids) {
+                if (id != null) {
+                    delete(id);
+                }
+            }
+        }
+    }
 
     void clear() throws Exception;
 
