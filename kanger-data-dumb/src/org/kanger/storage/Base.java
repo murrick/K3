@@ -36,9 +36,11 @@ import org.kanger.interfaces.internal.IStep;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
@@ -76,6 +78,14 @@ public class Base implements IBase, Iterable<IStep> {
     private volatile long flushCount = 0L;
 
     private long lastId = -1;
+
+    /*
+     * Chain position is semantic storage metadata, not numeric ID order.
+     * Parallel sibling transactions can allocate IDs in one order and commit
+     * them in another, so index.firstKey()/lastKey() are not chain endpoints.
+     */
+    private Long rootId = null;
+    private Long topId = null;
 
     public Base(String name, int baseCode, Object locker, boolean readonly, IUser user) throws Exception {
         this.name = name;
@@ -117,16 +127,17 @@ public class Base implements IBase, Iterable<IStep> {
 
             integrity = new IntegrityManifest(name + ".integrity", baseCode, locker);
             integrity.openOrBootstrap(index, data);
+            resolveEndpoints();
         } catch (Exception failure) {
             closeOpenedFilesAfterFailure();
             throw failure;
         }
 
-        IStep root = getRoot();
-        if (root != null) {
-            lastId = root.getId() + 1;
+        if (!index.isEmpty()) {
+            long maximumId = index.lastKey();
+            lastId = maximumId < 0L ? 0L : maximumId + 1L;
         } else {
-            lastId = 0;
+            lastId = 0L;
         }
     }
 
@@ -142,6 +153,88 @@ public class Base implements IBase, Iterable<IStep> {
                 data.close();
             }
         } catch (Exception ignored) {
+        }
+    }
+
+    private void invalidateEndpoints() {
+        rootId = null;
+        topId = null;
+    }
+
+    /**
+     * Reconstruct the linked-chain endpoints from persisted next references.
+     * Exactly one record is not referenced by another record (root), and
+     * exactly one record points to -1 (oldest/top). Any other shape is a
+     * structural storage error rather than an ID-order fallback.
+     */
+    private void resolveEndpoints() throws Exception {
+        synchronized (locker) {
+            if (index.isEmpty()) {
+                rootId = null;
+                topId = null;
+                return;
+            }
+            if (rootId != null && topId != null
+                    && index.getOne(rootId.longValue()) != null
+                    && index.getOne(topId.longValue()) != null) {
+                return;
+            }
+
+            Set<Long> ids = new HashSet<Long>();
+            Set<Long> referenced = new HashSet<Long>();
+            Long tail = null;
+            Iterator<Index.IndexOne> iterator = index.iterator(false);
+            if (iterator == null) {
+                throw new DatabaseErrorException(
+                        "DUMB storage corruption: cannot enumerate base=" + baseCode);
+            }
+            while (iterator.hasNext()) {
+                Index.IndexOne one = iterator.next();
+                if (one == null) {
+                    throw new DatabaseErrorException(
+                            "DUMB storage corruption: null index record base=" + baseCode);
+                }
+                IStep stored = data.getUncached(one.getLong());
+                if (!(stored instanceof Sapato) || stored.getId() != one.getId()) {
+                    throw new DatabaseErrorException(
+                            "DUMB storage corruption: invalid chain record base="
+                                    + baseCode + " id=" + one.getId());
+                }
+                long id = stored.getId();
+                if (!ids.add(Long.valueOf(id))) {
+                    throw new DatabaseErrorException(
+                            "DUMB storage corruption: duplicate chain id base="
+                                    + baseCode + " id=" + id);
+                }
+                long nextId = ((Sapato) stored).getNextId();
+                if (nextId == -1L) {
+                    if (tail != null && tail.longValue() != id) {
+                        throw new DatabaseErrorException(
+                                "DUMB storage corruption: multiple chain tails base="
+                                        + baseCode + " ids=" + tail + "," + id);
+                    }
+                    tail = Long.valueOf(id);
+                } else {
+                    referenced.add(Long.valueOf(nextId));
+                }
+            }
+
+            if (!ids.containsAll(referenced)) {
+                Set<Long> missing = new HashSet<Long>(referenced);
+                missing.removeAll(ids);
+                throw new DatabaseErrorException(
+                        "DUMB storage corruption: dangling chain links base="
+                                + baseCode + " missing=" + missing);
+            }
+            Set<Long> roots = new HashSet<Long>(ids);
+            roots.removeAll(referenced);
+            if (roots.size() != 1 || tail == null) {
+                throw new DatabaseErrorException(
+                        "DUMB storage corruption: invalid chain endpoints base="
+                                + baseCode + " roots=" + roots + " tail=" + tail);
+            }
+            rootId = roots.iterator().next();
+            topId = tail;
         }
     }
 
@@ -205,6 +298,7 @@ public class Base implements IBase, Iterable<IStep> {
         if (data != null && !data.isClosed()) {
             data.close();
         }
+        invalidateEndpoints();
     }
 
     @Override
@@ -229,6 +323,7 @@ public class Base implements IBase, Iterable<IStep> {
             DumbFaultInjector.hit("upsert-after-index");
             integrity.put(one);
             DumbFaultInjector.hit("upsert-after-integrity");
+            invalidateEndpoints();
         }
         invalidateCached(one.getId());
     }
@@ -308,6 +403,7 @@ public class Base implements IBase, Iterable<IStep> {
                 clearCache();
                 lastId = 0;
             }
+            invalidateEndpoints();
         }
     }
 
@@ -332,7 +428,8 @@ public class Base implements IBase, Iterable<IStep> {
     @Override
     public IStep getRoot() {
         try {
-            return isEmpty() ? null : get(index.lastKey());
+            resolveEndpoints();
+            return rootId == null ? null : get(rootId.longValue());
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -343,7 +440,8 @@ public class Base implements IBase, Iterable<IStep> {
     @Override
     public IStep getTop() {
         try {
-            return isEmpty() ? null : get(index.firstKey());
+            resolveEndpoints();
+            return topId == null ? null : get(topId.longValue());
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -382,6 +480,7 @@ public class Base implements IBase, Iterable<IStep> {
         synchronized (locker) {
             recovery.prepareDelete(ids, index, data);
             DumbFaultInjector.hit("delete-after-wal");
+            boolean removed = false;
             for (Long id : ids) {
                 if (id == null) {
                     continue;
@@ -394,7 +493,11 @@ public class Base implements IBase, Iterable<IStep> {
                     DumbFaultInjector.hit("delete-after-data");
                     integrity.remove(id.longValue());
                     DumbFaultInjector.hit("delete-after-integrity");
+                    removed = true;
                 }
+            }
+            if (removed) {
+                invalidateEndpoints();
             }
         }
     }
@@ -481,12 +584,15 @@ public class Base implements IBase, Iterable<IStep> {
 
         @Override
         public boolean hasNext() {
-            return iterator.hasNext();
+            return iterator != null && iterator.hasNext();
         }
 
         @Override
         public IStep next() {
-            Index.IndexOne one = (Index.IndexOne) iterator.next();
+            Index.IndexOne one = iterator == null ? null : (Index.IndexOne) iterator.next();
+            if (one == null) {
+                return null;
+            }
             try {
                 return data.getUncached(one.getLong());
             } catch (Exception e) {
