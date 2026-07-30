@@ -32,16 +32,7 @@ import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Reproducible DUMB storage qualification runner.
- *
- * <p>The default mode is observational: known reliability gaps are recorded in
- * the protocol without making the process fail. Set
- * {@code -Dkanger.dumb.qualification.strict=true} to make every qualification
- * gap fail. Set {@code -Dkanger.dumb.qualification.requireNoSilentCorruption=true}
- * to use the narrower 3.4.4.1 corruption-detection acceptance gate while Q2
- * crash atomicity is still intentionally open.</p>
- */
+/** Reproducible Q1-Q3 DUMB storage qualification runner. */
 public final class KangerDumbQualificationRunner {
 
     private static final String LOGIN = "dumb-qualification";
@@ -148,9 +139,11 @@ public final class KangerDumbQualificationRunner {
                                              List<Result> results) throws Exception {
         Path append = createBaseline(work.resolve("crash/append"), home);
         ChildResult crash = runChild(home, "child-append-halt", append, RECORD_COUNT);
-        ChildResult verify = runChild(home, "child-verify", append, RECORD_COUNT + 1);
+        // 3.4.4.2 defines Base.flush() as the commit boundary. An append that
+        // did not reach flush is therefore expected to recover the pre-state.
+        ChildResult verify = runChild(home, "child-verify", append, RECORD_COUNT);
         results.add(Result.of("Q2", "append-before-index-flush", "crash-window",
-                "reopen is complete pre-state or post-state, never silent hybrid",
+                "reopen restores the last completed flush",
                 verify.exitCode == 0 ? "PASS" : classifyCrashFailure(verify),
                 crash.elapsedMs + verify.elapsedMs, tail(verify.output)));
 
@@ -158,7 +151,7 @@ public final class KangerDumbQualificationRunner {
         crash = runChild(home, "child-relocate-halt", relocate, RECORD_COUNT / 2);
         verify = runChild(home, "child-verify", relocate, RECORD_COUNT);
         results.add(Result.of("Q2", "relocation-before-index-flush", "crash-window",
-                "existing record remains old or becomes complete new value",
+                "reopen restores the last completed flush",
                 verify.exitCode == 0 ? "PASS" : classifyCrashFailure(verify),
                 crash.elapsedMs + verify.elapsedMs, tail(verify.output)));
 
@@ -166,7 +159,7 @@ public final class KangerDumbQualificationRunner {
         crash = runChild(home, "child-delete-halt", delete, RECORD_COUNT / 2);
         verify = runChild(home, "child-verify", delete, RECORD_COUNT);
         results.add(Result.of("Q2", "delete-before-index-flush", "crash-window",
-                "reopen is complete pre-delete or post-delete state",
+                "reopen restores the last completed flush",
                 verify.exitCode == 0 ? "PASS" : classifyCrashFailure(verify),
                 crash.elapsedMs + verify.elapsedMs, tail(verify.output)));
     }
@@ -478,6 +471,7 @@ public final class KangerDumbQualificationRunner {
         Map<String, Integer> counts = countByClassification(results);
         int silentCorruption = count(results, "GAP_SILENT_CORRUPTION");
         int silentHybrid = count(results, "GAP_SILENT_HYBRID");
+        int crashException = count(results, "GAP_EXCEPTION");
         int detected = count(results, "DETECTED_EXCEPTION");
         int unaffected = count(results, "PASS_OR_IRRELEVANT");
 
@@ -508,8 +502,10 @@ public final class KangerDumbQualificationRunner {
         text.append("- Flush then process halt: ")
                 .append(hasClassification(results, "flush-then-halt-reopen", "PASS")
                         ? "PASS" : "FAIL").append(".\n");
-        text.append("- Interrupted operation silent hybrids: ")
+        text.append("- Interrupted-operation silent hybrids: ")
                 .append(silentHybrid).append(".\n");
+        text.append("- Interrupted-operation exceptions: ")
+                .append(crashException).append(".\n");
         text.append("- Corruptions explicitly rejected: ")
                 .append(detected).append(".\n");
         text.append("- Corruptions detected only by oracle: ")
@@ -519,13 +515,14 @@ public final class KangerDumbQualificationRunner {
 
         text.append("## Qualification statement\n\n");
         text.append("Completed DUMB flush/close survives ordinary JVM process ")
-                .append("termination in this environment. Integrity-protected databases ")
-                .append("must reject every tested live-state index, store, or manifest ")
-                .append("corruption explicitly; mutations outside live state may remain irrelevant.\n\n");
-        text.append("Not yet established: interrupted-operation atomicity, deterministic ")
-                .append("recovery, multiple-writer safety, OS-crash durability, or ")
-                .append("power-loss durability. Legacy databases bootstrapped without a ")
-                .append("previous manifest are not retroactively certified.\n\n");
+                .append("termination in this environment. Tested add/update/delete ")
+                .append("operations interrupted before flush recover to the last completed ")
+                .append("flush. Integrity-protected databases reject every tested live-state ")
+                .append("index, store, or manifest corruption explicitly.\n\n");
+        text.append("Not yet established: physical ordering barriers for OS crash or ")
+                .append("power loss, multiple-writer safety, or cryptographic authenticity. ")
+                .append("Legacy databases bootstrapped without a previous manifest are not ")
+                .append("retroactively certified.\n\n");
         text.append("Detailed rows are in `dumb-qualification.csv`.\n");
         Files.write(file, text.toString().getBytes(StandardCharsets.UTF_8));
     }
