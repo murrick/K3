@@ -129,6 +129,26 @@ jobs:
             END { if (rows != 12) exit 37 }
           ' kanger-semantic-profile-ubuntu-java-21.csv
 
+      - name: Capture exact operation effect masks
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.operation.effects.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerOperationEffectMaskRunner \
+            2>&1 | tee kanger-operation-effects-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-operation-effects-ubuntu-java-21.log \
+            > kanger-operation-effects-ubuntu-java-21.csv
+          grep -F '100,query-exact,0,NO_LINKER_OPERATION,0,0,0' \
+            kanger-operation-effects-ubuntu-java-21.csv
+          grep -F '500,query-one-constant' \
+            kanger-operation-effects-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' \
+            kanger-operation-effects-ubuntu-java-21.csv
+
       - name: Capture semantic yield curve
         if: matrix.id == 'ubuntu-java-21'
         shell: bash
@@ -202,6 +222,8 @@ jobs:
             kanger-linker-profile-${{ matrix.id }}.csv
             kanger-semantic-profile-${{ matrix.id }}.log
             kanger-semantic-profile-${{ matrix.id }}.csv
+            kanger-operation-effects-${{ matrix.id }}.log
+            kanger-operation-effects-${{ matrix.id }}.csv
             kanger-semantic-yield-${{ matrix.id }}.log
             kanger-semantic-yield-${{ matrix.id }}.csv
             kanger-generated-rule-yield-${{ matrix.id }}.log
