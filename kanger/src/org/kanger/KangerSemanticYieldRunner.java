@@ -35,9 +35,12 @@ public final class KangerSemanticYieldRunner {
 
             System.out.println("size,operation,result_rows,passes,executed_operations,"
                     + "new_tvalues,new_causes,solve_candidates,new_tsolves,"
-                    + "duplicate_solve_candidates,new_generated_rules,rule_delta,"
-                    + "solution_delta,value_row_delta,materialization_delta,"
-                    + "knowledge_delta,effect_delta,direct_delta,proof_yield,effect_yield");
+                    + "duplicate_solve_candidates,deferred_groups,"
+                    + "deferred_contributor_links,groups_with_new_tsolve,"
+                    + "minimum_contributors_per_group,maximum_contributors_per_group,"
+                    + "new_generated_rules,rule_delta,solution_delta,value_row_delta,"
+                    + "materialization_delta,knowledge_delta,effect_delta,direct_delta,"
+                    + "proof_yield,effect_yield");
 
             for (int size : parseSizes(args)) {
                 runCase(size);
@@ -89,6 +92,11 @@ public final class KangerSemanticYieldRunner {
         long solveCandidates = effects.getSolveCandidates();
         long newTSolves = effects.getNewTSolves();
         long duplicateSolveCandidates = effects.getDuplicateSolveCandidates();
+        long deferredGroups = effects.getDeferredGroups();
+        long deferredContributorLinks = effects.getDeferredContributorLinks();
+        long groupsWithNewTSolve = effects.getGroupsWithNewTSolve();
+        long minimumContributors = effects.getMinimumContributorsPerGroup();
+        long maximumContributors = effects.getMaximumContributorsPerGroup();
         long newGeneratedRules = effects.getNewGeneratedRules();
 
         if (solveCandidates != newTSolves + duplicateSolveCandidates) {
@@ -97,6 +105,23 @@ public final class KangerSemanticYieldRunner {
                             + ": candidates=" + solveCandidates
                             + ", new=" + newTSolves
                             + ", duplicates=" + duplicateSolveCandidates);
+        }
+        if (groupsWithNewTSolve != newTSolves) {
+            throw new IllegalStateException(
+                    "Deferred-group TSolve mismatch for " + operation
+                            + ": groups=" + groupsWithNewTSolve
+                            + ", new=" + newTSolves);
+        }
+        if (deferredContributorLinks > solveCandidates) {
+            throw new IllegalStateException(
+                    "Deferred contributor links exceed candidates for " + operation);
+        }
+        if (deferredGroups == 0L
+                && (deferredContributorLinks != 0L
+                || minimumContributors != 0L
+                || maximumContributors != 0L)) {
+            throw new IllegalStateException(
+                    "Empty deferred-group accounting mismatch for " + operation);
         }
 
         // Coarse historical measure: proof-internal TValue creation plus externally
@@ -116,7 +141,7 @@ public final class KangerSemanticYieldRunner {
                 : ((double) effectDelta) / executed;
 
         System.out.printf(Locale.ROOT,
-                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
+                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
                 size,
                 operation,
                 valueRowDelta,
@@ -127,6 +152,11 @@ public final class KangerSemanticYieldRunner {
                 solveCandidates,
                 newTSolves,
                 duplicateSolveCandidates,
+                deferredGroups,
+                deferredContributorLinks,
+                groupsWithNewTSolve,
+                minimumContributors,
+                maximumContributors,
                 newGeneratedRules,
                 ruleDelta,
                 solutionDelta,
