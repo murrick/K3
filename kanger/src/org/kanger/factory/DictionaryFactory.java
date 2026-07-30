@@ -38,6 +38,7 @@ import org.kanger.interfaces.internal.IStep;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.storage.Escalera;
+import org.kanger.units.Predicate;
 import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
@@ -213,52 +214,43 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return dynamicTerms;
     }
 
+    private Set<Long> collectReferencedTermIds() throws Exception {
+        Set<Long> referencedTermIds = collectDynamicRuleTerms();
+
+        for (IRule candidate : mind.getSolutions()) {
+            if (candidate == null || candidate.isDeleted(mind)) {
+                continue;
+            }
+            Rule rule = (Rule) candidate;
+            rule.containsTerm(Long.MIN_VALUE, mind);
+            referencedTermIds.addAll(rule.getTerms());
+        }
+
+        for (IHypothesis candidate : mind.getHypothesis()) {
+            if (candidate == null) {
+                continue;
+            }
+            Hypothesis hypothesis = (Hypothesis) candidate;
+            referencedTermIds.add(((Predicate) hypothesis.getPredicate()).getNameId());
+            referencedTermIds.addAll(hypothesis.getArguments().getTerms(mind, true));
+        }
+
+        for (Map<String, ITerm> row : mind.getValues()) {
+            for (ITerm term : row.values()) {
+                referencedTermIds.add(term.getId());
+            }
+        }
+
+        return referencedTermIds;
+    }
+
     public void pack() throws Exception {
-        Set<Long> dynamicRuleTerms = collectDynamicRuleTerms();
+        Set<Long> referencedTermIds = collectReferencedTermIds();
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {
-            if (((IUnit) o).isDeleted(mind)) {
+            IUnit unit = (IUnit) o;
+            if (unit.isDeleted(mind) || !referencedTermIds.contains(unit.getId())) {
                 toDelete.add(o);
-            } else {
-                long termId = ((IUnit) o).getId();
-                boolean found = mind.getRules().hasActiveRuleWithTerm(termId);
-                if (!found) {
-                    for (IRule r : mind.getSolutions()) {
-                        if (!r.isDeleted(mind) && ((Rule) r).containsTerm(termId, mind)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        for (IHypothesis r : mind.getHypothesis()) {
-                            if (((Hypothesis) r).containsTerm(termId, mind)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            for (Map<String, ITerm> row : mind.getValues()) {
-                                for (ITerm t : row.values()) {
-                                    if (t.getId() == termId) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                if (found) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (!found) {
-                    found = dynamicRuleTerms.contains(termId);
-                }
-
-                if (!found) {
-                    toDelete.add(o);
-                }
             }
         }
         for (Object o : toDelete) {
