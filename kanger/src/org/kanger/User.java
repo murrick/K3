@@ -137,11 +137,15 @@ public class User implements IUser {
     }
 
     public long lastId() {
-        return lastId;
+        synchronized (locker) {
+            return lastId;
+        }
     }
 
     public long nextId() {
-        return lastId++;
+        synchronized (locker) {
+            return lastId++;
+        }
     }
 
     public IMind close(IMind mind) throws Exception {
