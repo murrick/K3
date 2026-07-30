@@ -18,6 +18,7 @@ jobs:
   build-and-regression:
     name: ${{ matrix.id }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
