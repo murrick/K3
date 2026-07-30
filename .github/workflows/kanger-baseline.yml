@@ -1,155 +1,254 @@
-name: KANGER III P5a apply deferred contributor groups
+name: KANGER III 3.4.1 semantic planning
 
 on:
+  push:
+    branches:
+      - "arch/3.4.1-p5a-semantic-telemetry"
   pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: kanger-p5a-patch-${{ github.ref }}
+  group: kanger-3.4.1-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-deferred-groups:
-    runs-on: ubuntu-latest
+  build-and-regression:
+    name: ${{ matrix.id }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu-java-8
+            os: ubuntu-latest
+            java: "8"
+          - id: ubuntu-java-21
+            os: ubuntu-latest
+            java: "21"
+          - id: macos-java-21
+            os: macos-latest
+            java: "21"
+
     steps:
-      - name: Check out architecture branch
+      - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
         with:
-          ref: arch/3.4.1-p5a-semantic-telemetry
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
 
-      - name: Apply exact Linker provenance envelope
+      - name: Build and run all KANGER test corpora
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
+          set -o pipefail
+          mvn -B -V clean verify 2>&1 | tee "kanger-3.4.1-${{ matrix.id }}.log"
 
-          path = Path("kanger/src/org/kanger/Linker.java")
-          source = path.read_text(encoding="utf-8")
-          if "private static final class DeferredSolveCandidate" in source:
-              raise SystemExit(0)
-
-          replacements = [
-              (
-                  "    private static final class DomainKey {",
-                  "\n".join([
-                      "    private static final class DeferredSolveCandidate {",
-                      "        private final long operationId;",
-                      "        private final Object[] substitution;",
-                      "",
-                      "        private DeferredSolveCandidate(long operationId, Object[] substitution) {",
-                      "            this.operationId = operationId;",
-                      "            this.substitution = substitution;",
-                      "        }",
-                      "    }",
-                      "",
-                      "    private static final class DomainKey {",
-                  ]),
-                  1,
-                  1,
-                  "deferred candidate class",
-              ),
-              (
-                  "        Map<Solve, List<Object[]>> variants = new HashMap<>();",
-                  "        Map<Solve, List<DeferredSolveCandidate>> variants = new HashMap<>();",
-                  1,
-                  1,
-                  "variants map",
-              ),
-              (
-                  "\n".join([
-                      "                                statistics.incrementUnificationAttempts(",
-                      "                                        currentPass == 1, rule.isQuery(), rule.isGenerated());",
-                      "                                int operationEffects = 0;",
-                  ]),
-                  "\n".join([
-                      "                                long operationId = statistics.incrementUnificationAttempts(",
-                      "                                        currentPass == 1, rule.isQuery(), rule.isGenerated());",
-                      "                                int operationEffects = 0;",
-                  ]),
-                  1,
-                  1,
-                  "operation id",
-              ),
-              (
-                  "                                    operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, logging);",
-                  "                                    operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, operationId, logging);",
-                  1,
-                  1,
-                  "master candidate id",
-              ),
-              (
-                  "                                    operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, logging);",
-                  "                                    operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, operationId, logging);",
-                  1,
-                  1,
-                  "slave candidate id",
-              ),
-              (
-                  "            for (Map.Entry<Solve, List<Object[]>> variantsList : variants.entrySet()) {",
-                  "            for (Map.Entry<Solve, List<DeferredSolveCandidate>> variantsList : variants.entrySet()) {",
-                  1,
-                  1,
-                  "variant entry type",
-              ),
-              (
-                  "                for (Object[] subst : variantsList.getValue()) {",
-                  "\n".join([
-                      "                for (DeferredSolveCandidate candidate : variantsList.getValue()) {",
-                      "                    Object[] subst = candidate.substitution;",
-                  ]),
-                  1,
-                  1,
-                  "candidate envelope",
-              ),
-              (
-                  "                    mind.addTSolve(list);",
-                  "\n".join([
-                      "                    SemanticEffectTelemetry.recordDeferredContribution(",
-                      "                            list, candidate.operationId);",
-                      "                    mind.addTSolve(list);",
-                  ]),
-                  2,
-                  1,
-                  "group contribution",
-              ),
-              (
-                  "    private int markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {",
-                  "    private int markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<DeferredSolveCandidate>> variants, long operationId, boolean logging) throws Exception {",
-                  1,
-                  1,
-                  "markExcluded signature",
-              ),
-              (
-                  "            variants.get(master).add(subst);",
-                  "            variants.get(master).add(new DeferredSolveCandidate(operationId, subst));",
-                  1,
-                  1,
-                  "candidate insertion",
-              ),
-          ]
-
-          for old, new, expected, limit, label in replacements:
-              actual = source.count(old)
-              if actual != expected:
-                  raise SystemExit(f"Unexpected Linker shape for {label}: {actual} != {expected}")
-              source = source.replace(old, new, limit)
-
-          path.write_text(source, encoding="utf-8")
-          PY
-          git diff --check
-
-      - name: Commit contributor envelope when needed
+      - name: Verify historical and stabilization corpora
         shell: bash
         run: |
-          if git diff --quiet; then
-            echo "Deferred contributor envelope already applied"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add kanger/src/org/kanger/Linker.java
-          git commit -m "P5a: preserve deferred effect contributors"
-          git push origin HEAD:arch/3.4.1-p5a-semantic-telemetry
+          log="kanger-3.4.1-${{ matrix.id }}.log"
+          grep -Eq 'Success:[[:space:]]+101' "$log"
+          grep -Eq 'Fails:[[:space:]]+0' "$log"
+          grep -Eq 'Stabilization Success:[[:space:]]+7' "$log"
+          grep -Eq 'Stabilization Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C1 Success:[[:space:]]+5' "$log"
+          grep -Eq 'C1 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C4 Success:[[:space:]]+3' "$log"
+          grep -Eq 'C4 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C3 Success:[[:space:]]+6' "$log"
+          grep -Eq 'C3 Fails:[[:space:]]+0' "$log"
+
+      - name: Verify persistent lifecycle diagnostics
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.diagnostics=true \
+            -Dkanger.diagnostics.timeout.ms=5000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDiagnosticRunner \
+            2>&1 | tee kanger-3.4.1-db.log
+          grep -F 'D2 set_03_01 with storage: PASS' kanger-3.4.1-db.log
+          grep -F 'explicit closeStorage: true' kanger-3.4.1-db.log
+          grep -F 'normal JVM shutdown hook: true' kanger-3.4.1-db.log
+
+      - name: Capture linear Linker curve
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.linker.profile.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerLinkerProfileRunner \
+            2>&1 | tee kanger-linker-profile-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-linker-profile-ubuntu-java-21.log \
+            > kanger-linker-profile-ubuntu-java-21.csv
+          grep -F '100,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
+          grep -F '500,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
+
+      - name: Capture semantic operation profile
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.semantic.profile.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerSemanticProfileRunner \
+            2>&1 | tee kanger-semantic-profile-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-semantic-profile-ubuntu-java-21.log \
+            > kanger-semantic-profile-ubuntu-java-21.csv
+          grep -F '100,query-exact' kanger-semantic-profile-ubuntu-java-21.csv
+          grep -F '500,query-one-constant' kanger-semantic-profile-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' kanger-semantic-profile-ubuntu-java-21.csv
+          awk -F, '
+            NR == 1 {
+              if ($7 != "executed_operations" || $14 != "classified_operations") exit 30
+              if ($15 != "operations_new_tvalue" || $16 != "operations_new_cause") exit 31
+              if ($17 != "operations_deferred_solve_candidate" || $18 != "operations_used_only") exit 32
+              if ($19 != "operations_no_immediate_effect") exit 33
+              next
+            }
+            {
+              rows++
+              if ($14 != $7) exit 34
+              if ($15 > $14 || $16 > $14 || $17 > $14 || $18 > $14 || $19 > $14) exit 35
+              if ($2 == "query-exact" && ($7 != 0 || $14 != 0)) exit 36
+            }
+            END { if (rows != 12) exit 37 }
+          ' kanger-semantic-profile-ubuntu-java-21.csv
+
+      - name: Capture exact operation effect masks
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.operation.effects.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerOperationEffectMaskRunner \
+            2>&1 | tee kanger-operation-effects-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-operation-effects-ubuntu-java-21.log \
+            > kanger-operation-effects-ubuntu-java-21.csv
+          grep -F '100,query-exact,0,NO_LINKER_OPERATION,0,0,0' \
+            kanger-operation-effects-ubuntu-java-21.csv
+          grep -F '500,query-one-constant' \
+            kanger-operation-effects-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' \
+            kanger-operation-effects-ubuntu-java-21.csv
+
+      - name: Capture semantic yield curve
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.semantic.yield.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerSemanticYieldRunner \
+            2>&1 | tee kanger-semantic-yield-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-semantic-yield-ubuntu-java-21.log \
+            > kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '100,query-exact' kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '500,query-one-constant' kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
+          awk -F, '
+            NR == 1 {
+              if ($8 != "solve_candidates" || $9 != "new_tsolves") exit 10
+              if ($10 != "duplicate_solve_candidates" || $11 != "deferred_groups") exit 11
+              if ($12 != "deferred_contributor_links" || $13 != "groups_with_new_tsolve") exit 12
+              if ($14 != "minimum_contributors_per_group" || $15 != "maximum_contributors_per_group") exit 13
+              if ($16 != "new_generated_rules" || $22 != "effect_delta" || $25 != "effect_yield") exit 14
+              next
+            }
+            $2 == "query-exact" {
+              exact++
+              if ($5 != 0 || $8 != 0 || $9 != 0 || $10 != 0) exit 15
+              if ($11 != 0 || $12 != 0 || $13 != 0 || $14 != 0 || $15 != 0) exit 16
+              if ($22 != 0 || $23 != 1) exit 17
+              next
+            }
+            {
+              inferred++
+              if ($7 != $3 || $9 != $3 || $16 != $3) exit 18
+              if ($8 != 5 * $3 || $10 != 4 * $3) exit 19
+              if ($13 != $9 || $12 > $8) exit 20
+              if ($11 < $13) exit 21
+              if ($11 == 0 && ($12 != 0 || $14 != 0 || $15 != 0)) exit 22
+              if ($11 > 0 && ($14 < 1 || $15 < $14)) exit 23
+              if ($17 != 0) exit 24
+              if ($20 != 2 * $3) exit 25
+              if ($21 != $6 + $17 + $20) exit 26
+              if ($22 != $6 + $7 + $9 + $16) exit 27
+              if ($22 != $21 + $3) exit 28
+            }
+            END {
+              if (exact != 3 || inferred != 9) exit 29
+            }
+          ' kanger-semantic-yield-ubuntu-java-21.csv
+
+      - name: Capture generated-rule effect profile
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerGeneratedRuleYieldRunner \
+            2>&1 | tee kanger-generated-rule-yield-ubuntu-java-21.log
+          grep -E '^(scenario,|one-hop,|two-hop,|deduplicated-target,)' \
+            kanger-generated-rule-yield-ubuntu-java-21.log \
+            > kanger-generated-rule-yield-ubuntu-java-21.csv
+          awk -F, '
+            NR == 1 {
+              if ($6 != "solve_candidates" || $7 != "new_tsolves") exit 40
+              if ($8 != "duplicate_solve_candidates" || $9 != "deferred_groups") exit 41
+              if ($10 != "deferred_contributor_links" || $11 != "groups_with_new_tsolve") exit 42
+              if ($12 != "minimum_contributors_per_group" || $13 != "maximum_contributors_per_group") exit 43
+              if ($15 != "generated_rule_delta" || $16 != "observed_generated_rules" || $18 != "derived_true") exit 44
+              next
+            }
+            {
+              rows++
+              if ($6 != $7 + $8) exit 45
+              if ($11 != $7 || $10 > $6 || $9 < $11) exit 46
+              if ($9 == 0 && ($10 != 0 || $12 != 0 || $13 != 0)) exit 47
+              if ($9 > 0 && ($12 < 1 || $13 < $12)) exit 48
+              if ($15 != $16 || $18 != "true") exit 49
+            }
+            END { if (rows != 3) exit 50 }
+          ' kanger-generated-rule-yield-ubuntu-java-21.csv
+
+      - name: Upload 3.4.1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-3.4.1-${{ matrix.id }}
+          path: |
+            kanger-3.4.1-${{ matrix.id }}.log
+            kanger-3.4.1-db.log
+            kanger-linker-profile-${{ matrix.id }}.log
+            kanger-linker-profile-${{ matrix.id }}.csv
+            kanger-semantic-profile-${{ matrix.id }}.log
+            kanger-semantic-profile-${{ matrix.id }}.csv
+            kanger-operation-effects-${{ matrix.id }}.log
+            kanger-operation-effects-${{ matrix.id }}.csv
+            kanger-semantic-yield-${{ matrix.id }}.log
+            kanger-semantic-yield-${{ matrix.id }}.csv
+            kanger-generated-rule-yield-${{ matrix.id }}.log
+            kanger-generated-rule-yield-${{ matrix.id }}.csv
+            target/*.jar
+          if-no-files-found: warn
