@@ -124,8 +124,10 @@ final class RecoveryLog {
     }
 
     private BeforeImage capture(long id, Index index, Data data) throws Exception {
-        if (id < 0L) {
-            throw corruption("cannot journal negative id=" + id);
+        // -1 is the Index traversal sentinel. Other signed IDs are valid
+        // application/service keys; CommentFactory uses -2/-3 for header/footer.
+        if (id == -1L) {
+            throw corruption("cannot journal reserved id=-1");
         }
         Index.IndexOne current = index.getOne(id);
         if (current == null) {
@@ -295,7 +297,7 @@ final class RecoveryLog {
                 long id = input.readLong();
                 boolean existed = input.readBoolean();
                 int length = input.readInt();
-                if (id < 0L || length < 0 || length > input.available()
+                if (id == -1L || length < 0 || length > input.available()
                         || (existed && length == 0)
                         || (!existed && length != 0)) {
                     throw corruption("invalid undo before-image id=" + id
