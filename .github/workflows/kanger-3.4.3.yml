@@ -1,0 +1,116 @@
+name: KANGER III 3.4.3 storage optimization
+
+on:
+  push:
+    branches:
+      - "arch/3.4.3-semantic-storage-optimization"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: kanger-3.4.3-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-regression:
+    name: ${{ matrix.id }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu-java-8
+            os: ubuntu-latest
+            java: "8"
+          - id: ubuntu-java-21
+            os: ubuntu-latest
+            java: "21"
+          - id: macos-java-21
+            os: macos-latest
+            java: "21"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build and run all KANGER test corpora
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn -B -V clean verify 2>&1 | tee "kanger-3.4.3-${{ matrix.id }}.log"
+
+      - name: Verify historical and stabilization corpora
+        shell: bash
+        run: |
+          log="kanger-3.4.3-${{ matrix.id }}.log"
+          grep -Eq 'Success:[[:space:]]+101' "$log"
+          grep -Eq 'Fails:[[:space:]]+0' "$log"
+          grep -Eq 'Stabilization Success:[[:space:]]+7' "$log"
+          grep -Eq 'Stabilization Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C1 Success:[[:space:]]+5' "$log"
+          grep -Eq 'C1 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C4 Success:[[:space:]]+3' "$log"
+          grep -Eq 'C4 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C3 Success:[[:space:]]+6' "$log"
+          grep -Eq 'C3 Fails:[[:space:]]+0' "$log"
+
+      - name: Verify persistent lifecycle diagnostics
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.diagnostics=true \
+            -Dkanger.diagnostics.timeout.ms=5000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDiagnosticRunner \
+            2>&1 | tee kanger-3.4.3-db.log
+          grep -F 'D2 set_03_01 with storage: PASS' kanger-3.4.3-db.log
+          grep -F 'explicit closeStorage: true' kanger-3.4.3-db.log
+          grep -F 'normal JVM shutdown hook: true' kanger-3.4.3-db.log
+
+      - name: Capture storage traversal performance
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.perf.storage=false \
+            -Dkanger.perf.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerPerformanceRunner \
+            2>&1 | tee kanger-3.4.3-memory.log
+          java \
+            -Dkanger.perf.storage=true \
+            -Dkanger.perf.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerPerformanceRunner \
+            2>&1 | tee kanger-3.4.3-storage.log
+          grep -E '^(mode,|memory,)' kanger-3.4.3-memory.log > kanger-3.4.3-memory.csv
+          grep -E '^(mode,|storage,)' kanger-3.4.3-storage.log > kanger-3.4.3-storage.csv
+          grep -F 'storage,1000,insert-sequential' kanger-3.4.3-storage.csv
+          grep -F 'storage,1000,query-exact' kanger-3.4.3-storage.csv
+
+      - name: Upload 3.4.3 diagnostics
+        if: always() && matrix.id == 'ubuntu-java-21'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-3.4.3-ubuntu-java-21
+          path: |
+            kanger-3.4.3-ubuntu-java-21.log
+            kanger-3.4.3-db.log
+            kanger-3.4.3-memory.log
+            kanger-3.4.3-storage.log
+            kanger-3.4.3-memory.csv
+            kanger-3.4.3-storage.csv
+          if-no-files-found: warn
