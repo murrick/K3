@@ -1,14 +1,14 @@
-name: KANGER III 3.3.5 optimization
+name: KANGER III 3.4.1 semantic planning
 
 on:
   push:
     branches:
-      - "perf/3.3.6-linker-agenda"
+      - "arch/3.4.1-p5a-semantic-telemetry"
   pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: kanger-3.3.5-${{ github.ref }}
+  group: kanger-3.4.1-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -47,12 +47,12 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mvn -B -V clean verify 2>&1 | tee "kanger-3.3.5-${{ matrix.id }}.log"
+          mvn -B -V clean verify 2>&1 | tee "kanger-3.4.1-${{ matrix.id }}.log"
 
       - name: Verify historical and stabilization corpora
         shell: bash
         run: |
-          log="kanger-3.3.5-${{ matrix.id }}.log"
+          log="kanger-3.4.1-${{ matrix.id }}.log"
           grep -Eq 'Success:[[:space:]]+101' "$log"
           grep -Eq 'Fails:[[:space:]]+0' "$log"
           grep -Eq 'Stabilization Success:[[:space:]]+7' "$log"
@@ -74,12 +74,12 @@ jobs:
             -Dkanger.diagnostics.timeout.ms=5000 \
             -cp "target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDiagnosticRunner \
-            2>&1 | tee kanger-3.3.5-db.log
-          grep -F 'D2 set_03_01 with storage: PASS' kanger-3.3.5-db.log
-          grep -F 'explicit closeStorage: true' kanger-3.3.5-db.log
-          grep -F 'normal JVM shutdown hook: true' kanger-3.3.5-db.log
+            2>&1 | tee kanger-3.4.1-db.log
+          grep -F 'D2 set_03_01 with storage: PASS' kanger-3.4.1-db.log
+          grep -F 'explicit closeStorage: true' kanger-3.4.1-db.log
+          grep -F 'normal JVM shutdown hook: true' kanger-3.4.1-db.log
 
-      - name: Capture final linear Linker curve
+      - name: Capture linear Linker curve
         if: matrix.id == 'ubuntu-java-21'
         shell: bash
         run: |
@@ -96,15 +96,53 @@ jobs:
           grep -F '500,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
           grep -F '1000,query-all-variables' kanger-linker-profile-ubuntu-java-21.csv
 
-      - name: Upload 3.3.5 evidence
+      - name: Capture semantic operation profile
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.semantic.profile.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerSemanticProfileRunner \
+            2>&1 | tee kanger-semantic-profile-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-semantic-profile-ubuntu-java-21.log \
+            > kanger-semantic-profile-ubuntu-java-21.csv
+          grep -F '100,query-exact' kanger-semantic-profile-ubuntu-java-21.csv
+          grep -F '500,query-one-constant' kanger-semantic-profile-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' kanger-semantic-profile-ubuntu-java-21.csv
+
+      - name: Capture semantic yield curve
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.semantic.yield.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerSemanticYieldRunner \
+            2>&1 | tee kanger-semantic-yield-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-semantic-yield-ubuntu-java-21.log \
+            > kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '100,query-exact' kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '500,query-one-constant' kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
+
+      - name: Upload 3.4.1 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: kanger-3.3.5-${{ matrix.id }}
+          name: kanger-3.4.1-${{ matrix.id }}
           path: |
-            kanger-3.3.5-${{ matrix.id }}.log
-            kanger-3.3.5-db.log
+            kanger-3.4.1-${{ matrix.id }}.log
+            kanger-3.4.1-db.log
             kanger-linker-profile-${{ matrix.id }}.log
             kanger-linker-profile-${{ matrix.id }}.csv
+            kanger-semantic-profile-${{ matrix.id }}.log
+            kanger-semantic-profile-${{ matrix.id }}.csv
+            kanger-semantic-yield-${{ matrix.id }}.log
+            kanger-semantic-yield-${{ matrix.id }}.csv
             target/*.jar
           if-no-files-found: warn
