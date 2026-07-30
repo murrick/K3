@@ -15,6 +15,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +43,8 @@ final class IntegrityManifest {
     private static final int ENTRY_SIZE = Integer.BYTES + Long.BYTES
             + Integer.BYTES + Integer.BYTES;
     private static final int FOOTER_SIZE = Integer.BYTES;
+    private static final int STORE_HEADER_SIZE = Short.BYTES + Integer.BYTES;
+    private static final int STORE_BLOCK_HEADER_SIZE = Long.BYTES * 2;
 
     private final File file;
     private final int baseCode;
@@ -81,7 +84,7 @@ final class IntegrityManifest {
             throw corruption("cannot register null or negative-id record");
         }
         synchronized (locker) {
-            Entry next = Entry.from(step);
+            Entry next = Entry.fromStep(step);
             Entry previous = entries.put(Long.valueOf(step.getId()), next);
             changed = !next.equals(previous) || changed;
         }
@@ -154,8 +157,9 @@ final class IntegrityManifest {
                 if (one == null) {
                     throw corruption("null index record during manifest bootstrap");
                 }
-                IStep step = readExpected(data, one.getId(), one.getLong());
-                if (entries.put(Long.valueOf(one.getId()), Entry.from(step)) != null) {
+                readExpected(data, one.getId(), one.getLong());
+                Entry stored = Entry.fromStored(data.getFile(), one.getLong());
+                if (entries.put(Long.valueOf(one.getId()), stored) != null) {
                     throw corruption("duplicate index id=" + one.getId()
                             + " base=" + baseCode);
                 }
@@ -172,8 +176,8 @@ final class IntegrityManifest {
                 throw corruption("manifest id is absent from index base="
                         + baseCode + " id=" + id);
             }
-            IStep step = readExpected(data, id, one.getLong());
-            Entry actual = Entry.from(step);
+            readExpected(data, id, one.getLong());
+            Entry actual = Entry.fromStored(data.getFile(), one.getLong());
             if (!expected.getValue().equals(actual)) {
                 throw corruption("record checksum mismatch base="
                         + baseCode + " id=" + id);
@@ -380,8 +384,38 @@ final class IntegrityManifest {
             this.crc32 = crc32;
         }
 
-        private static Entry from(IStep step) throws Exception {
+        private static Entry fromStep(IStep step) throws Exception {
             byte[] packed = step.pack().getBuffer();
+            return fromBytes(packed);
+        }
+
+        private static Entry fromStored(File store, long offset) throws Exception {
+            try (RandomAccessFile input = new RandomAccessFile(store, "r")) {
+                long fileLength = input.length();
+                if (offset < STORE_HEADER_SIZE
+                        || offset > fileLength - STORE_BLOCK_HEADER_SIZE) {
+                    throw corruption("invalid store offset=" + offset
+                            + " fileLength=" + fileLength);
+                }
+                input.seek(offset);
+                long blockSize = input.readLong();
+                long dataSize = input.readLong();
+                long available = fileLength - offset - STORE_BLOCK_HEADER_SIZE;
+                if (blockSize <= 0L || dataSize <= 0L
+                        || dataSize > blockSize
+                        || dataSize > Integer.MAX_VALUE
+                        || blockSize > available) {
+                    throw corruption("invalid store block offset=" + offset
+                            + " blockSize=" + blockSize + " dataSize=" + dataSize
+                            + " available=" + available);
+                }
+                byte[] packed = new byte[(int) dataSize];
+                input.readFully(packed);
+                return fromBytes(packed);
+            }
+        }
+
+        private static Entry fromBytes(byte[] packed) {
             CRC32 crc = new CRC32();
             crc.update(packed);
             return new Entry(packed.length, (int) crc.getValue());
