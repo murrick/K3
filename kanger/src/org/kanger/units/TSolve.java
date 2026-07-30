@@ -26,7 +26,6 @@
 package org.kanger.units;
 
 import org.kanger.Mind;
-import org.kanger.SemanticEffectTelemetry;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
 import org.kanger.interfaces.IMind;
@@ -58,7 +57,6 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
             solveIds.add(v.getId());
         }
         this.mind = mind;
-        SemanticEffectTelemetry.recordTSolve(solve);
     }
 
     public TSolve(Domain d, Mind mind) throws Exception {
@@ -67,14 +65,12 @@ public class TSolve implements Comparable<TSolve>, IUnit<TSolve> {
             solveIds.add(v.getId());
         }
         this.mind = mind;
-        SemanticEffectTelemetry.recordTSolve(solve);
     }
 
     public TSolve(TValue vv, Mind mind) {
         solve.add(vv);
         solveIds.add(vv.getId());
         this.mind = mind;
-        SemanticEffectTelemetry.recordTSolve(solve);
     }
 
     public void add(TValue v) {

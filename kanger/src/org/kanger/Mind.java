@@ -1368,6 +1368,7 @@ public class Mind implements IMind {
     public TSolve addTSolve(List<TValue> list) throws Exception {
         TSolve tmp = findTSolve(list);
         if (tmp != null) {
+            SemanticEffectTelemetry.recordTSolveCandidate(false);
             return tmp;
         } else {
             tmp = new TSolve(list, this);
@@ -1376,6 +1377,8 @@ public class Mind implements IMind {
                 getRuleSolves().put(ts, new ArrayList<>());
             }
             getRuleSolves().get(ts).add(tmp);
+            SemanticEffectTelemetry.recordTSolve(list);
+            SemanticEffectTelemetry.recordTSolveCandidate(true);
             return tmp;
         }
     }
