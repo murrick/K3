@@ -111,7 +111,15 @@ public class Mind implements IMind {
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS);
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private Rule acceptedRule = null;
-    private volatile int transactionCounter = 0;
+    private int transactionCounter = 0;
+
+    /**
+     * Experimental query policy that allows hypotheses containing
+     * existential/C-variable terms. Such hypotheses can be useful, but they
+     * are not a generally valid fallback when concrete hypotheses are absent.
+     * The policy is therefore disabled by default and inherited by child Mind
+     * transactions only when explicitly enabled by the caller.
+     */
     private boolean includeAbstractiveHypothesis = false;
 
     public Mind(IUser user) throws Exception {
@@ -126,25 +134,34 @@ public class Mind implements IMind {
         id = user.nextId(); //root.getId() + 1;
         init();
 
-        ((Mind) root).incTransactionCounter();
-        terms = (DictionaryFactory) root.getTerms();
-        predicates = (PredicateFactory) root.getPredicates();
+        Mind parent = (Mind) root;
+        parent.incTransactionCounter();
+        boolean initialized = false;
+        try {
+            terms = (DictionaryFactory) root.getTerms();
+            predicates = (PredicateFactory) root.getPredicates();
 
-        library.transaction((LibraryFactory) root.getLibrary());
+            library.transaction((LibraryFactory) root.getLibrary());
 
-        domains.transaction(((Mind) root).getDomains());
-        rules.transaction((RuleFactory) root.getRules());
-        comments.transaction(((Mind) root).getComments());
-        tVars.transaction(((Mind) root).getTVars());
-        tValues.transaction(((Mind) root).getTValues());
-        functions.transaction(((Mind) root).getFunctions());
-        fValues.transaction(((Mind) root).getFValues());
+            domains.transaction(parent.getDomains());
+            rules.transaction((RuleFactory) root.getRules());
+            comments.transaction(parent.getComments());
+            tVars.transaction(parent.getTVars());
+            tValues.transaction(parent.getTValues());
+            functions.transaction(parent.getFunctions());
+            fValues.transaction(parent.getFValues());
 
-        debugLevel = root.getDebugLevel();
+            debugLevel = root.getDebugLevel();
 
-        values.setOrder(root.getOrder());
-        values.setAscending(root.isAscending());
-
+            values.setOrder(root.getOrder());
+            values.setAscending(root.isAscending());
+            includeAbstractiveHypothesis = parent.includeAbstractiveHypothesis();
+            initialized = true;
+        } finally {
+            if (!initialized) {
+                parent.abortTransactionStart();
+            }
+        }
     }
 
     private void init() throws Exception {
@@ -279,11 +296,7 @@ public class Mind implements IMind {
 
                 }
             }
-            --transactionCounter;
-            if (next == null && transactionCounter == 0) {
-                pack();
-                update();
-            }
+            finishTransactionLocked();
 
             log.commit((LogStore) m.getLog());
             queryResult = m.getQueryResult();
@@ -323,11 +336,7 @@ public class Mind implements IMind {
             compliedLine = m.getCompliedString();
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
 
-            --transactionCounter;
-            if (next == null && transactionCounter == 0) {
-                pack();
-                update();
-            }
+            finishTransactionLocked();
         }
     }
 
@@ -350,10 +359,32 @@ public class Mind implements IMind {
             hypothesis.clear();
             tempHypothesis.clear();
 
+            clearCVarLinks();
+            usedRules.clear();
+            usedDomains.clear();
+            excludedDomains.clear();
+            calculatedDomains.clear();
+            producedDomains.clear();
+            domainCauses.clear();
+            domainSolves.clear();
+            queryValues.clear();
             ruleSolves.clear();
+            floodControl.clear();
 
             deleted.clear();
             restored.clear();
+
+            acceptedRule = null;
+            queryResult = null;
+            querySource = "";
+            queryPass = QueryPass.SILENCE;
+            compliedLine = "";
+            lastLinkerStatistics = new LinkerStatistics();
+
+            // Linker owns additional query-local indexes that are intentionally
+            // private. Replacing the execution component drops those references
+            // together with the public transient maps cleared above.
+            linker = new Linker(this);
         }
     }
 
@@ -975,16 +1006,15 @@ public class Mind implements IMind {
                     }
                 }
             }
+            if (set.isEmpty() && logging) {
+                x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+            }
             release(x);
             if (!set.isEmpty()) {
                 removeResult(set, logging);
                 res = true;
                 hypothesis.clear();
                 tempHypothesis.clear();
-            } else {
-                if (logging) {
-                    x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
-                }
             }
         }
         return res;
@@ -1579,8 +1609,27 @@ public class Mind implements IMind {
         return user.getStoragesList();
     }
 
+    private void finishTransactionLocked() throws Exception {
+        if (transactionCounter <= 0) {
+            throw new IllegalStateException("Transaction counter underflow for Mind " + id);
+        }
+        --transactionCounter;
+        if (next == null && transactionCounter == 0) {
+            pack();
+            update();
+        }
+    }
+
+    private void abortTransactionStart() throws Exception {
+        synchronized (locker) {
+            finishTransactionLocked();
+        }
+    }
+
     public int incTransactionCounter() {
-        return ++transactionCounter;
+        synchronized (locker) {
+            return ++transactionCounter;
+        }
     }
 
     @Override
@@ -1656,10 +1705,19 @@ public class Mind implements IMind {
         return list;
     }
 
+    /**
+     * Returns whether the current transaction may emit hypotheses containing
+     * existential/C-variable terms.
+     */
     public boolean includeAbstractiveHypothesis() {
         return includeAbstractiveHypothesis;
     }
 
+    /**
+     * Enables or disables the experimental abstractive-hypothesis policy for
+     * this Mind. Child transactions inherit the selected value. The default is
+     * false; callers must opt in explicitly.
+     */
     public void includeAbstractiveHypothesis(boolean includeAbstractiveHypothesis) {
         this.includeAbstractiveHypothesis = includeAbstractiveHypothesis;
     }
