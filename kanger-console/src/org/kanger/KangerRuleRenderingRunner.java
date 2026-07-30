@@ -5,18 +5,24 @@
  */
 package org.kanger;
 
+import org.kanger.factory.DictionaryFactory;
+import org.kanger.factory.DomainFactory;
+import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.interfaces.internal.IStep;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.DB;
+import org.kanger.storage.Sapato;
 import org.kanger.udf.UDF;
 import org.kanger.units.Rule;
 
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -206,21 +212,52 @@ public final class KangerRuleRenderingRunner {
     }
 
     private static String factoryState(Mind mind) throws Exception {
-        return "rules(size=" + mind.getRules().size()
-                + ",chain=" + chainSize(mind.getRules()) + ")"
-                + ",domains(size=" + mind.getDomains().size()
-                + ",chain=" + chainSize(mind.getDomains()) + ")"
-                + ",terms(size=" + mind.getTerms().size()
-                + ",chain=" + chainSize(mind.getTerms()) + ")";
+        return factoryState(mind, "rules", mind.getRules(), RuleFactory.SCHEMA)
+                + "," + factoryState(mind, "domains", mind.getDomains(), DomainFactory.SCHEMA)
+                + "," + factoryState(mind, "terms", mind.getTerms(), DictionaryFactory.SCHEMA);
     }
 
-    private static int chainSize(Object factory) throws Exception {
+    private static String factoryState(Mind mind, String name, Object factory,
+                                       String schema) throws Exception {
+        ChainState chain = chainState(factory);
+        return name + "(size=" + size(factory)
+                + ",chain=" + chain.total
+                + ",memory=" + chain.memory
+                + ",persistent=" + chain.persistent
+                + ",base=" + baseSize(mind, schema) + ")";
+    }
+
+    private static int size(Object factory) throws Exception {
+        return ((Number) factory.getClass().getMethod("size").invoke(factory)).intValue();
+    }
+
+    private static ChainState chainState(Object factory) throws Exception {
         Field cacheField = factory.getClass().getDeclaredField("cache");
         cacheField.setAccessible(true);
         ICache cache = (ICache) cacheField.get(factory);
-        int count = 0;
+        ChainState state = new ChainState();
         for (IStep step = cache.getRoot(); step != null; step = step.getNext()) {
-            ++count;
+            ++state.total;
+            if (step instanceof Sapato) {
+                ++state.persistent;
+            } else {
+                ++state.memory;
+            }
+        }
+        return state;
+    }
+
+    private static int baseSize(Mind mind, String schema) {
+        if (!mind.isStorageUsed()) {
+            return -1;
+        }
+        int count = 0;
+        IBase base = ((User) mind.getUser()).getStorage(schema);
+        Iterator<IStep> iterator = base.iterator();
+        while (iterator != null && iterator.hasNext()) {
+            if (iterator.next() != null) {
+                ++count;
+            }
         }
         return count;
     }
@@ -234,5 +271,11 @@ public final class KangerRuleRenderingRunner {
             return Long.toString(((Number) value).longValue());
         }
         return String.valueOf(value);
+    }
+
+    private static final class ChainState {
+        private int total;
+        private int memory;
+        private int persistent;
     }
 }
