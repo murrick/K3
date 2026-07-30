@@ -17,13 +17,27 @@ knowledgeDelta = newTValues
                + positive result-row delta
 ```
 
-and:
+and, when Linker executed at least one unification:
 
 ```
 proofYield = knowledgeDelta / executedUnifications
 ```
 
+When `executedUnifications == 0`, the runner reports `proofYield = 0` by convention and records the semantic effect separately as:
+
+```
+directDelta = knowledgeDelta
+```
+
+A positive `directDelta` identifies a semantic result produced outside the measured Linker-unification path. It must not be interpreted as zero semantic value.
+
 This is deliberately not a complete semantic measure. Causes, used-only effects, generated-rule provenance, hypothesis changes, and deferred TSolve creation are not yet attributed to individual operations.
+
+## Isolation invariant
+
+Every measured operation runs in an independent `Mind` populated from the same durable `value/3` fixture.
+
+This is required because `SolutionsStore` and `ValuesStore` retain materialized query results. Sequentially evaluating several query shapes in one `Mind` causes an earlier query to suppress deltas in later queries through deduplication. Such a sequence is useful for cache/materialization studies, but it is not a valid independent semantic-yield baseline.
 
 ## Runner
 
@@ -56,8 +70,17 @@ rule_delta
 solution_delta
 value_row_delta
 knowledge_delta
+direct_delta
 proof_yield
 ```
+
+`result_rows` is the positive value-row delta of the isolated operation, not the cumulative size of the result store.
+
+## Interpretation boundary
+
+`solution_delta` and `value_row_delta` currently describe externally materialized query state. They are included in the coarse `knowledgeDelta`, but they are not yet proven to be durable proof production.
+
+Accordingly, this experiment measures an observational semantic-output yield. The next instrumentation layer must distinguish proof effects from presentation/materialization effects before Planner uses the metric as an optimization objective.
 
 ## Safety boundary
 
@@ -65,7 +88,7 @@ The experiment is observational only. It does not modify candidate selection, pa
 
 ## Next layer
 
-After this coarse hypothesis is validated, instrument individual proof operations with exact effect masks:
+After the isolated baseline is validated, instrument individual proof operations with exact effect masks:
 
 ```
 NEW_TVALUE
