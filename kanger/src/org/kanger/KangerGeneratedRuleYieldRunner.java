@@ -34,21 +34,24 @@ public final class KangerGeneratedRuleYieldRunner {
 
             runScenario(
                     "one-hop",
-                    "!@x source(x) -> derived(x);",
+                    new String[]{"!@x source(x) -> derived(x);"},
                     null,
                     "!source(1);",
                     "?derived(1);");
 
             runScenario(
                     "two-hop",
-                    "!@x source(x) -> middle(x); !@x middle(x) -> derived(x);",
+                    new String[]{
+                            "!@x source(x) -> middle(x);",
+                            "!@x middle(x) -> derived(x);"
+                    },
                     null,
                     "!source(1);",
                     "?derived(1);");
 
             runScenario(
                     "deduplicated-target",
-                    "!@x source(x) -> derived(x);",
+                    new String[]{"!@x source(x) -> derived(x);"},
                     "!derived(1);",
                     "!source(1);",
                     "?derived(1);");
@@ -59,12 +62,15 @@ public final class KangerGeneratedRuleYieldRunner {
     }
 
     private static void runScenario(String scenario,
-                                    String rules,
+                                    String[] rules,
                                     String preexisting,
                                     String operation,
                                     String verification) throws Exception {
         Mind mind = createMind(scenario);
-        requireTrue(mind.query(rules, null, false), "Rule fixture failed: " + scenario);
+        for (String rule : rules) {
+            requireTrue(mind.query(rule, null, false),
+                    "Rule fixture failed: " + scenario + " / " + rule);
+        }
         if (preexisting != null) {
             requireTrue(mind.query(preexisting, null, false),
                     "Preexisting fixture failed: " + scenario);
