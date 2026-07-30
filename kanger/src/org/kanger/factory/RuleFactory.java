@@ -71,7 +71,8 @@ public class RuleFactory implements IFactory<IRule> {
     private IBase connection = null;
 
     private final Mind mind;
-    private boolean action = false;
+    private volatile boolean action = false;
+    private final Object metadataLock = new Object();
 
     private static final class DomainKey {
         private final long predicateId;
@@ -128,6 +129,10 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void transaction(RuleFactory base) throws Exception {
+        top = null;
+        bottom = null;
+        connection = null;
+        action = false;
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -138,20 +143,22 @@ public class RuleFactory implements IFactory<IRule> {
             cache = new Escalera(mind, SCHEMA, null);
         }
         parentIndex = base;
-        localDomainIndex.clear();
-        localTermIndex.clear();
-        candidateIndex.clear();
-        domainIndexStack.clear();
-        termIndexStack.clear();
-        domainIndexInitialized = base != null;
+        synchronized (metadataLock) {
+            localDomainIndex.clear();
+            localTermIndex.clear();
+            domainIndexStack.clear();
+            termIndexStack.clear();
+            domainIndexInitialized = base != null;
 
-        primaryPromotions.clear();
-        promotionViews.clear();
-        promotionStack.clear();
-        appliedPromotions.clear();
+            primaryPromotions.clear();
+            promotionViews.clear();
+            promotionStack.clear();
+            appliedPromotions.clear();
+        }
+        candidateIndex.clear();
     }
 
-    private Map<DomainKey, LinkedHashSet<Long>> copyDomainIndex() {
+    private Map<DomainKey, LinkedHashSet<Long>> copyDomainIndexLocked() {
         Map<DomainKey, LinkedHashSet<Long>> copy = new HashMap<>();
         for (Map.Entry<DomainKey, LinkedHashSet<Long>> entry : localDomainIndex.entrySet()) {
             copy.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
@@ -159,7 +166,7 @@ public class RuleFactory implements IFactory<IRule> {
         return copy;
     }
 
-    private Map<Long, LinkedHashSet<Long>> copyTermIndex() {
+    private Map<Long, LinkedHashSet<Long>> copyTermIndexLocked() {
         Map<Long, LinkedHashSet<Long>> copy = new HashMap<>();
         for (Map.Entry<Long, LinkedHashSet<Long>> entry : localTermIndex.entrySet()) {
             copy.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
@@ -167,20 +174,7 @@ public class RuleFactory implements IFactory<IRule> {
         return copy;
     }
 
-    private void ensureDomainIndex() throws Exception {
-        if (domainIndexInitialized) {
-            return;
-        }
-        localDomainIndex.clear();
-        localTermIndex.clear();
-        candidateIndex.clear();
-        for (Object value : cache) {
-            indexRule((Rule) value);
-        }
-        domainIndexInitialized = true;
-    }
-
-    private void indexRule(Rule rule) throws Exception {
+    private void indexRuleLocked(Rule rule) throws Exception {
         if (rule == null) {
             return;
         }
@@ -208,38 +202,95 @@ public class RuleFactory implements IFactory<IRule> {
             }
             ids.add(rule.getId());
         }
+    }
+
+    private void ensureDomainIndex() throws Exception {
+        boolean build;
+        synchronized (metadataLock) {
+            build = !domainIndexInitialized;
+            if (build) {
+                localDomainIndex.clear();
+                localTermIndex.clear();
+            }
+        }
+        if (!build) {
+            return;
+        }
+
+        List<Rule> rules = new ArrayList<>();
+        for (Object value : cache) {
+            rules.add((Rule) value);
+        }
+        synchronized (metadataLock) {
+            if (domainIndexInitialized) {
+                return;
+            }
+            localDomainIndex.clear();
+            localTermIndex.clear();
+            for (Rule rule : rules) {
+                indexRuleLocked(rule);
+            }
+            domainIndexInitialized = true;
+        }
+        candidateIndex.clear();
+        for (Rule rule : rules) {
+            candidateIndex.indexRule(rule);
+        }
+    }
+
+    private void indexRule(Rule rule) throws Exception {
+        synchronized (metadataLock) {
+            indexRuleLocked(rule);
+            domainIndexInitialized = true;
+        }
         candidateIndex.indexRule(rule);
     }
 
     private void unindexRule(Rule rule) throws Exception {
-        if (rule == null || !domainIndexInitialized) {
-            return;
-        }
-        Set<DomainKey> indexed = new HashSet<>();
-        for (List<Domain> branch : rule.getTree()) {
-            for (Domain domain : branch) {
-                DomainKey key = new DomainKey(domain.getPredicateId(), domain.isAntc());
-                if (indexed.add(key)) {
-                    LinkedHashSet<Long> ids = localDomainIndex.get(key);
-                    if (ids != null) {
-                        ids.remove(rule.getId());
-                        if (ids.isEmpty()) {
-                            localDomainIndex.remove(key);
+        synchronized (metadataLock) {
+            if (rule == null || !domainIndexInitialized) {
+                return;
+            }
+            Set<DomainKey> indexed = new HashSet<>();
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain domain : branch) {
+                    DomainKey key = new DomainKey(domain.getPredicateId(), domain.isAntc());
+                    if (indexed.add(key)) {
+                        LinkedHashSet<Long> ids = localDomainIndex.get(key);
+                        if (ids != null) {
+                            ids.remove(rule.getId());
+                            if (ids.isEmpty()) {
+                                localDomainIndex.remove(key);
+                            }
                         }
                     }
                 }
             }
-        }
-        for (long termId : rule.getTerms()) {
-            LinkedHashSet<Long> ids = localTermIndex.get(termId);
-            if (ids != null) {
-                ids.remove(rule.getId());
-                if (ids.isEmpty()) {
-                    localTermIndex.remove(termId);
+            for (long termId : rule.getTerms()) {
+                LinkedHashSet<Long> ids = localTermIndex.get(termId);
+                if (ids != null) {
+                    ids.remove(rule.getId());
+                    if (ids.isEmpty()) {
+                        localTermIndex.remove(termId);
+                    }
                 }
             }
         }
         candidateIndex.unindexRule(rule);
+    }
+
+    private Map<DomainKey, LinkedHashSet<Long>> snapshotDomainIndex() throws Exception {
+        ensureDomainIndex();
+        synchronized (metadataLock) {
+            return copyDomainIndexLocked();
+        }
+    }
+
+    private Map<Long, LinkedHashSet<Long>> snapshotTermIndex() throws Exception {
+        ensureDomainIndex();
+        synchronized (metadataLock) {
+            return copyTermIndexLocked();
+        }
     }
 
     private void collectDomainIds(DomainKey key, LinkedHashSet<Long> result) throws Exception {
@@ -247,9 +298,11 @@ public class RuleFactory implements IFactory<IRule> {
             parentIndex.collectDomainIds(key, result);
         }
         ensureDomainIndex();
-        LinkedHashSet<Long> local = localDomainIndex.get(key);
-        if (local != null) {
-            result.addAll(local);
+        synchronized (metadataLock) {
+            LinkedHashSet<Long> local = localDomainIndex.get(key);
+            if (local != null) {
+                result.addAll(new LinkedHashSet<>(local));
+            }
         }
     }
 
@@ -258,30 +311,35 @@ public class RuleFactory implements IFactory<IRule> {
             parentIndex.collectTermIds(termId, result);
         }
         ensureDomainIndex();
-        LinkedHashSet<Long> local = localTermIndex.get(termId);
-        if (local != null) {
-            result.addAll(local);
+        synchronized (metadataLock) {
+            LinkedHashSet<Long> local = localTermIndex.get(termId);
+            if (local != null) {
+                result.addAll(new LinkedHashSet<>(local));
+            }
         }
     }
 
     private void mergeDomainIndex(RuleFactory child) throws Exception {
+        Map<DomainKey, LinkedHashSet<Long>> childDomains = child.snapshotDomainIndex();
+        Map<Long, LinkedHashSet<Long>> childTerms = child.snapshotTermIndex();
         ensureDomainIndex();
-        child.ensureDomainIndex();
-        for (Map.Entry<DomainKey, LinkedHashSet<Long>> entry : child.localDomainIndex.entrySet()) {
-            LinkedHashSet<Long> ids = localDomainIndex.get(entry.getKey());
-            if (ids == null) {
-                ids = new LinkedHashSet<>();
-                localDomainIndex.put(entry.getKey(), ids);
+        synchronized (metadataLock) {
+            for (Map.Entry<DomainKey, LinkedHashSet<Long>> entry : childDomains.entrySet()) {
+                LinkedHashSet<Long> ids = localDomainIndex.get(entry.getKey());
+                if (ids == null) {
+                    ids = new LinkedHashSet<>();
+                    localDomainIndex.put(entry.getKey(), ids);
+                }
+                ids.addAll(entry.getValue());
             }
-            ids.addAll(entry.getValue());
-        }
-        for (Map.Entry<Long, LinkedHashSet<Long>> entry : child.localTermIndex.entrySet()) {
-            LinkedHashSet<Long> ids = localTermIndex.get(entry.getKey());
-            if (ids == null) {
-                ids = new LinkedHashSet<>();
-                localTermIndex.put(entry.getKey(), ids);
+            for (Map.Entry<Long, LinkedHashSet<Long>> entry : childTerms.entrySet()) {
+                LinkedHashSet<Long> ids = localTermIndex.get(entry.getKey());
+                if (ids == null) {
+                    ids = new LinkedHashSet<>();
+                    localTermIndex.put(entry.getKey(), ids);
+                }
+                ids.addAll(entry.getValue());
             }
-            ids.addAll(entry.getValue());
         }
         candidateIndex.mergeFrom(child.candidateIndex);
     }
@@ -298,7 +356,6 @@ public class RuleFactory implements IFactory<IRule> {
         }
         return result;
     }
-
 
     private void collectCandidateIds(Domain source,
                                      boolean candidateAntc,
@@ -326,7 +383,6 @@ public class RuleFactory implements IFactory<IRule> {
         }
         return result;
     }
-
 
     private void collectResolvedCandidateIds(Domain source,
                                              boolean candidateAntc,
@@ -368,6 +424,12 @@ public class RuleFactory implements IFactory<IRule> {
         return false;
     }
 
+    private Set<Long> promotionSnapshot() {
+        synchronized (metadataLock) {
+            return new HashSet<>(primaryPromotions);
+        }
+    }
+
     public Set<Long> commit(RuleFactory base) throws Exception {
         Set<Long> list = new HashSet<>();
         if (base.cache.getRoot() != null) {
@@ -389,9 +451,12 @@ public class RuleFactory implements IFactory<IRule> {
             }
         }
 
-        if (!base.primaryPromotions.isEmpty()) {
-            primaryPromotions.addAll(base.primaryPromotions);
-            promotionViews.clear();
+        Set<Long> childPromotions = base.promotionSnapshot();
+        if (!childPromotions.isEmpty()) {
+            synchronized (metadataLock) {
+                primaryPromotions.addAll(childPromotions);
+                promotionViews.clear();
+            }
             action = true;
         }
 
@@ -415,8 +480,12 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void update() throws Exception {
         cache.update();
-        if (connection != null && !appliedPromotions.isEmpty()) {
-            for (long id : new HashSet<>(appliedPromotions)) {
+        Set<Long> applied;
+        synchronized (metadataLock) {
+            applied = new HashSet<>(appliedPromotions);
+        }
+        if (connection != null && !applied.isEmpty()) {
+            for (long id : applied) {
                 Rule rule = getRaw(id);
                 IStep step = connection.get(id);
                 if (rule != null && step != null) {
@@ -425,7 +494,9 @@ public class RuleFactory implements IFactory<IRule> {
                 }
             }
         }
-        appliedPromotions.clear();
+        synchronized (metadataLock) {
+            appliedPromotions.clear();
+        }
     }
 
     public synchronized IRule register(IRule r) {
@@ -508,45 +579,53 @@ public class RuleFactory implements IFactory<IRule> {
         return effectiveView(getRaw(id));
     }
 
+    private boolean containsPromotion(long id) {
+        synchronized (metadataLock) {
+            return primaryPromotions.contains(id);
+        }
+    }
+
     private Rule effectiveView(Rule rule) throws Exception {
         if (rule == null || !isPromoted(rule.getId())) {
             return rule;
         }
-        Rule view = promotionViews.get(rule.getId());
-        if (view == null) {
-            view = new Rule(mind);
-            view.setId(rule.getId());
-            view.setMindId(mind.getId());
-            if (rule.getOriginId() != -1) {
-                view.setOrigin(mind.getTerms().get(rule.getOriginId()));
+        synchronized (metadataLock) {
+            Rule view = promotionViews.get(rule.getId());
+            if (view == null) {
+                view = new Rule(mind);
+                view.setId(rule.getId());
+                view.setMindId(mind.getId());
+                if (rule.getOriginId() != -1) {
+                    view.setOrigin(mind.getTerms().get(rule.getOriginId()));
+                }
+                view.setVarIndex(rule.getVarIndex());
+                view.setQuery(false);
+                view.setGenerated(false);
+                if (rule.isStored()) {
+                    view.setStored(mind);
+                }
+                view.setSubstitutable(rule.isSubstitutable());
+                view.setAbstractive(rule.isAbstractive());
+                view.setSecond(false);
+                view.getTree().clear();
+                for (List<Domain> branch : rule.getTree()) {
+                    view.getTree().add(new ArrayList<>(branch));
+                }
+                view.getSolves().addAll(rule.getSolves());
+                view.getPredicates().addAll(rule.getPredicates());
+                view.getTerms().addAll(rule.getTerms());
+                promotionViews.put(rule.getId(), view);
+            } else {
+                view.setMind(mind);
             }
-            view.setVarIndex(rule.getVarIndex());
-            view.setQuery(false);
-            view.setGenerated(false);
-            if (rule.isStored()) {
-                view.setStored(mind);
-            }
-            view.setSubstitutable(rule.isSubstitutable());
-            view.setAbstractive(rule.isAbstractive());
-            view.setSecond(false);
-            view.getTree().clear();
-            for (List<Domain> branch : rule.getTree()) {
-                view.getTree().add(new ArrayList<>(branch));
-            }
-            view.getSolves().addAll(rule.getSolves());
-            view.getPredicates().addAll(rule.getPredicates());
-            view.getTerms().addAll(rule.getTerms());
-            promotionViews.put(rule.getId(), view);
-        } else {
-            view.setMind(mind);
+            return view;
         }
-        return view;
     }
 
     private boolean isPromoted(long id) {
         for (IMind current = mind; current != null; current = current.getNext()) {
             RuleFactory factory = (RuleFactory) current.getRules();
-            if (factory.primaryPromotions.contains(id)) {
+            if (factory.containsPromotion(id)) {
                 return true;
             }
         }
@@ -554,7 +633,7 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public boolean isPromotedHere(IRule rule) {
-        return rule != null && primaryPromotions.contains(rule.getId());
+        return rule != null && containsPromotion(rule.getId());
     }
 
     public boolean isGenerated(IRule rule) {
@@ -563,18 +642,22 @@ public class RuleFactory implements IFactory<IRule> {
 
     private IRule promotePrimary(IRule rule) throws Exception {
         if (rule != null && isGenerated(rule)) {
-            primaryPromotions.add(rule.getId());
-            promotionViews.remove(rule.getId());
+            synchronized (metadataLock) {
+                primaryPromotions.add(rule.getId());
+                promotionViews.remove(rule.getId());
+            }
             action = true;
         }
         return get(rule.getId());
     }
 
     public void clear() throws Exception {
-        primaryPromotions.clear();
-        promotionViews.clear();
-        promotionStack.clear();
-        appliedPromotions.clear();
+        synchronized (metadataLock) {
+            primaryPromotions.clear();
+            promotionViews.clear();
+            promotionStack.clear();
+            appliedPromotions.clear();
+        }
         if (mind.getNext() != null) {
             transaction((RuleFactory) mind.getNext().getRules());
         } else {
@@ -586,44 +669,50 @@ public class RuleFactory implements IFactory<IRule> {
     public void mark() throws Exception {
         cache.mark();
         ensureDomainIndex();
-        domainIndexStack.push(copyDomainIndex());
-        termIndexStack.push(copyTermIndex());
+        synchronized (metadataLock) {
+            domainIndexStack.push(copyDomainIndexLocked());
+            termIndexStack.push(copyTermIndexLocked());
+            promotionStack.push(new HashSet<>(primaryPromotions));
+        }
         candidateIndex.mark();
-        promotionStack.push(new HashSet<>(primaryPromotions));
     }
 
     public void commit() throws Exception {
         cache.commit();
-        if (!domainIndexStack.isEmpty()) {
-            domainIndexStack.pop();
-        }
-        if (!termIndexStack.isEmpty()) {
-            termIndexStack.pop();
+        synchronized (metadataLock) {
+            if (!domainIndexStack.isEmpty()) {
+                domainIndexStack.pop();
+            }
+            if (!termIndexStack.isEmpty()) {
+                termIndexStack.pop();
+            }
+            if (!promotionStack.isEmpty()) {
+                promotionStack.pop();
+            }
         }
         candidateIndex.commit();
-        if (!promotionStack.isEmpty()) {
-            promotionStack.pop();
-        }
     }
 
     public void release() throws Exception {
         cache.release();
-        if (!domainIndexStack.isEmpty()) {
-            localDomainIndex.clear();
-            localDomainIndex.putAll(domainIndexStack.pop());
-            domainIndexInitialized = true;
-        }
-        if (!termIndexStack.isEmpty()) {
-            localTermIndex.clear();
-            localTermIndex.putAll(termIndexStack.pop());
-            domainIndexInitialized = true;
+        synchronized (metadataLock) {
+            if (!domainIndexStack.isEmpty()) {
+                localDomainIndex.clear();
+                localDomainIndex.putAll(domainIndexStack.pop());
+                domainIndexInitialized = true;
+            }
+            if (!termIndexStack.isEmpty()) {
+                localTermIndex.clear();
+                localTermIndex.putAll(termIndexStack.pop());
+                domainIndexInitialized = true;
+            }
+            if (!promotionStack.isEmpty()) {
+                primaryPromotions.clear();
+                primaryPromotions.addAll(promotionStack.pop());
+                promotionViews.clear();
+            }
         }
         candidateIndex.release();
-        if (!promotionStack.isEmpty()) {
-            primaryPromotions.clear();
-            primaryPromotions.addAll(promotionStack.pop());
-            promotionViews.clear();
-        }
     }
 
     public int size() {
@@ -771,21 +860,32 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     private void applyPromotions() throws Exception {
-        if (mind.getNext() != null || primaryPromotions.isEmpty()) {
+        if (mind.getNext() != null) {
             return;
         }
-        for (long id : new HashSet<>(primaryPromotions)) {
+        Set<Long> promotions;
+        synchronized (metadataLock) {
+            if (primaryPromotions.isEmpty()) {
+                return;
+            }
+            promotions = new HashSet<>(primaryPromotions);
+        }
+        for (long id : promotions) {
             Rule rule = getRaw(id);
             if (rule != null) {
                 rule.setGenerated(false);
                 rule.setQuery(false);
                 rule.setSecond(false);
                 rule.getCauses().clear();
-                appliedPromotions.add(id);
+                synchronized (metadataLock) {
+                    appliedPromotions.add(id);
+                }
             }
         }
-        primaryPromotions.clear();
-        promotionViews.clear();
+        synchronized (metadataLock) {
+            primaryPromotions.clear();
+            promotionViews.clear();
+        }
     }
 
     public void pack() throws Exception {
