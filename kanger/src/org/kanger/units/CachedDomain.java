@@ -32,6 +32,7 @@ public class CachedDomain extends Domain {
 
     private static final long serialVersionUID = 196402070002L;
 
+    private final transient Object causeMemoLock = new Object();
     private transient Mind cachedCauseMind;
     private transient ArgumentsList cachedCauseArguments;
     private transient Set<ICause> cachedCauses;
@@ -58,18 +59,23 @@ public class CachedDomain extends Domain {
     }
 
     private void invalidateCauseMemo() {
-        cachedCauseMind = null;
-        cachedCauseArguments = null;
-        cachedCauses = null;
+        synchronized (causeMemoLock) {
+            cachedCauseMind = null;
+            cachedCauseArguments = null;
+            cachedCauses = null;
+        }
     }
 
     @Override
     public Set<ICause> getCauses(Mind mind) throws Exception {
         ArgumentsList current = getArguments().convertBase(mind);
-        if (cachedCauseMind == mind
-                && cachedCauseArguments != null
-                && current.equalsBase(mind, cachedCauseArguments)) {
-            return new HashSet<>(cachedCauses);
+        synchronized (causeMemoLock) {
+            if (cachedCauseMind == mind
+                    && cachedCauseArguments != null
+                    && cachedCauses != null
+                    && current.equalsBase(mind, cachedCauseArguments)) {
+                return new HashSet<>(cachedCauses);
+            }
         }
 
         Set<ICause> selected = new HashSet<>();
@@ -106,9 +112,11 @@ public class CachedDomain extends Domain {
             }
         }
 
-        cachedCauseMind = mind;
-        cachedCauseArguments = current;
-        cachedCauses = new HashSet<>(selected);
+        synchronized (causeMemoLock) {
+            cachedCauseMind = mind;
+            cachedCauseArguments = current;
+            cachedCauses = new HashSet<>(selected);
+        }
         return selected;
     }
 
@@ -120,8 +128,12 @@ public class CachedDomain extends Domain {
 
     @Override
     public CachedDomain setMind(Mind mind) throws Exception {
-        if (cachedCauseMind != mind) {
-            invalidateCauseMemo();
+        synchronized (causeMemoLock) {
+            if (cachedCauseMind != mind) {
+                cachedCauseMind = null;
+                cachedCauseArguments = null;
+                cachedCauses = null;
+            }
         }
         super.setMind(mind);
         return this;
