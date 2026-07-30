@@ -12,8 +12,9 @@ import org.kanger.units.Rule;
  * Opt-in query-local capture of pre-execution semantic estimates.
  *
  * A public query may execute multiple internal passes with transient Rule IDs
- * that overlap. The session therefore binds observations to both the Analyzer
- * target Rule and the intended QueryPass.
+ * that overlap. The session binds observations to the intended QueryPass and
+ * retains the first target-Rule estimate, which is the candidate state before
+ * any Linker transformation in that pass.
  */
 public final class SemanticPlanningTelemetry {
 
@@ -40,11 +41,15 @@ public final class SemanticPlanningTelemetry {
             return;
         }
         ++session.events;
-        session.queryShape = SemanticYieldPlanner.describeQueryShape(query, mind);
+        if (session.queryShape == null) {
+            session.queryShape = SemanticYieldPlanner.describeQueryShape(query, mind);
+        }
         if (estimate.isCalibrated()) {
             ++session.calibratedEvents;
-            session.estimate = estimate;
-        } else if (session.estimate == null) {
+            if (session.estimate == null) {
+                session.estimate = estimate;
+            }
+        } else if (session.estimate == null && session.fallback == null) {
             session.fallback = estimate;
         }
     }
