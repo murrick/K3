@@ -52,6 +52,20 @@ jobs:
           set -o pipefail
           mvn -B -V clean verify 2>&1 | tee "kanger-3.4.4-${{ matrix.id }}.log"
 
+      - name: Verify Mind lifecycle safety
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerMindSafetyRunner \
+            2>&1 | tee "mind-safety-${{ matrix.id }}.log"
+          grep -F 'MIND_SAFETY_PASS concurrent-children' "mind-safety-${{ matrix.id }}.log"
+          grep -F 'MIND_SAFETY_PASS transient-clear' "mind-safety-${{ matrix.id }}.log"
+          grep -F 'MIND_SAFETY_PASS delete-warning' "mind-safety-${{ matrix.id }}.log"
+          grep -F 'MIND_SAFETY_PASS abstractive-policy' "mind-safety-${{ matrix.id }}.log"
+          grep -F 'MIND_SAFETY_OK' "mind-safety-${{ matrix.id }}.log"
+
       - name: Stress RuleCandidateIndex concurrency with DUMB
         shell: bash
         run: |
@@ -130,6 +144,7 @@ jobs:
           name: dumb-qualification-${{ matrix.id }}
           path: |
             kanger-3.4.4-${{ matrix.id }}.log
+            mind-safety-${{ matrix.id }}.log
             rule-candidate-concurrency-${{ matrix.id }}.log
             rule-rendering-${{ matrix.id }}.log
             dumb-integrity-${{ matrix.id }}.log
