@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Created by Dmitry G. Quznetsov on 20.12.2020.
@@ -69,8 +71,8 @@ public class CommentFactory {
 
     private final Mind mind;
     private CommentFactory parentView = null;
-    private final Map<Long, Comment> overrides = new HashMap<>();
-    private final Set<Long> dirtyUpdates = new HashSet<>();
+    private final ConcurrentHashMap<Long, Comment> overrides = new ConcurrentHashMap<>();
+    private final Set<Long> dirtyUpdates = new CopyOnWriteArraySet<>();
     private final Stack<OverlayState> overlayStack = new Stack<>();
 
     public CommentFactory(Mind mind) throws Exception {
@@ -141,8 +143,9 @@ public class CommentFactory {
         }
         Comment copy = overrides.get(source.getId());
         if (copy == null) {
-            copy = copyComment(source, mind);
-            overrides.put(copy.getId(), copy);
+            Comment candidate = copyComment(source, mind);
+            Comment previous = overrides.putIfAbsent(candidate.getId(), candidate);
+            copy = previous == null ? candidate : previous;
         }
         return copy;
     }
@@ -160,10 +163,11 @@ public class CommentFactory {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-        for (Map.Entry<Long, Comment> entry : base.overrides.entrySet()) {
+        Map<Long, Comment> childOverrides = base.copyOverrides(base.overrides);
+        for (Map.Entry<Long, Comment> entry : childOverrides.entrySet()) {
             overrides.put(entry.getKey(), copyComment(entry.getValue(), mind));
         }
-        dirtyUpdates.addAll(base.dirtyUpdates);
+        dirtyUpdates.addAll(new HashSet<>(base.dirtyUpdates));
     }
 
     public void update() throws Exception {
