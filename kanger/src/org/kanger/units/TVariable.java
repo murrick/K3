@@ -34,6 +34,7 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
+import java.lang.ref.WeakReference;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,24 +52,44 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     private long mindId = -1;           // id транзакции
     private int index = 0;              // Сквозной индекс переменной
     private ITerm name = null;          // Оригинальное подкванторное имя
-    private IRule rule = null;          // Ссылка на правило
+    private IRule rule = null;           // Ссылка на правило
 
     private long nameId = -1;
     private long ruleId = -1;
+
+    /** Stable owner/default context for this transaction-owned object. */
     private Mind mind = null;
+
+    /**
+     * Parent TVariables are shared by concurrent sibling Minds. Historically
+     * every hydration overwrote one mutable Mind field, so no-arg runtime
+     * methods could read another sibling's TValueFactory. The active execution
+     * view is now thread-confined and weak, while the owner/default remains
+     * stable and does not retain completed child Minds.
+     */
+    private final transient ThreadLocal<WeakReference<Mind>> runtimeMind =
+            new ThreadLocal<>();
 
     public TVariable() {
     }
 
     public TVariable(Mind mind) {
         this.mind = mind;
+        runtimeMind.set(new WeakReference<>(mind));
+    }
+
+    private Mind activeMind() {
+        WeakReference<Mind> reference = runtimeMind.get();
+        Mind active = reference == null ? null : reference.get();
+        return active == null ? mind : active;
     }
 
     public ByteBuffer pack() {
+        Mind active = activeMind();
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
                 .putLong(mindId)
-                .putByte(isDeleted(mind) ? 1 : 0)
+                .putByte(isDeleted(active) ? 1 : 0)
                 .putLong(nameId)
                 .putInt(index)
                 .putLong(ruleId);
@@ -79,7 +100,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         id = packet.getLong();
         mindId = packet.getLong();
         if (packet.getByte() != 0) {
-            setDeleted(true, mind);
+            setDeleted(true, activeMind());
         }
         nameId = packet.getLong();
         index = packet.getInt();
@@ -122,29 +143,33 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     public ITerm getValue() throws Exception {
-        if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this).getValue(mind);
+        Mind active = activeMind();
+        if (active != null && active.getTValues().get(this) != null) {
+            return active.getTValues().get(this).getValue(active);
         } else {
             return null;
         }
     }
 
     public TValue getCurrent() {
-        if (mind.getTValues().get(this) != null) {
-            return mind.getTValues().get(this);
+        Mind active = activeMind();
+        if (active != null && active.getTValues().get(this) != null) {
+            return active.getTValues().get(this);
         } else {
             return null;
         }
     }
 
     public TValue setCurrent(TValue v) {
-        return mind.getTValues().set(this, v);
+        Mind active = activeMind();
+        return active == null ? null : active.getTValues().set(this, v);
     }
 
     public TValue setValue(ITerm value) throws Exception { //throws TValueOutOfOrderException {
+        Mind active = activeMind();
         TValue v = null;
-        if (value != null) {
-            v = mind.getTValues().add(this, value);
+        if (value != null && active != null) {
+            v = active.getTValues().add(this, value);
         }
         return setCurrent(v);
     }
@@ -172,7 +197,9 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     public String toString(IMind mind) {
         try {
-            return getVarName((Mind) mind) + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0 ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
+            return getVarName((Mind) mind)
+                    + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0
+                    ? (isEmpty() ? "" : (":" + getValue().toString())) : "");
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -196,12 +223,15 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     @Override
     public Mind getMind() {
-        return mind;
+        return activeMind();
     }
 
     @Override
     public TVariable setMind(Mind mind) {
-        this.mind = mind;
+        runtimeMind.set(new WeakReference<>(mind));
+        if (this.mind == null || mind.getNext() == null || mindId == mind.getId()) {
+            this.mind = mind;
+        }
         return this;
     }
 
@@ -218,11 +248,15 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     public TValue find(ITerm value) throws Exception {
-        return mind.getTValues().find(this, value);
+        Mind active = activeMind();
+        return active == null ? null : active.getTValues().find(this, value);
     }
 
     public boolean isEmpty() {
-        return mind.getTValues().isEmpty(this) || mind.getTValues().get(this) == null;
+        Mind active = activeMind();
+        return active == null
+                || active.getTValues().isEmpty(this)
+                || active.getTValues().get(this) == null;
     }
 
     public boolean isQuery(Mind mind) {
@@ -298,7 +332,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         mindId = Long.parseLong(map.get("mind_id") + "");
         boolean deleted = Boolean.parseBoolean(map.get("deleted") + "");
         if (deleted) {
-            setDeleted(true, mind);
+            setDeleted(true, activeMind());
         }
         nameId = Long.parseLong(map.get("name_id") + "");
         ruleId = Long.parseLong(map.get("rule_id") + "");
@@ -309,23 +343,28 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     }
 
     public void incFloodControl(ITerm t) throws Exception {
-        if (!mind.getFloodControl().containsKey(this)) {
-            Term r = mind.getTerms().getRoot();
+        Mind active = activeMind();
+        if (active == null) {
+            return;
+        }
+        if (!active.getFloodControl().containsKey(this)) {
+            Term r = active.getTerms().getRoot();
             long[] val = new long[]{r == null ? 0 : r.getId(), 0L};
-            mind.getFloodControl().put(this, val);
+            active.getFloodControl().put(this, val);
         } else {
-            long lastTermId = mind.getFloodControl().get(this)[0];
+            long lastTermId = active.getFloodControl().get(this)[0];
             if (t.getId() > lastTermId) {
-                long counter = mind.getFloodControl().get(this)[1];
+                long counter = active.getFloodControl().get(this)[1];
                 ++counter;
-                mind.getFloodControl().get(this)[1] = counter;
+                active.getFloodControl().get(this)[1] = counter;
             }
         }
     }
 
     public int getFloodCounter() {
-        if (mind.getFloodControl().containsKey(this)) {
-            return (int) mind.getFloodControl().get(this)[1];
+        Mind active = activeMind();
+        if (active != null && active.getFloodControl().containsKey(this)) {
+            return (int) active.getFloodControl().get(this)[1];
         } else {
             return 0;
         }
