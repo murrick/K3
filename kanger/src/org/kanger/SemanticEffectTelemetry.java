@@ -38,11 +38,13 @@ public final class SemanticEffectTelemetry {
         Session session = CURRENT.get();
         CURRENT.remove();
         return session == null
-                ? new Snapshot(0L, 0L, 0L)
+                ? new Snapshot(0L, 0L, 0L, 0L, 0L)
                 : new Snapshot(
                         session.causes.size(),
                         session.solveKeys.size(),
-                        session.generatedRules.size());
+                        session.generatedRules.size(),
+                        session.solveCandidates,
+                        session.duplicateSolveCandidates);
     }
 
     /**
@@ -57,8 +59,8 @@ public final class SemanticEffectTelemetry {
     }
 
     /**
-     * Internal instrumentation hook. TSolve construction is used both for
-     * lookup and insertion, so tuples are deduplicated by their TValue IDs.
+     * Records one unique TSolve only after Mind.addTSolve has passed canonical
+     * deduplication and inserted the tuple into ruleSolves.
      */
     public static void recordTSolve(Collection<TValue> values) {
         Session session = CURRENT.get();
@@ -78,6 +80,21 @@ public final class SemanticEffectTelemetry {
     }
 
     /**
+     * Records the result of one deferred solve candidate reaching the canonical
+     * Mind.addTSolve boundary. A duplicate candidate is semantically useful
+     * provenance but must not be counted as a new TSolve.
+     */
+    public static void recordTSolveCandidate(boolean created) {
+        Session session = CURRENT.get();
+        if (session != null) {
+            ++session.solveCandidates;
+            if (!created) {
+                ++session.duplicateSolveCandidates;
+            }
+        }
+    }
+
+    /**
      * Internal instrumentation hook for a generated Rule that survived the
      * canonical RuleFactory insertion path. Deduplicated candidates must not
      * call this method.
@@ -93,11 +110,19 @@ public final class SemanticEffectTelemetry {
         private final long newCauses;
         private final long newTSolves;
         private final long newGeneratedRules;
+        private final long solveCandidates;
+        private final long duplicateSolveCandidates;
 
-        private Snapshot(long newCauses, long newTSolves, long newGeneratedRules) {
+        private Snapshot(long newCauses,
+                         long newTSolves,
+                         long newGeneratedRules,
+                         long solveCandidates,
+                         long duplicateSolveCandidates) {
             this.newCauses = newCauses;
             this.newTSolves = newTSolves;
             this.newGeneratedRules = newGeneratedRules;
+            this.solveCandidates = solveCandidates;
+            this.duplicateSolveCandidates = duplicateSolveCandidates;
         }
 
         public long getNewCauses() {
@@ -111,11 +136,21 @@ public final class SemanticEffectTelemetry {
         public long getNewGeneratedRules() {
             return newGeneratedRules;
         }
+
+        public long getSolveCandidates() {
+            return solveCandidates;
+        }
+
+        public long getDuplicateSolveCandidates() {
+            return duplicateSolveCandidates;
+        }
     }
 
     private static final class Session {
         private final Set<Object> causes = new HashSet<>();
         private final Set<List<Long>> solveKeys = new HashSet<>();
         private final Set<Object> generatedRules = new HashSet<>();
+        private long solveCandidates;
+        private long duplicateSolveCandidates;
     }
 }
