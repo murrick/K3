@@ -131,8 +131,7 @@ jobs:
           grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($7 != "new_causes" || $8 != "new_tsolves"
-                  || $14 != "effect_delta" || $17 != "effect_yield") exit 10
+              if ($7 != "new_causes" || $8 != "new_tsolves" || $14 != "effect_delta" || $17 != "effect_yield") exit 10
               next
             }
             $2 == "query-exact" {
