@@ -89,7 +89,7 @@ final class RecoveryLog {
         }
     }
 
-    void rollback(Index index, Data data, IntegrityManifest integrity) throws Exception {
+    void rollback(Index index, Data data) throws Exception {
         synchronized (locker) {
             List<Record> records = load();
             for (int recordIndex = records.size() - 1; recordIndex >= 0; --recordIndex) {
@@ -97,9 +97,9 @@ final class RecoveryLog {
                 for (int imageIndex = images.size() - 1; imageIndex >= 0; --imageIndex) {
                     BeforeImage image = images.get(imageIndex);
                     if (image.existed) {
-                        restore(image, index, data, integrity);
+                        restore(image, index, data);
                     } else {
-                        removeCurrent(image.id, index, data, integrity);
+                        removeCurrent(image.id, index, data);
                     }
                 }
             }
@@ -124,23 +124,20 @@ final class RecoveryLog {
                 readPacked(data.getFile(), current.getLong()));
     }
 
-    private void restore(BeforeImage image, Index index, Data data,
-                         IntegrityManifest integrity) throws Exception {
+    private void restore(BeforeImage image, Index index, Data data)
+            throws Exception {
         Index.IndexOne current = index.getOne(image.id);
         long currentOffset = current == null ? -1L : current.getLong();
         long restoredOffset = writePacked(data.getFile(), currentOffset, image.packed);
         index.set(image.id, restoredOffset);
-        integrity.putRaw(image.id, image.packed);
     }
 
-    private void removeCurrent(long id, Index index, Data data,
-                               IntegrityManifest integrity) throws Exception {
+    private void removeCurrent(long id, Index index, Data data) throws Exception {
         Index.IndexOne current = index.getOne(id);
         if (current != null) {
             index.remove(id);
             invalidate(data.getFile(), current.getLong());
         }
-        integrity.remove(id);
     }
 
     private void append(Record record) throws Exception {
