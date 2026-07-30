@@ -1,0 +1,166 @@
+name: KANGER III 3.4.2 semantic estimation
+
+on:
+  push:
+    branches:
+      - "arch/3.4.2-p5b-semantic-estimation"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: kanger-3.4.2-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-calibrate:
+    name: ${{ matrix.id }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu-java-8
+            os: ubuntu-latest
+            java: "8"
+          - id: ubuntu-java-21
+            os: ubuntu-latest
+            java: "21"
+          - id: macos-java-21
+            os: macos-latest
+            java: "21"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build and run all KANGER test corpora
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn -B -V clean verify 2>&1 | tee "kanger-3.4.2-${{ matrix.id }}.log"
+
+      - name: Verify historical and stabilization corpora
+        shell: bash
+        run: |
+          log="kanger-3.4.2-${{ matrix.id }}.log"
+          grep -Eq 'Success:[[:space:]]+101' "$log"
+          grep -Eq 'Fails:[[:space:]]+0' "$log"
+          grep -Eq 'Stabilization Success:[[:space:]]+7' "$log"
+          grep -Eq 'Stabilization Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C1 Success:[[:space:]]+5' "$log"
+          grep -Eq 'C1 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C4 Success:[[:space:]]+3' "$log"
+          grep -Eq 'C4 Fails:[[:space:]]+0' "$log"
+          grep -Eq 'C3 Success:[[:space:]]+6' "$log"
+          grep -Eq 'C3 Fails:[[:space:]]+0' "$log"
+
+      - name: Verify persistent lifecycle diagnostics
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.diagnostics=true \
+            -Dkanger.diagnostics.timeout.ms=5000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDiagnosticRunner \
+            2>&1 | tee kanger-3.4.2-db.log
+          grep -F 'D2 set_03_01 with storage: PASS' kanger-3.4.2-db.log
+          grep -F 'explicit closeStorage: true' kanger-3.4.2-db.log
+          grep -F 'normal JVM shutdown hook: true' kanger-3.4.2-db.log
+
+      - name: Verify P5a observational baseline
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.semantic.yield.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerSemanticYieldRunner \
+            2>&1 | tee kanger-semantic-yield-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-semantic-yield-ubuntu-java-21.log \
+            > kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '100,query-exact' kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '500,query-one-constant' kanger-semantic-yield-ubuntu-java-21.csv
+          grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
+
+      - name: Capture P5b semantic prediction calibration
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -Dkanger.semantic.prediction.sizes=100,500,1000 \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerSemanticPredictionRunner \
+            2>&1 | tee kanger-semantic-prediction-ubuntu-java-21.log
+          grep -E '^(size,|[0-9]+,)' \
+            kanger-semantic-prediction-ubuntu-java-21.log \
+            > kanger-semantic-prediction-ubuntu-java-21.csv
+          awk -F, '
+            NR == 1 {
+              if ($3 != "calibration" || $4 != "calibrated") exit 10
+              if ($7 != "candidate_pool" || $10 != "predicted_matches") exit 11
+              if ($13 != "predicted_executed_operations" || $14 != "actual_executed_operations") exit 12
+              if ($15 != "predicted_effect_delta" || $16 != "actual_effect_delta") exit 13
+              if ($19 != "predicted_effect_yield" || $20 != "actual_effect_yield") exit 14
+              next
+            }
+            {
+              rows++
+              if ($3 != "P5A_SINGLE_DOMAIN_ARITY3" || $4 != "true") exit 15
+              if ($6 < 1 || $7 != $1) exit 16
+              if ($11 != $12 || $13 != $14 || $15 != $16 || $17 != $18) exit 17
+              if ($19 != $20) exit 18
+            }
+            $2 == "query-exact" {
+              exact++
+              if ($8 != 3 || $9 != 0 || $10 != 1) exit 19
+              if ($13 != 0 || $15 != 0 || $17 != 1) exit 20
+            }
+            $2 == "query-two-constants" {
+              selective++
+              if ($8 != 2 || $9 != 1 || $10 != 1) exit 21
+              if ($13 != 8 || $15 != 4 || $19 != "0.500000000") exit 22
+            }
+            $2 == "query-one-constant" {
+              selective++
+              if ($8 != 1 || $9 != 2 || $10 != 1) exit 23
+              if ($13 != 8 || $15 != 5 || $19 != "0.625000000") exit 24
+            }
+            $2 == "query-all-variables" {
+              broad++
+              if ($8 != 0 || $9 != 3 || $10 != $1) exit 25
+              if ($13 != 8 * $1 || $15 != 5 * $1 + 1) exit 26
+            }
+            END {
+              if (rows != 12 || exact != 3 || selective != 6 || broad != 3) exit 27
+            }
+          ' kanger-semantic-prediction-ubuntu-java-21.csv
+
+      - name: Upload 3.4.2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-3.4.2-${{ matrix.id }}
+          path: |
+            kanger-3.4.2-${{ matrix.id }}.log
+            kanger-3.4.2-db.log
+            kanger-semantic-yield-${{ matrix.id }}.log
+            kanger-semantic-yield-${{ matrix.id }}.csv
+            kanger-semantic-prediction-${{ matrix.id }}.log
+            kanger-semantic-prediction-${{ matrix.id }}.csv
+            target/*.jar
+          if-no-files-found: warn
