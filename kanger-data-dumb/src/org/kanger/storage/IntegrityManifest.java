@@ -36,6 +36,8 @@ import java.util.zip.CRC32;
  */
 final class IntegrityManifest {
 
+    static final String BOOTSTRAP_PROPERTY = "kanger.dumb.integrity.bootstrap";
+
     private static final int MAGIC = 0x4B444932; // KDI2
     private static final short VERSION = 2;
     private static final int HEADER_SIZE = Integer.BYTES + Short.BYTES
@@ -64,12 +66,17 @@ final class IntegrityManifest {
                 Map<Key, Entry> global = loadGlobal();
                 selectLocal(global);
                 if (entries.isEmpty() && !index.isEmpty()) {
+                    requireExplicitBootstrap("manifest has no protected subset for base="
+                            + baseCode);
                     bootstrap(index, data);
                     mergeAndWrite(global);
                 } else {
                     validate(index, data);
                 }
             } else {
+                if (!index.isEmpty()) {
+                    requireExplicitBootstrap("integrity manifest is missing for non-empty storage");
+                }
                 bootstrap(index, data);
                 Map<Key, Entry> global = new TreeMap<Key, Entry>();
                 addLocal(global);
@@ -117,6 +124,13 @@ final class IntegrityManifest {
         }
     }
 
+    private void requireExplicitBootstrap(String detail) throws DatabaseErrorException {
+        if (!Boolean.getBoolean(BOOTSTRAP_PROPERTY)) {
+            throw corruption(detail + "; explicit one-time migration requires -D"
+                    + BOOTSTRAP_PROPERTY + "=true");
+        }
+    }
+
     private void mergeAndWrite(Map<Key, Entry> global) throws Exception {
         Iterator<Key> iterator = global.keySet().iterator();
         while (iterator.hasNext()) {
@@ -157,8 +171,8 @@ final class IntegrityManifest {
                 if (one == null) {
                     throw corruption("null index record during manifest bootstrap");
                 }
-                readExpected(data, one.getId(), one.getLong());
                 Entry stored = Entry.fromStored(data.getFile(), one.getLong());
+                readExpected(data, one.getId(), one.getLong());
                 if (entries.put(Long.valueOf(one.getId()), stored) != null) {
                     throw corruption("duplicate index id=" + one.getId()
                             + " base=" + baseCode);
@@ -176,12 +190,12 @@ final class IntegrityManifest {
                 throw corruption("manifest id is absent from index base="
                         + baseCode + " id=" + id);
             }
-            readExpected(data, id, one.getLong());
             Entry actual = Entry.fromStored(data.getFile(), one.getLong());
             if (!expected.getValue().equals(actual)) {
                 throw corruption("record checksum mismatch base="
                         + baseCode + " id=" + id);
             }
+            readExpected(data, id, one.getLong());
         }
 
         int seen = 0;
