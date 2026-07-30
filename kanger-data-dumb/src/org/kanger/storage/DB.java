@@ -4,14 +4,14 @@
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ *  all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,7 +20,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- *
  */
 
 package org.kanger.storage;
@@ -97,6 +96,7 @@ public class DB implements IData {
         new File(dbPath + ".index").delete();
         new File(dbPath + ".store").delete();
         new File(dbPath + ".integrity").delete();
+        deleteRecoveryLogs(dbPath);
     }
 
     @Override
@@ -127,13 +127,36 @@ public class DB implements IData {
         new File(dbPath + ".index").delete();
         new File(dbPath + ".store").delete();
         new File(dbPath + ".integrity").delete();
+        deleteRecoveryLogs(dbPath);
 
-        new File(dbPath + "-temporary.index").renameTo(new File(dbPath + ".index"));
-        new File(dbPath + "-temporary.store").renameTo(new File(dbPath + ".store"));
-        new File(dbPath + "-temporary.integrity")
+        String temporaryPath = dbPath + "-temporary";
+        new File(temporaryPath + ".index").renameTo(new File(dbPath + ".index"));
+        new File(temporaryPath + ".store").renameTo(new File(dbPath + ".store"));
+        new File(temporaryPath + ".integrity")
                 .renameTo(new File(dbPath + ".integrity"));
+        // A correctly closed temporary storage has no WAL. Remove any residue
+        // defensively rather than carrying it across the physical rename.
+        deleteRecoveryLogs(temporaryPath);
 
         use(tmp);
+    }
+
+    private void deleteRecoveryLogs(String dbPath) {
+        File database = new File(dbPath).getAbsoluteFile();
+        File directory = database.getParentFile();
+        if (directory == null) {
+            directory = new File(".").getAbsoluteFile();
+        }
+        final String prefix = database.getName() + ".wal.";
+        File[] logs = directory.listFiles();
+        if (logs == null) {
+            return;
+        }
+        for (File log : logs) {
+            if (log.isFile() && log.getName().startsWith(prefix)) {
+                log.delete();
+            }
+        }
     }
 
     @Override
