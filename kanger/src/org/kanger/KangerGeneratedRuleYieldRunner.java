@@ -29,8 +29,8 @@ public final class KangerGeneratedRuleYieldRunner {
             System.setProperty("user.home", home.toAbsolutePath().toString());
 
             System.out.println("scenario,passes,executed_operations,new_tvalues,new_causes,"
-                    + "new_tsolves,total_rule_delta,generated_rule_delta,effect_delta,"
-                    + "derived_true");
+                    + "new_tsolves,total_rule_delta,generated_rule_delta,"
+                    + "observed_generated_rules,effect_delta,derived_true");
 
             runScenario(
                     "one-hop",
@@ -92,15 +92,22 @@ public final class KangerGeneratedRuleYieldRunner {
         long totalRuleDelta = nonNegativeDelta(after.rules, before.rules);
         long generatedRuleDelta = nonNegativeDelta(
                 after.generatedRules, before.generatedRules);
+        long observedGeneratedRules = effects.getNewGeneratedRules();
+        if (observedGeneratedRules != generatedRuleDelta) {
+            throw new IllegalStateException(
+                    "Generated-rule hook mismatch for " + scenario
+                            + ": observed=" + observedGeneratedRules
+                            + ", delta=" + generatedRuleDelta);
+        }
         long effectDelta = statistics.getNewTValues()
                 + effects.getNewCauses()
                 + effects.getNewTSolves()
-                + generatedRuleDelta;
+                + observedGeneratedRules;
 
         Boolean derived = mind.query(verification, null, false);
 
         System.out.printf(Locale.ROOT,
-                "%s,%d,%d,%d,%d,%d,%d,%d,%d,%s%n",
+                "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s%n",
                 scenario,
                 statistics.getPasses(),
                 statistics.getUnificationAttempts(),
@@ -109,6 +116,7 @@ public final class KangerGeneratedRuleYieldRunner {
                 effects.getNewTSolves(),
                 totalRuleDelta,
                 generatedRuleDelta,
+                observedGeneratedRules,
                 effectDelta,
                 Boolean.TRUE.equals(derived));
     }
