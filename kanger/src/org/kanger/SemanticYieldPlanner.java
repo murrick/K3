@@ -8,9 +8,11 @@ package org.kanger;
 import org.kanger.enums.ArgumentType;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
+import org.kanger.primitives.Argument;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
+import org.kanger.units.TVariable;
 
 import java.util.Collection;
 import java.util.List;
@@ -122,6 +124,58 @@ public final class SemanticYieldPlanner {
                 expectedOperations,
                 expectedEffectDelta,
                 0L);
+    }
+
+    public static String describeQueryShape(Rule query,
+                                            Mind mind) throws Exception {
+        StringBuilder result = new StringBuilder();
+        result.append("origin=").append(query.getOrigin());
+        result.append("; ruleId=").append(query.getId());
+        result.append("; queryValues=").append(mind.getQueryValues().size());
+        result.append("; ruleTVars=[");
+        boolean first = true;
+        for (TVariable variable : query.getTVariables()) {
+            if (!first) {
+                result.append('|');
+            }
+            first = false;
+            result.append(variable.getId())
+                    .append(':').append(variable.getIndex())
+                    .append(':').append(variable.getRuleId())
+                    .append(':').append(variable.isEmpty())
+                    .append(':').append(variable.isQuery(mind));
+        }
+        result.append(']');
+
+        Domain source = query.getDomain();
+        source.getHashStruct();
+        result.append("; args=[");
+        for (int i = 0; i < source.getRange(); ++i) {
+            if (i > 0) {
+                result.append('|');
+            }
+            IArgument argument = source.get(i);
+            Object object = argument.getObject(mind);
+            result.append(i)
+                    .append(':').append(argument.getType())
+                    .append(':').append(argument.getId())
+                    .append(':').append(((Argument) argument).getVarOrder())
+                    .append(':').append(object == null
+                            ? "null" : object.getClass().getSimpleName());
+            if (!argument.isEmpty(mind)) {
+                result.append(':').append(argument.getValue(mind).getId())
+                        .append(':').append(argument.getValue(mind).isCVariable());
+            }
+            if (object instanceof TValue) {
+                TVariable owner = ((TValue) object).getTVar(mind);
+                result.append(":owner=").append(owner.getId())
+                        .append(":ownerIndex=").append(owner.getIndex())
+                        .append(":inQueryValues=")
+                        .append(mind.getQueryValues().containsKey(owner));
+            }
+        }
+        result.append(']');
+        return result.toString();
     }
 
     private static boolean isSimpleStoredDomain(IRule candidate,
