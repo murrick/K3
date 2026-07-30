@@ -61,6 +61,8 @@ public class PredicateFactory implements IFactory<IPredicate> {
     }
 
     public void transaction(PredicateFactory base) throws Exception {
+        top = null;
+        connection = null;
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
