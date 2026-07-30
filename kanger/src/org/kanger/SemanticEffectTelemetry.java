@@ -43,7 +43,8 @@ public final class SemanticEffectTelemetry {
         if (session == null) {
             return new Snapshot(0L, 0L, 0L, 0L, 0L,
                     0L, 0L, 0L, 0L, 0L,
-                    0L, 0L, 0L);
+                    0L, 0L, 0L, 0L, 0L,
+                    0.0, 0.0, 0.0);
         }
 
         Set<Object> groupedGeneratedRules = new HashSet<>();
@@ -62,24 +63,47 @@ public final class SemanticEffectTelemetry {
         long groupsWithNewTSolve = 0L;
         long groupsWithGeneratedRule = 0L;
         long generatedRuleGroupLinks = 0L;
+        long deferredGroupEffects = 0L;
+        long groupsWithoutContributors = 0L;
         long minimumContributors = Long.MAX_VALUE;
         long maximumContributors = 0L;
+        double minimumDeferredCredit = Double.POSITIVE_INFINITY;
+        double maximumDeferredCredit = 0.0;
+
         for (DeferredGroup group : session.deferredGroups.values()) {
             long contributors = group.operationIds.size();
             contributorLinks += contributors;
             minimumContributors = Math.min(minimumContributors, contributors);
             maximumContributors = Math.max(maximumContributors, contributors);
+
+            long groupEffects = group.newTSolve ? 1L : 0L;
             if (group.newTSolve) {
                 ++groupsWithNewTSolve;
             }
             if (!group.generatedRules.isEmpty()) {
                 ++groupsWithGeneratedRule;
                 generatedRuleGroupLinks += group.generatedRules.size();
+                groupEffects += group.generatedRules.size();
+            }
+            deferredGroupEffects += groupEffects;
+
+            if (contributors == 0L) {
+                ++groupsWithoutContributors;
+            } else {
+                double credit = ((double) groupEffects) / contributors;
+                minimumDeferredCredit = Math.min(minimumDeferredCredit, credit);
+                maximumDeferredCredit = Math.max(maximumDeferredCredit, credit);
             }
         }
         if (session.deferredGroups.isEmpty()) {
             minimumContributors = 0L;
         }
+        if (minimumDeferredCredit == Double.POSITIVE_INFINITY) {
+            minimumDeferredCredit = 0.0;
+        }
+        double averageDeferredCredit = contributorLinks == 0L
+                ? 0.0
+                : ((double) deferredGroupEffects) / contributorLinks;
 
         return new Snapshot(
                 session.causes.size(),
@@ -94,7 +118,12 @@ public final class SemanticEffectTelemetry {
                 maximumContributors,
                 groupsWithGeneratedRule,
                 generatedRuleGroupLinks,
-                session.generatedRules.size() - groupedGeneratedRules.size());
+                session.generatedRules.size() - groupedGeneratedRules.size(),
+                deferredGroupEffects,
+                groupsWithoutContributors,
+                averageDeferredCredit,
+                minimumDeferredCredit,
+                maximumDeferredCredit);
     }
 
     /**
@@ -202,6 +231,11 @@ public final class SemanticEffectTelemetry {
         private final long groupsWithGeneratedRule;
         private final long generatedRuleGroupLinks;
         private final long ungroupedGeneratedRules;
+        private final long deferredGroupEffects;
+        private final long groupsWithoutContributors;
+        private final double averageDeferredCreditPerContributor;
+        private final double minimumDeferredCreditPerContributor;
+        private final double maximumDeferredCreditPerContributor;
 
         private Snapshot(long newCauses,
                          long newTSolves,
@@ -215,7 +249,12 @@ public final class SemanticEffectTelemetry {
                          long maximumContributorsPerGroup,
                          long groupsWithGeneratedRule,
                          long generatedRuleGroupLinks,
-                         long ungroupedGeneratedRules) {
+                         long ungroupedGeneratedRules,
+                         long deferredGroupEffects,
+                         long groupsWithoutContributors,
+                         double averageDeferredCreditPerContributor,
+                         double minimumDeferredCreditPerContributor,
+                         double maximumDeferredCreditPerContributor) {
             this.newCauses = newCauses;
             this.newTSolves = newTSolves;
             this.newGeneratedRules = newGeneratedRules;
@@ -229,6 +268,11 @@ public final class SemanticEffectTelemetry {
             this.groupsWithGeneratedRule = groupsWithGeneratedRule;
             this.generatedRuleGroupLinks = generatedRuleGroupLinks;
             this.ungroupedGeneratedRules = ungroupedGeneratedRules;
+            this.deferredGroupEffects = deferredGroupEffects;
+            this.groupsWithoutContributors = groupsWithoutContributors;
+            this.averageDeferredCreditPerContributor = averageDeferredCreditPerContributor;
+            this.minimumDeferredCreditPerContributor = minimumDeferredCreditPerContributor;
+            this.maximumDeferredCreditPerContributor = maximumDeferredCreditPerContributor;
         }
 
         public long getNewCauses() { return newCauses; }
@@ -244,6 +288,11 @@ public final class SemanticEffectTelemetry {
         public long getGroupsWithGeneratedRule() { return groupsWithGeneratedRule; }
         public long getGeneratedRuleGroupLinks() { return generatedRuleGroupLinks; }
         public long getUngroupedGeneratedRules() { return ungroupedGeneratedRules; }
+        public long getDeferredGroupEffects() { return deferredGroupEffects; }
+        public long getGroupsWithoutContributors() { return groupsWithoutContributors; }
+        public double getAverageDeferredCreditPerContributor() { return averageDeferredCreditPerContributor; }
+        public double getMinimumDeferredCreditPerContributor() { return minimumDeferredCreditPerContributor; }
+        public double getMaximumDeferredCreditPerContributor() { return maximumDeferredCreditPerContributor; }
     }
 
     private static final class Session {
