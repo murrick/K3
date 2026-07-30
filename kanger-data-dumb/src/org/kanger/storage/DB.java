@@ -93,10 +93,7 @@ public class DB implements IData {
         }
 
         String dbPath = user.getDatabaseDir() + tmp;
-        new File(dbPath + ".index").delete();
-        new File(dbPath + ".store").delete();
-        new File(dbPath + ".integrity").delete();
-        deleteRecoveryLogs(dbPath);
+        deleteStorageFiles(dbPath);
     }
 
     @Override
@@ -124,21 +121,25 @@ public class DB implements IData {
         m.closeStorage();
 
         String dbPath = user.getDatabaseDir() + tmp;
-        new File(dbPath + ".index").delete();
-        new File(dbPath + ".store").delete();
-        new File(dbPath + ".integrity").delete();
-        deleteRecoveryLogs(dbPath);
+        deleteStorageFiles(dbPath);
 
         String temporaryPath = dbPath + "-temporary";
         new File(temporaryPath + ".index").renameTo(new File(dbPath + ".index"));
         new File(temporaryPath + ".store").renameTo(new File(dbPath + ".store"));
         new File(temporaryPath + ".integrity")
                 .renameTo(new File(dbPath + ".integrity"));
-        // A correctly closed temporary storage has no WAL. Remove any residue
-        // defensively rather than carrying it across the physical rename.
+        new File(temporaryPath + ".integrity.delta").delete();
         deleteRecoveryLogs(temporaryPath);
 
         use(tmp);
+    }
+
+    private void deleteStorageFiles(String dbPath) {
+        new File(dbPath + ".index").delete();
+        new File(dbPath + ".store").delete();
+        new File(dbPath + ".integrity").delete();
+        new File(dbPath + ".integrity.delta").delete();
+        deleteRecoveryLogs(dbPath);
     }
 
     private void deleteRecoveryLogs(String dbPath) {
