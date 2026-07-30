@@ -33,8 +33,11 @@ public final class KangerGeneratedRuleYieldRunner {
                     + "deferred_groups,deferred_contributor_links,groups_with_new_tsolve,"
                     + "minimum_contributors_per_group,maximum_contributors_per_group,"
                     + "groups_with_generated_rule,generated_rule_group_links,"
-                    + "ungrouped_generated_rules,total_rule_delta,generated_rule_delta,"
-                    + "observed_generated_rules,effect_delta,derived_true");
+                    + "ungrouped_generated_rules,deferred_group_effects,"
+                    + "groups_without_contributors,average_deferred_credit_per_contributor,"
+                    + "minimum_deferred_credit_per_contributor,"
+                    + "maximum_deferred_credit_per_contributor,total_rule_delta,"
+                    + "generated_rule_delta,observed_generated_rules,effect_delta,derived_true");
 
             runScenario(
                     "one-hop",
@@ -126,6 +129,26 @@ public final class KangerGeneratedRuleYieldRunner {
             throw new IllegalStateException(
                     "Generated-rule group bounds failed for " + scenario);
         }
+        if (effects.getDeferredGroupEffects()
+                != effects.getGroupsWithNewTSolve()
+                + effects.getGeneratedRuleGroupLinks()) {
+            throw new IllegalStateException(
+                    "Deferred group effect accounting mismatch for " + scenario);
+        }
+        if (effects.getGroupsWithoutContributors() > effects.getDeferredGroups()) {
+            throw new IllegalStateException(
+                    "Contributorless group count exceeds groups for " + scenario);
+        }
+        double expectedAverageCredit = effects.getDeferredContributorLinks() == 0L
+                ? 0.0
+                : ((double) effects.getDeferredGroupEffects())
+                / effects.getDeferredContributorLinks();
+        if (Math.abs(effects.getAverageDeferredCreditPerContributor()
+                - expectedAverageCredit) > 1.0e-12) {
+            throw new IllegalStateException(
+                    "Deferred credit conservation mismatch for " + scenario);
+        }
+
         long effectDelta = statistics.getNewTValues()
                 + effects.getNewCauses()
                 + effects.getNewTSolves()
@@ -134,7 +157,7 @@ public final class KangerGeneratedRuleYieldRunner {
         Boolean derived = mind.query(verification, null, false);
 
         System.out.printf(Locale.ROOT,
-                "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s%n",
+                "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f,%.9f,%d,%d,%d,%d,%s%n",
                 scenario,
                 statistics.getPasses(),
                 statistics.getUnificationAttempts(),
@@ -151,6 +174,11 @@ public final class KangerGeneratedRuleYieldRunner {
                 effects.getGroupsWithGeneratedRule(),
                 effects.getGeneratedRuleGroupLinks(),
                 effects.getUngroupedGeneratedRules(),
+                effects.getDeferredGroupEffects(),
+                effects.getGroupsWithoutContributors(),
+                effects.getAverageDeferredCreditPerContributor(),
+                effects.getMinimumDeferredCreditPerContributor(),
+                effects.getMaximumDeferredCreditPerContributor(),
                 totalRuleDelta,
                 generatedRuleDelta,
                 observedGeneratedRules,
