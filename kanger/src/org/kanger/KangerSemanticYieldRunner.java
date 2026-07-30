@@ -38,9 +38,10 @@ public final class KangerSemanticYieldRunner {
                     + "duplicate_solve_candidates,deferred_groups,"
                     + "deferred_contributor_links,groups_with_new_tsolve,"
                     + "minimum_contributors_per_group,maximum_contributors_per_group,"
-                    + "new_generated_rules,rule_delta,solution_delta,value_row_delta,"
-                    + "materialization_delta,knowledge_delta,effect_delta,direct_delta,"
-                    + "proof_yield,effect_yield");
+                    + "groups_with_generated_rule,generated_rule_group_links,"
+                    + "ungrouped_generated_rules,new_generated_rules,rule_delta,"
+                    + "solution_delta,value_row_delta,materialization_delta,"
+                    + "knowledge_delta,effect_delta,direct_delta,proof_yield,effect_yield");
 
             for (int size : parseSizes(args)) {
                 runCase(size);
@@ -97,6 +98,9 @@ public final class KangerSemanticYieldRunner {
         long groupsWithNewTSolve = effects.getGroupsWithNewTSolve();
         long minimumContributors = effects.getMinimumContributorsPerGroup();
         long maximumContributors = effects.getMaximumContributorsPerGroup();
+        long groupsWithGeneratedRule = effects.getGroupsWithGeneratedRule();
+        long generatedRuleGroupLinks = effects.getGeneratedRuleGroupLinks();
+        long ungroupedGeneratedRules = effects.getUngroupedGeneratedRules();
         long newGeneratedRules = effects.getNewGeneratedRules();
 
         if (solveCandidates != newTSolves + duplicateSolveCandidates) {
@@ -123,6 +127,15 @@ public final class KangerSemanticYieldRunner {
             throw new IllegalStateException(
                     "Empty deferred-group accounting mismatch for " + operation);
         }
+        if (generatedRuleGroupLinks + ungroupedGeneratedRules != newGeneratedRules) {
+            throw new IllegalStateException(
+                    "Generated-rule group accounting mismatch for " + operation);
+        }
+        if (groupsWithGeneratedRule > generatedRuleGroupLinks
+                || generatedRuleGroupLinks > deferredGroups) {
+            throw new IllegalStateException(
+                    "Generated-rule causal group bounds failed for " + operation);
+        }
 
         // Coarse historical measure: proof-internal TValue creation plus externally
         // visible rule/result materialization.
@@ -141,7 +154,7 @@ public final class KangerSemanticYieldRunner {
                 : ((double) effectDelta) / executed;
 
         System.out.printf(Locale.ROOT,
-                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
+                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
                 size,
                 operation,
                 valueRowDelta,
@@ -157,6 +170,9 @@ public final class KangerSemanticYieldRunner {
                 groupsWithNewTSolve,
                 minimumContributors,
                 maximumContributors,
+                groupsWithGeneratedRule,
+                generatedRuleGroupLinks,
+                ungroupedGeneratedRules,
                 newGeneratedRules,
                 ruleDelta,
                 solutionDelta,
