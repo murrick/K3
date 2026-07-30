@@ -26,6 +26,7 @@ package org.kanger.storage;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.exception.DatabaseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
@@ -48,6 +49,7 @@ public class Base implements IBase, Iterable<IStep> {
 
     private Index index = null;
     private Data data = null;
+    private IntegrityManifest integrity = null;
     private Class udf = null;
     private final Object locker = new Object();
 
@@ -94,6 +96,9 @@ public class Base implements IBase, Iterable<IStep> {
 
         data = new Data(this, user);
         data.open(name + ".store", readonly);
+
+        integrity = new IntegrityManifest(name + ".integrity", baseCode, locker);
+        integrity.openOrBootstrap(index, data);
 
         IStep root = getRoot();
         if (root != null) {
@@ -157,6 +162,13 @@ public class Base implements IBase, Iterable<IStep> {
         if (data != null && !data.isClosed()) {
             data.close();
         }
+        if (integrity != null) {
+            try {
+                integrity.flush();
+            } catch (Exception e) {
+                throw new IOException(e.toString());
+            }
+        }
     }
 
     @Override
@@ -174,6 +186,7 @@ public class Base implements IBase, Iterable<IStep> {
                 long offset = data.add(one);
                 index.set(one.getId(), offset);
             }
+            integrity.put(one);
         }
         invalidateCached(one.getId());
     }
@@ -188,6 +201,7 @@ public class Base implements IBase, Iterable<IStep> {
         synchronized (locker) {
             index.flush();
             data.flush();
+            integrity.flush();
         }
     }
 
@@ -210,6 +224,15 @@ public class Base implements IBase, Iterable<IStep> {
             if (x != null) {
                 ++storageReadCount;
                 IStep one = data.get(x.getLong());
+                if (one == null) {
+                    throw new DatabaseErrorException(
+                            "DUMB storage corruption: index points to missing record id=" + id);
+                }
+                if (one.getId() != id) {
+                    throw new DatabaseErrorException(
+                            "DUMB storage corruption: index/store id mismatch expected="
+                                    + id + " actual=" + one.getId());
+                }
                 cacheRecord(id, one);
                 return one;
             }
@@ -232,6 +255,7 @@ public class Base implements IBase, Iterable<IStep> {
             if (!index.isEmpty()) {
                 data.clear();
                 index.clear();
+                integrity.clear();
                 flush();
                 clearCache();
                 lastId = 0;
@@ -316,6 +340,7 @@ public class Base implements IBase, Iterable<IStep> {
                 if (current != null) {
                     index.remove(id);
                     data.remove(current.getLong());
+                    integrity.remove(id.longValue());
                 }
             }
         }
