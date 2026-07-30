@@ -154,8 +154,8 @@ public class RuleFactory implements IFactory<IRule> {
             promotionViews.clear();
             promotionStack.clear();
             appliedPromotions.clear();
+            candidateIndex.clear();
         }
-        candidateIndex.clear();
     }
 
     private Map<DomainKey, LinkedHashSet<Long>> copyDomainIndexLocked() {
@@ -205,45 +205,34 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     private void ensureDomainIndex() throws Exception {
-        boolean build;
-        synchronized (metadataLock) {
-            build = !domainIndexInitialized;
-            if (build) {
-                localDomainIndex.clear();
-                localTermIndex.clear();
-            }
-        }
-        if (!build) {
-            return;
-        }
-
-        List<Rule> rules = new ArrayList<>();
-        for (Object value : cache) {
-            rules.add((Rule) value);
-        }
         synchronized (metadataLock) {
             if (domainIndexInitialized) {
                 return;
             }
+
+            List<Rule> rules = new ArrayList<>();
+            for (Object value : cache) {
+                rules.add((Rule) value);
+            }
+
             localDomainIndex.clear();
             localTermIndex.clear();
+            candidateIndex.clear();
             for (Rule rule : rules) {
                 indexRuleLocked(rule);
+                candidateIndex.indexRule(rule);
             }
+            // Publish readiness only after all three correlated indexes are complete.
             domainIndexInitialized = true;
-        }
-        candidateIndex.clear();
-        for (Rule rule : rules) {
-            candidateIndex.indexRule(rule);
         }
     }
 
     private void indexRule(Rule rule) throws Exception {
         synchronized (metadataLock) {
             indexRuleLocked(rule);
+            candidateIndex.indexRule(rule);
             domainIndexInitialized = true;
         }
-        candidateIndex.indexRule(rule);
     }
 
     private void unindexRule(Rule rule) throws Exception {
@@ -275,8 +264,8 @@ public class RuleFactory implements IFactory<IRule> {
                     }
                 }
             }
+            candidateIndex.unindexRule(rule);
         }
-        candidateIndex.unindexRule(rule);
     }
 
     private Map<DomainKey, LinkedHashSet<Long>> snapshotDomainIndex() throws Exception {
@@ -340,8 +329,8 @@ public class RuleFactory implements IFactory<IRule> {
                 }
                 ids.addAll(entry.getValue());
             }
+            candidateIndex.mergeFrom(child.candidateIndex);
         }
-        candidateIndex.mergeFrom(child.candidateIndex);
     }
 
     public List<IRule> findByDomain(long predicateId, boolean antc) throws Exception {
@@ -364,7 +353,9 @@ public class RuleFactory implements IFactory<IRule> {
             parentIndex.collectCandidateIds(source, candidateAntc, result);
         }
         ensureDomainIndex();
-        candidateIndex.collectLocal(source, candidateAntc, result);
+        synchronized (metadataLock) {
+            candidateIndex.collectLocal(source, candidateAntc, result);
+        }
     }
 
     /**
@@ -391,7 +382,9 @@ public class RuleFactory implements IFactory<IRule> {
             parentIndex.collectResolvedCandidateIds(source, candidateAntc, result);
         }
         ensureDomainIndex();
-        candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
+        synchronized (metadataLock) {
+            candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
+        }
     }
 
     /**
@@ -673,8 +666,8 @@ public class RuleFactory implements IFactory<IRule> {
             domainIndexStack.push(copyDomainIndexLocked());
             termIndexStack.push(copyTermIndexLocked());
             promotionStack.push(new HashSet<>(primaryPromotions));
+            candidateIndex.mark();
         }
-        candidateIndex.mark();
     }
 
     public void commit() throws Exception {
@@ -689,8 +682,8 @@ public class RuleFactory implements IFactory<IRule> {
             if (!promotionStack.isEmpty()) {
                 promotionStack.pop();
             }
+            candidateIndex.commit();
         }
-        candidateIndex.commit();
     }
 
     public void release() throws Exception {
@@ -711,8 +704,8 @@ public class RuleFactory implements IFactory<IRule> {
                 primaryPromotions.addAll(promotionStack.pop());
                 promotionViews.clear();
             }
+            candidateIndex.release();
         }
-        candidateIndex.release();
     }
 
     public int size() {
