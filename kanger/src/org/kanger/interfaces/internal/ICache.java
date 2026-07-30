@@ -20,11 +20,11 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  *  IN THE SOFTWARE.
- *
  */
 
 package org.kanger.interfaces.internal;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -40,6 +40,16 @@ public interface ICache extends Iterable {
     Object get(long id) throws Exception;
 
     void delete(long id) throws Exception;
+
+    default void deleteAll(Collection<Long> ids) throws Exception {
+        if (ids != null) {
+            for (Long id : ids) {
+                if (id != null) {
+                    delete(id);
+                }
+            }
+        }
+    }
 
     int size();
 
