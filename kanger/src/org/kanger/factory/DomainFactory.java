@@ -40,7 +40,11 @@ import org.kanger.units.CachedDomain;
 import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Created by Dmitry G. Quznetsov on 25.05.15.
@@ -53,7 +57,7 @@ public class DomainFactory implements IFactory<Domain> {
     private IStep top = null;
     private IBase connection = null;
     private final Mind mind;
-    private Set<Domain> waiters = new HashSet<>();
+    private final Set<Domain> waiters = new CopyOnWriteArraySet<>();
 
     public DomainFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -61,6 +65,9 @@ public class DomainFactory implements IFactory<Domain> {
     }
 
     public void transaction(DomainFactory base) throws Exception {
+        // A new transaction/storage generation must not retain old chain anchors.
+        top = null;
+        connection = null;
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -108,13 +115,13 @@ public class DomainFactory implements IFactory<Domain> {
             p.setId(((User) mind.getUser()).nextId(SCHEMA));
             p.setMindId(mind.getId());
 
-            if (!arg.getTVariables(mind).isEmpty()) {
-                p.setSubstitutable();
-            }
-            if (!arg.getCVariables(mind).isEmpty()) {
-                p.setAbstractive();
-            }
             if (arg != null) {
+                if (!arg.getTVariables(mind).isEmpty()) {
+                    p.setSubstitutable();
+                }
+                if (!arg.getCVariables(mind).isEmpty()) {
+                    p.setAbstractive();
+                }
                 for (IArgument t : arg) {
                     p.add(t);
                 }
