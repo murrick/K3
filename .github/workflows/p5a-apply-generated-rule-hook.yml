@@ -34,20 +34,24 @@ jobs:
               raise SystemExit("Unexpected RuleFactory import shape")
           source = source.replace(old_import, new_import, 1)
 
-          old_return = """            return add(r);
-              }
-          }
-
-          public IRule store(Domain d) throws Exception {"""
-          new_return = """            IRule inserted = add(r);
-              if (inserted == r) {
-                  SemanticEffectTelemetry.recordGeneratedRule(r);
-              }
-              return inserted;
-          }
-      }
-
-      public IRule store(Domain d) throws Exception {"""
+          old_return = "\n".join([
+              "            return add(r);",
+              "        }",
+              "    }",
+              "",
+              "    public IRule store(Domain d) throws Exception {",
+          ])
+          new_return = "\n".join([
+              "            IRule inserted = add(r);",
+              "            if (inserted == r) {",
+              "                SemanticEffectTelemetry.recordGeneratedRule(r);",
+              "            }",
+              "            return inserted;",
+              "        }",
+              "    }",
+              "",
+              "    public IRule store(Domain d) throws Exception {",
+          ])
           if source.count(old_return) != 1:
               raise SystemExit("Unexpected RuleFactory generated insertion shape")
           source = source.replace(old_return, new_return, 1)
