@@ -5,6 +5,7 @@
  */
 package org.kanger;
 
+import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 
 import java.util.ArrayList;
@@ -41,11 +42,26 @@ public final class SemanticEffectTelemetry {
         CURRENT.remove();
         if (session == null) {
             return new Snapshot(0L, 0L, 0L, 0L, 0L,
-                    0L, 0L, 0L, 0L, 0L);
+                    0L, 0L, 0L, 0L, 0L,
+                    0L, 0L, 0L);
+        }
+
+        Set<Object> groupedGeneratedRules = new HashSet<>();
+        for (Object value : session.generatedRules) {
+            if (!(value instanceof Rule)) {
+                continue;
+            }
+            List<Long> key = solveKey(((Rule) value).getSolves());
+            DeferredGroup group = session.deferredGroups.get(key);
+            if (group != null && group.generatedRules.add(value)) {
+                groupedGeneratedRules.add(value);
+            }
         }
 
         long contributorLinks = 0L;
         long groupsWithNewTSolve = 0L;
+        long groupsWithGeneratedRule = 0L;
+        long generatedRuleGroupLinks = 0L;
         long minimumContributors = Long.MAX_VALUE;
         long maximumContributors = 0L;
         for (DeferredGroup group : session.deferredGroups.values()) {
@@ -55,6 +71,10 @@ public final class SemanticEffectTelemetry {
             maximumContributors = Math.max(maximumContributors, contributors);
             if (group.newTSolve) {
                 ++groupsWithNewTSolve;
+            }
+            if (!group.generatedRules.isEmpty()) {
+                ++groupsWithGeneratedRule;
+                generatedRuleGroupLinks += group.generatedRules.size();
             }
         }
         if (session.deferredGroups.isEmpty()) {
@@ -71,7 +91,10 @@ public final class SemanticEffectTelemetry {
                 contributorLinks,
                 groupsWithNewTSolve,
                 minimumContributors,
-                maximumContributors);
+                maximumContributors,
+                groupsWithGeneratedRule,
+                generatedRuleGroupLinks,
+                session.generatedRules.size() - groupedGeneratedRules.size());
     }
 
     /**
@@ -176,6 +199,9 @@ public final class SemanticEffectTelemetry {
         private final long groupsWithNewTSolve;
         private final long minimumContributorsPerGroup;
         private final long maximumContributorsPerGroup;
+        private final long groupsWithGeneratedRule;
+        private final long generatedRuleGroupLinks;
+        private final long ungroupedGeneratedRules;
 
         private Snapshot(long newCauses,
                          long newTSolves,
@@ -186,7 +212,10 @@ public final class SemanticEffectTelemetry {
                          long deferredContributorLinks,
                          long groupsWithNewTSolve,
                          long minimumContributorsPerGroup,
-                         long maximumContributorsPerGroup) {
+                         long maximumContributorsPerGroup,
+                         long groupsWithGeneratedRule,
+                         long generatedRuleGroupLinks,
+                         long ungroupedGeneratedRules) {
             this.newCauses = newCauses;
             this.newTSolves = newTSolves;
             this.newGeneratedRules = newGeneratedRules;
@@ -197,6 +226,9 @@ public final class SemanticEffectTelemetry {
             this.groupsWithNewTSolve = groupsWithNewTSolve;
             this.minimumContributorsPerGroup = minimumContributorsPerGroup;
             this.maximumContributorsPerGroup = maximumContributorsPerGroup;
+            this.groupsWithGeneratedRule = groupsWithGeneratedRule;
+            this.generatedRuleGroupLinks = generatedRuleGroupLinks;
+            this.ungroupedGeneratedRules = ungroupedGeneratedRules;
         }
 
         public long getNewCauses() { return newCauses; }
@@ -209,6 +241,9 @@ public final class SemanticEffectTelemetry {
         public long getGroupsWithNewTSolve() { return groupsWithNewTSolve; }
         public long getMinimumContributorsPerGroup() { return minimumContributorsPerGroup; }
         public long getMaximumContributorsPerGroup() { return maximumContributorsPerGroup; }
+        public long getGroupsWithGeneratedRule() { return groupsWithGeneratedRule; }
+        public long getGeneratedRuleGroupLinks() { return generatedRuleGroupLinks; }
+        public long getUngroupedGeneratedRules() { return ungroupedGeneratedRules; }
     }
 
     private static final class Session {
@@ -222,6 +257,7 @@ public final class SemanticEffectTelemetry {
 
     private static final class DeferredGroup {
         private final Set<Long> operationIds = new HashSet<>();
+        private final Set<Object> generatedRules = new HashSet<>();
         private boolean newTSolve;
     }
 }
