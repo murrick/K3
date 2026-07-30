@@ -132,7 +132,10 @@ public class Analyzer {
 
         if (observePlanning) {
             SemanticPlanningTelemetry.record(
-                    SemanticYieldPlanner.estimate(p, result, mind, selectById));
+                    p,
+                    mind,
+                    SemanticYieldPlanner.estimate(
+                            p, result, mind, selectById));
         }
         return result;
     }
