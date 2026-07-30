@@ -521,6 +521,7 @@ public class Linker {
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
                                 statistics.incrementUnificationAttempts(
                                         currentPass == 1, rule.isQuery(), rule.isGenerated());
+                                int operationEffects = 0;
                                 TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
 
@@ -575,6 +576,7 @@ public class Linker {
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
                                                         statistics.incrementNewTValues();
+                                                        operationEffects |= LinkerStatistics.EFFECT_NEW_TVALUE;
                                                         result = true;
                                                     }
                                                     substMaster[i] = s;
@@ -607,6 +609,7 @@ public class Linker {
                                                     if (s == null) {
                                                         s = mind.getTValues().add(t, tm);
                                                         statistics.incrementNewTValues();
+                                                        operationEffects |= LinkerStatistics.EFFECT_NEW_TVALUE;
                                                         result = true;
                                                     }
 
@@ -634,13 +637,14 @@ public class Linker {
                                         mind.getFValues().commit();
                                     } else if (!master.isSubstitutable() && !slave.isSubstitutable()) {
                                         ++solvedPasses;
+                                        operationEffects |= LinkerStatistics.EFFECT_USED_ONLY;
                                         master.setUsed(mind);
                                         slave.setUsed(mind);
                                     } else {
                                         ++dumpedPasses;
                                     }
-                                    markExcluded(result, substMaster, master, slave, causes, variants, logging);
-                                    markExcluded(result, substSlave, slave, master, causes, variants, logging);
+                                    operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, logging);
+                                    operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, logging);
 
                                     ((Rule) master.getRule()).setUsed(mind);
                                     ((Rule) slave.getRule()).setUsed(mind);
@@ -649,6 +653,7 @@ public class Linker {
                                     mind.getTValues().release();
                                     mind.getFValues().release();
                                 }
+                                statistics.recordOperationEffectMask(operationEffects);
                             }
                         }
                     }
@@ -672,9 +677,10 @@ public class Linker {
         return result;
     }
 
-    private boolean markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {
+    private int markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<Object[]>> variants, boolean logging) throws Exception {
         IRule r = null;
         boolean occurrs = false;
+        int effects = 0;
 
 
         List<TValue> list = new ArrayList<>();
@@ -702,7 +708,9 @@ public class Linker {
                 if (!causes.containsKey(r)) {
                     causes.put(r, new HashSet<>());
                 }
-                causes.get(r).add(s);
+                if (causes.get(r).add(s)) {
+                    effects |= LinkerStatistics.EFFECT_NEW_CAUSE;
+                }
             }
 
             master.setExcluded(slave.getArguments(), mind);
@@ -710,6 +718,7 @@ public class Linker {
                 variants.put(master, new ArrayList<>());
             }
             variants.get(master).add(subst);
+            effects |= LinkerStatistics.EFFECT_DEFERRED_SOLVE_CANDIDATE;
 
             if (occurrs && result && logging) {
                 mind.pushDebugLevel();
@@ -721,7 +730,7 @@ public class Linker {
                 log.add(LogMode.ANALYZER, "-------------------------------------------");
             }
         }
-        return r != null;
+        return effects;
     }
 
 
