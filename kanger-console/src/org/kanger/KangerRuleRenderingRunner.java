@@ -7,11 +7,14 @@ package org.kanger;
 
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.interfaces.internal.IStep;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 import org.kanger.units.Rule;
 
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
@@ -32,6 +35,7 @@ public final class KangerRuleRenderingRunner {
 
     private static final int THREADS = 3;
     private static final int VALUES_PER_THREAD = 8;
+    private static final int DEFAULT_ITERATIONS = 8;
 
     private KangerRuleRenderingRunner() {
     }
@@ -43,10 +47,17 @@ public final class KangerRuleRenderingRunner {
             System.setProperty("user.home", home.toAbsolutePath().toString());
             System.out.println("Rule rendering home: " + home.toAbsolutePath());
 
-            runScenario(false);
-            runScenario(true);
+            int iterations = Integer.getInteger(
+                    "kanger.rule.rendering.iterations", DEFAULT_ITERATIONS);
+            if (iterations <= 0) {
+                throw new IllegalArgumentException("iterations must be positive");
+            }
+            for (int iteration = 1; iteration <= iterations; ++iteration) {
+                runScenario(false, iteration, iterations);
+                runScenario(true, iteration, iterations);
+            }
 
-            System.out.println("RULE_RENDERING_OK");
+            System.out.println("RULE_RENDERING_OK iterations=" + iterations);
             exitCode = 0;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
@@ -54,30 +65,40 @@ public final class KangerRuleRenderingRunner {
         System.exit(exitCode);
     }
 
-    private static void runScenario(boolean persistent) throws Exception {
+    private static void runScenario(boolean persistent, int iteration,
+                                    int iterations) throws Exception {
         String suffix = persistent ? "persistent" : "memory";
-        String userName = "rule-rendering-" + suffix;
+        String instance = suffix + "-" + iteration;
+        String userName = "rule-rendering-" + instance;
         IUser user = UserFactory.createUser(userName, userName);
         new UDF().init(user);
         new DB().init(user);
 
         Mind root = new Mind(user);
-        String storageName = "data/rule-rendering-" + suffix;
+        String storageName = "data/rule-rendering-" + instance;
         if (persistent) {
             root = (Mind) root.useStorage(storageName);
         }
         root = (Mind) root.clearWorkspace();
 
         Set<String> expected = populateInParallel(root);
-        assertRows(root, expected, suffix + "-live");
+        assertRows(root, expected, instance + "-live");
 
         if (persistent) {
+            String liveState = factoryState(root);
             root = (Mind) root.closeStorage();
             root = (Mind) root.useStorage(storageName);
-            assertRows(root, expected, suffix + "-reopen");
+            try {
+                assertRows(root, expected, instance + "-reopen");
+            } catch (AssertionError failure) {
+                throw new AssertionError(failure.getMessage()
+                        + "\nlive-state=" + liveState
+                        + "\nreopen-state=" + factoryState(root), failure);
+            }
         }
 
-        System.out.println("RULE_RENDERING_PASS " + suffix);
+        System.out.println("RULE_RENDERING_PASS " + suffix + " "
+                + iteration + "/" + iterations);
     }
 
     private static Set<String> populateInParallel(final Mind root) throws Exception {
@@ -134,10 +155,6 @@ public final class KangerRuleRenderingRunner {
 
     private static void assertRows(Mind mind, Set<String> expected, String phase) throws Exception {
         mind.query("?$x $y value(1, x, y);");
-        if (mind.getSolutions().size() != expected.size()) {
-            throw new AssertionError(phase + ": expected " + expected.size()
-                    + " solutions, got " + mind.getSolutions().size());
-        }
 
         Set<String> actual = new LinkedHashSet<>();
         int templateOrigins = 0;
@@ -169,6 +186,16 @@ public final class KangerRuleRenderingRunner {
             }
         }
 
+        if (mind.getSolutions().size() != expected.size()) {
+            Set<String> missing = new LinkedHashSet<>(expected);
+            missing.removeAll(actual);
+            Set<String> unexpected = new LinkedHashSet<>(actual);
+            unexpected.removeAll(expected);
+            throw new AssertionError(phase + ": expected " + expected.size()
+                    + " solutions, got " + mind.getSolutions().size()
+                    + "\nmissing=" + missing + "\nunexpected=" + unexpected
+                    + "\nstate=" + factoryState(mind));
+        }
         if (templateOrigins != expected.size()) {
             throw new AssertionError(phase + ": expected all source origins to retain '?' templates");
         }
@@ -176,6 +203,26 @@ public final class KangerRuleRenderingRunner {
             throw new AssertionError(phase + ": materialized rowset mismatch\nexpected="
                     + expected + "\nactual=" + actual);
         }
+    }
+
+    private static String factoryState(Mind mind) throws Exception {
+        return "rules(size=" + mind.getRules().size()
+                + ",chain=" + chainSize(mind.getRules()) + ")"
+                + ",domains(size=" + mind.getDomains().size()
+                + ",chain=" + chainSize(mind.getDomains()) + ")"
+                + ",terms(size=" + mind.getTerms().size()
+                + ",chain=" + chainSize(mind.getTerms()) + ")";
+    }
+
+    private static int chainSize(Object factory) throws Exception {
+        Field cacheField = factory.getClass().getDeclaredField("cache");
+        cacheField.setAccessible(true);
+        ICache cache = (ICache) cacheField.get(factory);
+        int count = 0;
+        for (IStep step = cache.getRoot(); step != null; step = step.getNext()) {
+            ++count;
+        }
+        return count;
     }
 
     private static String valueKey(Object left, Object right) {
