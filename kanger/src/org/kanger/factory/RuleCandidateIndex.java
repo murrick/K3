@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.WeakHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Compact in-memory candidate metadata. Only Rule IDs are retained; Rules and
@@ -166,8 +168,14 @@ final class RuleCandidateIndex {
             return ids == null ? new LinkedHashSet<Long>() : new LinkedHashSet<>(ids);
         }
 
-        void clear() { values.clear(); journals.clear(); }
-        void mark() { journals.push(new ArrayList<Change<K>>()); }
+        void clear() {
+            values.clear();
+            journals.clear();
+        }
+
+        void mark() {
+            journals.push(new ArrayList<Change<K>>());
+        }
 
         void commit() {
             if (journals.isEmpty()) return;
@@ -190,12 +198,43 @@ final class RuleCandidateIndex {
             }
         }
 
-        void mergeFrom(IdIndex<K> child) {
-            for (Map.Entry<K, LinkedHashSet<Long>> entry : child.values.entrySet()) {
+        Map<K, LinkedHashSet<Long>> snapshot() {
+            Map<K, LinkedHashSet<Long>> copy = new HashMap<>();
+            for (Map.Entry<K, LinkedHashSet<Long>> entry : values.entrySet()) {
+                copy.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
+            }
+            return copy;
+        }
+
+        void mergeFrom(Map<K, LinkedHashSet<Long>> childValues) {
+            for (Map.Entry<K, LinkedHashSet<Long>> entry : childValues.entrySet()) {
                 for (long id : entry.getValue()) add(entry.getKey(), id);
             }
         }
     }
+
+    private static final class Snapshot {
+        private final Map<SignatureKey, LinkedHashSet<Long>> signatures;
+        private final Map<SignatureKey, LinkedHashSet<Long>> fallbackSignatures;
+        private final Map<PositionKey, LinkedHashSet<Long>> positions;
+
+        private Snapshot(Map<SignatureKey, LinkedHashSet<Long>> signatures,
+                         Map<SignatureKey, LinkedHashSet<Long>> fallbackSignatures,
+                         Map<PositionKey, LinkedHashSet<Long>> positions) {
+            this.signatures = signatures;
+            this.fallbackSignatures = fallbackSignatures;
+            this.positions = positions;
+        }
+    }
+
+    /**
+     * One guard protects the three correlated indexes and their transaction
+     * journals. Candidate reads must observe one coherent version rather than
+     * copying a LinkedHashSet while a concurrent child commit mutates it.
+     */
+    private final ReentrantReadWriteLock guard = new ReentrantReadWriteLock();
+    private final Lock readLock = guard.readLock();
+    private final Lock writeLock = guard.writeLock();
 
     private final IdIndex<SignatureKey> signatures = new IdIndex<>();
     private final IdIndex<SignatureKey> fallbackSignatures = new IdIndex<>();
@@ -203,20 +242,72 @@ final class RuleCandidateIndex {
     private final Map<Mind, Map<BatchKey, BatchSummary>> batchSummaries = new WeakHashMap<>();
 
     void clear() {
-        signatures.clear();
-        fallbackSignatures.clear();
-        positions.clear();
-        batchSummaries.clear();
+        writeLock.lock();
+        try {
+            signatures.clear();
+            fallbackSignatures.clear();
+            positions.clear();
+            batchSummaries.clear();
+        } finally {
+            writeLock.unlock();
+        }
     }
-    void mark() { signatures.mark(); fallbackSignatures.mark(); positions.mark(); }
-    void commit() { signatures.commit(); fallbackSignatures.commit(); positions.commit(); }
-    void release() { signatures.release(); fallbackSignatures.release(); positions.release(); }
+
+    void mark() {
+        writeLock.lock();
+        try {
+            signatures.mark();
+            fallbackSignatures.mark();
+            positions.mark();
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    void commit() {
+        writeLock.lock();
+        try {
+            signatures.commit();
+            fallbackSignatures.commit();
+            positions.commit();
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    void release() {
+        writeLock.lock();
+        try {
+            signatures.release();
+            fallbackSignatures.release();
+            positions.release();
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    private Snapshot snapshot() {
+        readLock.lock();
+        try {
+            return new Snapshot(signatures.snapshot(),
+                    fallbackSignatures.snapshot(), positions.snapshot());
+        } finally {
+            readLock.unlock();
+        }
+    }
 
     void mergeFrom(RuleCandidateIndex child) {
-        signatures.mergeFrom(child.signatures);
-        fallbackSignatures.mergeFrom(child.fallbackSignatures);
-        positions.mergeFrom(child.positions);
-        batchSummaries.clear();
+        if (child == null || child == this) return;
+        Snapshot childSnapshot = child.snapshot();
+        writeLock.lock();
+        try {
+            signatures.mergeFrom(childSnapshot.signatures);
+            fallbackSignatures.mergeFrom(childSnapshot.fallbackSignatures);
+            positions.mergeFrom(childSnapshot.positions);
+            batchSummaries.clear();
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     private boolean positionalEligible(Rule rule) throws Exception {
@@ -228,62 +319,80 @@ final class RuleCandidateIndex {
 
     void indexRule(Rule rule) throws Exception {
         if (rule == null) return;
-        batchSummaries.clear();
-        boolean positional = positionalEligible(rule);
-        for (List<Domain> branch : rule.getTree()) {
-            for (Domain domain : branch) {
-                SignatureKey signature = signature(domain, domain.isAntc());
-                signatures.add(signature, rule.getId());
-                if (!positional) {
-                    fallbackSignatures.add(signature, rule.getId());
-                    continue;
-                }
-                for (int position = 0; position < domain.getRange(); ++position) {
-                    IArgument argument = domain.get(position);
-                    long termId = argument.getType() == ArgumentType.TERM
-                            ? argument.getId() : WILDCARD_TERM_ID;
-                    positions.add(new PositionKey(signature, position, termId), rule.getId());
+        writeLock.lock();
+        try {
+            batchSummaries.clear();
+            boolean positional = positionalEligible(rule);
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain domain : branch) {
+                    SignatureKey signature = signature(domain, domain.isAntc());
+                    signatures.add(signature, rule.getId());
+                    if (!positional) {
+                        fallbackSignatures.add(signature, rule.getId());
+                        continue;
+                    }
+                    for (int position = 0; position < domain.getRange(); ++position) {
+                        IArgument argument = domain.get(position);
+                        long termId = argument.getType() == ArgumentType.TERM
+                                ? argument.getId() : WILDCARD_TERM_ID;
+                        positions.add(new PositionKey(signature, position, termId), rule.getId());
+                    }
                 }
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
     void unindexRule(Rule rule) throws Exception {
         if (rule == null) return;
-        batchSummaries.clear();
-        for (List<Domain> branch : rule.getTree()) {
-            for (Domain domain : branch) {
-                SignatureKey signature = signature(domain, domain.isAntc());
-                signatures.remove(signature, rule.getId());
-                fallbackSignatures.remove(signature, rule.getId());
-                for (int position = 0; position < domain.getRange(); ++position) {
-                    IArgument argument = domain.get(position);
-                    long exactOrWildcard = argument.getType() == ArgumentType.TERM
-                            ? argument.getId() : WILDCARD_TERM_ID;
-                    positions.remove(new PositionKey(signature, position, exactOrWildcard), rule.getId());
-                    if (exactOrWildcard != WILDCARD_TERM_ID) {
-                        positions.remove(new PositionKey(signature, position, WILDCARD_TERM_ID), rule.getId());
+        writeLock.lock();
+        try {
+            batchSummaries.clear();
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain domain : branch) {
+                    SignatureKey signature = signature(domain, domain.isAntc());
+                    signatures.remove(signature, rule.getId());
+                    fallbackSignatures.remove(signature, rule.getId());
+                    for (int position = 0; position < domain.getRange(); ++position) {
+                        IArgument argument = domain.get(position);
+                        long exactOrWildcard = argument.getType() == ArgumentType.TERM
+                                ? argument.getId() : WILDCARD_TERM_ID;
+                        positions.remove(new PositionKey(signature, position, exactOrWildcard), rule.getId());
+                        if (exactOrWildcard != WILDCARD_TERM_ID) {
+                            positions.remove(new PositionKey(signature, position, WILDCARD_TERM_ID), rule.getId());
+                        }
                     }
                 }
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
-    void collectLocal(Domain source, boolean candidateAntc, LinkedHashSet<Long> result) throws Exception {
-        SignatureKey signature = signature(source, candidateAntc);
-        LinkedHashSet<Long> selected = signatures.get(signature);
-        if (selected.isEmpty()) return;
-        LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
-        for (int position = 0; position < source.getRange(); ++position) {
-            IArgument argument = source.get(position);
-            if (argument.getType() != ArgumentType.TERM) continue;
-            LinkedHashSet<Long> compatible = positions.get(new PositionKey(signature, position, argument.getId()));
-            compatible.addAll(positions.get(new PositionKey(signature, position, WILDCARD_TERM_ID)));
-            compatible.addAll(fallback);
-            selected.retainAll(compatible);
+    void collectLocal(Domain source, boolean candidateAntc,
+                      LinkedHashSet<Long> result) throws Exception {
+        readLock.lock();
+        try {
+            SignatureKey signature = signature(source, candidateAntc);
+            LinkedHashSet<Long> selected = signatures.get(signature);
             if (selected.isEmpty()) return;
+            LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
+            for (int position = 0; position < source.getRange(); ++position) {
+                IArgument argument = source.get(position);
+                if (argument.getType() != ArgumentType.TERM) continue;
+                LinkedHashSet<Long> compatible = positions.get(
+                        new PositionKey(signature, position, argument.getId()));
+                compatible.addAll(positions.get(
+                        new PositionKey(signature, position, WILDCARD_TERM_ID)));
+                compatible.addAll(fallback);
+                selected.retainAll(compatible);
+                if (selected.isEmpty()) return;
+            }
+            result.addAll(selected);
+        } finally {
+            readLock.unlock();
         }
-        result.addAll(selected);
     }
 
     private boolean batchGeneratedNonSubstitutablePair(Domain source,
@@ -345,7 +454,7 @@ final class RuleCandidateIndex {
                 Rule candidate = (Rule) activeMind.getRules().get(id);
                 if (candidate != null
                         && batchGeneratedNonSubstitutablePair(
-                                source, candidate, candidateAntc, activeMind)) {
+                        source, candidate, candidateAntc, activeMind)) {
                     batchedIds.add(id);
                 }
             }
@@ -360,25 +469,34 @@ final class RuleCandidateIndex {
 
     void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
                               LinkedHashSet<Long> result) throws Exception {
-        SignatureKey signature = signature(source, candidateAntc);
-        LinkedHashSet<Long> selected = signatures.get(signature);
-        if (selected.isEmpty()) return;
-        LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
-        for (int position = 0; position < source.getRange(); ++position) {
-            IArgument argument = source.get(position);
-            Long termId = resolvedTermId(argument, mind);
-            if (termId == null) continue;
-            LinkedHashSet<Long> compatible = positions.get(new PositionKey(signature, position, termId));
-            compatible.addAll(positions.get(new PositionKey(signature, position, WILDCARD_TERM_ID)));
-            compatible.addAll(fallback);
-            selected.retainAll(compatible);
+        // batchSummary is a mutable per-Mind memo, therefore the resolved path
+        // uses the write side of the same guard.
+        writeLock.lock();
+        try {
+            SignatureKey signature = signature(source, candidateAntc);
+            LinkedHashSet<Long> selected = signatures.get(signature);
             if (selected.isEmpty()) return;
+            LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
+            for (int position = 0; position < source.getRange(); ++position) {
+                IArgument argument = source.get(position);
+                Long termId = resolvedTermId(argument, mind);
+                if (termId == null) continue;
+                LinkedHashSet<Long> compatible = positions.get(
+                        new PositionKey(signature, position, termId));
+                compatible.addAll(positions.get(
+                        new PositionKey(signature, position, WILDCARD_TERM_ID)));
+                compatible.addAll(fallback);
+                selected.retainAll(compatible);
+                if (selected.isEmpty()) return;
+            }
+            if (!source.isSubstitutable()) {
+                BatchSummary summary = batchSummary(source, candidateAntc, mind, selected);
+                selected.removeAll(summary.batchedIds);
+            }
+            result.addAll(selected);
+        } finally {
+            writeLock.unlock();
         }
-        if (!source.isSubstitutable()) {
-            BatchSummary summary = batchSummary(source, candidateAntc, mind, selected);
-            selected.removeAll(summary.batchedIds);
-        }
-        result.addAll(selected);
     }
 
     private Long resolvedTermId(IArgument argument, Mind mind) throws Exception {
