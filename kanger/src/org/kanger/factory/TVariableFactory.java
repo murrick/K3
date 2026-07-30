@@ -60,6 +60,10 @@ public class TVariableFactory implements IFactory<TVariable> {
     }
 
     public void transaction(TVariableFactory base) throws Exception {
+        // A factory instance is reused across close/clear/use transitions.
+        // Anchors from the previous cache must never retain or address it.
+        top = null;
+        connection = null;
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -94,7 +98,7 @@ public class TVariableFactory implements IFactory<TVariable> {
     public synchronized TVariable createTVar(Rule r, ITerm name) throws Exception {
         TVariable p = new TVariable(mind);
         p.setId(((User) mind.getUser()).nextId(SCHEMA));
-        r.setMindId(mind.getId());
+        p.setMindId(mind.getId());
         p.setIndex(mind.getTerms().nextVarIndex());
         p.setRule(r);
         p.setName(name);
