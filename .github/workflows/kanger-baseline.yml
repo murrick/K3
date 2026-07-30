@@ -150,6 +150,24 @@ jobs:
             }
           ' kanger-semantic-yield-ubuntu-java-21.csv
 
+      - name: Capture generated-rule effect profile
+        if: matrix.id == 'ubuntu-java-21'
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerGeneratedRuleYieldRunner \
+            2>&1 | tee kanger-generated-rule-yield-ubuntu-java-21.log
+          grep -E '^(scenario,|one-hop,|two-hop,|deduplicated-target,)' \
+            kanger-generated-rule-yield-ubuntu-java-21.log \
+            > kanger-generated-rule-yield-ubuntu-java-21.csv
+          awk -F, '
+            NR == 1 { next }
+            { rows++; if ($10 != "true") exit 20 }
+            END { if (rows != 3) exit 21 }
+          ' kanger-generated-rule-yield-ubuntu-java-21.csv
+
       - name: Upload 3.4.1 evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -164,5 +182,7 @@ jobs:
             kanger-semantic-profile-${{ matrix.id }}.csv
             kanger-semantic-yield-${{ matrix.id }}.log
             kanger-semantic-yield-${{ matrix.id }}.csv
+            kanger-generated-rule-yield-${{ matrix.id }}.log
+            kanger-generated-rule-yield-${{ matrix.id }}.csv
             target/*.jar
           if-no-files-found: warn
