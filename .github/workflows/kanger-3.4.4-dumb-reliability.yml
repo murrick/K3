@@ -51,6 +51,16 @@ jobs:
           set -o pipefail
           mvn -B -V clean verify 2>&1 | tee "kanger-3.4.4-${{ matrix.id }}.log"
 
+      - name: Run DUMB integrity lifecycle regressions
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerDumbIntegrityTestRunner \
+            2>&1 | tee "dumb-integrity-${{ matrix.id }}.log"
+          grep -F 'INTEGRITY_REGRESSION_OK' "dumb-integrity-${{ matrix.id }}.log"
+
       - name: Run DUMB corruption-detection gate
         shell: bash
         run: |
@@ -82,6 +92,7 @@ jobs:
           name: dumb-qualification-${{ matrix.id }}
           path: |
             kanger-3.4.4-${{ matrix.id }}.log
+            dumb-integrity-${{ matrix.id }}.log
             dumb-qualification-${{ matrix.id }}.log
             target/dumb-qualification-${{ matrix.id }}/dumb-qualification.csv
             target/dumb-qualification-${{ matrix.id }}/dumb-qualification.md
