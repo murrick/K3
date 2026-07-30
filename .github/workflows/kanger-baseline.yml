@@ -167,33 +167,33 @@ jobs:
           grep -F '1000,query-all-variables' kanger-semantic-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($8 != "solve_candidates" || $9 != "new_tsolves") exit 10
-              if ($10 != "duplicate_solve_candidates" || $11 != "deferred_groups") exit 11
-              if ($12 != "deferred_contributor_links" || $13 != "groups_with_new_tsolve") exit 12
-              if ($14 != "minimum_contributors_per_group" || $15 != "maximum_contributors_per_group") exit 13
-              if ($16 != "new_generated_rules" || $22 != "effect_delta" || $25 != "effect_yield") exit 14
+              if ($11 != "deferred_groups" || $12 != "deferred_contributor_links") exit 10
+              if ($13 != "groups_with_new_tsolve" || $14 != "minimum_contributors_per_group") exit 11
+              if ($15 != "maximum_contributors_per_group" || $16 != "groups_with_generated_rule") exit 12
+              if ($17 != "generated_rule_group_links" || $18 != "ungrouped_generated_rules") exit 13
+              if ($19 != "new_generated_rules" || $25 != "effect_delta" || $28 != "effect_yield") exit 14
               next
             }
             $2 == "query-exact" {
               exact++
               if ($5 != 0 || $8 != 0 || $9 != 0 || $10 != 0) exit 15
               if ($11 != 0 || $12 != 0 || $13 != 0 || $14 != 0 || $15 != 0) exit 16
-              if ($22 != 0 || $23 != 1) exit 17
+              if ($16 != 0 || $17 != 0 || $18 != 0 || $19 != 0) exit 17
+              if ($25 != 0 || $26 != 1) exit 18
               next
             }
             {
               inferred++
-              if ($7 != $3 || $9 != $3 || $16 != $3) exit 18
-              if ($8 != 5 * $3 || $10 != 4 * $3) exit 19
-              if ($13 != $9 || $12 > $8) exit 20
-              if ($11 < $13) exit 21
-              if ($11 == 0 && ($12 != 0 || $14 != 0 || $15 != 0)) exit 22
-              if ($11 > 0 && ($14 < 1 || $15 < $14)) exit 23
-              if ($17 != 0) exit 24
-              if ($20 != 2 * $3) exit 25
-              if ($21 != $6 + $17 + $20) exit 26
-              if ($22 != $6 + $7 + $9 + $16) exit 27
-              if ($22 != $21 + $3) exit 28
+              if ($7 != $3 || $9 != $3 || $19 != $3) exit 19
+              if ($8 != 5 * $3 || $10 != 4 * $3) exit 20
+              if ($11 != $3 || $12 != 5 * $3 || $13 != $3) exit 21
+              if ($14 != 5 || $15 != 5) exit 22
+              if ($17 + $18 != $19 || $16 > $17 || $17 > $11) exit 23
+              if ($20 != 0) exit 24
+              if ($23 != 2 * $3) exit 25
+              if ($24 != $6 + $20 + $23) exit 26
+              if ($25 != $6 + $7 + $9 + $19) exit 27
+              if ($25 != $24 + $3) exit 28
             }
             END {
               if (exact != 3 || inferred != 9) exit 29
@@ -214,20 +214,24 @@ jobs:
             > kanger-generated-rule-yield-ubuntu-java-21.csv
           awk -F, '
             NR == 1 {
-              if ($6 != "solve_candidates" || $7 != "new_tsolves") exit 40
-              if ($8 != "duplicate_solve_candidates" || $9 != "deferred_groups") exit 41
-              if ($10 != "deferred_contributor_links" || $11 != "groups_with_new_tsolve") exit 42
-              if ($12 != "minimum_contributors_per_group" || $13 != "maximum_contributors_per_group") exit 43
-              if ($15 != "generated_rule_delta" || $16 != "observed_generated_rules" || $18 != "derived_true") exit 44
+              if ($9 != "deferred_groups" || $10 != "deferred_contributor_links") exit 40
+              if ($11 != "groups_with_new_tsolve" || $12 != "minimum_contributors_per_group") exit 41
+              if ($13 != "maximum_contributors_per_group" || $14 != "groups_with_generated_rule") exit 42
+              if ($15 != "generated_rule_group_links" || $16 != "ungrouped_generated_rules") exit 43
+              if ($18 != "generated_rule_delta" || $19 != "observed_generated_rules" || $21 != "derived_true") exit 44
               next
             }
             {
               rows++
-              if ($6 != $7 + $8) exit 45
-              if ($11 != $7 || $10 > $6 || $9 < $11) exit 46
-              if ($9 == 0 && ($10 != 0 || $12 != 0 || $13 != 0)) exit 47
-              if ($9 > 0 && ($12 < 1 || $13 < $12)) exit 48
-              if ($15 != $16 || $18 != "true") exit 49
+              if ($6 != $7 + $8 || $11 != $7) exit 45
+              if ($15 + $16 != $19 || $14 > $15 || $15 > $9) exit 46
+              if ($18 != $19 || $21 != "true") exit 47
+            }
+            $1 == "one-hop" || $1 == "deduplicated-target" {
+              if ($9 != 1 || $10 != 4 || $11 != 1 || $12 != 4 || $13 != 4) exit 48
+            }
+            $1 == "two-hop" {
+              if ($9 != 2 || $10 != 10 || $11 != 2 || $12 != 4 || $13 != 6) exit 49
             }
             END { if (rows != 3) exit 50 }
           ' kanger-generated-rule-yield-ubuntu-java-21.csv
