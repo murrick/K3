@@ -34,8 +34,9 @@ public final class KangerSemanticYieldRunner {
             System.setProperty("user.home", home.toAbsolutePath().toString());
 
             System.out.println("size,operation,result_rows,passes,executed_operations,"
-                    + "new_tvalues,rule_delta,solution_delta,value_row_delta,"
-                    + "knowledge_delta,direct_delta,proof_yield");
+                    + "new_tvalues,new_causes,new_tsolves,rule_delta,solution_delta,"
+                    + "value_row_delta,materialization_delta,knowledge_delta,effect_delta,"
+                    + "direct_delta,proof_yield,effect_yield");
 
             for (int size : parseSizes(args)) {
                 runCase(size);
@@ -63,7 +64,15 @@ public final class KangerSemanticYieldRunner {
                                 String query) throws Exception {
         Mind mind = createFixture(size, operation);
         Snapshot before = Snapshot.capture(mind);
-        Boolean result = mind.query(query, null, false);
+
+        Boolean result;
+        SemanticEffectTelemetry.Snapshot effects;
+        SemanticEffectTelemetry.begin();
+        try {
+            result = mind.query(query, null, false);
+        } finally {
+            effects = SemanticEffectTelemetry.end();
+        }
         if (!Boolean.TRUE.equals(result)) {
             throw new IllegalStateException("Query failed: " + query);
         }
@@ -73,28 +82,47 @@ public final class KangerSemanticYieldRunner {
         long ruleDelta = nonNegativeDelta(after.rules, before.rules);
         long solutionDelta = nonNegativeDelta(after.solutions, before.solutions);
         long valueRowDelta = nonNegativeDelta(after.valueRows, before.valueRows);
+        long materializationDelta = solutionDelta + valueRowDelta;
         long newTValues = statistics.getNewTValues();
-        long knowledgeDelta = newTValues + ruleDelta + solutionDelta + valueRowDelta;
+        long newCauses = effects.getNewCauses();
+        long newTSolves = effects.getNewTSolves();
+
+        // Coarse historical measure: proof-internal TValue creation plus externally
+        // visible rule/result materialization.
+        long knowledgeDelta = newTValues + ruleDelta + materializationDelta;
+
+        // Effect inventory: proof-internal semantic objects only. Generated-rule
+        // attribution is still represented by observed ruleDelta until a direct
+        // RuleFactory hook is introduced.
+        long effectDelta = newTValues + newCauses + newTSolves + ruleDelta;
         long executed = statistics.getUnificationAttempts();
         long directDelta = executed == 0L ? knowledgeDelta : 0L;
         double proofYield = executed == 0L
                 ? 0.0
                 : ((double) knowledgeDelta) / executed;
+        double effectYield = executed == 0L
+                ? 0.0
+                : ((double) effectDelta) / executed;
 
         System.out.printf(Locale.ROOT,
-                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f%n",
+                "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9f,%.9f%n",
                 size,
                 operation,
                 valueRowDelta,
                 statistics.getPasses(),
                 executed,
                 newTValues,
+                newCauses,
+                newTSolves,
                 ruleDelta,
                 solutionDelta,
                 valueRowDelta,
+                materializationDelta,
                 knowledgeDelta,
+                effectDelta,
                 directDelta,
-                proofYield);
+                proofYield,
+                effectYield);
     }
 
     private static Mind createFixture(int size, String operation) throws Exception {
