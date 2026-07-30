@@ -28,6 +28,7 @@ package org.kanger.factory;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.enums.LogMode;
+import org.kanger.enums.UnitType;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IRule;
@@ -44,6 +45,7 @@ import org.kanger.units.Term;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +62,18 @@ public class DictionaryFactory implements IFactory<ITerm> {
     private IBase connection = null;
     private final Mind mind;
     private int varIndex = 0;           // Счетчик C-переменных
+
+    /*
+     * Terms that can become unreachable without requiring a complete
+     * dictionary sweep. New Terms enter this frontier immediately. Terms
+     * referenced only by transient result stores remain in it until those
+     * references disappear. Terms owned by active Rules leave the frontier;
+     * a later Rule-reference loss is detected from the previous/current Rule
+     * term snapshots.
+     */
+    private final Set<Long> packCandidates = new LinkedHashSet<>();
+    private Set<Long> previousRuleTerms = new HashSet<>();
+    private boolean fullPackRequired = true;
 
     public DictionaryFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -113,7 +127,11 @@ public class DictionaryFactory implements IFactory<ITerm> {
     public synchronized ITerm add(Object o) throws Exception {
         ITerm p = find(o);
         if (p != null) {
+            boolean restored = ((Term) p).isDeleted(mind);
             ((Term) p).setDeleted(false, mind);
+            if (restored) {
+                packCandidates.add(p.getId());
+            }
             return p;
         } else {
             if (p instanceof Term) {
@@ -124,6 +142,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
                 ((Term) p).setMindId(mind.getId());
             }
             cache.add((IUnit) p);
+            packCandidates.add(p.getId());
             if (top == null) {
                 top = cache.getRoot();
             }
@@ -180,6 +199,9 @@ public class DictionaryFactory implements IFactory<ITerm> {
             transaction((DictionaryFactory) mind.getNext().getTerms());
         } else {
             cache.clear();
+            packCandidates.clear();
+            previousRuleTerms.clear();
+            fullPackRequired = true;
             transaction(null);
         }
     }
@@ -249,46 +271,96 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return valueTermIds;
     }
 
-    public void pack() throws Exception {
-        Set<Long> dynamicRuleTerms = collectDynamicRuleTerms();
-        Set<Long> solutionTermIds = null;
-        Set<Long> hypothesisTermIds = null;
-        Set<Long> valueTermIds = null;
-        List<Object> toDelete = new ArrayList<>();
-        for (Object o : cache) {
-            if (((IUnit) o).isDeleted(mind)) {
-                toDelete.add(o);
-            } else {
-                long termId = ((IUnit) o).getId();
-                boolean found = dynamicRuleTerms.contains(termId);
-                if (!found) {
-                    if (solutionTermIds == null) {
-                        solutionTermIds = collectSolutionTermIds();
-                    }
-                    found = solutionTermIds.contains(termId);
+    public synchronized void pack() throws Exception {
+        Set<Long> currentRuleTerms = collectDynamicRuleTerms();
+
+        if (!fullPackRequired) {
+            for (long termId : previousRuleTerms) {
+                if (!currentRuleTerms.contains(termId)) {
+                    packCandidates.add(termId);
                 }
-                if (!found) {
-                    if (hypothesisTermIds == null) {
-                        hypothesisTermIds = collectHypothesisTermIds();
-                    }
-                    found = hypothesisTermIds.contains(termId);
-                }
-                if (!found) {
-                    if (valueTermIds == null) {
-                        valueTermIds = collectValueTermIds();
-                    }
-                    found = valueTermIds.contains(termId);
-                }
-                if (!found) {
-                    toDelete.add(o);
+            }
+            Set<Long> explicitlyDeleted = mind.getDeleted().get(UnitType.TERM);
+            if (explicitlyDeleted != null) {
+                packCandidates.addAll(explicitlyDeleted);
+            }
+            if (packCandidates.isEmpty()) {
+                previousRuleTerms = currentRuleTerms;
+                return;
+            }
+        }
+
+        List<Object> candidates = new ArrayList<>();
+        if (fullPackRequired) {
+            for (Object value : cache) {
+                candidates.add(value);
+            }
+        } else {
+            for (long termId : new ArrayList<>(packCandidates)) {
+                Object value = get(termId);
+                if (value != null) {
+                    candidates.add(value);
                 }
             }
         }
+
+        Set<Long> solutionTermIds = null;
+        Set<Long> hypothesisTermIds = null;
+        Set<Long> valueTermIds = null;
+        Set<Long> retainedCandidates = new LinkedHashSet<>();
+        List<Object> toDelete = new ArrayList<>();
+
+        for (Object o : candidates) {
+            IUnit term = (IUnit) o;
+            if (term.isDeleted(mind)) {
+                toDelete.add(o);
+                continue;
+            }
+
+            long termId = term.getId();
+            if (currentRuleTerms.contains(termId)) {
+                // Active Rule references are durable. If they disappear later,
+                // the previous/current Rule-term diff re-enters this Term into
+                // the candidate frontier.
+                continue;
+            }
+
+            boolean found;
+            if (solutionTermIds == null) {
+                solutionTermIds = collectSolutionTermIds();
+            }
+            found = solutionTermIds.contains(termId);
+            if (!found) {
+                if (hypothesisTermIds == null) {
+                    hypothesisTermIds = collectHypothesisTermIds();
+                }
+                found = hypothesisTermIds.contains(termId);
+            }
+            if (!found) {
+                if (valueTermIds == null) {
+                    valueTermIds = collectValueTermIds();
+                }
+                found = valueTermIds.contains(termId);
+            }
+
+            if (found) {
+                // Secondary stores are transient, so keep watching this Term.
+                retainedCandidates.add(termId);
+            } else {
+                toDelete.add(o);
+            }
+        }
+
         for (Object o : toDelete) {
             mind.getLog().add(LogMode.STORAGE, "Unused term wiped: " + o.toString());
             mind.unlinkCVar((ITerm) o);
             cache.delete(((IUnit) o).getId());
         }
+
+        packCandidates.clear();
+        packCandidates.addAll(retainedCandidates);
+        previousRuleTerms = new HashSet<>(currentRuleTerms);
+        fullPackRequired = false;
     }
 
     public void closeConnection() throws Exception {
