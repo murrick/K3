@@ -231,7 +231,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         return head;
     }
 
-
     public IndexOne getOne(long id) throws Exception {
         return getOne(id, currentBlock);
     }
@@ -374,7 +373,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             }
         }
     }
-
 
 //    public void add(long id, long data) throws Exception {
 //        IndexOne io = getOne(id, currentBlock);
@@ -524,7 +522,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     @Override
     public Iterator<IndexOne> iterator() {
         try {
-            return new IndexIterator();
+            return new IndexIterator(false);
         } catch (Exception e) {
             return null;
         }
@@ -653,20 +651,20 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         private NavigableMap<Long, Index.IndexOne> block = new TreeMap<>();
 
-        private long currentId = 0;
-        private long blockId = 0;
-        private boolean backward = false;
+        private long currentId;
+        private long blockId;
+        private final boolean backward;
 
         public IndexIterator() throws Exception {
-            flush();
-            currentId = -1;
-            blockId = backward ? baseIndex.lastKey() : baseIndex.firstKey();
-            loadBlock(baseIndex.get(blockId), block);
+            this(false);
         }
 
         public IndexIterator(boolean backward) throws Exception {
-            this();
             this.backward = backward;
+            flush();
+            currentId = backward ? -1L : Long.MIN_VALUE;
+            blockId = backward ? baseIndex.lastKey() : baseIndex.firstKey();
+            loadBlock(baseIndex.get(blockId), block);
         }
 
         @Override
