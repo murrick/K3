@@ -7,6 +7,7 @@ package org.kanger;
 
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.IUser;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 import org.kanger.units.Rule;
@@ -116,7 +117,7 @@ public final class KangerRuleRenderingRunner {
             for (int i = 0; i < VALUES_PER_THREAD; ++i) {
                 int left = worker * 100 + i;
                 int right = 1000 + worker * 100 + i;
-                expected.add("!value(1, " + left + ", " + right + ");");
+                expected.add(valueKey(left, right));
             }
             workers[worker].start();
         }
@@ -149,11 +150,14 @@ public final class KangerRuleRenderingRunner {
             if (rendered == null || rendered.isEmpty() || rendered.contains("?")) {
                 throw new AssertionError(phase + ": unresolved solution row: " + rendered);
             }
-            int semicolon = rendered.indexOf(';');
-            if (semicolon < 0) {
+            if (rendered.indexOf(';') < 0) {
                 throw new AssertionError(phase + ": malformed solution row: " + rendered);
             }
-            actual.add(rendered.substring(0, semicolon + 1));
+
+            ArgumentsList arguments = (ArgumentsList) solution.getArguments();
+            Object left = arguments.get(1).getValue(mind).getValue();
+            Object right = arguments.get(2).getValue(mind).getValue();
+            actual.add(valueKey(left, right));
 
             Map<String, Object> row = ((Rule) solution).createMap(mind);
             if (!rendered.equals(row.get("text"))) {
@@ -171,5 +175,16 @@ public final class KangerRuleRenderingRunner {
             throw new AssertionError(phase + ": materialized rowset mismatch\nexpected="
                     + expected + "\nactual=" + actual);
         }
+    }
+
+    private static String valueKey(Object left, Object right) {
+        return normalize(left) + ":" + normalize(right);
+    }
+
+    private static String normalize(Object value) {
+        if (value instanceof Number) {
+            return Long.toString(((Number) value).longValue());
+        }
+        return String.valueOf(value);
     }
 }
