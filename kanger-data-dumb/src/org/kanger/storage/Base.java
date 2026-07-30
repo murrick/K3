@@ -91,20 +91,40 @@ public class Base implements IBase, Iterable<IStep> {
         cacheEnabled = Boolean.parseBoolean(
                 user.getProperty("cache.enable", "true")) && maxCacheSize > 0L;
 
-        index = new Index(baseCode, locker, user);
-        index.open(name + ".index", readonly);
+        try {
+            index = new Index(baseCode, locker, user);
+            index.open(name + ".index", readonly);
 
-        data = new Data(this, user);
-        data.open(name + ".store", readonly);
+            data = new Data(this, user);
+            data.open(name + ".store", readonly);
 
-        integrity = new IntegrityManifest(name + ".integrity", baseCode, locker);
-        integrity.openOrBootstrap(index, data);
+            integrity = new IntegrityManifest(name + ".integrity", baseCode, locker);
+            integrity.openOrBootstrap(index, data);
+        } catch (Exception failure) {
+            closeOpenedFilesAfterFailure();
+            throw failure;
+        }
 
         IStep root = getRoot();
         if (root != null) {
             lastId = root.getId() + 1;
         } else {
             lastId = 0;
+        }
+    }
+
+    private void closeOpenedFilesAfterFailure() {
+        try {
+            if (index != null && !index.isClosed()) {
+                index.close();
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            if (data != null && !data.isClosed()) {
+                data.close();
+            }
+        } catch (Exception ignored) {
         }
     }
 
