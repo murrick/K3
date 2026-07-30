@@ -184,8 +184,7 @@ public class Escalera implements ICache {
         return step == null ? null : step.getData(mind);
     }
 
-    @Override
-    public void delete(long id) throws Exception {
+    private void deleteOne(long id) throws Exception {
         ensureIndex();
         IStep target = indexedStep(id);
         if (target == null) {
@@ -195,7 +194,6 @@ public class Escalera implements ICache {
         IStep successor = target.getNext();
         Long predecessorId = predecessorById.get(id);
         if (predecessorId == null) {
-            // No predecessor means that the target is the current root.
             if (root != null && root.getId() == id) {
                 root = successor;
             }
@@ -203,8 +201,6 @@ public class Escalera implements ICache {
             IStep predecessor = indexedStep(predecessorId);
             if (predecessor != null) {
                 predecessor.setNext(successor);
-                // A persistent predecessor stores the successor ID in its own
-                // record; persist that one changed link before removing target.
                 if (predecessor instanceof Sapato) {
                     predecessor.update();
                 }
@@ -225,6 +221,101 @@ public class Escalera implements ICache {
         if (mind.isStorageUsed()) {
             synchronized (((User) mind.getUser()).getStorage(schema)) {
                 ((User) mind.getUser()).getStorage(schema).delete(id);
+            }
+        }
+    }
+
+    @Override
+    public void delete(long id) throws Exception {
+        deleteOne(id);
+    }
+
+    @Override
+    public void deleteAll(Collection<Long> ids) throws Exception {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+
+        if (!mind.isStorageUsed() || ids.size() == 1) {
+            LinkedHashSet<Long> unique = new LinkedHashSet<>(ids);
+            for (Long id : unique) {
+                if (id != null) {
+                    deleteOne(id);
+                }
+            }
+            return;
+        }
+
+        ensureIndex();
+        LinkedHashSet<Long> targets = new LinkedHashSet<>();
+        for (Long id : ids) {
+            if (id != null && (memoryById.containsKey(id) || persistentIds.contains(id))) {
+                targets.add(id);
+            }
+        }
+        if (targets.isEmpty()) {
+            return;
+        }
+
+        /*
+         * Unlink complete deleted runs. A run changes only one boundary link,
+         * so a persistent predecessor is rewritten at most once even when many
+         * adjacent records are removed.
+         */
+        LinkedHashMap<Long, IStep> removed = new LinkedHashMap<>();
+        LinkedHashSet<IStep> changedPersistentPredecessors = new LinkedHashSet<>();
+        for (long startId : targets) {
+            Long predecessorId = predecessorById.get(startId);
+            if (predecessorId != null && targets.contains(predecessorId)) {
+                continue;
+            }
+
+            IStep current = indexedStep(startId);
+            if (current == null) {
+                continue;
+            }
+            IStep predecessor = predecessorId == null ? null : indexedStep(predecessorId);
+            while (current != null && targets.contains(current.getId())) {
+                removed.put(current.getId(), current);
+                current = current.getNext();
+            }
+            IStep successor = current;
+
+            if (predecessor == null) {
+                if (root != null && targets.contains(root.getId())) {
+                    root = successor;
+                }
+            } else {
+                predecessor.setNext(successor);
+                if (predecessor instanceof Sapato) {
+                    changedPersistentPredecessors.add(predecessor);
+                }
+            }
+
+            if (successor != null) {
+                if (predecessorId == null) {
+                    predecessorById.remove(successor.getId());
+                } else {
+                    predecessorById.put(successor.getId(), predecessorId);
+                }
+            }
+        }
+
+        for (IStep predecessor : changedPersistentPredecessors) {
+            predecessor.update();
+        }
+        for (Map.Entry<Long, IStep> entry : removed.entrySet()) {
+            predecessorById.remove(entry.getKey());
+            removeIndexedStep(entry.getKey(), entry.getValue());
+        }
+        indexedRoot = root;
+
+        if (mind.isStorageUsed() && !removed.isEmpty()) {
+            IBase base = ((User) mind.getUser()).getStorage(schema);
+            synchronized (base) {
+                for (long id : removed.keySet()) {
+                    base.delete(id);
+                }
             }
         }
     }
