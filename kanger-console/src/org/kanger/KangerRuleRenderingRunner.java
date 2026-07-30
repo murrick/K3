@@ -253,7 +253,10 @@ public final class KangerRuleRenderingRunner {
         }
         int count = 0;
         IBase base = ((User) mind.getUser()).getStorage(schema);
-        Iterator<IStep> iterator = base.iterator();
+        if (!(base instanceof Iterable)) {
+            return -2;
+        }
+        Iterator<?> iterator = ((Iterable<?>) base).iterator();
         while (iterator != null && iterator.hasNext()) {
             if (iterator.next() != null) {
                 ++count;
