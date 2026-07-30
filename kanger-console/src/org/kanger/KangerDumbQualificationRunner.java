@@ -37,8 +37,10 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>The default mode is observational: known reliability gaps are recorded in
  * the protocol without making the process fail. Set
- * {@code -Dkanger.dumb.qualification.strict=true} to turn every non-atomic or
- * silently accepted corruption result into an acceptance failure.</p>
+ * {@code -Dkanger.dumb.qualification.strict=true} to make every qualification
+ * gap fail. Set {@code -Dkanger.dumb.qualification.requireNoSilentCorruption=true}
+ * to use the narrower 3.4.4.1 corruption-detection acceptance gate while Q2
+ * crash atomicity is still intentionally open.</p>
  */
 public final class KangerDumbQualificationRunner {
 
@@ -56,14 +58,13 @@ public final class KangerDumbQualificationRunner {
             runParent();
             return;
         }
-
-        String mode = args[0];
         if (args.length < 3) {
             throw new IllegalArgumentException("mode prefix count-or-id");
         }
+
+        String mode = args[0];
         String prefix = args[1];
         int value = Integer.parseInt(args[2]);
-
         if ("child-write-close".equals(mode)) {
             writeFixture(prefix, value, true, false);
         } else if ("child-write-flush-halt".equals(mode)) {
@@ -82,8 +83,10 @@ public final class KangerDumbQualificationRunner {
     }
 
     private static void runParent() throws Exception {
-        boolean strict = Boolean.parseBoolean(
-                System.getProperty("kanger.dumb.qualification.strict", "false"));
+        boolean strict = Boolean.parseBoolean(System.getProperty(
+                "kanger.dumb.qualification.strict", "false"));
+        boolean requireNoSilentCorruption = Boolean.parseBoolean(System.getProperty(
+                "kanger.dumb.qualification.requireNoSilentCorruption", "false"));
         Path output = Paths.get(System.getProperty(
                 "kanger.dumb.qualification.output",
                 "target/dumb-qualification")).toAbsolutePath();
@@ -100,7 +103,7 @@ public final class KangerDumbQualificationRunner {
         Path csv = output.resolve("dumb-qualification.csv");
         Path markdown = output.resolve("dumb-qualification.md");
         writeCsv(csv, results);
-        writeMarkdown(markdown, work, strict, results);
+        writeMarkdown(markdown, work, strict, requireNoSilentCorruption, results);
 
         Map<String, Integer> counts = countByClassification(results);
         System.out.println("DUMB qualification work: " + work);
@@ -110,6 +113,9 @@ public final class KangerDumbQualificationRunner {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
 
+        if (requireNoSilentCorruption && hasCorruptionGap(results)) {
+            System.exit(2);
+        }
         if (strict && hasQualificationGap(results)) {
             System.exit(1);
         }
@@ -123,8 +129,7 @@ public final class KangerDumbQualificationRunner {
         ChildResult verify = runChild(home, "child-verify", clean, RECORD_COUNT);
         results.add(Result.of("Q1", "clean-close-reopen", "lifecycle",
                 "all records and chain survive explicit close",
-                write.exitCode == 0 && verify.exitCode == 0
-                        ? "PASS" : "FAIL",
+                write.exitCode == 0 && verify.exitCode == 0 ? "PASS" : "FAIL",
                 write.elapsedMs + verify.elapsedMs,
                 tail(write.output + "\n" + verify.output)));
 
@@ -134,8 +139,7 @@ public final class KangerDumbQualificationRunner {
         verify = runChild(home, "child-verify", flushHalt, RECORD_COUNT);
         results.add(Result.of("Q1", "flush-then-halt-reopen", "lifecycle",
                 "all records and chain survive process halt after completed flush",
-                write.exitCode == 0 && verify.exitCode == 0
-                        ? "PASS" : "FAIL",
+                write.exitCode == 0 && verify.exitCode == 0 ? "PASS" : "FAIL",
                 write.elapsedMs + verify.elapsedMs,
                 tail(write.output + "\n" + verify.output)));
     }
@@ -189,10 +193,12 @@ public final class KangerDumbQualificationRunner {
     private static void runCorruptionMatrix(Path work, Path home,
                                             List<Result> results) throws Exception {
         Path baseline = createBaseline(work.resolve("corruption/baseline"), home);
-        Path baselineIndex = Paths.get(baseline.toString() + ".index");
-        Path baselineStore = Paths.get(baseline.toString() + ".store");
+        Path baselineIndex = fileOf(baseline, "index");
+        Path baselineStore = fileOf(baseline, "store");
+        Path baselineIntegrity = fileOf(baseline, "integrity");
         long indexLength = Files.size(baselineIndex);
         long storeLength = Files.size(baselineStore);
+        long integrityLength = Files.size(baselineIntegrity);
 
         List<MutationCase> cases = new ArrayList<MutationCase>();
         addTruncations(cases, "index", indexLength,
@@ -216,31 +222,33 @@ public final class KangerDumbQualificationRunner {
         cases.add(MutationCase.zero("store-zero-56", "store", 56, 8));
         cases.add(MutationCase.zero("store-zero-64", "store", 64, 8));
 
+        addTruncations(cases, "integrity", integrityLength,
+                new long[]{0, 1, 3, 4, 5, 6, 10, 13,
+                        integrityLength / 2, integrityLength - 4,
+                        integrityLength - 1});
+        addFlips(cases, "integrity", new long[]{0, 1, 2, 3, 4, 5, 6,
+                9, 10, 13, 14, 21, integrityLength / 2,
+                integrityLength - 5, integrityLength - 1}, 0x5A);
+        cases.add(MutationCase.zero("integrity-zero-header", "integrity", 0, 14));
+        cases.add(MutationCase.zero("integrity-zero-entry", "integrity", 14, 16));
+
         Random random = new Random(RANDOM_SEED);
-        for (int i = 0; i < 40; ++i) {
-            long position = positiveMod(random.nextLong(), indexLength);
-            int mask = 1 << random.nextInt(8);
-            cases.add(MutationCase.flip("index-random-" + i + "-" + position,
-                    "index", position, mask));
-        }
-        for (int i = 0; i < 40; ++i) {
-            long position = positiveMod(random.nextLong(), storeLength);
-            int mask = 1 << random.nextInt(8);
-            cases.add(MutationCase.flip("store-random-" + i + "-" + position,
-                    "store", position, mask));
-        }
+        addRandomFlips(cases, random, "index", indexLength, 40);
+        addRandomFlips(cases, random, "store", storeLength, 40);
+        addRandomFlips(cases, random, "integrity", integrityLength, 20);
 
         for (MutationCase mutation : cases) {
             Path caseDirectory = work.resolve("corruption/cases").resolve(mutation.name);
             Files.createDirectories(caseDirectory);
             Path prefix = caseDirectory.resolve("db");
-            Files.copy(baselineIndex, Paths.get(prefix.toString() + ".index"),
+            Files.copy(baselineIndex, fileOf(prefix, "index"),
                     StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(baselineStore, Paths.get(prefix.toString() + ".store"),
+            Files.copy(baselineStore, fileOf(prefix, "store"),
                     StandardCopyOption.REPLACE_EXISTING);
-            Path target = Paths.get(prefix.toString()
-                    + ("index".equals(mutation.target) ? ".index" : ".store"));
-            mutation.apply(target);
+            Files.copy(baselineIntegrity, fileOf(prefix, "integrity"),
+                    StandardCopyOption.REPLACE_EXISTING);
+            mutation.apply(fileOf(prefix, mutation.target));
+
             ChildResult verify = runChild(home, "child-verify", prefix, RECORD_COUNT);
             String classification;
             if (verify.exitCode == 0) {
@@ -255,6 +263,20 @@ public final class KangerDumbQualificationRunner {
             results.add(Result.of("Q3", mutation.name, mutation.target,
                     "recover deterministically or reject explicitly",
                     classification, verify.elapsedMs, tail(verify.output)));
+        }
+    }
+
+    private static Path fileOf(Path prefix, String suffix) {
+        return Paths.get(prefix.toString() + "." + suffix);
+    }
+
+    private static void addRandomFlips(List<MutationCase> cases, Random random,
+                                       String target, long length, int count) {
+        for (int i = 0; i < count; ++i) {
+            long position = positiveMod(random.nextLong(), length);
+            int mask = 1 << random.nextInt(8);
+            cases.add(MutationCase.flip(target + "-random-" + i + "-" + position,
+                    target, position, mask));
         }
     }
 
@@ -451,6 +473,7 @@ public final class KangerDumbQualificationRunner {
     }
 
     private static void writeMarkdown(Path file, Path work, boolean strict,
+                                      boolean requireNoSilentCorruption,
                                       List<Result> results) throws Exception {
         Map<String, Integer> counts = countByClassification(results);
         int silentCorruption = count(results, "GAP_SILENT_CORRUPTION");
@@ -466,6 +489,8 @@ public final class KangerDumbQualificationRunner {
                 .append(System.getProperty("os.version")).append("\n");
         text.append("- Architecture: ").append(System.getProperty("os.arch")).append("\n");
         text.append("- Strict mode: ").append(strict).append("\n");
+        text.append("- No-silent-corruption gate: ")
+                .append(requireNoSilentCorruption).append("\n");
         text.append("- Seed: ").append(RANDOM_SEED).append("\n");
         text.append("- Work directory: `").append(work).append("`\n\n");
 
@@ -493,12 +518,15 @@ public final class KangerDumbQualificationRunner {
                 .append(unaffected).append(".\n\n");
 
         text.append("## Qualification statement\n\n");
-        text.append("Current defensible guarantee: completed DUMB flush/close survives ")
-                .append("ordinary JVM process termination in this environment.\n\n");
-        text.append("Not yet established: interrupted-operation atomicity, silent-corruption ")
-                .append("detection, multiple-writer safety, OS-crash durability, or power-loss durability.\n\n");
+        text.append("Completed DUMB flush/close survives ordinary JVM process ")
+                .append("termination in this environment. Integrity-protected databases ")
+                .append("must reject every tested live-state index, store, or manifest ")
+                .append("corruption explicitly; mutations outside live state may remain irrelevant.\n\n");
+        text.append("Not yet established: interrupted-operation atomicity, deterministic ")
+                .append("recovery, multiple-writer safety, OS-crash durability, or ")
+                .append("power-loss durability. Legacy databases bootstrapped without a ")
+                .append("previous manifest are not retroactively certified.\n\n");
         text.append("Detailed rows are in `dumb-qualification.csv`.\n");
-
         Files.write(file, text.toString().getBytes(StandardCharsets.UTF_8));
     }
 
@@ -513,6 +541,17 @@ public final class KangerDumbQualificationRunner {
         for (Result result : results) {
             if (result.classification.startsWith("GAP_")
                     || "FAIL".equals(result.classification)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasCorruptionGap(List<Result> results) {
+        for (Result result : results) {
+            if ("Q3".equals(result.level)
+                    && (result.classification.startsWith("GAP_")
+                    || "FAIL".equals(result.classification))) {
                 return true;
             }
         }
