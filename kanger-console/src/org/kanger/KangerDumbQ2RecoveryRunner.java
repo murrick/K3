@@ -32,6 +32,8 @@ public final class KangerDumbQ2RecoveryRunner {
 
     private static final String LOGIN = "dumb-q2-recovery";
     private static final String PASSWORD = "dumb-q2-recovery";
+    private static final String FAULT_PROPERTY = "kanger.dumb.fault.haltAt";
+    private static final int FAULT_EXIT = 86;
     private static final int RECORD_COUNT = 100;
     private static final long VALUE_PREFIX = 0x4B414E4700000000L;
 
@@ -83,6 +85,43 @@ public final class KangerDumbQ2RecoveryRunner {
         Files.createDirectories(home);
 
         List<Result> results = new ArrayList<Result>();
+        addOperationLevelScenarios(work, home, results);
+        addMutationFailpointScenarios(work, home, results);
+        addFlushFailpointScenarios(work, home, results);
+        addRecoveryFailpointScenarios(work, home, results);
+
+        int passed = 0;
+        StringBuilder protocol = new StringBuilder();
+        protocol.append("# DUMB Q2 recovery protocol\n\n");
+        protocol.append("- Timestamp (UTC): ").append(utcNow()).append("\n");
+        protocol.append("- Java: ").append(System.getProperty("java.version")).append("\n");
+        protocol.append("- OS: ").append(System.getProperty("os.name"))
+                .append(' ').append(System.getProperty("os.version")).append("\n");
+        protocol.append("- Scenarios: ").append(results.size()).append("\n\n");
+        protocol.append("| Scenario | Result | Detail |\n|---|---|---|\n");
+        for (Result result : results) {
+            if (result.passed) {
+                ++passed;
+            }
+            protocol.append('|').append(result.name).append('|')
+                    .append(result.passed ? "PASS" : "FAIL").append('|')
+                    .append(escape(result.detail)).append("|\n");
+        }
+        Files.write(output.resolve("q2-recovery.md"),
+                protocol.toString().getBytes(StandardCharsets.UTF_8));
+
+        System.out.println("DUMB Q2 work: " + work);
+        System.out.println("DUMB Q2 protocol: " + output.resolve("q2-recovery.md"));
+        System.out.println("Q2_TOTAL: " + results.size());
+        System.out.println("Q2_PASS: " + passed);
+        System.out.println("Q2_FAIL: " + (results.size() - passed));
+        if (passed != results.size()) {
+            System.exit(1);
+        }
+    }
+
+    private static void addOperationLevelScenarios(Path work, Path home,
+                                                    List<Result> results) throws Exception {
         results.add(runScenario(work, home, "append-unflushed",
                 "child-append-halt", RECORD_COUNT,
                 "child-verify-pre", RECORD_COUNT));
@@ -101,32 +140,79 @@ public final class KangerDumbQ2RecoveryRunner {
         results.add(runScenario(work, home, "append-committed",
                 "child-append-flush-halt", RECORD_COUNT,
                 "child-verify-post", RECORD_COUNT + 1));
+    }
 
-        int passed = 0;
-        StringBuilder protocol = new StringBuilder();
-        protocol.append("# DUMB Q2 recovery protocol\n\n");
-        protocol.append("- Timestamp (UTC): ").append(utcNow()).append("\n");
-        protocol.append("- Java: ").append(System.getProperty("java.version")).append("\n");
-        protocol.append("- OS: ").append(System.getProperty("os.name"))
-                .append(' ').append(System.getProperty("os.version")).append("\n\n");
-        protocol.append("| Scenario | Result | Detail |\n|---|---|---|\n");
-        for (Result result : results) {
-            if (result.passed) {
-                ++passed;
-            }
-            protocol.append('|').append(result.name).append('|')
-                    .append(result.passed ? "PASS" : "FAIL").append('|')
-                    .append(escape(result.detail)).append("|\n");
+    private static void addMutationFailpointScenarios(Path work, Path home,
+                                                       List<Result> results) throws Exception {
+        String[] upsertPoints = new String[]{
+                "upsert-after-wal", "upsert-after-data",
+                "upsert-after-index", "upsert-after-integrity"};
+        for (String point : upsertPoints) {
+            results.add(runFaultScenario(work, home, "append-" + point,
+                    "child-append-halt", RECORD_COUNT, point,
+                    "child-verify-pre", RECORD_COUNT));
+            results.add(runFaultScenario(work, home, "relocate-" + point,
+                    "child-relocate-halt", RECORD_COUNT / 2, point,
+                    "child-verify-pre", RECORD_COUNT));
         }
-        Files.write(output.resolve("q2-recovery.md"),
-                protocol.toString().getBytes(StandardCharsets.UTF_8));
 
-        System.out.println("DUMB Q2 work: " + work);
-        System.out.println("DUMB Q2 protocol: " + output.resolve("q2-recovery.md"));
-        System.out.println("Q2_PASS: " + passed);
-        System.out.println("Q2_FAIL: " + (results.size() - passed));
-        if (passed != results.size()) {
-            System.exit(1);
+        String[] deletePoints = new String[]{
+                "delete-after-wal", "delete-after-index",
+                "delete-after-data", "delete-after-integrity"};
+        for (String point : deletePoints) {
+            results.add(runFaultScenario(work, home, "delete-" + point,
+                    "child-delete-halt", RECORD_COUNT / 2, point,
+                    "child-verify-pre", RECORD_COUNT));
+        }
+    }
+
+    private static void addFlushFailpointScenarios(Path work, Path home,
+                                                    List<Result> results) throws Exception {
+        String[] rollbackPoints = new String[]{
+                "flush-after-index", "flush-after-data", "flush-after-integrity"};
+        for (String point : rollbackPoints) {
+            results.add(runFaultScenario(work, home, "append-" + point,
+                    "child-append-flush-halt", RECORD_COUNT, point,
+                    "child-verify-pre", RECORD_COUNT));
+        }
+        results.add(runFaultScenario(work, home, "append-flush-after-checkpoint",
+                "child-append-flush-halt", RECORD_COUNT, "flush-after-checkpoint",
+                "child-verify-post", RECORD_COUNT + 1));
+    }
+
+    private static void addRecoveryFailpointScenarios(Path work, Path home,
+                                                       List<Result> results) throws Exception {
+        String[] points = new String[]{
+                "recovery-after-rollback", "recovery-after-index",
+                "recovery-after-data", "recovery-after-integrity",
+                "recovery-after-checkpoint"};
+        for (String point : points) {
+            String name = "restart-" + point;
+            Path directory = work.resolve(name);
+            Files.createDirectories(directory);
+            Path prefix = directory.resolve("db");
+            ChildResult baseline = runChild(home, "child-write-close",
+                    prefix, RECORD_COUNT, null);
+            if (baseline.exitCode != 0) {
+                results.add(new Result(name, false,
+                        "baseline: " + tail(baseline.output)));
+                continue;
+            }
+
+            ChildResult mutationCrash = runChild(home, "child-append-halt",
+                    prefix, RECORD_COUNT, "upsert-after-data");
+            ChildResult recoveryCrash = runChild(home, "child-verify-pre",
+                    prefix, RECORD_COUNT, point);
+            ChildResult verify = runChild(home, "child-verify-pre",
+                    prefix, RECORD_COUNT, null);
+            boolean passed = mutationCrash.exitCode == FAULT_EXIT
+                    && recoveryCrash.exitCode == FAULT_EXIT
+                    && verify.exitCode == 0;
+            results.add(new Result(name, passed,
+                    "mutation=" + mutationCrash.exitCode
+                            + "; recovery=" + recoveryCrash.exitCode
+                            + "; verify=" + verify.exitCode
+                            + "; " + tail(verify.output)));
         }
     }
 
@@ -137,28 +223,58 @@ public final class KangerDumbQ2RecoveryRunner {
         Files.createDirectories(directory);
         Path prefix = directory.resolve("db");
         ChildResult baseline = runChild(home, "child-write-close",
-                prefix, RECORD_COUNT);
+                prefix, RECORD_COUNT, null);
         if (baseline.exitCode != 0) {
             return new Result(name, false, "baseline: " + tail(baseline.output));
         }
-        ChildResult crash = runChild(home, crashMode, prefix, crashValue);
-        ChildResult verify = runChild(home, verifyMode, prefix, verifyValue);
+        ChildResult crash = runChild(home, crashMode, prefix, crashValue, null);
+        ChildResult verify = runChild(home, verifyMode, prefix, verifyValue, null);
         boolean passed = !crash.timedOut && verify.exitCode == 0;
         return new Result(name, passed,
                 "crash=" + crash.exitCode + "; verify=" + verify.exitCode
                         + "; " + tail(verify.output));
     }
 
+    private static Result runFaultScenario(Path work, Path home, String name,
+                                           String crashMode, int crashValue,
+                                           String faultPoint,
+                                           String verifyMode, int verifyValue) throws Exception {
+        Path directory = work.resolve(name);
+        Files.createDirectories(directory);
+        Path prefix = directory.resolve("db");
+        ChildResult baseline = runChild(home, "child-write-close",
+                prefix, RECORD_COUNT, null);
+        if (baseline.exitCode != 0) {
+            return new Result(name, false, "baseline: " + tail(baseline.output));
+        }
+        ChildResult crash = runChild(home, crashMode, prefix, crashValue, faultPoint);
+        ChildResult verify = runChild(home, verifyMode, prefix, verifyValue, null);
+        boolean passed = crash.exitCode == FAULT_EXIT && verify.exitCode == 0;
+        return new Result(name, passed,
+                "fault=" + faultPoint + "; crash=" + crash.exitCode
+                        + "; verify=" + verify.exitCode
+                        + "; " + tail(verify.output));
+    }
+
     private static ChildResult runChild(Path home, String mode,
-                                        Path prefix, int value) throws Exception {
+                                        Path prefix, int value,
+                                        String faultPoint) throws Exception {
         String java = System.getProperty("java.home") + File.separator
                 + "bin" + File.separator + "java";
-        ProcessBuilder builder = new ProcessBuilder(
-                java,
-                "-Duser.home=" + home.toAbsolutePath(),
-                "-cp", System.getProperty("java.class.path"),
-                KangerDumbQ2RecoveryRunner.class.getName(),
-                mode, prefix.toAbsolutePath().toString(), Integer.toString(value));
+        List<String> command = new ArrayList<String>();
+        command.add(java);
+        command.add("-Duser.home=" + home.toAbsolutePath());
+        if (faultPoint != null) {
+            command.add("-D" + FAULT_PROPERTY + "=" + faultPoint);
+        }
+        command.add("-cp");
+        command.add(System.getProperty("java.class.path"));
+        command.add(KangerDumbQ2RecoveryRunner.class.getName());
+        command.add(mode);
+        command.add(prefix.toAbsolutePath().toString());
+        command.add(Integer.toString(value));
+
+        ProcessBuilder builder = new ProcessBuilder(command);
         builder.redirectErrorStream(true);
         Process process = builder.start();
         boolean completed = process.waitFor(30L, TimeUnit.SECONDS);
