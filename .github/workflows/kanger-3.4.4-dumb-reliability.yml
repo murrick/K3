@@ -66,6 +66,22 @@ jobs:
           grep -F 'MIND_SAFETY_PASS abstractive-policy' "mind-safety-${{ matrix.id }}.log"
           grep -F 'MIND_SAFETY_OK' "mind-safety-${{ matrix.id }}.log"
 
+      - name: Verify factory safety
+        shell: bash
+        run: |
+          set -o pipefail
+          java \
+            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerFactorySafetyRunner \
+            2>&1 | tee "factory-safety-${{ matrix.id }}.log"
+          grep -F 'FACTORY_SAFETY_PASS runtime-ownership' "factory-safety-${{ matrix.id }}.log"
+          grep -F 'FACTORY_SAFETY_PASS anchor-reset' "factory-safety-${{ matrix.id }}.log"
+          grep -F 'FACTORY_SAFETY_PASS orphan-cleanup' "factory-safety-${{ matrix.id }}.log"
+          grep -F 'FACTORY_SAFETY_PASS comment-overlay' "factory-safety-${{ matrix.id }}.log"
+          grep -F 'FACTORY_SAFETY_PASS library-overlay' "factory-safety-${{ matrix.id }}.log"
+          grep -F 'FACTORY_SAFETY_PASS concurrent-metadata' "factory-safety-${{ matrix.id }}.log"
+          grep -F 'FACTORY_SAFETY_OK' "factory-safety-${{ matrix.id }}.log"
+
       - name: Stress RuleCandidateIndex concurrency with DUMB
         shell: bash
         run: |
@@ -145,6 +161,7 @@ jobs:
           path: |
             kanger-3.4.4-${{ matrix.id }}.log
             mind-safety-${{ matrix.id }}.log
+            factory-safety-${{ matrix.id }}.log
             rule-candidate-concurrency-${{ matrix.id }}.log
             rule-rendering-${{ matrix.id }}.log
             dumb-integrity-${{ matrix.id }}.log
