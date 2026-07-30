@@ -170,7 +170,8 @@ public final class SemanticYieldPlanner {
         if (argument.getType() == ArgumentType.TVALUE) {
             Object value = argument.getObject(mind);
             if (value instanceof TValue
-                    && ((TValue) value).getTVar(mind).isQuery(mind)) {
+                    && mind.getQueryValues().containsKey(
+                    ((TValue) value).getTVar(mind))) {
                 return true;
             }
         }
