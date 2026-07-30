@@ -23,6 +23,12 @@ import java.util.List;
 public final class KangerOperationEffectMaskRunner {
 
     private static final int MASK_LIMIT = 1 << 4;
+    private static final int MASK_DEFERRED =
+            LinkerStatistics.EFFECT_DEFERRED_SOLVE_CANDIDATE;
+    private static final int MASK_PRODUCING =
+            LinkerStatistics.EFFECT_NEW_TVALUE
+                    | LinkerStatistics.EFFECT_NEW_CAUSE
+                    | LinkerStatistics.EFFECT_DEFERRED_SOLVE_CANDIDATE;
 
     private KangerOperationEffectMaskRunner() {
     }
@@ -74,6 +80,8 @@ public final class KangerOperationEffectMaskRunner {
                             + ", executed=" + executed);
         }
 
+        verifyBaseline(size, operation, statistics);
+
         if (executed == 0L) {
             print(size, operation, 0, "NO_LINKER_OPERATION", 0L,
                     classified, executed);
@@ -93,6 +101,52 @@ public final class KangerOperationEffectMaskRunner {
             throw new IllegalStateException(
                     "Operation mask histogram mismatch for " + operation
                             + ": total=" + total + ", executed=" + executed);
+        }
+    }
+
+    private static void verifyBaseline(int size,
+                                       String operation,
+                                       LinkerStatistics statistics) {
+        if ("query-exact".equals(operation)) {
+            requireCount(operation, statistics, 0, 0L);
+            if (statistics.getUnificationAttempts() != 0L) {
+                throw new IllegalStateException(
+                        "Exact-query Linker baseline changed: "
+                                + statistics.getUnificationAttempts());
+            }
+            return;
+        }
+
+        long scale = "query-all-variables".equals(operation) ? size : 1L;
+        requireCount(operation, statistics, 0, 3L * scale);
+        requireCount(operation, statistics, MASK_DEFERRED, 4L * scale);
+        requireCount(operation, statistics, MASK_PRODUCING, scale);
+
+        for (int mask = 0; mask < MASK_LIMIT; ++mask) {
+            if (mask != 0 && mask != MASK_DEFERRED && mask != MASK_PRODUCING) {
+                requireCount(operation, statistics, mask, 0L);
+            }
+        }
+        long expectedExecuted = 8L * scale;
+        if (statistics.getUnificationAttempts() != expectedExecuted) {
+            throw new IllegalStateException(
+                    "Executed-operation baseline changed for " + operation
+                            + ": expected=" + expectedExecuted
+                            + ", actual=" + statistics.getUnificationAttempts());
+        }
+    }
+
+    private static void requireCount(String operation,
+                                     LinkerStatistics statistics,
+                                     int mask,
+                                     long expected) {
+        long actual = statistics.getOperationEffectMaskCount(mask);
+        if (actual != expected) {
+            throw new IllegalStateException(
+                    "Operation mask baseline changed for " + operation
+                            + ", mask=" + mask
+                            + ": expected=" + expected
+                            + ", actual=" + actual);
         }
     }
 
