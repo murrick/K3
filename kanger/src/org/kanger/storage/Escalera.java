@@ -309,17 +309,22 @@ public class Escalera implements ICache {
             IBase base = ((User) mind.getUser()).getStorage(schema);
             synchronized (base) {
 
-                List<IStep> list = new ArrayList<>();
-                for (IStep s = root; s != null; s = s.getNext()) {
-                    if (!base.containsKey(s.getId())) {
-                        list.add(0, s);
-                    }
+                /*
+                 * Newly added in-memory Steps always form a prefix in front of
+                 * the persistent Sapato suffix. Persist that prefix only: once
+                 * the first Sapato is reached, the rest of the chain is already
+                 * durable and must not be walked or hydrated again.
+                 */
+                Deque<IStep> pending = new ArrayDeque<>();
+                for (IStep s = root; s != null && !(s instanceof Sapato); s = s.getNext()) {
+                    pending.push(s);
                 }
 
-                for (IStep s : list) {
+                while (!pending.isEmpty()) {
+                    IStep s = pending.pop();
                     Sapato p = new Sapato(base, s);
                     p.append();
-                    IStep e = ((User) mind.getUser()).getStorage(schema).get(s.getId());
+                    IStep e = base.get(s.getId());
                     p.setData(e.getData(mind));
                     root = p;
                     if (indexValid) {
