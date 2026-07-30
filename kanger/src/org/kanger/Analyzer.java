@@ -67,7 +67,7 @@ public class Analyzer {
         mind.getSolutions().clear();
         mind.getValues().clear();
 
-        result = checkDatabase(null, logging);
+        result = checkDatabase(null, logging, rule);
 
         if (!result) {
 
@@ -114,7 +114,9 @@ public class Analyzer {
         return result;
     }
 
-    private Collection<IRule> candidatesFor(Rule p, boolean selectById) throws Exception {
+    private Collection<IRule> candidatesFor(Rule p,
+                                            boolean selectById,
+                                            boolean observePlanning) throws Exception {
         Collection<IRule> result;
         if (!selectById) {
             result = mind.getRules().findByDomain(
@@ -128,12 +130,18 @@ public class Analyzer {
             result = all;
         }
 
-        SemanticPlanningTelemetry.record(
-                SemanticYieldPlanner.estimate(p, result, mind, selectById));
+        if (observePlanning) {
+            SemanticPlanningTelemetry.record(
+                    SemanticYieldPlanner.estimate(p, result, mind, selectById));
+        }
         return result;
     }
 
-    private boolean checkRight(Rule p, Set<Rule> orfans, Set<Long> list, boolean logging) throws Exception {
+    private boolean checkRight(Rule p,
+                               Set<Rule> orfans,
+                               Set<Long> list,
+                               boolean logging,
+                               Rule planningRule) throws Exception {
         boolean result = false;
         if (p.getDomain().isCalculated(mind)) {
 
@@ -161,8 +169,10 @@ public class Analyzer {
             boolean selectById = "rule(1)".equals(
                     p.getDomain().getPredicate(mind).toString(mind))
                     && p.getDomain().get(0).getValue(mind).getType() == DataType.NUMERIC;
+            boolean observePlanning = planningRule != null
+                    && planningRule.getId() == p.getId();
 
-            for (IRule q : candidatesFor(p, selectById)) {
+            for (IRule q : candidatesFor(p, selectById, observePlanning)) {
                 if (q.isDeleted(mind) || q.getId() == p.getId()) {
                     continue;
                 }
@@ -227,6 +237,12 @@ public class Analyzer {
     }
 
     public boolean checkDatabase(Set<Long> list, boolean logging) throws Exception {
+        return checkDatabase(list, logging, null);
+    }
+
+    private boolean checkDatabase(Set<Long> list,
+                                  boolean logging,
+                                  Rule planningRule) throws Exception {
 
         boolean result = false;
         boolean calculated = false;
@@ -234,7 +250,10 @@ public class Analyzer {
         Set<Rule> orfans = new HashSet<>();
 
         for (IRule p : mind.getRules()) {
-            if (!p.isDeleted(mind) && p.isStored() && (list == null || list.contains(p.getId())) && checkRight((Rule) p, orfans, list, logging)) {
+            if (!p.isDeleted(mind)
+                    && p.isStored()
+                    && (list == null || list.contains(p.getId()))
+                    && checkRight((Rule) p, orfans, list, logging, planningRule)) {
                 if (((Rule) p).getDomain().isCalculated(mind)) {
                     calculated = true;
                 }
