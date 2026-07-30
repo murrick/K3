@@ -3,7 +3,7 @@ name: KANGER III 3.4.4 DUMB reliability qualification
 on:
   push:
     branches:
-      - "arch/3.4.4-dumb-reliability-qualification"
+      - "arch/3.4.4*"
       - "develop/3.4.4*"
   pull_request:
   workflow_dispatch:
@@ -51,12 +51,13 @@ jobs:
           set -o pipefail
           mvn -B -V clean verify 2>&1 | tee "kanger-3.4.4-${{ matrix.id }}.log"
 
-      - name: Run observational DUMB qualification
+      - name: Run DUMB corruption-detection gate
         shell: bash
         run: |
           set -o pipefail
           output="target/dumb-qualification-${{ matrix.id }}"
           java \
+            -Dkanger.dumb.qualification.requireNoSilentCorruption=true \
             -Dkanger.dumb.qualification.output="$output" \
             -cp "target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDumbQualificationRunner \
@@ -65,7 +66,10 @@ jobs:
           test -s "$output/dumb-qualification.csv"
           test -s "$output/dumb-qualification.md"
           grep -F 'PASS: 2' "dumb-qualification-${{ matrix.id }}.log"
-          grep -F 'GAP_SILENT_HYBRID: 3' "dumb-qualification-${{ matrix.id }}.log"
+          if grep -F 'GAP_SILENT_CORRUPTION:' "dumb-qualification-${{ matrix.id }}.log"; then
+            echo 'Silent corruption remains in Q3'
+            exit 1
+          fi
           if grep -F 'GAP_HANG:' "dumb-qualification-${{ matrix.id }}.log"; then
             echo 'Unexpected qualification hang'
             exit 1
