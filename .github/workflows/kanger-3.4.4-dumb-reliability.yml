@@ -72,7 +72,8 @@ jobs:
             org.kanger.KangerDumbQ2RecoveryRunner \
             2>&1 | tee "dumb-q2-recovery-${{ matrix.id }}.log"
           test -s "$output/q2-recovery.md"
-          grep -F 'Q2_PASS: 6' "dumb-q2-recovery-${{ matrix.id }}.log"
+          grep -F 'Q2_TOTAL: 27' "dumb-q2-recovery-${{ matrix.id }}.log"
+          grep -F 'Q2_PASS: 27' "dumb-q2-recovery-${{ matrix.id }}.log"
           grep -F 'Q2_FAIL: 0' "dumb-q2-recovery-${{ matrix.id }}.log"
 
       - name: Run strict DUMB Q1-Q3 qualification
