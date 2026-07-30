@@ -81,11 +81,15 @@ public class DictionaryFactory implements IFactory<ITerm> {
     }
 
     public void transaction(DictionaryFactory base) throws Exception {
+        top = null;
+        connection = null;
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
         if (base != null) {
-            varIndex = base.varIndex;
+            synchronized (base) {
+                varIndex = base.varIndex;
+            }
             cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
             cache = new Escalera(mind, SCHEMA, null);
@@ -115,8 +119,15 @@ public class DictionaryFactory implements IFactory<ITerm> {
                 ((IUnit) s).setMindId(mind.getId());
             }
         }
-        varIndex = Math.max(base.varIndex, varIndex);
-
+        synchronized (base) {
+            varIndex = Math.max(base.varIndex, varIndex);
+            /*
+             * A child may introduce Terms that are not retained by any Rule.
+             * Carry its cleanup frontier into the parent; otherwise an already
+             * incremental parent would never reconsider those committed orphans.
+             */
+            packCandidates.addAll(base.packCandidates);
+        }
     }
 
     public void update() throws Exception {
@@ -206,11 +217,11 @@ public class DictionaryFactory implements IFactory<ITerm> {
         }
     }
 
-    public int nextVarIndex() {
+    public synchronized int nextVarIndex() {
         return ++varIndex;
     }
 
-    public int getVarIndex() {
+    public synchronized int getVarIndex() {
         return varIndex;
     }
 
