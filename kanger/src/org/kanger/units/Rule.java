@@ -4,11 +4,11 @@
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -154,6 +154,10 @@ public class Rule implements IUnit<IRule>, IRule {
         }
     }
 
+    private boolean canMutateDirectly() {
+        return mind == null || mind.getNext() == null || mindId == mind.getId();
+    }
+
     public Domain getDomain() throws Exception {
         return getTree().get(0).get(0);
     }
@@ -173,7 +177,9 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     public void setGenerated(boolean b) {
-        this.generated = b;
+        if (canMutateDirectly()) {
+            this.generated = b;
+        }
     }
 
     @Override
@@ -252,7 +258,9 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     public void setQuery(boolean current) {
-        this.query = current;
+        if (canMutateDirectly()) {
+            this.query = current;
+        }
     }
 
     public int size() throws Exception {
@@ -596,11 +604,16 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     public void primitivize() {
-        for (List<Domain> a : tree) {
-            for (Domain d : a) {
-                ArgumentsList list = d.getArguments().convertBase(mind);
-                d.getArguments().clear();
-                d.getArguments().addAll(list);
+        if (!canMutateDirectly()) {
+            return;
+        }
+        synchronized (this) {
+            for (List<Domain> a : tree) {
+                for (Domain d : a) {
+                    ArgumentsList list = d.getArguments().convertBase(mind);
+                    d.getArguments().clear();
+                    d.getArguments().addAll(list);
+                }
             }
         }
     }
