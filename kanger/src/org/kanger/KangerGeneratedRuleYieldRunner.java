@@ -30,6 +30,8 @@ public final class KangerGeneratedRuleYieldRunner {
 
             System.out.println("scenario,passes,executed_operations,new_tvalues,new_causes,"
                     + "solve_candidates,new_tsolves,duplicate_solve_candidates,"
+                    + "deferred_groups,deferred_contributor_links,groups_with_new_tsolve,"
+                    + "minimum_contributors_per_group,maximum_contributors_per_group,"
                     + "total_rule_delta,generated_rule_delta,observed_generated_rules,"
                     + "effect_delta,derived_true");
 
@@ -105,6 +107,14 @@ public final class KangerGeneratedRuleYieldRunner {
             throw new IllegalStateException(
                     "TSolve candidate accounting mismatch for " + scenario);
         }
+        if (effects.getGroupsWithNewTSolve() != effects.getNewTSolves()) {
+            throw new IllegalStateException(
+                    "Deferred-group TSolve mismatch for " + scenario);
+        }
+        if (effects.getDeferredContributorLinks() > effects.getSolveCandidates()) {
+            throw new IllegalStateException(
+                    "Deferred contributor links exceed candidates for " + scenario);
+        }
         long effectDelta = statistics.getNewTValues()
                 + effects.getNewCauses()
                 + effects.getNewTSolves()
@@ -113,7 +123,7 @@ public final class KangerGeneratedRuleYieldRunner {
         Boolean derived = mind.query(verification, null, false);
 
         System.out.printf(Locale.ROOT,
-                "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s%n",
+                "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s%n",
                 scenario,
                 statistics.getPasses(),
                 statistics.getUnificationAttempts(),
@@ -122,6 +132,11 @@ public final class KangerGeneratedRuleYieldRunner {
                 effects.getSolveCandidates(),
                 effects.getNewTSolves(),
                 effects.getDuplicateSolveCandidates(),
+                effects.getDeferredGroups(),
+                effects.getDeferredContributorLinks(),
+                effects.getGroupsWithNewTSolve(),
+                effects.getMinimumContributorsPerGroup(),
+                effects.getMaximumContributorsPerGroup(),
                 totalRuleDelta,
                 generatedRuleDelta,
                 observedGeneratedRules,
