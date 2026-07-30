@@ -111,8 +111,10 @@ final class IntegrityManifest {
     }
 
     void put(IStep step) throws Exception {
-        if (step == null || step.getId() < 0L) {
-            throw corruption("cannot register null or negative-id record");
+        // -1 is reserved by Index traversal. Other signed IDs are valid
+        // application/service keys; CommentFactory uses -2/-3.
+        if (step == null || step.getId() == -1L) {
+            throw corruption("cannot register null or reserved id=-1 record");
         }
         synchronized (locker) {
             Long id = Long.valueOf(step.getId());
@@ -365,7 +367,7 @@ final class IntegrityManifest {
                 int recordCrc = input.readInt();
                 Key key = new Key(entryBaseCode, id);
                 if (entryBaseCode <= 0 || entryBaseCode > 0x0F
-                        || id < 0L || length <= 0
+                        || id == -1L || length <= 0
                         || (previous != null && key.compareTo(previous) <= 0)) {
                     throw corruption("invalid integrity entry base=" + entryBaseCode
                             + " id=" + id + " length=" + length);
@@ -454,7 +456,7 @@ final class IntegrityManifest {
                 long id = input.readLong();
                 int length = input.readInt();
                 int recordCrc = input.readInt();
-                if (id < 0L || !seen.add(Long.valueOf(id))) {
+                if (id == -1L || !seen.add(Long.valueOf(id))) {
                     throw corruption("invalid or duplicate integrity delta id=" + id
                             + " offset=" + frameOffset);
                 }
