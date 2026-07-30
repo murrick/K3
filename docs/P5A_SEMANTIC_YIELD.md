@@ -242,7 +242,7 @@ one-hop:
   newGeneratedRules   = 1
   effectDelta         = 4
 
- two-hop:
+two-hop:
   executedOperations  = 10
   solveCandidates     = 10
   newTSolves          = 2
@@ -250,7 +250,7 @@ one-hop:
   newGeneratedRules   = 2
   effectDelta         = 8
 
- deduplicated-target:
+deduplicated-target:
   executedOperations  = 4
   solveCandidates     = 4
   newTSolves          = 1
