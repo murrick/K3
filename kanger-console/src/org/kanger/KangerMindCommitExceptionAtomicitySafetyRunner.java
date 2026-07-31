@@ -11,6 +11,8 @@ import org.kanger.udf.UDF;
 import org.kanger.units.Rule;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,9 +40,6 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
             Mind child = new Mind(parent);
             addDirectRule(child, "commit_exception_atomicity_probe");
 
-            // Advance the parent sequence after child construction. This is the
-            // actual condition that forces Mind.commit(child) into its composite
-            // mark/merge/validate path rather than the direct sequenced path.
             Mind sibling = new Mind(parent);
             addDirectRule(sibling, "commit_exception_atomicity_sibling");
             require(transactionCounter(parent) == 2,
@@ -60,17 +59,28 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
             }
             require(failureObserved, "fault injection did not reach composite commit");
 
-            require(transactionCounter(parent) == 0,
-                    "failed commit leaked the child transaction reservation");
+            List<String> leaks = new ArrayList<>();
+            int counter = transactionCounter(parent);
+            if (counter != 0) {
+                leaks.add("transactionCounter expected 0 but was " + counter);
+            }
 
-            assertFactoryCheckpointDepth(parent.getFunctions(), 0, "functions");
-            assertFactoryCheckpointDepth(parent.getFValues(), 0, "fValues");
-            assertFactoryCheckpointDepth(parent.getTVars(), 0, "tVars");
-            assertFactoryCheckpointDepth(parent.getTValues(), 0, "tValues");
-            assertFactoryCheckpointDepth(parent.getDomains(), 0, "domains");
-            assertFactoryCheckpointDepth(parent.getRules(), 0, "rules");
-            assertFactoryCheckpointDepth(parent.getComments(), 0, "comments");
-            assertFactoryCheckpointDepth(parent.getLibrary(), 0, "library");
+            collectFactoryCheckpointLeaks(parent.getFunctions(), "functions", leaks);
+            collectFactoryCheckpointLeaks(parent.getFValues(), "fValues", leaks);
+            collectFactoryCheckpointLeaks(parent.getTVars(), "tVars", leaks);
+            collectFactoryCheckpointLeaks(parent.getTValues(), "tValues", leaks);
+            collectFactoryCheckpointLeaks(parent.getDomains(), "domains", leaks);
+            collectFactoryCheckpointLeaks(parent.getRules(), "rules", leaks);
+            collectFactoryCheckpointLeaks(parent.getComments(), "comments", leaks);
+            collectFactoryCheckpointLeaks(parent.getLibrary(), "library", leaks);
+
+            if (!leaks.isEmpty()) {
+                for (String leak : leaks) {
+                    System.err.println("MIND_COMMIT_EXCEPTION_ATOMICITY_LEAK " + leak);
+                }
+                throw new AssertionError("failed commit leaked " + leaks.size()
+                        + " composite transaction resources");
+            }
 
             System.out.println("MIND_COMMIT_EXCEPTION_ATOMICITY_PASS reservation");
             System.out.println("MIND_COMMIT_EXCEPTION_ATOMICITY_PASS checkpoints");
@@ -102,7 +112,9 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
         return field.getInt(mind);
     }
 
-    private static void assertFactoryCheckpointDepth(Object factory, int expected, String name)
+    private static void collectFactoryCheckpointLeaks(Object factory,
+                                                       String name,
+                                                       List<String> leaks)
             throws Exception {
         Field cacheField = findField(factory.getClass(), "cache");
         cacheField.setAccessible(true);
@@ -110,19 +122,19 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
 
         Field stackField = findField(cache.getClass(), "stack");
         stackField.setAccessible(true);
-        Object stack = stackField.get(cache);
-        int actual = ((java.util.Stack<?>) stack).size();
-        require(actual == expected,
-                name + " cache checkpoint depth expected " + expected + " but was " + actual);
+        int cacheDepth = ((java.util.Stack<?>) stackField.get(cache)).size();
+        if (cacheDepth != 0) {
+            leaks.add(name + ".cache checkpoint depth expected 0 but was " + cacheDepth);
+        }
 
-        // Also reject any non-empty auxiliary rollback stack declared by the factory.
         for (Field field : factory.getClass().getDeclaredFields()) {
             if (java.util.Stack.class.isAssignableFrom(field.getType())) {
                 field.setAccessible(true);
-                int auxiliaryDepth = ((java.util.Stack<?>) field.get(factory)).size();
-                require(auxiliaryDepth == expected,
-                        name + "." + field.getName() + " depth expected " + expected
-                                + " but was " + auxiliaryDepth);
+                int depth = ((java.util.Stack<?>) field.get(factory)).size();
+                if (depth != 0) {
+                    leaks.add(name + "." + field.getName()
+                            + " depth expected 0 but was " + depth);
+                }
             }
         }
     }
