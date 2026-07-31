@@ -241,20 +241,35 @@ public class User implements IUser {
                 mind = new Mind(this);
             }
 
-            data.use(name);
+            Map<String, IBase> acquiredStorage = new HashMap<>();
+            try {
+                data.use(name);
 
-            storage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
-            storage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
-            storage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
-            storage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
-            storage.put(RuleFactory.SCHEMA, data.getBase(RuleFactory.SCHEMA));
-            storage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
-            storage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
+                acquiredStorage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
+                acquiredStorage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
+                acquiredStorage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
+                acquiredStorage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
+                acquiredStorage.put(RuleFactory.SCHEMA, data.getBase(RuleFactory.SCHEMA));
+                acquiredStorage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
+                acquiredStorage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
 
-            storage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
-            storage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
+                acquiredStorage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
+                acquiredStorage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
 
-            storage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
+                acquiredStorage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
+            } catch (Exception error) {
+                try {
+                    if (!data.isClosed()) {
+                        data.close();
+                    }
+                } catch (Exception closeError) {
+                    error.addSuppressed(closeError);
+                }
+                throw error;
+            }
+
+            storage.clear();
+            storage.putAll(acquiredStorage);
 
             ((DictionaryFactory) mind.getTerms()).transaction(null);
             ((Mind) mind).getDomains().transaction(null);
