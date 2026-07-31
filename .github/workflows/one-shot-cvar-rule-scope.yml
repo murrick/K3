@@ -6,12 +6,14 @@ on:
       - 'fix/3.5.0.5-cvar-rule-scope'
     paths:
       - 'tools/one_shot_cvar_rule_scope.py'
+      - 'tools/one_shot_cvar_rule_scope_cleanup.py'
       - '.github/workflows/one-shot-cvar-rule-scope.yml'
   pull_request:
     branches:
       - 'develop/3.5.0.4'
     paths:
       - 'tools/one_shot_cvar_rule_scope.py'
+      - 'tools/one_shot_cvar_rule_scope_cleanup.py'
       - '.github/workflows/one-shot-cvar-rule-scope.yml'
   workflow_dispatch:
 
@@ -38,7 +40,9 @@ jobs:
           cache: maven
 
       - name: Apply rule-scoped C-variable patch
-        run: python3 tools/one_shot_cvar_rule_scope.py
+        run: |
+          python3 tools/one_shot_cvar_rule_scope.py
+          python3 tools/one_shot_cvar_rule_scope_cleanup.py
 
       - name: Verify focused source diff
         shell: bash
@@ -68,6 +72,7 @@ jobs:
           set -euo pipefail
           rm .github/workflows/one-shot-cvar-rule-scope.yml
           rm tools/one_shot_cvar_rule_scope.py
+          rm tools/one_shot_cvar_rule_scope_cleanup.py
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
