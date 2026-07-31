@@ -44,6 +44,61 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+/**
+ * Семантический транслятор AST KANGER в canonical units одного Mind.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Compiller} принимает дерево
+ * {@link Leaf}, построенное {@link Parser}, и через фабрики {@link Mind}
+ * создаёт Rule, Domain, Predicate, Function, Term и variable structures. Он
+ * является границей между синтаксическим представлением и semantic model, но
+ * не исполняет операции, не запускает fixed-point и не определяет истинность
+ * запроса. Historical spelling имени класса является compatibility surface и
+ * намеренно сохраняется.</p>
+ *
+ * <p><strong>Rule lifecycle.</strong> {@link #compileLine(Leaf, boolean,
+ * String, boolean, Queue)} сначала регистрирует новый Rule и origin Term,
+ * строит его дерево, затем передаёт объект {@link org.kanger.factory.RuleFactory}
+ * для canonicalization. Если сохранён именно новый ID, выставляется query flag
+ * и выполняется Rule expansion; найденный canonical/promoted Rule получает
+ * historical second/promotion interpretation. Compiler не подменяет правила
+ * фабрики собственным cache.</p>
+ *
+ * <p><strong>Логическая трансформация.</strong> Рекурсивный {@code construct}
+ * переводит отрицание, conjunction, disjunction и implication в Rule domain
+ * trees с исторически заданным порядком clone/append. Различия antecedent и
+ * consequent определяют, когда ветвь клонируется и когда polarity инвертируется.
+ * Этот statement order является semantic kernel и не может быть упрощён как
+ * обычная булева AST-нормализация.</p>
+ *
+ * <p><strong>Кванторы.</strong> {@code @/$} создают либо TVariable, либо
+ * child C-variable в зависимости от polarity. Rule помечается substitutable
+ * или abstractive, повторное имя variable запрещается, а ранее встреченная
+ * C-variable может получить domini marker. Полученные объекты принадлежат
+ * соответствующим Mind factories и их transactional lifecycle.</p>
+ *
+ * <p><strong>Функции и предикаты.</strong> Signature проверяется сначала в
+ * infrastructure catalog текущего Calculator, затем в Library. При компиляции
+ * Function сохраняется явный {@link FunctionBinding}: built-in operation
+ * становится {@code INFRASTRUCTURE}, найденная Library operation —
+ * {@code UDF_DYNAMIC}. Predicate и Domain canonicalization выполняется только
+ * их фабриками; compiler не исполняет найденную операцию.</p>
+ *
+ * <p><strong>Аргументы.</strong> Comma-tree разворачивается слева направо.
+ * Специальная форма {@code _set} создаёт canonical set Term. Имена переменных
+ * разрешаются через map текущего Rule, обычные literals — через Dictionary,
+ * а внешние параметры {@code ?...} потребляются из Queue в порядке появления.
+ * Недостаток externals, duplicate variable, пустой term или undefined function
+ * завершаются {@link ParseErrorException} с source position.</p>
+ *
+ * <p><strong>Concurrency.</strong> Экземпляр привязан к одному Mind и использует
+ * его mutable factories. Одновременная компиляция через один Mind требует
+ * внешней сериализации или отдельного child transaction; сам класс не создаёт
+ * checkpoint и не владеет rollback.</p>
+ *
+ * @see Parser
+ * @see Mind
+ * @see Rule
+ */
 public class Compiller {
 
     private final Mind mind;
