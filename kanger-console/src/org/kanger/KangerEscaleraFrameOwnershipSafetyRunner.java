@@ -5,12 +5,11 @@
  */
 package org.kanger;
 
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.storage.Escalera;
-import org.kanger.storage.Step;
 import org.kanger.udf.UDF;
-import org.kanger.units.Term;
 
 /**
  * Regression gate for strict ownership of nested Escalera mark frames.
@@ -33,21 +32,24 @@ public final class KangerEscaleraFrameOwnershipSafetyRunner {
             Mind mind = new Mind(user);
             Escalera cache = new Escalera(mind, "frame-ownership", null);
 
-            Term baseline = term(mind, 1L, "baseline");
+            ITerm baseline = mind.getTerms().add("frame_baseline");
+            ITerm outer = mind.getTerms().add("frame_outer");
+            ITerm inner = mind.getTerms().add("frame_inner");
             cache.add(baseline);
 
             cache.mark();
-            Term outer = term(mind, 2L, "outer");
             cache.add(outer);
 
             cache.mark();
-            Term inner = term(mind, 3L, "inner");
             cache.add(inner);
 
             cache.release();
-            require(cache.containsKey(1L), "inner release lost baseline");
-            require(cache.containsKey(2L), "inner release lost outer mutation");
-            require(!cache.containsKey(3L), "inner release retained inner mutation");
+            require(cache.containsKey(baseline.getId()),
+                    "inner release lost baseline");
+            require(cache.containsKey(outer.getId()),
+                    "inner release lost outer mutation");
+            require(!cache.containsKey(inner.getId()),
+                    "inner release retained inner mutation");
 
             boolean duplicateRejected = false;
             try {
@@ -59,9 +61,12 @@ public final class KangerEscaleraFrameOwnershipSafetyRunner {
                     "duplicate inner release consumed the outer frame");
 
             cache.commit();
-            require(cache.containsKey(1L), "outer commit lost baseline");
-            require(cache.containsKey(2L), "outer commit lost committed mutation");
-            require(!cache.containsKey(3L), "outer commit restored inner mutation");
+            require(cache.containsKey(baseline.getId()),
+                    "outer commit lost baseline");
+            require(cache.containsKey(outer.getId()),
+                    "outer commit lost committed mutation");
+            require(!cache.containsKey(inner.getId()),
+                    "outer commit restored inner mutation");
 
             boolean underflowRejected = false;
             try {
@@ -80,13 +85,6 @@ public final class KangerEscaleraFrameOwnershipSafetyRunner {
             error.printStackTrace(System.err);
         }
         System.exit(exitCode);
-    }
-
-    private static Term term(Mind mind, long id, String text) throws Exception {
-        Term term = new Term(text, mind);
-        term.setId(id);
-        term.setMindId(mind.getId());
-        return term;
     }
 
     private static void require(boolean condition, String message) {
