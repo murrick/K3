@@ -1,0 +1,120 @@
+name: KANGER C-variable adjacency audit
+
+on:
+  push:
+    branches:
+      - 'audit/3.5.0-cvar-adjacency'
+    paths:
+      - '.github/workflows/kanger-cvar-adjacency-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  without-virtual-child:
+    name: No virtual child / Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+
+    steps:
+      - name: Check out diagnostic branch
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Inventory C-variable adjacency
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -RInE \
+            'cvarChilds|cvarParents|getCvarChilds|getCvarParents|linkCVar|unlinkCVar|getChild\(|getParent\(|getParentId\(|setChild\(|setParent\(' \
+            kanger/src kanger-console/src \
+            | tee target-cvar-adjacency-before.txt
+
+      - name: Disable Linker virtual child substitution
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('kanger/src/org/kanger/Linker.java')
+          text = path.read_text(encoding='utf-8')
+
+          old_down = '''                                                    TValue s = null;
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                        Term tn = (Term) tm.getChild(mind);
+                                                        if (tn == null) {
+                                                            tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind), tm);
+                                                        }
+                                                        tm = tn;
+                                                    } else {
+                                                        s = mind.getTValues().find(t, tm);
+                                                    }
+'''
+          new_down = '''                                                    TValue s = mind.getTValues().find(t, tm);
+'''
+
+          old_up = '''                                                    TValue s = null;
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                        Term tn = (Term) tm.getChild(mind);
+                                                        if (tn == null) {
+                                                            tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind), tm);
+                                                        }
+                                                        tm = tn;
+                                                    } else {
+                                                        s = mind.getTValues().find(t, tm);
+                                                    }
+'''
+          new_up = '''                                                    TValue s = mind.getTValues().find(t, tm);
+'''
+
+          if text.count(old_down) != 1:
+              raise SystemExit('Expected exactly one downward virtual-child block')
+          if text.count(old_up) != 1:
+              raise SystemExit('Expected exactly one upward virtual-child block')
+
+          text = text.replace(old_down, new_down).replace(old_up, new_up)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          ! grep -qE 'getChild\(mind\)|getParentId\(mind\)|createCVar\([^;]*, tm\)' \
+            kanger/src/org/kanger/Linker.java
+          git diff --check
+          git diff -- kanger/src/org/kanger/Linker.java
+
+      - name: Run focused 03 quantifier corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn --batch-mode --no-transfer-progress -DskipTests test-compile
+          mvn --batch-mode --no-transfer-progress \
+            -Dexec.mainClass=org.kanger.KangerTestRunner \
+            -Dexec.classpathScope=test \
+            -Dexec.args=set_03_ \
+            exec:java \
+            | tee target-cvar-set-03.txt
+          grep -Fq 'Fails: 0' target-cvar-set-03.txt
+          grep -Fq 'Testing: set_03_01' target-cvar-set-03.txt
+
+      - name: Run complete regression corpus
+        shell: bash
+        run: mvn --batch-mode --no-transfer-progress test
+
+      - name: Confirm diagnostic scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          test "$changed" = 'kanger/src/org/kanger/Linker.java'
+          git diff --check
