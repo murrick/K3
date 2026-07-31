@@ -42,7 +42,65 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Quznetsov on 25.05.15.
+ * Реестр и транзакционный overlay логических {@link TVariable}, принадлежащих
+ * одному уровню {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Фабрика создаёт variable units,
+ * связывающие schema identity, owning Rule, name Term и отдельный variable
+ * index, выделяемый dictionary/term subsystem. {@link #createTVar(Rule, ITerm)}
+ * всегда создаёт новую логическую переменную; класс не выполняет
+ * semantic-deduplication по имени или Rule и не должен описываться как lookup
+ * canonicalizer аналогично {@link TValueFactory}.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Каждый {@code Mind} создаёт
+ * собственную {@code TVariableFactory}. Child
+ * {@code transaction(parentFactory)} строит {@link Escalera} overlay над
+ * parent cache, сбрасывает generation-local chain anchor и не наследует
+ * storage connection. До typed parent commit child-created variables
+ * принадлежат дочернему уровню.</p>
+ *
+ * <p><strong>Завершение транзакции.</strong> Typed
+ * {@code commit(childFactory)} продвигает child cache chain и переводит
+ * созданные на дочернем уровне variables в runtime-контекст родительского
+ * {@code Mind}. Решение о принятии или отклонении всего child уровня, порядок
+ * factory completion и transaction reservation принадлежат {@code Mind}, а не
+ * этой фабрике.</p>
+ *
+ * <p><strong>Checkpoint protocol.</strong> No-argument {@link #mark()},
+ * {@link #commit()} и {@link #release()} относятся к вложенным cache/composite
+ * checkpoints и делегируют их {@code Escalera}. У фабрики нет отдельного
+ * auxiliary checkpoint journal; это не означает, что typed child commit и
+ * no-argument checkpoint commit являются одной операцией.</p>
+ *
+ * <p><strong>Persistence.</strong> Только root factory при открытом storage
+ * заимствует schema-specific {@link IBase} у {@link User}. Cache miss может
+ * materialize переменную через эту базу, а root update передаёт cache changes
+ * storage-модулю. Child overlay получает видимость через parent cache и не
+ * владеет connection, storage generation или close authority.</p>
+ *
+ * <p><strong>Очистка.</strong> Child {@link #clear()} заново создаёт overlay
+ * над текущей parent factory; root clear сбрасывает текущую generation.
+ * {@link #pack()} физически удаляет variables, остающиеся logically deleted, и
+ * одновременно удаляет их как keys из transient binding projection
+ * {@link TValueFactory#getCurrent()}. Эта cross-factory очистка не позволяет
+ * runtime binding ссылаться на уже удалённую logical variable.</p>
+ *
+ * <p><strong>Инварианты и concurrency.</strong> Schema ID, variable index,
+ * owning Rule, name и owning Mind ID являются различными частями identity и
+ * lifecycle; variable index нельзя трактовать как persistent schema ID.
+ * Синхронизация {@code createTVar} защищает локальный creation path, но не
+ * делает mutable variables, iterator, связанную value factory или полный
+ * transaction protocol независимо thread-safe.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Переменные следует
+ * создавать и получать через фабрику актуального {@code Mind}. Вызывающая
+ * сторона не должна ожидать несуществующей дедупликации по имени, публиковать
+ * child variable до parent completion либо сохранять active TValue binding
+ * после физического удаления соответствующей переменной.</p>
+ *
+ * @see TValueFactory
+ * @see TVariable
+ * @see Rule
  */
 public class TVariableFactory implements IFactory<TVariable> {
 
