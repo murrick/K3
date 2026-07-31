@@ -42,7 +42,57 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Quznetsov on 26.05.15.
+ * Интерпретатор насыщенного состояния Mind и граница формирования ответа.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Analyzer} запускается после
+ * работы {@link Linker} и читает уже сформированные Rule, TValue и variable
+ * bindings. Он распознаёт рассчитанные домены, совпадения противоположной
+ * полярности, специальный запрос {@code rule(1)}, наполняет query-local stores
+ * решений и значений и определяет, закрыты ли все ветви запроса. Класс не
+ * выполняет saturation, не создаёт canonical Rule identity и не владеет
+ * транзакцией.</p>
+ *
+ * <p><strong>Жизненный цикл ответа.</strong> {@link #analyze(Rule, boolean)}
+ * очищает {@link org.kanger.stores.SolutionsStore} и
+ * {@link org.kanger.stores.ValuesStore} текущего Mind, затем проверяет всю
+ * видимую базу. Переданный параметр {@code rule} сохраняется как historical
+ * compatibility surface и не ограничивает текущий полный анализ. Результаты
+ * существуют в runtime-контексте Mind и не являются persistence publication.</p>
+ *
+ * <p><strong>Совпадения.</strong> Calculated domain считается совпадением и
+ * публикует solves, когда сам домен или связанная TVariable относится к запросу.
+ * Для обычного домена выбираются кандидаты противоположной полярности через
+ * RuleFactory candidate index; при {@code rule(1)} используется полный Rule-set
+ * и сравнение по точному {@code long} ID. Deleted Rule и текущий Rule исключаются.
+ * Historical ID-order filter предотвращает повторную симметричную обработку
+ * одной пары и является частью существующей семантики.</p>
+ *
+ * <p><strong>Закрытие запроса.</strong> Query domain, не имеющий совпадения и
+ * не помеченный used, попадает в набор unresolved branches. Если такие ветви
+ * остаются и ни один calculated result не закрыл запрос, общий ответ
+ * принудительно становится false. Это проверка полноты результата, а не
+ * доказательство отсутствия отдельных локальных совпадений.</p>
+ *
+ * <p><strong>Гипотезы.</strong> Только при отсутствии основного результата
+ * Analyzer рассматривает stored, complete, non-query Rule текущего или
+ * восстановленного Mind. Abstractive candidates фильтруются настройкой
+ * {@link Mind#includeAbstractiveHypothesis()}; дубликаты в RuleFactory и
+ * HypothesisStore не добавляются. Гипотеза является runtime semantic effect и
+ * не заменяет persistent Rule.</p>
+ *
+ * <p><strong>Порядок и side effects.</strong> Обход Rule-set, candidate order,
+ * special-ID selection, добавление solutions/values и admission hypotheses
+ * являются историческим semantic kernel. Документация не разрешает менять их
+ * порядок, симметрию или критерии. Logging добавляет только Analyzer/Timing
+ * записи и не влияет на результат.</p>
+ *
+ * <p><strong>Concurrency.</strong> Экземпляр привязан к одному {@link Mind} и
+ * его query-local stores. Concurrent analyze одного Mind не поддерживается;
+ * внешняя сторона должна сериализовать link/analyze lifecycle.</p>
+ *
+ * @see Linker
+ * @see Mind
+ * @see Hypothesis
  */
 public class Analyzer {
 
