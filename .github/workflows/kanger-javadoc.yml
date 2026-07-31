@@ -8,6 +8,7 @@ on:
       - 'kanger-data-dumb/src/**/*.java'
       - 'kanger-console/src/**/*.java'
       - 'docs/architecture/3.5.0.4-*.md'
+      - 'tools/audit_architectural_javadoc.py'
       - 'pom.xml'
       - '.github/workflows/kanger-javadoc.yml'
   workflow_dispatch:
@@ -60,6 +61,13 @@ jobs:
             -Xdoclint:none \
             -d build/javadoc \
             @build/javadoc-sources.txt
+
+      - name: Audit public Javadoc coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/audit_architectural_javadoc.py \
+            | tee build/javadoc-coverage.tsv
 
       - name: Verify rendered architecture checkpoints
         shell: bash
@@ -159,6 +167,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kanger-javadoc-java21
-          path: build/javadoc
+          path: |
+            build/javadoc
+            build/javadoc-coverage.tsv
           if-no-files-found: error
           retention-days: 14
