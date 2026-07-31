@@ -35,12 +35,16 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by Dmitry G. Quznetsov on 27.05.20.
@@ -48,6 +52,10 @@ import java.util.Map;
 public class DB implements IData {
 
     private static final Object locker = new Object();
+    private static final String[] GENERATION_SUFFIXES = {
+            ".index", ".store", ".integrity"
+    };
+
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<String, IBase>();
     private IUser user = null;
@@ -138,17 +146,96 @@ public class DB implements IData {
         m.closeStorage();
 
         String dbPath = user.getDatabaseDir() + tmp;
-        deleteStorageFiles(dbPath);
-
         String temporaryPath = dbPath + "-temporary";
-        new File(temporaryPath + ".index").renameTo(new File(dbPath + ".index"));
-        new File(temporaryPath + ".store").renameTo(new File(dbPath + ".store"));
-        new File(temporaryPath + ".integrity")
-                .renameTo(new File(dbPath + ".integrity"));
+        replaceGeneration(dbPath, temporaryPath);
+
+        new File(dbPath + ".integrity.delta").delete();
+        deleteRecoveryLogs(dbPath);
         new File(temporaryPath + ".integrity.delta").delete();
         deleteRecoveryLogs(temporaryPath);
 
         use(tmp);
+    }
+
+    private void replaceGeneration(String dbPath, String temporaryPath)
+            throws Exception {
+        List<GenerationFile> generation = new ArrayList<GenerationFile>();
+        String backupMarker = ".reindex-backup-" + UUID.randomUUID().toString();
+
+        for (String suffix : GENERATION_SUFFIXES) {
+            GenerationFile file = new GenerationFile(
+                    new File(dbPath + suffix),
+                    new File(temporaryPath + suffix),
+                    new File(dbPath + suffix + backupMarker));
+            if (!file.temporary.isFile()) {
+                throw new IOException("Temporary reindex file is missing: "
+                        + file.temporary.getPath());
+            }
+            generation.add(file);
+        }
+
+        List<GenerationFile> backedUp = new ArrayList<GenerationFile>();
+        List<GenerationFile> installed = new ArrayList<GenerationFile>();
+        try {
+            for (GenerationFile file : generation) {
+                if (file.live.exists()) {
+                    Files.move(file.live.toPath(), file.backup.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                    backedUp.add(file);
+                }
+            }
+            for (GenerationFile file : generation) {
+                Files.move(file.temporary.toPath(), file.live.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+                installed.add(file);
+            }
+        } catch (Exception publicationError) {
+            rollbackGeneration(installed, backedUp, publicationError);
+            throw publicationError;
+        }
+
+        for (GenerationFile file : backedUp) {
+            file.backup.delete();
+        }
+    }
+
+    private void rollbackGeneration(List<GenerationFile> installed,
+                                    List<GenerationFile> backedUp,
+                                    Exception publicationError) {
+        for (int i = installed.size() - 1; i >= 0; --i) {
+            GenerationFile file = installed.get(i);
+            try {
+                if (file.live.exists()) {
+                    Files.move(file.live.toPath(), file.temporary.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (Exception rollbackError) {
+                publicationError.addSuppressed(rollbackError);
+            }
+        }
+        for (int i = backedUp.size() - 1; i >= 0; --i) {
+            GenerationFile file = backedUp.get(i);
+            try {
+                if (file.backup.exists()) {
+                    Files.move(file.backup.toPath(), file.live.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (Exception rollbackError) {
+                publicationError.addSuppressed(rollbackError);
+            }
+        }
+    }
+
+    private static final class GenerationFile {
+        private final File live;
+        private final File temporary;
+        private final File backup;
+
+        private GenerationFile(File live, File temporary, File backup) {
+            this.live = live;
+            this.temporary = temporary;
+            this.backup = backup;
+        }
     }
 
     private void deleteStorageFiles(String dbPath) {
