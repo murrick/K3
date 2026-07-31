@@ -240,6 +240,7 @@ final class RuleCandidateIndex {
     private final IdIndex<SignatureKey> fallbackSignatures = new IdIndex<>();
     private final IdIndex<PositionKey> positions = new IdIndex<>();
     private final Map<Mind, Map<BatchKey, BatchSummary>> batchSummaries = new WeakHashMap<>();
+    private long version = 0L;
 
     void clear() {
         writeLock.lock();
@@ -248,6 +249,7 @@ final class RuleCandidateIndex {
             fallbackSignatures.clear();
             positions.clear();
             batchSummaries.clear();
+            ++version;
         } finally {
             writeLock.unlock();
         }
@@ -281,6 +283,8 @@ final class RuleCandidateIndex {
             signatures.release();
             fallbackSignatures.release();
             positions.release();
+            batchSummaries.clear();
+            ++version;
         } finally {
             writeLock.unlock();
         }
@@ -305,6 +309,7 @@ final class RuleCandidateIndex {
             fallbackSignatures.mergeFrom(childSnapshot.fallbackSignatures);
             positions.mergeFrom(childSnapshot.positions);
             batchSummaries.clear();
+            ++version;
         } finally {
             writeLock.unlock();
         }
@@ -322,6 +327,7 @@ final class RuleCandidateIndex {
         writeLock.lock();
         try {
             batchSummaries.clear();
+            ++version;
             boolean positional = positionalEligible(rule);
             for (List<Domain> branch : rule.getTree()) {
                 for (Domain domain : branch) {
@@ -349,6 +355,7 @@ final class RuleCandidateIndex {
         writeLock.lock();
         try {
             batchSummaries.clear();
+            ++version;
             for (List<Domain> branch : rule.getTree()) {
                 for (Domain domain : branch) {
                     SignatureKey signature = signature(domain, domain.isAntc());
@@ -433,53 +440,60 @@ final class RuleCandidateIndex {
         return true;
     }
 
-    private BatchSummary batchSummary(Domain source,
-                                      boolean candidateAntc,
-                                      Mind mind,
-                                      LinkedHashSet<Long> selected) throws Exception {
-        Rule sourceRule = (Rule) source.getRule();
-        Mind activeMind = sourceRule.getMind() == null ? mind : sourceRule.getMind();
-        SignatureKey signature = signature(source, candidateAntc);
-        BatchKey key = new BatchKey(signature, sourceRule.isGenerated());
-
-        Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
-        if (byKey == null) {
-            byKey = new HashMap<>();
-            batchSummaries.put(activeMind, byKey);
-        }
-        BatchSummary summary = byKey.get(key);
-        if (summary == null) {
-            LinkedHashSet<Long> batchedIds = new LinkedHashSet<>();
-            for (long id : selected) {
-                Rule candidate = (Rule) activeMind.getRules().get(id);
-                if (candidate != null
-                        && batchGeneratedNonSubstitutablePair(
-                        source, candidate, candidateAntc, activeMind)) {
-                    batchedIds.add(id);
-                }
+    private BatchSummary computeBatchSummary(Domain source,
+                                             boolean candidateAntc,
+                                             Mind activeMind,
+                                             LinkedHashSet<Long> selected) throws Exception {
+        LinkedHashSet<Long> batchedIds = new LinkedHashSet<>();
+        for (long id : selected) {
+            Rule candidate = (Rule) activeMind.getRules().get(id);
+            if (candidate != null
+                    && batchGeneratedNonSubstitutablePair(
+                    source, candidate, candidateAntc, activeMind)) {
+                batchedIds.add(id);
             }
-            summary = new BatchSummary(batchedIds);
-            byKey.put(key, summary);
-        } else if (!summary.batchedIds.isEmpty()) {
+        }
+        return new BatchSummary(batchedIds);
+    }
+
+    private void markCachedBatchUsed(Domain source,
+                                     Rule sourceRule,
+                                     Mind activeMind,
+                                     BatchSummary summary) throws Exception {
+        if (!summary.batchedIds.isEmpty()) {
             source.setUsed(activeMind);
             sourceRule.setUsed(activeMind);
         }
-        return summary;
     }
 
     void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
                               LinkedHashSet<Long> result) throws Exception {
-        // batchSummary is a mutable per-Mind memo, therefore the resolved path
-        // uses the write side of the same guard.
+        SignatureKey signature = signature(source, candidateAntc);
+        Long[] resolvedTermIds = new Long[source.getRange()];
+        for (int position = 0; position < source.getRange(); ++position) {
+            resolvedTermIds[position] = resolvedTermId(source.get(position), mind);
+        }
+
+        boolean batchEligible = !source.isSubstitutable();
+        Rule sourceRule = batchEligible ? (Rule) source.getRule() : null;
+        Mind activeMind = batchEligible
+                ? (sourceRule.getMind() == null ? mind : sourceRule.getMind())
+                : null;
+        BatchKey batchKey = batchEligible
+                ? new BatchKey(signature, sourceRule.isGenerated())
+                : null;
+
+        LinkedHashSet<Long> selected;
+        BatchSummary summary = null;
+        long observedVersion;
+
         writeLock.lock();
         try {
-            SignatureKey signature = signature(source, candidateAntc);
-            LinkedHashSet<Long> selected = signatures.get(signature);
+            selected = signatures.get(signature);
             if (selected.isEmpty()) return;
             LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
-            for (int position = 0; position < source.getRange(); ++position) {
-                IArgument argument = source.get(position);
-                Long termId = resolvedTermId(argument, mind);
+            for (int position = 0; position < resolvedTermIds.length; ++position) {
+                Long termId = resolvedTermIds[position];
                 if (termId == null) continue;
                 LinkedHashSet<Long> compatible = positions.get(
                         new PositionKey(signature, position, termId));
@@ -489,14 +503,47 @@ final class RuleCandidateIndex {
                 selected.retainAll(compatible);
                 if (selected.isEmpty()) return;
             }
-            if (!source.isSubstitutable()) {
-                BatchSummary summary = batchSummary(source, candidateAntc, mind, selected);
-                selected.removeAll(summary.batchedIds);
+            observedVersion = version;
+            if (batchEligible) {
+                Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
+                summary = byKey == null ? null : byKey.get(batchKey);
             }
-            result.addAll(selected);
         } finally {
             writeLock.unlock();
         }
+
+        if (batchEligible) {
+            boolean cached = summary != null;
+            if (summary == null) {
+                summary = computeBatchSummary(
+                        source, candidateAntc, activeMind, selected);
+
+                writeLock.lock();
+                try {
+                    if (version == observedVersion) {
+                        Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
+                        if (byKey == null) {
+                            byKey = new HashMap<>();
+                            batchSummaries.put(activeMind, byKey);
+                        }
+                        BatchSummary existing = byKey.get(batchKey);
+                        if (existing == null) {
+                            byKey.put(batchKey, summary);
+                        } else {
+                            summary = existing;
+                            cached = true;
+                        }
+                    }
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+            if (cached) {
+                markCachedBatchUsed(source, sourceRule, activeMind, summary);
+            }
+            selected.removeAll(summary.batchedIds);
+        }
+        result.addAll(selected);
     }
 
     private Long resolvedTermId(IArgument argument, Mind mind) throws Exception {

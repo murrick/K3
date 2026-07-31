@@ -382,9 +382,7 @@ public class RuleFactory implements IFactory<IRule> {
             parentIndex.collectResolvedCandidateIds(source, candidateAntc, result);
         }
         ensureDomainIndex();
-        synchronized (metadataLock) {
-            candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
-        }
+        candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
     }
 
     /**
