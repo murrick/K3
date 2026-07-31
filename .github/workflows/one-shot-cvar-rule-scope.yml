@@ -78,4 +78,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git commit -m 'Scope C-variable children by target Rule'
+          git fetch origin fix/3.5.0.5-cvar-rule-scope
+          git rebase origin/fix/3.5.0.5-cvar-rule-scope
           git push origin HEAD:fix/3.5.0.5-cvar-rule-scope
