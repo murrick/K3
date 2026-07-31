@@ -41,9 +41,11 @@ import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -58,6 +60,7 @@ public class DomainFactory implements IFactory<Domain> {
     private IBase connection = null;
     private final Mind mind;
     private final Set<Domain> waiters = new CopyOnWriteArraySet<>();
+    private final Stack<Set<Domain>> waiterStack = new Stack<>();
 
     public DomainFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -73,6 +76,7 @@ public class DomainFactory implements IFactory<Domain> {
         }
 
         waiters.clear();
+        waiterStack.clear();
         if (base != null) {
             waiters.addAll(base.waiters);
             cache = new Escalera(mind, SCHEMA, base.cache);
@@ -189,14 +193,23 @@ public class DomainFactory implements IFactory<Domain> {
 
     public void mark() throws Exception {
         cache.mark();
+        waiterStack.push(new HashSet<>(waiters));
     }
 
     public void commit() throws Exception {
         cache.commit();
+        if (!waiterStack.isEmpty()) {
+            waiterStack.pop();
+        }
     }
 
     public void release() throws Exception {
         cache.release();
+        if (!waiterStack.isEmpty()) {
+            Set<Domain> waiterSnapshot = waiterStack.pop();
+            waiters.clear();
+            waiters.addAll(waiterSnapshot);
+        }
     }
 
     @Override
