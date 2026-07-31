@@ -1,0 +1,66 @@
+name: KANGER architectural Javadoc
+
+on:
+  pull_request:
+    paths:
+      - 'kanger/src/**/*.java'
+      - '.github/workflows/kanger-javadoc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  javadoc:
+    name: Java ${{ matrix.java }} Javadoc
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Generate implementation Javadoc
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build/javadoc
+          mkdir -p build/javadoc
+          find kanger/src -name '*.java' -print0 \
+            | sort -z \
+            | xargs -0 javadoc \
+                -quiet \
+                -encoding UTF-8 \
+                -docencoding UTF-8 \
+                -charset UTF-8 \
+                -Xdoclint:none \
+                -d build/javadoc
+
+      - name: Verify User–Mind rendered pilot
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build/javadoc/org/kanger/User.html
+          test -s build/javadoc/org/kanger/Mind.html
+          grep -Fq 'Пользовательский контекст верхнего уровня' build/javadoc/org/kanger/User.html
+          grep -Fq 'Активный логический контекст KANGER' build/javadoc/org/kanger/Mind.html
+          ! grep -Fq '{@link' build/javadoc/org/kanger/User.html
+          ! grep -Fq '{@link' build/javadoc/org/kanger/Mind.html
+
+      - name: Upload rendered Javadoc
+        if: matrix.java == '21'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-javadoc-java21
+          path: build/javadoc
+          if-no-files-found: error
+          retention-days: 14
