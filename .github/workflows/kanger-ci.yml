@@ -88,6 +88,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: DUMB close failure isolation invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.storage.DBCloseFailureIsolationSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Escalera empty-root mark invariant
         run: >-
           mvn --batch-mode --no-transfer-progress
