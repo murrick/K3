@@ -46,10 +46,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
     private Object locker;
 
-//    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-//    private final Lock r = rwl.readLock();
-//    private final Lock w = rwl.writeLock();
-
     private File file = null;
     private RandomAccessFile rasRead = null;
     private int version = VERSION_CODE;
@@ -256,14 +252,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         return null;
     }
 
-//    private int getBlockLength(Collection<IndexOne> block) {
-//        int size = 0;
-//        for (IndexOne one : block) {
-//            size += one.getRecordSize();
-//        }
-//        return size;
-//    }
-
     private void writeDumb(RandomAccessFile ras, int cnt) throws IOException {
         ByteBuffer packet = new ByteBuffer();
         for (int i = 0; i < cnt; ++i) {
@@ -374,16 +362,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
     }
 
-//    public void add(long id, long data) throws Exception {
-//        IndexOne io = getOne(id, currentBlock);
-//        if (io == null) {
-//            set(id, data);
-//        } else if (io.getLong() != data) {
-//            io.setLong(data);
-//            changed = true;
-//        }
-//    }
-
     public IndexOne set(long id, long data) throws Exception {
         synchronized (locker) {
             IndexOne io = getOne(id, currentBlock);
@@ -481,18 +459,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         writeCounter = 0;
     }
 
-//    public int size() throws Exception {
-//        int size = 0;
-//        if (!isClosed()) {
-//            NavigableMap<Long, Index.IndexOne> block = new TreeMap<>();
-//            for (IndexOne one : baseIndex.values()) {
-//                loadBlock(one, block);
-//                size += block.size();
-//            }
-//        }
-//        return size;
-//    }
-
     public long firstKey() {
         if (baseIndex.firstKey() != null) {
             return baseIndex.firstKey();
@@ -508,11 +474,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             } else {
                 NavigableMap<Long, IndexOne> block = new TreeMap<>();
                 loadBlock(baseIndex.lastEntry().getValue(), block);
-//                if(block.lastEntry() != null && block.lastEntry().getValue().getSize() != 0) {
                 return block.lastKey();
-//                } else {
-//                    return -1;
-//                }
             }
         } else {
             return -1;
@@ -539,17 +501,6 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     public boolean isEmpty() {
         return baseIndex.isEmpty();
     }
-
-//    private long getFreeBlock() throws IOException {
-//        IndexOne one = null;
-//        if (!emptyIndex.isEmpty()) {
-//            one = emptyIndex.firstEntry().getValue();
-//            emptyIndex.remove(one.getId());
-//            return one.getOffset();
-//        } else {
-//            return rasRead.length();
-//        }
-//    }
 
     public class IndexOne implements Comparable<IndexOne> {
         public static final int RECORD_SIZE = Byte.BYTES + Long.BYTES + Long.BYTES;
