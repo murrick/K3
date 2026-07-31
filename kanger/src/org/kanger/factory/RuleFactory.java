@@ -72,6 +72,7 @@ public class RuleFactory implements IFactory<IRule> {
 
     private final Mind mind;
     private volatile boolean action = false;
+    private final Stack<Boolean> actionStack = new Stack<>();
     private final Object metadataLock = new Object();
 
     private static final class DomainKey {
@@ -133,6 +134,7 @@ public class RuleFactory implements IFactory<IRule> {
         bottom = null;
         connection = null;
         action = false;
+        actionStack.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -648,6 +650,7 @@ public class RuleFactory implements IFactory<IRule> {
             promotionViews.clear();
             promotionStack.clear();
             appliedPromotions.clear();
+            actionStack.clear();
         }
         if (mind.getNext() != null) {
             transaction((RuleFactory) mind.getNext().getRules());
@@ -665,6 +668,7 @@ public class RuleFactory implements IFactory<IRule> {
             termIndexStack.push(copyTermIndexLocked());
             promotionStack.push(new HashSet<>(primaryPromotions));
             candidateIndex.mark();
+            actionStack.push(action);
         }
     }
 
@@ -681,6 +685,9 @@ public class RuleFactory implements IFactory<IRule> {
                 promotionStack.pop();
             }
             candidateIndex.commit();
+            if (!actionStack.isEmpty()) {
+                actionStack.pop();
+            }
         }
     }
 
@@ -703,6 +710,9 @@ public class RuleFactory implements IFactory<IRule> {
                 promotionViews.clear();
             }
             candidateIndex.release();
+            if (!actionStack.isEmpty()) {
+                action = actionStack.pop();
+            }
         }
     }
 
