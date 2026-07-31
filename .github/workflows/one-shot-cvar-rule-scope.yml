@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           git diff --check
           expected=$'.github/workflows/kanger-ci.yml\nkanger-console/src/org/kanger/KangerCVarRuleScopeSafetyRunner.java\nkanger/src/org/kanger/Linker.java\nkanger/src/org/kanger/Mind.java\nkanger/src/org/kanger/factory/DictionaryFactory.java\nkanger/src/org/kanger/units/Term.java'
-          actual="$(git diff --name-only | sort)"
+          actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort )"
           test "$actual" = "$expected"
 
           unexpected="$(grep -R --line-number --fixed-strings 'getChild(mind)' kanger/src kanger-console/src | grep -v 'kanger/src/org/kanger/units/Term.java' || true)"
