@@ -684,6 +684,11 @@ public class Term implements IUnit<Term>, ITerm {
         mind.getCvarParents().put(this, parent);
     }
 
+    /**
+     * Historical unscoped lookup. New inference code must select a child by
+     * target Rule through {@link #getChild(Mind, long)}.
+     */
+    @Deprecated
     public ITerm getChild(Mind mind) {
         ITerm t = mind.getCvarChilds().get(this);
         if (t == null && mind.getNext() != null) {
@@ -691,6 +696,11 @@ public class Term implements IUnit<Term>, ITerm {
         } else {
             return t;
         }
+    }
+
+    /** Return this C-variable's canonical projection for one target Rule. */
+    public ITerm getChild(Mind mind, long targetRuleId) {
+        return mind.getCVarChild(this, targetRuleId);
     }
 
     public void setChild(ITerm child) {

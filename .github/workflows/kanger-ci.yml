@@ -74,6 +74,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: C-variable Rule-scope invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerCVarRuleScopeSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Linker checkpoint balance invariant
         run: >-
           mvn --batch-mode --no-transfer-progress

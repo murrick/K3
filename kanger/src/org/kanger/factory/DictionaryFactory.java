@@ -236,6 +236,26 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return null;
     }
 
+    /**
+     * Create a C-variable descriptor owned by {@code r}.
+     *
+     * <p>When {@code parent} is non-null, the new {@code *N} term is not a
+     * concrete substitution. It is the canonical projection of the parent
+     * C-variable into the independent binding scope of the target Rule. A
+     * parent may therefore have several children, but at most one child for
+     * each target Rule id. Reusing that rule-scoped identity prevents repeated
+     * linker passes from producing an unbounded chain of equivalent variables,
+     * while keeping different Rule-local sets of T-variables isolated.</p>
+     *
+     * <p>The child receives its target Rule before {@link Mind#linkCVar(ITerm,
+     * ITerm)} publishes the transient adjacency. The adjacency belongs to the
+     * active Mind lifecycle and is not persistent knowledge.</p>
+     *
+     * @param r target Rule whose T-variable set defines the binding scope
+     * @param name source-level variable name retained for display
+     * @param parent source C-variable, or {@code null} for a root descriptor
+     * @return the newly allocated root or rule-scoped child descriptor
+     */
     public ITerm createCVar(IRule r, ITerm name, ITerm parent) throws Exception {
         int i = nextVarIndex();
         String temp = String.format("%c%d", parent == null ? '%' : '*', i);
