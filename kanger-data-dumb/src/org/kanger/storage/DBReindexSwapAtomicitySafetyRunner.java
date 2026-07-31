@@ -71,7 +71,7 @@ public final class DBReindexSwapAtomicitySafetyRunner {
             require(observed != null,
                     "The injected reindex publication failure must propagate");
             require(injector.wasTriggered(),
-                    "The failure must occur while publishing the temporary index");
+                    "The failure must occur after backup and before index install");
             requireFileEquals(new File(dbPath + ".index"), indexBefore,
                     "Original index must survive a failed publication");
             requireFileEquals(new File(dbPath + ".store"), storeBefore,
@@ -130,11 +130,13 @@ public final class DBReindexSwapAtomicitySafetyRunner {
 
     private static final class OneShotRenameFailure extends SecurityManager {
         private final String liveIndex;
-        private boolean liveIndexDeleted;
+        private final String backupPrefix;
+        private boolean liveIndexBackedUp;
         private boolean triggered;
 
         private OneShotRenameFailure(File liveIndex) {
             this.liveIndex = liveIndex.getAbsolutePath();
+            this.backupPrefix = this.liveIndex + ".reindex-backup-";
         }
 
         private boolean wasTriggered() {
@@ -150,18 +152,14 @@ public final class DBReindexSwapAtomicitySafetyRunner {
         }
 
         @Override
-        public void checkDelete(String file) {
-            if (liveIndex.equals(new File(file).getAbsolutePath())) {
-                liveIndexDeleted = true;
-            }
-        }
-
-        @Override
         public void checkWrite(String file) {
-            if (liveIndexDeleted && !triggered
-                    && liveIndex.equals(new File(file).getAbsolutePath())) {
+            String absolute = new File(file).getAbsolutePath();
+            if (absolute.startsWith(backupPrefix)) {
+                liveIndexBackedUp = true;
+            } else if (liveIndexBackedUp && !triggered
+                    && liveIndex.equals(absolute)) {
                 triggered = true;
-                throw new SecurityException("injected reindex rename failure");
+                throw new SecurityException("injected reindex install failure");
             }
         }
     }
