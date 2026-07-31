@@ -7,6 +7,8 @@ package org.kanger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,9 +16,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Diagnostic wrapper around the existing factory concurrency regression.
  *
  * <p>The wrapped regression remains the source of pass/fail semantics. This
- * runner repeats that exact regression and emits JVM thread snapshots while an
- * attempt is still active, so a platform-specific timeout exposes the actual
- * wait/lock locations.</p>
+ * runner repeats that exact regression in an isolated temporary user home and
+ * emits JVM thread snapshots while an attempt is still active, so a
+ * platform-specific timeout exposes the actual wait/lock locations.</p>
  */
 public final class KangerFactoryConcurrencyDiagnosticRunner {
 
@@ -44,6 +46,10 @@ public final class KangerFactoryConcurrencyDiagnosticRunner {
     }
 
     private static void runAttempt(final int attempt) throws Throwable {
+        Path testHome = Files.createTempDirectory(
+                "kanger-factory-concurrency-diagnostic-" + attempt + "-");
+        System.setProperty("user.home", testHome.toAbsolutePath().toString());
+
         final AtomicReference<Throwable> failure = new AtomicReference<>();
         Thread regression = new Thread(new Runnable() {
             @Override
