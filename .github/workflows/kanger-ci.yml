@@ -178,3 +178,97 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerMindPartialCommitCompletionSafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+  cvar-without-virtual-child:
+    name: C-variable semantics without virtual child / Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Disable Linker virtual child substitution
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('kanger/src/org/kanger/Linker.java')
+          text = path.read_text(encoding='utf-8')
+
+          blocks = [
+          '''                                                    TValue s = null;
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                        Term tn = (Term) tm.getChild(mind);
+                                                        if (tn == null) {
+                                                            tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind), tm);
+                                                        }
+                                                        tm = tn;
+                                                    } else {
+                                                        s = mind.getTValues().find(t, tm);
+                                                    }
+''',
+          '''                                                    TValue s = null;
+                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
+                                                        Term tn = (Term) tm.getChild(mind);
+                                                        if (tn == null) {
+                                                            tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind), tm);
+                                                        }
+                                                        tm = tn;
+                                                    } else {
+                                                        s = mind.getTValues().find(t, tm);
+                                                    }
+'''
+          ]
+
+          for block in blocks:
+              if text.count(block) != 1:
+                  raise SystemExit('Virtual-child block identity changed')
+              text = text.replace(
+                  block,
+                  '                                                    TValue s = mind.getTValues().find(t, tm);\n')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          ! grep -qE 'getChild\(mind\)|getParentId\(mind\)|createCVar\([^;]*, tm\)' \
+            kanger/src/org/kanger/Linker.java
+          git diff --check
+
+      - name: Focused set_03 quantifier corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn --batch-mode --no-transfer-progress -DskipTests test-compile
+          mvn --batch-mode --no-transfer-progress \
+            -Dexec.mainClass=org.kanger.KangerTestRunner \
+            -Dexec.classpathScope=test \
+            -Dexec.args=set_03_ \
+            exec:java \
+            | tee target-cvar-set-03.txt
+          grep -Fq 'Testing: set_03_01' target-cvar-set-03.txt
+          grep -Fq 'Fails: 0' target-cvar-set-03.txt
+
+      - name: Complete regression corpus without virtual child
+        run: mvn --batch-mode --no-transfer-progress test
+
+      - name: Confirm in-memory diagnostic scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          test "$changed" = 'kanger/src/org/kanger/Linker.java'
+          git diff --check
