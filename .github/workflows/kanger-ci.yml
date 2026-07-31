@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: kanger-ci-${{ github.workflow }}-${{ github.ref }}
@@ -178,3 +178,116 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerMindPartialCommitCompletionSafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+  document-scoped-cvar:
+    name: Publish scoped C-variable Javadoc
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 34
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout architectural branch
+        uses: actions/checkout@v4
+        with:
+          ref: arch/3.5.0-core-consolidation
+          fetch-depth: 0
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Explain scoped C-variable projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          dictionary_path = Path('kanger/src/org/kanger/factory/DictionaryFactory.java')
+          dictionary = dictionary_path.read_text(encoding='utf-8')
+          method_anchor = '    public ITerm createCVar(IRule r, ITerm name, ITerm parent) throws Exception {\n'
+          if dictionary.count(method_anchor) != 1:
+              raise SystemExit('Unexpected DictionaryFactory.createCVar anchor count')
+          if 'Отдельная identity здесь семантически обязательна' in dictionary:
+              raise SystemExit('Scoped C-variable Javadoc is already present')
+
+          javadoc = '''    /**
+     * Создаёт канонический descriptor C-переменной, принадлежащий правилу.
+     *
+     * <p>При {@code parent == null} создаётся корневая C-переменная
+     * {@code %N}. При ненулевом {@code parent} создаётся временная scoped-
+     * проекция {@code *N} существующей C-переменной в контекст другого
+     * правила во время унификации {@link org.kanger.Linker}. Отдельная identity
+     * здесь семантически обязательна: прямое повторное использование исходного
+     * {@link Term} пересекло бы независимые области связывания правил и изменило
+     * бы результаты кванторного и реляционного вывода.</p>
+     *
+     * <p>Связь parent/child публикуется через
+     * {@link Mind#linkCVar(ITerm, ITerm)} только как runtime adjacency активного
+     * {@link Mind}. Она не является сохраняемым знанием и удаляется вместе с
+     * любым из связанных endpoints. {@code Linker} использует эту связь, чтобы
+     * распознавать уже выполненную scoped-проекцию и не строить рекурсивную
+     * цепочку искусственных C-переменных.</p>
+     *
+     * @param r правило, которому принадлежит создаваемый descriptor
+     * @param name исходное имя переменной для отображения и диагностики
+     * @param parent исходная C-переменная для scoped-проекции либо
+     *               {@code null} для корневой C-переменной
+     * @return канонический корневой либо scoped C-variable {@link Term}
+     * @throws Exception если не удалось канонизировать descriptor, выделить
+     *                   идентификатор или опубликовать runtime adjacency
+     */
+'''
+          dictionary_path.write_text(
+              dictionary.replace(method_anchor, javadoc + method_anchor),
+              encoding='utf-8')
+
+          linker_path = Path('kanger/src/org/kanger/Linker.java')
+          linker = linker_path.read_text(encoding='utf-8')
+          projection_anchor = '                                                    if (tm.isCVariable() && tm.getParentId(mind) == -1 &&'
+          if linker.count(projection_anchor) != 2:
+              raise SystemExit('Unexpected Linker scoped-projection anchor count')
+          if 'Crossing a Rule boundary requires a distinct scoped C-variable identity.' in linker:
+              raise SystemExit('Scoped C-variable Linker comments are already present')
+
+          local_comment = '''                                                    /*
+                                                     * Crossing a Rule boundary requires a distinct
+                                                     * scoped C-variable identity. Reusing tm directly
+                                                     * would merge the source and target binding scopes.
+                                                     * See DictionaryFactory.createCVar(...) for the
+                                                     * semantic and lifecycle contract.
+                                                     */
+'''
+          linker_path.write_text(
+              linker.replace(projection_anchor, local_comment + projection_anchor),
+              encoding='utf-8')
+          PY
+
+      - name: Validate documentation-only source diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --exit-code --stat -- . ':!kanger/src/org/kanger/factory/DictionaryFactory.java' ':!kanger/src/org/kanger/Linker.java' ':!.github/workflows/kanger-ci.yml' ':!.github/workflows/one-shot-cvar-scope-javadoc.yml'
+
+      - name: Run regression corpus
+        run: mvn --batch-mode --no-transfer-progress test
+
+      - name: Render Javadoc
+        run: mvn --batch-mode --no-transfer-progress -DskipTests javadoc:javadoc
+
+      - name: Publish clean documentation commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show c1272007d135979ca9ce556afbf94315ecb6451e:.github/workflows/kanger-ci.yml > .github/workflows/kanger-ci.yml
+          rm -f .github/workflows/one-shot-cvar-scope-javadoc.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kanger/src/org/kanger/factory/DictionaryFactory.java kanger/src/org/kanger/Linker.java .github/workflows/kanger-ci.yml .github/workflows/one-shot-cvar-scope-javadoc.yml
+          git commit -m 'Explain scoped C-variable projection'
+          git push origin HEAD:arch/3.5.0-core-consolidation
