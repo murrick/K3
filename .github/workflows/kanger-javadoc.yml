@@ -77,6 +77,10 @@ jobs:
           user_doc=build/javadoc/org/kanger/User.html
           mind_doc=build/javadoc/org/kanger/Mind.html
           linker_doc=build/javadoc/org/kanger/Linker.html
+          analyzer_doc=build/javadoc/org/kanger/Analyzer.html
+          parser_doc=build/javadoc/org/kanger/compiler/Parser.html
+          compiller_doc=build/javadoc/org/kanger/compiler/Compiller.html
+          calculator_doc=build/javadoc/org/kanger/calculator/Calculator.html
           escalera_doc=build/javadoc/org/kanger/storage/Escalera.html
           db_doc=build/javadoc/org/kanger/storage/DB.html
           base_doc=build/javadoc/org/kanger/storage/Base.html
@@ -98,6 +102,10 @@ jobs:
           test -s "$user_doc"
           test -s "$mind_doc"
           test -s "$linker_doc"
+          test -s "$analyzer_doc"
+          test -s "$parser_doc"
+          test -s "$compiller_doc"
+          test -s "$calculator_doc"
           test -s "$escalera_doc"
           test -s "$db_doc"
           test -s "$base_doc"
@@ -119,6 +127,10 @@ jobs:
           grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
           grep -Fq 'Исполнитель насыщения и оркестратор неподвижной точки KANGER' "$linker_doc"
+          grep -Fq 'Интерпретатор насыщенного состояния Mind' "$analyzer_doc"
+          grep -Fq 'Синтаксический front-end исторического языка KANGER' "$parser_doc"
+          grep -Fq 'Семантический транслятор AST KANGER' "$compiller_doc"
+          grep -Fq 'Per-Mind facade выполнения системных' "$calculator_doc"
           grep -Fq 'Транзакционная linked-snapshot проекция canonical units одной schema' "$escalera_doc"
           grep -Fq 'Контейнер физического поколения DUMB' "$db_doc"
           grep -Fq 'Логическая база DUMB' "$base_doc"
@@ -142,6 +154,10 @@ jobs:
             "$user_doc" \
             "$mind_doc" \
             "$linker_doc" \
+            "$analyzer_doc" \
+            "$parser_doc" \
+            "$compiller_doc" \
+            "$calculator_doc" \
             "$escalera_doc" \
             "$db_doc" \
             "$base_doc" \
