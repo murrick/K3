@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'kanger/src/**/*.java'
+      - 'kanger-udf/src/**/*.java'
+      - 'kanger-data-dumb/src/**/*.java'
+      - 'kanger-console/src/**/*.java'
+      - 'pom.xml'
       - '.github/workflows/kanger-javadoc.yml'
   workflow_dispatch:
 
@@ -35,15 +39,26 @@ jobs:
           set -euo pipefail
           rm -rf build/javadoc
           mkdir -p build/javadoc
-          find kanger/src -name '*.java' -print0 \
-            | sort -z \
-            | xargs -0 javadoc \
-                -quiet \
-                -encoding UTF-8 \
-                -docencoding UTF-8 \
-                -charset UTF-8 \
-                -Xdoclint:none \
-                -d build/javadoc
+
+          find \
+            kanger/src \
+            kanger-udf/src \
+            kanger-data-dumb/src \
+            kanger-console/src \
+            -name '*.java' -print \
+            | LC_ALL=C sort \
+            > build/javadoc-sources.txt
+
+          test -s build/javadoc-sources.txt
+
+          javadoc \
+            -quiet \
+            -encoding UTF-8 \
+            -docencoding UTF-8 \
+            -charset UTF-8 \
+            -Xdoclint:none \
+            -d build/javadoc \
+            @build/javadoc-sources.txt
 
       - name: Verify User–Mind rendered pilot
         shell: bash
