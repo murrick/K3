@@ -101,3 +101,10 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerMindRollbackFailureIsolationSafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+      - name: Mind partial mark acquisition invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerMindPartialMarkAcquisitionSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
