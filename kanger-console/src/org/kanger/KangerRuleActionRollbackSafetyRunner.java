@@ -66,7 +66,7 @@ public final class KangerRuleActionRollbackSafetyRunner {
             require(mind.getRules().get(speculativeId) == null,
                     "released speculative Rule remained findable");
             require(!mind.getRules().isAction(),
-                    "release retained a false RuleFactory Linker continuation signal");
+                    "release retained a stale RuleFactory Linker continuation signal");
 
             System.out.println("RULE_ACTION_ROLLBACK_OK");
             exitCode = 0;
