@@ -35,8 +35,9 @@ public final class KangerMindRollbackFailureIsolationSafetyRunner {
     public static void main(String[] args) {
         int exitCode = 1;
         try {
-            IUser user = UserFactory.createUser("mind-rollback-failure-isolation-" + System.nanoTime(),
-                    "mind-rollback-failure-isolation");
+            String userName =
+                    "mind-rollback-failure-isolation-" + System.nanoTime();
+            IUser user = UserFactory.createUser(userName, userName);
             new UDF().init(user);
             new DB().init(user);
 
