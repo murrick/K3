@@ -60,16 +60,34 @@ jobs:
             -d build/javadoc \
             @build/javadoc-sources.txt
 
-      - name: Verify User–Mind rendered pilot
+      - name: Verify rendered architecture checkpoints
         shell: bash
         run: |
           set -euo pipefail
-          test -s build/javadoc/org/kanger/User.html
-          test -s build/javadoc/org/kanger/Mind.html
-          grep -Fq 'Пользовательский контекст верхнего уровня' build/javadoc/org/kanger/User.html
-          grep -Fq 'Активный логический контекст KANGER' build/javadoc/org/kanger/Mind.html
-          ! grep -Fq '{@link' build/javadoc/org/kanger/User.html
-          ! grep -Fq '{@link' build/javadoc/org/kanger/Mind.html
+
+          user_doc=build/javadoc/org/kanger/User.html
+          mind_doc=build/javadoc/org/kanger/Mind.html
+          dictionary_doc=build/javadoc/org/kanger/factory/DictionaryFactory.html
+          predicate_doc=build/javadoc/org/kanger/factory/PredicateFactory.html
+
+          test -s "$user_doc"
+          test -s "$mind_doc"
+          test -s "$dictionary_doc"
+          test -s "$predicate_doc"
+
+          grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
+          grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
+          grep -Fq 'Канонический словарь' "$dictionary_doc"
+          grep -Fq 'Канонический реестр предикатов' "$predicate_doc"
+
+          for rendered_doc in \
+            "$user_doc" \
+            "$mind_doc" \
+            "$dictionary_doc" \
+            "$predicate_doc"
+          do
+            ! grep -Fq '{@link' "$rendered_doc"
+          done
 
       - name: Upload rendered Javadoc
         if: matrix.java == '21'
