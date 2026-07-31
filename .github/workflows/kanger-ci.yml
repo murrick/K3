@@ -81,6 +81,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: Storage acquisition atomicity invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerStorageAcquisitionAtomicitySafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Escalera empty-root mark invariant
         run: >-
           mvn --batch-mode --no-transfer-progress
