@@ -491,7 +491,6 @@ public class Parser {
                 waitParams = false;
                 waitScript = true;
             } else if (",".equals(ln)) {
-                ++pos;
             } else if (waitParams) {
                 f.getParams().add(ln);
             } else if (waitScript) {
