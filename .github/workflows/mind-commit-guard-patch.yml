@@ -1,3 +1,4 @@
+# registered workflow trigger
 name: Apply Mind commit guard patch
 
 on:
