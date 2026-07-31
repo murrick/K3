@@ -7,6 +7,7 @@ package org.kanger;
 
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.DB;
 import org.kanger.storage.Escalera;
 import org.kanger.udf.UDF;
@@ -35,13 +36,13 @@ public final class KangerEscaleraFrameOwnershipSafetyRunner {
             ITerm baseline = mind.getTerms().add("frame_baseline");
             ITerm outer = mind.getTerms().add("frame_outer");
             ITerm inner = mind.getTerms().add("frame_inner");
-            cache.add(baseline);
+            cache.add((IUnit) baseline);
 
             cache.mark();
-            cache.add(outer);
+            cache.add((IUnit) outer);
 
             cache.mark();
-            cache.add(inner);
+            cache.add((IUnit) inner);
 
             cache.release();
             require(cache.containsKey(baseline.getId()),
