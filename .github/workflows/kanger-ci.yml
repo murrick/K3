@@ -67,6 +67,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: Linker rule ordering invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerLinkerRuleOrderingSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Escalera empty-root mark invariant
         run: >-
           mvn --batch-mode --no-transfer-progress
