@@ -89,11 +89,23 @@ jobs:
           exec:java
 
       - name: Factory concurrency diagnostics
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerFactoryConcurrencyDiagnosticRunner
-          -Dexec.classpathScope=test
-          exec:java
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p target
+          mvn --batch-mode --no-transfer-progress \
+            -Dexec.mainClass=org.kanger.KangerFactoryConcurrencyDiagnosticRunner \
+            -Dexec.classpathScope=test \
+            exec:java 2>&1 | tee target/factory-concurrency-diagnostic.log
+
+      - name: Upload factory concurrency diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-concurrency-diagnostic
+          path: target/factory-concurrency-diagnostic.log
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Escalera frame ownership invariant
         run: >-
