@@ -36,14 +36,19 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
 
             Mind parent = new Mind(user);
             Mind child = new Mind(parent);
-            require(transactionCounter(parent) == 1,
-                    "child construction did not reserve exactly one transaction");
+            addDirectRule(child, "commit_exception_atomicity_probe");
 
-            Rule probe = new Rule(child);
-            child.getRules().register(probe);
-            probe.setOrigin(child.getTerms().add("commit_exception_atomicity_probe"));
-            require(child.getRules().add(probe) == probe,
-                    "fixture did not create a direct child-local rule");
+            // Advance the parent sequence after child construction. This is the
+            // actual condition that forces Mind.commit(child) into its composite
+            // mark/merge/validate path rather than the direct sequenced path.
+            Mind sibling = new Mind(parent);
+            addDirectRule(sibling, "commit_exception_atomicity_sibling");
+            require(transactionCounter(parent) == 2,
+                    "two open children did not reserve two transactions");
+            require(parent.commit(sibling),
+                    "fixture sibling commit unexpectedly failed");
+            require(transactionCounter(parent) == 1,
+                    "sibling commit did not leave exactly the original child reservation");
 
             replaceAnalyzer(parent, new FailingAnalyzer(parent));
 
@@ -75,6 +80,14 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
             error.printStackTrace(System.err);
         }
         System.exit(exitCode);
+    }
+
+    private static void addDirectRule(Mind mind, String origin) throws Exception {
+        Rule rule = new Rule(mind);
+        mind.getRules().register(rule);
+        rule.setOrigin(mind.getTerms().add(origin));
+        require(mind.getRules().add(rule) == rule,
+                "fixture did not create direct local rule " + origin);
     }
 
     private static void replaceAnalyzer(Mind mind, Analyzer analyzer) throws Exception {
