@@ -74,6 +74,8 @@ jobs:
           comment_doc=build/javadoc/org/kanger/factory/CommentFactory.html
           tvariable_doc=build/javadoc/org/kanger/factory/TVariableFactory.html
           tvalue_doc=build/javadoc/org/kanger/factory/TValueFactory.html
+          function_doc=build/javadoc/org/kanger/factory/FunctionFactory.html
+          fvalue_doc=build/javadoc/org/kanger/factory/FValueFactory.html
 
           test -s "$user_doc"
           test -s "$mind_doc"
@@ -83,6 +85,8 @@ jobs:
           test -s "$comment_doc"
           test -s "$tvariable_doc"
           test -s "$tvalue_doc"
+          test -s "$function_doc"
+          test -s "$fvalue_doc"
 
           grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
@@ -92,6 +96,8 @@ jobs:
           grep -Fq 'Транзакционный реестр source/provenance' "$comment_doc"
           grep -Fq 'Реестр и транзакционный overlay логических' "$tvariable_doc"
           grep -Fq 'Канонический реестр, транзакционный overlay' "$tvalue_doc"
+          grep -Fq 'Реестр и транзакционный overlay скомпилированных' "$function_doc"
+          grep -Fq 'Канонический реестр и транзакционный overlay материализованных' "$fvalue_doc"
 
           for rendered_doc in \
             "$user_doc" \
@@ -101,7 +107,9 @@ jobs:
             "$domain_doc" \
             "$comment_doc" \
             "$tvariable_doc" \
-            "$tvalue_doc"
+            "$tvalue_doc" \
+            "$function_doc" \
+            "$fvalue_doc"
           do
             ! grep -Fq '{@link' "$rendered_doc"
           done
