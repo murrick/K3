@@ -3,6 +3,7 @@ name: KANGER build metadata
 on:
   pull_request:
     paths:
+      - 'pom.xml'
       - 'build.xml'
       - 'kanger/src/org/kanger/Version.java'
       - '.github/workflows/kanger-build-metadata.yml'
@@ -26,6 +27,47 @@ jobs:
           distribution: temurin
           java-version: '8'
 
+      - name: Package branch-stamped JAR with Maven
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          test -n "$expected_branch"
+
+          mvn --batch-mode --no-transfer-progress -DskipTests clean package
+
+          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          test -n "$jar_file"
+
+          unzip -p "$jar_file" org/kanger/build.properties > target/packaged-build.properties
+          grep -Fxq "branch=${expected_branch}" target/packaged-build.properties
+          grep -Eq '^date=[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}$' \
+            target/packaged-build.properties
+
+          java -jar "$jar_file" --help > target/maven-banner.txt
+          grep -Fq "KANGER III, Version ${expected_branch}" target/maven-banner.txt
+          grep -Fq 'Stabilized and audited in collaboration with ChatGPT.' \
+            target/maven-banner.txt
+
+          git diff --exit-code -- pom.xml build.xml kanger/src/org/kanger/Version.java
+          test ! -e .build.number
+
+      - name: Verify explicit artifact override
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          artifact_branch='develop/3.5.0.4'
+          mvn --batch-mode --no-transfer-progress \
+            -DskipTests \
+            -Dkanger.build.branch.override="$artifact_branch" \
+            clean package
+
+          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          java -jar "$jar_file" --help > target/artifact-banner.txt
+          grep -Fq "KANGER III, Version ${artifact_branch}" target/artifact-banner.txt
+
       - name: Install Ant
         shell: bash
         run: |
@@ -33,16 +75,19 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y ant
 
-      - name: Stamp branch metadata
+      - name: Verify legacy Ant source stamp
         shell: bash
         run: |
           set -euo pipefail
+
           ant init
 
           expected_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           test -n "$expected_branch"
 
-          grep -Fq "public static final String BRANCH = \"${expected_branch}\";" \
+          grep -Fq "private static final String SOURCE_BRANCH = \"${expected_branch}\";" \
+            kanger/src/org/kanger/Version.java
+          grep -Eq 'private static final String SOURCE_DATE = "[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}";' \
             kanger/src/org/kanger/Version.java
           grep -Fq 'public static final String VERSION_S = BRANCH;' \
             kanger/src/org/kanger/Version.java
@@ -50,7 +95,7 @@ jobs:
             kanger/src/org/kanger/Version.java
           test ! -e .build.number
 
-      - name: Compile stamped source tree
+      - name: Compile Ant-stamped source tree
         shell: bash
         run: |
           set -euo pipefail
