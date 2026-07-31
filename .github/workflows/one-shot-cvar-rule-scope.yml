@@ -43,13 +43,14 @@ jobs:
         run: |
           python3 tools/one_shot_cvar_rule_scope.py
           python3 tools/one_shot_cvar_rule_scope_cleanup.py
+          git checkout -- .github/workflows/kanger-ci.yml
 
       - name: Verify focused source diff
         shell: bash
         run: |
           set -euo pipefail
           git diff --check
-          expected=$'.github/workflows/kanger-ci.yml\nkanger-console/src/org/kanger/KangerCVarRuleScopeSafetyRunner.java\nkanger/src/org/kanger/Linker.java\nkanger/src/org/kanger/Mind.java\nkanger/src/org/kanger/factory/DictionaryFactory.java\nkanger/src/org/kanger/units/Term.java'
+          expected=$'kanger-console/src/org/kanger/KangerCVarRuleScopeSafetyRunner.java\nkanger/src/org/kanger/Linker.java\nkanger/src/org/kanger/Mind.java\nkanger/src/org/kanger/factory/DictionaryFactory.java\nkanger/src/org/kanger/units/Term.java'
           actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort )"
           test "$actual" = "$expected"
 
@@ -66,11 +67,10 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
-      - name: Commit verified experiment
+      - name: Commit verified implementation
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/one-shot-cvar-rule-scope.yml
           rm tools/one_shot_cvar_rule_scope.py
           rm tools/one_shot_cvar_rule_scope_cleanup.py
           git diff --check
