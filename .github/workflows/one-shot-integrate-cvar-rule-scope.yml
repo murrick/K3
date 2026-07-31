@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: integrate-cvar-rule-scope
+  cancel-in-progress: true
+
 jobs:
   integrate-and-verify:
     runs-on: ubuntu-latest
