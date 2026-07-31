@@ -7,6 +7,12 @@ on:
     paths:
       - 'tools/one_shot_cvar_rule_scope.py'
       - '.github/workflows/one-shot-cvar-rule-scope.yml'
+  pull_request:
+    branches:
+      - 'develop/3.5.0.4'
+    paths:
+      - 'tools/one_shot_cvar_rule_scope.py'
+      - '.github/workflows/one-shot-cvar-rule-scope.yml'
   workflow_dispatch:
 
 permissions:
