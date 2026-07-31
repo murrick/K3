@@ -54,17 +54,15 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
-      - name: Publish clean integration commit
+      - name: Publish verified code commit
         run: |
           rm tools/integrate_cvar_rule_scope.py
-          rm .github/workflows/one-shot-integrate-cvar-rule-scope.yml
+          git checkout -- .github/workflows/kanger-ci.yml
           git diff --check
           git status --short
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            .github/workflows/kanger-ci.yml \
-            .github/workflows/one-shot-integrate-cvar-rule-scope.yml \
             tools/integrate_cvar_rule_scope.py \
             kanger-console/src/org/kanger/KangerCVarRuleScopeSafetyRunner.java \
             kanger/src/org/kanger/Linker.java \
