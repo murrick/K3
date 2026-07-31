@@ -1,3 +1,4 @@
+# one-shot trigger
 name: Apply Mind guard on feature branch
 
 on:
