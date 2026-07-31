@@ -25,25 +25,52 @@
 
 package org.kanger;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 
 /**
  * Created by Dmitry G. Qusnetsov on 27.05.20.
  */
 public abstract class Version {
 
+    private static final String SOURCE_BRANCH = "arch/3.5.0-core-consolidation";
+    private static final String SOURCE_DATE = "2021-12-28_13:28:12";
+    private static final Properties BUILD_METADATA = loadBuildMetadata();
+
     public static final int VERSION = 3;
     public static final int RELEASE = 3;
     public static final String REVISION = "7318";
-    public static final String BRANCH = "arch/3.5.0-core-consolidation";
-    public static final String DATE = "2021-12-28_13:28:12";
+    public static final String BRANCH = buildProperty("branch", SOURCE_BRANCH);
+    public static final String DATE = buildProperty("date", SOURCE_DATE);
     public static final String BUILD_CREDIT = "Stabilized and audited in collaboration with ChatGPT.";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
     public static final String VERSION_S = BRANCH;
     public static final String DATE_S = formatDate(parseDate(DATE)) + "\n" + BUILD_CREDIT;
+
+    private static Properties loadBuildMetadata() {
+        Properties properties = new Properties();
+        try (InputStream input = Version.class.getResourceAsStream("/org/kanger/build.properties")) {
+            if (input != null) {
+                properties.load(input);
+            }
+        } catch (IOException ex) {
+            // Source constants remain the compatibility fallback.
+        }
+        return properties;
+    }
+
+    private static String buildProperty(String name, String fallback) {
+        String value = BUILD_METADATA.getProperty(name);
+        if (value == null || value.trim().isEmpty()) {
+            return fallback;
+        }
+        return value.trim();
+    }
 
     private static String formatDate(Date date) {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(date);
