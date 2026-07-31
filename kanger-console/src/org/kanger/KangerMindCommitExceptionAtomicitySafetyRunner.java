@@ -31,8 +31,9 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
     public static void main(String[] args) {
         int exitCode = 1;
         try {
-            IUser user = UserFactory.createUser("mind-commit-exception-atomicity-" + + System.nanoTime(),
-                    "mind-commit-exception-atomicity");
+            String userName =
+                    "mind-commit-exception-atomicity-" + System.nanoTime();
+            IUser user = UserFactory.createUser(userName, userName);
             new UDF().init(user);
             new DB().init(user);
 
