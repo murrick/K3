@@ -103,7 +103,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: factory-concurrency-diagnostic
-          path: target/factory-concurrency-diagnostic.log
+          path: |
+            target/factory-concurrency-diagnostic.log
+            kanger/src/org/kanger/factory/RuleFactory.java
+            kanger/src/org/kanger/factory/RuleCandidateIndex.java
           if-no-files-found: error
           retention-days: 7
 
