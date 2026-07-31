@@ -688,7 +688,7 @@ public class Linker {
                                                     TVariable t = (TVariable) master.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        Term tn = (Term) tm.getChild(mind);
+                                                        Term tn = (Term) tm.getChild(mind, master.getRuleId());
                                                         if (tn == null) {
                                                             tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind), tm);
                                                         }
@@ -720,7 +720,7 @@ public class Linker {
                                                     TVariable t = (TVariable) slave.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        Term tn = (Term) tm.getChild(mind);
+                                                        Term tn = (Term) tm.getChild(mind, slave.getRuleId());
                                                         if (tn == null) {
                                                             tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind), tm);
                                                         }
