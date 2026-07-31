@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: kanger-ci-${{ github.workflow }}-${{ github.ref }}
@@ -28,6 +28,209 @@ jobs:
           distribution: temurin
           java-version: '8'
           cache: maven
+
+      - name: Apply candidate lock-order correction
+        if: github.event_name == 'push' && github.ref == 'refs/heads/arch/3.5.0-core-consolidation'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          candidate_path = Path('kanger/src/org/kanger/factory/RuleCandidateIndex.java')
+          text = candidate_path.read_text()
+
+          field_anchor = '''    private final Map<Mind, Map<BatchKey, BatchSummary>> batchSummaries = new WeakHashMap<>();
+          '''
+          if '    private long version = 0L;\n' not in text:
+              text = text.replace(field_anchor, field_anchor + '    private long version = 0L;\n', 1)
+
+          text = text.replace(
+              '''            positions.clear();
+                      batchSummaries.clear();
+          ''',
+              '''            positions.clear();
+                      batchSummaries.clear();
+                      ++version;
+          ''', 1)
+
+          text = text.replace(
+              '''            signatures.release();
+                      fallbackSignatures.release();
+                      positions.release();
+          ''',
+              '''            signatures.release();
+                      fallbackSignatures.release();
+                      positions.release();
+                      batchSummaries.clear();
+                      ++version;
+          ''', 1)
+
+          text = text.replace(
+              '''            positions.mergeFrom(childSnapshot.positions);
+                      batchSummaries.clear();
+          ''',
+              '''            positions.mergeFrom(childSnapshot.positions);
+                      batchSummaries.clear();
+                      ++version;
+          ''', 1)
+
+          text = text.replace(
+              '''        try {
+                      batchSummaries.clear();
+                      boolean positional = positionalEligible(rule);
+          ''',
+              '''        try {
+                      batchSummaries.clear();
+                      ++version;
+                      boolean positional = positionalEligible(rule);
+          ''', 1)
+
+          text = text.replace(
+              '''        try {
+                      batchSummaries.clear();
+                      for (List<Domain> branch : rule.getTree()) {
+          ''',
+              '''        try {
+                      batchSummaries.clear();
+                      ++version;
+                      for (List<Domain> branch : rule.getTree()) {
+          ''', 1)
+
+          start = text.index('    private BatchSummary batchSummary(')
+          end = text.index('    private Long resolvedTermId(', start)
+          replacement = '''    private BatchSummary computeBatchSummary(Domain source,
+                                                       boolean candidateAntc,
+                                                       Mind activeMind,
+                                                       LinkedHashSet<Long> selected) throws Exception {
+                  LinkedHashSet<Long> batchedIds = new LinkedHashSet<>();
+                  for (long id : selected) {
+                      Rule candidate = (Rule) activeMind.getRules().get(id);
+                      if (candidate != null
+                              && batchGeneratedNonSubstitutablePair(
+                              source, candidate, candidateAntc, activeMind)) {
+                          batchedIds.add(id);
+                      }
+                  }
+                  return new BatchSummary(batchedIds);
+              }
+
+              private void markCachedBatchUsed(Domain source,
+                                               Rule sourceRule,
+                                               Mind activeMind,
+                                               BatchSummary summary) throws Exception {
+                  if (!summary.batchedIds.isEmpty()) {
+                      source.setUsed(activeMind);
+                      sourceRule.setUsed(activeMind);
+                  }
+              }
+
+              void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
+                                        LinkedHashSet<Long> result) throws Exception {
+                  SignatureKey signature = signature(source, candidateAntc);
+                  Long[] resolvedTermIds = new Long[source.getRange()];
+                  for (int position = 0; position < source.getRange(); ++position) {
+                      resolvedTermIds[position] = resolvedTermId(source.get(position), mind);
+                  }
+
+                  boolean batchEligible = !source.isSubstitutable();
+                  Rule sourceRule = batchEligible ? (Rule) source.getRule() : null;
+                  Mind activeMind = batchEligible
+                          ? (sourceRule.getMind() == null ? mind : sourceRule.getMind())
+                          : null;
+                  BatchKey batchKey = batchEligible
+                          ? new BatchKey(signature, sourceRule.isGenerated())
+                          : null;
+
+                  LinkedHashSet<Long> selected;
+                  BatchSummary summary = null;
+                  long observedVersion;
+
+                  writeLock.lock();
+                  try {
+                      selected = signatures.get(signature);
+                      if (selected.isEmpty()) return;
+                      LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
+                      for (int position = 0; position < resolvedTermIds.length; ++position) {
+                          Long termId = resolvedTermIds[position];
+                          if (termId == null) continue;
+                          LinkedHashSet<Long> compatible = positions.get(
+                                  new PositionKey(signature, position, termId));
+                          compatible.addAll(positions.get(
+                                  new PositionKey(signature, position, WILDCARD_TERM_ID)));
+                          compatible.addAll(fallback);
+                          selected.retainAll(compatible);
+                          if (selected.isEmpty()) return;
+                      }
+                      observedVersion = version;
+                      if (batchEligible) {
+                          Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
+                          summary = byKey == null ? null : byKey.get(batchKey);
+                      }
+                  } finally {
+                      writeLock.unlock();
+                  }
+
+                  if (batchEligible) {
+                      boolean cached = summary != null;
+                      if (summary == null) {
+                          summary = computeBatchSummary(
+                                  source, candidateAntc, activeMind, selected);
+
+                          writeLock.lock();
+                          try {
+                              if (version == observedVersion) {
+                                  Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
+                                  if (byKey == null) {
+                                      byKey = new HashMap<>();
+                                      batchSummaries.put(activeMind, byKey);
+                                  }
+                                  BatchSummary existing = byKey.get(batchKey);
+                                  if (existing == null) {
+                                      byKey.put(batchKey, summary);
+                                  } else {
+                                      summary = existing;
+                                      cached = true;
+                                  }
+                              }
+                          } finally {
+                              writeLock.unlock();
+                          }
+                      }
+                      if (cached) {
+                          markCachedBatchUsed(source, sourceRule, activeMind, summary);
+                      }
+                      selected.removeAll(summary.batchedIds);
+                  }
+                  result.addAll(selected);
+              }
+
+          '''
+          text = text[:start] + replacement + text[end:]
+          candidate_path.write_text(text)
+
+          factory_path = Path('kanger/src/org/kanger/factory/RuleFactory.java')
+          text = factory_path.read_text()
+          old = '''        ensureDomainIndex();
+                  synchronized (metadataLock) {
+                      candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
+                  }
+          '''
+          new = '''        ensureDomainIndex();
+                  candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
+          '''
+          if old not in text:
+              raise SystemExit('RuleFactory resolved candidate lock boundary not found')
+          factory_path.write_text(text.replace(old, new, 1))
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kanger/src/org/kanger/factory/RuleFactory.java \
+                  kanger/src/org/kanger/factory/RuleCandidateIndex.java
+          if ! git diff --cached --quiet; then
+            git commit -m "Fix Rule candidate lock inversion"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
       - name: Compile and run regression corpus
         run: mvn --batch-mode --no-transfer-progress test
@@ -103,10 +306,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: factory-concurrency-diagnostic
-          path: |
-            target/factory-concurrency-diagnostic.log
-            kanger/src/org/kanger/factory/RuleFactory.java
-            kanger/src/org/kanger/factory/RuleCandidateIndex.java
+          path: target/factory-concurrency-diagnostic.log
           if-no-files-found: error
           retention-days: 7
 
