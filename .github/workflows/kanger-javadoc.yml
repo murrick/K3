@@ -70,22 +70,30 @@ jobs:
           mind_doc=build/javadoc/org/kanger/Mind.html
           dictionary_doc=build/javadoc/org/kanger/factory/DictionaryFactory.html
           predicate_doc=build/javadoc/org/kanger/factory/PredicateFactory.html
+          domain_doc=build/javadoc/org/kanger/factory/DomainFactory.html
+          comment_doc=build/javadoc/org/kanger/factory/CommentFactory.html
 
           test -s "$user_doc"
           test -s "$mind_doc"
           test -s "$dictionary_doc"
           test -s "$predicate_doc"
+          test -s "$domain_doc"
+          test -s "$comment_doc"
 
           grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
           grep -Fq 'Канонический словарь' "$dictionary_doc"
           grep -Fq 'Канонический реестр предикатов' "$predicate_doc"
+          grep -Fq 'Канонический реестр и транзакционный overlay' "$domain_doc"
+          grep -Fq 'Транзакционный реестр source/provenance' "$comment_doc"
 
           for rendered_doc in \
             "$user_doc" \
             "$mind_doc" \
             "$dictionary_doc" \
-            "$predicate_doc"
+            "$predicate_doc" \
+            "$domain_doc" \
+            "$comment_doc"
           do
             ! grep -Fq '{@link' "$rendered_doc"
           done
