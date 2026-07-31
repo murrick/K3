@@ -70,6 +70,9 @@ jobs:
           mind_doc=build/javadoc/org/kanger/Mind.html
           linker_doc=build/javadoc/org/kanger/Linker.html
           escalera_doc=build/javadoc/org/kanger/storage/Escalera.html
+          db_doc=build/javadoc/org/kanger/storage/DB.html
+          base_doc=build/javadoc/org/kanger/storage/Base.html
+          data_doc=build/javadoc/org/kanger/storage/Data.html
           ibase_doc=build/javadoc/org/kanger/interfaces/internal/IBase.html
           idata_doc=build/javadoc/org/kanger/interfaces/internal/IData.html
           dictionary_doc=build/javadoc/org/kanger/factory/DictionaryFactory.html
@@ -88,6 +91,9 @@ jobs:
           test -s "$mind_doc"
           test -s "$linker_doc"
           test -s "$escalera_doc"
+          test -s "$db_doc"
+          test -s "$base_doc"
+          test -s "$data_doc"
           test -s "$ibase_doc"
           test -s "$idata_doc"
           test -s "$dictionary_doc"
@@ -106,6 +112,9 @@ jobs:
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
           grep -Fq 'Исполнитель насыщения и оркестратор неподвижной точки KANGER' "$linker_doc"
           grep -Fq 'Транзакционная linked-snapshot проекция canonical units одной schema' "$escalera_doc"
+          grep -Fq 'Контейнер физического поколения DUMB' "$db_doc"
+          grep -Fq 'Логическая база DUMB' "$base_doc"
+          grep -Fq 'Физическое block store DUMB' "$data_doc"
           grep -Fq 'Внутренняя граница одной логической persistent-схемы KANGER' "$ibase_doc"
           grep -Fq 'Внутренняя граница storage-плагина, владеющего одним выбранным физическим' "$idata_doc"
           grep -Fq 'Канонический словарь' "$dictionary_doc"
@@ -126,6 +135,9 @@ jobs:
             "$mind_doc" \
             "$linker_doc" \
             "$escalera_doc" \
+            "$db_doc" \
+            "$base_doc" \
+            "$data_doc" \
             "$ibase_doc" \
             "$idata_doc" \
             "$dictionary_doc" \
