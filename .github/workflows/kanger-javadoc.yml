@@ -77,6 +77,8 @@ jobs:
           function_doc=build/javadoc/org/kanger/factory/FunctionFactory.html
           fvalue_doc=build/javadoc/org/kanger/factory/FValueFactory.html
           library_doc=build/javadoc/org/kanger/factory/LibraryFactory.html
+          rule_doc=build/javadoc/org/kanger/factory/RuleFactory.html
+          candidate_source=kanger/src/org/kanger/factory/RuleCandidateIndex.java
 
           test -s "$user_doc"
           test -s "$mind_doc"
@@ -89,6 +91,8 @@ jobs:
           test -s "$function_doc"
           test -s "$fvalue_doc"
           test -s "$library_doc"
+          test -s "$rule_doc"
+          test -s "$candidate_source"
 
           grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
@@ -101,6 +105,9 @@ jobs:
           grep -Fq 'Реестр и транзакционный overlay скомпилированных' "$function_doc"
           grep -Fq 'Канонический реестр и транзакционный overlay материализованных' "$fvalue_doc"
           grep -Fq 'Copy-on-write реестр и транзакционный overlay операций' "$library_doc"
+          grep -Fq 'Канонический реестр Rule и транзакционный overlay' "$rule_doc"
+          grep -Fq 'Внутренний ID-only индекс кандидатов' "$candidate_source"
+          grep -Fq 'гидратация Rule и Mind-dependent batching/used effects вне lock' "$candidate_source"
 
           for rendered_doc in \
             "$user_doc" \
@@ -113,7 +120,8 @@ jobs:
             "$tvalue_doc" \
             "$function_doc" \
             "$fvalue_doc" \
-            "$library_doc"
+            "$library_doc" \
+            "$rule_doc"
           do
             ! grep -Fq '{@link' "$rendered_doc"
           done
