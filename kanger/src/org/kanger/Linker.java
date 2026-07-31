@@ -658,8 +658,12 @@ public class Linker {
                                         operationEffects |= LinkerStatistics.EFFECT_USED_ONLY;
                                         master.setUsed(mind);
                                         slave.setUsed(mind);
+                                        mind.getTValues().commit();
+                                        mind.getFValues().commit();
                                     } else {
                                         ++dumpedPasses;
+                                        mind.getTValues().release();
+                                        mind.getFValues().release();
                                     }
                                     operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, operationId, logging);
                                     operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, operationId, logging);
