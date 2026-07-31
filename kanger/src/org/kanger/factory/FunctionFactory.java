@@ -44,7 +44,77 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Реестр и транзакционный overlay скомпилированных {@link Function},
+ * принадлежащих одному уровню {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Фабрика создаёт отдельное Function
+ * occurrence, связывающее schema ID, owning Mind, name Term, range,
+ * {@link FunctionBinding}, argument structure и зарезервированный result slot
+ * с индексом {@code range}. {@link #add(ITerm, ArgumentsList,
+ * FunctionBinding)} всегда выделяет новую Function identity; structural
+ * comparison реализуется на unit level и не является factory-level
+ * canonicalization или дедупликацией.</p>
+ *
+ * <p><strong>Binding contract.</strong> Binding mode сохраняется вместе с
+ * Function и участвует в hashing/structural comparison. {@code LEGACY_AUTO}
+ * поддерживает исторический infrastructure-first, UDF-second resolution;
+ * {@code INFRASTRUCTURE} ограничивает dispatch инфраструктурным registry;
+ * {@code UDF_DYNAMIC} разрешает актуальную пользовательскую operation по
+ * signature при каждом вызове. Перегрузка без binding использует
+ * {@code LEGACY_AUTO}; старые records без сохранённого binding также hydrate в
+ * этот compatibility mode.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Каждый {@code Mind} создаёт
+ * отдельную {@code FunctionFactory}. Child
+ * {@code transaction(parentFactory)} строит {@link Escalera} overlay над
+ * parent cache, сбрасывает generation-local chain anchor и не наследует
+ * storage connection. До typed parent commit созданные Functions принадлежат
+ * child Mind. Typed {@code commit(childFactory)} продвигает cache chain и
+ * переводит promoted units в runtime-контекст родителя.</p>
+ *
+ * <p><strong>Add-time side effect.</strong> Добавление не является только
+ * инертной регистрацией. После публикации новой Function в local cache фабрика
+ * вызывает Calculator, когда {@link Function#isCalculable()} возвращает
+ * {@code false}. Документация сохраняет историческое значение этого predicate
+ * и не переименовывает его: в текущей реализации оно выводится из наличия
+ * TVariables в argument structure.</p>
+ *
+ * <p><strong>Checkpoint protocol.</strong> No-argument {@link #mark()},
+ * {@link #commit()} и {@link #release()} относятся к вложенным
+ * cache/composite checkpoints и делегируют их {@code Escalera}. Фабрика не
+ * владеет отдельным auxiliary journal. Эти операции не следует смешивать с
+ * typed child commit, решение и sequencing которого принадлежат parent
+ * {@code Mind}.</p>
+ *
+ * <p><strong>Persistence.</strong> Только root factory при открытом storage
+ * заимствует schema-specific {@link IBase} у {@link User}. Root cache miss
+ * может materialize Function через эту базу, а update передаёт cache changes
+ * storage-модулю. Child overlays остаются memory-only и не владеют connection,
+ * storage generation или close authority.</p>
+ *
+ * <p><strong>Очистка.</strong> Child {@link #clear()} заново строит overlay над
+ * текущей parent factory; root clear сбрасывает текущую generation.
+ * {@link #pack()} физически удаляет Functions, остающиеся logically deleted.
+ * Unit-level deletion Function может также пометить найденный {@link
+ * FValueFactory} result deleted через активный Mind, но этот cascade не
+ * превращает pack фабрики в общий механизм invalidation результатов.</p>
+ *
+ * <p><strong>Инварианты и concurrency.</strong> Function schema identity,
+ * binding metadata, structural identity и materialized {@code FValue} являются
+ * различными lifecycle dimensions. Локальная синхронизация add защищает
+ * creation path, но не делает argument objects, Calculator execution,
+ * iterators, FValue state или полный transaction protocol независимо
+ * thread-safe.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Function следует
+ * создавать и получать через фабрику актуального {@code Mind}. Вызывающая
+ * сторона должна учитывать add-time calculation, не ожидать несуществующей
+ * factory deduplication, не публиковать child Function до parent completion и
+ * не трактовать binding как transient delivery preference.</p>
+ *
+ * @see FValueFactory
+ * @see Function
+ * @see FunctionBinding
  */
 public class FunctionFactory implements IFactory<Function> {
 
