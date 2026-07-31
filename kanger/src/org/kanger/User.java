@@ -38,7 +38,49 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Пользовательский контекст верхнего уровня, объединяющий внешние ресурсы и
+ * настройки, с которыми работает один экземпляр KANGER.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code User} является границей
+ * bootstrap и владения ресурсами, но не транзакцией и не версией логического
+ * состояния. Он хранит подключённый модуль {@link IData}, реестр открытых
+ * логических баз {@link IBase}, пользовательские параметры, возможность
+ * создания UDF и области выделения идентификаторов. Конкретное состояние
+ * вывода и транзакции представляет {@link Mind}.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Объект создаётся и удерживается
+ * приложением или оболочкой. Корневой {@code Mind} получает его явно через
+ * конструктор и сохраняет ту же ссылку для дочерних уровней. Открытые базы
+ * публикуются фабрикам корневого {@code Mind} при выборе хранилища; физические
+ * операции выполняет подключённая реализация {@code IData}.</p>
+ *
+ * <p><strong>Жизненный цикл.</strong> {@code User} обычно живёт дольше
+ * отдельного запроса и дочерней транзакции. Выбор, очистка, переиндексация и
+ * закрытие хранилища координируются методами этого класса, которым передаётся
+ * актуальная цепочка {@link IMind}. Эти операции не определяют активный
+ * {@code Mind} по скрытой глобальной ссылке.</p>
+ *
+ * <p><strong>Persistence.</strong> При открытом хранилище идентификаторы схем
+ * выделяются соответствующими {@code IBase}; без открытого хранилища
+ * используются локальные счётчики пользователя. {@link #flush()} передаёт
+ * накопленные изменения storage-модулю, а закрытие дополнительно сбрасывает
+ * factory caches и очищает связанное runtime-состояние переданных
+ * {@code Mind}, не уничтожая сам объект {@code User}.</p>
+ *
+ * <p><strong>Инварианты.</strong> Внутренний lifecycle KANGER опирается на
+ * явные ссылки {@code IMind}. Поле {@code currentMind} является только
+ * управляемым вызывающим кодом compatibility slot: оно не является владельцем
+ * хранилища, корнем shutdown-cleanup, публикацией текущей транзакции или
+ * авторитетным источником активного runtime-контекста.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Вызывающая сторона
+ * должна хранить и передавать фактически актуальную ссылку {@code IMind},
+ * учитывать возвращаемое lifecycle-операциями значение и самостоятельно
+ * управлять compatibility slot {@code currentMind}, если он используется
+ * внешней интеграцией.</p>
+ *
+ * @see Mind
+ * @see IUser
  */
 public class User implements IUser {
 
@@ -230,12 +272,12 @@ public class User implements IUser {
 //            Boolean ar = m.analise(null, true);
 //
 //            if (ar) {
-//                m.getLog().add(LogMode.ANALIZER, "ERROR: Collisions in Program");
+//                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
 //                mind.release(m);
 //                close();
 //                throw new RuntimeErrorException("Collisions in Program");
 //            } else {
-//                m.getLog().add(LogMode.ANALIZER, "SUCCESS: No Collisions in Program");
+//                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
 //                mind.commit(m);
 //            }
 
