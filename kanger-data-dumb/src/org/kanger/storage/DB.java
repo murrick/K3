@@ -38,6 +38,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -67,11 +68,27 @@ public class DB implements IData {
 
     @Override
     public void close() throws Exception {
-        for (IBase b : bases.values()) {
-            b.close();
+        Exception failure = null;
+        Iterator<Map.Entry<String, IBase>> iterator = bases.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, IBase> entry = iterator.next();
+            try {
+                entry.getValue().close();
+                iterator.remove();
+            } catch (Exception closeError) {
+                if (failure == null) {
+                    failure = closeError;
+                } else {
+                    failure.addSuppressed(closeError);
+                }
+            }
         }
-        bases.clear();
-        storageName = "";
+        if (bases.isEmpty()) {
+            storageName = "";
+        }
+        if (failure != null) {
+            throw failure;
+        }
     }
 
     @Override
