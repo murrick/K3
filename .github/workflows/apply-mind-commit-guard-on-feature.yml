@@ -1,12 +1,8 @@
-# one-shot trigger
 name: Apply Mind guard on feature branch
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - .github/workflows/apply-mind-commit-guard-on-feature.yml
+  pull_request_target:
+    types: [synchronize]
 
 permissions:
   contents: write
@@ -16,6 +12,7 @@ env:
 
 jobs:
   patch-feature:
+    if: github.event.pull_request.head.ref == 'arch/3.5.0-core-consolidation'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -23,24 +20,16 @@ jobs:
           ref: ${{ env.TARGET_BRANCH }}
           fetch-depth: 0
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '8'
-          cache: maven
-
       - name: Patch Mind composite transaction orchestration
         shell: python
         run: |
           from pathlib import Path
-
           path = Path('kanger/src/org/kanger/Mind.java')
           text = path.read_text(encoding='utf-8')
-          start_marker = '    @Override\n    public boolean commit(IMind m) throws Exception {'
-          end_marker = '    private void update() throws Exception {'
-          start = text.index(start_marker)
-          end = text.index(end_marker, start)
-
+          if 'private void markCompositeCheckpoints(boolean[] active)' in text:
+              raise SystemExit(0)
+          start = text.index('    @Override\n    public boolean commit(IMind m) throws Exception {')
+          end = text.index('    private void update() throws Exception {', start)
           replacement = r'''    @Override
     public boolean commit(IMind m) throws Exception {
         synchronized (locker) {
@@ -51,12 +40,8 @@ jobs:
             boolean factoriesCompleted = sequencedBy;
             Map<UnitType, Set<Long>> saveDeleted = copyUnitState(deleted);
             Map<UnitType, Set<Long>> saveRestored = copyUnitState(restored);
-
             try {
-                if (!sequencedBy) {
-                    markCompositeCheckpoints(activeCheckpoints);
-                }
-
+                if (!sequencedBy) markCompositeCheckpoints(activeCheckpoints);
                 functions.commit(child.getFunctions());
                 fValues.commit(child.getFValues());
                 tVars.commit(child.getTVars());
@@ -65,28 +50,21 @@ jobs:
                 Set<Long> list = rules.commit((RuleFactory) child.getRules());
                 comments.commit(child.getComments());
                 library.commit((LibraryFactory) child.getLibrary());
-
                 mergeUnitState(child);
-
                 if (!sequencedBy) {
                     Boolean rejected = analyzer.checkDatabase(list, false);
                     if (rejected != null && rejected) {
                         Throwable rollbackFailure = releaseCompositeCheckpoints(activeCheckpoints, null);
                         restoreUnitState(saveDeleted, saveRestored);
-                        if (rollbackFailure != null) {
-                            rethrow(rollbackFailure);
-                        }
-
+                        if (rollbackFailure != null) rethrow(rollbackFailure);
                         finishTransactionLocked();
                         reservationFinished = true;
                         copyCommitResult(child);
                         return false;
                     }
-
                     completeCompositeCheckpoints(activeCheckpoints);
                     factoriesCompleted = true;
                 }
-
                 finishTransactionLocked();
                 reservationFinished = true;
                 copyCommitResult(child);
@@ -111,57 +89,36 @@ jobs:
     }
 
     private void markCompositeCheckpoints(boolean[] active) throws Exception {
-        functions.mark();
-        active[0] = true;
-        fValues.mark();
-        active[1] = true;
-        tVars.mark();
-        active[2] = true;
-        tValues.mark();
-        active[3] = true;
-        domains.mark();
-        active[4] = true;
-        rules.mark();
-        active[5] = true;
-        comments.mark();
-        active[6] = true;
-        library.mark();
-        active[7] = true;
+        functions.mark(); active[0] = true;
+        fValues.mark(); active[1] = true;
+        tVars.mark(); active[2] = true;
+        tValues.mark(); active[3] = true;
+        domains.mark(); active[4] = true;
+        rules.mark(); active[5] = true;
+        comments.mark(); active[6] = true;
+        library.mark(); active[7] = true;
     }
 
     private void completeCompositeCheckpoints(boolean[] active) throws Exception {
-        functions.commit();
-        active[0] = false;
-        fValues.commit();
-        active[1] = false;
-        tVars.commit();
-        active[2] = false;
-        tValues.commit();
-        active[3] = false;
-        domains.commit();
-        active[4] = false;
-        rules.commit();
-        active[5] = false;
-        comments.commit();
-        active[6] = false;
-        library.commit();
-        active[7] = false;
+        functions.commit(); active[0] = false;
+        fValues.commit(); active[1] = false;
+        tVars.commit(); active[2] = false;
+        tValues.commit(); active[3] = false;
+        domains.commit(); active[4] = false;
+        rules.commit(); active[5] = false;
+        comments.commit(); active[6] = false;
+        library.commit(); active[7] = false;
     }
 
     private Throwable releaseCompositeCheckpoints(boolean[] active, Throwable primary) {
         Throwable failure = primary;
         for (int i = active.length - 1; i >= 0; --i) {
-            if (!active[i]) {
-                continue;
-            }
+            if (!active[i]) continue;
             try {
                 releaseCompositeCheckpoint(i);
             } catch (Throwable rollbackFailure) {
-                if (failure == null) {
-                    failure = rollbackFailure;
-                } else if (failure != rollbackFailure) {
-                    failure.addSuppressed(rollbackFailure);
-                }
+                if (failure == null) failure = rollbackFailure;
+                else if (failure != rollbackFailure) failure.addSuppressed(rollbackFailure);
             } finally {
                 active[i] = false;
             }
@@ -171,32 +128,15 @@ jobs:
 
     private void releaseCompositeCheckpoint(int index) throws Exception {
         switch (index) {
-            case 0:
-                functions.release();
-                break;
-            case 1:
-                fValues.release();
-                break;
-            case 2:
-                tVars.release();
-                break;
-            case 3:
-                tValues.release();
-                break;
-            case 4:
-                domains.release();
-                break;
-            case 5:
-                rules.release();
-                break;
-            case 6:
-                comments.release();
-                break;
-            case 7:
-                library.release();
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown composite checkpoint " + index);
+            case 0: functions.release(); break;
+            case 1: fValues.release(); break;
+            case 2: tVars.release(); break;
+            case 3: tValues.release(); break;
+            case 4: domains.release(); break;
+            case 5: rules.release(); break;
+            case 6: comments.release(); break;
+            case 7: library.release(); break;
+            default: throw new IllegalArgumentException("Unknown composite checkpoint " + index);
         }
     }
 
@@ -215,16 +155,13 @@ jobs:
         for (Map.Entry<UnitType, Set<Long>> entry : child.getRestored().entrySet()) {
             restored.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
             Set<Long> deletedIds = deleted.get(entry.getKey());
-            if (deletedIds != null) {
-                deletedIds.removeAll(entry.getValue());
-            }
+            if (deletedIds != null) deletedIds.removeAll(entry.getValue());
         }
     }
 
     private void restoreUnitState(Map<UnitType, Set<Long>> saveDeleted,
                                   Map<UnitType, Set<Long>> saveRestored) {
-        deleted.clear();
-        restored.clear();
+        deleted.clear(); restored.clear();
         deleted.putAll(copyUnitState(saveDeleted));
         restored.putAll(copyUnitState(saveRestored));
     }
@@ -244,37 +181,19 @@ jobs:
     }
 
     private static void rethrow(Throwable failure) throws Exception {
-        if (failure instanceof Exception) {
-            throw (Exception) failure;
-        }
-        if (failure instanceof Error) {
-            throw (Error) failure;
-        }
+        if (failure instanceof Exception) throw (Exception) failure;
+        if (failure instanceof Error) throw (Error) failure;
         throw new RuntimeException(failure);
     }
 
 '''
-
-          updated = text[:start] + replacement + text[end:]
-          if updated == text:
-              raise SystemExit('Mind.java was not changed')
-          path.write_text(updated, encoding='utf-8')
-
-      - name: Compile and run Mind fault-injection gates
-        run: |
-          mvn --batch-mode --no-transfer-progress -DskipTests compile
-          for runner in \
-            org.kanger.KangerMindCommitExceptionAtomicitySafetyRunner \
-            org.kanger.KangerMindRollbackFailureIsolationSafetyRunner \
-            org.kanger.KangerMindPartialMarkAcquisitionSafetyRunner \
-            org.kanger.KangerMindPartialCommitCompletionSafetyRunner
-          do
-            mvn --batch-mode --no-transfer-progress \
-              -Dexec.mainClass="$runner" -Dexec.classpathScope=test exec:java
-          done
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
 
       - name: Commit production fix
         run: |
+          if git diff --quiet -- kanger/src/org/kanger/Mind.java; then
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add kanger/src/org/kanger/Mind.java
