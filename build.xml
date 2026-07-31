@@ -116,13 +116,13 @@
         <echo message="KANGER build branch: ${build.branch}"/>
 
         <replaceregexp file="${src}/org/kanger/Version.java"
-                       match="public\s+static\s+final\s+String\s+BRANCH\s+=\s+&quot;.*&quot;;"
-                       replace="public static final String BRANCH = &quot;${build.branch}&quot;;"
+                       match="private\s+static\s+final\s+String\s+SOURCE_BRANCH\s+=\s+&quot;.*&quot;;"
+                       replace="private static final String SOURCE_BRANCH = &quot;${build.branch}&quot;;"
                        byline="true"
         />
         <replaceregexp file="${src}/org/kanger/Version.java"
-                       match="public\s+static\s+final\s+String\s+DATE\s+=\s+&quot;.*&quot;;"
-                       replace="public static final String DATE = &quot;${build.time}&quot;;"
+                       match="private\s+static\s+final\s+String\s+SOURCE_DATE\s+=\s+&quot;.*&quot;;"
+                       replace="private static final String SOURCE_DATE = &quot;${build.time}&quot;;"
                        byline="true"
         />
     </target>
