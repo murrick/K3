@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - arch/3.5.0-core-consolidation
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
@@ -15,6 +18,7 @@ concurrency:
 
 jobs:
   apply:
+    if: github.head_ref == 'arch/3.5.0-core-consolidation' || github.ref == 'refs/heads/arch/3.5.0-core-consolidation'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout working branch
