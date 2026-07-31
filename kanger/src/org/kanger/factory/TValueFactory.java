@@ -74,6 +74,7 @@ public class TValueFactory implements IFactory<TValue> {
      * the complete index for every candidate pair.
      */
     private final Stack<List<TValue>> additionsStack = new Stack<>();
+    private final Stack<Boolean> actionStack = new Stack<>();
     private boolean indexInitialized = false;
 
     public TValueFactory(Mind mind) throws Exception {
@@ -100,6 +101,7 @@ public class TValueFactory implements IFactory<TValue> {
         synchronized (indexLock) {
             localByVariable.clear();
             additionsStack.clear();
+            actionStack.clear();
             indexInitialized = base != null;
         }
     }
@@ -317,11 +319,13 @@ public class TValueFactory implements IFactory<TValue> {
     public long mark() throws Exception {
         synchronized (indexLock) {
             additionsStack.push(new ArrayList<TValue>());
+            actionStack.push(action);
         }
         return cache.mark();
     }
 
     public long commit() throws Exception {
+        long result = cache.commit();
         synchronized (indexLock) {
             if (!additionsStack.isEmpty()) {
                 List<TValue> additions = additionsStack.pop();
@@ -329,8 +333,11 @@ public class TValueFactory implements IFactory<TValue> {
                     additionsStack.peek().addAll(additions);
                 }
             }
+            if (!actionStack.isEmpty()) {
+                actionStack.pop();
+            }
         }
-        return cache.commit();
+        return result;
     }
 
     public long release() throws Exception {
@@ -339,6 +346,9 @@ public class TValueFactory implements IFactory<TValue> {
         synchronized (indexLock) {
             if (!additionsStack.isEmpty()) {
                 additions = additionsStack.pop();
+            }
+            if (!actionStack.isEmpty()) {
+                action = actionStack.pop();
             }
         }
         if (additions != null) {
