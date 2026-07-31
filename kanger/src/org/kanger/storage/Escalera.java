@@ -34,7 +34,85 @@ import org.kanger.interfaces.internal.IUnit;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Транзакционная linked-snapshot проекция canonical units одной schema,
+ * видимая конкретному {@link Mind}.
+ *
+ * <p><strong>Представление.</strong> Escalera хранит собственный указатель
+ * {@code root} на цепочку {@link IStep}. Memory-only {@link Step} содержит ещё
+ * не материализованный unit; {@link Sapato} представляет persistent link,
+ * гидратируемый через заимствованный {@link IBase}. Объект не является
+ * физическим storage container и не владеет закрытием базы.</p>
+ *
+ * <p><strong>Root и child snapshots.</strong> Корневая Escalera при открытом
+ * storage начинает с persistent root соответствующей schema. Child Escalera
+ * получает root родительского {@link ICache}, создавая собственную mutable
+ * snapshot boundary поверх той же видимой цепочки. Публикация нового root между
+ * factory layers выполняется explicit transaction protocol владельца Mind.</p>
+ *
+ * <p><strong>Chain authority.</strong> Наблюдаемый порядок задаётся только
+ * связями {@code next}: новые Step добавляются в голову, iterator идёт от root
+ * к tail. ID, hash buckets и physical index positions являются descriptors и
+ * acceleration metadata, но не источником порядка. Persistent endpoints
+ * восстанавливаются {@code IBase} из links.</p>
+ *
+ * <p><strong>Checkpoint protocol.</strong> {@link #mark()} всегда открывает
+ * реальный LIFO frame и сохраняет root, включая пустой root. {@link #commit()}
+ * потребляет ровно один frame, сохраняя текущую цепочку; {@link #release()}
+ * восстанавливает root frame и инвалидирует производные indexes. Completion
+ * без открытого frame является lifecycle error. Checkpoint не копирует graph и
+ * не выполняет physical storage commit.</p>
+ *
+ * <p><strong>Acceleration metadata.</strong> {@code memoryById},
+ * {@code persistentIds}, {@code idsByHash} и {@code predecessorById} являются
+ * производными структурами для lookup, find и splice. Они перестраиваются из
+ * текущей linked chain, не владеют canonical units и не переживают изменение
+ * root как semantic authority. Persistent entries удерживаются ID-only и
+ * гидратируются через IBase только при фактическом доступе.</p>
+ *
+ * <p><strong>Mutation и deletion.</strong> {@link #add(IUnit)} создаёт новый
+ * memory Step в голове snapshot. Delete перестраивает links и metadata; если
+ * изменяется persistent predecessor, обновляет его physical link, после чего
+ * удаляет record из IBase. Batch deletion сохраняет ту же linked semantics и
+ * не допускает, чтобы ID-order заменил predecessor relations.</p>
+ *
+ * <p><strong>Materialization.</strong> {@link #update()} собирает ведущий
+ * memory-only segment, публикует его от старейшего Step к новейшему и заменяет
+ * его persistent Sapato nodes. Такой порядок сохраняет существующую цепочку и
+ * делает новый persistent root последним. После materialization открытые local
+ * checkpoints очищаются: persisted boundary уже не является откатываемым
+ * transient frame этой Escalera.</p>
+ *
+ * <p><strong>Clear boundary.</strong> {@link #clear()} сбрасывает snapshot и
+ * derived metadata. На root factory при открытом storage он также очищает
+ * заимствованный IBase; child factory lifecycle обязан вместо destructive
+ * clear перестроить overlay через parent transaction. Без storage очищается
+ * schema-local in-memory ID counter пользователя.</p>
+ *
+ * <p><strong>Hydration и ошибки.</strong> Persistent lookup выполняется через
+ * schema-specific IBase текущего User generation. Escalera не должна
+ * интерпретировать storage/recovery failure как semantic absence. Исторический
+ * iterator диагностирует hydration failures и продолжает compatibility path;
+ * изменение этой политики требует отдельного public/error-contract аудита.</p>
+ *
+ * <p><strong>Владение storage.</strong> Escalera заимствует IBase у User и
+ * никогда не выбирает generation, не приобретает полный schema set и не
+ * закрывает IData/IBase. Exception-atomic acquisition и публикация storage
+ * generation выполняются User/IData до инициализации root factories.</p>
+ *
+ * <p><strong>Concurrency.</strong> Отдельные persistent операции синхронизуют
+ * доступ к IBase, но mutable root, checkpoint stack и indexes не делают
+ * Escalera independently thread-safe. Factory/Mind owner сериализует composite
+ * transaction и не использует один snapshot конкурентно без внешнего протокола.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Не следует менять root,
+ * links или indexes в обход ICache protocol; считать hash/ID index canonical
+ * truth; закрывать borrowed storage; смешивать checkpoint commit с physical
+ * update; либо вызывать destructive clear на child overlay.</p>
+ *
+ * @see ICache
+ * @see IBase
+ * @see Step
+ * @see Sapato
  */
 public class Escalera implements ICache {
 
