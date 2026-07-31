@@ -68,6 +68,7 @@ jobs:
 
           user_doc=build/javadoc/org/kanger/User.html
           mind_doc=build/javadoc/org/kanger/Mind.html
+          linker_doc=build/javadoc/org/kanger/Linker.html
           dictionary_doc=build/javadoc/org/kanger/factory/DictionaryFactory.html
           predicate_doc=build/javadoc/org/kanger/factory/PredicateFactory.html
           domain_doc=build/javadoc/org/kanger/factory/DomainFactory.html
@@ -82,6 +83,7 @@ jobs:
 
           test -s "$user_doc"
           test -s "$mind_doc"
+          test -s "$linker_doc"
           test -s "$dictionary_doc"
           test -s "$predicate_doc"
           test -s "$domain_doc"
@@ -96,6 +98,7 @@ jobs:
 
           grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
+          grep -Fq 'Исполнитель насыщения и оркестратор неподвижной точки KANGER' "$linker_doc"
           grep -Fq 'Канонический словарь' "$dictionary_doc"
           grep -Fq 'Канонический реестр предикатов' "$predicate_doc"
           grep -Fq 'Канонический реестр и транзакционный overlay' "$domain_doc"
@@ -112,6 +115,7 @@ jobs:
           for rendered_doc in \
             "$user_doc" \
             "$mind_doc" \
+            "$linker_doc" \
             "$dictionary_doc" \
             "$predicate_doc" \
             "$domain_doc" \
