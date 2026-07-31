@@ -72,6 +72,8 @@ jobs:
           predicate_doc=build/javadoc/org/kanger/factory/PredicateFactory.html
           domain_doc=build/javadoc/org/kanger/factory/DomainFactory.html
           comment_doc=build/javadoc/org/kanger/factory/CommentFactory.html
+          tvariable_doc=build/javadoc/org/kanger/factory/TVariableFactory.html
+          tvalue_doc=build/javadoc/org/kanger/factory/TValueFactory.html
 
           test -s "$user_doc"
           test -s "$mind_doc"
@@ -79,6 +81,8 @@ jobs:
           test -s "$predicate_doc"
           test -s "$domain_doc"
           test -s "$comment_doc"
+          test -s "$tvariable_doc"
+          test -s "$tvalue_doc"
 
           grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
@@ -86,6 +90,8 @@ jobs:
           grep -Fq 'Канонический реестр предикатов' "$predicate_doc"
           grep -Fq 'Канонический реестр и транзакционный overlay' "$domain_doc"
           grep -Fq 'Транзакционный реестр source/provenance' "$comment_doc"
+          grep -Fq 'Реестр и транзакционный overlay логических' "$tvariable_doc"
+          grep -Fq 'Канонический реестр, транзакционный overlay' "$tvalue_doc"
 
           for rendered_doc in \
             "$user_doc" \
@@ -93,7 +99,9 @@ jobs:
             "$dictionary_doc" \
             "$predicate_doc" \
             "$domain_doc" \
-            "$comment_doc"
+            "$comment_doc" \
+            "$tvariable_doc" \
+            "$tvalue_doc"
           do
             ! grep -Fq '{@link' "$rendered_doc"
           done
