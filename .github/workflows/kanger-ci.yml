@@ -87,3 +87,10 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerEscaleraFrameOwnershipSafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+      - name: Mind commit exception atomicity invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerMindCommitExceptionAtomicitySafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
