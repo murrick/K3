@@ -60,6 +60,7 @@ public class FValueFactory implements IFactory<FValue> {
     private boolean action = false;
     private final Set<Long> invalidated = new CopyOnWriteArraySet<>();
     private final Stack<Set<Long>> invalidatedStack = new Stack<>();
+    private final Stack<Boolean> actionStack = new Stack<>();
 
     public FValueFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -73,6 +74,7 @@ public class FValueFactory implements IFactory<FValue> {
         action = false;
         invalidated.clear();
         invalidatedStack.clear();
+        actionStack.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -184,6 +186,7 @@ public class FValueFactory implements IFactory<FValue> {
     public void clear() throws Exception {
         invalidated.clear();
         invalidatedStack.clear();
+        actionStack.clear();
         if (mind.getNext() != null) {
             transaction(((Mind) mind.getNext()).getFValues());
         } else {
@@ -195,12 +198,16 @@ public class FValueFactory implements IFactory<FValue> {
     public void mark() throws Exception {
         cache.mark();
         invalidatedStack.push(new HashSet<>(invalidated));
+        actionStack.push(action);
     }
 
     public void commit() throws Exception {
         cache.commit();
         if (!invalidatedStack.isEmpty()) {
             invalidatedStack.pop();
+        }
+        if (!actionStack.isEmpty()) {
+            actionStack.pop();
         }
     }
 
@@ -209,6 +216,9 @@ public class FValueFactory implements IFactory<FValue> {
         if (!invalidatedStack.isEmpty()) {
             invalidated.clear();
             invalidated.addAll(invalidatedStack.pop());
+        }
+        if (!actionStack.isEmpty()) {
+            action = actionStack.pop();
         }
     }
 
