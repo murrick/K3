@@ -3,9 +3,10 @@ name: One-shot C-variable scope Javadoc
 on:
   pull_request:
     branches:
-      - fix/3.4.4.2.3-mind-lifecycle-safety
+      - arch/3.5.0-core-consolidation
     paths:
       - '.github/workflows/one-shot-cvar-scope-javadoc.yml'
+      - '.github/cvar-javadoc-trigger'
 
 permissions:
   contents: write
