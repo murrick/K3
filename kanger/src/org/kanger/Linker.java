@@ -41,7 +41,112 @@ import org.kanger.units.*;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Исполнитель насыщения и оркестратор неподвижной точки KANGER для одного
+ * {@link Mind}.
+ *
+ * <p><strong>Роль и владение.</strong> Каждый {@code Mind} создаёт собственный
+ * {@code Linker}; экземпляр хранит ссылку на этот runtime-контекст и его
+ * {@link LogStore}. Linker не владеет каноническими Rule, TValue, FValue или
+ * Hypothesis и не является самостоятельной транзакцией. Он координирует их
+ * фабрики, transient solve-state, вычисления и материализацию внутри уже
+ * зарезервированного вызывающей стороной Mind.</p>
+ *
+ * <p><strong>Граница одного запуска.</strong> {@link #link(Rule, boolean)}
+ * очищает query-local used/excluded/calculated/flood state, canonical
+ * {@code ruleSolves}, производный tuple-index и статистику. Ускорители
+ * {@code solveIndex}, {@code indexedSolveCounts}, {@code unarySolveKeys} и
+ * {@code indexedSolves} содержат только ссылки на существующие {@link TSolve}
+ * текущего запуска; они не являются semantic authority и не переживают новый
+ * {@code link()}.</p>
+ *
+ * <p><strong>Активный Rule-set.</strong> Полное насыщение обходит все видимые
+ * неудалённые Rule. Rule-scoped запуск начинает с переданного правила и
+ * расширяет множество opposite-polarity native candidates, уже used Rules и
+ * новых generated Rules текущей границы. Candidate indexes сокращают число
+ * проверок, но итоговое сопоставление, hydration и semantic validation остаются
+ * в Linker и Rule/Domain.</p>
+ *
+ * <p><strong>Порядок прохода.</strong> Каждый saturation pass дважды обходит
+ * один и тот же Rule-set: сначала в строгом порядке убывания полного
+ * {@code long Rule id}, затем в строгом порядке возрастания. Первый проход
+ * распространяет факты в исторически установленном направлении, второй
+ * замыкает обратные зависимости. Этот порядок является наблюдаемым инвариантом
+ * алгоритма и не эквивалентен произвольной итерации {@link HashSet}.</p>
+ *
+ * <p><strong>Неподвижная точка.</strong> В начале каждого pass Linker сбрасывает
+ * continuation signals {@code RuleFactory}, {@code TValueFactory},
+ * {@code FValueFactory}, temporary hypothesis и final hypothesis. Следующий
+ * pass выполняется только если хотя бы один из этих владельцев сообщил о
+ * пережившем операцию эффекте. Signal не является самостоятельным результатом:
+ * speculative mutation, откатанная локальным checkpoint, не должна оставлять
+ * ложное требование продолжения.</p>
+ *
+ * <p><strong>Unification и checkpoints.</strong> {@code linkDomains()} для
+ * каждого opposite-polarity candidate открывает парные локальные checkpoints
+ * TValue/FValue. Новая подстановка или surviving ground used-state завершает
+ * их commit; discarded substitutable/no-op match и failed candidate завершают
+ * release. Вся пара должна быть закрыта в том же candidate-operation frame:
+ * незакрытая рамка меняет смысл последующих nested commit/release и поэтому
+ * является lifecycle defect, а не только retention.</p>
+ *
+ * <p><strong>Подстановки и совместимость.</strong> Переменные вращаются от
+ * старших к младшим по их установленному порядку, а {@code isValidFor()}
+ * проверяет совместимость текущей частичной подстановки с уже известными
+ * {@code TSolve}. Это query-local join/filter; tuple-index ускоряет lookup, но
+ * не создаёт решений и не отменяет каноническую проверку значений.</p>
+ *
+ * <p><strong>Побочные эффекты.</strong> Во время прохода Linker может создать
+ * TValue/FValue, отметить Domain и Rule used/calculated/excluded, накопить
+ * {@link Cause}, добавить TSolve, temporary/final hypotheses и classified
+ * produced Domains. {@code linkDatabase()} выполняет retained legacy
+ * branch-closure и только помечает materialization candidates;
+ * {@code updateDatabase()} после завершения Rule-rotation применяет stamp,
+ * довычисляет необходимые Function values и создаёт canonical stored Rule через
+ * Domain/RuleFactory. Такое разделение препятствует изменению Rule-set внутри
+ * незавершённого branch traversal.</p>
+ *
+ * <p><strong>Functions и system predicates.</strong> {@code calcFunctions()}
+ * передаёт calculable occurrences в принадлежащий Mind {@code Calculator};
+ * {@code checkSystem()} вычисляет algorithmic predicates, управляет calculated
+ * marks и публикует полные transient solves. Linker не определяет binding mode
+ * Function/UDF и не владеет canonical FValue identity — эти контракты остаются
+ * у соответствующих фабрик и Calculator.</p>
+ *
+ * <p><strong>Ошибки и flood control.</strong> Ошибки одной terminal branch,
+ * возникшие внутри domain/function/database evaluation, диагностируются в
+ * {@code stderr} и делают результат этой branch ложным; владельцы локальных
+ * checkpoints обязаны оставить state согласованным до выхода с исключением.
+ * Превышение flood limit при вращении переменных выбрасывает
+ * {@link RuntimeErrorException} наружу и не является частичным логическим
+ * ответом.</p>
+ *
+ * <p><strong>Persistence и cleanup.</strong> Linker напрямую не открывает и не
+ * обновляет storage. Durable publication проходит через factory/Domain paths,
+ * а физический pack/cleanup выполняется владельцами Mind и фабрик. Сам Linker
+ * сохраняет только runtime statistics и query-local acceleration structures,
+ * которые переинициализируются на следующем запуске.</p>
+ *
+ * <p><strong>Concurrency и caller obligations.</strong> Mutable counters,
+ * indexes, current substitutions и связанные Mind stores не делают Linker
+ * independently thread-safe. Публичный query/transaction protocol должен
+ * сериализовать работу через reservation/locking Mind и не вызывать один
+ * экземпляр Linker конкурентно. Вызывающий код не должен менять Rule-set,
+ * factory checkpoints или query-local solve maps во время насыщения и не должен
+ * трактовать acceleration metadata либо statistics как часть логического
+ * результата.</p>
+ *
+ * <p><strong>Замороженные границы.</strong> Исторический control flow
+ * {@code linkDatabase()} и compatibility join {@code isValidFor()} являются
+ * semantic kernels. Их переименование, декомпозиция или оптимизация допустимы
+ * только после отдельного equivalence proof и regression gate; архитектурный
+ * Javadoc сам по себе не разрешает такой рефакторинг.</p>
+ *
+ * @see Mind
+ * @see Rule
+ * @see Domain
+ * @see TValue
+ * @see FValue
+ * @see LinkerStatistics
  */
 public class Linker {
 
