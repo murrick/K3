@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - integrate/3.5.0.5-cvar-rule-scope
+  pull_request:
+    branches:
+      - integrate/3.5.0.5-cvar-rule-scope
   workflow_dispatch:
 
 permissions:
