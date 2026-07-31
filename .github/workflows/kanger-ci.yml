@@ -94,3 +94,10 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerMindCommitExceptionAtomicitySafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+      - name: Mind rollback failure isolation invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerMindRollbackFailureIsolationSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
