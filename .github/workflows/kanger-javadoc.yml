@@ -7,6 +7,7 @@ on:
       - 'kanger-udf/src/**/*.java'
       - 'kanger-data-dumb/src/**/*.java'
       - 'kanger-console/src/**/*.java'
+      - 'docs/architecture/3.5.0.4-*.md'
       - 'pom.xml'
       - '.github/workflows/kanger-javadoc.yml'
   workflow_dispatch:
