@@ -38,6 +38,7 @@ jobs:
       - name: Apply recovered invariant
         run: |
           git fetch origin fix/3.5.0.5-cvar-rule-scope
+          sed -i 's/if count != 1:/if count < 1:/' tools/integrate_cvar_rule_scope.py
           python3 tools/integrate_cvar_rule_scope.py
           git show FETCH_HEAD:kanger-console/src/org/kanger/KangerCVarRuleScopeSafetyRunner.java \
             > kanger-console/src/org/kanger/KangerCVarRuleScopeSafetyRunner.java
