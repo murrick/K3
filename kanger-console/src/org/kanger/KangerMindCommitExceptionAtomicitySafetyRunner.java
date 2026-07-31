@@ -38,6 +38,11 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
             require(transactionCounter(parent) == 1,
                     "child construction did not reserve exactly one transaction");
 
+            Object probe = child.compileLine(
+                    "!commit_exception_atomicity_probe(value);", false, null);
+            require(probe != null,
+                    "fixture did not create child-local state for composite commit");
+
             replaceAnalyzer(parent, new FailingAnalyzer(parent));
 
             boolean failureObserved = false;
