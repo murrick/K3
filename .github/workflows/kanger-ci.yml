@@ -108,3 +108,10 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerMindPartialMarkAcquisitionSafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+      - name: Mind partial commit completion invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerMindPartialCommitCompletionSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
