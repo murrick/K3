@@ -70,6 +70,14 @@ public class Linker {
         this.log = mind.getLog();
     }
 
+    static int compareRuleIdsDescending(IRule left, IRule right) {
+        return Long.compare(right.getId(), left.getId());
+    }
+
+    static int compareRuleIdsAscending(IRule left, IRule right) {
+        return Long.compare(left.getId(), right.getId());
+    }
+
     public LinkerStatistics snapshotStatistics() {
         return statistics.snapshot();
     }
@@ -346,14 +354,14 @@ public class Linker {
             Collections.sort(leftList, new Comparator<IRule>() {
                 @Override
                 public int compare(IRule o1, IRule o2) {
-                    return (int) (o2.getId() - o1.getId());
+                    return compareRuleIdsDescending(o1, o2);
                 }
             });
             ruleList.addAll(ruleSet);
             Collections.sort(ruleList, new Comparator<IRule>() {
                 @Override
                 public int compare(IRule o1, IRule o2) {
-                    return (int) (o1.getId() - o2.getId());
+                    return compareRuleIdsAscending(o1, o2);
                 }
             });
 
@@ -1074,4 +1082,3 @@ public class Linker {
         return !block;
     }
 }
-
