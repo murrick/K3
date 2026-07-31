@@ -524,7 +524,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         try {
             return new IndexIterator(false);
         } catch (Exception e) {
-            return null;
+            throw new IllegalStateException("Unable to create forward index iterator", e);
         }
     }
 
@@ -532,7 +532,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         try {
             return new IndexIterator(backward);
         } catch (Exception e) {
-            return null;
+            throw new IllegalStateException("Unable to create index iterator", e);
         }
     }
 
@@ -643,7 +643,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
 
         @Override
         public int compareTo(IndexOne indexOne) {
-            return (int) (id - indexOne.getId());
+            return Long.compare(id, indexOne.getId());
         }
     }
 
@@ -663,6 +663,10 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
             this.backward = backward;
             flush();
             currentId = backward ? -1L : Long.MIN_VALUE;
+            if (baseIndex.isEmpty()) {
+                blockId = -1L;
+                return;
+            }
             blockId = backward ? baseIndex.lastKey() : baseIndex.firstKey();
             loadBlock(baseIndex.get(blockId), block);
         }
