@@ -189,7 +189,8 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     @Override
     public int compareTo(TValue o) {
-        return (int) (tVarId == o.getTVarId() ? id - o.getId() : tVarId - o.getTVarId());
+        int variableOrder = Long.compare(tVarId, o.getTVarId());
+        return variableOrder != 0 ? variableOrder : Long.compare(id, o.getId());
     }
 
     public long getValueId() {
