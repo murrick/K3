@@ -37,11 +37,13 @@ public abstract class Version {
     public static final int VERSION = 3;
     public static final int RELEASE = 3;
     public static final String REVISION = "7318";
+    public static final String BRANCH = "arch/3.5.0-core-consolidation";
     public static final String DATE = "2021-12-28_13:28:12";
+    public static final String BUILD_CREDIT = "Stabilized and audited in collaboration with ChatGPT.";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
-    public static final String VERSION_S = String.format("%d.%d.%s", VERSION, RELEASE, REVISION);
-    public static final String DATE_S = formatDate(parseDate(DATE));
+    public static final String VERSION_S = BRANCH;
+    public static final String DATE_S = formatDate(parseDate(DATE)) + "\n" + BUILD_CREDIT;
 
     private static String formatDate(Date date) {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(date);
