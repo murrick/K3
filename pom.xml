@@ -37,9 +37,142 @@
                     <include>**/*.properties</include>
                 </includes>
             </resource>
+            <resource>
+                <directory>${project.build.directory}/generated-resources/kanger</directory>
+            </resource>
         </resources>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-kanger-build-metadata</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <property environment="env"/>
+
+                                <tstamp>
+                                    <format property="kanger.build.time" pattern="yyyy-MM-dd_HH:mm:ss"/>
+                                </tstamp>
+
+                                <condition property="kanger.build.branch.raw"
+                                           value="${kanger.build.branch.override}">
+                                    <and>
+                                        <isset property="kanger.build.branch.override"/>
+                                        <not>
+                                            <equals arg1="${kanger.build.branch.override}" arg2=""/>
+                                        </not>
+                                    </and>
+                                </condition>
+
+                                <condition property="kanger.build.branch.raw" value="${env.GITHUB_HEAD_REF}">
+                                    <and>
+                                        <not>
+                                            <isset property="kanger.build.branch.raw"/>
+                                        </not>
+                                        <isset property="env.GITHUB_HEAD_REF"/>
+                                        <not>
+                                            <equals arg1="${env.GITHUB_HEAD_REF}" arg2=""/>
+                                        </not>
+                                    </and>
+                                </condition>
+
+                                <condition property="kanger.build.branch.raw" value="${env.GITHUB_REF_NAME}">
+                                    <and>
+                                        <not>
+                                            <isset property="kanger.build.branch.raw"/>
+                                        </not>
+                                        <isset property="env.GITHUB_REF_NAME"/>
+                                        <not>
+                                            <equals arg1="${env.GITHUB_REF_NAME}" arg2=""/>
+                                        </not>
+                                    </and>
+                                </condition>
+
+                                <condition property="kanger.build.branch.raw" value="${env.BRANCH_NAME}">
+                                    <and>
+                                        <not>
+                                            <isset property="kanger.build.branch.raw"/>
+                                        </not>
+                                        <isset property="env.BRANCH_NAME"/>
+                                        <not>
+                                            <equals arg1="${env.BRANCH_NAME}" arg2=""/>
+                                        </not>
+                                    </and>
+                                </condition>
+
+                                <condition property="kanger.build.branch.raw" value="${env.CI_COMMIT_REF_NAME}">
+                                    <and>
+                                        <not>
+                                            <isset property="kanger.build.branch.raw"/>
+                                        </not>
+                                        <isset property="env.CI_COMMIT_REF_NAME"/>
+                                        <not>
+                                            <equals arg1="${env.CI_COMMIT_REF_NAME}" arg2=""/>
+                                        </not>
+                                    </and>
+                                </condition>
+
+                                <exec executable="git"
+                                      outputproperty="kanger.git.branch"
+                                      resultproperty="kanger.git.result"
+                                      failifexecutionfails="false"
+                                      failonerror="false">
+                                    <arg value="rev-parse"/>
+                                    <arg value="--abbrev-ref"/>
+                                    <arg value="HEAD"/>
+                                </exec>
+
+                                <condition property="kanger.build.branch.raw" value="${kanger.git.branch}">
+                                    <and>
+                                        <not>
+                                            <isset property="kanger.build.branch.raw"/>
+                                        </not>
+                                        <isset property="kanger.git.branch"/>
+                                        <not>
+                                            <equals arg1="${kanger.git.branch}" arg2=""/>
+                                        </not>
+                                    </and>
+                                </condition>
+
+                                <fail message="Unable to resolve the KANGER source branch for Maven build metadata">
+                                    <condition>
+                                        <not>
+                                            <isset property="kanger.build.branch.raw"/>
+                                        </not>
+                                    </condition>
+                                </fail>
+
+                                <loadresource property="kanger.build.branch">
+                                    <string value="${kanger.build.branch.raw}"/>
+                                    <filterchain>
+                                        <striplinebreaks/>
+                                    </filterchain>
+                                </loadresource>
+
+                                <fail message="Resolved an empty KANGER source branch for Maven build metadata">
+                                    <condition>
+                                        <equals arg1="${kanger.build.branch}" arg2=""/>
+                                    </condition>
+                                </fail>
+
+                                <mkdir dir="${project.build.directory}/generated-resources/kanger/org/kanger"/>
+                                <echo file="${project.build.directory}/generated-resources/kanger/org/kanger/build.properties"
+                                      message="branch=${kanger.build.branch}&#10;date=${kanger.build.time}&#10;"/>
+                                <echo message="KANGER Maven build branch: ${kanger.build.branch}"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
