@@ -32,7 +32,62 @@ import org.kanger.interfaces.IUser;
 import java.util.Collection;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Внутренняя граница storage-плагина, владеющего одним выбранным физическим
+ * generation и набором его логических {@link IBase}.
+ *
+ * <p><strong>Роль и публикация.</strong> Реализация регистрируется в
+ * {@link IUser} через {@link #init(IUser)}. {@link #use(String)} выбирает или
+ * открывает один storage generation, после чего {@link #getBase(String)}
+ * создаёт либо получает schema-specific bases. Публикация полного набора в
+ * фабрики выполняется {@code User}; {@code IData} не выбирает текущий
+ * {@link IMind} и не является логической транзакцией.</p>
+ *
+ * <p><strong>Атомарность acquisition.</strong> Открытый generation становится
+ * видимым KANGER только после успешного получения полного canonical schema set.
+ * Если acquisition одной базы завершается исключением до публикации, владелец
+ * обязан закрыть частично открытый {@code IData}; partial set не должен
+ * публиковаться фабрикам, а существующий in-memory Mind не должен уничтожаться.
+ * Ошибка cleanup сохраняется как дополнительная к исходной acquisition error.</p>
+ *
+ * <p><strong>Владение ресурсами.</strong> {@code IData} владеет физическим
+ * контекстом, registry логических баз и storage-wide close/flush/remove/reindex
+ * sequencing. Фабрики и Escalera получают {@code IBase} как заимствованные
+ * generation-local ссылки и не закрывают контейнер самостоятельно.</p>
+ *
+ * <p><strong>Операции lifecycle.</strong> {@link #flush()} публикует
+ * накопленные physical changes без завершения generation; {@link #close()}
+ * освобождает открытые ресурсы; {@link #remove(String)} уничтожает выбранное
+ * хранилище согласно реализации. Эти методы не являются синонимами и не
+ * заменяют transaction commit/release конкретного Mind.</p>
+ *
+ * <p><strong>Base lookup.</strong> {@link #getBase(String)} является
+ * acquisition path и может создать отсутствующую логическую базу.
+ * {@link #connect(String)} подключается к уже существующей базе в текущем
+ * generation согласно контракту реализации. Вызывающая сторона не должна
+ * смешивать эти операции либо предполагать, что отсутствие базы эквивалентно
+ * пустой semantic schema.</p>
+ *
+ * <p><strong>Reindex.</strong> {@link #reindex(IReactor, IMind)} является
+ * storage-wide migration/reconstruction workflow. Переданный Mind служит
+ * контекстом гидратации и materialization; порядок схем, base codes, recovery и
+ * swap policy принадлежат реализации и orchestration {@code User}. Reindex не
+ * разрешает transaction overlay самостоятельно владеть physical destination.</p>
+ *
+ * <p><strong>Наблюдаемость.</strong> {@link #isClosed()} и
+ * {@link #getStorageName()} описывают состояние физического generation, а не
+ * наличие активного query или child transaction. {@link #list()} перечисляет
+ * доступные storage names и не является перечислением схем текущего Mind.</p>
+ *
+ * <p><strong>Concurrency, failure и compatibility.</strong> Интерфейс не
+ * обещает конкурентное управление одним generation несколькими независимыми
+ * callers. Вызывающий владелец сериализует lifecycle и обязан учитывать
+ * checked failures. DUMB directory layout, WAL, locking и recovery являются
+ * конкретной реализацией; окончательные внешние гарантии public API проверяются
+ * отдельно на этапе 3.5.0.5.</p>
+ *
+ * @see IBase
+ * @see IUser
+ * @see IMind
  */
 public interface IData {
     void init(IUser user);
