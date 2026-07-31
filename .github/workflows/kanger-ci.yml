@@ -73,3 +73,10 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerEscaleraMarkSafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+      - name: Factory action rollback invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerFactoryActionRollbackSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
