@@ -74,6 +74,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: Linker checkpoint balance invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerLinkerCheckpointBalanceSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Escalera empty-root mark invariant
         run: >-
           mvn --batch-mode --no-transfer-progress
