@@ -13,11 +13,11 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Characterization runner for the observable empty-index boundary.
+ * Regression runner for the hardened empty-index boundary.
  *
- * <p>This runner intentionally records current behavior. It does not declare
- * the behavior desirable: {@link Index#firstKey()} throws, while both iterator
- * factories return {@code null} after swallowing the constructor failure.</p>
+ * <p>{@link Index#firstKey()} preserves its effective exception contract,
+ * while both iterator factories must return valid empty iterators rather than
+ * {@code null}.</p>
  */
 public final class IndexEmptyBoundarySafetyRunner {
 
@@ -61,14 +61,18 @@ public final class IndexEmptyBoundarySafetyRunner {
             firstKeyThrew = true;
         }
         require(firstKeyThrew,
-                "current empty firstKey contract must throw NoSuchElementException");
+                "empty firstKey must preserve NoSuchElementException contract");
 
         Iterator<Index.IndexOne> forward = index.iterator();
         Iterator<Index.IndexOne> backward = index.iterator(true);
-        require(forward == null,
-                "current empty forward iterator factory must return null");
-        require(backward == null,
-                "current empty backward iterator factory must return null");
+        require(forward != null,
+                "empty forward iterator factory must return an iterator");
+        require(backward != null,
+                "empty backward iterator factory must return an iterator");
+        require(!forward.hasNext(),
+                "empty forward iterator must report no next element");
+        require(!backward.hasNext(),
+                "empty backward iterator must report no next element");
 
         System.out.println("IndexEmptyBoundarySafetyRunner: OK");
     }
