@@ -95,6 +95,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: Rule action rollback invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerRuleActionRollbackSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Domain waiter rollback invariant
         run: >-
           mvn --batch-mode --no-transfer-progress
