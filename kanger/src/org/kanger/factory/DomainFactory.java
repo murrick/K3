@@ -49,7 +49,65 @@ import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Created by Dmitry G. Quznetsov on 25.05.15.
+ * Канонический реестр и транзакционный overlay {@link Domain} одного уровня
+ * {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Фабрика канонизирует домены по
+ * фактическому descriptor, включающему предикат, полярность, аргументы и Rule
+ * context текущего equality/hash contract. При создании она также фиксирует
+ * substitutable/abstractive свойства аргументов. Это граница identity,
+ * hydration и transaction visibility, а не только конструктор Domain.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Каждый {@code Mind} создаёт
+ * собственную {@code DomainFactory}. Дочерний уровень инициализирует её через
+ * {@code transaction(parentFactory)}: {@link Escalera} образует overlay над
+ * cache родителя, а auxiliary set {@code waiters} копируется как исходное
+ * видимое состояние. До parent commit дочерние добавления принадлежат child
+ * factory и не должны публиковаться как состояние родителя.</p>
+ *
+ * <p><strong>Завершение транзакции.</strong> Typed
+ * {@code commit(childFactory)} продвигает child cache, переводит promoted
+ * units в контекст родительского {@code Mind} и объединяет child waiters.
+ * Release всего child уровня координирует родительский {@code Mind}; сама
+ * фабрика не принимает решения о принятии или отклонении логической
+ * транзакции.</p>
+ *
+ * <p><strong>Deferred-domain metadata.</strong> {@code waiters} содержит
+ * домены, опубликованные {@link RuleFactory} для последующего использования
+ * Linker при сопоставлении с opposite-polarity masters. Это семантическое
+ * inference state, а не diagnostic cache. Поэтому checkpoint protocol
+ * {@link #mark()}, {@link #commit()} и {@link #release()} сохраняет и
+ * восстанавливает waiters параллельно с Escalera; release обязан вернуть обе
+ * части factory state к одному transaction snapshot.</p>
+ *
+ * <p><strong>Persistence.</strong> Только root factory при открытом storage
+ * заимствует schema-specific {@link IBase} у {@link User}. Cache miss может
+ * materialize Domain через эту базу, а root update — передать изменения в
+ * storage. Child overlay получает видимость через parent cache, но не storage
+ * connection или close authority; generation и закрытием владеют
+ * {@code User}/{@code IData}.</p>
+ *
+ * <p><strong>Очистка.</strong> Child {@link #clear()} заново строит overlay из
+ * текущего parent view; root clear сбрасывает canonical generation. {@link
+ * #pack()} удаляет только Domains, помеченные deleted, и синхронно исключает
+ * их из waiters. Метод не является общей сборкой достижимости всех активных
+ * доменов.</p>
+ *
+ * <p><strong>Инварианты и concurrency.</strong> Canonical add защищён
+ * локальной синхронизацией, а waiter set допускает безопасное snapshot-чтение,
+ * но это не делает mutable Domains, iterator или весь transaction protocol
+ * независимо thread-safe. Parent publication, composite checkpoint order и
+ * transaction reservation остаются ответственностью {@code Mind}.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Нормальный доступ идёт
+ * через фабрику актуального {@code Mind}. Вызывающая сторона не должна
+ * трактовать child overlay как самостоятельную persistent базу, изменять
+ * parent state до commit либо считать Escalera единственной частью Domain
+ * transaction state.</p>
+ *
+ * @see CommentFactory
+ * @see IFactory
+ * @see Domain
  */
 public class DomainFactory implements IFactory<Domain> {
 
