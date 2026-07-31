@@ -88,6 +88,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: Domain waiter rollback invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerDomainWaiterRollbackSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Factory concurrency lock-order invariant
         run: >-
           mvn --batch-mode --no-transfer-progress
