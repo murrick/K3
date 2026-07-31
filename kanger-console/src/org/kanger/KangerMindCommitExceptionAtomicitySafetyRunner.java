@@ -8,6 +8,7 @@ package org.kanger;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
+import org.kanger.units.Rule;
 
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -38,10 +39,11 @@ public final class KangerMindCommitExceptionAtomicitySafetyRunner {
             require(transactionCounter(parent) == 1,
                     "child construction did not reserve exactly one transaction");
 
-            Object probe = child.compileLine(
-                    "!commit_exception_atomicity_probe(value);", false, null);
-            require(probe != null,
-                    "fixture did not create child-local state for composite commit");
+            Rule probe = new Rule(child);
+            child.getRules().register(probe);
+            probe.setOrigin(child.getTerms().add("commit_exception_atomicity_probe"));
+            require(child.getRules().add(probe) == probe,
+                    "fixture did not create a direct child-local rule");
 
             replaceAnalyzer(parent, new FailingAnalyzer(parent));
 
