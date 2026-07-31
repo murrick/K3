@@ -3,24 +3,23 @@
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *  IN THE SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 package org.kanger.storage;
@@ -42,9 +41,17 @@ public class Escalera implements ICache {
     private IStep root = null;
 
     private String schema = "";
-    private Stack<IStep> stack = new Stack<>();
+    private Stack<Checkpoint> stack = new Stack<>();
 
     private Mind mind = null;
+
+    private static final class Checkpoint {
+        private final IStep root;
+
+        private Checkpoint(IStep root) {
+            this.root = root;
+        }
+    }
 
     /**
      * Lightweight acceleration metadata. Persistent semantic objects are not
@@ -54,7 +61,6 @@ public class Escalera implements ICache {
     private final Map<Long, IStep> memoryById = new HashMap<>();
     private final Set<Long> persistentIds = new HashSet<>();
     private final Map<Integer, Set<Long>> idsByHash = new HashMap<>();
-    // target ID -> predecessor ID in the root-to-tail chain.
     private final Map<Long, Long> predecessorById = new HashMap<>();
     private boolean indexValid = false;
     private IStep indexedRoot = null;
@@ -257,11 +263,6 @@ public class Escalera implements ICache {
             return;
         }
 
-        /*
-         * Unlink complete deleted runs. A run changes only one boundary link,
-         * so a persistent predecessor is rewritten at most once even when many
-         * adjacent records are removed.
-         */
         LinkedHashMap<Long, IStep> removed = new LinkedHashMap<>();
         LinkedHashSet<IStep> changedPersistentPredecessors = new LinkedHashSet<>();
         for (long startId : targets) {
@@ -351,27 +352,26 @@ public class Escalera implements ICache {
 
     @Override
     public long mark() {
-        if (root != null) {
-            return stack.push(root).getId();
-        } else {
-            return -1;
-        }
+        stack.push(new Checkpoint(root));
+        return root == null ? -1 : root.getId();
     }
 
     @Override
     public long commit() {
-        if (!stack.isEmpty()) {
-            stack.pop();
+        if (stack.isEmpty()) {
+            throw new IllegalStateException("Escalera commit without an open checkpoint");
         }
+        stack.pop();
         return root == null ? -1 : root.getId();
     }
 
     @Override
     public long release() {
-        if (!stack.isEmpty()) {
-            root = stack.pop();
-            invalidateIndex();
+        if (stack.isEmpty()) {
+            throw new IllegalStateException("Escalera release without an open checkpoint");
         }
+        root = stack.pop().root;
+        invalidateIndex();
         return root == null ? -1 : root.getId();
     }
 
@@ -439,18 +439,9 @@ public class Escalera implements ICache {
 
     @Override
     public boolean update() throws Exception {
-        // Это самый низ
         if (mind.isStorageUsed()) {
-
             IBase base = ((User) mind.getUser()).getStorage(schema);
             synchronized (base) {
-
-                /*
-                 * Newly added in-memory Steps always form a prefix in front of
-                 * the persistent Sapato suffix. Persist that prefix only: once
-                 * the first Sapato is reached, the rest of the chain is already
-                 * durable and must not be walked or hydrated again.
-                 */
                 Deque<IStep> pending = new ArrayDeque<>();
                 for (IStep s = root; s != null && !(s instanceof Sapato); s = s.getNext()) {
                     pending.push(s);
@@ -524,6 +515,5 @@ public class Escalera implements ICache {
             }
             return o;
         }
-
     }
 }
