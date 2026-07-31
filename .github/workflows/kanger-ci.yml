@@ -88,6 +88,13 @@ jobs:
           -Dexec.classpathScope=test
           exec:java
 
+      - name: Factory concurrency diagnostics
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerFactoryConcurrencyDiagnosticRunner
+          -Dexec.classpathScope=test
+          exec:java
+
       - name: Escalera frame ownership invariant
         run: >-
           mvn --batch-mode --no-transfer-progress
