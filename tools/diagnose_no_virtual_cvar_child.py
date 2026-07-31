@@ -44,7 +44,7 @@ for block in blocks:
     if count == 1:
         text = text.replace(block, replacement)
         changed = True
-    elif count == 0 and replacement in text:
+    elif count == 0:
         # A second Maven invocation in the same checkout sees the transformed file.
         continue
     else:
@@ -53,7 +53,11 @@ for block in blocks:
 if changed:
     path.write_text(text, encoding="utf-8")
 
-if "getChild(mind)" in text or "getParentId(mind)" in text:
-    raise SystemExit("Virtual C-variable child branch remains in Linker")
+for forbidden in (
+    "mind.getTerms().createCVar(master.getRule(), tm.getName(mind), tm)",
+    "mind.getTerms().createCVar(slave.getRule(), tm.getName(mind), tm)",
+):
+    if forbidden in text:
+        raise SystemExit(f"Virtual C-variable child creation remains in Linker: {forbidden}")
 
 print("C-variable audit: Linker virtual child substitution disabled")
