@@ -80,3 +80,10 @@ jobs:
           -Dexec.mainClass=org.kanger.KangerFactoryActionRollbackSafetyRunner
           -Dexec.classpathScope=test
           exec:java
+
+      - name: Escalera frame ownership invariant
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Dexec.mainClass=org.kanger.KangerEscaleraFrameOwnershipSafetyRunner
+          -Dexec.classpathScope=test
+          exec:java
