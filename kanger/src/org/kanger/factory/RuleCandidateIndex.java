@@ -24,9 +24,78 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Compact in-memory candidate metadata. Only Rule IDs are retained; Rules and
- * Domains remain owned by Escalera/IBase and are hydrated after candidate
- * selection.
+ * Внутренний ID-only индекс кандидатов, принадлежащий одному
+ * {@link RuleFactory}. Он сокращает множество Rule перед unification, но не
+ * владеет {@link Rule}, {@link Domain}, persistent storage либо semantic
+ * identity.
+ *
+ * <p><strong>Представление.</strong> Индекс поддерживает три согласованные
+ * структуры:</p>
+ * <ul>
+ *   <li>{@code signatures}: predicate ID, polarity и arity -> Rule IDs;</li>
+ *   <li>{@code positions}: signature, argument position и exact/wildcard Term
+ *       ID -> Rule IDs;</li>
+ *   <li>{@code fallbackSignatures}: Rule IDs, для которых positional pruning
+ *       небезопасен.</li>
+ * </ul>
+ * <p>Все коллекции сохраняют только IDs. Canonical Rule и Domain остаются в
+ * Escalera/IBase контуре {@link RuleFactory} и гидратируются после selection.</p>
+ *
+ * <p><strong>Positional eligibility.</strong> Exact/wildcard positional index
+ * строится только для primary, non-query Rule с одним branch и одним Domain.
+ * Generated, query и multi-domain Rules сохраняются в fallback signature, чтобы
+ * ускорение не стало semantic filter. Non-Term candidate argument индексируется
+ * как wildcard {@code -1}; обычная unification остаётся окончательной проверкой.</p>
+ *
+ * <p><strong>Checkpoint journals.</strong> Каждый внутренний {@code IdIndex}
+ * хранит nested delta journals. {@link #mark()} открывает journal во всех трёх
+ * картах, {@link #commit()} сливает inner delta во внешний frame, а
+ * {@link #release()} воспроизводит changes в обратном порядке. Это derived
+ * metadata checkpoint; canonical Rule rollback выполняет owning factory.
+ * {@link #mergeFrom(RuleCandidateIndex)} копирует child snapshot по IDs и не
+ * передаёт object ownership.</p>
+ *
+ * <p><strong>Generation и memo.</strong> Каждая mutation, release, merge либо
+ * clear увеличивает {@code version} и очищает per-Mind batch summaries.
+ * {@link WeakHashMap} не является persistence layer: он ограничивает lifetime
+ * memo активными Mind generations. Summary публикуется только если observed
+ * version не изменилась; устаревший результат может использоваться для текущего
+ * вызова, но не кэшируется как новая authoritative view.</p>
+ *
+ * <p><strong>Resolved selection phases.</strong>
+ * {@link #collectResolvedLocal(Domain, boolean, Mind, LinkedHashSet)} строго
+ * разделяет четыре стадии:</p>
+ * <ol>
+ *   <li>разрешение direct Term/TVariable -> TValue bindings вне index lock;</li>
+ *   <li>копирование и фильтрация Rule IDs, чтение memo/version под lock;</li>
+ *   <li>гидратация Rule и Mind-dependent batching/used effects вне lock;</li>
+ *   <li>условная публикация memo под lock при неизменной version.</li>
+ * </ol>
+ *
+ * <p><strong>Lock-order invariant.</strong> Один
+ * {@link ReentrantReadWriteLock} защищает coherent snapshots трёх карт,
+ * journals, version и memo publication. Он не должен охватывать
+ * {@code RuleFactory.get(id)}, logical deletion checks, TValue resolution либо
+ * операции, способные войти в {@code Mind.locker}. Эта граница устраняет цикл
+ * {@code Mind.locker -> candidate lock -> Mind.locker}. Owning factory может
+ * дополнительно сериализовать metadata publication своим lock, но внутренний
+ * guard не становится глобальным Mind lock.</p>
+ *
+ * <p><strong>Semantic batching.</strong> Для non-substitutable generated pair
+ * resolved path может отметить source/candidate Domains и Rules как used и
+ * исключить batched IDs из текущего candidate result. Это существующий
+ * Mind-dependent semantic side effect, поэтому он вычисляется только после
+ * выхода из metadata lock и memo хранится отдельно для каждого active Mind.</p>
+ *
+ * <p><strong>Lifetime и ограничения.</strong> Индекс создаётся вместе с
+ * {@link RuleFactory}, очищается при смене transaction/cache generation и не
+ * сериализуется. Возвращаемые ID sets являются snapshots/copies; вызывающий код
+ * обязан гидратировать их через owning factory и повторно проверить logical
+ * visibility. Класс package-private и не является public API.</p>
+ *
+ * @see RuleFactory
+ * @see Rule
+ * @see Domain
  */
 final class RuleCandidateIndex {
 
