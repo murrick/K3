@@ -1,2 +1,3 @@
 Trigger the one-shot scoped C-variable Javadoc patch on the architectural branch.
 Retry after installing the guarded job in KANGER CI.
+Run the corrected external patch script.
