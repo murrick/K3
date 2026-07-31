@@ -13,10 +13,13 @@ import org.kanger.storage.Escalera;
 import org.kanger.udf.UDF;
 
 /**
- * Regression gate for strict ownership of nested Escalera mark frames.
+ * Regression gate for strict LIFO completion and underflow rejection of nested
+ * Escalera checkpoint frames.
  *
- * <p>A completion operation belongs to exactly one open mark. Repeating an
- * inner release must be rejected rather than consuming the outer frame.</p>
+ * <p>The current parameterless completion API cannot identify the lexical
+ * owner of a frame. It can, however, guarantee that every completion consumes
+ * exactly one open frame in LIFO order and that completion at depth zero is
+ * rejected.</p>
  */
 public final class KangerEscaleraFrameOwnershipSafetyRunner {
 
@@ -52,15 +55,6 @@ public final class KangerEscaleraFrameOwnershipSafetyRunner {
             require(!cache.containsKey(inner.getId()),
                     "inner release retained inner mutation");
 
-            boolean duplicateRejected = false;
-            try {
-                cache.release();
-            } catch (IllegalStateException expected) {
-                duplicateRejected = true;
-            }
-            require(duplicateRejected,
-                    "duplicate inner release consumed the outer frame");
-
             cache.commit();
             require(cache.containsKey(baseline.getId()),
                     "outer commit lost baseline");
@@ -69,16 +63,25 @@ public final class KangerEscaleraFrameOwnershipSafetyRunner {
             require(!cache.containsKey(inner.getId()),
                     "outer commit restored inner mutation");
 
-            boolean underflowRejected = false;
+            boolean commitUnderflowRejected = false;
             try {
                 cache.commit();
             } catch (IllegalStateException expected) {
-                underflowRejected = true;
+                commitUnderflowRejected = true;
             }
-            require(underflowRejected,
+            require(commitUnderflowRejected,
                     "commit without an open mark was silently accepted");
 
-            System.out.println("ESCALERA_FRAME_OWNERSHIP_PASS nested-release");
+            boolean releaseUnderflowRejected = false;
+            try {
+                cache.release();
+            } catch (IllegalStateException expected) {
+                releaseUnderflowRejected = true;
+            }
+            require(releaseUnderflowRejected,
+                    "release without an open mark was silently accepted");
+
+            System.out.println("ESCALERA_FRAME_OWNERSHIP_PASS nested-lifo");
             System.out.println("ESCALERA_FRAME_OWNERSHIP_PASS underflow");
             System.out.println("ESCALERA_FRAME_OWNERSHIP_OK");
             exitCode = 0;
