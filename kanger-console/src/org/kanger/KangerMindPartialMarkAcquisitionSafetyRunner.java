@@ -9,6 +9,7 @@ import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
+import org.kanger.units.Rule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
@@ -29,15 +30,28 @@ public final class KangerMindPartialMarkAcquisitionSafetyRunner {
     public static void main(String[] args) {
         int exitCode = 1;
         try {
-            IUser user = UserFactory.createUser("mind-partial-mark-acquisition",
-                    "mind-partial-mark-acquisition");
+            String userName =
+                    "mind-partial-mark-acquisition-" + System.nanoTime();
+            IUser user = UserFactory.createUser(userName, userName);
             new UDF().init(user);
             new DB().init(user);
 
             Mind parent = new Mind(user);
+
             Mind child = new Mind(parent);
+            addDirectRule(child, "partial_mark_acquisition_probe");
+
+            Mind sibling = new Mind(parent);
+            addDirectRule(sibling, "partial_mark_acquisition_sibling");
+
+            require(transactionCounter(parent) == 2,
+                    "two open children did not reserve two transactions");
+
+            require(parent.commit(sibling),
+                    "fixture sibling commit unexpectedly failed");
+
             require(transactionCounter(parent) == 1,
-                    "child construction did not reserve one transaction");
+                    "sibling commit did not leave exactly the original child reservation");
 
             installFailingMarkCache(parent.getTVars());
 
@@ -69,6 +83,14 @@ public final class KangerMindPartialMarkAcquisitionSafetyRunner {
             error.printStackTrace(System.err);
         }
         System.exit(exitCode);
+    }
+
+    private static void addDirectRule(Mind mind, String origin) throws Exception {
+        Rule rule = new Rule(mind);
+        mind.getRules().register(rule);
+        rule.setOrigin(mind.getTerms().add(origin));
+        require(mind.getRules().add(rule) == rule,
+                "fixture did not create direct local rule " + origin);
     }
 
     private static void installFailingMarkCache(Object factory) throws Exception {

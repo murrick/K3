@@ -9,6 +9,7 @@ import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.ICache;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
+import org.kanger.units.Rule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -25,13 +26,29 @@ public final class KangerMindPartialCommitCompletionSafetyRunner {
     public static void main(String[] args) {
         int exitCode = 1;
         try {
-            IUser user = UserFactory.createUser("mind-partial-commit-completion",
-                    "mind-partial-commit-completion");
+            String userName =
+                    "mind-partial-commit-completion-" + System.nanoTime();
+            IUser user = UserFactory.createUser(userName, userName);
             new UDF().init(user);
             new DB().init(user);
 
             Mind parent = new Mind(user);
+
             Mind child = new Mind(parent);
+            addDirectRule(child, "partial_commit_completion_probe");
+
+            Mind sibling = new Mind(parent);
+            addDirectRule(sibling, "partial_commit_completion_sibling");
+
+            require(transactionCounter(parent) == 2,
+                    "two open children did not reserve two transactions");
+
+            require(parent.commit(sibling),
+                    "fixture sibling commit unexpectedly failed");
+
+            require(transactionCounter(parent) == 1,
+                    "sibling commit did not leave exactly the original child reservation");
+
             replaceAnalyzer(parent, new SuccessfulAnalyzer(parent));
 
             Object tVars = parent.getTVars();
@@ -68,6 +85,14 @@ public final class KangerMindPartialCommitCompletionSafetyRunner {
             error.printStackTrace(System.err);
         }
         System.exit(exitCode);
+    }
+
+    private static void addDirectRule(Mind mind, String origin) throws Exception {
+        Rule rule = new Rule(mind);
+        mind.getRules().register(rule);
+        rule.setOrigin(mind.getTerms().add(origin));
+        require(mind.getRules().add(rule) == rule,
+                "fixture did not create direct local rule " + origin);
     }
 
     private static ICache failingCommitCache(final ICache delegate) {
