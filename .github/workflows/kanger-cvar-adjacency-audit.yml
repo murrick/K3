@@ -6,6 +6,11 @@ on:
       - 'audit/3.5.0-cvar-adjacency'
     paths:
       - '.github/workflows/kanger-cvar-adjacency-audit.yml'
+  pull_request:
+    branches:
+      - 'arch/3.5.0-core-consolidation'
+    paths:
+      - '.github/workflows/kanger-cvar-adjacency-audit.yml'
   workflow_dispatch:
 
 permissions:
