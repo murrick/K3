@@ -29,7 +29,68 @@ import org.kanger.interfaces.IMind;
 import java.util.Collection;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Внутренняя граница одной логической persistent-схемы KANGER внутри выбранного
+ * storage generation.
+ *
+ * <p><strong>Представление и владение.</strong> {@code IBase} представляет не
+ * транзакцию и не factory cache, а schema-specific persistent address space:
+ * записи {@link IStep}, allocation domain идентификаторов, восстановленные
+ * chain endpoints, физическую durability и implementation-specific cache.
+ * Экземпляр создаётся и удерживается {@link IData}; {@code User} публикует
+ * полный набор таких баз корневым фабрикам, которые только заимствуют ссылки.</p>
+ *
+ * <p><strong>Chain authority.</strong> {@link #getRoot()} и {@link #getTop()}
+ * описывают концы persistent linked representation. Порядок цепочки задаётся
+ * ссылками {@code IStep.next}, а не числовым порядком ID или позицией записи в
+ * физическом индексе. Реализация обязана восстанавливать endpoints из
+ * сохранённых связей и сигнализировать повреждение согласно своему recovery
+ * contract.</p>
+ *
+ * <p><strong>Hydration и materialization.</strong> {@link #get(long)}
+ * гидратирует persistent step по canonical ID. {@link #add(IStep)} и
+ * {@link #update(IStep)} публикуют или изменяют физическое представление уже
+ * подготовленного chain node; orchestration перехода memory-only Step в
+ * persistent Sapato остаётся у snapshot/cache layer. {@link #containsKey(long)}
+ * проверяет physical namespace и не заменяет semantic lookup фабрики.</p>
+ *
+ * <p><strong>Удаление и очистка.</strong> {@link #delete(long)} и
+ * {@link #deleteAll(Collection)} удаляют выбранные physical records;
+ * {@link #clear()} очищает всю логическую базу. Эти операции отличаются от
+ * {@link #clearCache()}, который освобождает только implementation-specific
+ * hydration/cache state, и от {@link #close()}, завершающего ресурс базы.
+ * Владельцы транзакционных overlay не должны вызывать destructive operations
+ * как обычный rollback.</p>
+ *
+ * <p><strong>Persistence lifecycle.</strong> {@link #flush()} задаёт
+ * durability boundary накопленных изменений. {@link #reindex(IBase, IMind)}
+ * переносит логическую схему в другую базу с использованием переданного
+ * контекста гидратации; storage-wide sequencing и атомарность выбора generation
+ * принадлежат {@link IData} и {@code User}, а не отдельной базе.</p>
+ *
+ * <p><strong>Идентификаторы.</strong> {@link #lastId()} и {@link #nextId()}
+ * принадлежат schema-local persistent allocation domain. ID является
+ * operational identity внутри поддерживаемого generation и не определяет
+ * linked traversal order.</p>
+ *
+ * <p><strong>Cache telemetry.</strong> Метрики hits, misses, evictions и entry
+ * count относятся к физическому storage cache реализации. Они не описывают
+ * canonical semantic ownership, transaction visibility или Escalera indexes.
+ * Значение {@code -1} означает, что совместимая реализация не публикует данную
+ * метрику.</p>
+ *
+ * <p><strong>Concurrency и ошибки.</strong> Интерфейс не обещает независимую
+ * thread-safety каждой операции. Вызывающий код соблюдает synchronization и
+ * lifecycle владельца storage. Возвращаемый {@code null}, checked exception и
+ * recovery failure имеют implementation-specific смысл; вызывающая сторона не
+ * должна превращать ошибку hydration в доказанное отсутствие semantic unit.</p>
+ *
+ * <p><strong>Совместимость.</strong> Конкретные DUMB file layout, WAL,
+ * base-code packing, cache policy и recovery algorithm являются доказательной
+ * реализацией этого контракта, но не универсальной частью интерфейса.</p>
+ *
+ * @see IData
+ * @see ICache
+ * @see IStep
  */
 public interface IBase {
 
