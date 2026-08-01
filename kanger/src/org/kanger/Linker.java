@@ -170,6 +170,16 @@ public class Linker {
     private final Set<TSolve> indexedSolves = Collections.newSetFromMap(
             new IdentityHashMap<TSolve, Boolean>());
 
+    /**
+     * Создаёт per-Mind исполнитель насыщения.
+     *
+     * <p>Экземпляр заимствует Mind и его LogStore, но не приобретает
+     * самостоятельного transaction или storage ownership. Caller не должен
+     * передавать один Linker другому Mind или запускать его конкурентно.</p>
+     *
+     * @param mind активный runtime-контекст, чьи фабрики и query-local stores
+     *             используются во всех последующих вызовах
+     */
     public Linker(Mind mind) {
         this.mind = mind;
         this.log = mind.getLog();
@@ -183,6 +193,16 @@ public class Linker {
         return Long.compare(left.getId(), right.getId());
     }
 
+    /**
+     * Возвращает отделённый снимок диагностических счётчиков последнего
+     * запуска Linker.
+     *
+     * <p>Снимок не является частью логического ответа, не владеет runtime
+     * объектами Mind и не изменяется следующими проходами. Значения пригодны
+     * для profiling/qualification, но не для управления семантикой запроса.</p>
+     *
+     * @return независимый snapshot текущей статистики
+     */
     public LinkerStatistics snapshotStatistics() {
         return statistics.snapshot();
     }
@@ -368,6 +388,28 @@ public class Linker {
         }
     }
 
+    /**
+     * Выполняет насыщение принадлежащего экземпляру Mind до неподвижной точки.
+     *
+     * <p>Перед первым pass очищаются query-local used/excluded/calculated,
+     * flood, TSolve-index и statistics state. При {@code rule == null}
+     * обходятся все видимые неудалённые Rule. Ненулевой seed ограничивает
+     * начальный набор переданным Rule и транзитивно добавляемыми
+     * opposite-polarity, already-used и новыми generated кандидатами.</p>
+     *
+     * <p>Метод координирует Rule/TValue/FValue actions, функции, системные
+     * предикаты, hypotheses и отложенную materialization. Он не открывает
+     * отдельную пользовательскую транзакцию: caller обязан вызвать его внутри
+     * корректно зарезервированного Mind workflow. Исключение, включая flood
+     * control, не означает частичный логический результат.</p>
+     *
+     * @param rule seed Rule для локализованного насыщения или {@code null}
+     *             для полного видимого Rule-set
+     * @param logging {@code true}, если pass/timing и semantic events должны
+     *                публиковаться в LogStore Mind
+     * @throws Exception при ошибке unification, вычисления, materialization
+     *                   или превышении flood limit
+     */
     public void link(Rule rule, boolean logging) throws Exception {
 
         mind.getExcludedDomains().clear();
@@ -585,6 +627,28 @@ public class Linker {
         return result[0];
     }
 
+    /**
+     * Проверяет, совместима ли текущая частичная подстановка с уже
+     * зарегистрированными TSolve.
+     *
+     * <p>{@code tail} является непустым suffix вращаемых TVariable; первая
+     * переменная уже имеет current TValue. Для каждого TVariableSet,
+     * содержащего её, метод требует существования хотя бы одного TSolve,
+     * совместимого со всеми уже назначенными переменными из suffix. Unary
+     * tuple не добавляет межпеременного ограничения. Если релевантных
+     * TVariableSet нет, частичная подстановка допустима.</p>
+     *
+     * <p>Это query-local join/filter, а не создание TValue/TSolve и не
+     * доказательство Rule. Tuple index только ускоряет поиск и синхронно
+     * достраивается из authoritative {@code mind.getRuleSolves()}.</p>
+     *
+     * @param tail непустой упорядоченный suffix переменных с установленными
+     *             current bindings для уже вращаемой части
+     * @return {@code true}, если ограничений нет или найден совместимый
+     *         зарегистрированный tuple; иначе {@code false}
+     * @throws Exception если current binding или tuple metadata не могут
+     *                   быть разрешены в текущем Mind
+     */
     private boolean isValidFor(SortedSet<TVariable> tail) throws Exception {
         synchronizeSolveIndex();
         final TVariable t = tail.first();
@@ -864,6 +928,36 @@ public class Linker {
     }
 
 
+    /**
+     * Классифицирует terminal branch и регистрирует её отложенный
+     * семантический эффект.
+     *
+     * <p>Историческое имя не обозначает физический database I/O. После
+     * {@link #checkSystem(List, boolean)} метод собирает текущий solve,
+     * разделяет Domains на stored, calculated, excluded, assumed и обычные
+     * candidates, после чего либо отмечает ровно выводимый Domain как
+     * produced, либо добавляет альтернативные temporary hypotheses.
+     * Canonical Rule создаётся позже в {@code updateDatabase()}, после
+     * завершения branch traversal.</p>
+     *
+     * <p>Возвращаемое значение сообщает только о новом produced-domain
+     * эффекте, который требует продолжения saturation. Создание одной
+     * hypothesis само по себе не превращает результат в {@code true}; её
+     * собственный action signal учитывается владельцем store. Метод может
+     * изменять produced domains, causes, solves, calculated/used marks,
+     * temporary hypotheses и diagnostic log.</p>
+     *
+     * @param tree terminal conjunction текущей Rule branch
+     * @param causes накопленные provenance-связи по Rule
+     * @param tvars переменные Rule, из current bindings которых строится
+     *              solve для materialized результата
+     * @param logging {@code true} для публикации classification/provenance
+     *                событий в LogStore
+     * @return {@code true}, если зарегистрирован новый produced Domain;
+     *         иначе {@code false}
+     * @throws Exception при ошибке разрешения Domain, system predicate,
+     *                   provenance или hypothesis state
+     */
     private boolean linkDatabase(List<Domain> tree, Map<IRule, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
 
         boolean result = false;
@@ -1107,6 +1201,22 @@ public class Linker {
     }
 
 
+    /**
+     * Вычисляет пустые calculable Function occurrences в переданных Domains.
+     *
+     * <p>Каждое подходящее вхождение очищается и передаётся Calculator
+     * текущего Mind. Canonical FValue identity, UDF binding и invalidation
+     * остаются обязанностью Calculator/FunctionFactory/FValueFactory. Метод
+     * не выполняет отдельный saturation pass и не использует параметр
+     * {@code causes}; параметр сохранён в исторической сигнатуре.</p>
+     *
+     * @param master Domains текущей branch
+     * @param causes исторический параметр provenance; методом не изменяется
+     * @param logging {@code true} для публикации вычислительных событий
+     * @return {@code true}, если хотя бы одно вычисление создало новый
+     *         surviving result
+     * @throws Exception при ошибке разрешения или выполнения функции
+     */
     public boolean calcFunctions(List<Domain> master, Map<IRule, Set<Cause>> causes, boolean logging) throws Exception {
         boolean result = false;
 
@@ -1127,6 +1237,29 @@ public class Linker {
         return result;
     }
 
+    /**
+     * Выполняет системные предикаты branch и определяет, блокируют ли они
+     * дальнейшую классификацию.
+     *
+     * <p>Успешные complete system Domains получают calculated mark. Если
+     * любой системный предикат противоречит своей polarity либо после
+     * частичного успеха остаётся невычисленный system Domain, все marks
+     * текущей попытки снимаются и branch блокируется. Полные наборы current
+     * TValue публикуются как TSolve только после согласованного успеха всей
+     * системной части.</p>
+     *
+     * <p>{@code true} означает отсутствие доказанного блока, а не
+     * обязательную вычисленность каждого ещё неполного предиката.</p>
+     *
+     * @param tree terminal conjunction, содержащая обычные и/или системные
+     *             Domains
+     * @param logging сохранённый orchestration flag; непосредственный вывод
+     *                этим методом не производится
+     * @return {@code false}, если системная часть отвергает branch;
+     *         иначе {@code true}
+     * @throws Exception при ошибке выполнения системного предиката или
+     *                   регистрации TSolve
+     */
     public boolean checkSystem(List<Domain> tree, boolean logging) throws Exception {
         boolean block = false;
         boolean success = false;

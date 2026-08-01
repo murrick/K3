@@ -26,7 +26,25 @@
 package org.kanger.interfaces;
 
 /**
- * Описатель объекта пользователя.
+ * Внешний пользовательский контекст KANGER.
+ *
+ * <p>Интерфейс объединяет три совместимые, но независимые роли: внешний
+ * идентификатор пользователя, сохраняемый набор строковых параметров и
+ * caller-managed ссылку на текущий {@link IMind}. Ядро KANGER не выполняет
+ * аутентификацию и не придаёт {@link #getId()} глобальной семантики: значение
+ * хранится для приложения, storage-модуля или иной внешней интеграции.</p>
+ *
+ * <p>Параметры принадлежат объекту пользователя и могут сохраняться в
+ * {@code kanger.conf}, если задан {@code user.dir}. Методы чтения с default
+ * имеют побочный эффект: отсутствующее значение регистрируется и может быть
+ * записано в конфигурационный файл. Поэтому этот интерфейс не является
+ * неизменяемым property view.</p>
+ *
+ * <p>{@code currentMind} — compatibility slot, управляемый вызывающей
+ * стороной. Он не является lifecycle authority, владельцем storage,
+ * указателем опубликованной транзакции или заменой {@link IMind#commit(IMind)}
+ * и {@link IMind#release(IMind)}. Приложение обязано само поддерживать ссылку
+ * в соответствии со своим transaction workflow.</p>
  */
 public interface IUser {
 
@@ -167,8 +185,27 @@ public interface IUser {
      */
     void setSourceDir(String dir);
 
+    /**
+     * Возвращает сохранённую приложением ссылку на текущий Mind.
+     *
+     * <p>Метод не вычисляет вершину transaction chain и не проверяет, что
+     * объект ещё активен. Значение может быть {@code null}; ядро KANGER не
+     * использует этот slot как источник истины lifecycle.</p>
+     *
+     * @return caller-managed ссылка на Mind или {@code null}
+     */
     IMind getCurrentMind();
 
+    /**
+     * Сохраняет caller-managed ссылку на текущий Mind.
+     *
+     * <p>Операция не выполняет commit, release, reservation, storage
+     * publication или cleanup. Передача {@code null} только очищает slot.
+     * Вызывающая сторона отвечает за согласованность ссылки со своим
+     * transaction workflow.</p>
+     *
+     * @param mind сохраняемый Mind или {@code null}
+     */
     void setCurrentMind(IMind mind);
 
 }
