@@ -36,19 +36,47 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Created by Dmitry G. Quznetsov on 20.05.15.
+ * Каноническое определение логического отношения KANGER.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Predicate} связывает
+ * канонический name Term и arity. Утверждения и составные правила ссылаются на
+ * это определение по ID; множество использующих его assertion-правил является
+ * контекстной проекцией конкретного {@link Mind}, а не частью identity самого
+ * предиката.</p>
+ *
+ * <p><strong>Inside.</strong> Устойчивое определение включает operational ID,
+ * owner Mind ID, name Term ID и range. Factory canonicalization использует пару
+ * {@code (name Term, arity)}; физический ID остаётся operational identity уже
+ * зарегистрированного объекта.</p>
+ *
+ * <p><strong>Outside.</strong> Lazy hydration имени, transaction-visible
+ * deletion, набор видимых assertion-правил и признак system operation зависят
+ * от переданного Mind и текущего runtime registry.</p>
+ *
+ * <p><strong>Lifecycle.</strong> Удаление является контекстной пометкой и не
+ * уничтожает определение, необходимое существующим Rule-ссылкам и rollback.
+ * {@link #getSolves(IMind)} сканирует текущую видимость правил и не является
+ * persistent reverse index.</p>
+ *
+ * <p><strong>Инварианты.</strong> Predicate definition != assertion set;
+ * operational ID != structural key; empty assertion set != absent predicate;
+ * deleted != nonexistent; diagnostic rendering != persistence protocol.</p>
  */
 public class Predicate implements IUnit<Predicate>, IPredicate {
 
     private static final long serialVersionUID = 196402070004L;
 
-    private long id = -1;                   // Идентификатор
-    private long mindId = -1;               // id транзакции
-    private ITerm name = null;              // Имя предиката
-    private int range = 0;                  // К-во параметров
+    private long id = -1;
+    private long mindId = -1;
+    private ITerm name = null;
+    private int range = 0;
 
     private Mind mind = null;
     private long nameId = -1;
@@ -56,16 +84,19 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
     public Predicate() {
     }
 
+    /** Creates an unresolved canonical definition from name and arity. */
     public Predicate(ITerm name, int range) {
         this.name = name;
         this.range = range;
         this.nameId = name.getId();
     }
 
+    /** Creates a hydration shell owned by the supplied Mind. */
     public Predicate(Mind mind) {
         this.mind = mind;
     }
 
+    /** @return persistent representation containing IDs, deletion marker and arity */
     @Override
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
@@ -77,6 +108,13 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return packet.createMarked();
     }
 
+    /**
+     * Applies serialized state without resolving the name Term.
+     *
+     * @param packet serialized predicate state
+     * @return this hydrated shell
+     * @throws OutOfBufferException if the packet is incomplete
+     */
     @Override
     public Predicate apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
@@ -89,6 +127,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return this;
     }
 
+    /** Resolves and returns the canonical name in the supplied Mind. */
     @Override
     public String getName(IMind mind) throws Exception {
         if (name == null) {
@@ -97,6 +136,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return name.getValue() + "";
     }
 
+    /** Sets the stable name reference; it does not change assertion membership. */
     public void setName(ITerm name) {
         this.name = name;
         this.nameId = name.getId();
@@ -107,6 +147,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return range;
     }
 
+    /** Sets arity before canonical publication. */
     public void setRange(int range) {
         this.range = range;
     }
@@ -121,6 +162,13 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         this.id = id;
     }
 
+    /**
+     * Returns assertion Rules visible in the supplied Mind.
+     *
+     * @param mind transaction context defining Rule visibility
+     * @return visible non-deleted assertion Rules using this predicate
+     * @throws Exception if Rule or Domain hydration fails
+     */
     @Override
     public Set<IRule> getSolves(IMind mind) throws Exception {
         Set<IRule> set = new HashSet<>();
@@ -132,6 +180,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return set;
     }
 
+    /** Returns a context-sensitive diagnostic rendering, not a stable protocol. */
     public String toString(IMind mind) {
         try {
             return getName(mind) + "(" + range + ")";
@@ -142,6 +191,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         }
     }
 
+    /** Hashes the structural key {@code (nameId, range)} for candidate lookup. */
     @Override
     public int getHash() {
         int hash = 3;
@@ -150,6 +200,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return hash;
     }
 
+    /** Compares canonical definition keys independently of operational IDs. */
     @Override
     public boolean equalsTo(Predicate to) {
         return to.getNameId() == nameId && to.getRange() == range;
@@ -160,6 +211,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return mind;
     }
 
+    /** Selects the Mind used for hydration and deletion projection. */
     @Override
     public Predicate setMind(Mind mind) {
         this.mind = mind;
@@ -171,11 +223,13 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return ((Mind) mind).isUnitDeleted(this);
     }
 
+    /** Changes transaction-visible deletion without destroying identity. */
     @Override
     public void setDeleted(boolean on, Mind mind) {
         mind.setUnitDeleted(this, on);
     }
 
+    /** Hashes operational identity, not the structural key. */
     @Override
     public int hashCode() {
         int hash = 3;
@@ -183,6 +237,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return hash;
     }
 
+    /** @return ID of the canonical name Term */
     public long getNameId() {
         return nameId;
     }
@@ -202,6 +257,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         this.mindId = mindId;
     }
 
+    /** @return whether the name Term is currently hydrated */
     @Override
     public boolean isLoaded() {
         return name != null && nameId == name.getId();
@@ -233,11 +289,16 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return this;
     }
 
+    /** Tests whether no visible assertion Rule uses this definition. */
     @Override
     public boolean isEmpty(IMind mind) throws Exception {
         return getSolves(mind).isEmpty();
     }
 
+    /**
+     * Tests whether runtime syntax registration contains an operation with the
+     * same name and arity. This classification is not part of predicate identity.
+     */
     public boolean isSystem(Mind mind) throws Exception {
         return Parser.getOp(getName(mind), getRange()) != null;
     }
