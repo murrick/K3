@@ -270,7 +270,7 @@ public class Solve {
 
     public Solve applyMap(Map<String, Object> map) throws Exception {
         predicateId = Long.parseLong(map.get("predicate_id") + "");
-        range = Integer.parseInt(map.get("tange") + "");
+        range = Integer.parseInt(map.get("range") + "");
         antc = Boolean.parseBoolean(map.get("antc") + "");
         arguments.applyMap((List<Map<String, Object>>) map.get("arguments"));
         predicate = null;
