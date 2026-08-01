@@ -1,0 +1,66 @@
+name: KANGER qualification isolation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolate-qualification:
+    name: Production surface excludes runners
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Verify production source roots are clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          remaining="$(find \
+            kanger/src \
+            kanger-console/src \
+            kanger-data-dumb/src \
+            kanger-udf/src \
+            -type f -name '*Runner.java' -print)"
+          if [ -n "$remaining" ]; then
+            echo 'Qualification runners remain in production source roots:'
+            printf '%s\n' "$remaining"
+            exit 1
+          fi
+
+      - name: Package production artifact
+        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
+
+      - name: Verify production JAR is clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          test -n "$jar_file"
+          leaked="$(jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\.class$' || true)"
+          if [ -n "$leaked" ]; then
+            echo 'Qualification runners leaked into production JAR:'
+            printf '%s\n' "$leaked"
+            exit 1
+          fi
+
+      - name: Verify qualification source remains available
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d kanger-qualification/src
+          count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
+          test "$count" -eq 36
+          mvn --batch-mode --no-transfer-progress -DskipTests test-compile
