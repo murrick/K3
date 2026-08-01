@@ -84,5 +84,7 @@ jobs:
                   kanger-qualification/src/org/kanger/KangerParserTerminalDelimiterSafetyRunner.java \
                   .github/workflows/kanger-qualification-isolation.yml \
                   .github/workflows/one-shot-3.5.0.8-parser-boundary.yml
-          git commit -m '3.5.0.8: guard parser terminal delimiters'
+          git commit -m '3.5.0.7: guard parser terminal delimiters'
           git push origin HEAD:fix/3.5.0.8-parser-terminal-delimiter
+
+# retrigger after bootstrap
