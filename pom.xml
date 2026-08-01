@@ -132,6 +132,20 @@
                             </target>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>stage-qualification-launchers</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy todir="${project.build.outputDirectory}">
+                                    <fileset dir="${project.build.testOutputDirectory}"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
