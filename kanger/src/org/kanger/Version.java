@@ -49,7 +49,7 @@ public abstract class Version {
     public static final String BUILD_CREDIT = "Stabilized and audited in collaboration with ChatGPT.";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
-    public static final String VERSION_S = BRANCH;
+    public static final String VERSION_S = branchLeaf(BRANCH);
     public static final String DATE_S = formatDate(parseDate(DATE)) + "\n" + BUILD_CREDIT;
 
     private static Properties loadBuildMetadata() {
@@ -70,6 +70,11 @@ public abstract class Version {
             return fallback;
         }
         return value.trim();
+    }
+
+    private static String branchLeaf(String branch) {
+        int separator = Math.max(branch.lastIndexOf('/'), branch.lastIndexOf('\\'));
+        return separator >= 0 ? branch.substring(separator + 1) : branch;
     }
 
     private static String formatDate(Date date) {
