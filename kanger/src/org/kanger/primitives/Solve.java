@@ -194,7 +194,7 @@ public class Solve {
     @Override
     public boolean equals(Object d) {
         if (d != null) {
-            if (((Solve) d).getPredicateId() == predicateId || ((Solve) d).getRange() == range) {
+            if (((Solve) d).getPredicateId() == predicateId && ((Solve) d).getRange() == range) {
                 for (int i = 0; i < arguments.size(); ++i) {
                     if (arguments.get(i).getId() != ((Solve) d).getArguments().get(i).getId()) {
                         return false;
@@ -277,4 +277,3 @@ public class Solve {
         return this;
     }
 }
-
