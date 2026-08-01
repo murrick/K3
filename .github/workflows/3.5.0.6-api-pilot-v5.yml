@@ -1,0 +1,118 @@
+name: KANGER 3.5.0.6 API documentation pilot v5
+
+on:
+  pull_request:
+    branches:
+      - arch/3.5.0-core-consolidation
+    paths:
+      - '.github/workflows/3.5.0.6-api-pilot-v5.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'trigger/3.5.0.6-api-pilot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out live artifact branch
+        uses: actions/checkout@v4
+        with:
+          ref: arch/3.5.0-core-consolidation
+          fetch-depth: 0
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Apply declaration-anchored documentation patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin trigger/3.5.0.6-api-pilot
+          git show FETCH_HEAD:.github/scripts/3.5.0.6-api-pilot.py > /tmp/apply-api-pilot.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('/tmp/apply-api-pilot.py')
+          source = path.read_text(encoding='utf-8')
+          old = '''def regex_once(text, pattern, replacement, label):
+              result, count = re.subn(pattern, replacement, text, count=1, flags=re.DOTALL)
+              if count != 1:
+                  raise SystemExit("%s: expected one regex anchor, found %d" % (label, count))
+              return result
+          '''.replace('          ', '')
+          new = '''def regex_once(text, pattern, replacement, label):
+              result, count = re.subn(pattern, replacement, text, count=1, flags=re.DOTALL)
+              if count == 1:
+                  return result
+
+              declaration = replacement.rstrip().splitlines()[-1]
+              declaration_index = text.find(declaration)
+              if declaration_index < 0 or text.find(declaration, declaration_index + 1) >= 0:
+                  raise SystemExit("%s: declaration anchor is not unique" % label)
+
+              comment_start = text.rfind("/**", 0, declaration_index)
+              comment_end = text.find("*/", comment_start, declaration_index)
+              if comment_start < 0 or comment_end < 0:
+                  raise SystemExit("%s: preceding Javadoc was not found" % label)
+              comment_end += 2
+              if text[comment_end:declaration_index].strip():
+                  raise SystemExit("%s: non-whitespace between Javadoc and declaration" % label)
+
+              declaration_end = declaration_index + len(declaration)
+              return text[:comment_start] + replacement + text[declaration_end:]
+          '''.replace('          ', '')
+          if source.count(old) != 1:
+              raise SystemExit('regex_once helper anchor mismatch')
+          path.write_text(source.replace(old, new, 1), encoding='utf-8')
+          PY
+          python3 /tmp/apply-api-pilot.py
+
+      - name: Compile, test and verify documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn --batch-mode --no-transfer-progress test
+          rm -rf build/javadoc
+          mkdir -p build/javadoc
+          find kanger/src kanger-udf/src kanger-data-dumb/src kanger-console/src \
+            -name '*.java' -print | LC_ALL=C sort > build/javadoc-sources.txt
+          javadoc -quiet -encoding UTF-8 -docencoding UTF-8 -charset UTF-8 \
+            -Xdoclint:none -d build/javadoc @build/javadoc-sources.txt
+          python3 tools/audit_public_api_javadoc.py | tee build/public-api-javadoc.tsv
+
+          # Caller-visible contracts must be present in rendered Javadoc.
+          grep -Fq 'caller-managed ссылку на текущий Mind' \
+            build/javadoc/org/kanger/interfaces/IUser.html
+          grep -Fq 'Публичный контракт активного логического контекста KANGER' \
+            build/javadoc/org/kanger/interfaces/IMind.html
+          grep -Fq 'Выполняет насыщение принадлежащего экземпляру Mind до неподвижной' \
+            build/javadoc/org/kanger/Linker.html
+          grep -Fq 'Выполняет системные предикаты branch' \
+            build/javadoc/org/kanger/Linker.html
+
+          # Private semantic kernels are intentionally absent from standard HTML;
+          # their contracts are source-level invariants.
+          grep -Fq 'query-local join/filter' kanger/src/org/kanger/Linker.java
+          grep -Fq 'Историческое имя не обозначает физический database I/O' \
+            kanger/src/org/kanger/Linker.java
+
+      - name: Publish clean pilot commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'KANGER documentation bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add \
+            kanger/src/org/kanger/interfaces/IUser.java \
+            kanger/src/org/kanger/interfaces/IMind.java \
+            kanger/src/org/kanger/Linker.java
+          git diff --cached --check
+          git commit -m 'Document caller and Linker API contracts'
+          git push origin HEAD:arch/3.5.0-core-consolidation
