@@ -3,24 +3,23 @@
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *  IN THE SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 package org.kanger.storage;
@@ -35,16 +34,102 @@ import org.kanger.interfaces.internal.IUnit;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Транзакционная linked-snapshot проекция canonical units одной schema,
+ * видимая конкретному {@link Mind}.
+ *
+ * <p><strong>Представление.</strong> Escalera хранит собственный указатель
+ * {@code root} на цепочку {@link IStep}. Memory-only {@link Step} содержит ещё
+ * не материализованный unit; {@link Sapato} представляет persistent link,
+ * гидратируемый через заимствованный {@link IBase}. Объект не является
+ * физическим storage container и не владеет закрытием базы.</p>
+ *
+ * <p><strong>Root и child snapshots.</strong> Корневая Escalera при открытом
+ * storage начинает с persistent root соответствующей schema. Child Escalera
+ * получает root родительского {@link ICache}, создавая собственную mutable
+ * snapshot boundary поверх той же видимой цепочки. Публикация нового root между
+ * factory layers выполняется explicit transaction protocol владельца Mind.</p>
+ *
+ * <p><strong>Chain authority.</strong> Наблюдаемый порядок задаётся только
+ * связями {@code next}: новые Step добавляются в голову, iterator идёт от root
+ * к tail. ID, hash buckets и physical index positions являются descriptors и
+ * acceleration metadata, но не источником порядка. Persistent endpoints
+ * восстанавливаются {@code IBase} из links.</p>
+ *
+ * <p><strong>Checkpoint protocol.</strong> {@link #mark()} всегда открывает
+ * реальный LIFO frame и сохраняет root, включая пустой root. {@link #commit()}
+ * потребляет ровно один frame, сохраняя текущую цепочку; {@link #release()}
+ * восстанавливает root frame и инвалидирует производные indexes. Completion
+ * без открытого frame является lifecycle error. Checkpoint не копирует graph и
+ * не выполняет physical storage commit.</p>
+ *
+ * <p><strong>Acceleration metadata.</strong> {@code memoryById},
+ * {@code persistentIds}, {@code idsByHash} и {@code predecessorById} являются
+ * производными структурами для lookup, find и splice. Они перестраиваются из
+ * текущей linked chain, не владеют canonical units и не переживают изменение
+ * root как semantic authority. Persistent entries удерживаются ID-only и
+ * гидратируются через IBase только при фактическом доступе.</p>
+ *
+ * <p><strong>Mutation и deletion.</strong> {@link #add(IUnit)} создаёт новый
+ * memory Step в голове snapshot. Delete перестраивает links и metadata; если
+ * изменяется persistent predecessor, обновляет его physical link, после чего
+ * удаляет record из IBase. Batch deletion сохраняет ту же linked semantics и
+ * не допускает, чтобы ID-order заменил predecessor relations.</p>
+ *
+ * <p><strong>Materialization.</strong> {@link #update()} собирает ведущий
+ * memory-only segment, публикует его от старейшего Step к новейшему и заменяет
+ * его persistent Sapato nodes. Такой порядок сохраняет существующую цепочку и
+ * делает новый persistent root последним. После materialization открытые local
+ * checkpoints очищаются: persisted boundary уже не является откатываемым
+ * transient frame этой Escalera.</p>
+ *
+ * <p><strong>Clear boundary.</strong> {@link #clear()} сбрасывает snapshot и
+ * derived metadata. На root factory при открытом storage он также очищает
+ * заимствованный IBase; child factory lifecycle обязан вместо destructive
+ * clear перестроить overlay через parent transaction. Без storage очищается
+ * schema-local in-memory ID counter пользователя.</p>
+ *
+ * <p><strong>Hydration и ошибки.</strong> Persistent lookup выполняется через
+ * schema-specific IBase текущего User generation. Escalera не должна
+ * интерпретировать storage/recovery failure как semantic absence. Исторический
+ * iterator диагностирует hydration failures и продолжает compatibility path;
+ * изменение этой политики требует отдельного public/error-contract аудита.</p>
+ *
+ * <p><strong>Владение storage.</strong> Escalera заимствует IBase у User и
+ * никогда не выбирает generation, не приобретает полный schema set и не
+ * закрывает IData/IBase. Exception-atomic acquisition и публикация storage
+ * generation выполняются User/IData до инициализации root factories.</p>
+ *
+ * <p><strong>Concurrency.</strong> Отдельные persistent операции синхронизуют
+ * доступ к IBase, но mutable root, checkpoint stack и indexes не делают
+ * Escalera independently thread-safe. Factory/Mind owner сериализует composite
+ * transaction и не использует один snapshot конкурентно без внешнего протокола.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Не следует менять root,
+ * links или indexes в обход ICache protocol; считать hash/ID index canonical
+ * truth; закрывать borrowed storage; смешивать checkpoint commit с physical
+ * update; либо вызывать destructive clear на child overlay.</p>
+ *
+ * @see ICache
+ * @see IBase
+ * @see Step
+ * @see Sapato
  */
 public class Escalera implements ICache {
 
     private IStep root = null;
 
     private String schema = "";
-    private Stack<IStep> stack = new Stack<>();
+    private Stack<Checkpoint> stack = new Stack<>();
 
     private Mind mind = null;
+
+    private static final class Checkpoint {
+        private final IStep root;
+
+        private Checkpoint(IStep root) {
+            this.root = root;
+        }
+    }
 
     /**
      * Lightweight acceleration metadata. Persistent semantic objects are not
@@ -54,7 +139,6 @@ public class Escalera implements ICache {
     private final Map<Long, IStep> memoryById = new HashMap<>();
     private final Set<Long> persistentIds = new HashSet<>();
     private final Map<Integer, Set<Long>> idsByHash = new HashMap<>();
-    // target ID -> predecessor ID in the root-to-tail chain.
     private final Map<Long, Long> predecessorById = new HashMap<>();
     private boolean indexValid = false;
     private IStep indexedRoot = null;
@@ -257,11 +341,6 @@ public class Escalera implements ICache {
             return;
         }
 
-        /*
-         * Unlink complete deleted runs. A run changes only one boundary link,
-         * so a persistent predecessor is rewritten at most once even when many
-         * adjacent records are removed.
-         */
         LinkedHashMap<Long, IStep> removed = new LinkedHashMap<>();
         LinkedHashSet<IStep> changedPersistentPredecessors = new LinkedHashSet<>();
         for (long startId : targets) {
@@ -351,27 +430,26 @@ public class Escalera implements ICache {
 
     @Override
     public long mark() {
-        if (root != null) {
-            return stack.push(root).getId();
-        } else {
-            return -1;
-        }
+        stack.push(new Checkpoint(root));
+        return root == null ? -1 : root.getId();
     }
 
     @Override
     public long commit() {
-        if (!stack.isEmpty()) {
-            stack.pop();
+        if (stack.isEmpty()) {
+            throw new IllegalStateException("Escalera commit without an open checkpoint");
         }
+        stack.pop();
         return root == null ? -1 : root.getId();
     }
 
     @Override
     public long release() {
-        if (!stack.isEmpty()) {
-            root = stack.pop();
-            invalidateIndex();
+        if (stack.isEmpty()) {
+            throw new IllegalStateException("Escalera release without an open checkpoint");
         }
+        root = stack.pop().root;
+        invalidateIndex();
         return root == null ? -1 : root.getId();
     }
 
@@ -439,18 +517,9 @@ public class Escalera implements ICache {
 
     @Override
     public boolean update() throws Exception {
-        // Это самый низ
         if (mind.isStorageUsed()) {
-
             IBase base = ((User) mind.getUser()).getStorage(schema);
             synchronized (base) {
-
-                /*
-                 * Newly added in-memory Steps always form a prefix in front of
-                 * the persistent Sapato suffix. Persist that prefix only: once
-                 * the first Sapato is reached, the rest of the chain is already
-                 * durable and must not be walked or hydrated again.
-                 */
                 Deque<IStep> pending = new ArrayDeque<>();
                 for (IStep s = root; s != null && !(s instanceof Sapato); s = s.getNext()) {
                     pending.push(s);
@@ -524,6 +593,5 @@ public class Escalera implements ICache {
             }
             return o;
         }
-
     }
 }

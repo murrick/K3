@@ -36,6 +36,59 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Синтаксический front-end исторического языка KANGER.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Parser} выполняет
+ * tokenization, распознаёт operator signatures, строит mutable дерево
+ * {@link Leaf} с учётом precedence/arity и нормализует внешние обозначения в
+ * внутренние operation names. Он не владеет {@link Mind}, не регистрирует
+ * semantic units и не выполняет логический вывод; созданный AST передаётся
+ * {@link Compiller}.</p>
+ *
+ * <p><strong>Грамматика.</strong> Таблица {@code ops} является компактным
+ * контрактом языка: она задаёт aliases, внутренние имена, priority, arity,
+ * direction, postfix и replacement semantics для arithmetic functions,
+ * predicates, conjunction/disjunction, implication и quantifiers. При
+ * tokenization действует longest textual match, а overloaded operator
+ * уточняется ожидаемой arity. Порядок и численные priorities являются frozen
+ * compatibility surface.</p>
+ *
+ * <p><strong>Tokenization.</strong> {@link #nextToken(String, Token)} сохраняет
+ * source positions, пропускает delimiters, различает block/line comments,
+ * quoted literals, nested functional blocks, identifiers и numeric forms.
+ * Последовательность {@code ..} отделяется от decimal scanning. Незакрытые
+ * comments, quotes и brackets завершаются {@link ParseErrorException} с
+ * исходной позицией.</p>
+ *
+ * <p><strong>Построение AST.</strong> Внутренний parser вставляет operator
+ * nodes по historical priority rules, обрабатывает quantifier variable,
+ * parentheses и set syntax, расширяет arity операции {@code _in} через comma
+ * tree и отвергает misplaced term, operation или quantifier. Метод
+ * {@code squeeze} удаляет grouping nodes, переносит function name и вычисляет
+ * фактический range аргументов. Получившееся дерево отражает именно порядок,
+ * который ожидает {@link Compiller#compileLine(Leaf, boolean, String, boolean,
+ * java.util.Queue)}.</p>
+ *
+ * <p><strong>UDF declaration.</strong> {@link #implement(String, Mind, Token)}
+ * использует настроенный в {@link User} prototype {@link Operation}, заполняет
+ * name, params и script blocks и маркирует результат как function. Parser лишь
+ * разбирает declaration; publication и invocation принадлежат Library и
+ * Calculator.</p>
+ *
+ * <p><strong>Comments.</strong> {@link #extractComments(String)} является
+ * отдельным lexical utility и возвращает исходные comment fragments без
+ * semantic interpretation.</p>
+ *
+ * <p><strong>Concurrency.</strong> Основные методы статичны и не хранят
+ * глобального mutable parse state. Переданный {@link Token}, AST и UDF
+ * prototype принадлежат одному вызову; совместное использование mutable Token
+ * или Operation между потоками требует внешней сериализации.</p>
+ *
+ * @see Compiller
+ * @see Leaf
+ * @see Token
+ */
 public class Parser {
 
     private static final Op[] ops = {

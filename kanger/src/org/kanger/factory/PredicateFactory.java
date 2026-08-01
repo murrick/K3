@@ -43,7 +43,57 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Dmitry G. Quznetsov on 25.05.15.
+ * Канонический реестр предикатов, видимый всей цепочке одного {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Фабрика сопоставляет составному
+ * семантическому дескриптору «имя-терм + арность» единственный канонический
+ * {@link Predicate}. Она отвечает за поиск, восстановление удалённой единицы,
+ * создание нового идентификатора, materialization из storage и удаление
+ * недостижимых предикатов, а не только за вызов конструктора.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Экземпляр создаётся корневым
+ * {@code Mind} и удерживает этот контекст. При штатном создании дочернего
+ * {@code Mind} отдельная {@code PredicateFactory} не создаётся: ребёнок
+ * получает ту же ссылку через {@code getPredicates()}. Поэтому canonical
+ * identity и cache этой категории общие для всей активной Mind-цепочки и не
+ * являются transaction-private overlay.</p>
+ *
+ * <p><strong>Persistence.</strong> {@link Escalera} хранит каноническую
+ * последовательность и её runtime/cache-представление. Если у корневого
+ * {@code Mind} открыто хранилище, поле {@code connection} временно указывает
+ * на schema-specific {@link IBase}, полученный от {@link User}. Это borrowed
+ * attachment текущей storage generation: фабрика может читать и обновлять
+ * свою схему, но владельцем закрытия остаются {@code User} и {@code IData}.</p>
+ *
+ * <p><strong>Generation lifecycle.</strong> Методы {@code transaction},
+ * {@code commit(PredicateFactory)} и cache checkpoints сохраняются как
+ * implementation/compatibility surfaces, однако штатная публикация в child
+ * {@code Mind} выполняется повторным использованием того же экземпляра, а не
+ * продвижением дочерней фабрики. Поле {@code top} является локальным якорем
+ * последовательности для creation/splice mechanics и не задаёт semantic
+ * identity или durable database root.</p>
+ *
+ * <p><strong>Очистка.</strong> {@link #pack()} выполняет полный просмотр
+ * canonical cache и сохраняет предикаты, достижимые из активных Rules либо из
+ * текущих solution/hypothesis projections. Удалённые и недостижимые единицы
+ * исключаются из cache. Эти projections используются как временные корни
+ * достижимости, но не принадлежат фабрике и не становятся persistent state.</p>
+ *
+ * <p><strong>Инварианты и concurrency.</strong> Каноническая идентичность
+ * определяется одновременно именем и арностью; одинаковый дескриптор не
+ * должен публиковать две активные единицы. Синхронизация {@link #add(ITerm,
+ * int)} защищает конкретную операцию canonicalization, но не объявляет
+ * фабрику, её iterator или возвращённые Predicates независимо thread-safe.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Нормальный доступ идёт
+ * через актуальный {@code Mind}. Вызывающая сторона не должна трактовать
+ * фабрику как child transaction, закрывать через неё общее storage или
+ * считать, что очистка текущих query projections уничтожает каноническую
+ * идентичность предиката.</p>
+ *
+ * @see DictionaryFactory
+ * @see IFactory
+ * @see Predicate
  */
 public class PredicateFactory implements IFactory<IPredicate> {
 

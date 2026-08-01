@@ -46,7 +46,63 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.15.
+ * Per-Mind facade выполнения системных и пользовательских операций KANGER.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Calculator} связывает
+ * semantic {@link Function}/{@link Domain} с built-in каталогами
+ * {@link Functions}/{@link Predicates} и copy-on-write Library текущего
+ * {@link Mind}. Он разрешает operation binding, вызывает {@link Operation} и
+ * публикует новый function result через FValueFactory. Fixed-point orchestration
+ * принадлежит {@link org.kanger.Linker}; Calculator не владеет транзакцией,
+ * canonical Function identity или persistent Library.</p>
+ *
+ * <p><strong>Function calculation.</strong> {@link #calculate(Function,
+ * boolean)} сначала рекурсивно рассчитывает вложенные Function arguments,
+ * результаты которых ещё пусты. Текущая Function выполняется только если
+ * result отсутствует либо отличается от вычисляемого value. Return convention
+ * operation сохраняется исторически: {@code 1/2} означает успешный effect или
+ * подтверждение, {@code 0} — несовместимость, {@code -1} — operation не найдена
+ * либо ещё не может быть выполнена. Новый result добавляется через FValueFactory
+ * и поднимает обычный Linker continuation signal.</p>
+ *
+ * <p><strong>Binding resolution.</strong> Явный {@link FunctionBinding}
+ * исключает случайное shadowing: {@code INFRASTRUCTURE} ищет только built-in
+ * catalog, {@code UDF_DYNAMIC} — только Library, {@code LEGACY_AUTO} сохраняет
+ * старый порядок built-in → Library. Во всех режимах после exact arity может
+ * применяться historical {@code name(0)} fallback. Этот порядок является
+ * compatibility contract и не должен меняться как обычная lookup-оптимизация.</p>
+ *
+ * <p><strong>Predicates.</strong> {@link #execute(Domain)} разрешает exact
+ * predicate signature сначала в system catalog, затем в Library. Метод
+ * возвращает operation convention без дополнительной интерпретации; решение о
+ * Rule branch и fixed-point продолжении принимает вызывающий Linker. Метод
+ * {@link #exists(IPredicate)} дополнительно требует {@link LibMode#PREDICATE}.</p>
+ *
+ * <p><strong>Unresolved arguments.</strong> Function с непустым C-variable
+ * argument не передаётся operation и возвращает {@code -1}. Это execution
+ * boundary, а не ошибка: binding должен быть завершён последующими проходами
+ * Linker или признан unresolved Analyzer.</p>
+ *
+ * <p><strong>Expansion utility.</strong> {@link #expand(ITerm, ITerm,
+ * boolean)} материализует interval, recursive set, string/regex captures и
+ * blob chunks в canonical Terms текущего Mind. Zero interval step возвращает
+ * пустой результат; no-progress по тому же Term ID останавливает цикл. Direction,
+ * endpoint inclusion и chunking являются частью существующей семантики.</p>
+ *
+ * <p><strong>Каталоги операций.</strong> {@link Functions} и
+ * {@link Predicates} принадлежат экземпляру Calculator и используют тот же
+ * Mind для создания TValue/Term effects. Их карты являются dispatch metadata,
+ * а не Library persistence и не semantic object caches.</p>
+ *
+ * <p><strong>Concurrency.</strong> Calculator, каталоги и вызываемые Operation
+ * привязаны к одному mutable Mind. Параллельное выполнение через один Mind
+ * требует внешней сериализации; callbacks Library могут иметь собственные
+ * thread-safety ограничения.</p>
+ *
+ * @see org.kanger.Linker
+ * @see org.kanger.Analyzer
+ * @see Functions
+ * @see Predicates
  */
 public class Calculator {
 

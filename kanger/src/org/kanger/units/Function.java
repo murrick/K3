@@ -47,19 +47,54 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Dmitry G. Quznetsov on 26.05.15.
- * <p>
- * Домен для функции. Может быть рекурсивным на уровне структуры TList.
+ * Определение вычислительного узла, встроенного в структуру правила KANGER.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Function} описывает имя,
+ * arity, binding и рекурсивную структуру аргументов вычисления. Это определение
+ * потенциального вычисления, а не контейнер уже полученного результата.
+ * Материализованный результат принадлежит отдельному {@link FValue} и
+ * выбирается относительно текущих T-подстановок в owning {@link Mind}.</p>
+ *
+ * <p><strong>Inside.</strong> Устойчивое состояние включает operational ID,
+ * owner Mind ID, name ID, range, {@link FunctionBinding} и argument graph.
+ * Аргументы с индексами {@code 0..range-1} являются входами; элемент с индексом
+ * {@code range} служит transient result slot для orchestration вычисления.</p>
+ *
+ * <p><strong>Outside.</strong> Текущие значения параметров, result slot,
+ * найденный FValue, query-local T-solves и deletion visibility зависят от Mind.
+ * Эти проекции могут меняться при переборе и rollback, не меняя definition
+ * identity функции.</p>
+ *
+ * <p><strong>Binding.</strong> {@link FunctionBinding} фиксирует роль узла в
+ * выражении и участвует в structural identity. {@code LEGACY_AUTO} сохраняет
+ * совместимость старых persistent записей, где binding ещё не сериализовался.</p>
+ *
+ * <p><strong>Structural comparison.</strong> {@link #getHashStruct(IRule)} и
+ * {@link #equalsToStruct(Function, IRule, IRule)} сравнивают функцию между
+ * правилами с нормализацией rule-local индексов TVariable. Это отдельный
+ * контракт от operational {@link #getId()} и от applicability текущего
+ * {@link FValue}.</p>
+ *
+ * <p><strong>Lifecycle.</strong> {@link #setParameter(int, ITerm)} изменяет
+ * только текущую аргументную проекцию. {@link #setResult(ITerm)} заполняет
+ * transient result slot; factory затем может материализовать FValue. Удаление
+ * Function в Mind симметрично скрывает найденный current FValue, но не
+ * уничтожает definition identity.</p>
+ *
+ * <p><strong>Инварианты.</strong> Function definition != FValue result;
+ * argument structure != current argument values; result slot != canonical
+ * materialization; operational ID != structural equality; deleted !=
+ * nonexistent; diagnostic rendering != persistence representation.</p>
  */
 public class Function implements IUnit<Function> {
 
     private static final long serialVersionUID = 196402070002L;
 
-    private long id = -1;                                       // id функции
-    private long mindId = -1;                                   // id транзакции
-    private ITerm name = null;                                  // имя
-    private int range = 0;                                      // количество параметров
-    private ArgumentsList arguments = new ArgumentsList();      // Параметры
+    private long id = -1;
+    private long mindId = -1;
+    private ITerm name = null;
+    private int range = 0;
+    private ArgumentsList arguments = new ArgumentsList();
     private FunctionBinding binding = FunctionBinding.LEGACY_AUTO;
 
     private transient long nameId = -1;
@@ -72,6 +107,7 @@ public class Function implements IUnit<Function> {
         this.mind = mind;
     }
 
+    /** @return persistent representation of the function definition and argument graph */
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
@@ -84,6 +120,13 @@ public class Function implements IUnit<Function> {
         return packet.createMarked();
     }
 
+    /**
+     * Applies serialized definition state and restores legacy binding when absent.
+     *
+     * @param packet serialized function state
+     * @return this hydrated definition shell
+     * @throws Exception if packet decoding or nested argument restoration fails
+     */
     public Function apply(ByteBuffer packet) throws Exception {
         id = packet.getLong();
         mindId = packet.getLong();
@@ -126,18 +169,28 @@ public class Function implements IUnit<Function> {
         this.range = range;
     }
 
+    /** @return semantic binding category participating in structural identity */
     public FunctionBinding getBinding() {
         return binding;
     }
 
+    /** Sets binding, mapping {@code null} to the historical compatibility mode. */
     public void setBinding(FunctionBinding binding) {
         this.binding = binding == null ? FunctionBinding.LEGACY_AUTO : binding;
     }
 
+    /** @return mutable argument graph owned by this definition */
     public ArgumentsList getArguments() {
         return arguments;
     }
 
+    /**
+     * Returns the result Term of the current applicable FValue.
+     *
+     * @param mind context used to hydrate the result
+     * @return current materialized result or {@code null}
+     * @throws Exception if FValue or Term resolution fails
+     */
     public ITerm getValue(Mind mind) throws Exception {
         FValue c = getCurrent();
         if (c != null) {
@@ -147,6 +200,7 @@ public class Function implements IUnit<Function> {
         }
     }
 
+    /** Clears only the transient result slot at index {@code range}. */
     public void clear() {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
@@ -154,6 +208,13 @@ public class Function implements IUnit<Function> {
         ((Argument) arguments.get(range)).clear();
     }
 
+    /**
+     * Writes the transient result slot; it does not itself create canonical FValue.
+     *
+     * @param r computed result Term
+     * @return result argument slot
+     * @throws Exception if the argument cannot accept the value
+     */
     public IArgument setResult(ITerm r) throws Exception {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
@@ -162,6 +223,7 @@ public class Function implements IUnit<Function> {
         return arguments.get(range);
     }
 
+    /** @return transient result argument slot, creating it when required */
     public IArgument getResult() {
         while (range + 1 > arguments.size()) {
             arguments.add(new Argument());
@@ -169,6 +231,7 @@ public class Function implements IUnit<Function> {
         return arguments.get(range);
     }
 
+    /** @return {@code true} when no applicable materialized result exists */
     public boolean isEmpty(Mind mind) {
         try {
             return getValue(mind) == null;
@@ -179,6 +242,14 @@ public class Function implements IUnit<Function> {
         }
     }
 
+    /**
+     * Assigns one current input parameter and records a T-solve when applicable.
+     *
+     * @param i zero-based input position
+     * @param r projected Term value
+     * @return {@code true} when the argument accepted the value
+     * @throws Exception if argument or TVariable resolution fails
+     */
     public boolean setParameter(int i, ITerm r) throws Exception {
         if (((Argument) arguments.get(i)).setValue(mind, r)) {
             if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
@@ -192,6 +263,7 @@ public class Function implements IUnit<Function> {
         }
     }
 
+    /** Resolves the canonical name Term in the supplied Mind. */
     public ITerm getName(Mind mind) throws Exception {
         if (name == null) {
             name = mind.getTerms().get(nameId);
@@ -199,6 +271,7 @@ public class Function implements IUnit<Function> {
         return name;
     }
 
+    /** Sets the stable name reference of this definition. */
     public void setName(ITerm name) {
         this.name = name;
         this.nameId = name.getId();
@@ -224,6 +297,7 @@ public class Function implements IUnit<Function> {
         return s;
     }
 
+    /** Returns a context-sensitive diagnostic rendering, not a stable protocol. */
     public String toString(IMind mind, boolean asRight) {
         try {
             if (!isCalculable() && getValue((Mind) mind) != null) {
@@ -272,6 +346,7 @@ public class Function implements IUnit<Function> {
         }
     }
 
+    /** @return {@code true} when every argument, including result slot, has a value */
     public boolean isComplete() throws Exception {
         for (IArgument a : arguments) {
             if (a.getValue(mind) == null) {
@@ -281,14 +356,20 @@ public class Function implements IUnit<Function> {
         return true;
     }
 
+    /** @return {@code true} when the definition contains at least one TVariable */
     public boolean isCalculable() throws Exception {
         return arguments.getTVariables(mind).size() > 0;
     }
 
+    /** @return canonical FValue applicable to current substitutions, or {@code null} */
     public FValue getCurrent() throws Exception {
         return mind.getFValues().find(this);
     }
 
+    /**
+     * Hashes operational Function ID, result slot and current TVariable values.
+     * Used for FValue candidate lookup, not definition identity.
+     */
     public int getHashBase(Mind mind) throws Exception {
         long valueId = getResult().isEmpty(mind) ? 0 : getResult().getValue(mind).getId();
         int hash = 3;
@@ -305,6 +386,7 @@ public class Function implements IUnit<Function> {
         return hash;
     }
 
+    /** Hashes the stored definition shape for factory candidate lookup. */
     @Override
     public int getHash() {
         int hash = 3;
@@ -315,6 +397,10 @@ public class Function implements IUnit<Function> {
         return hash;
     }
 
+    /**
+     * Function does not define direct structural equivalence outside Rule context.
+     * Use {@link #equalsToStruct(Function, IRule, IRule)} when comparing rules.
+     */
     @Override
     public boolean equalsTo(Function to) {
         return false;
@@ -325,6 +411,7 @@ public class Function implements IUnit<Function> {
         return mind;
     }
 
+    /** Selects the Mind used for hydration and current execution projections. */
     @Override
     public Function setMind(Mind mind) {
         this.mind = mind;
@@ -338,6 +425,9 @@ public class Function implements IUnit<Function> {
         return hash;
     }
 
+    /**
+     * Computes a Rule-relative structural hash with normalized TVariable indexes.
+     */
     public int getHashStruct(IRule r) throws Exception {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
@@ -361,6 +451,9 @@ public class Function implements IUnit<Function> {
         return hash;
     }
 
+    /**
+     * Compares two recursive function structures across Rule-local variable spaces.
+     */
     public boolean equalsToStruct(Function f, IRule left, IRule rule) throws Exception {
         if (nameId == f.nameId && range == f.getRange() && binding == f.getBinding()) {
             for (int i = 0; i < range; ++i) {
@@ -399,6 +492,9 @@ public class Function implements IUnit<Function> {
         return ((Mind) mind).isUnitDeleted(this);
     }
 
+    /**
+     * Changes deletion visibility and hides the current materialized result when deleting.
+     */
     @Override
     public void setDeleted(boolean on, Mind mind) throws Exception {
         mind.setUnitDeleted(this, on);

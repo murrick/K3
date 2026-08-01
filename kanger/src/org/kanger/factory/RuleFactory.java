@@ -59,7 +59,109 @@ import java.util.Set;
 import java.util.Stack;
 
 /**
- * Created by Dmitry G. Quznetsov on 25.05.15.
+ * Канонический реестр Rule и транзакционный overlay одного {@link Mind}.
+ * Фабрика связывает persistent/canonical Rule lifecycle, child transaction
+ * visibility, generated-to-primary promotion и производные ID-only индексы,
+ * но не заменяет semantic unification в Linker.
+ *
+ * <p><strong>Каноническое владение и lifetime.</strong> Объекты {@link Rule}
+ * принадлежат {@link Escalera} cache и, для root Mind со storage, schema-specific
+ * {@link IBase}. Root factory создаёт самостоятельную cache chain; child
+ * {@link #transaction(RuleFactory)} строит overlay над parent cache, фиксирует
+ * parent {@code top} как sequencing boundary и не наследует storage connection.
+ * {@link #get(long)} всегда начинает с canonical raw lookup и только затем может
+ * вернуть transaction-local effective promotion view.</p>
+ *
+ * <p><strong>Identity и lookup.</strong> {@link #register(IRule)} выделяет Rule
+ * ID, привязывает Rule к текущему Mind generation и сохраняет текущий variable
+ * index. Structural canonical lookup выполняется через hash bucket и
+ * {@link Rule#equalsTo(IRule)} либо {@link Rule#equalsTo(Solve)}. Origin является
+ * provenance и частью persistent Rule record, но не отдельным ключом canonical
+ * identity. Логически удалённый matching Rule может быть восстановлен до
+ * физического {@link #pack()} с сохранением ID.</p>
+ *
+ * <p><strong>Производные metadata.</strong> {@code localDomainIndex},
+ * {@code localTermIndex} и {@link RuleCandidateIndex} хранят только Rule IDs.
+ * Они ускоряют поиск по predicate/polarity, участвующим Term и resolved direct
+ * positions, но не владеют Rule/Domain и не являются persistence authority.
+ * Child lookup собирает parent IDs раньше local IDs, после чего каждый кандидат
+ * гидратируется через {@link #get(long)} и повторно проверяется на logical
+ * deletion. Initial root hydration публикует готовность только после согласованной
+ * перестройки всех трёх индексов.</p>
+ *
+ * <p><strong>Candidate boundary.</strong> {@link #findByDomain(Domain, boolean)}
+ * применяет signature и direct-Term positional filtering до Rule hydration.
+ * {@link #findByResolvedDomain(Domain, boolean)} дополнительно разрешает текущие
+ * TValue bindings и делегирует versioned batch analysis внутреннему index.
+ * Candidate result остаётся лишь superset для обычной unification. Ни один
+ * acceleration path не меняет canonical Rule identity и не разрешает обход
+ * semantic проверки.</p>
+ *
+ * <p><strong>Lock-order invariant.</strong> {@code metadataLock} защищает
+ * согласованность layered indexes и promotion state. Внутренний candidate lock
+ * защищает только coherent ID snapshots, journals и memo publication. Rule
+ * hydration, deletion checks, TValue resolution и Mind-dependent semantic
+ * effects выполняются вне candidate lock; иначе возник бы цикл
+ * {@code Mind.locker -> candidate lock -> Mind.locker}. Public lookup не обещает
+ * общую thread-safety mutable Rule graph: lifecycle reservation и composite
+ * transaction ordering остаются обязанностью {@link Mind}.</p>
+ *
+ * <p><strong>Generated-to-primary promotion.</strong> При insert semantics уже
+ * существующий generated Rule может стать independent primary Rule без
+ * немедленной мутации parent-visible raw object. {@code primaryPromotions}
+ * хранит ID намерения, а effective view создаёт transaction-local projection с
+ * тем же ID, tree и semantic references, но без generated/query/second/cause
+ * состояния. Child typed commit передаёт promotion intent parent factory. Только
+ * root {@link #pack()} материализует promotion в raw Rule, после чего
+ * {@link #update()} обновляет уже persisted record. Projection не является новой
+ * canonical Rule и не получает отдельный ID.</p>
+ *
+ * <p><strong>Два commit-протокола.</strong> {@link #commit(RuleFactory)} — typed
+ * child-to-parent publication: он устраняет structural duplicates, переносит
+ * child-owned Rules в parent Mind, объединяет ID indexes и promotion intent и
+ * публикует surviving action. No-argument {@link #commit()} завершает только
+ * верхний nested checkpoint текущей фабрики. Эти операции не взаимозаменяемы.</p>
+ *
+ * <p><strong>Nested checkpoint.</strong> {@link #mark()} открывает согласованный
+ * frame для Escalera cache, domain/term index snapshots, candidate journals,
+ * promotion set и Linker continuation {@code action}. {@link #commit()}
+ * отбрасывает saved frame, сохраняя текущую effective state. {@link #release()}
+ * восстанавливает все компоненты как одну pre-mark view. Поэтому Rule, его
+ * acceleration IDs, promotion visibility и continuation signal не могут
+ * переживать rollback по отдельности.</p>
+ *
+ * <p><strong>Action semantics.</strong> {@code action=true} означает surviving
+ * Rule creation, resurrection либо primary promotion и участвует в решении
+ * Linker о следующем проходе. Это memory-only continuation state, а не
+ * persistent Rule attribute. {@link #dropAction()} относится к Linker pass
+ * protocol; speculative action после released checkpoint восстанавливается из
+ * отдельного journal.</p>
+ *
+ * <p><strong>Persistence и cleanup.</strong> Root cache miss может materialize
+ * Rule из {@link IBase}. {@link #pack()} сначала материализует root promotions,
+ * затем физически удаляет Rules, остающиеся logically deleted, одновременно
+ * очищая их derived metadata. {@link #update()} передаёт cache changes storage и
+ * отдельно обновляет records, изменённые promotion materialization. Child
+ * factory не владеет storage connection. {@link #clear()} уничтожает cache
+ * generation anchors, все metadata/promotion/action journals и заново строит
+ * правильный root либо child transaction.</p>
+ *
+ * <p><strong>Ordering boundary.</strong> Порядок обхода Rule IDs не является
+ * canonical identity этой фабрики. Linker обязан задавать требуемый ascending
+ * либо descending порядок явно и сравнивать полный {@code long} domain через
+ * {@link Long#compare(long, long)}; cache insertion order и candidate index не
+ * являются заменой этого execution invariant.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Rule следует получать
+ * через фабрику актуального Mind, не удерживать promotion projection как durable
+ * object, не считать ID index semantic authority, не гидратировать Rule под
+ * candidate metadata lock, не смешивать typed commit с checkpoint completion и
+ * не вызывать root persistence operations из child transaction.</p>
+ *
+ * @see Rule
+ * @see RuleCandidateIndex
+ * @see DomainFactory
+ * @see org.kanger.Linker
  */
 public class RuleFactory implements IFactory<IRule> {
 
@@ -72,6 +174,7 @@ public class RuleFactory implements IFactory<IRule> {
 
     private final Mind mind;
     private volatile boolean action = false;
+    private final Stack<Boolean> actionStack = new Stack<>();
     private final Object metadataLock = new Object();
 
     private static final class DomainKey {
@@ -133,6 +236,7 @@ public class RuleFactory implements IFactory<IRule> {
         bottom = null;
         connection = null;
         action = false;
+        actionStack.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -382,9 +486,7 @@ public class RuleFactory implements IFactory<IRule> {
             parentIndex.collectResolvedCandidateIds(source, candidateAntc, result);
         }
         ensureDomainIndex();
-        synchronized (metadataLock) {
-            candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
-        }
+        candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
     }
 
     /**
@@ -650,6 +752,7 @@ public class RuleFactory implements IFactory<IRule> {
             promotionViews.clear();
             promotionStack.clear();
             appliedPromotions.clear();
+            actionStack.clear();
         }
         if (mind.getNext() != null) {
             transaction((RuleFactory) mind.getNext().getRules());
@@ -667,6 +770,7 @@ public class RuleFactory implements IFactory<IRule> {
             termIndexStack.push(copyTermIndexLocked());
             promotionStack.push(new HashSet<>(primaryPromotions));
             candidateIndex.mark();
+            actionStack.push(action);
         }
     }
 
@@ -683,6 +787,9 @@ public class RuleFactory implements IFactory<IRule> {
                 promotionStack.pop();
             }
             candidateIndex.commit();
+            if (!actionStack.isEmpty()) {
+                actionStack.pop();
+            }
         }
     }
 
@@ -705,6 +812,9 @@ public class RuleFactory implements IFactory<IRule> {
                 promotionViews.clear();
             }
             candidateIndex.release();
+            if (!actionStack.isEmpty()) {
+                action = actionStack.pop();
+            }
         }
     }
 

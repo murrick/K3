@@ -47,7 +47,65 @@ import org.kanger.units.*;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Quznetsov on 20.05.15.
+ * Активный логический контекст KANGER, объединяющий состояние знаний,
+ * транзакционный уровень и временную рабочую область логического вывода.
+ *
+ * <p><strong>Архитектурная роль.</strong> Корневой {@code Mind} представляет
+ * текущее пользовательское рабочее состояние, связанное с одним {@link User}.
+ * Дочерний {@code Mind} представляет транзакционный overlay над родительским
+ * уровнем: он наследует видимое состояние, накапливает изменения и завершает
+ * их ровно одним из двух путей — {@link #commit(IMind)} или
+ * {@link #release(IMind)}. Класс одновременно координирует фабрики единиц,
+ * compiler/linker/analyzer pipeline и query-local stores, но не является
+ * владельцем внешнего storage-модуля.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Корень создаётся вызывающим кодом
+ * из явного {@link IUser}; дочерний уровень создаётся из явного родительского
+ * {@link IMind} и связывается с ним через {@link #getNext()}. Все уровни одной
+ * цепочки удерживают тот же {@code User}. Активный контекст передаётся явно;
+ * создание {@code Mind} не публикует его через {@code User.currentMind} и не
+ * использует этот compatibility slot для внутреннего lifecycle.</p>
+ *
+ * <p><strong>Транзакции.</strong> Создание дочернего уровня резервирует одну
+ * незавершённую транзакцию у родителя. Успешный commit атомарно объединяет
+ * factory overlays, deletion/restoration state и результат исполнения;
+ * release переносит только диагностический и результатный runtime-state,
+ * отбрасывая логические изменения. Любой путь завершения обязан снять ровно
+ * одну reservation, включая отказ конструктора и исключения частичного
+ * commit. Корневые {@code pack/update/flush} выполняются только после
+ * завершения последней активной дочерней транзакции.</p>
+ *
+ * <p><strong>Persistence.</strong> Дочерний {@code Mind} самостоятельно не
+ * является durable state и не записывает storage. Persistence достигается на
+ * корневом уровне через фабрики, базы, принадлежащие {@link User}, и его
+ * {@link User#flush()} после достижения transaction quiescence. Поэтому
+ * наличие объекта или успешное выполнение запроса само по себе не означает,
+ * что существует отдельная persistent-версия этого {@code Mind}.</p>
+ *
+ * <p><strong>Временное состояние.</strong> Hypotheses, solutions, values,
+ * C-variable links, domain/rule usage maps, flood control и linker indexes
+ * принадлежат конкретному runtime-контексту. {@link #clearMind()} удаляет эти
+ * ссылки и переинициализирует private linker state; закрытие или очистку всей
+ * цепочки координирует {@code User}. Persistent фабричное состояние и
+ * query-local caches имеют разные lifecycle и не должны смешиваться.</p>
+ *
+ * <p><strong>Concurrency и инварианты.</strong> Внутренний locker защищает
+ * композицию транзакций, transaction reservation и локальные overlays; он не
+ * превращает весь объект в свободно разделяемый immutable snapshot. Код,
+ * взаимодействующий с внутренними блокировками фабрик, обязан сохранять
+ * установленный lock order и не выполнять Mind-dependent hydration под
+ * чужими metadata locks. Цепочка {@code next} должна оставаться конечной, а
+ * каждый дочерний уровень — завершаться ровно один раз.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Вызывающая сторона
+ * должна удерживать фактически актуальный {@code IMind}, учитывать значение,
+ * возвращаемое storage lifecycle-операциями, и парно завершать каждый
+ * созданный дочерний уровень. {@code Mind} нельзя трактовать как независимую
+ * копию базы, скрытый thread-local context или замену владельцу ресурсов
+ * {@link User}.</p>
+ *
+ * @see User
+ * @see IMind
  */
 public class Mind implements IMind {
 
@@ -60,6 +118,7 @@ public class Mind implements IMind {
     private IMind next = null;
     //
     private final Map<ITerm, ITerm> cvarChilds = new HashMap<>();
+    private final Map<ITerm, Map<Long, ITerm>> cvarChildrenByRule = new HashMap<>();
     private final Map<ITerm, ITerm> cvarParents = new HashMap<>();
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
     private final Map<UnitType, Set<Long>> restored = new HashMap<>();
@@ -198,114 +257,214 @@ public class Mind implements IMind {
 
     @Override
     public boolean commit(IMind m) throws Exception {
-        boolean result = true;
         synchronized (locker) {
+            Mind child = (Mind) m;
+            boolean sequencedBy = rules.isSequencedBy((RuleFactory) child.getRules());
+            boolean[] activeCheckpoints = new boolean[8];
+            boolean reservationFinished = false;
+            boolean factoriesCompleted = sequencedBy;
+            Map<UnitType, Set<Long>> saveDeleted = copyUnitState(deleted);
+            Map<UnitType, Set<Long>> saveRestored = copyUnitState(restored);
 
-            boolean sequencedBy = rules.isSequencedBy((RuleFactory) m.getRules());
-            if (!sequencedBy) {
-
-                functions.mark();
-                fValues.mark();
-                tVars.mark();
-                tValues.mark();
-
-                domains.mark();
-                rules.mark();
-                comments.mark();
-
-                library.mark();
-            }
-
-            functions.commit(((Mind) m).getFunctions());
-            fValues.commit(((Mind) m).getFValues());
-            tVars.commit(((Mind) m).getTVars());
-            tValues.commit(((Mind) m).getTValues());
-
-            domains.commit(((Mind) m).getDomains());
-
-            Set<Long> list = rules.commit((RuleFactory) m.getRules());
-            comments.commit(((Mind) m).getComments());
-            library.commit((LibraryFactory) m.getLibrary());
-
-            Map<UnitType, Set<Long>> saveDeleted = new HashMap<>();
-            Map<UnitType, Set<Long>> saveRestored = new HashMap<>();
-            for (Map.Entry<UnitType, Set<Long>> e : deleted.entrySet()) {
-                saveDeleted.put(e.getKey(), new HashSet<>());
-                saveDeleted.get(e.getKey()).addAll(e.getValue());
-            }
-            for (Map.Entry<UnitType, Set<Long>> e : restored.entrySet()) {
-                saveRestored.put(e.getKey(), new HashSet<>());
-                saveRestored.get(e.getKey()).addAll(e.getValue());
-            }
-            for (Map.Entry<UnitType, Set<Long>> e : ((Mind) m).getDeleted().entrySet()) {
-                if (!deleted.containsKey(e.getKey())) {
-                    deleted.put(e.getKey(), new HashSet<>());
+            try {
+                if (!sequencedBy) {
+                    markCompositeCheckpoints(activeCheckpoints);
                 }
-                deleted.get(e.getKey()).addAll(e.getValue());
-            }
-            for (Map.Entry<UnitType, Set<Long>> e : ((Mind) m).getRestored().entrySet()) {
-                if (!restored.containsKey(e.getKey())) {
-                    restored.put(e.getKey(), new HashSet<>());
+
+                functions.commit(child.getFunctions());
+                fValues.commit(child.getFValues());
+                tVars.commit(child.getTVars());
+                tValues.commit(child.getTValues());
+                domains.commit(child.getDomains());
+                Set<Long> list = rules.commit((RuleFactory) child.getRules());
+                comments.commit(child.getComments());
+                library.commit((LibraryFactory) child.getLibrary());
+
+                mergeUnitState(child);
+
+                if (!sequencedBy) {
+                    Boolean rejected = analyzer.checkDatabase(list, false);
+                    if (rejected != null && rejected) {
+                        Throwable rollbackFailure = releaseCompositeCheckpoints(activeCheckpoints, null);
+                        restoreUnitState(saveDeleted, saveRestored);
+                        if (rollbackFailure != null) {
+                            rethrow(rollbackFailure);
+                        }
+
+                        finishTransactionLocked();
+                        reservationFinished = true;
+                        copyCommitResult(child);
+                        return false;
+                    }
+
+                    completeCompositeCheckpoints(activeCheckpoints);
+                    factoriesCompleted = true;
                 }
-                restored.get(e.getKey()).addAll(e.getValue());
-                if (deleted.containsKey(e.getKey())) {
-                    for (long id : restored.get(e.getKey())) {
-                        deleted.get(e.getKey()).remove(id);
+
+                finishTransactionLocked();
+                reservationFinished = true;
+                copyCommitResult(child);
+                return true;
+            } catch (Throwable failure) {
+                Throwable propagated = failure;
+                if (!factoriesCompleted) {
+                    propagated = releaseCompositeCheckpoints(activeCheckpoints, propagated);
+                    restoreUnitState(saveDeleted, saveRestored);
+                }
+                if (!reservationFinished) {
+                    try {
+                        finishFailedTransactionLocked();
+                    } catch (Throwable finishFailure) {
+                        propagated.addSuppressed(finishFailure);
                     }
                 }
+                rethrow(propagated);
+                throw new AssertionError("unreachable");
             }
-
-
-            if (!sequencedBy) {
-                Boolean res = analyzer.checkDatabase(list, false);
-                if (res != null && res) {
-
-                    functions.release();
-                    fValues.release();
-                    tVars.release();
-                    tValues.release();
-
-                    domains.release();
-                    rules.release();
-                    comments.release();
-
-                    library.release();
-
-                    deleted.clear();
-                    restored.clear();
-                    deleted.putAll(saveDeleted);
-                    restored.putAll(saveRestored);
-
-                    result = false;
-
-                } else {
-
-                    functions.commit();
-                    fValues.commit();
-                    tVars.commit();
-                    tValues.commit();
-
-                    domains.commit();
-                    rules.commit();
-                    comments.commit();
-
-                    library.commit();
-
-//                    solves.commit((SolutionsStore) m.getSolutions());
-//                    values.commit((ValuesStore) m.getValues());
-
-                }
-            }
-            finishTransactionLocked();
-
-            log.commit((LogStore) m.getLog());
-            queryResult = m.getQueryResult();
-            compliedLine = m.getCompliedString();
-            lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
-
-
         }
-        return result;
+    }
+
+    private void markCompositeCheckpoints(boolean[] active) throws Exception {
+        functions.mark();
+        active[0] = true;
+        fValues.mark();
+        active[1] = true;
+        tVars.mark();
+        active[2] = true;
+        tValues.mark();
+        active[3] = true;
+        domains.mark();
+        active[4] = true;
+        rules.mark();
+        active[5] = true;
+        comments.mark();
+        active[6] = true;
+        library.mark();
+        active[7] = true;
+    }
+
+    private void completeCompositeCheckpoints(boolean[] active) throws Exception {
+        functions.commit();
+        active[0] = false;
+        fValues.commit();
+        active[1] = false;
+        tVars.commit();
+        active[2] = false;
+        tValues.commit();
+        active[3] = false;
+        domains.commit();
+        active[4] = false;
+        rules.commit();
+        active[5] = false;
+        comments.commit();
+        active[6] = false;
+        library.commit();
+        active[7] = false;
+    }
+
+    private Throwable releaseCompositeCheckpoints(boolean[] active, Throwable primary) {
+        Throwable failure = primary;
+        for (int i = active.length - 1; i >= 0; --i) {
+            if (!active[i]) {
+                continue;
+            }
+            try {
+                releaseCompositeCheckpoint(i);
+            } catch (Throwable rollbackFailure) {
+                if (failure == null) {
+                    failure = rollbackFailure;
+                } else if (failure != rollbackFailure) {
+                    failure.addSuppressed(rollbackFailure);
+                }
+            } finally {
+                active[i] = false;
+            }
+        }
+        return failure;
+    }
+
+    private void releaseCompositeCheckpoint(int index) throws Exception {
+        switch (index) {
+            case 0:
+                functions.release();
+                break;
+            case 1:
+                fValues.release();
+                break;
+            case 2:
+                tVars.release();
+                break;
+            case 3:
+                tValues.release();
+                break;
+            case 4:
+                domains.release();
+                break;
+            case 5:
+                rules.release();
+                break;
+            case 6:
+                comments.release();
+                break;
+            case 7:
+                library.release();
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown composite checkpoint " + index);
+        }
+    }
+
+    private Map<UnitType, Set<Long>> copyUnitState(Map<UnitType, Set<Long>> source) {
+        Map<UnitType, Set<Long>> copy = new HashMap<>();
+        for (Map.Entry<UnitType, Set<Long>> entry : source.entrySet()) {
+            copy.put(entry.getKey(), new HashSet<>(entry.getValue()));
+        }
+        return copy;
+    }
+
+    private void mergeUnitState(Mind child) {
+        for (Map.Entry<UnitType, Set<Long>> entry : child.getDeleted().entrySet()) {
+            deleted.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
+        }
+        for (Map.Entry<UnitType, Set<Long>> entry : child.getRestored().entrySet()) {
+            restored.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
+            Set<Long> deletedIds = deleted.get(entry.getKey());
+            if (deletedIds != null) {
+                deletedIds.removeAll(entry.getValue());
+            }
+        }
+    }
+
+    private void restoreUnitState(Map<UnitType, Set<Long>> saveDeleted,
+                                  Map<UnitType, Set<Long>> saveRestored) {
+        deleted.clear();
+        restored.clear();
+        deleted.putAll(copyUnitState(saveDeleted));
+        restored.putAll(copyUnitState(saveRestored));
+    }
+
+    private void copyCommitResult(Mind child) throws Exception {
+        log.commit(child.getLog());
+        queryResult = child.getQueryResult();
+        compliedLine = child.getCompliedString();
+        lastLinkerStatistics = child.linker.snapshotStatistics();
+    }
+
+    private void finishFailedTransactionLocked() {
+        if (transactionCounter <= 0) {
+            throw new IllegalStateException("Transaction counter underflow for Mind " + id);
+        }
+        --transactionCounter;
+    }
+
+    private static void rethrow(Throwable failure) throws Exception {
+        if (failure instanceof Exception) {
+            throw (Exception) failure;
+        }
+        if (failure instanceof Error) {
+            throw (Error) failure;
+        }
+        throw new RuntimeException(failure);
     }
 
     private void update() throws Exception {
@@ -740,6 +899,12 @@ public class Mind implements IMind {
         return restored;
     }
 
+    /**
+     * Historical one-child view retained for binary/source compatibility.
+     * Semantic lookup must use {@link #getCVarChild(ITerm, long)} because one
+     * parent C-variable can have a distinct projection in each target Rule.
+     */
+    @Deprecated
     public Map<ITerm, ITerm> getCvarChilds() {
         return cvarChilds;
     }
@@ -748,42 +913,120 @@ public class Mind implements IMind {
         return cvarParents;
     }
 
-    /** Bind C-variable links to an explicit active Mind context. */
-    public void linkCVar(ITerm parent, ITerm child) {
-        if (parent != null && child != null) {
-            cvarParents.put(child, parent);
-            cvarChilds.put(parent, child);
+    /**
+     * Return the canonical child projection of {@code parent} in the binding
+     * scope of {@code targetRuleId}, searching parent Mind contexts when the
+     * current transaction does not own that projection.
+     */
+    public ITerm getCVarChild(ITerm parent, long targetRuleId) {
+        Map<Long, ITerm> children = cvarChildrenByRule.get(parent);
+        ITerm child = children == null ? null : children.get(targetRuleId);
+        if (child == null && next != null) {
+            return ((Mind) next).getCVarChild(parent, targetRuleId);
         }
+        return child;
+    }
+
+    /** Bind a C-variable projection to its explicit target Rule scope. */
+    public void linkCVar(ITerm parent, ITerm child) {
+        if (parent == null || child == null) {
+            return;
+        }
+        if (!(child instanceof Term)) {
+            throw new IllegalArgumentException("C-variable child must be a Term");
+        }
+
+        long targetRuleId = ((Term) child).getRuleId();
+        if (targetRuleId < 0) {
+            throw new IllegalStateException("C-variable child has no target Rule");
+        }
+
+        Map<Long, ITerm> children = cvarChildrenByRule.get(parent);
+        if (children == null) {
+            children = new HashMap<>();
+            cvarChildrenByRule.put(parent, children);
+        }
+
+        ITerm displaced = children.put(targetRuleId, child);
+        if (displaced != null && !displaced.equals(child)) {
+            cvarParents.remove(displaced);
+        }
+        cvarParents.put(child, parent);
+
+        // Compatibility view only. Linker and new code must use rule-scoped lookup.
+        cvarChilds.put(parent, child);
     }
 
     public void unlinkCVar(ITerm term) {
         if (term == null) {
             return;
         }
-        Set<ITerm> linked = new HashSet<>();
-        linked.add(term);
-        ITerm child = cvarChilds.get(term);
-        if (child != null) linked.add(child);
-        ITerm parent = cvarParents.get(term);
-        if (parent != null) linked.add(parent);
+
+        Set<ITerm> affectedParents = new HashSet<>();
+
+        // If the removed term is a parent, drop every Rule-scoped projection.
+        Map<Long, ITerm> ownedChildren = cvarChildrenByRule.remove(term);
+        if (ownedChildren != null) {
+            for (ITerm child : ownedChildren.values()) {
+                cvarParents.remove(child);
+            }
+        }
+
+        // If the removed term is a child, drop only its projection and retain
+        // siblings belonging to other target Rules. Scan the authority map as
+        // well as the reverse map so damaged one-sided adjacency is repairable.
+        ITerm reverseParent = cvarParents.remove(term);
+        if (reverseParent != null) {
+            affectedParents.add(reverseParent);
+        }
+        Iterator<Map.Entry<ITerm, Map<Long, ITerm>>> parentIterator =
+                cvarChildrenByRule.entrySet().iterator();
+        while (parentIterator.hasNext()) {
+            Map.Entry<ITerm, Map<Long, ITerm>> parentEntry = parentIterator.next();
+            Iterator<Map.Entry<Long, ITerm>> childIterator =
+                    parentEntry.getValue().entrySet().iterator();
+            boolean removed = false;
+            while (childIterator.hasNext()) {
+                if (term.equals(childIterator.next().getValue())) {
+                    childIterator.remove();
+                    removed = true;
+                }
+            }
+            if (removed) {
+                affectedParents.add(parentEntry.getKey());
+            }
+            if (parentEntry.getValue().isEmpty()) {
+                parentIterator.remove();
+            }
+        }
+
+        // B7.1 deliberately exercises legacy and damaged one-sided links.
+        // Scrub every direct edge involving the removed term even when that
+        // edge was never published into cvarChildrenByRule.
         for (Map.Entry<ITerm, ITerm> entry : cvarChilds.entrySet()) {
-            if (entry.getKey().equals(term) || entry.getValue().equals(term)) {
-                linked.add(entry.getKey());
-                linked.add(entry.getValue());
+            if (term.equals(entry.getValue())) {
+                affectedParents.add(entry.getKey());
             }
         }
-        for (Map.Entry<ITerm, ITerm> entry : cvarParents.entrySet()) {
-            if (entry.getKey().equals(term) || entry.getValue().equals(term)) {
-                linked.add(entry.getKey());
-                linked.add(entry.getValue());
+        cvarChilds.entrySet().removeIf(entry ->
+                term.equals(entry.getKey()) || term.equals(entry.getValue()));
+        cvarParents.entrySet().removeIf(entry ->
+                term.equals(entry.getKey()) || term.equals(entry.getValue()));
+
+        // The legacy one-child view is non-authoritative, but keep it coherent
+        // for callers that still inspect it: select any surviving Rule child.
+        for (ITerm parent : affectedParents) {
+            cvarChilds.remove(parent);
+            Map<Long, ITerm> siblings = cvarChildrenByRule.get(parent);
+            if (siblings != null && !siblings.isEmpty()) {
+                cvarChilds.put(parent, siblings.values().iterator().next());
             }
         }
-        cvarChilds.entrySet().removeIf(e -> linked.contains(e.getKey()) || linked.contains(e.getValue()));
-        cvarParents.entrySet().removeIf(e -> linked.contains(e.getKey()) || linked.contains(e.getValue()));
     }
 
     private void clearCVarLinks() {
         cvarChilds.clear();
+        cvarChildrenByRule.clear();
         cvarParents.clear();
     }
 

@@ -51,7 +51,66 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Quznetsov on 25.05.15.
+ * Канонический словарь {@link Term}, общий для цепочки одного {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Фабрика сопоставляет внешнему
+ * значению либо внутреннему variable descriptor единственный канонический
+ * {@code Term}. Она координирует identity lookup, восстановление удалённых
+ * единиц, выделение идентификаторов, storage hydration, C-variable descriptors
+ * и reachability cleanup; это registry/lifecycle boundary, а не простой
+ * конструктор объектов.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Экземпляр создаётся корневым
+ * {@code Mind} и сохраняет этот контекст. Штатный дочерний {@code Mind} не
+ * получает отдельный dictionary overlay, а повторно использует ту же ссылку
+ * через {@code getTerms()}. Поэтому canonical Term identity, cache и счётчик
+ * C-переменных общие для активной Mind-цепочки и не откатываются как обычное
+ * transaction-private состояние дочерней фабрики.</p>
+ *
+ * <p><strong>C-variable lifecycle.</strong> {@link #createCVar(IRule, ITerm,
+ * ITerm)} выделяет chain-shared index, канонизирует внутренний descriptor,
+ * связывает его с Rule и именем и, при наличии parent, публикует transient
+ * parent/child adjacency в retained {@code Mind}. Канонический Term может
+ * участвовать в persistence, но карты C-variable links являются runtime-state
+ * {@code Mind} и удаляются симметрично при cleanup.</p>
+ *
+ * <p><strong>Persistence.</strong> {@link Escalera} удерживает каноническую
+ * последовательность и cache. При открытом storage поле {@code connection}
+ * указывает на schema-specific {@link IBase}, заимствованный у {@link User}:
+ * cache miss может materialize Term через эту базу, а {@link #update()} —
+ * передать изменения storage boundary. Владельцами generation и close остаются
+ * {@code User}/{@code IData}; фабрика не приобретает close authority.</p>
+ *
+ * <p><strong>Generation lifecycle.</strong> Методы {@code transaction},
+ * {@code commit(DictionaryFactory)} и cache checkpoints сохраняются как
+ * implementation/compatibility surfaces, но штатный child {@code Mind}
+ * публикует тот же canonical instance, а не отдельную фабрику для последующего
+ * promotion. Поле {@code top} — локальный sequence anchor creation/splice
+ * mechanics, не semantic identity и не durable database root.</p>
+ *
+ * <p><strong>Reachability cleanup.</strong> {@link #pack()} после первого
+ * полного прохода поддерживает incremental candidate frontier. Активные Rules
+ * образуют устойчивые корни; diff предыдущего и текущего Rule-term snapshot
+ * возвращает потерявшие Rule-ссылку Terms в frontier. Solutions, hypotheses и
+ * values являются временными корнями: удерживаемый только ими Term остаётся
+ * кандидатом, чтобы быть пересмотренным после очистки projection. Удаление
+ * Term одновременно разрывает его transient C-variable adjacency.</p>
+ *
+ * <p><strong>Инварианты и concurrency.</strong> Одно эквивалентное значение
+ * должно иметь одну активную каноническую единицу. C-variable indexes должны
+ * возрастать без коллизий во всей общей цепочке. Синхронизация canonical add,
+ * index allocation и pack защищает эти конкретные операции, но не объявляет
+ * factory iterators или возвращённые Terms независимо thread-safe.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Нормальный доступ идёт
+ * через актуальный {@code Mind}. Вызывающая сторона не должна считать фабрику
+ * child transaction, сохранять C-variable adjacency как durable knowledge,
+ * закрывать через неё общее storage либо удерживать query projections как
+ * постоянное доказательство достижимости Term.</p>
+ *
+ * @see PredicateFactory
+ * @see IFactory
+ * @see Term
  */
 public class DictionaryFactory implements IFactory<ITerm> {
 
@@ -177,6 +236,26 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return null;
     }
 
+    /**
+     * Create a C-variable descriptor owned by {@code r}.
+     *
+     * <p>When {@code parent} is non-null, the new {@code *N} term is not a
+     * concrete substitution. It is the canonical projection of the parent
+     * C-variable into the independent binding scope of the target Rule. A
+     * parent may therefore have several children, but at most one child for
+     * each target Rule id. Reusing that rule-scoped identity prevents repeated
+     * linker passes from producing an unbounded chain of equivalent variables,
+     * while keeping different Rule-local sets of T-variables isolated.</p>
+     *
+     * <p>The child receives its target Rule before {@link Mind#linkCVar(ITerm,
+     * ITerm)} publishes the transient adjacency. The adjacency belongs to the
+     * active Mind lifecycle and is not persistent knowledge.</p>
+     *
+     * @param r target Rule whose T-variable set defines the binding scope
+     * @param name source-level variable name retained for display
+     * @param parent source C-variable, or {@code null} for a root descriptor
+     * @return the newly allocated root or rule-scoped child descriptor
+     */
     public ITerm createCVar(IRule r, ITerm name, ITerm parent) throws Exception {
         int i = nextVarIndex();
         String temp = String.format("%c%d", parent == null ? '%' : '*', i);

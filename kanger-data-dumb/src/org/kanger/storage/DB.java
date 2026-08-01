@@ -35,18 +35,78 @@ import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Контейнер физического поколения DUMB и конкретная реализация {@link IData}.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code DB} выбирает одно именованное
+ * поколение файлов, создаёт и публикует его логические базы {@link Base},
+ * координирует общий lifecycle {@code use/flush/close/remove/reindex} и
+ * назначает каждой новой схеме устойчивый внутри поколения {@code baseCode}.
+ * Класс не хранит семантические объекты и не является транзакционным snapshot:
+ * эти роли принадлежат фабрикам и {@link org.kanger.storage.Escalera}.</p>
+ *
+ * <p><strong>Физическое поколение.</strong> Все логические базы совместно
+ * используют файлы {@code .index}, {@code .store} и {@code .integrity};
+ * {@code baseCode} отделяет записи одной схемы от записей другой. Отдельные
+ * журналы восстановления имеют суффикс {@code .wal.<baseCode>}. Поэтому порядок
+ * первого получения баз является частью физической адресации и должен
+ * задаваться верхним bootstrap-контрактом, а не случайным обходом карты.</p>
+ *
+ * <p><strong>Владение базами.</strong> Реестр {@code bases} содержит только
+ * открытые или не закрывшиеся {@link IBase}. При закрытии каждая база получает
+ * независимую попытку; успешно закрытая запись немедленно удаляется, первая
+ * ошибка возвращается вызывающему коду, последующие прикрепляются как
+ * suppressed. Имя поколения очищается только после опустошения реестра, поэтому
+ * неудачно закрывшиеся ресурсы остаются явно доступными для повторной попытки.</p>
+ *
+ * <p><strong>Переиндексация.</strong> {@link #reindex(IReactor, IMind)} строит
+ * полное временное поколение через обычные {@link IBase} и затем публикует его
+ * обратимой заменой трёх core-файлов. Сначала live-файлы перемещаются в
+ * уникальные backup-пути, затем temporary-файлы устанавливаются на live-пути.
+ * При исключении уже установленные файлы возвращаются во временные пути, а
+ * backups восстанавливаются; ошибки rollback сохраняются как suppressed.
+ * Это exception-atomic операция внутри работающего процесса, но не заявление
+ * о crash-atomic многофайловой транзакции при внезапном завершении ОС.</p>
+ *
+ * <p><strong>Удаление и перечисление.</strong> {@link #remove(String)} удаляет
+ * файлы явно выбранного поколения после закрытия текущего, включая delta и WAL.
+ * {@link #list()} выводит поколения по найденным {@code .store}-файлам и не
+ * открывает их для проверки содержимого.</p>
+ *
+ * <p><strong>Concurrency.</strong> Создаваемые базы получают общий статический
+ * locker для согласования доступа к совместным index/store-файлам. Сам реестр
+ * поколения предполагает внешнюю сериализацию lifecycle-операций; конкурентные
+ * {@code use}, {@code close}, {@code remove} и {@code reindex} одним экземпляром
+ * {@code DB} не образуют поддерживаемый режим.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Перед получением баз надо
+ * выбрать поколение через {@link #use(String)}. После ошибки закрытия следует
+ * повторить {@link #close()}, а после неудачной публикации reindex считать live
+ * поколение восстановленным и temporary поколение сохранённым для диагностики
+ * или повторной операции.</p>
+ *
+ * @see Base
+ * @see Data
+ * @see IData
  */
 public class DB implements IData {
 
     private static final Object locker = new Object();
+    private static final String[] GENERATION_SUFFIXES = {
+            ".index", ".store", ".integrity"
+    };
+
     private String storageName = "";
     private Map<String, IBase> bases = new HashMap<String, IBase>();
     private IUser user = null;
@@ -67,11 +127,27 @@ public class DB implements IData {
 
     @Override
     public void close() throws Exception {
-        for (IBase b : bases.values()) {
-            b.close();
+        Exception failure = null;
+        Iterator<Map.Entry<String, IBase>> iterator = bases.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, IBase> entry = iterator.next();
+            try {
+                entry.getValue().close();
+                iterator.remove();
+            } catch (Exception closeError) {
+                if (failure == null) {
+                    failure = closeError;
+                } else {
+                    failure.addSuppressed(closeError);
+                }
+            }
         }
-        bases.clear();
-        storageName = "";
+        if (bases.isEmpty()) {
+            storageName = "";
+        }
+        if (failure != null) {
+            throw failure;
+        }
     }
 
     @Override
@@ -121,17 +197,96 @@ public class DB implements IData {
         m.closeStorage();
 
         String dbPath = user.getDatabaseDir() + tmp;
-        deleteStorageFiles(dbPath);
-
         String temporaryPath = dbPath + "-temporary";
-        new File(temporaryPath + ".index").renameTo(new File(dbPath + ".index"));
-        new File(temporaryPath + ".store").renameTo(new File(dbPath + ".store"));
-        new File(temporaryPath + ".integrity")
-                .renameTo(new File(dbPath + ".integrity"));
+        replaceGeneration(dbPath, temporaryPath);
+
+        new File(dbPath + ".integrity.delta").delete();
+        deleteRecoveryLogs(dbPath);
         new File(temporaryPath + ".integrity.delta").delete();
         deleteRecoveryLogs(temporaryPath);
 
         use(tmp);
+    }
+
+    private void replaceGeneration(String dbPath, String temporaryPath)
+            throws Exception {
+        List<GenerationFile> generation = new ArrayList<GenerationFile>();
+        String backupMarker = ".reindex-backup-" + UUID.randomUUID().toString();
+
+        for (String suffix : GENERATION_SUFFIXES) {
+            GenerationFile file = new GenerationFile(
+                    new File(dbPath + suffix),
+                    new File(temporaryPath + suffix),
+                    new File(dbPath + suffix + backupMarker));
+            if (!file.temporary.isFile()) {
+                throw new IOException("Temporary reindex file is missing: "
+                        + file.temporary.getPath());
+            }
+            generation.add(file);
+        }
+
+        List<GenerationFile> backedUp = new ArrayList<GenerationFile>();
+        List<GenerationFile> installed = new ArrayList<GenerationFile>();
+        try {
+            for (GenerationFile file : generation) {
+                if (file.live.exists()) {
+                    Files.move(file.live.toPath(), file.backup.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                    backedUp.add(file);
+                }
+            }
+            for (GenerationFile file : generation) {
+                Files.move(file.temporary.toPath(), file.live.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+                installed.add(file);
+            }
+        } catch (Exception publicationError) {
+            rollbackGeneration(installed, backedUp, publicationError);
+            throw publicationError;
+        }
+
+        for (GenerationFile file : backedUp) {
+            file.backup.delete();
+        }
+    }
+
+    private void rollbackGeneration(List<GenerationFile> installed,
+                                    List<GenerationFile> backedUp,
+                                    Exception publicationError) {
+        for (int i = installed.size() - 1; i >= 0; --i) {
+            GenerationFile file = installed.get(i);
+            try {
+                if (file.live.exists()) {
+                    Files.move(file.live.toPath(), file.temporary.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (Exception rollbackError) {
+                publicationError.addSuppressed(rollbackError);
+            }
+        }
+        for (int i = backedUp.size() - 1; i >= 0; --i) {
+            GenerationFile file = backedUp.get(i);
+            try {
+                if (file.backup.exists()) {
+                    Files.move(file.backup.toPath(), file.live.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (Exception rollbackError) {
+                publicationError.addSuppressed(rollbackError);
+            }
+        }
+    }
+
+    private static final class GenerationFile {
+        private final File live;
+        private final File temporary;
+        private final File backup;
+
+        private GenerationFile(File live, File temporary, File backup) {
+            this.live = live;
+            this.temporary = temporary;
+            this.backup = backup;
+        }
     }
 
     private void deleteStorageFiles(String dbPath) {

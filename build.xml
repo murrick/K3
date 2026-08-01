@@ -25,33 +25,105 @@
 
 <project name="K3" default="init" basedir=".">
     <description>
-        simple example increment build variable
+        Stamp KANGER build metadata from the current source branch.
     </description>
-    <!-- set global properties for this build -->
+
     <property name="src" location="./kanger/src"/>
     <property name="doc" location="./doc"/>
+    <property environment="env"/>
 
     <tstamp>
         <format property="build.time" pattern="yyyy-MM-dd_HH:mm:ss"/>
     </tstamp>
 
-    <target name="init">
-        <!--echo file="myAntOut.txt">My first ant ${src} ${line.separator}</echo-->
+    <target name="resolve-ci-branch">
+        <condition property="build.branch.raw" value="${env.GITHUB_HEAD_REF}">
+            <and>
+                <isset property="env.GITHUB_HEAD_REF"/>
+                <not>
+                    <equals arg1="${env.GITHUB_HEAD_REF}" arg2=""/>
+                </not>
+            </and>
+        </condition>
 
-        <buildnumber/>
+        <condition property="build.branch.raw" value="${env.GITHUB_REF_NAME}">
+            <and>
+                <not>
+                    <isset property="build.branch.raw"/>
+                </not>
+                <isset property="env.GITHUB_REF_NAME"/>
+                <not>
+                    <equals arg1="${env.GITHUB_REF_NAME}" arg2=""/>
+                </not>
+            </and>
+        </condition>
+
+        <condition property="build.branch.raw" value="${env.BRANCH_NAME}">
+            <and>
+                <not>
+                    <isset property="build.branch.raw"/>
+                </not>
+                <isset property="env.BRANCH_NAME"/>
+                <not>
+                    <equals arg1="${env.BRANCH_NAME}" arg2=""/>
+                </not>
+            </and>
+        </condition>
+
+        <condition property="build.branch.raw" value="${env.CI_COMMIT_REF_NAME}">
+            <and>
+                <not>
+                    <isset property="build.branch.raw"/>
+                </not>
+                <isset property="env.CI_COMMIT_REF_NAME"/>
+                <not>
+                    <equals arg1="${env.CI_COMMIT_REF_NAME}" arg2=""/>
+                </not>
+            </and>
+        </condition>
+    </target>
+
+    <target name="resolve-git-branch" depends="resolve-ci-branch" unless="build.branch.raw">
+        <exec executable="git"
+              outputproperty="build.branch.raw"
+              failifexecutionfails="true"
+              failonerror="true">
+            <arg value="rev-parse"/>
+            <arg value="--abbrev-ref"/>
+            <arg value="HEAD"/>
+        </exec>
+    </target>
+
+    <target name="init" depends="resolve-git-branch">
+        <loadresource property="build.branch">
+            <string value="${build.branch.raw}"/>
+            <filterchain>
+                <striplinebreaks/>
+            </filterchain>
+        </loadresource>
+
+        <fail message="Unable to resolve the KANGER source branch for build metadata">
+            <condition>
+                <or>
+                    <not>
+                        <isset property="build.branch"/>
+                    </not>
+                    <equals arg1="${build.branch}" arg2=""/>
+                </or>
+            </condition>
+        </fail>
+
+        <echo message="KANGER build branch: ${build.branch}"/>
+
         <replaceregexp file="${src}/org/kanger/Version.java"
-                       match="public\s+static\s+final\s+String\s+REVISION\s+=\s+&quot;.*&quot;;"
-                       replace="public static final String REVISION = &quot;${build.number}&quot;;"
+                       match="private\s+static\s+final\s+String\s+SOURCE_BRANCH\s+=\s+&quot;.*&quot;;"
+                       replace="private static final String SOURCE_BRANCH = &quot;${build.branch}&quot;;"
                        byline="true"
         />
         <replaceregexp file="${src}/org/kanger/Version.java"
-                       match="public\s+static\s+final\s+String\s+DATE\s+=\s+&quot;.*&quot;;"
-                       replace="public static final String DATE = &quot;${build.time}&quot;;"
+                       match="private\s+static\s+final\s+String\s+SOURCE_DATE\s+=\s+&quot;.*&quot;;"
+                       replace="private static final String SOURCE_DATE = &quot;${build.time}&quot;;"
                        byline="true"
         />
-        <!--exec dir="${doc}" executable="jar">
-            <arg line="cf ../kanger-javadoc.jar ."/>
-        </exec-->
-
     </target>
 </project>

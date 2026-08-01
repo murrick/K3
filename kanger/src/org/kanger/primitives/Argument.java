@@ -261,14 +261,19 @@ public class Argument implements IArgument {
         switch (type) {
             case TERM:
                 o = new Term();
+                break;
             case TVARIABLE:
                 o = new TVariable();
+                break;
             case TVALUE:
                 o = new TValue();
+                break;
             case FVALUE:
                 o = new FValue();
+                break;
             case FUNCTION:
                 o = new Function();
+                break;
             default:
                 o = null;
         }

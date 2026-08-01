@@ -26,7 +26,34 @@
 package org.kanger.interfaces;
 
 /**
- * Описатель объекта пользователя.
+ * Внешний пользовательский контекст KANGER и граница пользовательского владения.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code IUser} связывает приложение
+ * с пользовательскими параметрами и caller-managed ссылкой на активный
+ * {@link IMind}. Пользователь не является частью логического вывода: он задаёт
+ * внешний контекст размещения, конфигурации и навигации между Mind, но не
+ * определяет canonical identity правил, термов или иных сущностей знания.</p>
+ *
+ * <p><strong>Inside.</strong> Собственное состояние пользователя состоит из
+ * прикладного идентификатора, набора строковых параметров и compatibility slot
+ * текущего Mind. Это состояние принадлежит объекту пользователя и может быть
+ * изменено независимо от транзакционного состояния любого Mind.</p>
+ *
+ * <p><strong>Outside.</strong> Связи пользователя с файловой системой,
+ * storage-модулем и текущим Mind являются внешними проекциями. Значения
+ * {@code user.dir}, {@code database.dir} и {@code sources.dir} лишь передают
+ * пути другим компонентам. {@link #getCurrentMind()} не вычисляет вершину
+ * transaction chain и не является lifecycle authority.</p>
+ *
+ * <p><strong>Lifecycle и persistence.</strong> Параметры могут сохраняться в
+ * {@code kanger.conf}, если задан {@code user.dir}. Чтение с default имеет
+ * побочный эффект: отсутствующее значение регистрируется и может быть записано
+ * в файл. Поэтому {@code IUser} не является immutable property view.</p>
+ *
+ * <p><strong>Инварианты.</strong> Идентификатор пользователя не является
+ * идентификатором Mind; currentMind не является опубликованной транзакцией;
+ * изменение параметров пользователя не выполняет commit или rollback;
+ * очистка currentMind не завершает lifecycle ранее сохранённого объекта.</p>
  */
 public interface IUser {
 
@@ -67,6 +94,7 @@ public interface IUser {
      * @param key          текстовый ключ запрашиваемого параметра.
      * @param defaultValue значение по умолчанию.
      * @return текстовое значение параметра.
+     * @throws Exception если параметр нельзя прочитать или сохранить в пользовательской конфигурации
      */
     String getProperty(String key, String defaultValue) throws Exception;
 
@@ -84,6 +112,7 @@ public interface IUser {
      *
      * @param key          текстовый ключ параметра.
      * @param defaultValue текстовое значение параметра.
+     * @throws Exception если изменение нельзя сохранить в пользовательской конфигурации
      */
     void setProperty(String key, String defaultValue) throws Exception;
 
@@ -92,7 +121,7 @@ public interface IUser {
      * kanger.conf. Если параметр с ключем "user.dir" не задан
      * то операция игнорируется.
      *
-     * @throws Exception
+     * @throws Exception если конфигурационный файл нельзя прочитать
      */
     void loadProperties() throws Exception;
 
@@ -167,8 +196,27 @@ public interface IUser {
      */
     void setSourceDir(String dir);
 
+    /**
+     * Возвращает сохранённую приложением ссылку на текущий Mind.
+     *
+     * <p>Метод не вычисляет вершину transaction chain и не проверяет, что
+     * объект ещё активен. Значение может быть {@code null}; ядро KANGER не
+     * использует этот slot как источник истины lifecycle.</p>
+     *
+     * @return caller-managed ссылка на Mind или {@code null}
+     */
     IMind getCurrentMind();
 
+    /**
+     * Сохраняет caller-managed ссылку на текущий Mind.
+     *
+     * <p>Операция не выполняет commit, release, reservation, storage
+     * publication или cleanup. Передача {@code null} только очищает slot.
+     * Вызывающая сторона отвечает за согласованность ссылки со своим
+     * transaction workflow.</p>
+     *
+     * @param mind сохраняемый Mind или {@code null}
+     */
     void setCurrentMind(IMind mind);
 
 }

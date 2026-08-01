@@ -46,7 +46,70 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Created by Dmitry G. Quznetsov on 20.12.2020.
+ * Транзакционный реестр source/provenance {@link Comment}, принадлежащий одному
+ * уровню {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Комментарии адресуются ID Rule,
+ * включая зарезервированные {@link #HEADER_ID} и {@link #FOOTER_ID}. Фабрика
+ * поддерживает новые child-owned записи и безопасное изменение уже видимого
+ * parent comment. Поэтому её transaction state состоит не только из
+ * {@link Escalera}, но и из effective-view/copy-on-write metadata.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Каждый {@code Mind} создаёт
+ * собственный экземпляр. Child {@code transaction(parentFactory)} строит cache
+ * overlay, сохраняет {@code parentView} и начинает с пустых local overrides.
+ * До typed parent commit изменение inherited Comment остаётся дочерней копией;
+ * parent object не мутируется и release child уровня сохраняет исходный
+ * комментарий.</p>
+ *
+ * <p><strong>Effective view.</strong> Lookup выполняется в порядке: local
+ * override, effective parent view, затем raw local/cache value или root
+ * storage hydration. При первой записи в inherited Comment {@code writable}
+ * создаёт child-owned copy с тем же semantic ID. Iterator возвращает effective
+ * values, а не обязательно raw objects Escalera.</p>
+ *
+ * <p><strong>Завершение транзакции.</strong> Typed
+ * {@code commit(childFactory)} продвигает новые cache units, копирует child
+ * overrides в parent context и объединяет dirty IDs. Решение о commit/release
+ * принимает родительский {@code Mind}; фабрика реализует category-specific
+ * publication, но не владеет reservation или всей composite atomicity.</p>
+ *
+ * <p><strong>Persistence.</strong> Только root factory заимствует
+ * schema-specific {@link IBase} у {@link User}. Новые Comments проходят через
+ * cache update. Изменения уже persistent IDs учитываются в
+ * {@code dirtyUpdates}: root {@link #update()} записывает effective value в
+ * существующий storage step. {@code applyOverrides()} материализует root
+ * overrides перед pack. Storage generation и close authority принадлежат
+ * {@code User}/{@code IData}, а не фабрике.</p>
+ *
+ * <p><strong>Checkpoint protocol.</strong> {@link #mark()}, {@link #commit()}
+ * и {@link #release()} журналируют snapshot maps {@code overrides} и set
+ * {@code dirtyUpdates} параллельно с Escalera frames. Cache rollback без этого
+ * auxiliary journal не восстановил бы effective Comment view. Stack допускает
+ * вложенные composite checkpoints.</p>
+ *
+ * <p><strong>Очистка.</strong> Child {@link #clear()} отбрасывает local
+ * overrides/journal и заново создаёт overlay над текущим parent factory. Root
+ * clear сбрасывает generation. {@link #pack()} сначала применяет только root
+ * overrides, затем удаляет Comments, помеченные deleted, вместе с их auxiliary
+ * metadata; child pack не публикует override непосредственно в parent raw
+ * object.</p>
+ *
+ * <p><strong>Инварианты и concurrency.</strong> До commit inherited Comment
+ * должен оставаться неизменным в parent view; release должен удалить child
+ * override; committed persistent override должен переживать close/reopen.
+ * Concurrent collections защищают отдельные publication operations, но не
+ * делают mutable Comments, iterator или composite transaction protocol
+ * независимо thread-safe.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Нормальный доступ идёт
+ * через фабрику актуального {@code Mind}. Вызывающая сторона не должна
+ * удерживать raw object как авторитетный effective value между transaction
+ * levels, изменять inherited Comment в обход {@link #add(long, String)} либо
+ * закрывать общее storage через child factory.</p>
+ *
+ * @see DomainFactory
+ * @see Comment
  */
 public class CommentFactory {
 

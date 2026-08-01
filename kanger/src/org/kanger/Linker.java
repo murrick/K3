@@ -41,7 +41,112 @@ import org.kanger.units.*;
 import java.util.*;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Исполнитель насыщения и оркестратор неподвижной точки KANGER для одного
+ * {@link Mind}.
+ *
+ * <p><strong>Роль и владение.</strong> Каждый {@code Mind} создаёт собственный
+ * {@code Linker}; экземпляр хранит ссылку на этот runtime-контекст и его
+ * {@link LogStore}. Linker не владеет каноническими Rule, TValue, FValue или
+ * Hypothesis и не является самостоятельной транзакцией. Он координирует их
+ * фабрики, transient solve-state, вычисления и материализацию внутри уже
+ * зарезервированного вызывающей стороной Mind.</p>
+ *
+ * <p><strong>Граница одного запуска.</strong> {@link #link(Rule, boolean)}
+ * очищает query-local used/excluded/calculated/flood state, canonical
+ * {@code ruleSolves}, производный tuple-index и статистику. Ускорители
+ * {@code solveIndex}, {@code indexedSolveCounts}, {@code unarySolveKeys} и
+ * {@code indexedSolves} содержат только ссылки на существующие {@link TSolve}
+ * текущего запуска; они не являются semantic authority и не переживают новый
+ * {@code link()}.</p>
+ *
+ * <p><strong>Активный Rule-set.</strong> Полное насыщение обходит все видимые
+ * неудалённые Rule. Rule-scoped запуск начинает с переданного правила и
+ * расширяет множество opposite-polarity native candidates, уже used Rules и
+ * новых generated Rules текущей границы. Candidate indexes сокращают число
+ * проверок, но итоговое сопоставление, hydration и semantic validation остаются
+ * в Linker и Rule/Domain.</p>
+ *
+ * <p><strong>Порядок прохода.</strong> Каждый saturation pass дважды обходит
+ * один и тот же Rule-set: сначала в строгом порядке убывания полного
+ * {@code long Rule id}, затем в строгом порядке возрастания. Первый проход
+ * распространяет факты в исторически установленном направлении, второй
+ * замыкает обратные зависимости. Этот порядок является наблюдаемым инвариантом
+ * алгоритма и не эквивалентен произвольной итерации {@link HashSet}.</p>
+ *
+ * <p><strong>Неподвижная точка.</strong> В начале каждого pass Linker сбрасывает
+ * continuation signals {@code RuleFactory}, {@code TValueFactory},
+ * {@code FValueFactory}, temporary hypothesis и final hypothesis. Следующий
+ * pass выполняется только если хотя бы один из этих владельцев сообщил о
+ * пережившем операцию эффекте. Signal не является самостоятельным результатом:
+ * speculative mutation, откатанная локальным checkpoint, не должна оставлять
+ * ложное требование продолжения.</p>
+ *
+ * <p><strong>Unification и checkpoints.</strong> {@code linkDomains()} для
+ * каждого opposite-polarity candidate открывает парные локальные checkpoints
+ * TValue/FValue. Новая подстановка или surviving ground used-state завершает
+ * их commit; discarded substitutable/no-op match и failed candidate завершают
+ * release. Вся пара должна быть закрыта в том же candidate-operation frame:
+ * незакрытая рамка меняет смысл последующих nested commit/release и поэтому
+ * является lifecycle defect, а не только retention.</p>
+ *
+ * <p><strong>Подстановки и совместимость.</strong> Переменные вращаются от
+ * старших к младшим по их установленному порядку, а {@code isValidFor()}
+ * проверяет совместимость текущей частичной подстановки с уже известными
+ * {@code TSolve}. Это query-local join/filter; tuple-index ускоряет lookup, но
+ * не создаёт решений и не отменяет каноническую проверку значений.</p>
+ *
+ * <p><strong>Побочные эффекты.</strong> Во время прохода Linker может создать
+ * TValue/FValue, отметить Domain и Rule used/calculated/excluded, накопить
+ * {@link Cause}, добавить TSolve, temporary/final hypotheses и classified
+ * produced Domains. {@code linkDatabase()} выполняет retained legacy
+ * branch-closure и только помечает materialization candidates;
+ * {@code updateDatabase()} после завершения Rule-rotation применяет stamp,
+ * довычисляет необходимые Function values и создаёт canonical stored Rule через
+ * Domain/RuleFactory. Такое разделение препятствует изменению Rule-set внутри
+ * незавершённого branch traversal.</p>
+ *
+ * <p><strong>Functions и system predicates.</strong> {@code calcFunctions()}
+ * передаёт calculable occurrences в принадлежащий Mind {@code Calculator};
+ * {@code checkSystem()} вычисляет algorithmic predicates, управляет calculated
+ * marks и публикует полные transient solves. Linker не определяет binding mode
+ * Function/UDF и не владеет canonical FValue identity — эти контракты остаются
+ * у соответствующих фабрик и Calculator.</p>
+ *
+ * <p><strong>Ошибки и flood control.</strong> Ошибки одной terminal branch,
+ * возникшие внутри domain/function/database evaluation, диагностируются в
+ * {@code stderr} и делают результат этой branch ложным; владельцы локальных
+ * checkpoints обязаны оставить state согласованным до выхода с исключением.
+ * Превышение flood limit при вращении переменных выбрасывает
+ * {@link RuntimeErrorException} наружу и не является частичным логическим
+ * ответом.</p>
+ *
+ * <p><strong>Persistence и cleanup.</strong> Linker напрямую не открывает и не
+ * обновляет storage. Durable publication проходит через factory/Domain paths,
+ * а физический pack/cleanup выполняется владельцами Mind и фабрик. Сам Linker
+ * сохраняет только runtime statistics и query-local acceleration structures,
+ * которые переинициализируются на следующем запуске.</p>
+ *
+ * <p><strong>Concurrency и caller obligations.</strong> Mutable counters,
+ * indexes, current substitutions и связанные Mind stores не делают Linker
+ * independently thread-safe. Публичный query/transaction protocol должен
+ * сериализовать работу через reservation/locking Mind и не вызывать один
+ * экземпляр Linker конкурентно. Вызывающий код не должен менять Rule-set,
+ * factory checkpoints или query-local solve maps во время насыщения и не должен
+ * трактовать acceleration metadata либо statistics как часть логического
+ * результата.</p>
+ *
+ * <p><strong>Замороженные границы.</strong> Исторический control flow
+ * {@code linkDatabase()} и compatibility join {@code isValidFor()} являются
+ * semantic kernels. Их переименование, декомпозиция или оптимизация допустимы
+ * только после отдельного equivalence proof и regression gate; архитектурный
+ * Javadoc сам по себе не разрешает такой рефакторинг.</p>
+ *
+ * @see Mind
+ * @see Rule
+ * @see Domain
+ * @see TValue
+ * @see FValue
+ * @see LinkerStatistics
  */
 public class Linker {
 
@@ -65,11 +170,39 @@ public class Linker {
     private final Set<TSolve> indexedSolves = Collections.newSetFromMap(
             new IdentityHashMap<TSolve, Boolean>());
 
+    /**
+     * Создаёт per-Mind исполнитель насыщения.
+     *
+     * <p>Экземпляр заимствует Mind и его LogStore, но не приобретает
+     * самостоятельного transaction или storage ownership. Caller не должен
+     * передавать один Linker другому Mind или запускать его конкурентно.</p>
+     *
+     * @param mind активный runtime-контекст, чьи фабрики и query-local stores
+     *             используются во всех последующих вызовах
+     */
     public Linker(Mind mind) {
         this.mind = mind;
         this.log = mind.getLog();
     }
 
+    static int compareRuleIdsDescending(IRule left, IRule right) {
+        return Long.compare(right.getId(), left.getId());
+    }
+
+    static int compareRuleIdsAscending(IRule left, IRule right) {
+        return Long.compare(left.getId(), right.getId());
+    }
+
+    /**
+     * Возвращает отделённый снимок диагностических счётчиков последнего
+     * запуска Linker.
+     *
+     * <p>Снимок не является частью логического ответа, не владеет runtime
+     * объектами Mind и не изменяется следующими проходами. Значения пригодны
+     * для profiling/qualification, но не для управления семантикой запроса.</p>
+     *
+     * @return независимый snapshot текущей статистики
+     */
     public LinkerStatistics snapshotStatistics() {
         return statistics.snapshot();
     }
@@ -255,6 +388,28 @@ public class Linker {
         }
     }
 
+    /**
+     * Выполняет насыщение принадлежащего экземпляру Mind до неподвижной точки.
+     *
+     * <p>Перед первым pass очищаются query-local used/excluded/calculated,
+     * flood, TSolve-index и statistics state. При {@code rule == null}
+     * обходятся все видимые неудалённые Rule. Ненулевой seed ограничивает
+     * начальный набор переданным Rule и транзитивно добавляемыми
+     * opposite-polarity, already-used и новыми generated кандидатами.</p>
+     *
+     * <p>Метод координирует Rule/TValue/FValue actions, функции, системные
+     * предикаты, hypotheses и отложенную materialization. Он не открывает
+     * отдельную пользовательскую транзакцию: caller обязан вызвать его внутри
+     * корректно зарезервированного Mind workflow. Исключение, включая flood
+     * control, не означает частичный логический результат.</p>
+     *
+     * @param rule seed Rule для локализованного насыщения или {@code null}
+     *             для полного видимого Rule-set
+     * @param logging {@code true}, если pass/timing и semantic events должны
+     *                публиковаться в LogStore Mind
+     * @throws Exception при ошибке unification, вычисления, materialization
+     *                   или превышении flood limit
+     */
     public void link(Rule rule, boolean logging) throws Exception {
 
         mind.getExcludedDomains().clear();
@@ -346,14 +501,14 @@ public class Linker {
             Collections.sort(leftList, new Comparator<IRule>() {
                 @Override
                 public int compare(IRule o1, IRule o2) {
-                    return (int) (o2.getId() - o1.getId());
+                    return compareRuleIdsDescending(o1, o2);
                 }
             });
             ruleList.addAll(ruleSet);
             Collections.sort(ruleList, new Comparator<IRule>() {
                 @Override
                 public int compare(IRule o1, IRule o2) {
-                    return (int) (o1.getId() - o2.getId());
+                    return compareRuleIdsAscending(o1, o2);
                 }
             });
 
@@ -472,6 +627,28 @@ public class Linker {
         return result[0];
     }
 
+    /**
+     * Проверяет, совместима ли текущая частичная подстановка с уже
+     * зарегистрированными TSolve.
+     *
+     * <p>{@code tail} является непустым suffix вращаемых TVariable; первая
+     * переменная уже имеет current TValue. Для каждого TVariableSet,
+     * содержащего её, метод требует существования хотя бы одного TSolve,
+     * совместимого со всеми уже назначенными переменными из suffix. Unary
+     * tuple не добавляет межпеременного ограничения. Если релевантных
+     * TVariableSet нет, частичная подстановка допустима.</p>
+     *
+     * <p>Это query-local join/filter, а не создание TValue/TSolve и не
+     * доказательство Rule. Tuple index только ускоряет поиск и синхронно
+     * достраивается из authoritative {@code mind.getRuleSolves()}.</p>
+     *
+     * @param tail непустой упорядоченный suffix переменных с установленными
+     *             current bindings для уже вращаемой части
+     * @return {@code true}, если ограничений нет или найден совместимый
+     *         зарегистрированный tuple; иначе {@code false}
+     * @throws Exception если current binding или tuple metadata не могут
+     *                   быть разрешены в текущем Mind
+     */
     private boolean isValidFor(SortedSet<TVariable> tail) throws Exception {
         synchronizeSolveIndex();
         final TVariable t = tail.first();
@@ -575,7 +752,7 @@ public class Linker {
                                                     TVariable t = (TVariable) master.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && tm.getParentId(mind) == -1 && slave.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        Term tn = (Term) tm.getChild(mind);
+                                                        Term tn = (Term) tm.getChild(mind, master.getRuleId());
                                                         if (tn == null) {
                                                             tn = (Term) mind.getTerms().createCVar(master.getRule(), tm.getName(mind), tm);
                                                         }
@@ -607,7 +784,7 @@ public class Linker {
                                                     TVariable t = (TVariable) slave.get(i).getObject(mind);
                                                     TValue s = null;
                                                     if (tm.isCVariable() && tm.getParentId(mind) == -1 && master.getRuleId() == tm.getRuleId() && !tm.isDomini() /*&& tm.getRight().isSubstitutable()*/ /*&& tm.getSlaves().contains(t.getId())*/) {
-                                                        Term tn = (Term) tm.getChild(mind);
+                                                        Term tn = (Term) tm.getChild(mind, slave.getRuleId());
                                                         if (tn == null) {
                                                             tn = (Term) mind.getTerms().createCVar(slave.getRule(), tm.getName(mind), tm);
                                                         }
@@ -650,8 +827,12 @@ public class Linker {
                                         operationEffects |= LinkerStatistics.EFFECT_USED_ONLY;
                                         master.setUsed(mind);
                                         slave.setUsed(mind);
+                                        mind.getTValues().commit();
+                                        mind.getFValues().commit();
                                     } else {
                                         ++dumpedPasses;
+                                        mind.getTValues().release();
+                                        mind.getFValues().release();
                                     }
                                     operationEffects |= markExcluded(result, substMaster, master, slave, causes, variants, operationId, logging);
                                     operationEffects |= markExcluded(result, substSlave, slave, master, causes, variants, operationId, logging);
@@ -747,6 +928,36 @@ public class Linker {
     }
 
 
+    /**
+     * Классифицирует terminal branch и регистрирует её отложенный
+     * семантический эффект.
+     *
+     * <p>Историческое имя не обозначает физический database I/O. После
+     * {@link #checkSystem(List, boolean)} метод собирает текущий solve,
+     * разделяет Domains на stored, calculated, excluded, assumed и обычные
+     * candidates, после чего либо отмечает ровно выводимый Domain как
+     * produced, либо добавляет альтернативные temporary hypotheses.
+     * Canonical Rule создаётся позже в {@code updateDatabase()}, после
+     * завершения branch traversal.</p>
+     *
+     * <p>Возвращаемое значение сообщает только о новом produced-domain
+     * эффекте, который требует продолжения saturation. Создание одной
+     * hypothesis само по себе не превращает результат в {@code true}; её
+     * собственный action signal учитывается владельцем store. Метод может
+     * изменять produced domains, causes, solves, calculated/used marks,
+     * temporary hypotheses и diagnostic log.</p>
+     *
+     * @param tree terminal conjunction текущей Rule branch
+     * @param causes накопленные provenance-связи по Rule
+     * @param tvars переменные Rule, из current bindings которых строится
+     *              solve для materialized результата
+     * @param logging {@code true} для публикации classification/provenance
+     *                событий в LogStore
+     * @return {@code true}, если зарегистрирован новый produced Domain;
+     *         иначе {@code false}
+     * @throws Exception при ошибке разрешения Domain, system predicate,
+     *                   provenance или hypothesis state
+     */
     private boolean linkDatabase(List<Domain> tree, Map<IRule, Set<Cause>> causes, Set<TVariable> tvars, boolean logging) throws Exception {
 
         boolean result = false;
@@ -990,6 +1201,22 @@ public class Linker {
     }
 
 
+    /**
+     * Вычисляет пустые calculable Function occurrences в переданных Domains.
+     *
+     * <p>Каждое подходящее вхождение очищается и передаётся Calculator
+     * текущего Mind. Canonical FValue identity, UDF binding и invalidation
+     * остаются обязанностью Calculator/FunctionFactory/FValueFactory. Метод
+     * не выполняет отдельный saturation pass и не использует параметр
+     * {@code causes}; параметр сохранён в исторической сигнатуре.</p>
+     *
+     * @param master Domains текущей branch
+     * @param causes исторический параметр provenance; методом не изменяется
+     * @param logging {@code true} для публикации вычислительных событий
+     * @return {@code true}, если хотя бы одно вычисление создало новый
+     *         surviving result
+     * @throws Exception при ошибке разрешения или выполнения функции
+     */
     public boolean calcFunctions(List<Domain> master, Map<IRule, Set<Cause>> causes, boolean logging) throws Exception {
         boolean result = false;
 
@@ -1010,6 +1237,29 @@ public class Linker {
         return result;
     }
 
+    /**
+     * Выполняет системные предикаты branch и определяет, блокируют ли они
+     * дальнейшую классификацию.
+     *
+     * <p>Успешные complete system Domains получают calculated mark. Если
+     * любой системный предикат противоречит своей polarity либо после
+     * частичного успеха остаётся невычисленный system Domain, все marks
+     * текущей попытки снимаются и branch блокируется. Полные наборы current
+     * TValue публикуются как TSolve только после согласованного успеха всей
+     * системной части.</p>
+     *
+     * <p>{@code true} означает отсутствие доказанного блока, а не
+     * обязательную вычисленность каждого ещё неполного предиката.</p>
+     *
+     * @param tree terminal conjunction, содержащая обычные и/или системные
+     *             Domains
+     * @param logging сохранённый orchestration flag; непосредственный вывод
+     *                этим методом не производится
+     * @return {@code false}, если системная часть отвергает branch;
+     *         иначе {@code true}
+     * @throws Exception при ошибке выполнения системного предиката или
+     *                   регистрации TSolve
+     */
     public boolean checkSystem(List<Domain> tree, boolean logging) throws Exception {
         boolean block = false;
         boolean success = false;
@@ -1074,4 +1324,3 @@ public class Linker {
         return !block;
     }
 }
-

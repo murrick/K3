@@ -43,7 +43,67 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Логическая база DUMB, занимающая один {@code baseCode} в общих физических
+ * файлах поколения.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Base} реализует {@link IBase}
+ * для одной схемы KANGER и связывает четыре физических механизма: ID-to-offset
+ * {@link Index}, block store {@link Data}, undo-журнал {@link RecoveryLog} и
+ * контроль целостности {@link IntegrityManifest}. Он предоставляет hydration,
+ * mutation, delete, flush, endpoint reconstruction и schema-local ID allocation,
+ * но не владеет всем поколением файлов — container lifecycle принадлежит
+ * {@link DB}.</p>
+ *
+ * <p><strong>Открытие и recovery.</strong> Сначала открываются index и store.
+ * Если WAL содержит незавершённый checkpoint, before-images откатываются в оба
+ * файла, восстановленный subset принудительно flush-ится, его integrity-запись
+ * пересобирается, и только затем WAL checkpoint удаляет журнал. После этого
+ * manifest открывается либо явно bootstrap-ится для legacy generation, а
+ * linked endpoints проверяются по persisted {@code next}-ссылкам.</p>
+ *
+ * <p><strong>Порядок цепочки.</strong> Корень и хвост нельзя выводить из
+ * минимального или максимального ID: параллельные транзакции способны выделять
+ * идентификаторы в одном порядке, а публиковаться в другом. Авторитетен только
+ * граф {@link Sapato#getNextId()}. При восстановлении требуется ровно один не
+ * referenced root, ровно один tail с sentinel {@code -1}, отсутствие dangling
+ * links, duplicate IDs и чужих записей по index offset. Нарушение является
+ * corruption, а не поводом перейти к сортировке по ID.</p>
+ *
+ * <p><strong>Mutation protocol.</strong> До изменения записи WAL сохраняет её
+ * первое before-image. Затем обновляется или размещается packed block в
+ * {@link Data}, при relocation корректируется {@link Index}, после чего
+ * integrity delta получает новое semantic содержимое. Удаление аналогично
+ * проходит WAL, index, block tombstone и integrity delta. {@link #flush()}
+ * фиксирует index, затем store, затем integrity и лишь после этого завершает
+ * recovery checkpoint.</p>
+ *
+ * <p><strong>Кэши.</strong> Верхний access-ordered LRU хранит hydrated
+ * persistent {@link IStep} по semantic ID. Внутри {@link Data} существует
+ * независимый LRU packed blocks по physical offset. Оба являются только
+ * физическими ускорителями: они не определяют identity, chain membership или
+ * committed state. Mutation инвалидирует hydrated entry; sequential reindex и
+ * endpoint scans используют uncached чтение и не вытесняют hot blocks.</p>
+ *
+ * <p><strong>ID и reindex.</strong> {@link #nextId()} выделяет идентификаторы
+ * только внутри этой схемы. Начальное значение восстанавливается по максимальному
+ * indexed ID, но это не превращает ID order в chain order. {@link #reindex(IBase,
+ * IMind)} гидратирует каждую живую запись и переносит её в destination base;
+ * publication нового поколения координирует {@link DB}.</p>
+ *
+ * <p><strong>Закрытие.</strong> {@link #close()} сначала выполняет полный
+ * flush, затем compaction integrity manifest, очищает hydrated cache и закрывает
+ * index/store handles. Ошибка flush/compact не маскируется успешным закрытием и
+ * должна быть обработана container-level retry protocol.</p>
+ *
+ * <p><strong>Concurrency.</strong> Index, store, WAL, integrity и endpoint
+ * reconstruction сериализуются общим locker поколения. Hydrated LRU имеет
+ * отдельный monitor. Код не должен удерживать cache monitor во время semantic
+ * hydration или пользовательских callback; canonical semantic ownership
+ * остаётся за фабриками и {@link org.kanger.storage.Escalera}.</p>
+ *
+ * @see DB
+ * @see Data
+ * @see IBase
  */
 public class Base implements IBase, Iterable<IStep> {
 

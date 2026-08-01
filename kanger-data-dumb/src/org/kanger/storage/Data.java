@@ -41,7 +41,60 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Serialized block store and its bounded hydrated-block cache.
+ * Физическое block store DUMB и ограниченный LRU распакованных блоков.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code Data} владеет форматом файла
+ * {@code .store}, чтением и записью packed {@link Sapato}, relocation блоков,
+ * tombstone при удалении и cache по physical offset. Он не знает semantic ID
+ * lookup: соответствие {@code (baseCode, id) -> offset} принадлежит {@link Index}
+ * и координируется {@link Base}.</p>
+ *
+ * <p><strong>Формат.</strong> Заголовок содержит version code и размер
+ * заголовка. Каждый блок начинается с зарезервированного {@code blockSize} и
+ * текущего {@code dataSize}, после чего идут packed bytes. Нулевой
+ * {@code dataSize} обозначает удалённый блок. Physical offset является локальным
+ * адресом файла и не должен публиковаться как semantic identity.</p>
+ *
+ * <p><strong>Чтение.</strong> {@link #get(long)} использует access-ordered LRU
+ * по offset. {@link #getUncached(long)} читает и распаковывает блок напрямую;
+ * этот путь применяется для последовательных scans, endpoint reconstruction и
+ * reindex, чтобы большой проход не вытеснял рабочий набор hot blocks. При
+ * hydration проверяются границы файла и положительный размер данных, а semantic
+ * согласованность ID дополнительно проверяет {@link Base}.</p>
+ *
+ * <p><strong>Запись и relocation.</strong> {@link #set(long, IStep)} сначала
+ * сериализует запись. Если существующий reserved block достаточен, содержимое
+ * переписывается на месте. Если запись выросла в конце файла, хвост расширяется.
+ * Иначе старый блок получает tombstone, новая копия append-ится, а возвращённый
+ * offset обязан быть опубликован в {@link Index} вызывающим {@link Base} до
+ * дальнейшей работы с записью. Этот write-through необходим, чтобы eviction не
+ * мог скрыть ещё не опубликованный relocation.</p>
+ *
+ * <p><strong>Удаление.</strong> {@link #remove(long)} удаляет cached entry и
+ * записывает нулевой {@code dataSize}; физическое место не переиспользуется
+ * немедленно. Очистка или reindex создают новое компактное поколение на уровне
+ * {@link DB}, а не перемещают живые блоки внутри открытого store.</p>
+ *
+ * <p><strong>Кэш.</strong> LRU взвешивается размером packed data и ограничен
+ * параметром {@code cache.data.size}. Dirty block сохраняется до eviction или
+ * flush; при выключенном кэше запись сохраняется немедленно. Метрики отражают
+ * только physical block acceleration и не определяют committed state,
+ * semantic object identity или chain membership.</p>
+ *
+ * <p><strong>Durability boundary.</strong> {@link #flush()} сохраняет dirty
+ * cached blocks, но не завершает DUMB transaction самостоятельно. Полный порядок
+ * index/store/integrity/WAL checkpoint задаёт {@link Base#flush()}. Аналогично
+ * {@link #close()} flush-ит store и закрывает file handle, но generation
+ * ownership и retry принадлежат {@link DB}.</p>
+ *
+ * <p><strong>Concurrency.</strong> File positioning и physical writes
+ * сериализуются внутренним locker; LRU имеет отдельный monitor. Вызывающий код
+ * не должен считать итератор snapshot-ом при конкурентных mutations. Основной
+ * поддерживаемый режим — операции под общим locker, предоставленным {@link Base}.</p>
+ *
+ * @see Base
+ * @see Index
+ * @see DB
  */
 public class Data implements Closeable, Iterable<IStep> {
 

@@ -47,7 +47,87 @@ import java.util.Map;
 import java.util.Stack;
 
 /**
- * Created by Dmitry G. Quznetsov on 25.05.15.
+ * Канонический реестр, транзакционный overlay и runtime-проекция значений
+ * {@link TValue}, видимых на одном уровне {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Фабрика объединяет несколько
+ * самостоятельных lifecycle dimensions. {@link Escalera} хранит canonical
+ * TValue identities и их transaction visibility; {@code current} хранит
+ * transient active binding для каждой {@link TVariable}; layered ID-index
+ * ускоряет обход values одной переменной; {@code action} фиксирует локальный
+ * mutation/effect state; delta stacks обеспечивают nested checkpoint rollback.
+ * Эти структуры не являются взаимозаменяемыми представлениями одного map.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Каждый {@code Mind} создаёт
+ * отдельную {@code TValueFactory}. Child
+ * {@code transaction(parentFactory)} строит cache overlay, связывает index с
+ * parent layer, очищает active bindings, action и checkpoint journals и не
+ * получает storage connection. Typed {@code commit(childFactory)} продвигает
+ * child cache, переводит promoted units в parent {@code Mind}, объединяет
+ * layered index и распространяет action state. Решение и sequencing всей
+ * транзакции остаются ответственностью {@code Mind}.</p>
+ *
+ * <p><strong>Canonical identity и resurrection.</strong> Canonical key
+ * задаётся парой {@code (TVariable identity, ITerm value identity)}.
+ * {@link #add(TVariable, ITerm)} сначала вызывает
+ * {@link #find(TVariable, ITerm)}. Lookup намеренно не исключает logically
+ * deleted object: до физического {@link #pack()} повторное добавление той же
+ * пары должно вернуть тот же {@code TValue} и снять deletion mark, а не создать
+ * duplicate identity. Logical deletion является обратимым transaction state;
+ * pack задаёт physical canonical removal boundary.</p>
+ *
+ * <p><strong>Active binding projection.</strong> {@code current} отвечает на
+ * runtime-вопрос, какое значение сейчас выбрано для конкретной переменной.
+ * {@link #get(TVariable)}, {@link #set(TVariable, TValue)} и
+ * {@link #isEmpty(TVariable)} работают с этой transient projection, а не с
+ * canonical registry или persistent records. Она очищается при новой
+ * transaction/generation initialization и не определяется typed commit как
+ * durable child-to-parent map. Pack удаляет stale bindings, чьи values больше
+ * не существуют; {@link TVariableFactory#pack()} отдельно удаляет keys
+ * физически удалённых variables.</p>
+ *
+ * <p><strong>Layered variable index.</strong> {@code parentIndex} и
+ * {@code localByVariable} хранят только TValue IDs; semantic objects остаются
+ * в cache/storage и materialize через {@link #get(long)}. Lazy root indexing
+ * разворачивает newest-first iteration Escalera, чтобы сохранить исторический
+ * oldest-first substitution order. Child collection обходит parent layers до
+ * local IDs. Этот порядок наблюдаем и отличается как от canonical identity,
+ * так и от full-range Comparable ordering самого {@code TValue}.</p>
+ *
+ * <p><strong>Checkpoint protocol.</strong> No-argument {@link #mark()},
+ * {@link #commit()} и {@link #release()} журналируют не полный index snapshot,
+ * а только values, добавленные после mark, плюс предыдущее action state. Nested
+ * commit включает inner additions во внешний delta; release откатывает cache,
+ * unindex-ит additions в обратном порядке и восстанавливает action. Это
+ * category-specific auxiliary rollback, необходимый для согласованности cache
+ * и acceleration metadata.</p>
+ *
+ * <p><strong>Persistence и очистка.</strong> Только root factory при открытом
+ * storage заимствует schema-specific {@link IBase} у {@link User}; child
+ * overlays остаются memory-only. {@link #pack()} физически удаляет values,
+ * которые остаются logically deleted либо ссылаются на Term, не используемый
+ * активным Rule, synchronously unindex-ит их, очищает stale current bindings и
+ * переустанавливает generation-local chain anchor. Метод не меняет pre-pack
+ * canonical resurrection contract.</p>
+ *
+ * <p><strong>Ordering и concurrency.</strong> {@code TValue.compareTo}
+ * задаёт lexicographic order {@code (tVarId, TValue id)} по полному диапазону
+ * {@code long}; factory per-variable traversal сохраняет иной — исторический
+ * substitution order. {@code indexLock} и synchronized add защищают отдельные
+ * metadata/creation paths, но не делают mutable values, reactors, iterator или
+ * composite transaction protocol независимо thread-safe. Parent publication
+ * и lock ordering остаются обязанностью {@code Mind}.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Доступ должен идти через
+ * фабрику актуального {@code Mind}. Вызывающая сторона не должна фильтровать
+ * deleted candidates внутри canonical lookup, трактовать {@code current} как
+ * persistent truth, изменять layered index напрямую, смешивать typed commit с
+ * checkpoint completion либо предполагать произвольный порядок substitution
+ * values.</p>
+ *
+ * @see TVariableFactory
+ * @see TValue
+ * @see TVariable
  */
 public class TValueFactory implements IFactory<TValue> {
 
@@ -74,6 +154,7 @@ public class TValueFactory implements IFactory<TValue> {
      * the complete index for every candidate pair.
      */
     private final Stack<List<TValue>> additionsStack = new Stack<>();
+    private final Stack<Boolean> actionStack = new Stack<>();
     private boolean indexInitialized = false;
 
     public TValueFactory(Mind mind) throws Exception {
@@ -100,6 +181,7 @@ public class TValueFactory implements IFactory<TValue> {
         synchronized (indexLock) {
             localByVariable.clear();
             additionsStack.clear();
+            actionStack.clear();
             indexInitialized = base != null;
         }
     }
@@ -317,11 +399,13 @@ public class TValueFactory implements IFactory<TValue> {
     public long mark() throws Exception {
         synchronized (indexLock) {
             additionsStack.push(new ArrayList<TValue>());
+            actionStack.push(action);
         }
         return cache.mark();
     }
 
     public long commit() throws Exception {
+        long result = cache.commit();
         synchronized (indexLock) {
             if (!additionsStack.isEmpty()) {
                 List<TValue> additions = additionsStack.pop();
@@ -329,8 +413,11 @@ public class TValueFactory implements IFactory<TValue> {
                     additionsStack.peek().addAll(additions);
                 }
             }
+            if (!actionStack.isEmpty()) {
+                actionStack.pop();
+            }
         }
-        return cache.commit();
+        return result;
     }
 
     public long release() throws Exception {
@@ -339,6 +426,9 @@ public class TValueFactory implements IFactory<TValue> {
         synchronized (indexLock) {
             if (!additionsStack.isEmpty()) {
                 additions = additionsStack.pop();
+            }
+            if (!actionStack.isEmpty()) {
+                action = actionStack.pop();
             }
         }
         if (additions != null) {

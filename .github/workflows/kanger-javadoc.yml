@@ -1,0 +1,216 @@
+name: KANGER architectural Javadoc
+
+on:
+  pull_request:
+    paths:
+      - 'kanger/src/**/*.java'
+      - 'kanger-udf/src/**/*.java'
+      - 'kanger-data-dumb/src/**/*.java'
+      - 'kanger-console/src/**/*.java'
+      - 'docs/architecture/3.5.0.4-*.md'
+      - 'docs/architecture/3.5.0.6-*.md'
+      - 'tools/audit_architectural_javadoc.py'
+      - 'tools/audit_public_api_javadoc.py'
+      - 'pom.xml'
+      - '.github/workflows/kanger-javadoc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  javadoc:
+    name: Java ${{ matrix.java }} Javadoc
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Generate implementation Javadoc
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build/javadoc
+          mkdir -p build/javadoc
+
+          find \
+            kanger/src \
+            kanger-udf/src \
+            kanger-data-dumb/src \
+            kanger-console/src \
+            -name '*.java' -print \
+            | LC_ALL=C sort \
+            > build/javadoc-sources.txt
+
+          test -s build/javadoc-sources.txt
+
+          javadoc \
+            -quiet \
+            -encoding UTF-8 \
+            -docencoding UTF-8 \
+            -charset UTF-8 \
+            -Xdoclint:none \
+            -d build/javadoc \
+            @build/javadoc-sources.txt
+
+      - name: Audit public type Javadoc coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/audit_architectural_javadoc.py \
+            | tee build/javadoc-coverage.tsv
+
+      - name: Audit public API method contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/audit_public_api_javadoc.py \
+            | tee build/public-api-javadoc.tsv
+          test -s build/public-api-javadoc.tsv
+
+      - name: Verify rendered architecture checkpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          user_doc=build/javadoc/org/kanger/User.html
+          mind_doc=build/javadoc/org/kanger/Mind.html
+          iuser_doc=build/javadoc/org/kanger/interfaces/IUser.html
+          imind_doc=build/javadoc/org/kanger/interfaces/IMind.html
+          linker_doc=build/javadoc/org/kanger/Linker.html
+          linker_source=kanger/src/org/kanger/Linker.java
+          analyzer_doc=build/javadoc/org/kanger/Analyzer.html
+          parser_doc=build/javadoc/org/kanger/compiler/Parser.html
+          compiller_doc=build/javadoc/org/kanger/compiler/Compiller.html
+          calculator_doc=build/javadoc/org/kanger/calculator/Calculator.html
+          escalera_doc=build/javadoc/org/kanger/storage/Escalera.html
+          db_doc=build/javadoc/org/kanger/storage/DB.html
+          base_doc=build/javadoc/org/kanger/storage/Base.html
+          data_doc=build/javadoc/org/kanger/storage/Data.html
+          ibase_doc=build/javadoc/org/kanger/interfaces/internal/IBase.html
+          idata_doc=build/javadoc/org/kanger/interfaces/internal/IData.html
+          dictionary_doc=build/javadoc/org/kanger/factory/DictionaryFactory.html
+          predicate_doc=build/javadoc/org/kanger/factory/PredicateFactory.html
+          domain_doc=build/javadoc/org/kanger/factory/DomainFactory.html
+          comment_doc=build/javadoc/org/kanger/factory/CommentFactory.html
+          tvariable_doc=build/javadoc/org/kanger/factory/TVariableFactory.html
+          tvalue_doc=build/javadoc/org/kanger/factory/TValueFactory.html
+          function_doc=build/javadoc/org/kanger/factory/FunctionFactory.html
+          fvalue_doc=build/javadoc/org/kanger/factory/FValueFactory.html
+          library_doc=build/javadoc/org/kanger/factory/LibraryFactory.html
+          rule_doc=build/javadoc/org/kanger/factory/RuleFactory.html
+          candidate_source=kanger/src/org/kanger/factory/RuleCandidateIndex.java
+
+          test -s "$user_doc"
+          test -s "$mind_doc"
+          test -s "$iuser_doc"
+          test -s "$imind_doc"
+          test -s "$linker_doc"
+          test -s "$linker_source"
+          test -s "$analyzer_doc"
+          test -s "$parser_doc"
+          test -s "$compiller_doc"
+          test -s "$calculator_doc"
+          test -s "$escalera_doc"
+          test -s "$db_doc"
+          test -s "$base_doc"
+          test -s "$data_doc"
+          test -s "$ibase_doc"
+          test -s "$idata_doc"
+          test -s "$dictionary_doc"
+          test -s "$predicate_doc"
+          test -s "$domain_doc"
+          test -s "$comment_doc"
+          test -s "$tvariable_doc"
+          test -s "$tvalue_doc"
+          test -s "$function_doc"
+          test -s "$fvalue_doc"
+          test -s "$library_doc"
+          test -s "$rule_doc"
+          test -s "$candidate_source"
+
+          grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
+          grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
+          grep -Fq 'Внешний пользовательский контекст KANGER' "$iuser_doc"
+          grep -Fq 'caller-managed ссылку на текущий Mind' "$iuser_doc"
+          grep -Fq 'Публичный контракт активного логического контекста KANGER' "$imind_doc"
+          grep -Fq 'Исполнитель насыщения и оркестратор неподвижной точки KANGER' "$linker_doc"
+          grep -Fq 'Выполняет насыщение принадлежащего экземпляру Mind до неподвижной' "$linker_doc"
+          grep -Fq 'Выполняет системные предикаты branch' "$linker_doc"
+          grep -Fq 'query-local join/filter' "$linker_source"
+          grep -Fq 'Историческое имя не обозначает физический database I/O' "$linker_source"
+          grep -Fq 'Интерпретатор насыщенного состояния Mind' "$analyzer_doc"
+          grep -Fq 'Синтаксический front-end исторического языка KANGER' "$parser_doc"
+          grep -Fq 'Семантический транслятор AST KANGER' "$compiller_doc"
+          grep -Fq 'Per-Mind facade выполнения системных' "$calculator_doc"
+          grep -Fq 'Транзакционная linked-snapshot проекция canonical units одной schema' "$escalera_doc"
+          grep -Fq 'Контейнер физического поколения DUMB' "$db_doc"
+          grep -Fq 'Логическая база DUMB' "$base_doc"
+          grep -Fq 'Физическое block store DUMB' "$data_doc"
+          grep -Fq 'Внутренняя граница одной логической persistent-схемы KANGER' "$ibase_doc"
+          grep -Fq 'Внутренняя граница storage-плагина, владеющего одним выбранным физическим' "$idata_doc"
+          grep -Fq 'Канонический словарь' "$dictionary_doc"
+          grep -Fq 'Канонический реестр предикатов' "$predicate_doc"
+          grep -Fq 'Канонический реестр и транзакционный overlay' "$domain_doc"
+          grep -Fq 'Транзакционный реестр source/provenance' "$comment_doc"
+          grep -Fq 'Реестр и транзакционный overlay логических' "$tvariable_doc"
+          grep -Fq 'Канонический реестр, транзакционный overlay' "$tvalue_doc"
+          grep -Fq 'Реестр и транзакционный overlay скомпилированных' "$function_doc"
+          grep -Fq 'Канонический реестр и транзакционный overlay материализованных' "$fvalue_doc"
+          grep -Fq 'Copy-on-write реестр и транзакционный overlay операций' "$library_doc"
+          grep -Fq 'Канонический реестр Rule и транзакционный overlay' "$rule_doc"
+          grep -Fq 'Внутренний ID-only индекс кандидатов' "$candidate_source"
+          grep -Fq 'гидратация Rule и Mind-dependent batching/used effects вне lock' "$candidate_source"
+
+          for rendered_doc in \
+            "$user_doc" \
+            "$mind_doc" \
+            "$iuser_doc" \
+            "$imind_doc" \
+            "$linker_doc" \
+            "$analyzer_doc" \
+            "$parser_doc" \
+            "$compiller_doc" \
+            "$calculator_doc" \
+            "$escalera_doc" \
+            "$db_doc" \
+            "$base_doc" \
+            "$data_doc" \
+            "$ibase_doc" \
+            "$idata_doc" \
+            "$dictionary_doc" \
+            "$predicate_doc" \
+            "$domain_doc" \
+            "$comment_doc" \
+            "$tvariable_doc" \
+            "$tvalue_doc" \
+            "$function_doc" \
+            "$fvalue_doc" \
+            "$library_doc" \
+            "$rule_doc"
+          do
+            ! grep -Fq '{@link' "$rendered_doc"
+          done
+
+      - name: Upload rendered Javadoc
+        if: matrix.java == '21'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-javadoc-java21
+          path: |
+            build/javadoc
+            build/javadoc-coverage.tsv
+            build/public-api-javadoc.tsv
+          if-no-files-found: error
+          retention-days: 14

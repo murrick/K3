@@ -24,9 +24,78 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Compact in-memory candidate metadata. Only Rule IDs are retained; Rules and
- * Domains remain owned by Escalera/IBase and are hydrated after candidate
- * selection.
+ * Внутренний ID-only индекс кандидатов, принадлежащий одному
+ * {@link RuleFactory}. Он сокращает множество Rule перед unification, но не
+ * владеет {@link Rule}, {@link Domain}, persistent storage либо semantic
+ * identity.
+ *
+ * <p><strong>Представление.</strong> Индекс поддерживает три согласованные
+ * структуры:</p>
+ * <ul>
+ *   <li>{@code signatures}: predicate ID, polarity и arity -> Rule IDs;</li>
+ *   <li>{@code positions}: signature, argument position и exact/wildcard Term
+ *       ID -> Rule IDs;</li>
+ *   <li>{@code fallbackSignatures}: Rule IDs, для которых positional pruning
+ *       небезопасен.</li>
+ * </ul>
+ * <p>Все коллекции сохраняют только IDs. Canonical Rule и Domain остаются в
+ * Escalera/IBase контуре {@link RuleFactory} и гидратируются после selection.</p>
+ *
+ * <p><strong>Positional eligibility.</strong> Exact/wildcard positional index
+ * строится только для primary, non-query Rule с одним branch и одним Domain.
+ * Generated, query и multi-domain Rules сохраняются в fallback signature, чтобы
+ * ускорение не стало semantic filter. Non-Term candidate argument индексируется
+ * как wildcard {@code -1}; обычная unification остаётся окончательной проверкой.</p>
+ *
+ * <p><strong>Checkpoint journals.</strong> Каждый внутренний {@code IdIndex}
+ * хранит nested delta journals. {@link #mark()} открывает journal во всех трёх
+ * картах, {@link #commit()} сливает inner delta во внешний frame, а
+ * {@link #release()} воспроизводит changes в обратном порядке. Это derived
+ * metadata checkpoint; canonical Rule rollback выполняет owning factory.
+ * {@link #mergeFrom(RuleCandidateIndex)} копирует child snapshot по IDs и не
+ * передаёт object ownership.</p>
+ *
+ * <p><strong>Generation и memo.</strong> Каждая mutation, release, merge либо
+ * clear увеличивает {@code version} и очищает per-Mind batch summaries.
+ * {@link WeakHashMap} не является persistence layer: он ограничивает lifetime
+ * memo активными Mind generations. Summary публикуется только если observed
+ * version не изменилась; устаревший результат может использоваться для текущего
+ * вызова, но не кэшируется как новая authoritative view.</p>
+ *
+ * <p><strong>Resolved selection phases.</strong>
+ * {@link #collectResolvedLocal(Domain, boolean, Mind, LinkedHashSet)} строго
+ * разделяет четыре стадии:</p>
+ * <ol>
+ *   <li>разрешение direct Term/TVariable -> TValue bindings вне index lock;</li>
+ *   <li>копирование и фильтрация Rule IDs, чтение memo/version под lock;</li>
+ *   <li>гидратация Rule и Mind-dependent batching/used effects вне lock;</li>
+ *   <li>условная публикация memo под lock при неизменной version.</li>
+ * </ol>
+ *
+ * <p><strong>Lock-order invariant.</strong> Один
+ * {@link ReentrantReadWriteLock} защищает coherent snapshots трёх карт,
+ * journals, version и memo publication. Он не должен охватывать
+ * {@code RuleFactory.get(id)}, logical deletion checks, TValue resolution либо
+ * операции, способные войти в {@code Mind.locker}. Эта граница устраняет цикл
+ * {@code Mind.locker -> candidate lock -> Mind.locker}. Owning factory может
+ * дополнительно сериализовать metadata publication своим lock, но внутренний
+ * guard не становится глобальным Mind lock.</p>
+ *
+ * <p><strong>Semantic batching.</strong> Для non-substitutable generated pair
+ * resolved path может отметить source/candidate Domains и Rules как used и
+ * исключить batched IDs из текущего candidate result. Это существующий
+ * Mind-dependent semantic side effect, поэтому он вычисляется только после
+ * выхода из metadata lock и memo хранится отдельно для каждого active Mind.</p>
+ *
+ * <p><strong>Lifetime и ограничения.</strong> Индекс создаётся вместе с
+ * {@link RuleFactory}, очищается при смене transaction/cache generation и не
+ * сериализуется. Возвращаемые ID sets являются snapshots/copies; вызывающий код
+ * обязан гидратировать их через owning factory и повторно проверить logical
+ * visibility. Класс package-private и не является public API.</p>
+ *
+ * @see RuleFactory
+ * @see Rule
+ * @see Domain
  */
 final class RuleCandidateIndex {
 
@@ -240,6 +309,7 @@ final class RuleCandidateIndex {
     private final IdIndex<SignatureKey> fallbackSignatures = new IdIndex<>();
     private final IdIndex<PositionKey> positions = new IdIndex<>();
     private final Map<Mind, Map<BatchKey, BatchSummary>> batchSummaries = new WeakHashMap<>();
+    private long version = 0L;
 
     void clear() {
         writeLock.lock();
@@ -248,6 +318,7 @@ final class RuleCandidateIndex {
             fallbackSignatures.clear();
             positions.clear();
             batchSummaries.clear();
+            ++version;
         } finally {
             writeLock.unlock();
         }
@@ -281,6 +352,8 @@ final class RuleCandidateIndex {
             signatures.release();
             fallbackSignatures.release();
             positions.release();
+            batchSummaries.clear();
+            ++version;
         } finally {
             writeLock.unlock();
         }
@@ -305,6 +378,7 @@ final class RuleCandidateIndex {
             fallbackSignatures.mergeFrom(childSnapshot.fallbackSignatures);
             positions.mergeFrom(childSnapshot.positions);
             batchSummaries.clear();
+            ++version;
         } finally {
             writeLock.unlock();
         }
@@ -322,6 +396,7 @@ final class RuleCandidateIndex {
         writeLock.lock();
         try {
             batchSummaries.clear();
+            ++version;
             boolean positional = positionalEligible(rule);
             for (List<Domain> branch : rule.getTree()) {
                 for (Domain domain : branch) {
@@ -349,6 +424,7 @@ final class RuleCandidateIndex {
         writeLock.lock();
         try {
             batchSummaries.clear();
+            ++version;
             for (List<Domain> branch : rule.getTree()) {
                 for (Domain domain : branch) {
                     SignatureKey signature = signature(domain, domain.isAntc());
@@ -433,53 +509,60 @@ final class RuleCandidateIndex {
         return true;
     }
 
-    private BatchSummary batchSummary(Domain source,
-                                      boolean candidateAntc,
-                                      Mind mind,
-                                      LinkedHashSet<Long> selected) throws Exception {
-        Rule sourceRule = (Rule) source.getRule();
-        Mind activeMind = sourceRule.getMind() == null ? mind : sourceRule.getMind();
-        SignatureKey signature = signature(source, candidateAntc);
-        BatchKey key = new BatchKey(signature, sourceRule.isGenerated());
-
-        Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
-        if (byKey == null) {
-            byKey = new HashMap<>();
-            batchSummaries.put(activeMind, byKey);
-        }
-        BatchSummary summary = byKey.get(key);
-        if (summary == null) {
-            LinkedHashSet<Long> batchedIds = new LinkedHashSet<>();
-            for (long id : selected) {
-                Rule candidate = (Rule) activeMind.getRules().get(id);
-                if (candidate != null
-                        && batchGeneratedNonSubstitutablePair(
-                        source, candidate, candidateAntc, activeMind)) {
-                    batchedIds.add(id);
-                }
+    private BatchSummary computeBatchSummary(Domain source,
+                                             boolean candidateAntc,
+                                             Mind activeMind,
+                                             LinkedHashSet<Long> selected) throws Exception {
+        LinkedHashSet<Long> batchedIds = new LinkedHashSet<>();
+        for (long id : selected) {
+            Rule candidate = (Rule) activeMind.getRules().get(id);
+            if (candidate != null
+                    && batchGeneratedNonSubstitutablePair(
+                    source, candidate, candidateAntc, activeMind)) {
+                batchedIds.add(id);
             }
-            summary = new BatchSummary(batchedIds);
-            byKey.put(key, summary);
-        } else if (!summary.batchedIds.isEmpty()) {
+        }
+        return new BatchSummary(batchedIds);
+    }
+
+    private void markCachedBatchUsed(Domain source,
+                                     Rule sourceRule,
+                                     Mind activeMind,
+                                     BatchSummary summary) throws Exception {
+        if (!summary.batchedIds.isEmpty()) {
             source.setUsed(activeMind);
             sourceRule.setUsed(activeMind);
         }
-        return summary;
     }
 
     void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
                               LinkedHashSet<Long> result) throws Exception {
-        // batchSummary is a mutable per-Mind memo, therefore the resolved path
-        // uses the write side of the same guard.
+        SignatureKey signature = signature(source, candidateAntc);
+        Long[] resolvedTermIds = new Long[source.getRange()];
+        for (int position = 0; position < source.getRange(); ++position) {
+            resolvedTermIds[position] = resolvedTermId(source.get(position), mind);
+        }
+
+        boolean batchEligible = !source.isSubstitutable();
+        Rule sourceRule = batchEligible ? (Rule) source.getRule() : null;
+        Mind activeMind = batchEligible
+                ? (sourceRule.getMind() == null ? mind : sourceRule.getMind())
+                : null;
+        BatchKey batchKey = batchEligible
+                ? new BatchKey(signature, sourceRule.isGenerated())
+                : null;
+
+        LinkedHashSet<Long> selected;
+        BatchSummary summary = null;
+        long observedVersion;
+
         writeLock.lock();
         try {
-            SignatureKey signature = signature(source, candidateAntc);
-            LinkedHashSet<Long> selected = signatures.get(signature);
+            selected = signatures.get(signature);
             if (selected.isEmpty()) return;
             LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
-            for (int position = 0; position < source.getRange(); ++position) {
-                IArgument argument = source.get(position);
-                Long termId = resolvedTermId(argument, mind);
+            for (int position = 0; position < resolvedTermIds.length; ++position) {
+                Long termId = resolvedTermIds[position];
                 if (termId == null) continue;
                 LinkedHashSet<Long> compatible = positions.get(
                         new PositionKey(signature, position, termId));
@@ -489,14 +572,47 @@ final class RuleCandidateIndex {
                 selected.retainAll(compatible);
                 if (selected.isEmpty()) return;
             }
-            if (!source.isSubstitutable()) {
-                BatchSummary summary = batchSummary(source, candidateAntc, mind, selected);
-                selected.removeAll(summary.batchedIds);
+            observedVersion = version;
+            if (batchEligible) {
+                Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
+                summary = byKey == null ? null : byKey.get(batchKey);
             }
-            result.addAll(selected);
         } finally {
             writeLock.unlock();
         }
+
+        if (batchEligible) {
+            boolean cached = summary != null;
+            if (summary == null) {
+                summary = computeBatchSummary(
+                        source, candidateAntc, activeMind, selected);
+
+                writeLock.lock();
+                try {
+                    if (version == observedVersion) {
+                        Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
+                        if (byKey == null) {
+                            byKey = new HashMap<>();
+                            batchSummaries.put(activeMind, byKey);
+                        }
+                        BatchSummary existing = byKey.get(batchKey);
+                        if (existing == null) {
+                            byKey.put(batchKey, summary);
+                        } else {
+                            summary = existing;
+                            cached = true;
+                        }
+                    }
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+            if (cached) {
+                markCachedBatchUsed(source, sourceRule, activeMind, summary);
+            }
+            selected.removeAll(summary.batchedIds);
+        }
+        result.addAll(selected);
     }
 
     private Long resolvedTermId(IArgument argument, Mind mind) throws Exception {

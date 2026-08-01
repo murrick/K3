@@ -49,7 +49,111 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Created by Dmitry G. Quznetsov on 25.01.2016.
+ * Copy-on-write реестр и транзакционный overlay операций {@link Operation},
+ * видимых на одном уровне {@link Mind}.
+ *
+ * <p><strong>Представление и canonical signature.</strong> Operation хранит
+ * schema ID, owning Mind ID, {@link LibMode}, имя, range, runtime reactor,
+ * source scripts, parameter names и logical deletion state. Канонический title
+ * задаётся строкой {@code name(range)}: её используют
+ * {@link Operation#toString()}, hash и {@link #find(String)}. Поэтому
+ * {@link #add(IOperation)} заменяет либо логически восстанавливает существующую
+ * Operation с тем же title и ID, а не создаёт вторую активную identity до
+ * физического {@link #pack()}. Mode, reactor, scripts и parameters являются
+ * mutable implementation payload, а не дополнительными частями signature.</p>
+ *
+ * <p><strong>Владение и effective view.</strong> Каждый {@code Mind} создаёт
+ * отдельную {@code LibraryFactory}. Child
+ * {@code transaction(parentFactory)} строит {@link Escalera} overlay,
+ * сохраняет ссылку на parent effective view, очищает local overrides,
+ * dirty-update metadata и checkpoint journal, сбрасывает generation-local
+ * anchor и не наследует storage connection. Чтение выполняется в порядке
+ * local override, parent effective view, затем raw cache/root storage
+ * hydration.</p>
+ *
+ * <p><strong>Child copy-on-write.</strong> Изменение унаследованной Operation
+ * не мутирует parent object. Writable path создаёт child-owned copy с тем же
+ * ID и копирует mode, name, range, reactor, scripts и parameters. Iterator
+ * обходит raw cache identities, но разрешает каждый ID через effective view,
+ * поэтому child наблюдает собственный payload, а parent до completion сохраняет
+ * прежнее состояние.</p>
+ *
+ * <p><strong>Add и replacement.</strong> Для нового title фабрика связывает
+ * incoming Operation с текущим Mind, выделяет library ID и добавляет её в
+ * local cache. Для существующего title она снимает deletion mark и заменяет
+ * mode, reactor, scripts и parameters, сохраняя Operation ID. Direct root
+ * replacement существующего raw object отмечается в dirty updates. Если после
+ * add scripts отсутствуют, effective Operation помечается logically deleted;
+ * это реализованная deletion condition, а не утверждение об единственном
+ * внешнем способе удаления.</p>
+ *
+ * <p><strong>Cross-factory invalidation.</strong> Replacement имеет
+ * семантический side effect за пределами Library cache. Если существующая либо
+ * incoming Operation имеет mode {@link LibMode#FUNCTION}, фабрика через
+ * активный {@code Mind} просит {@link FValueFactory} invalidировать
+ * materialized results соответствующего name/range. Unit-level deletion
+ * Function Operation выполняет ту же делегацию. Binding-sensitive выбор
+ * invalidated FValues принадлежит {@code FValueFactory} и здесь не
+ * переопределяется.</p>
+ *
+ * <p><strong>Composite rollback boundary.</strong> Library replacement может
+ * одновременно изменить Operation overlay и FValue invalidation metadata.
+ * Локальные {@link #mark()}, {@link #commit()} и {@link #release()}
+ * журналируют только Library cache, overrides и dirty IDs. Полный rollback
+ * cross-factory side effect требует enclosing composite checkpoint
+ * {@code Mind}, который отмечает и освобождает обе фабрики в согласованном
+ * порядке. Library-local release сам по себе не является транзакцией всего
+ * semantic effect.</p>
+ *
+ * <p><strong>Typed child completion.</strong> Typed
+ * {@code commit(childFactory)} продвигает child cache chain, переводит новые
+ * Operations в runtime-контекст parent Mind, копирует child overrides в
+ * parent-owned objects и объединяет dirty IDs. Решение о commit/release и
+ * sequencing с FValue completion принадлежат parent {@code Mind}; typed commit
+ * не записывает existing-record replacements непосредственно в storage.</p>
+ *
+ * <p><strong>Nested Library checkpoints.</strong> Mark сохраняет Escalera
+ * frame, глубокие копии active overrides и snapshot dirty IDs. No-argument
+ * commit завершает cache frame и отбрасывает текущий snapshot; release
+ * восстанавливает cache и обе auxiliary structures. Глубокая копия Operation
+ * payload не позволяет последующей mutation writable object изменить saved
+ * rollback state. Этот journal category-specific и не является общей
+ * реализацией factory transactions.</p>
+ *
+ * <p><strong>Persistence.</strong> Только root factory при открытом storage
+ * заимствует library {@link IBase} у {@link User}. Новые Operations проходят
+ * обычный cache update. Existing root mutation сохраняет ID в dirty updates;
+ * child-committed replacement сначала остаётся root override, затем root pack
+ * materialize его в raw canonical Operation и также отмечает ID dirty.
+ * {@link #update()} сохраняет cache changes, переписывает существующие steps и
+ * очищает dirty metadata. Reactor reference и overlay metadata не являются
+ * самостоятельными persistent records; persistent payload определяется
+ * {@code Operation} serialization.</p>
+ *
+ * <p><strong>Physical cleanup.</strong> Root pack сначала применяет overrides
+ * к raw canonical objects, затем физически удаляет Operations, остающиеся
+ * logically deleted, и очищает соответствующие override/dirty entries. До
+ * pack поиск по signature может найти deleted Operation, а add — восстановить
+ * тот же canonical ID. Clear сбрасывает generation/checkpoint metadata и
+ * заново создаёт child overlay либо root cache generation.</p>
+ *
+ * <p><strong>Concurrency boundary.</strong> Concurrent map/set и synchronized
+ * add защищают отдельные metadata и replacement paths. Они не делают mutable
+ * Operation payloads, reactors, effective iterator, FValue invalidation,
+ * persistent update либо полный Mind transaction protocol независимо
+ * thread-safe. Publication order, composite rollback и storage lifecycle
+ * остаются обязанностью {@code Mind} и {@code User}.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Доступ должен идти через
+ * фабрику актуального {@code Mind}. Вызывающая сторона не должна мутировать
+ * inherited Operation в обход copy-on-write path, считать runtime reactor
+ * durable storage state, ожидать восстановления FValue invalidation от одного
+ * Library-local release, смешивать typed child commit с checkpoint commit либо
+ * обходить root pack/update при публикации existing-record replacement.</p>
+ *
+ * @see Operation
+ * @see FValueFactory
+ * @see LibMode
  */
 public class LibraryFactory implements IFactory<IOperation> {
     public static final String SCHEMA = "library";

@@ -3,24 +3,23 @@
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *  IN THE SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 package org.kanger.units;
@@ -37,18 +36,50 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * Материализованный результат одного {@link Function} при конкретном stamp
+ * входных T-подстановок.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code FValue} отделяет устойчивое
+ * определение вычислительного узла от результата его исполнения. Он хранит
+ * ссылку на Function, результирующий Term и упорядоченный stamp значений всех
+ * участвующих {@link TVariable}; сам Function при этом не превращается в
+ * mutable result slot.</p>
+ *
+ * <p><strong>Inside.</strong> Собственное состояние включает operational ID,
+ * owner Mind ID, Function ID, result Term ID и stamp входных Term ID. Именно
+ * сочетание Function и stamp определяет применимость ранее вычисленного
+ * результата к текущему состоянию аргументов.</p>
+ *
+ * <p><strong>Outside.</strong> Транзакционная видимость удаления, lazy hydration
+ * Function/Term, диагностическое представление и включение в continuation
+ * lifecycle принадлежат конкретному Mind и его {@code FValueFactory}.</p>
+ *
+ * <p><strong>Canonicalization и lifecycle.</strong> Factory должна повторно
+ * использовать канонический FValue для совместимого Function/stamp, а rollback
+ * обязан удалять continuation, созданные после checkpoint. Удалённый объект не
+ * считается несуществующим и может участвовать в восстановлении канонической
+ * identity согласно factory contract.</p>
+ *
+ * <p><strong>Инварианты.</strong> Function definition != FValue result;
+ * result Term != input stamp; operational ID != semantic applicability;
+ * deleted != nonexistent; diagnostic text != persistence representation.</p>
+ */
 public class FValue implements IUnit<FValue> {
 
     private static final long serialVersionUID = 196402070003L;
 
-    private long id = -1;                                   // id решения
-    private long mindId = -1;                               // id транзакции
-    private Function function = null;                       // ссылка на функцию
-    private Term value = null;                              // результат решения
-//    private ArgumentsList condition = new ArgumentsList();  // список значений параметров
-    private List<Long> stamp = new ArrayList<>();           // список t-подстановок в порядке слдедования t-перем.
+    private long id = -1;
+    private long mindId = -1;
+    private Function function = null;
+    private Term value = null;
+    private List<Long> stamp = new ArrayList<>();
 
     private transient long functionId = -1;
     private transient long valueId = -1;
@@ -57,6 +88,13 @@ public class FValue implements IUnit<FValue> {
     public FValue() {
     }
 
+    /**
+     * Captures the current result and ordered T-variable substitution stamp.
+     *
+     * @param f function whose current execution state is materialized
+     * @param mind owning execution context
+     * @throws Exception if arguments or the result cannot be resolved
+     */
     public FValue(Function f, Mind mind) throws Exception {
         function = f;
         value = (Term) f.getArguments().get(f.getRange()).getValue(mind);
@@ -64,15 +102,6 @@ public class FValue implements IUnit<FValue> {
         if (value != null) {
             valueId = value.getId();
         }
-//        for (IArgument a : f.getArguments()) {
-//            if (a.getType() == ArgumentType.TVARIABLE) {
-//                condition.add(new Argument(((TVariable) a.getObject(mind)).getCurrent()));
-//            } else if (a.getType() == ArgumentType.FUNCTION) {
-//                condition.add(new Argument(((Function) a.getObject(mind)).getCurrent()));
-//            } else {
-//                condition.add(new Argument(a.getValue(mind)));
-//            }
-//        }
         for (TVariable t : f.getArguments().getTVariables(mind)) {
             if (t.isEmpty()) {
                 stamp.add(0L);
@@ -83,6 +112,7 @@ public class FValue implements IUnit<FValue> {
         this.mind = mind;
     }
 
+    /** @return persistent representation containing IDs and ordered stamp */
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
@@ -95,10 +125,16 @@ public class FValue implements IUnit<FValue> {
         for (long id : stamp) {
             packet.putLong(id);
         }
-//        packet.append(condition.pack());
         return packet.createMarked();
     }
 
+    /**
+     * Applies serialized state without resolving Function or result Term.
+     *
+     * @param packet serialized FValue state
+     * @return this hydrated shell
+     * @throws OutOfBufferException if the packet is incomplete
+     */
     public FValue apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
@@ -111,12 +147,6 @@ public class FValue implements IUnit<FValue> {
         while (cnt-- > 0) {
             stamp.add(packet.getLong());
         }
-//        try {
-//            packet.mark();
-//            condition = new ArgumentsList().apply(packet);
-//        } finally {
-//            packet.release();
-//        }
         return this;
     }
 
@@ -130,11 +160,13 @@ public class FValue implements IUnit<FValue> {
         this.id = id;
     }
 
+    /** Sets the materialized result reference; it does not alter the input stamp. */
     public void setValue(Term value) {
         this.value = value;
         valueId = value.getId();
     }
 
+    /** Resolves the result Term in the supplied Mind. */
     public ITerm getValue(Mind mind) throws Exception {
         if (value == null && valueId != -1) {
             value = mind.getTerms().get(valueId);
@@ -142,6 +174,7 @@ public class FValue implements IUnit<FValue> {
         return value;
     }
 
+    /** Resolves the Function definition through the owning Mind. */
     public Function getFunction() throws Exception {
         if (function == null) {
             function = mind.getFunctions().get(functionId);
@@ -149,23 +182,11 @@ public class FValue implements IUnit<FValue> {
         return function;
     }
 
+    /** Sets the stable Function reference represented by this result. */
     public void setFunction(Function function) {
         this.function = function;
         this.functionId = function.getId();
     }
-
-//    public ArgumentsList getCondition() {
-//        return condition;
-//    }
-
-//    private TValue getTValue(TVariable t) throws Exception {
-//        for(TValue v : getCondition(mind)) {
-//            if(v.getTVarId() == t.getId()) {
-//                return v;
-//            }
-//        }
-//        return null;
-//    }
 
     private String formatParam(IArgument t, Mind mind) throws Exception {
         Parser.Op op = Parser.getOp(getFunction().getName(mind).toString(), getFunction().getRange());
@@ -183,6 +204,9 @@ public class FValue implements IUnit<FValue> {
         return s;
     }
 
+    /**
+     * Hashes Function ID, result ID and ordered input stamp for candidate lookup.
+     */
     @Override
     public int getHash() {
         int hash = 3;
@@ -194,17 +218,19 @@ public class FValue implements IUnit<FValue> {
         return hash;
     }
 
+    /** Tests applicability against another materialized result's Function state. */
     @Override
     public boolean equalsTo(FValue f) throws Exception {
         return equalsTo(f.getFunction());
     }
 
+    /**
+     * Tests whether the current substitutions of a Function match this stamp.
+     * The result Term is deliberately not part of this applicability check.
+     */
     public boolean equalsTo(Function f) {
         try {
-            if (f.getId() == getFunction().getId()
-//                    && !f.getResult().isEmpty(mind)
-//                    && valueId == f.getResult().getValue(mind).getId()
-            ) {
+            if (f.getId() == getFunction().getId()) {
                 boolean complete = true;
                 List<TVariable> list = f.getArguments().getTVariables(mind);
                 for (int i = 0; i < list.size(); ++i) {
@@ -252,6 +278,7 @@ public class FValue implements IUnit<FValue> {
         return hash;
     }
 
+    /** Returns a context-sensitive diagnostic rendering, not a stable protocol. */
     public String toString(IMind mind) {
         try {
             if (!getFunction().isCalculable() && getValue((Mind) mind) != null) {
@@ -287,10 +314,10 @@ public class FValue implements IUnit<FValue> {
 
                     String res = "";
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0) {
-                        //                if (getResult() != null) {
                         if (getValue((Mind) mind) != null) {
                             res = " {= " + getValue((Mind) mind) + "}";
-                        } else if (f.getArguments().size() > function.getRange() && !f.getArguments().get(function.getRange()).isEmpty((Mind) mind)) {
+                        } else if (f.getArguments().size() > function.getRange()
+                                && !f.getArguments().get(function.getRange()).isEmpty((Mind) mind)) {
                             res = " [= " + f.getArguments().get(function.getRange()).getValue(mind) + "]";
                         }
                     }
@@ -323,6 +350,7 @@ public class FValue implements IUnit<FValue> {
         this.mindId = mindId;
     }
 
+    /** @return operational ID of the represented Function */
     public long getFunctionId() {
         return functionId;
     }
@@ -340,7 +368,6 @@ public class FValue implements IUnit<FValue> {
         map.put("deleted", isDeleted(mind));
         map.put("function_id", functionId);
         map.put("value_id", valueId);
-//        map.put("condition", condition.createMap(mind));
         map.put("function", function.createMap(mind));
         map.put("value", value.createMap(mind));
         return map;
@@ -356,17 +383,8 @@ public class FValue implements IUnit<FValue> {
         }
         functionId = Long.parseLong(map.get("function_id") + "");
         valueId = Long.parseLong(map.get("value_id") + "");
-//        condition.applyMap((List<Map<String, Object>>) map.get("condition"));
         function = null;
         value = null;
         return this;
     }
-
-//    public List<TValue> getCondition(Mind mind) throws Exception {
-//        List<TValue> list = new ArrayList<>();
-//        for(long id : stamp) {
-//            list.add(mind.getTValues().get(id));
-//        }
-//        return list;
-//    }
 }

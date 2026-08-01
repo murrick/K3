@@ -46,7 +46,91 @@ import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Канонический реестр и транзакционный overlay материализованных
+ * {@link FValue}, видимых на одном уровне {@link Mind}.
+ *
+ * <p><strong>Представление и роль.</strong> Один {@code FValue} сохраняет
+ * schema ID, owning Mind ID, identity исходной {@link Function}, identity
+ * result Term и substitution stamp, составленный из текущих значений её
+ * TVariables. Runtime-ссылки на Function, Term и Mind могут materialize
+ * лениво, но их сохранённые IDs и substitution stamp являются частью
+ * persistent semantic record.</p>
+ *
+ * <p><strong>Completeness и canonical lookup.</strong>
+ * {@link #add(Function)} создаёт result только для complete Function; иначе
+ * возвращает {@code null}. Перед allocation он вызывает
+ * {@link #find(Function)}. Lookup использует текущий hash base Function как
+ * candidate bucket, исключает transaction-visible invalidated IDs и затем
+ * проверяет {@code FValue.equalsTo(Function)}: Function ID и сохранённый
+ * substitution stamp должны соответствовать текущим bindings. Это точный
+ * operational contract, а не утверждение об универсальном математическом ключе
+ * проще реализованной проверки.</p>
+ *
+ * <p><strong>Логическое повторное использование.</strong> Matching object,
+ * уже существующий в canonical cache, повторно используется и получает снятый
+ * deletion mark. Lookup намеренно не фильтрует logically deleted result:
+ * logical deletion остаётся обратимым transaction state до физического
+ * {@link #pack()}. Invalidated result, напротив, исключается из lookup и не
+ * может быть восстановлен простым повторным add.</p>
+ *
+ * <p><strong>Владение и публикация.</strong> Каждый {@code Mind} создаёт
+ * отдельную {@code FValueFactory}. Child
+ * {@code transaction(parentFactory)} строит {@link Escalera} overlay над
+ * parent cache, копирует видимый invalidation set, очищает generation-local
+ * anchors, action и checkpoint journals и не наследует storage connection.
+ * Typed {@code commit(childFactory)} продвигает child cache, переводит
+ * promoted units в parent Mind, объединяет invalidated IDs и публикует child
+ * action state согласно существующему transaction contract.</p>
+ *
+ * <p><strong>Dynamic UDF invalidation.</strong> Замена operation через
+ * {@link LibraryFactory} вызывает {@code invalidateUdf(name, range)}.
+ * Matching result invalidated для {@link FunctionBinding#UDF_DYNAMIC};
+ * {@code INFRASTRUCTURE} не зависит от UDF replacement; для
+ * {@code LEGACY_AUTO} invalidation выполняется только при отсутствии
+ * infrastructure operation с точной либо zero-range fallback signature.
+ * Значение {@code range == 0} использует реализованное широкое условие
+ * диапазона, не формируя отдельного публичного wildcard-контракта.</p>
+ *
+ * <p><strong>Auxiliary semantic state.</strong> {@code invalidated} хранит
+ * transaction-visible IDs, исключённые из canonical lookup. Это memory-only
+ * semantic metadata, а не самостоятельные persistent records. {@code action}
+ * является сигналом появления нового result и непосредственно участвует в
+ * условии продолжения проходов Linker; поэтому released speculative mutation
+ * обязана восстановить его pre-mark значение.</p>
+ *
+ * <p><strong>Checkpoint protocol.</strong> No-argument {@link #mark()},
+ * {@link #commit()} и {@link #release()} относятся к nested
+ * cache/composite checkpoints, а не к typed child commit. Mark сохраняет
+ * полный snapshot invalidated IDs и отдельный snapshot action. Commit
+ * отбрасывает оба saved states; release восстанавливает cache, invalidation и
+ * action как одну согласованную checkpoint view. Это category-specific
+ * journal: в отличие от {@link TValueFactory}, здесь нет additions delta, а
+ * invalidation snapshots являются полными.</p>
+ *
+ * <p><strong>Persistence и cleanup.</strong> Только root factory при открытом
+ * storage заимствует schema-specific {@link IBase} у {@link User}. Root cache
+ * miss может materialize FValue через эту базу, а {@link #update()} передаёт
+ * canonical cache changes storage-модулю; invalidation и action snapshots не
+ * сохраняются отдельно. {@link #pack()} физически удаляет records, остающиеся
+ * logically deleted либо invalidated, после чего очищает invalidation set.</p>
+ *
+ * <p><strong>Concurrency boundary.</strong> Copy-on-write invalidation set и
+ * synchronized add защищают отдельные metadata/creation paths. Они не делают
+ * mutable Functions/FValues, lazy hydration, Calculator/Library interaction,
+ * iterator или полный Mind transaction protocol независимо thread-safe.
+ * Parent publication, composite checkpoint ordering и lifecycle reservation
+ * остаются обязанностью {@code Mind}.</p>
+ *
+ * <p><strong>Обязательства вызывающего кода.</strong> Доступ должен идти через
+ * фабрику актуального {@code Mind}. Вызывающая сторона не должна трактовать
+ * incomplete Function как materializable result, обходить binding-sensitive
+ * invalidation, считать invalidation durable storage state, смешивать typed
+ * commit с checkpoint completion либо сохранять action после release вручную.</p>
+ *
+ * @see FunctionFactory
+ * @see FValue
+ * @see Function
+ * @see FunctionBinding
  */
 public class FValueFactory implements IFactory<FValue> {
 
@@ -60,6 +144,7 @@ public class FValueFactory implements IFactory<FValue> {
     private boolean action = false;
     private final Set<Long> invalidated = new CopyOnWriteArraySet<>();
     private final Stack<Set<Long>> invalidatedStack = new Stack<>();
+    private final Stack<Boolean> actionStack = new Stack<>();
 
     public FValueFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -73,6 +158,7 @@ public class FValueFactory implements IFactory<FValue> {
         action = false;
         invalidated.clear();
         invalidatedStack.clear();
+        actionStack.clear();
         if (mind.getNext() == null && mind.isStorageUsed()) {
             connection = ((User) mind.getUser()).getStorage(SCHEMA);
         }
@@ -184,6 +270,7 @@ public class FValueFactory implements IFactory<FValue> {
     public void clear() throws Exception {
         invalidated.clear();
         invalidatedStack.clear();
+        actionStack.clear();
         if (mind.getNext() != null) {
             transaction(((Mind) mind.getNext()).getFValues());
         } else {
@@ -195,12 +282,16 @@ public class FValueFactory implements IFactory<FValue> {
     public void mark() throws Exception {
         cache.mark();
         invalidatedStack.push(new HashSet<>(invalidated));
+        actionStack.push(action);
     }
 
     public void commit() throws Exception {
         cache.commit();
         if (!invalidatedStack.isEmpty()) {
             invalidatedStack.pop();
+        }
+        if (!actionStack.isEmpty()) {
+            actionStack.pop();
         }
     }
 
@@ -209,6 +300,9 @@ public class FValueFactory implements IFactory<FValue> {
         if (!invalidatedStack.isEmpty()) {
             invalidated.clear();
             invalidated.addAll(invalidatedStack.pop());
+        }
+        if (!actionStack.isEmpty()) {
+            action = actionStack.pop();
         }
     }
 

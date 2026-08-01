@@ -194,7 +194,7 @@ public class Solve {
     @Override
     public boolean equals(Object d) {
         if (d != null) {
-            if (((Solve) d).getPredicateId() == predicateId || ((Solve) d).getRange() == range) {
+            if (((Solve) d).getPredicateId() == predicateId && ((Solve) d).getRange() == range) {
                 for (int i = 0; i < arguments.size(); ++i) {
                     if (arguments.get(i).getId() != ((Solve) d).getArguments().get(i).getId()) {
                         return false;
@@ -270,11 +270,10 @@ public class Solve {
 
     public Solve applyMap(Map<String, Object> map) throws Exception {
         predicateId = Long.parseLong(map.get("predicate_id") + "");
-        range = Integer.parseInt(map.get("tange") + "");
+        range = Integer.parseInt(map.get("range") + "");
         antc = Boolean.parseBoolean(map.get("antc") + "");
         arguments.applyMap((List<Map<String, Object>>) map.get("arguments"));
         predicate = null;
         return this;
     }
 }
-
