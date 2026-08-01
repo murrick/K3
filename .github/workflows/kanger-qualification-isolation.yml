@@ -6,9 +6,138 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: write
+
+jobs:
+  apply-parser-boundary-hotfix:
+    if: github.event_name == 'pull_request' && github.head_ref == 'fix/3.5.0.8-parser-terminal-delimiter' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out hotfix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/3.5.0.8-parser-terminal-delimiter
+
+      - name: Apply and publish parser boundary hotfix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          tools = Path('kanger/src/org/kanger/enums/Tools.java')
+          text = tools.read_text()
+          old = 'if (line.length() < t.getPos()) {'
+          new = 'if (t.getPos() >= line.length()) {'
+          assert text.count(old) == 1
+          tools.write_text(text.replace(old, new))
+
+          parser = Path('kanger/src/org/kanger/compiler/Parser.java')
+          text = parser.read_text()
+          old = '''        while (current.getPos() < line.length() && isDelimiter(line.charAt(current.getPos()))) {
+            current.setPos(current.getPos() + 1);
+        }
+
+        Op op = getOp(line, current.getPos(), 0);'''
+          new = '''        while (current.getPos() < line.length() && isDelimiter(line.charAt(current.getPos()))) {
+            current.setPos(current.getPos() + 1);
+        }
+        if (current.getPos() >= line.length()) {
+            return null;
+        }
+
+        Op op = getOp(line, current.getPos(), 0);'''
+          assert text.count(old) == 1
+          parser.write_text(text.replace(old, new))
+
+          runner = Path('kanger-qualification/src/org/kanger/KangerParserTerminalDelimiterSafetyRunner.java')
+          runner.write_text('''/*\n * MIT License\n *\n * Copyright (c) 2026 Dmitry G. Quznetsov\n */\npackage org.kanger;\n\nimport org.kanger.compiler.Parser;\nimport org.kanger.compiler.Token;\nimport org.kanger.enums.Tools;\n\n/** Regression gate for terminal delimiter and exact-end token boundaries. */\npublic final class KangerParserTerminalDelimiterSafetyRunner {\n\n    private KangerParserTerminalDelimiterSafetyRunner() {\n    }\n\n    public static void main(String[] args) throws Exception {\n        require(Parser.nextToken(" \\t\\r\\n", null) == null,\n                "Delimiter-only input must terminate without charAt past end");\n\n        Token exact = Tools.extractLine("!value;", null);\n        require(exact != null, "Expected first exact-end statement");\n        require(Tools.extractLine("!value;", exact) == null,\n                "Exact-end extraction must terminate cleanly");\n\n        Token trailing = Tools.extractLine("!value;\\r\\n", null);\n        require(trailing != null, "Expected statement before trailing delimiters");\n        require(Tools.extractLine("!value;\\r\\n", trailing) == null,\n                "Trailing delimiters must terminate cleanly");\n\n        System.out.println("PARSER_TERMINAL_DELIMITER_OK");\n    }\n\n    private static void require(boolean condition, String message) {\n        if (!condition) {\n            throw new AssertionError(message);\n        }\n    }\n}\n''')
+
+          final_workflow = '''name: KANGER qualification isolation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
   contents: read
 
 jobs:
+  isolate-qualification:
+    name: Production surface excludes runners
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Verify production source roots are clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          remaining="$(find \\
+            kanger/src \\
+            kanger-console/src \\
+            kanger-data-dumb/src \\
+            kanger-udf/src \\
+            -type f -name '*Runner.java' -print)"
+          if [ -n "$remaining" ]; then
+            echo 'Qualification runners remain in production source roots:'
+            printf '%s\\n' "$remaining"
+            exit 1
+          fi
+
+      - name: Package production artifact
+        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
+
+      - name: Verify production JAR is clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          test -n "$jar_file"
+          leaked="$(jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\\.class$' || true)"
+          if [ -n "$leaked" ]; then
+            echo 'Qualification runners leaked into production JAR:'
+            printf '%s\\n' "$leaked"
+            exit 1
+          fi
+
+      - name: Verify qualification source remains available
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d kanger-qualification/src
+          count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
+          test "$count" -eq 37
+          mvn --batch-mode --no-transfer-progress -DskipTests test-compile
+          java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \\
+            org.kanger.KangerParserTerminalDelimiterSafetyRunner
+'''
+          Path('.github/workflows/kanger-qualification-isolation.yml').write_text(final_workflow)
+          one_shot = Path('.github/workflows/one-shot-3.5.0.8-parser-boundary.yml')
+          if one_shot.exists():
+              one_shot.unlink()
+          PY
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add kanger/src/org/kanger/enums/Tools.java \
+                  kanger/src/org/kanger/compiler/Parser.java \
+                  kanger-qualification/src/org/kanger/KangerParserTerminalDelimiterSafetyRunner.java \
+                  .github/workflows/kanger-qualification-isolation.yml \
+                  .github/workflows/one-shot-3.5.0.8-parser-boundary.yml
+          git commit -m '3.5.0.7: guard parser terminal delimiters'
+          git push origin HEAD:fix/3.5.0.8-parser-terminal-delimiter
+
   isolate-qualification:
     name: Production surface excludes runners
     runs-on: ubuntu-latest
