@@ -40,19 +40,51 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by Dmitry G. Quznetsov on 20.05.15.
- * <p>
- * Элемент подстановочной переменной
+ * Определение подстановочной переменной, принадлежащей одному {@link IRule}.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code TVariable} представляет
+ * потенциальное место значения в структуре правила. Её identity задаётся
+ * operational ID и rule-local координатами имени/индекса; текущее значение не
+ * хранится в самой переменной, а существует как контекстная {@link TValue}
+ * проекция в активном {@link Mind}.</p>
+ *
+ * <p><strong>Inside.</strong> Устойчивое определение включает ссылку на Rule,
+ * исходное подкванторное имя, сквозной индекс и persistent identifiers. Эти
+ * данные описывают саму переменную и не меняются при переборе подстановок.</p>
+ *
+ * <p><strong>Outside.</strong> Текущее значение, query membership, flood
+ * control и видимость удаления принадлежат конкретному Mind. Методы без
+ * параметра Mind используют thread-confined active execution view; это не
+ * переносит ownership переменной в вызывающий child Mind.</p>
+ *
+ * <p><strong>Ownership и concurrency.</strong> Поле owner/default Mind остаётся
+ * стабильным. Временный {@code runtimeMind} хранится как слабая thread-local
+ * ссылка, чтобы concurrent sibling Minds не перезаписывали общий execution
+ * context и завершённый child не удерживался объектом переменной.</p>
+ *
+ * <p><strong>Canonicalization.</strong> Присваивание значения создаёт или
+ * переиспользует канонический {@link TValue} по паре
+ * {@code (TVariable id, Term id)}. {@link #setValue(ITerm)} не мутирует identity
+ * переменной. {@link #setCurrent(TValue)} переключает только текущую проекцию
+ * в active Mind.</p>
+ *
+ * <p><strong>Удаление.</strong> Удаление переменной является контекстной
+ * пометкой и симметрично распространяется на её TValue в том же Mind. Оно не
+ * уничтожает определение, Rule ownership или persistent ID.</p>
+ *
+ * <p><strong>Инварианты.</strong> variable definition != current value;
+ * owner Mind != active execution Mind; Rule ownership != query membership;
+ * undefined value != deleted variable; serialized form != canonical identity.</p>
  */
 public class TVariable implements Comparable<Object>, IUnit<TVariable> {
 
     private static final long serialVersionUID = 196402070010L;
 
-    private long id = -1;               // Идентификатор переменной
-    private long mindId = -1;           // id транзакции
-    private int index = 0;              // Сквозной индекс переменной
-    private ITerm name = null;          // Оригинальное подкванторное имя
-    private IRule rule = null;           // Ссылка на правило
+    private long id = -1;
+    private long mindId = -1;
+    private int index = 0;
+    private ITerm name = null;
+    private IRule rule = null;
 
     private long nameId = -1;
     private long ruleId = -1;
@@ -84,6 +116,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return active == null ? mind : active;
     }
 
+    /** @return persistent representation of the variable definition and deletion projection */
     public ByteBuffer pack() {
         Mind active = activeMind();
         ByteBuffer packet = new ByteBuffer()
@@ -96,6 +129,13 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return packet.createMarked();
     }
 
+    /**
+     * Applies a persistent representation without resolving referenced objects.
+     *
+     * @param packet serialized variable state
+     * @return this hydrated shell
+     * @throws Exception if packet decoding or deletion restoration fails
+     */
     public TVariable apply(ByteBuffer packet) throws Exception {
         id = packet.getLong();
         mindId = packet.getLong();
@@ -108,6 +148,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return this;
     }
 
+    /** Resolves the original variable name in the supplied Mind. */
     public ITerm getName(Mind mind) throws Exception {
         if (name == null) {
             name = mind.getTerms().get(nameId);
@@ -115,6 +156,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return name;
     }
 
+    /** Sets the stable name reference; it does not assign a runtime value. */
     public void setName(ITerm tName) {
         this.name = tName;
         this.nameId = tName.getId();
@@ -142,6 +184,12 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.index = index;
     }
 
+    /**
+     * Returns the Term projected by the current TValue in the active Mind.
+     *
+     * @return current donor Term or {@code null} when unbound
+     * @throws Exception if the TValue or Term cannot be resolved
+     */
     public ITerm getValue() throws Exception {
         Mind active = activeMind();
         if (active != null && active.getTValues().get(this) != null) {
@@ -151,6 +199,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         }
     }
 
+    /** @return current TValue projection in the active Mind, or {@code null} */
     public TValue getCurrent() {
         Mind active = activeMind();
         if (active != null && active.getTValues().get(this) != null) {
@@ -160,12 +209,22 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         }
     }
 
+    /**
+     * Replaces the active Mind's current projection without changing variable identity.
+     *
+     * @param v canonical TValue or {@code null} to clear the projection
+     * @return previous/current factory result according to TValueFactory contract
+     */
     public TValue setCurrent(TValue v) {
         Mind active = activeMind();
         return active == null ? null : active.getTValues().set(this, v);
     }
 
-    public TValue setValue(ITerm value) throws Exception { //throws TValueOutOfOrderException {
+    /**
+     * Canonicalizes the pair {@code (this, value)} and makes it current.
+     * Passing {@code null} clears the current projection.
+     */
+    public TValue setValue(ITerm value) throws Exception {
         Mind active = activeMind();
         TValue v = null;
         if (value != null && active != null) {
@@ -174,6 +233,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return setCurrent(v);
     }
 
+    /** Resolves the Rule that owns this variable. */
     public IRule getRule(Mind mind) throws Exception {
         if (rule == null && ruleId != -1) {
             rule = mind.getRules().get(ruleId);
@@ -181,6 +241,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return rule;
     }
 
+    /** Sets the stable Rule ownership reference. */
     public void setRule(IRule rule) {
         this.rule = rule;
         this.ruleId = rule.getId();
@@ -216,6 +277,10 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return hash;
     }
 
+    /**
+     * TVariable does not define structural equivalence beyond canonical identity.
+     * The historical method therefore deliberately returns {@code false}.
+     */
     @Override
     public boolean equalsTo(TVariable to) {
         return false;
@@ -226,6 +291,9 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return activeMind();
     }
 
+    /**
+     * Selects a thread-local execution context while preserving stable ownership.
+     */
     @Override
     public TVariable setMind(Mind mind) {
         runtimeMind.set(new WeakReference<>(mind));
@@ -247,11 +315,13 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return !(t == null || !(t instanceof TVariable)) && ((TVariable) t).id == id;
     }
 
+    /** Finds the canonical TValue for this variable and donor Term. */
     public TValue find(ITerm value) throws Exception {
         Mind active = activeMind();
         return active == null ? null : active.getTValues().find(this, value);
     }
 
+    /** @return {@code true} when no current TValue exists in the active Mind */
     public boolean isEmpty() {
         Mind active = activeMind();
         return active == null
@@ -259,6 +329,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
                 || active.getTValues().get(this) == null;
     }
 
+    /** Tests whether the current TValue belongs to the query-result projection. */
     public boolean isQuery(Mind mind) {
         return !isEmpty()
                 && mind.getQueryValues().containsKey(this)
@@ -277,6 +348,9 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return ((Mind) mind).isUnitDeleted(this);
     }
 
+    /**
+     * Changes deletion visibility and propagates it to this variable's TValue objects.
+     */
     @Override
     public void setDeleted(boolean on, Mind mind) throws Exception {
         mind.setUnitDeleted(this, on);
@@ -342,6 +416,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         return this;
     }
 
+    /** Updates query-local flood-control telemetry for an observed Term. */
     public void incFloodControl(ITerm t) throws Exception {
         Mind active = activeMind();
         if (active == null) {
@@ -361,6 +436,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         }
     }
 
+    /** @return query-local flood-control counter for the active Mind */
     public int getFloodCounter() {
         Mind active = activeMind();
         if (active != null && active.getFloodControl().containsKey(this)) {
