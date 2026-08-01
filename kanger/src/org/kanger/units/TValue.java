@@ -40,16 +40,51 @@ import java.util.HashSet;
 import java.util.Map;
 
 /**
- * Created by Dmitry G. Quznetsov on 13.12.16.
+ * Каноническая актуализация подстановки t-переменной в конкретном Mind.
+ *
+ * <p><strong>Архитектурная роль.</strong> {@code TValue} связывает одну
+ * {@link TVariable} с одним конкретным {@link ITerm}. Объект представляет не
+ * саму переменную и не терм-донор, а каноническую пару
+ * {@code (TVariable, Term)}, принадлежащую транзакционной проекции Mind.</p>
+ *
+ * <p><strong>Inside.</strong> Собственная семантическая identity подстановки
+ * определяется идентификаторами переменной и значения. Operational ID
+ * {@link #getId()} идентифицирует зарегистрированный unit, но не заменяет
+ * равенство пары, проверяемое {@link #equalsTo(TValue)}.</p>
+ *
+ * <p><strong>Outside.</strong> Текущая видимость, удаление, query projection,
+ * hydration переменной и терма, а также отображение имени переменной зависят от
+ * переданного или owning {@link Mind}. Эти отношения не изменяют identity
+ * самой пары.</p>
+ *
+ * <p><strong>Canonicalization и lifecycle.</strong> Создание и повторное
+ * получение подстановок принадлежат TValueFactory. Для одной видимой пары
+ * {@code (TVariable, Term)} должен использоваться один канонический TValue;
+ * удалённый объект может быть восстановлен и переиспользован, а не заменён
+ * дубликатом. Пометка удаления не означает физического уничтожения.</p>
+ *
+ * <p><strong>Query semantics.</strong> {@link #setQuery(Mind)} публикует
+ * существующую подстановку в query-local result projection. Операция не создаёт
+ * новую логическую подстановку и не выполняет commit.</p>
+ *
+ * <p><strong>Persistence.</strong> {@link #pack()} и
+ * {@link #apply(ByteBuffer)} сохраняют operational representation через ID
+ * переменной и терма. Hydration объектов выполняется лениво через Mind;
+ * serialized representation не является canonical identity.</p>
+ *
+ * <p><strong>Инварианты.</strong> TValue не является значением переменной без
+ * контекста; {@code deleted != nonexistent}; query membership не является
+ * identity; порядок {@link #compareTo(TValue)} не определяет семантическое
+ * равенство; hash collision не создаёт эквивалентность.</p>
  */
 public class TValue implements Comparable<TValue>, IUnit<TValue> {
 
     private static final long serialVersionUID = 196402070009L;
 
-    private long id = -1;               // Идентификатор значения переменной
-    private long mindId = -1;           // id транзакции
-    private ITerm value = null;         // Подставленное значение донор
-    private TVariable tVar = null;      // t-переменная аксептор
+    private long id = -1;
+    private long mindId = -1;
+    private ITerm value = null;
+    private TVariable tVar = null;
 
     private long valueId = -1;
     private long tVarId = -1;
@@ -77,6 +112,13 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         valueId = value.getId();
     }
 
+    /**
+     * Сериализует operational representation подстановки.
+     *
+     * @return маркированный пакет с unit ID, Mind ID, deletion flag и ссылками
+     *         на терм и t-переменную
+     */
+    @Override
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)
@@ -87,6 +129,15 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return packet.createMarked();
     }
 
+    /**
+     * Восстанавливает operational fields из serialized packet.
+     * Связанные объекты остаются негидратированными до первого обращения.
+     *
+     * @param packet пакет persistent representation
+     * @return этот объект
+     * @throws OutOfBufferException если пакет неполон
+     */
+    @Override
     public TValue apply(ByteBuffer packet) throws OutOfBufferException {
         id = packet.getLong();
         mindId = packet.getLong();
@@ -98,6 +149,14 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return this;
     }
 
+    /**
+     * Возвращает терм-донор, при необходимости гидратируя его через Mind.
+     *
+     * @param mind контекст hydration
+     * @return терм, подставленный в переменную, либо {@code null}, если ссылка
+     *         не задана
+     * @throws Exception если терм нельзя разрешить
+     */
     public ITerm getValue(Mind mind) throws Exception {
         if (value == null && valueId != -1) {
             value = mind.getTerms().get(valueId);
@@ -105,6 +164,12 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return value;
     }
 
+    /**
+     * Устанавливает уже канонический терм-донор и синхронизирует его ID.
+     * Метод не регистрирует TValue в factory.
+     *
+     * @param value терм-донор
+     */
     public void setValue(Term value) {
         this.value = value;
         valueId = value.getId();
@@ -120,6 +185,14 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.id = id;
     }
 
+    /**
+     * Возвращает переменную-акцептор, при необходимости гидратируя её через
+     * Mind.
+     *
+     * @param mind контекст hydration
+     * @return t-переменная подстановки
+     * @throws Exception если переменную нельзя разрешить
+     */
     public TVariable getTVar(Mind mind) throws Exception {
         if (tVar == null && tVarId != -1) {
             tVar = mind.getTVars().get(tVarId);
@@ -127,11 +200,23 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return tVar;
     }
 
+    /**
+     * Устанавливает уже каноническую переменную-акцептор и синхронизирует ID.
+     *
+     * @param tVar t-переменная
+     */
     public void setTVar(TVariable tVar) {
         this.tVar = tVar;
         this.tVarId = tVar.getId();
     }
 
+    /**
+     * Формирует диагностическое представление подстановки в указанном Mind.
+     * Формат зависит от debug options и не является persistence-протоколом.
+     *
+     * @param mind контекст разрешения имени и значения
+     * @return диагностическое представление либо пустая строка при ошибке
+     */
     public String toString(IMind mind) {
         try {
             return ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0
@@ -144,6 +229,13 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         }
     }
 
+    /**
+     * Добавляет эту подстановку в query-local projection текущего Mind.
+     * Повторная публикация той же identity не создаёт дубликат в Set.
+     *
+     * @param mind Mind, владеющий результатом query
+     * @throws Exception если переменную нельзя разрешить
+     */
     public void setQuery(Mind mind) throws Exception {
         if (!mind.getQueryValues().containsKey(getTVar(mind))) {
             mind.getQueryValues().put(getTVar(mind), new HashSet<>());
@@ -159,6 +251,12 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return hash;
     }
 
+    /**
+     * Проверяет семантическое равенство canonicalization key.
+     *
+     * @param to сравниваемая подстановка
+     * @return {@code true}, если совпадают ID переменной и терма
+     */
     @Override
     public boolean equalsTo(TValue to) {
         return to.getTVarId() == tVarId && to.getValueId() == valueId;
@@ -187,6 +285,13 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         return obj != null && obj instanceof TValue && ((TValue) obj).getId() == id;
     }
 
+    /**
+     * Задаёт стабильный operational order: сначала по ID переменной, затем по
+     * unit ID TValue. Порядок не является семантическим равенством пары.
+     *
+     * @param o сравниваемый TValue
+     * @return результат сравнения
+     */
     @Override
     public int compareTo(TValue o) {
         int variableOrder = Long.compare(tVarId, o.getTVarId());
@@ -226,6 +331,12 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
         this.mindId = mindId;
     }
 
+    /**
+     * Проверяет, гидратирован ли терм-донор и соответствует ли он сохранённому
+     * ID. Состояние {@code false} не означает отсутствие persistent unit.
+     *
+     * @return {@code true}, если терм уже разрешён
+     */
     @Override
     public boolean isLoaded() {
         return value != null && valueId == value.getId();
