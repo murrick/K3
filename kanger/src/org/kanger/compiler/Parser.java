@@ -205,6 +205,9 @@ public class Parser {
         while (current.getPos() < line.length() && isDelimiter(line.charAt(current.getPos()))) {
             current.setPos(current.getPos() + 1);
         }
+        if (current.getPos() >= line.length()) {
+            return null;
+        }
 
         Op op = getOp(line, current.getPos(), 0);
         if (line.startsWith("/*", current.getPos())) {

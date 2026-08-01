@@ -302,7 +302,7 @@ public abstract class Tools {
         if (token != null) {
             t.setPos(token.getPos() + token.getLen());
         }
-        if (line.length() < t.getPos()) {
+        if (t.getPos() >= line.length()) {
             return null;
         } else {
             while ((t = Parser.nextToken(line, t)) != null) {
