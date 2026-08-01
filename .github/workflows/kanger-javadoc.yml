@@ -86,7 +86,10 @@ jobs:
 
           user_doc=build/javadoc/org/kanger/User.html
           mind_doc=build/javadoc/org/kanger/Mind.html
+          iuser_doc=build/javadoc/org/kanger/interfaces/IUser.html
+          imind_doc=build/javadoc/org/kanger/interfaces/IMind.html
           linker_doc=build/javadoc/org/kanger/Linker.html
+          linker_source=kanger/src/org/kanger/Linker.java
           analyzer_doc=build/javadoc/org/kanger/Analyzer.html
           parser_doc=build/javadoc/org/kanger/compiler/Parser.html
           compiller_doc=build/javadoc/org/kanger/compiler/Compiller.html
@@ -111,7 +114,10 @@ jobs:
 
           test -s "$user_doc"
           test -s "$mind_doc"
+          test -s "$iuser_doc"
+          test -s "$imind_doc"
           test -s "$linker_doc"
+          test -s "$linker_source"
           test -s "$analyzer_doc"
           test -s "$parser_doc"
           test -s "$compiller_doc"
@@ -136,7 +142,14 @@ jobs:
 
           grep -Fq 'Пользовательский контекст верхнего уровня' "$user_doc"
           grep -Fq 'Активный логический контекст KANGER' "$mind_doc"
+          grep -Fq 'Внешний пользовательский контекст KANGER' "$iuser_doc"
+          grep -Fq 'caller-managed ссылку на текущий Mind' "$iuser_doc"
+          grep -Fq 'Публичный контракт активного логического контекста KANGER' "$imind_doc"
           grep -Fq 'Исполнитель насыщения и оркестратор неподвижной точки KANGER' "$linker_doc"
+          grep -Fq 'Выполняет насыщение принадлежащего экземпляру Mind до неподвижной' "$linker_doc"
+          grep -Fq 'Выполняет системные предикаты branch' "$linker_doc"
+          grep -Fq 'query-local join/filter' "$linker_source"
+          grep -Fq 'Историческое имя не обозначает физический database I/O' "$linker_source"
           grep -Fq 'Интерпретатор насыщенного состояния Mind' "$analyzer_doc"
           grep -Fq 'Синтаксический front-end исторического языка KANGER' "$parser_doc"
           grep -Fq 'Семантический транслятор AST KANGER' "$compiller_doc"
@@ -163,6 +176,8 @@ jobs:
           for rendered_doc in \
             "$user_doc" \
             "$mind_doc" \
+            "$iuser_doc" \
+            "$imind_doc" \
             "$linker_doc" \
             "$analyzer_doc" \
             "$parser_doc" \
