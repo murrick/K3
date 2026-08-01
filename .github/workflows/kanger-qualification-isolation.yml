@@ -21,13 +21,18 @@ jobs:
       - name: Apply parser hotfix
         run: python3 tools/apply_parser_terminal_hotfix.py
 
-      - name: Publish parser hotfix
+      - name: Publish Java correction only
         shell: bash
         run: |
           set -euo pipefail
+          git checkout -- .github/workflows/kanger-qualification-isolation.yml \
+                          .github/workflows/one-shot-3.5.0.8-parser-boundary.yml \
+                          tools/apply_parser_terminal_hotfix.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
+          git add kanger/src/org/kanger/enums/Tools.java \
+                  kanger/src/org/kanger/compiler/Parser.java \
+                  kanger-qualification/src/org/kanger/KangerParserTerminalDelimiterSafetyRunner.java
           git commit -m '3.5.0.7: guard parser terminal delimiters'
           git push origin HEAD:fix/3.5.0.8-parser-terminal-delimiter
 
