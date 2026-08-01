@@ -26,7 +26,7 @@
 package org.kanger.interfaces;
 
 /**
- * Внешняя граница пользовательского владения KANGER.
+ * Внешний пользовательский контекст KANGER и граница пользовательского владения.
  *
  * <p><strong>Архитектурная роль.</strong> {@code IUser} связывает приложение
  * с пользовательскими параметрами и caller-managed ссылкой на активный
@@ -94,6 +94,7 @@ public interface IUser {
      * @param key          текстовый ключ запрашиваемого параметра.
      * @param defaultValue значение по умолчанию.
      * @return текстовое значение параметра.
+     * @throws Exception если параметр нельзя прочитать или сохранить в пользовательской конфигурации
      */
     String getProperty(String key, String defaultValue) throws Exception;
 
@@ -111,6 +112,7 @@ public interface IUser {
      *
      * @param key          текстовый ключ параметра.
      * @param defaultValue текстовое значение параметра.
+     * @throws Exception если изменение нельзя сохранить в пользовательской конфигурации
      */
     void setProperty(String key, String defaultValue) throws Exception;
 
@@ -119,7 +121,7 @@ public interface IUser {
      * kanger.conf. Если параметр с ключем "user.dir" не задан
      * то операция игнорируется.
      *
-     * @throws Exception
+     * @throws Exception если конфигурационный файл нельзя прочитать
      */
     void loadProperties() throws Exception;
 
