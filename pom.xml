@@ -11,8 +11,8 @@
 
     <name>KANGER III reproducible baseline</name>
     <description>
-        Aggregate build of the four source roots used by the current Eclipse baseline.
-        This is a stabilization harness, not a redesign of the historical module packaging.
+        Aggregate build of the four production source roots used by the current
+        Eclipse baseline, with qualification runners isolated on the test classpath.
     </description>
 
     <properties>
@@ -57,7 +57,6 @@
                         <configuration>
                             <target>
                                 <property environment="env"/>
-
                                 <tstamp>
                                     <format property="kanger.build.time" pattern="yyyy-MM-dd_HH:mm:ss"/>
                                 </tstamp>
@@ -66,57 +65,35 @@
                                            value="${kanger.build.branch.override}">
                                     <and>
                                         <isset property="kanger.build.branch.override"/>
-                                        <not>
-                                            <equals arg1="${kanger.build.branch.override}" arg2=""/>
-                                        </not>
+                                        <not><equals arg1="${kanger.build.branch.override}" arg2=""/></not>
                                     </and>
                                 </condition>
-
                                 <condition property="kanger.build.branch.raw" value="${env.GITHUB_HEAD_REF}">
                                     <and>
-                                        <not>
-                                            <isset property="kanger.build.branch.raw"/>
-                                        </not>
+                                        <not><isset property="kanger.build.branch.raw"/></not>
                                         <isset property="env.GITHUB_HEAD_REF"/>
-                                        <not>
-                                            <equals arg1="${env.GITHUB_HEAD_REF}" arg2=""/>
-                                        </not>
+                                        <not><equals arg1="${env.GITHUB_HEAD_REF}" arg2=""/></not>
                                     </and>
                                 </condition>
-
                                 <condition property="kanger.build.branch.raw" value="${env.GITHUB_REF_NAME}">
                                     <and>
-                                        <not>
-                                            <isset property="kanger.build.branch.raw"/>
-                                        </not>
+                                        <not><isset property="kanger.build.branch.raw"/></not>
                                         <isset property="env.GITHUB_REF_NAME"/>
-                                        <not>
-                                            <equals arg1="${env.GITHUB_REF_NAME}" arg2=""/>
-                                        </not>
+                                        <not><equals arg1="${env.GITHUB_REF_NAME}" arg2=""/></not>
                                     </and>
                                 </condition>
-
                                 <condition property="kanger.build.branch.raw" value="${env.BRANCH_NAME}">
                                     <and>
-                                        <not>
-                                            <isset property="kanger.build.branch.raw"/>
-                                        </not>
+                                        <not><isset property="kanger.build.branch.raw"/></not>
                                         <isset property="env.BRANCH_NAME"/>
-                                        <not>
-                                            <equals arg1="${env.BRANCH_NAME}" arg2=""/>
-                                        </not>
+                                        <not><equals arg1="${env.BRANCH_NAME}" arg2=""/></not>
                                     </and>
                                 </condition>
-
                                 <condition property="kanger.build.branch.raw" value="${env.CI_COMMIT_REF_NAME}">
                                     <and>
-                                        <not>
-                                            <isset property="kanger.build.branch.raw"/>
-                                        </not>
+                                        <not><isset property="kanger.build.branch.raw"/></not>
                                         <isset property="env.CI_COMMIT_REF_NAME"/>
-                                        <not>
-                                            <equals arg1="${env.CI_COMMIT_REF_NAME}" arg2=""/>
-                                        </not>
+                                        <not><equals arg1="${env.CI_COMMIT_REF_NAME}" arg2=""/></not>
                                     </and>
                                 </condition>
 
@@ -129,38 +106,23 @@
                                     <arg value="--abbrev-ref"/>
                                     <arg value="HEAD"/>
                                 </exec>
-
                                 <condition property="kanger.build.branch.raw" value="${kanger.git.branch}">
                                     <and>
-                                        <not>
-                                            <isset property="kanger.build.branch.raw"/>
-                                        </not>
+                                        <not><isset property="kanger.build.branch.raw"/></not>
                                         <isset property="kanger.git.branch"/>
-                                        <not>
-                                            <equals arg1="${kanger.git.branch}" arg2=""/>
-                                        </not>
+                                        <not><equals arg1="${kanger.git.branch}" arg2=""/></not>
                                     </and>
                                 </condition>
 
                                 <fail message="Unable to resolve the KANGER source branch for Maven build metadata">
-                                    <condition>
-                                        <not>
-                                            <isset property="kanger.build.branch.raw"/>
-                                        </not>
-                                    </condition>
+                                    <condition><not><isset property="kanger.build.branch.raw"/></not></condition>
                                 </fail>
-
                                 <loadresource property="kanger.build.branch">
                                     <string value="${kanger.build.branch.raw}"/>
-                                    <filterchain>
-                                        <striplinebreaks/>
-                                    </filterchain>
+                                    <filterchain><striplinebreaks/></filterchain>
                                 </loadresource>
-
                                 <fail message="Resolved an empty KANGER source branch for Maven build metadata">
-                                    <condition>
-                                        <equals arg1="${kanger.build.branch}" arg2=""/>
-                                    </condition>
+                                    <condition><equals arg1="${kanger.build.branch}" arg2=""/></condition>
                                 </fail>
 
                                 <mkdir dir="${project.build.directory}/generated-resources/kanger/org/kanger"/>
@@ -181,14 +143,22 @@
                     <execution>
                         <id>add-kanger-source-roots</id>
                         <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
+                        <goals><goal>add-source</goal></goals>
                         <configuration>
                             <sources>
                                 <source>${project.basedir}/kanger-udf/src</source>
                                 <source>${project.basedir}/kanger-data-dumb/src</source>
                                 <source>${project.basedir}/kanger-console/src</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-kanger-qualification-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals><goal>add-test-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/kanger-qualification/src</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -215,9 +185,7 @@
                     <execution>
                         <id>kanger-regression-corpus</id>
                         <phase>test</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
                             <executable>${java.home}/bin/java</executable>
                             <workingDirectory>${project.basedir}</workingDirectory>
@@ -228,7 +196,7 @@
                                 <argument>org.kanger.KangerTestRunner</argument>
                                 <argument>set_</argument>
                             </arguments>
-                            <classpathScope>runtime</classpathScope>
+                            <classpathScope>test</classpathScope>
                         </configuration>
                     </execution>
                 </executions>
@@ -240,9 +208,7 @@
                 <version>3.3.0</version>
                 <configuration>
                     <archive>
-                        <manifest>
-                            <mainClass>org.kanger.Kanger</mainClass>
-                        </manifest>
+                        <manifest><mainClass>org.kanger.Kanger</mainClass></manifest>
                     </archive>
                 </configuration>
             </plugin>
