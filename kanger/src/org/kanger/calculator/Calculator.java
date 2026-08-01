@@ -118,10 +118,12 @@ public class Calculator {
 
 
     /**
-     * Вычисление значения функции
+     * Вычисляет значение функции в контексте принадлежащего калькулятору Mind.
      *
-     * @param fu
-     * @return
+     * @param fu      вычисляемая функция
+     * @param logging {@code true}, если требуется диагностическое журналирование
+     * @return {@code true}, если вычисление функции успешно завершено
+     * @throws Exception если выполнение функции или вложенного вычисления завершилось ошибкой
      */
     public boolean calculate(Function fu, boolean logging) throws Exception {
 

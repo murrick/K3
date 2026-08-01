@@ -104,6 +104,7 @@ public class Kanger {
                         .getLocation()
                         .toURI()).getName();
                 Console.showCopyrigt();
+                System.out.println();
                 System.out.printf("Usage: java -jar %s [options]\n" +
                                 "Options:\n" +
                                 "\t--adduser or -A\t-Create new user. Password required.\n" +
@@ -186,6 +187,7 @@ public class Kanger {
 //        }
 
         Console.showCopyrigt();
+        System.out.println();
 
         if (login == null) {
             Kanger k = new Kanger();
