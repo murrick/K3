@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: kanger-ci-${{ github.workflow }}-${{ github.ref }}
@@ -33,207 +33,67 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress test
 
       - name: Index empty-boundary invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.storage.IndexEmptyBoundarySafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.storage.IndexEmptyBoundarySafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Index comparable invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.storage.IndexOneComparableSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.storage.IndexOneComparableSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Mind transaction reservation invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.MindTransactionReservationSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.MindTransactionReservationSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: TValue canonical resurrection invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerTValueResurrectionSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerTValueResurrectionSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: TValue comparable invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerTValueComparableSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerTValueComparableSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Linker rule ordering invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerLinkerRuleOrderingSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerLinkerRuleOrderingSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: C-variable Rule-scope invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerCVarRuleScopeSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerCVarRuleScopeSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Linker checkpoint balance invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerLinkerCheckpointBalanceSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerLinkerCheckpointBalanceSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Storage acquisition atomicity invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerStorageAcquisitionAtomicitySafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerStorageAcquisitionAtomicitySafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: DUMB close failure isolation invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.storage.DBCloseFailureIsolationSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.storage.DBCloseFailureIsolationSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: DUMB reindex swap atomicity invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.storage.DBReindexSwapAtomicitySafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.storage.DBReindexSwapAtomicitySafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Escalera empty-root mark invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerEscaleraMarkSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerEscaleraMarkSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Factory action rollback invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerFactoryActionRollbackSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerFactoryActionRollbackSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: FValue action rollback invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerFValueActionRollbackSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerFValueActionRollbackSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Rule action rollback invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerRuleActionRollbackSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerRuleActionRollbackSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Domain waiter rollback invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerDomainWaiterRollbackSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerDomainWaiterRollbackSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Factory concurrency lock-order invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerFactoryConcurrencyDiagnosticRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerFactorySafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Escalera frame ownership invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerEscaleraFrameOwnershipSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerEscaleraFrameOwnershipSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Mind commit exception atomicity invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerMindCommitExceptionAtomicitySafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerMindCommitExceptionAtomicitySafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Mind rollback failure isolation invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerMindRollbackFailureIsolationSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerMindRollbackFailureIsolationSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Mind partial mark acquisition invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerMindPartialMarkAcquisitionSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerMindPartialMarkAcquisitionSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Mind partial commit completion invariant
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          -Dexec.mainClass=org.kanger.KangerMindPartialCommitCompletionSafetyRunner
-          -Dexec.classpathScope=test
-          exec:java
-
-  document-scoped-cvar:
-    name: Publish scoped C-variable Javadoc
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 34
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout architectural branch
-        uses: actions/checkout@v4
-        with:
-          ref: arch/3.5.0-core-consolidation
-          fetch-depth: 0
-
-      - name: Set up Java 8
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '8'
-          cache: maven
-
-      - name: Apply documentation patch
-        run: python3 tools/one_shot_cvar_javadoc.py
-
-      - name: Validate documentation-only source diff
-        shell: bash
-        run: |
-          set -euo pipefail
-          git diff --check
-          expected=$'kanger/src/org/kanger/Linker.java\nkanger/src/org/kanger/factory/DictionaryFactory.java'
-          actual="$(git diff --name-only | sort)"
-          test "$actual" = "$expected"
-
-      - name: Run regression corpus
-        run: mvn --batch-mode --no-transfer-progress test
-
-      - name: Render Javadoc
-        run: mvn --batch-mode --no-transfer-progress -DskipTests javadoc:javadoc
-
-      - name: Publish clean documentation commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          git show c1272007d135979ca9ce556afbf94315ecb6451e:.github/workflows/kanger-ci.yml > .github/workflows/kanger-ci.yml
-          rm -f .github/workflows/one-shot-cvar-scope-javadoc.yml
-          rm -f tools/one_shot_cvar_javadoc.py
-          git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add kanger/src/org/kanger/factory/DictionaryFactory.java kanger/src/org/kanger/Linker.java .github/workflows/kanger-ci.yml .github/workflows/one-shot-cvar-scope-javadoc.yml tools/one_shot_cvar_javadoc.py
-          git commit -m 'Explain scoped C-variable projection'
-          git push origin HEAD:arch/3.5.0-core-consolidation
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerMindPartialCommitCompletionSafetyRunner -Dexec.classpathScope=test exec:java
