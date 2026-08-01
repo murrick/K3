@@ -1,0 +1,88 @@
+name: One-shot 3.5.0.8 parser boundary fix
+
+on:
+  push:
+    branches:
+      - fix/3.5.0.8-parser-terminal-delimiter
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-qualify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/3.5.0.8-parser-terminal-delimiter
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Apply parser boundary correction
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          tools = Path('kanger/src/org/kanger/enums/Tools.java')
+          text = tools.read_text()
+          old = 'if (line.length() < t.getPos()) {'
+          new = 'if (t.getPos() >= line.length()) {'
+          assert text.count(old) == 1
+          tools.write_text(text.replace(old, new))
+
+          parser = Path('kanger/src/org/kanger/compiler/Parser.java')
+          text = parser.read_text()
+          old = '''        while (current.getPos() < line.length() && isDelimiter(line.charAt(current.getPos()))) {
+            current.setPos(current.getPos() + 1);
+        }
+
+        Op op = getOp(line, current.getPos(), 0);'''
+          new = '''        while (current.getPos() < line.length() && isDelimiter(line.charAt(current.getPos()))) {
+            current.setPos(current.getPos() + 1);
+        }
+        if (current.getPos() >= line.length()) {
+            return null;
+        }
+
+        Op op = getOp(line, current.getPos(), 0);'''
+          assert text.count(old) == 1
+          parser.write_text(text.replace(old, new))
+
+          runner = Path('kanger-qualification/src/org/kanger/KangerParserTerminalDelimiterSafetyRunner.java')
+          runner.write_text('''/*\n * MIT License\n *\n * Copyright (c) 2026 Dmitry G. Quznetsov\n */\npackage org.kanger;\n\nimport org.kanger.compiler.Parser;\nimport org.kanger.compiler.Token;\nimport org.kanger.enums.Tools;\n\n/** Regression gate for terminal delimiter and exact-end token boundaries. */\npublic final class KangerParserTerminalDelimiterSafetyRunner {\n\n    private KangerParserTerminalDelimiterSafetyRunner() {\n    }\n\n    public static void main(String[] args) throws Exception {\n        require(Parser.nextToken(" \\t\\r\\n", null) == null,\n                "Delimiter-only input must terminate without charAt past end");\n\n        Token exact = Tools.extractLine("!value;", null);\n        require(exact != null, "Expected first exact-end statement");\n        require(Tools.extractLine("!value;", exact) == null,\n                "Exact-end extraction must terminate cleanly");\n\n        Token trailing = Tools.extractLine("!value;\\r\\n", null);\n        require(trailing != null, "Expected statement before trailing delimiters");\n        require(Tools.extractLine("!value;\\r\\n", trailing) == null,\n                "Trailing delimiters must terminate cleanly");\n\n        System.out.println("PARSER_TERMINAL_DELIMITER_OK");\n    }\n\n    private static void require(boolean condition, String message) {\n        if (!condition) {\n            throw new AssertionError(message);\n        }\n    }\n}\n''')
+
+          workflow = Path('.github/workflows/kanger-qualification-isolation.yml')
+          text = workflow.read_text()
+          old = '''          mvn --batch-mode --no-transfer-progress -DskipTests test-compile\n'''
+          new = '''          mvn --batch-mode --no-transfer-progress -DskipTests test-compile\n          java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \\\n            org.kanger.KangerParserTerminalDelimiterSafetyRunner\n'''
+          assert text.count(old) == 1
+          workflow.write_text(text.replace(old, new))
+          PY
+
+      - name: Qualify exact patch
+        shell: bash
+        run: |
+          mvn -B -V clean verify
+          java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerParserTerminalDelimiterSafetyRunner | tee parser-boundary.log
+          grep -F 'PARSER_TERMINAL_DELIMITER_OK' parser-boundary.log
+
+      - name: Publish patch and remove trigger
+        shell: bash
+        run: |
+          rm .github/workflows/one-shot-3.5.0.8-parser-boundary.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add kanger/src/org/kanger/enums/Tools.java \
+                  kanger/src/org/kanger/compiler/Parser.java \
+                  kanger-qualification/src/org/kanger/KangerParserTerminalDelimiterSafetyRunner.java \
+                  .github/workflows/kanger-qualification-isolation.yml \
+                  .github/workflows/one-shot-3.5.0.8-parser-boundary.yml
+          git commit -m '3.5.0.8: guard parser terminal delimiters'
+          git push origin HEAD:fix/3.5.0.8-parser-terminal-delimiter
