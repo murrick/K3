@@ -83,34 +83,132 @@ import java.util.Collection;
  * callers. Вызывающий владелец сериализует lifecycle и обязан учитывать
  * checked failures. DUMB directory layout, WAL, locking и recovery являются
  * конкретной реализацией; окончательные внешние гарантии public API проверяются
- * отдельно на этапе 3.5.0.5.</p>
+ * отдельно на этапе 3.5.0.6.</p>
  *
  * @see IBase
  * @see IUser
  * @see IMind
  */
 public interface IData {
+
+    /**
+     * Привязывает storage-плагин к пользовательскому контексту размещения и
+     * конфигурации.
+     *
+     * <p>Метод не открывает generation и не публикует базы в Mind.</p>
+     *
+     * @param user внешний владелец конфигурации storage
+     */
     void init(IUser user);
 
+    /**
+     * Выбирает или открывает physical storage generation с указанным именем.
+     *
+     * <p>Успешный вызов ещё не означает публикацию canonical schema set в
+     * фабрики; acquisition и публикация выполняются владельцем отдельно.</p>
+     *
+     * @param name implementation-defined storage name
+     * @throws Exception если generation нельзя открыть, проверить или восстановить
+     */
     void use(String name) throws Exception;
 
+    /**
+     * Закрывает текущий generation и все принадлежащие storage-плагину базы.
+     *
+     * <p>Реализация должна попытаться освободить независимые ресурсы даже при
+     * ошибке закрытия одного из них; aggregate failure определяется конкретным
+     * storage contract.</p>
+     *
+     * @throws Exception если один или несколько ресурсов не закрыты корректно
+     */
     void close() throws Exception;
 
+    /**
+     * Доводит накопленные physical changes всех открытых баз до storage-wide
+     * durability boundary, не закрывая generation.
+     *
+     * @throws Exception если flush одной или нескольких баз не завершён
+     */
     void flush() throws Exception;
 
+    /**
+     * Уничтожает storage generation с указанным именем согласно реализации.
+     *
+     * <p>Это destructive physical operation, не transaction rollback и не
+     * очистка текущего Mind.</p>
+     *
+     * @param name удаляемый storage name
+     * @throws Exception если generation активен, недоступен или не может быть удалён
+     */
     void remove(String name) throws Exception;
 
+    /**
+     * Выполняет storage-wide migration/reindex workflow.
+     *
+     * <p>{@code mind} задаёт контекст гидратации/materialization. Reactor
+     * получает implementation-defined progress или schema events; его ошибки
+     * считаются частью migration failure. Publication/swap destination должна
+     * оставаться обратимой до успешного завершения workflow.</p>
+     *
+     * @param reactor callback наблюдения migration, допускается согласно реализации
+     * @param mind контекст гидратации persistent units
+     * @throws Exception при чтении source, построении destination, callback или swap
+     */
     void reindex(IReactor<String> reactor, IMind mind) throws Exception;
 
+    /**
+     * Проверяет, завершён ли lifecycle текущего physical generation.
+     *
+     * @return {@code true}, если storage resources закрыты
+     */
     boolean isClosed();
 
+    /**
+     * Возвращает имя текущего physical generation.
+     *
+     * @return выбранное storage name либо implementation-defined пустое значение,
+     *         если generation не открыт
+     */
     String getStorageName();
 
+    /**
+     * Получает или создаёт schema-specific base в текущем generation.
+     *
+     * <p>Это acquisition path. Возвращаемая база принадлежит {@code IData} и
+     * передаётся вызывающей стороне как заимствованная ссылка.</p>
+     *
+     * @param context canonical schema name
+     * @return открытая schema-specific base
+     * @throws Exception если база не может быть создана, открыта или восстановлена
+     */
     IBase getBase(String context) throws Exception;
 
+    /**
+     * Подключается к уже существующей schema-specific base текущего generation.
+     *
+     * <p>Метод не должен молча подменять отсутствие базы созданием новой, если
+     * конкретный storage contract различает connect и acquisition.</p>
+     *
+     * @param context canonical schema name
+     * @return подключённая base
+     * @throws Exception если база отсутствует или подключение не удалось
+     */
     IBase connect(String context) throws Exception;
 
+    /**
+     * Возвращает человекочитаемое описание storage implementation.
+     *
+     * @return описание плагина, формата или generation semantics
+     */
     String getDescription();
 
+    /**
+     * Перечисляет доступные physical storage generations.
+     *
+     * <p>Результат не является перечнем logical schemas текущего Mind и может
+     * быть snapshot-представлением состояния внешнего storage namespace.</p>
+     *
+     * @return коллекция доступных storage names
+     */
     Collection<String> list();
 }
