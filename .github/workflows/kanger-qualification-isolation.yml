@@ -6,39 +6,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-parser-boundary-hotfix:
-    if: github.event_name == 'pull_request' && github.head_ref == 'automation/3.5.0.7-parser-hotfix-trigger' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out hotfix branch
-        uses: actions/checkout@v4
-        with:
-          ref: fix/3.5.0.8-parser-terminal-delimiter
-
-      - name: Apply parser hotfix
-        run: python3 tools/apply_parser_terminal_hotfix.py
-
-      - name: Publish Java correction only
-        shell: bash
-        run: |
-          set -euo pipefail
-          git checkout -- .github/workflows/kanger-qualification-isolation.yml \
-                          .github/workflows/one-shot-3.5.0.8-parser-boundary.yml \
-                          tools/apply_parser_terminal_hotfix.py
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add kanger/src/org/kanger/enums/Tools.java \
-                  kanger/src/org/kanger/compiler/Parser.java \
-                  kanger-qualification/src/org/kanger/KangerParserTerminalDelimiterSafetyRunner.java
-          git commit -m '3.5.0.7: guard parser terminal delimiters'
-          git push origin HEAD:fix/3.5.0.8-parser-terminal-delimiter
-
   isolate-qualification:
     name: Production surface excludes runners
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -88,5 +62,7 @@ jobs:
           set -euo pipefail
           test -d kanger-qualification/src
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
-          test "$count" -eq 36
+          test "$count" -eq 37
           mvn --batch-mode --no-transfer-progress -DskipTests test-compile
+          java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            org.kanger.KangerParserTerminalDelimiterSafetyRunner
