@@ -33,7 +33,9 @@ jobs:
           set -euo pipefail
 
           expected_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          expected_banner_branch="${expected_branch##*/}"
           test -n "$expected_branch"
+          test -n "$expected_banner_branch"
 
           mvn --batch-mode --no-transfer-progress -DskipTests clean package
 
@@ -46,7 +48,7 @@ jobs:
             target/packaged-build.properties
 
           java -jar "$jar_file" --help > target/maven-banner.txt
-          grep -Fq "KANGER III, Version ${expected_branch}" target/maven-banner.txt
+          grep -Fq "KANGER III, Version ${expected_banner_branch}" target/maven-banner.txt
           grep -Fq 'Stabilized and audited in collaboration with ChatGPT.' \
             target/maven-banner.txt
 
@@ -58,15 +60,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          artifact_branch='develop/3.5.0.4'
+          artifact_branch='develop/3.5.0.6'
+          artifact_banner_branch="${artifact_branch##*/}"
           mvn --batch-mode --no-transfer-progress \
             -DskipTests \
             -Dkanger.build.branch.override="$artifact_branch" \
             clean package
 
           jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          unzip -p "$jar_file" org/kanger/build.properties > target/artifact-build.properties
+          grep -Fxq "branch=${artifact_branch}" target/artifact-build.properties
           java -jar "$jar_file" --help > target/artifact-banner.txt
-          grep -Fq "KANGER III, Version ${artifact_branch}" target/artifact-banner.txt
+          grep -Fq "KANGER III, Version ${artifact_banner_branch}" target/artifact-banner.txt
 
       - name: Install Ant
         shell: bash
@@ -89,7 +94,9 @@ jobs:
             kanger/src/org/kanger/Version.java
           grep -Eq 'private static final String SOURCE_DATE = "[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}";' \
             kanger/src/org/kanger/Version.java
-          grep -Fq 'public static final String VERSION_S = BRANCH;' \
+          grep -Fq 'public static final String VERSION_S = branchLeaf(BRANCH);' \
+            kanger/src/org/kanger/Version.java
+          grep -Fq "int separator = Math.max(branch.lastIndexOf('/'), branch.lastIndexOf('\\\\'));" \
             kanger/src/org/kanger/Version.java
           grep -Fq 'Stabilized and audited in collaboration with ChatGPT.' \
             kanger/src/org/kanger/Version.java
