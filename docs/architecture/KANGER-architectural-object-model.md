@@ -88,33 +88,6 @@ An implementation identifier may retain a historical or imperfect name, but this
 
 No chapter of the Object Model is considered complete until every new or refined term has been checked against the Encyclopedia and all conflicting current definitions have been eliminated.
 
-The initial synchronization set is:
-
-- object;
-- identity;
-- space;
-- ownership;
-- visibility;
-- lifecycle;
-- canonicalization;
-- hydration;
-- materialization;
-- publication;
-- projection;
-- transaction overlay;
-- commit;
-- release;
-- deletion;
-- restoration;
-- resurrection;
-- Mind;
-- Factory;
-- Unit;
-- semantic object;
-- contextual object;
-- runtime object;
-- representation object.
-
 ---
 
 ## 2. What counts as an object in KANGER
@@ -135,23 +108,13 @@ lifecycle
 representation
 ```
 
-### 2.2 Preliminary object classes
+### 2.2 Object classes
 
 #### A. Canonical semantic objects
 
 Entities whose semantic identity is recognized by KANGER and whose duplicate construction is prevented or collapsed by a canonical registry.
 
-Typical families:
-
-- `Predicate`;
-- `Rule`;
-- `Domain`;
-- `Term`;
-- `TVariable`;
-- `TValue`;
-- `Function`;
-- `FValue`;
-- provenance-bearing semantic units.
+Typical families include `Predicate`, `Rule`, `Domain`, `Term`, `TVariable`, `TValue`, `Function`, `FValue` and provenance-bearing semantic units.
 
 Their Java reference is an implementation-level handle. Canonical equality is determined by the unit-specific identity contract, not by reference equality alone.
 
@@ -159,12 +122,7 @@ Their Java reference is an implementation-level handle. Canonical equality is de
 
 Entities whose identity, meaning or visible state includes a `Mind`, `Rule`, transaction level or execution context as a required coordinate.
 
-Typical cases include:
-
-- Rule-owned variables;
-- Rule-scoped U-children;
-- transaction-local promotion or deletion projections;
-- materialized values whose visibility depends on the observing `Mind`.
+Typical cases include Rule-owned variables, Rule-scoped U-children, transaction-local promotion or deletion projections and materialized values whose visibility depends on the observing Mind.
 
 The same canonical entity may have different transaction-visible states without becoming a different durable entity.
 
@@ -172,44 +130,19 @@ The same canonical entity may have different transaction-visible states without 
 
 Entities that coordinate inference or represent an active computation but are not themselves durable semantic knowledge.
 
-Typical families:
-
-- `Mind`;
-- `Linker`;
-- `Analyzer`;
-- `Calculator`;
-- `Solve`;
-- execution continuations and query-local stores.
-
-Some runtime objects have strong identity and lifecycle; others are transient projections over canonical units. They must not be classified solely by whether they implement `IUnit`.
+Typical families include `Mind`, `Linker`, `Analyzer`, `Calculator`, `Solve`, execution continuations and query-local stores.
 
 #### D. Representation objects
 
 Objects that represent another entity in one layer but do not define its semantic identity.
 
-Examples:
-
-- `ByteBuffer` storage packets;
-- map projections created by `createMap()`;
-- compiler `Token` and `Leaf` structures;
-- persistent IDs and storage discriminators;
-- cached or partially hydrated shells.
-
-A representation may be destroyed and recreated while the represented semantic object remains the same.
+Examples include `ByteBuffer` packets, map projections, compiler `Token` and `Leaf` structures, persistent IDs, storage discriminators and partially hydrated shells.
 
 #### E. Service and infrastructure objects
 
 Objects that own registries, perform transitions or provide access to object spaces.
 
-Examples:
-
-- `User`;
-- factories;
-- runtime stores;
-- `IData`, `IBase` and storage implementations;
-- libraries and UDF bindings.
-
-These objects are architecturally significant because they govern the existence, visibility, canonicalization or persistence of other objects.
+Examples include `User`, factories, runtime stores, `IData`, `IBase`, storage implementations, libraries and UDF bindings.
 
 ---
 
@@ -283,45 +216,108 @@ An object may be represented in several spaces simultaneously. Movement between 
 
 ---
 
-## 6. Ownership
+## 6. Relations and mappings
 
-Ownership is the authority to control visibility or lifecycle, not merely the presence of a Java field.
+The Object Model distinguishes relations between objects from mappings of an object into a space. The generic words "contains", "belongs to" and "has" are insufficient unless the exact relation is named.
 
-Preliminary ownership graph:
+### 6.1 Lifecycle ownership
+
+Lifecycle ownership is authority and responsibility for creation, publication, completion, release or destruction.
+
+Examples:
 
 ```text
-User
-  -> root Mind lifecycle
-  -> external storage resources
-
-Mind
-  -> factory overlays
-  -> runtime stores
-  -> transaction-visible state
-  -> Linker / Analyzer / Calculator execution context
-
-Rule
-  -> semantic containment of Domains
-  -> Rule-local TVariable definitions
-  -> Rule-scoped U-child context
-
-Function
-  -> Arguments
-  -> result projection
-
-Storage plugin
-  -> physical generations
-  -> logical bases
-  -> serialized unit representations
+User owns the lifecycle of the root Mind
+parent Mind owns completion protocol of a child Mind
+Factory owns canonical registration lifecycle of its units
 ```
 
-Every arrow must ultimately be classified as one of:
+A Java field or collection membership does not by itself prove lifecycle ownership.
 
-- lifecycle ownership;
-- semantic containment;
-- visibility authority;
-- reference dependency;
-- representation ownership.
+### 6.2 Semantic containment
+
+Semantic containment means that an object participates as a constituent of another object's definition without surrendering independent identity.
+
+Examples:
+
+```text
+Rule semantically contains Domain references
+Function semantically contains an argument graph
+```
+
+A contained Domain remains a canonical object registered independently of the Rule that uses it.
+
+### 6.3 Reference dependency
+
+Reference dependency allows one object to identify or resolve another without controlling its lifecycle.
+
+Examples:
+
+```text
+Cause references a Rule and a donor Solve
+TValue references a TVariable and a Term
+FValue references a Function and a result Term
+```
+
+Removing the reference does not by itself remove the referenced object.
+
+### 6.4 Representation
+
+Representation is a relation between a KANGER object and a carrier encoding some state of that object.
+
+Examples:
+
+```text
+ByteBuffer represents persistent fields of a Rule
+Map represents an external projection of a unit
+Token/Leaf represent compiler structure
+```
+
+The representation can be recreated without creating a new semantic object. Serialized bytes, operational IDs and diagnostic text do not define semantic identity on their own.
+
+### 6.5 Projection
+
+Projection is not ordinary containment and not a second semantic object. It is the mapping of one object into the observable state of a specific space.
+
+Canonical form:
+
+```text
+projection(object, space) -> observable state
+```
+
+A projection may include visibility, current value, deletion, restoration, promotion, query membership, current function result or provenance state. The projection is governed by the observing space and may differ between sibling Minds while the canonical object remains the same.
+
+Examples:
+
+```text
+projection(Rule, child Mind)
+    includes child-visible deletion/promotion/cause state
+
+projection(TVariable, active Mind)
+    includes current TValue or undefined state
+
+projection(Function, active Mind)
+    includes current arguments and applicable FValue
+
+projection(TValue, query-local space)
+    includes result membership without changing TValue identity
+```
+
+Projection is therefore a mapping between an object and a space, not a substitute for either one.
+
+### 6.6 Governing axiom
+
+> A KANGER object does not move between spaces. Its representations are created or reconstructed, and its projections become visible or cease to be visible in those spaces.
+
+Consequences:
+
+- `commit` does not physically move the semantic object; it merges the child's state into the parent's visibility domain and preserves or resolves canonical identity;
+- `release` removes the child projection without deleting inherited canonical objects;
+- hydration reconstructs a runtime representation of an existing durable identity;
+- serialization creates a carrier representation rather than converting the object into bytes;
+- a child Mind is not a copied database, but an overlay containing local objects and projections of inherited objects.
+
+The axiom does not deny creation of genuinely new provisional objects in a child Mind. Such objects receive identity in the allocation domain, are visible first through the child projection, and may become visible to the parent after commit.
 
 ---
 
@@ -342,8 +338,6 @@ The Object Model uses the following terms consistently:
 - **restored** — a hidden or unloaded entity becomes visible or materialized again;
 - **resurrected** — canonical identity is reused after prior deletion or loss of its live representation.
 
-These terms are not synonyms:
-
 ```text
 constructed != canonicalized
 canonicalized != hydrated
@@ -354,83 +348,126 @@ restored != newly created
 
 ---
 
-## 8. First production-validated object matrix
+## 8. Production-validated object matrix
 
-The matrix records the architectural object, not merely the Java class. `Persistent` means that the object's defining state has a durable representation; it does not mean that every runtime projection is stored.
+`Persistent` means that defining state has a durable representation; it does not mean that every runtime projection is stored.
 
 | Object family | Object class | Defining identity | Primary owning space | Lifecycle authority | Persistent | Canonicalized | Context-dependent |
 |---|---|---|---|---|---|---|---|
-| `Mind` | runtime and governing object | explicit Mind identity plus its position in the parent/child transaction chain | User-owned root space or parent-owned child overlay | caller/User for root; parent transaction protocol for child | root state indirectly through owned factories/storage; child itself is not durable | no semantic factory canonicalization | yes, intrinsically |
-| `Rule` | canonical semantic object | normalized rule structure confirmed by RuleFactory equality contract; operational ID names the registered representative | factory registry visible through a Mind | RuleFactory and observing Mind overlay | yes | yes | structure is canonical; visibility, promotion, causes and deletion are contextual |
-| `Term` | canonical semantic object with contextual subtypes | typed normalized value for ordinary terms; contextual key for C/U terms includes rule-related coordinates | DictionaryFactory visible through a Mind | DictionaryFactory and Mind overlay | yes | yes | ordinary terms mostly no; C/U terms yes |
-| `TVariable` | Rule-owned canonical semantic object | variable definition: owning Rule plus rule-local name/index coordinates and registered ID | Rule semantic space, represented through TVariableFactory | Rule definition and TVariableFactory; active values belong to Mind runtime state | yes, as a variable definition | yes | definition is Rule-dependent; current value and deletion are Mind-dependent |
+| `Mind` | runtime and governing object | explicit Mind identity plus position in parent/child chain | User-owned root space or parent-owned child overlay | caller/User for root; parent transaction protocol for child | child itself no | no semantic factory canonicalization | intrinsically |
+| `Rule` | canonical semantic object | normalized rule structure confirmed by RuleFactory | factory registry visible through Mind | RuleFactory and Mind overlay | yes | yes | projection state yes |
+| `Term` | canonical semantic object with contextual subtypes | normalized typed value; contextual key for C/U terms | DictionaryFactory visible through Mind | DictionaryFactory and Mind overlay | yes | yes | C/U terms yes |
+| `TVariable` | Rule-owned canonical semantic object | Rule plus rule-local name/index coordinates | Rule semantic space through TVariableFactory | Rule definition and TVariableFactory | yes | yes | definition Rule-dependent; value Mind-dependent |
+| `Domain` | Rule-associated canonical semantic object and predicate occurrence | predicate, polarity, arity/arguments and Rule association under DomainFactory contract | DomainFactory; semantically used by Rule | DomainFactory and Mind overlay | yes | yes | current causes, solves and argument projection are Mind-dependent |
+| `TValue` | contextual canonical semantic object | `(TVariable id, Term id)` | TValueFactory visible in a Mind | TValueFactory and Mind overlay | yes | yes | visibility, deletion and query membership depend on Mind |
+| `Function` | canonical semantic definition of potential computation | name, arity, binding and normalized argument graph | FunctionFactory; semantically embedded in Rule structure | FunctionFactory and Mind overlay | yes | yes | current arguments/result are Mind projections |
+| `FValue` | materialized computation object | Function plus ordered input stamp and registered result representation | FValueFactory visible in Mind | FValueFactory and transaction continuation lifecycle | yes | yes | applicability and visibility depend on active substitutions/Mind |
+| `Solve` | structural runtime value object | predicate, arity and ordered argument identities; polarity participates in hash/representation and requires explicit semantic treatment | query, Domain or Cause-local runtime space | owning aggregate/runtime store | embedded only | no independent factory | yes when arguments resolve through Mind |
+| `Cause` | provenance relation object | target Rule plus donor Solve | Rule/Domain provenance space | owning Rule/Domain provenance lifecycle | embedded in Rule persistence | structural deduplication, not independent factory | donor resolution depends on Mind |
 
 ### 8.1 Mind
 
-`Mind` is an object of the architecture, but not a semantic unit of knowledge.
-
-Its defining role is to establish an active logical and transactional space. A root Mind represents the user's current working logical context. A child Mind represents a provisional overlay over one parent.
-
-A child Mind is not a durable copy of the database. Its lifetime begins with transaction reservation and ends exactly once through `commit` or `release`. Query-local hypotheses, values, solutions, C-variable links and linker indexes belong to this runtime space rather than to persistent semantic identity.
-
-Consequently:
+`Mind` is an architectural object but not a semantic unit of knowledge. It establishes an active logical and transactional space. A child Mind is a provisional overlay, not a durable copy of a database.
 
 ```text
 Mind identity != database identity
 child Mind != persistent version
-Mind ownership of factories != ownership of the external storage plugin
+Mind ownership of factories != ownership of external storage
 ```
 
 ### 8.2 Rule
 
-`Rule` is a canonical semantic object.
-
-Its operational ID identifies the registered representative, while canonical sameness is established by normalized semantic structure through the Rule factory contract. Source spelling and variable names are representations and do not independently define the Rule.
-
-A Rule contains semantic structure and references to Domains and variable definitions. At the same time, several Rule states are projections relative to a Mind:
-
-- visibility;
-- deletion or restoration;
-- promotion from generated to basic status;
-- causes and generated-state effects;
-- query-local usage and solutions.
-
-Thus the Rule is one canonical semantic object with potentially different transaction-visible projections.
+`Rule` is a canonical semantic object. Its operational ID names the registered representative, while sameness is established through normalized semantic structure. Visibility, deletion, restoration, promotion, causes and query-local usage are projections relative to a Mind.
 
 ### 8.3 Term
 
-`Term` is not one homogeneous identity family.
-
-For ordinary values, identity is based on normalized typed content and is canonicalized by the dictionary factory. A newly allocated `Term` is only a candidate until the factory either reuses an existing representative or publishes a new canonical one.
-
-C-variable and U-child terms introduce contextual identity coordinates. In particular, a U-child is canonical only within:
+Ordinary Term identity is based on normalized typed content. C-variable and U-child terms include contextual coordinates. In particular:
 
 ```text
-(parent C-variable, target Rule id)
+(parent C-variable, target Rule id) -> canonical U-child
 ```
-
-Therefore the general statement "one value means one Term" is valid only after the exact term kind and its required context coordinates have been specified.
 
 ### 8.4 TVariable
 
-`TVariable` is the persistent definition of one substitution position owned by a Rule. It is not the current substitution value.
-
-Its stable inside consists of:
-
-- owning Rule;
-- original variable name;
-- rule-local index;
-- registered identifiers.
-
-Its current value exists outside the variable as a `TValue` projection in an active Mind. Setting a value therefore does not mutate TVariable identity.
-
-The crucial separations are:
+`TVariable` is the persistent definition of a substitution position owned by a Rule. Its current value exists separately as a TValue projection in an active Mind.
 
 ```text
 variable definition != current value
 Rule ownership != query membership
 owner Mind != active execution Mind
 undefined value != deleted variable
+```
+
+### 8.5 Domain
+
+`Domain` is more than an arbitrary `Solve`: it is a registered predicate occurrence associated with a Rule and carrying persistent unit identity. Its stable definition includes predicate/polarity/arguments, Rule reference and substitution/abstraction properties.
+
+The Rule does not lifecycle-own the canonical Domain merely because it contains it in its tree. The Rule semantically contains a reference to the Domain; DomainFactory owns registration and canonicalization.
+
+Causes, solved TValue sets, calculated argument variants and exclusion state are not defining fields of Domain identity. They are projections stored in the observing Mind and keyed by the Domain plus the current converted argument list.
+
+```text
+Domain definition != current argument instantiation
+Domain containment in Rule != lifecycle ownership
+Domain causes/solves != Domain canonical identity
+```
+
+### 8.6 TValue
+
+`TValue` materializes the pair `(TVariable, Term)`. It is not the TVariable itself and not merely the donor Term.
+
+The same canonical TValue may participate in several runtime mappings:
+
+- current-value projection of its TVariable;
+- query-result projection;
+- visible/deleted/restored projection of a Mind.
+
+`setQuery()` publishes an existing TValue into query-local results; it does not create another substitution or commit state.
+
+```text
+TValue identity != query membership
+TValue identity != current-selection status
+(TVariable, Term) != either component alone
+```
+
+### 8.7 Function
+
+`Function` is a definition of potential computation. Its identity includes name, arity, binding and normalized recursive argument structure. The transient slot at index `range` and current parameter values are execution projections, not part of the stable definition.
+
+```text
+Function definition != FValue result
+argument graph != current argument values
+result slot != canonical materialization
+```
+
+### 8.8 FValue
+
+`FValue` is a materialized result of one Function under an ordered stamp of participating T-variable values. It preserves the distinction between the potential computation and an actual result.
+
+Applicability is evaluated by comparing the Function and current substitutions with the stored stamp. The result Term is stored as part of the materialized record, while the applicability check deliberately focuses on Function plus stamp.
+
+```text
+Function + current stamp -> applicable FValue
+FValue != transient result slot
+result Term != input stamp
+```
+
+### 8.9 Solve
+
+`Solve` is a structural runtime object describing one predicate-shaped variant through predicate ID, arity, polarity and ordered arguments. It is not independently registered as an `IUnit`; it is embedded in Domain, Cause and runtime collections.
+
+Its equality contract protects structural deduplication of predicate-shaped variants. Because it has no independent factory or durable ID, its identity is value-like and local to the aggregate or runtime space that owns it.
+
+### 8.10 Cause
+
+`Cause` is a provenance relation object connecting a target Rule with a donor Solve. It does not own either the Rule or the donor's underlying semantic objects.
+
+Its durable form is embedded in Rule persistence as `(ruleId, donor Solve)`. Resolution of the donor back to a Rule is a Mind-dependent lookup through RuleFactory.
+
+```text
+Cause owns neither endpoint
+Cause identity = target Rule relation + donor structure
+Cause persistence != independent canonical unit registration
 ```
 
 ---
@@ -440,7 +477,7 @@ undefined value != deleted variable
 1. Scope, terminology and object criteria.
 2. Object spaces and boundaries.
 3. Identity model.
-4. Ownership and containment.
+4. Relations, ownership and containment.
 5. Canonicalization and factory ecosystem.
 6. Hydration and representation transitions.
 7. Mind and transactional overlays.
@@ -458,15 +495,12 @@ undefined value != deleted variable
 
 ## 10. Immediate next step
 
-The next revision extends the production-validated matrix with:
+The next revision validates the factory ecosystem and storage object families, then formalizes object-space boundaries and transition vocabulary for:
 
-- `Domain`;
-- `TValue`;
-- `Function`;
-- `FValue`;
-- `Solve`;
-- `Cause`;
-- Factory;
-- storage objects.
+- construction and canonicalization;
+- hydration and publication;
+- child projection, commit and release;
+- deletion, restoration and resurrection;
+- persistence representation and physical reclamation.
 
-Each classification must be supported by current production code, qualified Javadoc contracts and closure documents. Philosophical interpretation remains outside the normative Object Model and will be developed in the monograph using the same canonical vocabulary.
+Each classification must remain grounded in current production code and qualified contracts. Philosophical interpretation remains outside the normative Object Model and will use the same canonical vocabulary in the monograph.
