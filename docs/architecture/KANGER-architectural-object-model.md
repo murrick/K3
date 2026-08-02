@@ -53,6 +53,67 @@ A Java instance is therefore not automatically a KANGER object. It may be only a
 
 Conversely, one KANGER object may have several representations during its lifetime without losing semantic identity.
 
+### 1.1 Terminology synchronization contract
+
+The Architectural Object Model is the canonical bridge between implementation terminology and the terminology of the wider KANGER literature.
+
+Every term introduced, refined or reassigned here must be synchronized across four layers:
+
+```text
+Javadoc
+    implementation-level contract and local usage
+
+Architectural Object Model
+    canonical architectural meaning
+
+KANGER Encyclopedia
+    normalized definition, aliases and historical evolution
+
+Monographs
+    semantic and philosophical interpretation
+```
+
+Synchronization is not limited to copying definitions. For every significant term the documentation set must preserve a **meaning-migration record**:
+
+- historical name and original meaning;
+- current canonical name;
+- current architectural meaning;
+- implementation names that remain for compatibility;
+- semantic broadening, narrowing or reassignment;
+- deprecated interpretations that must not be used in new texts;
+- links to the owning Javadoc contracts and monograph chapters.
+
+The migration record is especially important where historical implementation names no longer match current architectural meaning. Such names remain valid code identifiers when compatibility requires it, but the encyclopedia and Object Model must explicitly prevent semantic drift.
+
+The following terms require continuous cross-document synchronization from the beginning of `3.6.0`:
+
+- object;
+- identity;
+- space;
+- ownership;
+- visibility;
+- lifecycle;
+- canonicalization;
+- hydration;
+- materialization;
+- publication;
+- projection;
+- transaction overlay;
+- commit;
+- release;
+- deletion;
+- restoration;
+- resurrection;
+- Mind;
+- Factory;
+- Unit;
+- semantic object;
+- contextual object;
+- runtime object;
+- representation object.
+
+No chapter of the Object Model is considered closed until its new or changed terms have been added to the terminology synchronization backlog for the KANGER Encyclopedia.
+
 ---
 
 ## 2. What counts as an object in KANGER
@@ -310,6 +371,7 @@ restored != newly created
 13. Lifecycle state machines.
 14. Cross-object invariants.
 15. Consolidated relationship map.
+16. Terminology migration and encyclopedia synchronization appendix.
 
 ---
 
