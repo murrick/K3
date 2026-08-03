@@ -2,6 +2,7 @@ package org.kanger;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IReactor;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,6 +46,15 @@ class SessionSerializingReactorTest {
     void missingParametersProduceEmptyObject() {
         assertFalse(SessionSerializingReactor.parameters(new JSONObject())
                 .keys().hasNext());
+    }
+
+    @Test
+    void expectedAuthenticationRejectionUsesNormalErrorEnvelope() {
+        JSONObject response = SessionSerializingReactor.authenticationRejected(
+                new AuthenticationErrorException());
+
+        assertEquals("error", response.getString("result"));
+        assertEquals("Authentication error", response.getString("description"));
     }
 
     @Test
