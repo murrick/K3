@@ -33,12 +33,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Timer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Kanger {
 
     private static Process serviceDescriptor = null;
     private static boolean serviceTerminate = false;
     private static HttpServer httpServer = null;
+    private static final AtomicBoolean serverShutdown = new AtomicBoolean(false);
 
     public static void main(String[] args) throws Exception {
         boolean wrapper = false;
@@ -55,6 +57,8 @@ public class Kanger {
             Kanger.start();
             System.exit(0);
         } else {
+            serverShutdown.set(false);
+            registerServerShutdownHook();
             try {
                 Settings.setActive(true);
                 Timer timer = new Timer(true);
@@ -64,13 +68,7 @@ public class Kanger {
                 httpServer = new HttpServer();
                 httpServer.start(new SessionSerializingReactor(new QueryProcessor()));
             } finally {
-                try {
-                    if (httpServer != null) {
-                        httpServer.stop();
-                    }
-                } catch (Exception ex) {
-                }
-                UserFactory.shutdown();
+                shutdownServer();
                 System.out.println("FORCE REBOOT Server");
             }
         }
@@ -146,6 +144,48 @@ public class Kanger {
                     }
                 }
         );
+    }
+
+    private static void registerServerShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(
+                new Thread("kanger-server-shutdown") {
+                    @Override
+                    public void run() {
+                        shutdownServer();
+                    }
+                }
+        );
+    }
+
+    private static void shutdownServer() {
+        if (!serverShutdown.compareAndSet(false, true)) {
+            return;
+        }
+
+        try {
+            HttpServer current = httpServer;
+            httpServer = null;
+            if (current != null) {
+                current.stop();
+            }
+        } catch (Exception error) {
+            System.err.println(new Date());
+            error.printStackTrace(System.err);
+        }
+
+        try {
+            UserFactory.shutdown();
+        } catch (Exception error) {
+            System.err.println(new Date());
+            error.printStackTrace(System.err);
+        }
+
+        try {
+            Settings.setActive(false);
+        } catch (Exception error) {
+            System.err.println(new Date());
+            error.printStackTrace(System.err);
+        }
     }
 
     public static boolean launch(String[] cmdarray) throws IOException, InterruptedException, IOException {
