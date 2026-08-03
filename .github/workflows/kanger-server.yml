@@ -68,6 +68,7 @@ jobs:
 
           bash -n kanger-server/deploy/install.sh
           bash -n kanger-server/deploy/verify-installed.sh
+          bash -n kanger-server/scripts/smoke-local.sh
 
           grep -q '^server.bind.address=127.0.0.1$' \
             kanger-server/deploy/kanger.conf.example
@@ -78,6 +79,10 @@ jobs:
           grep -q 'KillSignal=SIGTERM' \
             kanger-server/deploy/systemd/kanger-server.service
           grep -q 'proxy_pass http://kanger_server_backend' \
+            kanger-server/deploy/nginx/kanger-server.conf.template
+          grep -q 'proxy_set_header X-Request-ID \$request_id' \
+            kanger-server/deploy/nginx/kanger-server.conf.template
+          grep -q 'location = /ready' \
             kanger-server/deploy/nginx/kanger-server.conf.template
 
       - name: Run authenticated loopback and shutdown smoke
@@ -125,11 +130,25 @@ jobs:
           test "${ready}" = true
           test -f "${runtime}/home/KANGER/kanger.active"
 
+          ready_response="$(curl --fail --silent --show-error \
+            --dump-header "${runtime}/ready.headers" \
+            --header 'X-Request-ID: ci-ready-check' \
+            http://127.0.0.1:1964/ready)"
+          echo "${ready_response}" | grep -q '"status":"READY"'
+          echo "${ready_response}" | grep -q '"queue_capacity":16'
+          grep -qi '^X-Request-ID: ci-ready-check' "${runtime}/ready.headers"
+
+          KANGER_BASE_URL=http://127.0.0.1:1964 \
+            bash kanger-server/scripts/smoke-local.sh
           KANGER_BASE_URL=http://127.0.0.1:1964 \
             bash kanger-server/scripts/smoke-auth-local.sh
 
           ! grep -q 'CredentialStore.authenticate' "${runtime}/server.log"
           ! grep -q '^Authentication error$' "${runtime}/server.log"
+          grep -q 'http request_id=ci-ready-check method=GET path=/ready status=200' \
+            "${runtime}/server.log"
+          ! grep -q 'Kanger-Smoke-' "${runtime}/server.log"
+          ! grep -q 'Mail-Disabled-' "${runtime}/server.log"
 
           kill -TERM "${server_pid}"
           set +e
