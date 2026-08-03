@@ -21,7 +21,8 @@ TARGET_JAR="${INSTALL_DIR}/kanger-server.jar"
 PREVIOUS_JAR="${INSTALL_DIR}/kanger-server.jar.previous"
 HEALTH_URL="http://127.0.0.1:1964/health"
 
-for command in java systemctl curl install getent useradd; do
+for command in java systemctl systemd-analyze journalctl curl install \
+  getent groupadd useradd readlink; do
   command -v "${command}" >/dev/null 2>&1 || {
     echo "Required command not found: ${command}" >&2
     exit 1
