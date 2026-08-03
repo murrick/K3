@@ -68,7 +68,7 @@ public class Kanger {
 
                 Watchdog.log("HTTP Server starting...");
                 httpServer = new HttpServer();
-                httpServer.start(new QueryProcessor());
+                httpServer.start(new SessionSerializingReactor(new QueryProcessor()));
             } finally {
                 try {
                     if (httpServer != null) {
