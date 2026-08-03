@@ -1,0 +1,42 @@
+[Unit]
+Description=KANGER Server
+Documentation=file:/opt/kanger-server/DEPLOYMENT.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=kanger
+Group=kanger
+WorkingDirectory=/opt/kanger-server
+Environment=KANGER_HOME=KANGER
+ExecStartPre=/usr/bin/test -r /opt/kanger-server/kanger-server.jar
+ExecStart=/usr/bin/java -Duser.home=/var/lib/kanger-server -jar /opt/kanger-server/kanger-server.jar
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=60s
+KillSignal=SIGTERM
+UMask=0077
+
+StateDirectory=kanger-server
+StateDirectoryMode=0750
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+ReadWritePaths=/var/lib/kanger-server
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kanger-server
+
+[Install]
+WantedBy=multi-user.target
