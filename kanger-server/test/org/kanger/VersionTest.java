@@ -8,8 +8,14 @@ package org.kanger;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class VersionTest {
 
@@ -21,5 +27,22 @@ class VersionTest {
         assertEquals("server-0.12", Version.SERVER_VERSION_S);
         assertFalse(Version.SERVER_VERSION_S.contains("deployment"));
         assertFalse(Version.SERVER_VERSION_S.contains("first-vps-deploy"));
+    }
+
+    @Test
+    void buildMetadataKeepsSourceProvenanceSeparate() throws IOException {
+        Properties properties = new Properties();
+        try (InputStream input = Version.class.getResourceAsStream(
+                "/org/kanger/build.properties")) {
+            assertNotNull(input);
+            properties.load(input);
+        }
+
+        assertEquals("server-0.12", properties.getProperty("branch"));
+        assertEquals("server-0.12", properties.getProperty("server.version"));
+        String sourceBranch = properties.getProperty("source.branch");
+        assertNotNull(sourceBranch);
+        assertFalse(sourceBranch.trim().isEmpty());
+        assertNotEquals("server-0.12", sourceBranch);
     }
 }
