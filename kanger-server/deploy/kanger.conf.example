@@ -11,11 +11,11 @@ server.watchdog.period=1000
 
 # Browser clients require exact origins. Keep CORS disabled until the final
 # public application origin is known.
-# server.cors.allowed.origin.1=https://kanger.example.org
+# server.cors.allowed.origin.1=https://api.kanger.ru
 # server.cors.allow.credentials=false
 
 # Public URL used in generated confirmation links.
-# server.url=https://kanger.example.org
+# server.url=https://api.kanger.ru
 
 # Confirmation mail is disabled until a complete explicit profile is supplied.
 # Choose exactly one mode: disabled, starttls, or smtps.
