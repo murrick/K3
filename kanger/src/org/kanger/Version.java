@@ -37,19 +37,34 @@ import java.util.Properties;
  */
 public abstract class Version {
 
-    private static final String SOURCE_BRANCH = "arch/3.5.0-core-consolidation";
+    private static final String SOURCE_BRANCH_FALLBACK = "arch/3.5.0-core-consolidation";
     private static final String SOURCE_DATE = "2021-12-28_13:28:12";
     private static final Properties BUILD_METADATA = loadBuildMetadata();
 
     public static final int VERSION = 3;
     public static final int RELEASE = 3;
     public static final String REVISION = "7318";
-    public static final String BRANCH = buildProperty("branch", SOURCE_BRANCH);
+    public static final String BRANCH = buildProperty("source.branch",
+            buildProperty("branch", SOURCE_BRANCH_FALLBACK));
     public static final String DATE = buildProperty("date", SOURCE_DATE);
     public static final String BUILD_CREDIT = "Stabilized and audited in collaboration with ChatGPT.";
     public static final int YEAR = getYear(parseDate(DATE));
     public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
-    public static final String VERSION_S = branchLeaf(BRANCH);
+
+    /** Historical semantic/core version. */
+    public static final String CORE_VERSION_S = VERSION + "." + RELEASE;
+
+    /** Public version of the deployable server artifact. */
+    public static final String SERVER_VERSION_S = buildProperty(
+            "server.version", branchLeaf(BRANCH));
+
+    /**
+     * Compatibility display value used by the existing UI and HTTP endpoints.
+     * Server builds supply an explicit server.version; source-only builds retain
+     * the historical branch-leaf fallback.
+     */
+    public static final String VERSION_S = SERVER_VERSION_S;
+
     public static final String DATE_S = formatDate(parseDate(DATE)) + "\n" + BUILD_CREDIT;
 
     private static Properties loadBuildMetadata() {
