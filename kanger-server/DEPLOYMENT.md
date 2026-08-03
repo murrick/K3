@@ -55,9 +55,16 @@ git status --short
 
 mvn -B -ntp \
   -f kanger-server/pom.xml \
-  -Dkanger.build.branch.override=deployment \
+  -Dkanger.server.artifact.version=server-0.12 \
   clean verify
 ```
+
+`kanger.server.artifact.version` is the public deployment-artifact identity
+returned by `/health` and `/ready`. Use a stable release value such as
+`server-0.12`; never use operational labels such as `deployment` or
+`first-vps-deploy`. The source branch is recorded independently in build
+metadata and does not change the public server version. The semantic KANGER core
+version remains `3.3`.
 
 Do not build from a working tree with unexplained local changes. IDE metadata
 such as `.idea` files is not part of the server artifact and should not be mixed
@@ -191,15 +198,16 @@ curl --fail --silent --show-error \
 echo
 ```
 
-Expected liveness response shape:
+Expected liveness response:
 
 ```json
-{"result":"OK","status":"UP","version":"..."}
+{"result":"OK","status":"UP","version":"server-0.12"}
 ```
 
-Expected readiness response shape includes `status: READY` and bounded executor
-counters such as `active_requests`, `queued_requests`, `queue_capacity`,
-`queue_remaining`, `failed_requests`, and `overload_rejections`.
+Expected readiness response includes `status: READY`,
+`version: server-0.12`, and bounded executor counters such as
+`active_requests`, `queued_requests`, `queue_capacity`, `queue_remaining`,
+`failed_requests`, and `overload_rejections`.
 
 Verify systemd and the listener:
 
@@ -651,7 +659,7 @@ echo
 Expected response:
 
 ```json
-{"result":"OK","status":"UP","version":"..."}
+{"result":"OK","status":"UP","version":"server-0.12"}
 ```
 
 Detailed readiness metrics remain local. A public request must be rejected:
@@ -897,30 +905,3 @@ sudo systemctl start kanger-server.service
 curl --fail http://127.0.0.1:1964/health
 curl --fail http://127.0.0.1:1964/ready
 ```
-
-Restore shared Cloudflare Origin CA material separately under
-`/etc/nginx/ssl/kanger.org/`, preserving root ownership and private-key mode
-`0600`, then run:
-
-```bash
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-## Current deployment boundary
-
-This package qualifies build, bounded loopback HTTP, liveness/readiness,
-request correlation, overload rejection, authentication/session lifecycle,
-filesystem input confinement, atomic settings, platform TLS for outbound HTTP,
-graceful SIGTERM shutdown, reproducible systemd/nginx API deployment, and
-bounded explicit confirmation-mail transport.
-
-The static UI deployment for `kanger.org` and `www.kanger.org` is deliberately
-separate from the Java service boundary. It can reuse the shared certificate and
-call `https://api.kanger.org` through the explicit CORS allow-list.
-
-The historical mail helper remains present for source compatibility, but the
-active server request path intercepts new e-mail registrations and resend
-requests before those legacy raw-thread branches. A later consolidation slice
-may remove that unreachable compatibility code after protocol compatibility is
-frozen.
