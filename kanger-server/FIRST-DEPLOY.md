@@ -48,9 +48,14 @@ git status --short
 
 mvn -B -ntp \
   -f kanger-server/pom.xml \
-  -Dkanger.build.branch.override=first-vps-deploy \
+  -Dkanger.server.artifact.version=server-0.12 \
   clean verify
 ```
+
+`kanger.server.artifact.version` is the stable public identity returned by
+`/health` and `/ready`. Never use scenario labels such as `first-vps-deploy` or
+`deployment` here. Source branch provenance is recorded separately in build
+metadata, while the semantic KANGER core version remains `3.3`.
 
 Start the local isolated process:
 
@@ -148,6 +153,12 @@ echo
 sudo systemctl status kanger-server.service --no-pager
 sudo ss -ltnp | grep 1964
 sudo bash /tmp/kanger-deploy/verify-installed.sh
+```
+
+Expected liveness response:
+
+```json
+{"result":"OK","status":"UP","version":"server-0.12"}
 ```
 
 The required listener is equivalent to:
@@ -423,7 +434,7 @@ echo
 Expected liveness status:
 
 ```json
-{"result":"OK","status":"UP","version":"..."}
+{"result":"OK","status":"UP","version":"server-0.12"}
 ```
 
 Detailed `/ready` counters remain local to the VPS. A public request to
