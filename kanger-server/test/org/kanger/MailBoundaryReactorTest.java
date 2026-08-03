@@ -1,0 +1,130 @@
+package org.kanger;
+
+import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
+import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class MailBoundaryReactorTest {
+
+    @Test
+    void nonLoginRequestPassesThroughUnchanged() throws Exception {
+        final AtomicBoolean called = new AtomicBoolean();
+        IReactor<JSONObject> delegate = new IReactor<JSONObject>() {
+            @Override
+            public Object run(JSONObject packet) {
+                called.set(true);
+                return new JSONObject().put("result", "OK");
+            }
+        };
+
+        MailBoundaryReactor reactor = new MailBoundaryReactor(
+                delegate, new DisabledGateway());
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "command", new JSONObject().put("ping", "")));
+
+        assertTrue(called.get());
+        assertEquals("OK", response.getString("result"));
+    }
+
+    @Test
+    void disabledMailRejectsEmailRegistrationBeforeLegacyProcessor() throws Exception {
+        final AtomicBoolean called = new AtomicBoolean();
+        IReactor<JSONObject> delegate = new IReactor<JSONObject>() {
+            @Override
+            public Object run(JSONObject packet) {
+                called.set(true);
+                return new JSONObject().put("result", "OK");
+            }
+        };
+
+        MailBoundaryReactor reactor = new MailBoundaryReactor(
+                delegate, new DisabledGateway());
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "login", registration("rick@example.org")));
+
+        assertFalse(called.get());
+        assertEquals("error", response.getString("result"));
+        assertTrue(response.getString("description").contains("disabled"));
+    }
+
+    @Test
+    void newEmailRegistrationIsStrippedBeforeLegacyDispatchAndRestoredAfterward() throws Exception {
+        final AtomicBoolean emailReachedDelegate = new AtomicBoolean();
+        final JSONObject parameters = registration("rick@example.org");
+        IReactor<JSONObject> delegate = new IReactor<JSONObject>() {
+            @Override
+            public Object run(JSONObject packet) {
+                emailReachedDelegate.set(
+                        SessionSerializingReactor.parameters(packet).has("email"));
+                return new JSONObject()
+                        .put("result", "error")
+                        .put("description", "synthetic validation stop");
+            }
+        };
+
+        MailBoundaryReactor reactor = new MailBoundaryReactor(
+                delegate, new AcceptingGateway());
+        JSONObject response = (JSONObject) reactor.run(packet("login", parameters));
+
+        assertFalse(emailReachedDelegate.get());
+        assertEquals("rick@example.org", parameters.getString("email"));
+        assertEquals("error", response.getString("result"));
+    }
+
+    private static JSONObject packet(String context, JSONObject parameters) {
+        return new JSONObject().put("body", new JSONObject()
+                .put("context", context)
+                .put("parameters", parameters));
+    }
+
+    private static JSONObject registration(String email) {
+        return new JSONObject()
+                .put("register", "rick")
+                .put("password", "correct horse battery staple")
+                .put("token", "")
+                .put("email", email);
+    }
+
+    private static final class DisabledGateway
+            implements MailBoundaryReactor.MailGateway {
+        @Override
+        public boolean isEnabled() {
+            return false;
+        }
+
+        @Override
+        public void validateRecipient(String address) {
+            throw new IllegalStateException("E-mail transport is disabled");
+        }
+
+        @Override
+        public void queueConfirmation(IUser user, String confirmationToken) {
+            throw new AssertionError("disabled gateway must not queue");
+        }
+    }
+
+    private static final class AcceptingGateway
+            implements MailBoundaryReactor.MailGateway {
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+
+        @Override
+        public void validateRecipient(String address) {
+            // accepted
+        }
+
+        @Override
+        public void queueConfirmation(IUser user, String confirmationToken) {
+            // not reached because the synthetic delegate returns an error
+        }
+    }
+}
