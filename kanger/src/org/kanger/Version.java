@@ -37,7 +37,8 @@ import java.util.Properties;
  */
 public abstract class Version {
 
-    private static final String SOURCE_BRANCH_FALLBACK = "arch/3.5.0-core-consolidation";
+    /* This literal is the compatibility anchor stamped by the legacy Ant build. */
+    private static final String SOURCE_BRANCH = "arch/3.5.0-core-consolidation";
     private static final String SOURCE_DATE = "2021-12-28_13:28:12";
     private static final Properties BUILD_METADATA = loadBuildMetadata();
 
@@ -45,11 +46,12 @@ public abstract class Version {
     public static final int RELEASE = 3;
     public static final String REVISION = "7318";
 
-    /** Compatibility build identity used by existing KANGER displays. */
-    public static final String BRANCH = buildProperty("branch", SOURCE_BRANCH_FALLBACK);
-
-    /** Actual source branch/build provenance when supplied separately. */
-    public static final String SOURCE_BRANCH = buildProperty("source.branch", BRANCH);
+    /**
+     * Compatibility build identity used by existing KANGER displays. Server
+     * packaging binds this to the server artifact identity; ordinary builds
+     * retain the source branch identity.
+     */
+    public static final String BRANCH = buildProperty("branch", SOURCE_BRANCH);
 
     public static final String DATE = buildProperty("date", SOURCE_DATE);
     public static final String BUILD_CREDIT = "Stabilized and audited in collaboration with ChatGPT.";
@@ -59,14 +61,11 @@ public abstract class Version {
     /** Historical semantic/core version. */
     public static final String CORE_VERSION_S = VERSION + "." + RELEASE;
 
-    /**
-     * Compatibility display value. Its established contract is the final
-     * segment of {@link #BRANCH}.
-     */
+    /** Established compatibility display contract: the final segment of BRANCH. */
     public static final String VERSION_S = branchLeaf(BRANCH);
 
-    /** Explicit public identity of a deployable server artifact. */
-    public static final String SERVER_VERSION_S = buildProperty("server.version", VERSION_S);
+    /** Public identity of a deployable server artifact. */
+    public static final String SERVER_VERSION_S = VERSION_S;
 
     public static final String DATE_S = formatDate(parseDate(DATE)) + "\n" + BUILD_CREDIT;
 
