@@ -20,6 +20,7 @@ UNIT_FILE="/etc/systemd/system/kanger-server.service"
 TARGET_JAR="${INSTALL_DIR}/kanger-server.jar"
 PREVIOUS_JAR="${INSTALL_DIR}/kanger-server.jar.previous"
 HEALTH_URL="http://127.0.0.1:1964/health"
+READY_URL="http://127.0.0.1:1964/ready"
 
 for command in java systemctl systemd-analyze journalctl curl install \
   getent groupadd useradd readlink; do
@@ -83,18 +84,20 @@ systemctl daemon-reload
 systemctl enable kanger-server.service >/dev/null
 systemctl restart kanger-server.service
 
-healthy=false
+ready=false
 for attempt in $(seq 1 30); do
   if curl --fail --silent --show-error --max-time 2 \
-      "${HEALTH_URL}" >/dev/null; then
-    healthy=true
+      "${HEALTH_URL}" >/dev/null \
+      && curl --fail --silent --show-error --max-time 2 \
+      "${READY_URL}" >/dev/null; then
+    ready=true
     break
   fi
   sleep 1
 done
 
-if [[ "${healthy}" != true ]]; then
-  echo "KANGER Server failed its loopback health check." >&2
+if [[ "${ready}" != true ]]; then
+  echo "KANGER Server failed its loopback health/readiness checks." >&2
   systemctl status kanger-server.service --no-pager || true
   journalctl -u kanger-server.service -n 100 --no-pager || true
 
@@ -110,5 +113,7 @@ fi
 
 systemctl --no-pager --full status kanger-server.service
 echo
-echo "KANGER Server is healthy on ${HEALTH_URL}"
+echo "KANGER Server is healthy and ready:"
+echo "  ${HEALTH_URL}"
+echo "  ${READY_URL}"
 echo "Public nginx exposure is a separate explicit step."
