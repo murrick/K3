@@ -15,7 +15,7 @@ intended for API development and qualification on macOS or Linux.
 
 ```bash
 git fetch origin
-git switch server/0.7-settings-store
+git switch server/0.10-vps-deployment
 ```
 
 ## 2. Start the isolated local server
@@ -44,7 +44,9 @@ To start without rebuilding an existing JAR:
 KANGER_LOCAL_REBUILD=0 bash kanger-server/scripts/run-local.sh
 ```
 
-Stop the server with `Ctrl+C`.
+Stop the server with `Ctrl+C`. The normal process shutdown hook stops the HTTP
+listener, closes active user runtime/storage state and removes the active
+marker.
 
 ## 3. Verify the transport
 
@@ -141,12 +143,15 @@ normal operating-system home directory are unaffected.
 
 ## Current qualification boundary
 
-The transport, credential migration, cryptographic session tokens, per-user
-request serialization, logout/timeout cleanup, filesystem-facing input
-confinement and atomic settings store are covered by automated Java 8/21
-qualification. The authenticated smoke is also executed against a real
-loopback server process in GitHub Actions.
+Automated Java 8/21 qualification covers the bounded loopback transport,
+credential migration, cryptographic sessions, per-user serialization,
+logout/timeout cleanup, filesystem input confinement, atomic settings, platform
+TLS for outbound HTTP and graceful SIGTERM shutdown.
 
-This remains a local and pre-deployment qualification scenario. Public exposure
-still requires the nginx/systemd deployment slice and the remaining outbound
-TLS, mail and operational-hardening work.
+GitHub Actions also starts the packaged JAR as a real process, performs the
+complete authenticated smoke, sends SIGTERM, checks active-marker removal and
+verifies that the HTTP port closes.
+
+The VPS deployment package under `kanger-server/deploy` is qualified for shell
+syntax and architecture invariants. SMTP remains intentionally unconfigured
+until its dedicated mail-transport hardening slice is completed.
