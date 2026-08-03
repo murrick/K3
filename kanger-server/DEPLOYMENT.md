@@ -1,12 +1,25 @@
 # KANGER Server VPS deployment
 
 This guide deploys the standalone KANGER Server JAR on a Debian/Ubuntu-style
-systemd host behind nginx. The public API endpoint is fixed throughout this
-guide as:
+systemd host behind nginx.
+
+The public API endpoint is:
+
+```text
+https://api.kanger.org
+```
+
+The browser UI is a separate deployment target:
 
 ```text
 https://kanger.org
+https://www.kanger.org
 ```
+
+The UI may be served by another nginx virtual host on the same VPS, using the
+files in the repository `html/` directory. This document installs and exposes
+the API only; the UI virtual host can be added independently without changing
+the Java service.
 
 Target topology:
 
@@ -16,16 +29,15 @@ Internet
    v
 Cloudflare or direct DNS
    |
-   v
-nginx :80/:443
+   +--> kanger.org / www.kanger.org --> nginx static UI --> K3/html
    |
-   v
-127.0.0.1:1964
-   |
-   v
-KANGER Server JVM managed by systemd
-   |
-   +-- bounded optional SMTP transport
+   +--> api.kanger.org --> nginx reverse proxy
+                              |
+                              v
+                         127.0.0.1:1964
+                              |
+                              v
+                    KANGER Server JVM managed by systemd
 ```
 
 Port `1964` is an internal application port. It must never be opened in the VPS
@@ -237,11 +249,23 @@ server.port=1964
 server.email.mode=disabled
 ```
 
-When a public base URL setting is used, set it to:
+The public API URL used in generated confirmation links is:
 
 ```properties
-server.url=https://kanger.org
+server.url=https://api.kanger.org
 ```
+
+The Java transport uses an exact CORS allow-list. When both UI hostnames may
+call the API directly, configure both:
+
+```properties
+server.cors.allowed.origin.1=https://kanger.org
+server.cors.allowed.origin.2=https://www.kanger.org
+server.cors.allow.credentials=false
+```
+
+If `www.kanger.org` is permanently redirected to `kanger.org` before the UI is
+loaded, only the canonical UI origin is needed. Never use `*` with credentials.
 
 After changing configuration:
 
@@ -255,26 +279,27 @@ curl --fail http://127.0.0.1:1964/ready
 Never change `server.bind.address` to `0.0.0.0` or to a public VPS address.
 nginx is the public boundary.
 
-## 6. Configure DNS for `kanger.org`
+## 6. Configure DNS
 
-The apex DNS record for `kanger.org` must point to the VPS origin IPv4 address.
-
-For direct DNS:
+Create the API record:
 
 ```text
 Type: A
-Name: @
+Name: api
 Content: <VPS_IPV4>
-Proxy: DNS only
+Proxy: DNS only or Proxied
 ```
 
-For Cloudflare:
+The later UI deployment uses separate records:
 
 ```text
-Type: A
+Type: A or CNAME
 Name: @
-Content: <VPS_IPV4>
-Proxy: Proxied
+Target: <VPS origin or provider-specific target>
+
+Type: A or CNAME
+Name: www
+Target: <VPS origin, kanger.org, or provider-specific target>
 ```
 
 With Cloudflare proxying enabled, public `dig` queries return Cloudflare edge
@@ -283,7 +308,9 @@ addresses rather than `<VPS_IPV4>`. That is expected.
 Useful checks:
 
 ```bash
+dig +short A api.kanger.org
 dig +short A kanger.org
+dig +short A www.kanger.org
 dig +short NS kanger.org
 ```
 
@@ -326,19 +353,19 @@ Stop, remove or remap an unneeded conflicting container. Do not delete generated
 Docker iptables rules manually: Docker will recreate them. nginx must be the
 only public owner of TCP ports `80` and `443`.
 
-## 8. Render the nginx configuration
+## 8. Render the API nginx configuration
 
-Render the supplied template for the public domain:
+Render the supplied template for the API host:
 
 ```bash
-sudo sed 's/KANGER_DOMAIN/kanger.org/g' \
+sudo sed 's/KANGER_DOMAIN/api.kanger.org/g' \
   /tmp/kanger-deploy/nginx/kanger-server.conf.template \
   | sudo tee /etc/nginx/sites-available/kanger-server.conf >/dev/null
 ```
 
 The template:
 
-- redirects HTTP to HTTPS;
+- redirects API HTTP to HTTPS;
 - proxies `/health` publicly;
 - restricts detailed `/ready` metrics to local VPS requests;
 - forwards `X-Request-ID`, client address and original scheme;
@@ -346,9 +373,9 @@ The template:
 
 Choose exactly one TLS option below before enabling the site.
 
-## 9A. TLS option 1 — Let's Encrypt
+## 9A. TLS option 1 — Let's Encrypt for `api.kanger.org`
 
-Use this option when the VPS should obtain and renew a publicly trusted
+Use this option when the VPS should obtain and renew a publicly trusted API
 certificate directly.
 
 Install Certbot and prepare the webroot:
@@ -366,7 +393,7 @@ sudo tee /etc/nginx/sites-available/kanger-acme.conf >/dev/null <<'EOF'
 server {
     listen 80;
     listen [::]:80;
-    server_name kanger.org;
+    server_name api.kanger.org;
 
     location /.well-known/acme-challenge/ {
         root /var/www/html;
@@ -392,14 +419,14 @@ Make sure public TCP/80 reaches this nginx instance, then obtain the certificate
 sudo certbot certonly \
   --webroot \
   -w /var/www/html \
-  -d kanger.org
+  -d api.kanger.org
 ```
 
 The supplied nginx template already expects:
 
 ```text
-/etc/letsencrypt/live/kanger.org/fullchain.pem
-/etc/letsencrypt/live/kanger.org/privkey.pem
+/etc/letsencrypt/live/api.kanger.org/fullchain.pem
+/etc/letsencrypt/live/api.kanger.org/privkey.pem
 ```
 
 Remove the temporary ACME-only site after the certificate exists:
@@ -414,22 +441,34 @@ Test automatic renewal without changing the certificate:
 sudo certbot renew --dry-run
 ```
 
-## 9B. TLS option 2 — Cloudflare Origin CA
+## 9B. TLS option 2 — shared Cloudflare Origin CA certificate
 
-Use this option only when `kanger.org` is proxied through Cloudflare.
+Use this option only when the public hosts are proxied through Cloudflare.
 Configure Cloudflare SSL/TLS mode as:
 
 ```text
 Full (strict)
 ```
 
-A typical certificate bundle consists of:
+The certificate files deliberately use the base-domain names even though this
+nginx virtual host serves `api.kanger.org`:
 
 ```text
 kanger.org.pem
 kanger.org.key
 origin_ca_rsa_root.pem
 ```
+
+To serve the API and both UI hostnames with this one certificate, request SANs
+covering:
+
+```text
+kanger.org
+*.kanger.org
+```
+
+The apex entry covers `kanger.org`. The wildcard covers `api.kanger.org` and
+`www.kanger.org`; a wildcard alone does not cover the apex domain.
 
 Before copying the files, inspect the certificate:
 
@@ -438,9 +477,6 @@ openssl x509 \
   -in kanger.org.pem \
   -noout -subject -issuer -dates -ext subjectAltName
 ```
-
-The certificate SAN must contain `kanger.org`. A wildcard such as
-`*.kanger.org` alone does not cover the apex domain.
 
 Verify the chain against the supplied Cloudflare Origin CA root:
 
@@ -495,16 +531,16 @@ sudo install \
   /etc/nginx/ssl/kanger.org/origin_ca_rsa_root.pem
 ```
 
-Replace the Let's Encrypt paths in the rendered nginx configuration:
+Replace the Let's Encrypt paths in the rendered API configuration:
 
 ```bash
 sudo sed -i \
-  -e 's#/etc/letsencrypt/live/kanger.org/fullchain.pem#/etc/nginx/ssl/kanger.org/kanger.org.pem#' \
-  -e 's#/etc/letsencrypt/live/kanger.org/privkey.pem#/etc/nginx/ssl/kanger.org/kanger.org.key#' \
+  -e 's#/etc/letsencrypt/live/api.kanger.org/fullchain.pem#/etc/nginx/ssl/kanger.org/kanger.org.pem#' \
+  -e 's#/etc/letsencrypt/live/api.kanger.org/privkey.pem#/etc/nginx/ssl/kanger.org/kanger.org.key#' \
   /etc/nginx/sites-available/kanger-server.conf
 ```
 
-Remove temporary private-key copies after installation:
+Remove temporary copies after installation:
 
 ```bash
 rm -f \
@@ -518,9 +554,12 @@ authenticated Cloudflare-to-origin connection. A browser connecting directly
 to the VPS may not trust it; public clients receive Cloudflare's edge
 certificate instead.
 
-## 10. Enable nginx HTTPS
+The same installed files may later be referenced by the separate UI virtual
+host for `kanger.org` and `www.kanger.org`.
 
-Enable the site:
+## 10. Enable API HTTPS
+
+Enable the API site:
 
 ```bash
 sudo ln -sfn \
@@ -538,21 +577,21 @@ Confirm that nginx owns the public ports:
 sudo ss -ltnp | grep -E ':(80|443)\b'
 ```
 
-Verify the origin locally, bypassing DNS and Cloudflare:
+Verify the API origin locally, bypassing DNS and Cloudflare:
 
 ```bash
 curl -k --fail --silent --show-error \
   --connect-timeout 5 \
   --max-time 10 \
-  --resolve kanger.org:443:127.0.0.1 \
-  https://kanger.org/health
+  --resolve api.kanger.org:443:127.0.0.1 \
+  https://api.kanger.org/health
 echo
 
 curl -k --fail --silent --show-error \
   --connect-timeout 5 \
   --max-time 10 \
-  --resolve kanger.org:443:127.0.0.1 \
-  https://kanger.org/ready
+  --resolve api.kanger.org:443:127.0.0.1 \
+  https://api.kanger.org/ready
 echo
 ```
 
@@ -561,7 +600,7 @@ For a Cloudflare Origin CA certificate, verify the origin chain explicitly:
 ```bash
 openssl s_client \
   -connect 127.0.0.1:443 \
-  -servername kanger.org \
+  -servername api.kanger.org \
   -CAfile /etc/nginx/ssl/kanger.org/origin_ca_rsa_root.pem \
   </dev/null 2>/dev/null \
   | grep 'Verify return code'
@@ -573,13 +612,13 @@ Expected result:
 Verify return code: 0 (ok)
 ```
 
-Verify the public route from a different machine:
+Verify the public API route from a different machine:
 
 ```bash
 curl --fail --silent --show-error \
   --connect-timeout 5 \
   --max-time 20 \
-  https://kanger.org/health
+  https://api.kanger.org/health
 echo
 ```
 
@@ -595,7 +634,7 @@ Detailed readiness metrics remain local. A public request must be rejected:
 curl -i \
   --connect-timeout 5 \
   --max-time 20 \
-  https://kanger.org/ready
+  https://api.kanger.org/ready
 ```
 
 Expected public result:
@@ -655,7 +694,7 @@ transport logs.
 Endpoints:
 
 ```text
-/health  process liveness; public through nginx
+/health  process liveness; public through api.kanger.org
 /ready   bounded-capacity readiness; local VPS only
 ```
 
@@ -664,8 +703,8 @@ When worker and queue capacity is exhausted, KANGER Server returns explicit HTTP
 
 ## 13. Enable confirmation mail
 
-Leave mail disabled until the internal service, nginx, `server.url`, DNS and the
-complete HTTPS route at `https://kanger.org` are correct.
+Leave mail disabled until the internal service, nginx, DNS, `server.url` and the
+complete API route at `https://api.kanger.org` are correct.
 
 Then follow:
 
@@ -745,14 +784,15 @@ Interpretation:
 - public TLS completes and the HTTP request hangs: inspect the Cloudflare-to-
   origin path and Docker NAT before changing DNS.
 
-Direct origin test from another machine, bypassing public DNS and Cloudflare:
+Direct API-origin test from another machine, bypassing public DNS and
+Cloudflare:
 
 ```bash
 curl -k -i \
   --connect-timeout 5 \
   --max-time 10 \
-  --resolve kanger.org:443:<VPS_IPV4> \
-  https://kanger.org/health
+  --resolve api.kanger.org:443:<VPS_IPV4> \
+  https://api.kanger.org/health
 ```
 
 ## 15. Update and rollback
@@ -784,15 +824,14 @@ curl --fail http://127.0.0.1:1964/ready
 
 ## 16. Backup
 
-The durable state consists of:
+The durable server state consists of:
 
 ```text
 /etc/kanger-server/kanger.conf
 /var/lib/kanger-server/
 ```
 
-nginx certificate material must also be backed up separately when it is not
-managed by Let's Encrypt:
+Shared Cloudflare Origin CA material must also be backed up separately:
 
 ```text
 /etc/nginx/ssl/kanger.org/
@@ -833,7 +872,7 @@ curl --fail http://127.0.0.1:1964/health
 curl --fail http://127.0.0.1:1964/ready
 ```
 
-Restore Cloudflare Origin CA material separately under
+Restore shared Cloudflare Origin CA material separately under
 `/etc/nginx/ssl/kanger.org/`, preserving root ownership and private-key mode
 `0600`, then run:
 
@@ -847,8 +886,12 @@ sudo systemctl restart nginx
 This package qualifies build, bounded loopback HTTP, liveness/readiness,
 request correlation, overload rejection, authentication/session lifecycle,
 filesystem input confinement, atomic settings, platform TLS for outbound HTTP,
-graceful SIGTERM shutdown, reproducible systemd/nginx deployment, and bounded
-explicit confirmation-mail transport.
+graceful SIGTERM shutdown, reproducible systemd/nginx API deployment, and
+bounded explicit confirmation-mail transport.
+
+The static UI deployment for `kanger.org` and `www.kanger.org` is deliberately
+separate from the Java service boundary. It can reuse the shared certificate and
+call `https://api.kanger.org` through the explicit CORS allow-list.
 
 The historical mail helper remains present for source compatibility, but the
 active server request path intercepts new e-mail registrations and resend
