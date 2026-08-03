@@ -44,8 +44,13 @@ public abstract class Version {
     public static final int VERSION = 3;
     public static final int RELEASE = 3;
     public static final String REVISION = "7318";
-    public static final String BRANCH = buildProperty("source.branch",
-            buildProperty("branch", SOURCE_BRANCH_FALLBACK));
+
+    /** Compatibility build identity used by existing KANGER displays. */
+    public static final String BRANCH = buildProperty("branch", SOURCE_BRANCH_FALLBACK);
+
+    /** Actual source branch/build provenance when supplied separately. */
+    public static final String SOURCE_BRANCH = buildProperty("source.branch", BRANCH);
+
     public static final String DATE = buildProperty("date", SOURCE_DATE);
     public static final String BUILD_CREDIT = "Stabilized and audited in collaboration with ChatGPT.";
     public static final int YEAR = getYear(parseDate(DATE));
@@ -54,16 +59,14 @@ public abstract class Version {
     /** Historical semantic/core version. */
     public static final String CORE_VERSION_S = VERSION + "." + RELEASE;
 
-    /** Public version of the deployable server artifact. */
-    public static final String SERVER_VERSION_S = buildProperty(
-            "server.version", branchLeaf(BRANCH));
-
     /**
-     * Compatibility display value used by the existing UI and HTTP endpoints.
-     * Server builds supply an explicit server.version; source-only builds retain
-     * the historical branch-leaf fallback.
+     * Compatibility display value. Its established contract is the final
+     * segment of {@link #BRANCH}.
      */
-    public static final String VERSION_S = SERVER_VERSION_S;
+    public static final String VERSION_S = branchLeaf(BRANCH);
+
+    /** Explicit public identity of a deployable server artifact. */
+    public static final String SERVER_VERSION_S = buildProperty("server.version", VERSION_S);
 
     public static final String DATE_S = formatDate(parseDate(DATE)) + "\n" + BUILD_CREDIT;
 
