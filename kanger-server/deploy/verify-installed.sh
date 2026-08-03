@@ -2,6 +2,7 @@
 set -euo pipefail
 
 HEALTH_URL="${KANGER_HEALTH_URL:-http://127.0.0.1:1964/health}"
+READY_URL="${KANGER_READY_URL:-http://127.0.0.1:1964/ready}"
 
 for command in systemctl curl ss nginx; do
   command -v "${command}" >/dev/null 2>&1 || {
@@ -12,8 +13,13 @@ done
 
 systemctl is-enabled --quiet kanger-server.service
 systemctl is-active --quiet kanger-server.service
-curl --fail --silent --show-error --max-time 3 "${HEALTH_URL}"
-echo
+
+health="$(curl --fail --silent --show-error --max-time 3 "${HEALTH_URL}")"
+ready="$(curl --fail --silent --show-error --max-time 3 "${READY_URL}")"
+echo "${health}"
+echo "${ready}"
+echo "${health}" | grep -q '"status":"UP"'
+echo "${ready}" | grep -q '"status":"READY"'
 
 listeners="$(ss -H -ltn '( sport = :1964 )')"
 [[ -n "${listeners}" ]] || {
@@ -35,4 +41,4 @@ fi
 
 nginx -t
 
-echo "KANGER service, loopback confinement and nginx configuration are valid."
+echo "KANGER service, readiness, loopback confinement and nginx configuration are valid."
