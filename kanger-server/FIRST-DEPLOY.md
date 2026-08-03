@@ -4,7 +4,7 @@ This is the shortest qualified path for the first installation of the public
 KANGER API at:
 
 ```text
-https://api.kanger.ru
+https://kanger.org
 ```
 
 The deployment deliberately separates the internal Java service from the public
@@ -160,11 +160,20 @@ The service must not listen on `0.0.0.0:1964` or `[::]:1964`.
 At this point KANGER Server is running persistently under systemd but is not yet
 publicly exposed. This is a valid deployment checkpoint.
 
-## Phase D — prepare `api.kanger.ru`
+## Phase D — prepare `kanger.org`
 
-The public DNS record must point to the VPS origin. With Cloudflare proxying
+The root DNS record must point to the VPS origin. With Cloudflare proxying
 enabled, public DNS queries return Cloudflare addresses rather than the origin
 address; that is expected.
+
+For Cloudflare or another DNS provider, the record is equivalent to:
+
+```text
+Type: A
+Name: @
+Content: <VPS_IPV4>
+Proxy: Proxied or DNS only
+```
 
 Before enabling nginx HTTPS, make sure no other process or Docker container owns
 public TCP port `443`:
@@ -182,7 +191,7 @@ them. nginx must be the only public owner of TCP ports `80` and `443`.
 Render the supplied nginx template for the fixed API domain:
 
 ```bash
-sudo sed 's/KANGER_DOMAIN/api.kanger.ru/g' \
+sudo sed 's/KANGER_DOMAIN/kanger.org/g' \
   /tmp/kanger-deploy/nginx/kanger-server.conf.template \
   | sudo tee /etc/nginx/sites-available/kanger-server.conf >/dev/null
 ```
@@ -206,7 +215,7 @@ sudo tee /etc/nginx/sites-available/kanger-acme.conf >/dev/null <<'EOF'
 server {
     listen 80;
     listen [::]:80;
-    server_name api.kanger.ru;
+    server_name kanger.org;
 
     location /.well-known/acme-challenge/ {
         root /var/www/html;
@@ -232,14 +241,14 @@ Obtain the certificate:
 sudo certbot certonly \
   --webroot \
   -w /var/www/html \
-  -d api.kanger.ru
+  -d kanger.org
 ```
 
 The supplied nginx template already expects:
 
 ```text
-/etc/letsencrypt/live/api.kanger.ru/fullchain.pem
-/etc/letsencrypt/live/api.kanger.ru/privkey.pem
+/etc/letsencrypt/live/kanger.org/fullchain.pem
+/etc/letsencrypt/live/kanger.org/privkey.pem
 ```
 
 Remove the temporary ACME-only site after the certificate exists:
@@ -250,62 +259,62 @@ sudo rm -f /etc/nginx/sites-enabled/kanger-acme.conf
 
 ### TLS option 2 — Cloudflare Origin CA
 
-This option is valid only when `api.kanger.ru` is proxied through Cloudflare and
+This option is valid only when `kanger.org` is proxied through Cloudflare and
 Cloudflare SSL/TLS mode is `Full (strict)`.
 
 On the machine holding the files, verify the certificate before copying it:
 
 ```bash
 openssl x509 \
-  -in api.kanger.ru.pem \
+  -in kanger.org.pem \
   -noout -subject -issuer -dates -ext subjectAltName
 
 openssl verify \
   -CAfile origin_ca_rsa_root.pem \
-  api.kanger.ru.pem
+  kanger.org.pem
 
-openssl x509 -in api.kanger.ru.pem -pubkey -noout \
+openssl x509 -in kanger.org.pem -pubkey -noout \
   | openssl pkey -pubin -outform DER \
   | shasum -a 256
 
-openssl pkey -in api.kanger.ru.key -pubout -outform DER \
+openssl pkey -in kanger.org.key -pubout -outform DER \
   | shasum -a 256
 ```
 
 The two SHA-256 values must match, and the certificate SAN must contain
-`api.kanger.ru` or a matching wildcard.
+`kanger.org`.
 
 Copy the certificate and private key to the VPS, then install them:
 
 ```bash
 sudo install -d \
   -o root -g root -m 0700 \
-  /etc/nginx/ssl/api.kanger.ru
+  /etc/nginx/ssl/kanger.org
 
 sudo install \
   -o root -g root -m 0644 \
-  /tmp/api.kanger.ru.pem \
-  /etc/nginx/ssl/api.kanger.ru/api.kanger.ru.pem
+  /tmp/kanger.org.pem \
+  /etc/nginx/ssl/kanger.org/kanger.org.pem
 
 sudo install \
   -o root -g root -m 0600 \
-  /tmp/api.kanger.ru.key \
-  /etc/nginx/ssl/api.kanger.ru/api.kanger.ru.key
+  /tmp/kanger.org.key \
+  /etc/nginx/ssl/kanger.org/kanger.org.key
 ```
 
 Replace the Let's Encrypt paths in the rendered nginx configuration:
 
 ```bash
 sudo sed -i \
-  -e 's#/etc/letsencrypt/live/api.kanger.ru/fullchain.pem#/etc/nginx/ssl/api.kanger.ru/api.kanger.ru.pem#' \
-  -e 's#/etc/letsencrypt/live/api.kanger.ru/privkey.pem#/etc/nginx/ssl/api.kanger.ru/api.kanger.ru.key#' \
+  -e 's#/etc/letsencrypt/live/kanger.org/fullchain.pem#/etc/nginx/ssl/kanger.org/kanger.org.pem#' \
+  -e 's#/etc/letsencrypt/live/kanger.org/privkey.pem#/etc/nginx/ssl/kanger.org/kanger.org.key#' \
   /etc/nginx/sites-available/kanger-server.conf
 ```
 
 Remove temporary private-key copies after installation:
 
 ```bash
-rm -f /tmp/api.kanger.ru.key /tmp/api.kanger.ru.pem
+rm -f /tmp/kanger.org.key /tmp/kanger.org.pem
 ```
 
 A Cloudflare Origin CA certificate is trusted by Cloudflare, not necessarily by
@@ -335,13 +344,13 @@ Verify the origin locally, bypassing public DNS and Cloudflare:
 
 ```bash
 curl -k --fail --silent --show-error \
-  --resolve api.kanger.ru:443:127.0.0.1 \
-  https://api.kanger.ru/health
+  --resolve kanger.org:443:127.0.0.1 \
+  https://kanger.org/health
 echo
 
 curl -k --fail --silent --show-error \
-  --resolve api.kanger.ru:443:127.0.0.1 \
-  https://api.kanger.ru/ready
+  --resolve kanger.org:443:127.0.0.1 \
+  https://kanger.org/ready
 echo
 ```
 
@@ -349,7 +358,7 @@ Then verify the public route from another machine:
 
 ```bash
 curl --fail --silent --show-error \
-  https://api.kanger.ru/health
+  https://kanger.org/health
 echo
 ```
 
@@ -360,7 +369,7 @@ Expected liveness status:
 ```
 
 Detailed `/ready` counters remain local to the VPS. A public request to
-`https://api.kanger.ru/ready` must be rejected by nginx with HTTP `403`.
+`https://kanger.org/ready` must be rejected by nginx with HTTP `403`.
 
 ## Diagnosis
 
@@ -388,4 +397,4 @@ server.email.mode=disabled
 
 Password-only registration and authentication remain available. Configure SMTP
 only after the internal service and the complete public HTTPS boundary at
-`https://api.kanger.ru` have both been verified.
+`https://kanger.org` have both been verified.
