@@ -3,8 +3,9 @@
 Confirmation mail is disabled by default. The server starts, authenticates
 users without e-mail, and passes all local/VPS health checks without SMTP.
 
-Enable mail only after the internal service and nginx public URL are working.
-The active configuration is `/etc/kanger-server/kanger.conf` on the VPS or
+Enable mail only after the internal service and the public API URL at
+`https://api.kanger.org` are working. The active configuration is
+`/etc/kanger-server/kanger.conf` on the VPS or
 `kanger-server/run/local/home/kanger.conf` in the local sandbox.
 
 ## Security modes
@@ -30,7 +31,7 @@ or wildcard-trust setting.
 ## STARTTLS profile
 
 ```properties
-server.url=https://kanger.example.org
+server.url=https://api.kanger.org
 server.email.mode=starttls
 server.email.host=smtp.example.org
 server.email.port=587
@@ -49,7 +50,7 @@ server.email.queue.capacity=64
 ## SMTPS profile
 
 ```properties
-server.url=https://kanger.example.org
+server.url=https://api.kanger.org
 server.email.mode=smtps
 server.email.host=smtp.example.org
 server.email.port=465
@@ -108,7 +109,8 @@ Expected behavior:
 2. the API reports that confirmation mail was queued;
 3. the mail is sent by the bounded server mail executor rather than the HTTP
    request thread;
-4. the confirmation link uses `server.url`;
+4. the confirmation link uses `server.url` and therefore points to
+   `https://api.kanger.org`;
 5. resend issues a new one-time confirmation token and queues one message;
 6. the previous confirmation token is invalidated by the token store.
 
