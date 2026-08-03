@@ -9,13 +9,14 @@ server.queue.capacity=128
 server.request.max.body.bytes=1048576
 server.watchdog.period=1000
 
-# Browser clients require exact origins. Keep CORS disabled until the final
-# public application origin is known.
+# Browser clients require exact origins. The public UI is served separately from
+# the API, so allow the exact UI origins that will call https://api.kanger.org.
 # server.cors.allowed.origin.1=https://kanger.org
+# server.cors.allowed.origin.2=https://www.kanger.org
 # server.cors.allow.credentials=false
 
-# Public URL used in generated confirmation links.
-# server.url=https://kanger.org
+# Public API URL used in generated confirmation links.
+# server.url=https://api.kanger.org
 
 # Confirmation mail is disabled until a complete explicit profile is supplied.
 # Choose exactly one mode: disabled, starttls, or smtps.
