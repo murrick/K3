@@ -22,6 +22,7 @@
         <org.json.version>20201115</org.json.version>
         <javax.mail.version>1.6.2</javax.mail.version>
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
+        <kanger.server.artifact.version>server-0.12</kanger.server.artifact.version>
     </properties>
 
     <dependencies>
@@ -152,9 +153,20 @@
                                     <filterchain><striplinebreaks/></filterchain>
                                 </loadresource>
 
+                                <fail message="KANGER Server artifact version must not be empty">
+                                    <condition>
+                                        <or>
+                                            <not><isset property="kanger.server.artifact.version"/></not>
+                                            <equals arg1="${kanger.server.artifact.version}" arg2=""/>
+                                        </or>
+                                    </condition>
+                                </fail>
+
                                 <mkdir dir="${project.build.directory}/generated-resources/kanger/org/kanger"/>
                                 <echo file="${project.build.directory}/generated-resources/kanger/org/kanger/build.properties"
                                       message="branch=${kanger.build.branch}&#10;date=${kanger.build.time}&#10;"/>
+                                <echo file="${project.build.directory}/generated-resources/kanger/org/kanger/server-build.properties"
+                                      message="artifact=${kanger.server.artifact.version}&#10;source.branch=${kanger.build.branch}&#10;date=${kanger.build.time}&#10;"/>
                             </target>
                         </configuration>
                     </execution>
