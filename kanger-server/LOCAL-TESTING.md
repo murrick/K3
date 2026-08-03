@@ -15,7 +15,7 @@ intended for API development and qualification on macOS or Linux.
 
 ```bash
 git fetch origin
-git switch server/0.10-vps-deployment
+git switch server/0.11-mail-transport
 ```
 
 ## 2. Start the isolated local server
@@ -45,8 +45,8 @@ KANGER_LOCAL_REBUILD=0 bash kanger-server/scripts/run-local.sh
 ```
 
 Stop the server with `Ctrl+C`. The normal process shutdown hook stops the HTTP
-listener, closes active user runtime/storage state and removes the active
-marker.
+listener, drains the bounded mail executor, closes active user runtime/storage
+state and removes the active marker.
 
 ## 3. Verify the transport
 
@@ -57,7 +57,7 @@ curl --fail --silent --show-error http://127.0.0.1:1964/health
 curl --fail --silent --show-error http://127.0.0.1:1964/version
 ```
 
-Or run the supplied transport smoke check:
+Or run:
 
 ```bash
 bash kanger-server/scripts/smoke-local.sh
@@ -69,51 +69,55 @@ Expected health response shape:
 {"result":"OK","status":"UP","version":"..."}
 ```
 
-Expected version response shape:
-
-```json
-{"result":"OK","version":"..."}
-```
-
 `localhost` is equivalent for interactive use:
 
 ```text
 http://localhost:1964/health
 ```
 
-The explicit `127.0.0.1` form is used in scripts to make the IPv4 loopback
-boundary unambiguous.
-
 ## 4. Verify authentication and session lifecycle
 
-With the server still running, execute:
+With the server still running:
 
 ```bash
 bash kanger-server/scripts/smoke-auth-local.sh
 ```
 
-The authenticated smoke scenario:
+The scenario registers a unique user without e-mail, receives a cryptographic
+session token, executes `ping`, logs out, verifies rejection of the old token,
+logs in again, verifies token rotation and closes the new session.
 
-1. registers a unique temporary user in the isolated sandbox;
-2. receives a cryptographic session token;
-3. executes an authenticated `ping` command;
-4. logs out and verifies that the old token is rejected;
-5. logs in again using the stored PBKDF2 credential;
-6. verifies that a new session token is issued;
-7. executes another authenticated command and closes the session.
+The default local configuration contains:
 
-The script does not send e-mail and does not require SMTP settings. Every run
-creates a unique smoke user inside the local sandbox. Remove the sandbox as
-described below when those records are no longer needed.
+```properties
+server.email.mode=disabled
+```
 
-When using another local port, pass the base URL explicitly:
+Therefore the smoke does not connect to SMTP and remains deterministic.
+
+When using another local port:
 
 ```bash
 KANGER_BASE_URL=http://127.0.0.1:1965 \
   bash kanger-server/scripts/smoke-auth-local.sh
 ```
 
-## 5. Change local settings
+## 5. Verify disabled-mail admission
+
+With the default configuration, a registration containing a non-empty e-mail
+address must return a normal JSON error before the legacy processor creates its
+historical mail thread. Password-only registration remains available.
+
+SMTP modes and functional mail testing are documented in:
+
+```text
+kanger-server/MAIL-CONFIGURATION.md
+```
+
+Use a dedicated test mailbox when enabling mail locally. Never commit SMTP
+credentials into `config/kanger.local.conf.example` or any repository file.
+
+## 6. Change local settings
 
 Edit:
 
@@ -121,16 +125,15 @@ Edit:
 kanger-server/run/local/home/kanger.conf
 ```
 
-For example, to use another port:
+For example:
 
 ```properties
 server.port=1965
 ```
 
-Restart the server after changing settings. Pass the same address to either
-smoke script through `KANGER_BASE_URL`.
+Restart the server after changing settings.
 
-## 6. Reset the local sandbox
+## 7. Reset the local sandbox
 
 Stop the server, then remove only the isolated runtime directory:
 
@@ -143,15 +146,13 @@ normal operating-system home directory are unaffected.
 
 ## Current qualification boundary
 
-Automated Java 8/21 qualification covers the bounded loopback transport,
-credential migration, cryptographic sessions, per-user serialization,
-logout/timeout cleanup, filesystem input confinement, atomic settings, platform
-TLS for outbound HTTP and graceful SIGTERM shutdown.
+Automated Java 8/21 qualification covers bounded loopback HTTP, credential
+migration, cryptographic sessions, per-user serialization, logout/timeout
+cleanup, filesystem input confinement, atomic settings, platform TLS for
+outbound HTTP, graceful SIGTERM shutdown, deployment assets and the bounded
+explicit mail transport.
 
-GitHub Actions also starts the packaged JAR as a real process, performs the
-complete authenticated smoke, sends SIGTERM, checks active-marker removal and
-verifies that the HTTP port closes.
-
-The VPS deployment package under `kanger-server/deploy` is qualified for shell
-syntax and architecture invariants. SMTP remains intentionally unconfigured
-until its dedicated mail-transport hardening slice is completed.
+The process smoke starts the packaged JAR, executes the complete authenticated
+lifecycle, sends SIGTERM, checks active-marker removal and verifies that the
+HTTP port closes. Mail-specific tests use an injected sender and never create an
+external SMTP connection.
