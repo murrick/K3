@@ -164,7 +164,7 @@
 
                                 <mkdir dir="${project.build.directory}/generated-resources/kanger/org/kanger"/>
                                 <echo file="${project.build.directory}/generated-resources/kanger/org/kanger/build.properties"
-                                      message="branch=${kanger.build.branch}&#10;source.branch=${kanger.build.branch}&#10;server.version=${kanger.server.artifact.version}&#10;date=${kanger.build.time}&#10;"/>
+                                      message="branch=${kanger.server.artifact.version}&#10;source.branch=${kanger.build.branch}&#10;server.version=${kanger.server.artifact.version}&#10;date=${kanger.build.time}&#10;"/>
                             </target>
                         </configuration>
                     </execution>
