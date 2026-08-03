@@ -14,8 +14,32 @@ server.watchdog.period=1000
 # server.cors.allowed.origin.1=https://kanger.example.org
 # server.cors.allow.credentials=false
 
-# Public URL used in generated links.
+# Public URL used in generated confirmation links.
 # server.url=https://kanger.example.org
 
-# SMTP remains intentionally unconfigured until the dedicated mail-transport
-# hardening slice is deployed.
+# Confirmation mail is disabled until a complete explicit profile is supplied.
+# Choose exactly one mode: disabled, starttls, or smtps.
+server.email.mode=disabled
+server.email.debug=false
+server.email.auth=true
+server.email.connection.timeout.millis=10000
+server.email.read.timeout.millis=10000
+server.email.write.timeout.millis=10000
+server.email.workers=1
+server.email.queue.capacity=64
+
+# STARTTLS example (typically port 587):
+# server.email.mode=starttls
+# server.email.host=smtp.example.org
+# server.email.port=587
+# server.email.from=noreply@example.org
+# server.email.login=noreply@example.org
+# server.email.password=CHANGE_ME
+
+# Implicit TLS / SMTPS example (typically port 465):
+# server.email.mode=smtps
+# server.email.host=smtp.example.org
+# server.email.port=465
+# server.email.from=noreply@example.org
+# server.email.login=noreply@example.org
+# server.email.password=CHANGE_ME
