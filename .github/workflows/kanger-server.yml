@@ -56,6 +56,51 @@ jobs:
           unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
             | grep -q '^Main-Class: org.kanger.Kanger'
 
+      - name: Run authenticated loopback smoke
+        if: matrix.java == '21'
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime="${RUNNER_TEMP}/kanger-server-smoke"
+          mkdir -p "${runtime}/home"
+          cat > "${runtime}/home/kanger.conf" <<'EOF'
+          server.bind.address=127.0.0.1
+          server.port=1964
+          server.backlog=16
+          server.maxthreads=4
+          server.queue.capacity=16
+          server.request.max.body.bytes=1048576
+          server.watchdog.period=1000
+          EOF
+
+          java \
+            -Duser.home="${runtime}/home" \
+            -jar kanger-server/target/kanger-server.jar \
+            >"${runtime}/server.log" 2>&1 &
+          server_pid=$!
+
+          cleanup() {
+            kill "${server_pid}" 2>/dev/null || true
+            wait "${server_pid}" 2>/dev/null || true
+            echo "--- KANGER Server smoke log ---"
+            cat "${runtime}/server.log"
+          }
+          trap cleanup EXIT
+
+          ready=false
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent \
+              http://127.0.0.1:1964/health >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "${ready}" = true
+
+          KANGER_BASE_URL=http://127.0.0.1:1964 \
+            bash kanger-server/scripts/smoke-auth-local.sh
+
       - name: Upload Java 21 distribution
         if: matrix.java == '21'
         uses: actions/upload-artifact@v7
