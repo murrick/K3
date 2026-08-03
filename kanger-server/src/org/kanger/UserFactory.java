@@ -27,23 +27,21 @@ package org.kanger;
 
 import org.kanger.enums.Enums;
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.security.ConfirmationTokenStore;
 import org.kanger.security.CredentialStore;
-import org.kanger.security.SecureTokens;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * Server-side user, credential and session lifecycle authority.
  */
 public class UserFactory {
     public static final int MAX_HISTORY_SIZE = 512;
@@ -52,14 +50,14 @@ public class UserFactory {
 
     public static String rootDir = "KANGER";
 
-    private static final Map<String, IUser> users = new ConcurrentHashMap<String, IUser>();
-    private static final Map<Long, List<String>> history = new ConcurrentHashMap<Long, List<String>>();
-    private static final Map<Long, Long> activity = new ConcurrentHashMap<Long, Long>();
-    private static final TimerThread timerThread = new TimerThread(activity);
-    private static final ThreadLocal<String> pendingConfirmationToken = new ThreadLocal<String>();
+    private static final ConcurrentHashMap<Long, List<String>> history =
+            new ConcurrentHashMap<Long, List<String>>();
+    private static final ThreadLocal<String> pendingConfirmationToken =
+            new ThreadLocal<String>();
 
     private static CredentialStore credentialStore;
     private static ConfirmationTokenStore confirmationTokenStore;
+    private static SessionRegistry sessions;
 
     static {
         if (System.getenv().containsKey("KANGER_HOME")) {
@@ -70,35 +68,74 @@ public class UserFactory {
         credentialStore = new CredentialStore(Paths.get(credentialFile));
         confirmationTokenStore = new ConfirmationTokenStore(Paths.get(
                 new File(credentialFile).getParent(), "confirmations.conf"));
+        sessions = new SessionRegistry(
+                INACTIVITY_TIME,
+                new SessionRegistry.TimeSource() {
+                    @Override
+                    public long now() {
+                        return System.currentTimeMillis();
+                    }
+                },
+                new SessionRegistry.RuntimeCloser() {
+                    @Override
+                    public void close(IUser user) throws Exception {
+                        closeRuntime(user);
+                    }
+                });
 
         Timer timer = new Timer(true);
-        timer.scheduleAtFixedRate(timerThread, 0, INACTIVITY_TIME / 10);
+        timer.scheduleAtFixedRate(new TimerThread(), 0, INACTIVITY_TIME / 10);
     }
 
+    /**
+     * Compatibility lookup. Mutable request workflows must be wrapped by the
+     * HTTP boundary so the registry lock remains held for the complete call.
+     */
     public static IUser getUser(String token) throws Exception {
-        if (users.containsKey(token)) {
-            IUser user = users.get(token);
-            activity.put(user.getId(), System.currentTimeMillis());
-            return user;
+        return sessions.execute(token, new SessionRegistry.UserAction<IUser>() {
+            @Override
+            public IUser run(IUser user) {
+                return user;
+            }
+        });
+    }
+
+    static <T> T executeWithSessionIfPresent(String token,
+                                             SessionRegistry.Work<T> work)
+            throws Exception {
+        return sessions.executeIfPresent(token, work);
+    }
+
+    static <T> T executeWithAuthenticatedUserIfPresent(String login,
+                                                       String password,
+                                                       SessionRegistry.Work<T> work)
+            throws Exception {
+        try {
+            long userId = credentialStore.authenticate(login, password);
+            return sessions.executeUserIfPresent(userId, work);
+        } catch (AuthenticationErrorException ex) {
+            return work.run();
         }
-        throw new AuthenticationErrorException("token " + token);
     }
 
     public static String addUser(IUser user) {
-        for (Map.Entry<String, IUser> entry : users.entrySet()) {
-            if (entry.getValue().getId() == user.getId()) {
-                users.remove(entry.getKey());
-                break;
-            }
-        }
-        String token = SecureTokens.random256();
-        users.put(token, user);
-        activity.put(user.getId(), System.currentTimeMillis());
-        return token;
+        return sessions.open(user);
     }
 
-    public static void dropUser(IUser user) {
-        dropUser(user.getId());
+    public static void dropUser(IUser user) throws Exception {
+        if (user != null) {
+            sessions.closeUser(user.getId());
+        }
+    }
+
+    public static void dropUser(Long id) throws Exception {
+        if (id != null) {
+            sessions.closeUser(id.longValue());
+        }
+    }
+
+    public static void logout(String token) throws Exception {
+        sessions.closeToken(token);
     }
 
     /**
@@ -109,7 +146,8 @@ public class UserFactory {
         return confirmationTokenStore.issue(user.getId(), CONFIRMATION_TIME);
     }
 
-    public static void updateUserToken(IUser user, String login, String password) throws Exception {
+    public static void updateUserToken(IUser user, String login, String password)
+            throws Exception {
         credentialStore.update(user.getId(), login, password);
     }
 
@@ -122,14 +160,7 @@ public class UserFactory {
     }
 
     private static IUser getUserById(long userId) throws Exception {
-        IUser user = null;
-        for (Map.Entry<String, IUser> entry : users.entrySet()) {
-            if (entry.getValue().getId() == userId) {
-                user = entry.getValue();
-                break;
-            }
-        }
-
+        IUser user = sessions.findActiveUser(userId);
         if (user == null) {
             user = new User();
             user.setProperty("user.home", getHome());
@@ -176,11 +207,11 @@ public class UserFactory {
 
     /**
      * Transitional registration hook preserving the historical QueryProcessor
-     * call order. The returned value is now an opaque one-time confirmation
-     * token and is never derived from login or password.
+     * call order. The returned value is an opaque one-time confirmation token
+     * and is never derived from login or password.
      */
     public static String token(String login, String password) {
-        String token = SecureTokens.random256();
+        String token = org.kanger.security.SecureTokens.random256();
         pendingConfirmationToken.set(token);
         return token;
     }
@@ -209,37 +240,58 @@ public class UserFactory {
     }
 
     public static void addHistory(IUser user, String record) throws Exception {
-        if (!history.containsKey(user.getId())) {
-            history.put(user.getId(), new ArrayList<String>());
+        List<String> records = history.get(user.getId());
+        if (records == null) {
+            List<String> created = new ArrayList<String>();
+            List<String> previous = history.putIfAbsent(user.getId(), created);
+            records = previous == null ? created : previous;
         }
-        history.get(user.getId()).add(record);
-        while (history.get(user.getId()).size() > Integer.parseInt(
+        records.add(record);
+        while (records.size() > Integer.parseInt(
                 user.getProperty("user.history.size", MAX_HISTORY_SIZE + ""))) {
-            history.get(user.getId()).remove(0);
+            records.remove(0);
         }
     }
 
     public static List<String> getHistory(IUser user) {
-        if (history.containsKey(user.getId())) {
-            return history.get(user.getId());
+        List<String> records = history.get(user.getId());
+        if (records == null) {
+            return new ArrayList<String>();
         }
-        return new ArrayList<String>();
+        return new ArrayList<String>(records);
     }
 
-    public static void dropUser(Long id) {
-        for (Map.Entry<String, IUser> entry : users.entrySet()) {
-            if (entry.getValue().getId() == id.longValue()) {
-                users.remove(entry.getKey());
-                break;
-            }
+    static void expireInactiveSessions() {
+        try {
+            sessions.expireInactive();
+        } catch (Exception ex) {
+            Watchdog.err("Unable to expire inactive user session: " + ex);
         }
-        history.remove(id);
-        activity.remove(id);
     }
 
     public static void shutdown() {
-        while (!users.isEmpty()) {
-            dropUser(users.values().iterator().next().getId());
+        try {
+            sessions.shutdown();
+        } catch (Exception ex) {
+            Watchdog.err("Unable to close all user sessions: " + ex);
+        }
+    }
+
+    private static void closeRuntime(IUser user) throws Exception {
+        Exception failure = null;
+        try {
+            IMind mind = user.getCurrentMind();
+            if (mind != null) {
+                mind.closeStorage();
+            }
+        } catch (Exception ex) {
+            failure = ex;
+        } finally {
+            user.setCurrentMind(null);
+            history.remove(user.getId());
+        }
+        if (failure != null) {
+            throw failure;
         }
     }
 
