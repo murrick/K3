@@ -15,3 +15,13 @@ server.watchdog.period=1000
 # Add an exact browser origin only when a local web client needs it, for example:
 # server.cors.allowed.origin.1=http://localhost:3000
 # server.cors.allow.credentials=false
+
+# Confirmation mail is explicitly disabled in the local sandbox. Supported
+# production modes are starttls and smtps; never enable both.
+server.email.mode=disabled
+server.email.debug=false
+server.email.connection.timeout.millis=10000
+server.email.read.timeout.millis=10000
+server.email.write.timeout.millis=10000
+server.email.workers=1
+server.email.queue.capacity=64
