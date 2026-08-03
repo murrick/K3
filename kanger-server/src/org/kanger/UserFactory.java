@@ -26,7 +26,6 @@
 package org.kanger;
 
 import org.kanger.enums.Enums;
-import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.security.ConfirmationTokenStore;
@@ -110,12 +109,8 @@ public class UserFactory {
                                                        String password,
                                                        SessionRegistry.Work<T> work)
             throws Exception {
-        try {
-            long userId = credentialStore.authenticate(login, password);
-            return sessions.executeUserIfPresent(userId, work);
-        } catch (AuthenticationErrorException ex) {
-            return work.run();
-        }
+        long userId = credentialStore.authenticate(login, password);
+        return sessions.executeUserIfPresent(userId, work);
     }
 
     public static String addUser(IUser user) {
