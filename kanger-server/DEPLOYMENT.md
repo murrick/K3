@@ -1,12 +1,20 @@
 # KANGER Server VPS deployment
 
 This guide deploys the standalone KANGER Server JAR on a Debian/Ubuntu-style
-systemd host behind an existing nginx installation.
+systemd host behind nginx. The public API endpoint is fixed throughout this
+guide as:
+
+```text
+https://api.kanger.ru
+```
 
 Target topology:
 
 ```text
 Internet
+   |
+   v
+Cloudflare or direct DNS
    |
    v
 nginx :80/:443
@@ -29,13 +37,19 @@ On the development machine, from the repository root:
 
 ```bash
 git fetch origin
-git switch server/0.11-mail-transport
+git switch server/0.12-operational-boundary
+
+git status --short
 
 mvn -B -ntp \
   -f kanger-server/pom.xml \
   -Dkanger.build.branch.override=deployment \
   clean verify
 ```
+
+Do not build from a working tree with unexplained local changes. IDE metadata
+such as `.idea` files is not part of the server artifact and should not be mixed
+into deployment changes.
 
 Start the isolated local process:
 
@@ -50,6 +64,8 @@ bash kanger-server/scripts/smoke-local.sh
 bash kanger-server/scripts/smoke-auth-local.sh
 ```
 
+Stop the local process with `Ctrl+C`.
+
 The deployable artifact is:
 
 ```text
@@ -58,14 +74,31 @@ kanger-server/target/kanger-server.jar
 
 ## 2. Copy the distribution to the VPS
 
-Replace `user@vps` with the actual SSH destination:
+Set the actual SSH destination and port:
 
 ```bash
-scp kanger-server/target/kanger-server.jar \
-  user@vps:/tmp/kanger-server.jar
+SSH_TARGET=user@vps
+SSH_PORT=22
+```
 
-scp -r kanger-server/deploy \
-  user@vps:/tmp/kanger-deploy
+Prepare a clean temporary deployment directory. This avoids accidental nested
+`deploy/deploy` directories from a previous copy:
+
+```bash
+ssh -p "${SSH_PORT}" "${SSH_TARGET}" \
+  'rm -rf /tmp/kanger-deploy && mkdir -m 700 /tmp/kanger-deploy'
+```
+
+Copy the qualified JAR and deployment assets:
+
+```bash
+scp -P "${SSH_PORT}" \
+  kanger-server/target/kanger-server.jar \
+  "${SSH_TARGET}:/tmp/kanger-server.jar"
+
+scp -P "${SSH_PORT}" -r \
+  kanger-server/deploy/. \
+  "${SSH_TARGET}:/tmp/kanger-deploy/"
 ```
 
 The deployment directory contains:
@@ -78,7 +111,13 @@ systemd/kanger-server.service
 nginx/kanger-server.conf.template
 ```
 
-## 3. Verify Java on the VPS
+Connect to the VPS:
+
+```bash
+ssh -p "${SSH_PORT}" "${SSH_TARGET}"
+```
+
+## 3. Verify Java and host prerequisites
 
 KANGER Server is qualified on Java 8 and Java 21. Java 21 is recommended for
 the service installation.
@@ -87,6 +126,7 @@ the service installation.
 java -version
 readlink -f "$(command -v java)"
 test -x /usr/bin/java
+command -v curl systemctl nginx
 ```
 
 When Java is absent on a compatible Debian/Ubuntu release:
@@ -96,7 +136,8 @@ sudo apt update
 sudo apt install -y openjdk-21-jre-headless curl
 ```
 
-Do not continue until `java -version` and `/usr/bin/java` are valid.
+Do not continue until `java -version`, `/usr/bin/java`, `curl`, `systemctl` and
+`nginx` are valid.
 
 ## 4. Install the internal service
 
@@ -118,22 +159,67 @@ The installer:
 6. creates `/etc/kanger-server/kanger.conf` only on first installation;
 7. links that configuration into the service `user.home`;
 8. enables and starts the service;
-9. waits for `http://127.0.0.1:1964/health`;
-10. restores the previous JAR if the health check fails.
+9. waits for both `http://127.0.0.1:1964/health` and
+   `http://127.0.0.1:1964/ready`;
+10. restores the previous JAR automatically if qualification fails.
 
-Check the internal endpoint:
+A manual `curl` issued during the short restart window may briefly fail before
+the Java listener is open. The installer itself waits for the qualified
+liveness and readiness endpoints before reporting success.
+
+Check the internal endpoints:
 
 ```bash
 curl --fail --silent --show-error \
   http://127.0.0.1:1964/health
 echo
+
+curl --fail --silent --show-error \
+  http://127.0.0.1:1964/ready
+echo
 ```
 
-Expected response shape:
+Expected liveness response shape:
 
 ```json
 {"result":"OK","status":"UP","version":"..."}
 ```
+
+Expected readiness response shape includes `status: READY` and bounded executor
+counters such as `active_requests`, `queued_requests`, `queue_capacity`,
+`queue_remaining`, `failed_requests`, and `overload_rejections`.
+
+Verify systemd and the listener:
+
+```bash
+sudo systemctl status kanger-server.service --no-pager
+sudo systemctl is-enabled kanger-server.service
+sudo systemctl is-active kanger-server.service
+sudo ss -ltnp | grep 1964
+sudo bash /tmp/kanger-deploy/verify-installed.sh
+```
+
+The KANGER listener must be equivalent to:
+
+```text
+127.0.0.1:1964
+```
+
+Linux may display the same IPv4 loopback endpoint in IPv4-mapped IPv6 notation:
+
+```text
+[::ffff:127.0.0.1]:1964
+```
+
+It must not appear as:
+
+```text
+0.0.0.0:1964
+[::]:1964
+```
+
+At this point KANGER Server is running persistently under systemd but is not yet
+publicly exposed. This is a valid deployment checkpoint.
 
 ## 5. Review the service configuration
 
@@ -151,44 +237,287 @@ server.port=1964
 server.email.mode=disabled
 ```
 
+When a public base URL setting is used, set it to:
+
+```properties
+server.url=https://api.kanger.ru
+```
+
 After changing configuration:
 
 ```bash
 sudo systemctl restart kanger-server.service
 sudo systemctl status kanger-server.service --no-pager
+curl --fail http://127.0.0.1:1964/health
+curl --fail http://127.0.0.1:1964/ready
 ```
 
-Never change `server.bind.address` to `0.0.0.0` or a public VPS address. nginx is
-the public boundary.
+Never change `server.bind.address` to `0.0.0.0` or to a public VPS address.
+nginx is the public boundary.
 
-## 6. Configure nginx
+## 6. Configure DNS for `api.kanger.ru`
 
-Choose the public domain:
+The DNS record for `api.kanger.ru` must point to the VPS origin IPv4 address.
 
-```bash
-DOMAIN=kanger.example.org
-```
-
-Copy and render the supplied template:
-
-```bash
-sudo cp \
-  /tmp/kanger-deploy/nginx/kanger-server.conf.template \
-  /etc/nginx/sites-available/kanger-server.conf
-
-sudo sed -i "s/KANGER_DOMAIN/${DOMAIN}/g" \
-  /etc/nginx/sites-available/kanger-server.conf
-```
-
-Review the certificate paths in the rendered file:
+For direct DNS:
 
 ```text
-/etc/letsencrypt/live/<domain>/fullchain.pem
-/etc/letsencrypt/live/<domain>/privkey.pem
+Type: A
+Name: api
+Content: <VPS_IPV4>
+Proxy: DNS only
 ```
 
-They must point to certificates already provisioned for the domain. Do not
-enable the HTTPS block until the certificate and key exist.
+For Cloudflare:
+
+```text
+Type: A
+Name: api
+Content: <VPS_IPV4>
+Proxy: Proxied
+```
+
+With Cloudflare proxying enabled, public `dig` queries return Cloudflare edge
+addresses rather than `<VPS_IPV4>`. That is expected.
+
+Useful checks:
+
+```bash
+dig +short A api.kanger.ru
+dig +short NS kanger.ru
+```
+
+A registrar panel may describe a domain as not delegated to that registrar's
+own DNS service even while the domain is correctly delegated to Cloudflare or
+another authoritative DNS provider. The authoritative NS chain and successful
+public DNS answers are the source of truth.
+
+## 7. Reserve public TCP ports for nginx
+
+Before enabling public HTTPS, confirm that no other process or container owns
+TCP ports `80` or `443`:
+
+```bash
+sudo ss -ltnp | grep -E ':(80|443)\b' || true
+sudo docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}' 2>/dev/null || true
+sudo iptables -t nat -S 2>/dev/null | grep -- '--dport 443' || true
+```
+
+A Docker publication such as:
+
+```text
+0.0.0.0:443->443/tcp
+```
+
+creates a DNAT rule and can divert all external HTTPS traffic away from nginx
+even when nginx works correctly on loopback. A typical packet trace then shows
+traffic arriving on the public interface and being forwarded to a container
+address.
+
+Identify the owner with:
+
+```bash
+sudo docker inspect $(sudo docker ps -q) \
+  --format '{{.Name}} {{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}} {{json .HostConfig.PortBindings}}' \
+  | grep 443 || true
+```
+
+Stop, remove or remap an unneeded conflicting container. Do not delete generated
+Docker iptables rules manually: Docker will recreate them. nginx must be the
+only public owner of TCP ports `80` and `443`.
+
+## 8. Render the nginx configuration
+
+Render the supplied template for the fixed API domain:
+
+```bash
+sudo sed 's/KANGER_DOMAIN/api.kanger.ru/g' \
+  /tmp/kanger-deploy/nginx/kanger-server.conf.template \
+  | sudo tee /etc/nginx/sites-available/kanger-server.conf >/dev/null
+```
+
+The template:
+
+- redirects HTTP to HTTPS;
+- proxies `/health` publicly;
+- restricts detailed `/ready` metrics to local VPS requests;
+- forwards `X-Request-ID`, client address and original scheme;
+- keeps the Java service private on `127.0.0.1:1964`.
+
+Choose exactly one TLS option below before enabling the site.
+
+## 9A. TLS option 1 — Let's Encrypt
+
+Use this option when the VPS should obtain and renew a publicly trusted
+certificate directly.
+
+Install Certbot and prepare the webroot:
+
+```bash
+sudo apt update
+sudo apt install -y certbot
+sudo install -d -m 0755 /var/www/html/.well-known/acme-challenge
+```
+
+Create a temporary HTTP-only ACME site:
+
+```bash
+sudo tee /etc/nginx/sites-available/kanger-acme.conf >/dev/null <<'EOF'
+server {
+    listen 80;
+    listen [::]:80;
+    server_name api.kanger.ru;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 404;
+    }
+}
+EOF
+
+sudo ln -sfn \
+  /etc/nginx/sites-available/kanger-acme.conf \
+  /etc/nginx/sites-enabled/kanger-acme.conf
+
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+Make sure public TCP/80 reaches this nginx instance, then obtain the certificate:
+
+```bash
+sudo certbot certonly \
+  --webroot \
+  -w /var/www/html \
+  -d api.kanger.ru
+```
+
+The supplied nginx template already expects:
+
+```text
+/etc/letsencrypt/live/api.kanger.ru/fullchain.pem
+/etc/letsencrypt/live/api.kanger.ru/privkey.pem
+```
+
+Remove the temporary ACME-only site after the certificate exists:
+
+```bash
+sudo rm -f /etc/nginx/sites-enabled/kanger-acme.conf
+```
+
+Test automatic renewal without changing the certificate:
+
+```bash
+sudo certbot renew --dry-run
+```
+
+## 9B. TLS option 2 — Cloudflare Origin CA
+
+Use this option only when `api.kanger.ru` is proxied through Cloudflare.
+Configure Cloudflare SSL/TLS mode as:
+
+```text
+Full (strict)
+```
+
+A typical certificate bundle consists of:
+
+```text
+api.kanger.ru.pem
+api.kanger.ru.key
+origin_ca_rsa_root.pem
+```
+
+Before copying the files, inspect the certificate:
+
+```bash
+openssl x509 \
+  -in api.kanger.ru.pem \
+  -noout -subject -issuer -dates -ext subjectAltName
+```
+
+The certificate SAN must contain `api.kanger.ru` or a matching wildcard.
+
+Verify the chain against the supplied Cloudflare Origin CA root:
+
+```bash
+openssl verify \
+  -CAfile origin_ca_rsa_root.pem \
+  api.kanger.ru.pem
+```
+
+Expected result:
+
+```text
+api.kanger.ru.pem: OK
+```
+
+Verify that the private key matches the certificate without displaying private
+key material:
+
+```bash
+openssl x509 -in api.kanger.ru.pem -pubkey -noout \
+  | openssl pkey -pubin -outform DER \
+  | shasum -a 256
+
+openssl pkey -in api.kanger.ru.key -pubout -outform DER \
+  | shasum -a 256
+```
+
+The two SHA-256 values must match. If the key is encrypted and prompts for a
+password, nginx cannot restart unattended without additional key handling.
+
+Copy the files to the VPS using the configured SSH port. On the VPS, install the
+certificate and key with strict permissions:
+
+```bash
+sudo install -d \
+  -o root -g root -m 0700 \
+  /etc/nginx/ssl/api.kanger.ru
+
+sudo install \
+  -o root -g root -m 0644 \
+  /tmp/api.kanger.ru.pem \
+  /etc/nginx/ssl/api.kanger.ru/api.kanger.ru.pem
+
+sudo install \
+  -o root -g root -m 0600 \
+  /tmp/api.kanger.ru.key \
+  /etc/nginx/ssl/api.kanger.ru/api.kanger.ru.key
+
+sudo install \
+  -o root -g root -m 0644 \
+  /tmp/origin_ca_rsa_root.pem \
+  /etc/nginx/ssl/api.kanger.ru/origin_ca_rsa_root.pem
+```
+
+Replace the Let's Encrypt paths in the rendered nginx configuration:
+
+```bash
+sudo sed -i \
+  -e 's#/etc/letsencrypt/live/api.kanger.ru/fullchain.pem#/etc/nginx/ssl/api.kanger.ru/api.kanger.ru.pem#' \
+  -e 's#/etc/letsencrypt/live/api.kanger.ru/privkey.pem#/etc/nginx/ssl/api.kanger.ru/api.kanger.ru.key#' \
+  /etc/nginx/sites-available/kanger-server.conf
+```
+
+Remove temporary private-key copies after installation:
+
+```bash
+rm -f \
+  /tmp/api.kanger.ru.key \
+  /tmp/api.kanger.ru.pem \
+  /tmp/origin_ca_rsa_root.pem
+```
+
+A Cloudflare Origin CA certificate is designed for the encrypted and
+authenticated Cloudflare-to-origin connection. A browser connecting directly
+to the VPS may not trust it; public clients receive Cloudflare's edge
+certificate instead.
+
+## 10. Enable nginx HTTPS
 
 Enable the site:
 
@@ -198,51 +527,146 @@ sudo ln -sfn \
   /etc/nginx/sites-enabled/kanger-server.conf
 
 sudo nginx -t
-sudo systemctl reload nginx
+sudo systemctl restart nginx
+sudo systemctl status nginx --no-pager
 ```
 
-External health check:
+Confirm that nginx owns the public ports:
 
 ```bash
-curl --fail --silent --show-error \
-  "https://${DOMAIN}/health"
+sudo ss -ltnp | grep -E ':(80|443)\b'
+```
+
+Verify the origin locally, bypassing DNS and Cloudflare:
+
+```bash
+curl -k --fail --silent --show-error \
+  --connect-timeout 5 \
+  --max-time 10 \
+  --resolve api.kanger.ru:443:127.0.0.1 \
+  https://api.kanger.ru/health
+echo
+
+curl -k --fail --silent --show-error \
+  --connect-timeout 5 \
+  --max-time 10 \
+  --resolve api.kanger.ru:443:127.0.0.1 \
+  https://api.kanger.ru/ready
 echo
 ```
 
-## 7. Firewall boundary
-
-Allow only the intended public services and the existing SSH port. Port `1964`
-must not be allowed publicly.
-
-Inspect listeners:
+For a Cloudflare Origin CA certificate, verify the origin chain explicitly:
 
 ```bash
-sudo ss -ltnp
+openssl s_client \
+  -connect 127.0.0.1:443 \
+  -servername api.kanger.ru \
+  -CAfile /etc/nginx/ssl/api.kanger.ru/origin_ca_rsa_root.pem \
+  </dev/null 2>/dev/null \
+  | grep 'Verify return code'
 ```
 
-The KANGER entry must be equivalent to:
+Expected result:
 
 ```text
-127.0.0.1:1964
+Verify return code: 0 (ok)
 ```
 
-It must not appear as:
-
-```text
-0.0.0.0:1964
-[::]:1964
-```
-
-Run the supplied verification after nginx is configured:
+Verify the public route from a different machine:
 
 ```bash
-sudo bash /tmp/kanger-deploy/verify-installed.sh
+curl --fail --silent --show-error \
+  --connect-timeout 5 \
+  --max-time 20 \
+  https://api.kanger.ru/health
+echo
 ```
 
-## 8. Enable confirmation mail
+Expected response:
 
-Leave mail disabled until the internal service, nginx and `server.url` are
-correct. Then follow:
+```json
+{"result":"OK","status":"UP","version":"..."}
+```
+
+Detailed readiness metrics remain local. A public request must be rejected:
+
+```bash
+curl -i \
+  --connect-timeout 5 \
+  --max-time 20 \
+  https://api.kanger.ru/ready
+```
+
+Expected public result:
+
+```text
+HTTP/... 403
+```
+
+## 11. Firewall boundary
+
+Allow only the intended public services and the actual SSH port:
+
+```text
+80/tcp
+443/tcp
+<SSH_PORT>/tcp
+```
+
+Port `1964` must not be allowed publicly.
+
+For UFW, inspect before modifying:
+
+```bash
+sudo ufw status verbose
+```
+
+Typical rules are:
+
+```bash
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow "${SSH_PORT}/tcp"
+sudo ufw reload
+```
+
+Also inspect provider-level firewalls or security groups when packets never
+reach the VPS.
+
+## 12. Request correlation and operational endpoints
+
+nginx assigns `X-Request-ID` and forwards it to KANGER Server. The Java service
+returns the same identifier and writes a structured journald entry containing:
+
+```text
+request_id
+method
+sanitized path without query string
+status
+duration_ms
+active worker count
+queued request count
+```
+
+Request bodies, query strings, passwords and session tokens are not written to
+transport logs.
+
+Endpoints:
+
+```text
+/health  process liveness; public through nginx
+/ready   bounded-capacity readiness; local VPS only
+```
+
+When worker and queue capacity is exhausted, KANGER Server returns explicit HTTP
+`503` with `Retry-After: 1` rather than accepting unbounded work.
+
+## 13. Enable confirmation mail
+
+Leave mail disabled until the internal service, nginx, `server.url`, DNS and the
+complete HTTPS route at `https://api.kanger.ru` are correct.
+
+Then follow:
 
 ```text
 kanger-server/MAIL-CONFIGURATION.md
@@ -276,7 +700,7 @@ When `server.email.mode=disabled`, registrations containing a non-empty e-mail
 address and resend requests are rejected before the legacy mail paths. Ordinary
 password-only registration and authentication remain available.
 
-## 9. Logs and diagnosis
+## 14. Logs and diagnosis
 
 Service state and logs:
 
@@ -290,11 +714,47 @@ nginx validation and logs:
 
 ```bash
 sudo nginx -t
+sudo systemctl status nginx --no-pager
 sudo tail -n 200 /var/log/nginx/error.log
 sudo tail -n 200 /var/log/nginx/access.log
 ```
 
-## 10. Update and rollback
+Listener and Docker routing diagnosis:
+
+```bash
+sudo ss -ltnp | grep -E ':(80|443|1964)\b'
+sudo docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}' 2>/dev/null || true
+sudo iptables -t nat -S 2>/dev/null | grep -- '--dport 443' || true
+sudo nft list ruleset 2>/dev/null | grep -nE '80|443|drop|reject' || true
+```
+
+Packet tracing when Cloudflare or another external client hangs:
+
+```bash
+sudo tcpdump -ni any tcp port 443
+```
+
+Interpretation:
+
+- no inbound SYN reaches the VPS: check provider firewall, route and DNS origin;
+- inbound traffic reaches the VPS but is DNATed to a container: free or remap
+  that container's public `443` binding;
+- nginx receives the connection but `/health` fails: check nginx error log and
+  `http://127.0.0.1:1964/health`;
+- public TLS completes and the HTTP request hangs: inspect the Cloudflare-to-
+  origin path and Docker NAT before changing DNS.
+
+Direct origin test from another machine, bypassing public DNS and Cloudflare:
+
+```bash
+curl -k -i \
+  --connect-timeout 5 \
+  --max-time 10 \
+  --resolve api.kanger.ru:443:<VPS_IPV4> \
+  https://api.kanger.ru/health
+```
+
+## 15. Update and rollback
 
 Build and copy a newly qualified JAR, then run the same installer:
 
@@ -304,7 +764,8 @@ sudo bash /tmp/kanger-deploy/install.sh \
 ```
 
 Configuration and user data are retained. The previous JAR is saved before the
-service restart. An unsuccessful health check automatically restores it.
+service restart. An unsuccessful liveness or readiness check automatically
+restores it.
 
 Manual rollback:
 
@@ -317,15 +778,23 @@ sudo chown root:kanger /opt/kanger-server/kanger-server.jar
 sudo chmod 0640 /opt/kanger-server/kanger-server.jar
 sudo systemctl start kanger-server.service
 curl --fail http://127.0.0.1:1964/health
+curl --fail http://127.0.0.1:1964/ready
 ```
 
-## 11. Backup
+## 16. Backup
 
 The durable state consists of:
 
 ```text
 /etc/kanger-server/kanger.conf
 /var/lib/kanger-server/
+```
+
+nginx certificate material must also be backed up separately when it is not
+managed by Let's Encrypt:
+
+```text
+/etc/nginx/ssl/api.kanger.ru/
 ```
 
 For a transactionally quiet filesystem backup:
@@ -338,12 +807,14 @@ sudo tar -C / -czf "/root/kanger-server-${stamp}.tar.gz" \
   var/lib/kanger-server
 sudo systemctl start kanger-server.service
 curl --fail http://127.0.0.1:1964/health
+curl --fail http://127.0.0.1:1964/ready
 ```
 
 Copy the archive off the VPS. A backup stored only on the same VPS is not a
-disaster-recovery backup.
+disaster-recovery backup. Never store an unencrypted private key in the Git
+repository.
 
-## 12. Restore
+## 17. Restore
 
 ```bash
 sudo systemctl stop kanger-server.service
@@ -358,14 +829,25 @@ sudo ln -sfn \
 sudo chown -h root:kanger /var/lib/kanger-server/kanger.conf
 sudo systemctl start kanger-server.service
 curl --fail http://127.0.0.1:1964/health
+curl --fail http://127.0.0.1:1964/ready
+```
+
+Restore Cloudflare Origin CA material separately under
+`/etc/nginx/ssl/api.kanger.ru/`, preserving root ownership and private-key mode
+`0600`, then run:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
 ```
 
 ## Current deployment boundary
 
-This package qualifies build, bounded loopback HTTP, authentication/session
-lifecycle, filesystem input confinement, atomic settings, platform TLS for
-outbound HTTP, graceful SIGTERM shutdown, reproducible systemd/nginx deployment,
-and bounded explicit confirmation-mail transport.
+This package qualifies build, bounded loopback HTTP, liveness/readiness,
+request correlation, overload rejection, authentication/session lifecycle,
+filesystem input confinement, atomic settings, platform TLS for outbound HTTP,
+graceful SIGTERM shutdown, reproducible systemd/nginx deployment, and bounded
+explicit confirmation-mail transport.
 
 The historical mail helper remains present for source compatibility, but the
 active server request path intercepts new e-mail registrations and resend
