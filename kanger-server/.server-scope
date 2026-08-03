@@ -1,0 +1,3 @@
+base=develop/3.5.0.7
+scope=kanger-server/**,.github/workflows/kanger-server.yml
+core-policy=read-only
