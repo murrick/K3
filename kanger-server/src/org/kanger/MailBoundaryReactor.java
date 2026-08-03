@@ -63,7 +63,11 @@ final class MailBoundaryReactor implements IReactor<JSONObject> {
             return delegate.run(packet);
         }
 
-        mail.validateRecipient(email);
+        try {
+            mail.validateRecipient(email);
+        } catch (Exception error) {
+            return error(error);
+        }
 
         parameters.remove("email");
         final Object response;
@@ -83,35 +87,43 @@ final class MailBoundaryReactor implements IReactor<JSONObject> {
             return result;
         }
 
-        IUser user = UserFactory.getUser(result.getString("token"));
-        user.setProperty("reg.email", email);
-        String confirmationToken = UserFactory.getUserToken(user);
-        mail.queueConfirmation(user, confirmationToken);
-        result.put("description", "Sending e-mail to " + email + " queued");
+        try {
+            IUser user = UserFactory.getUser(result.getString("token"));
+            user.setProperty("reg.email", email);
+            String confirmationToken = UserFactory.getUserToken(user);
+            mail.queueConfirmation(user, confirmationToken);
+            result.put("description", "Sending e-mail to " + email + " queued");
+        } catch (Exception queueError) {
+            result.put("result", "error");
+            result.put("description", "User registered, but confirmation e-mail was not queued: "
+                    + queueError);
+        }
         return result;
     }
 
     private JSONObject resend(JSONObject parameters) {
-        JSONObject result = new JSONObject();
         try {
             IUser user = UserFactory.getUser(parameters.getString("token"));
             String email = user.getProperty("reg.email", "");
             if (email.isEmpty()) {
-                result.put("result", "error");
-                result.put("description", "E-mail address not defined");
-                return result;
+                return error(new IllegalArgumentException("E-mail address not defined"));
             }
 
             mail.validateRecipient(email);
             String confirmationToken = UserFactory.getUserToken(user);
             mail.queueConfirmation(user, confirmationToken);
-            result.put("result", "OK");
-            result.put("description", "Sending e-mail to " + email + " queued");
+            return new JSONObject()
+                    .put("result", "OK")
+                    .put("description", "Sending e-mail to " + email + " queued");
         } catch (Exception error) {
-            result.put("result", "error");
-            result.put("description", error.toString());
+            return error(error);
         }
-        return result;
+    }
+
+    private static JSONObject error(Exception error) {
+        return new JSONObject()
+                .put("result", "error")
+                .put("description", error.toString());
     }
 
     private static String context(JSONObject packet) {
