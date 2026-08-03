@@ -21,6 +21,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <org.json.version>20201115</org.json.version>
         <javax.mail.version>1.6.2</javax.mail.version>
+        <junit.jupiter.version>5.10.3</junit.jupiter.version>
     </properties>
 
     <dependencies>
@@ -34,10 +35,17 @@
             <artifactId>javax.mail</artifactId>
             <version>${javax.mail.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>${project.basedir}/src</sourceDirectory>
+        <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <finalName>kanger-server</finalName>
 
         <resources>
@@ -162,6 +170,15 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
 
