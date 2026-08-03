@@ -2,7 +2,6 @@ package org.kanger;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OutboundHttpClientTest {
 
-    private HttpServer server;
+    private com.sun.net.httpserver.HttpServer server;
 
     @AfterEach
     void tearDown() {
@@ -49,7 +48,8 @@ class OutboundHttpClientTest {
 
     @Test
     void postsUsingRequestedEncoding() throws Exception {
-        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server = com.sun.net.httpserver.HttpServer.create(
+                new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/post", new HttpHandler() {
             @Override
             public void handle(HttpExchange exchange) throws IOException {
@@ -106,7 +106,8 @@ class OutboundHttpClientTest {
     }
 
     private void start(HttpHandler handler) throws IOException {
-        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server = com.sun.net.httpserver.HttpServer.create(
+                new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", handler);
         server.start();
     }
