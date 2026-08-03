@@ -15,7 +15,7 @@ intended for API development and qualification on macOS or Linux.
 
 ```bash
 git fetch origin
-git switch server/0.6-authenticated-smoke
+git switch server/0.7-settings-store
 ```
 
 ## 2. Start the isolated local server
@@ -142,10 +142,11 @@ normal operating-system home directory are unaffected.
 ## Current qualification boundary
 
 The transport, credential migration, cryptographic session tokens, per-user
-request serialization, logout/timeout cleanup and filesystem-facing input
-confinement are covered by automated Java 8/21 qualification. The authenticated
-smoke is also executed against a real loopback server process in GitHub Actions.
+request serialization, logout/timeout cleanup, filesystem-facing input
+confinement and atomic settings store are covered by automated Java 8/21
+qualification. The authenticated smoke is also executed against a real
+loopback server process in GitHub Actions.
 
 This remains a local and pre-deployment qualification scenario. Public exposure
 still requires the nginx/systemd deployment slice and the remaining outbound
-TLS, settings, mail and operational-hardening work.
+TLS, mail and operational-hardening work.
