@@ -1,0 +1,17 @@
+# KANGER Server local development configuration
+#
+# The local runner copies this file to its isolated user.home directory as
+# kanger.conf. Values can then be changed without modifying the repository.
+
+server.bind.address=127.0.0.1
+server.port=1964
+server.backlog=32
+server.maxthreads=8
+server.queue.capacity=32
+server.request.max.body.bytes=1048576
+server.watchdog.period=1000
+
+# CORS is intentionally disabled for curl/Postman testing.
+# Add an exact browser origin only when a local web client needs it, for example:
+# server.cors.allowed.origin.1=http://localhost:3000
+# server.cors.allow.credentials=false
