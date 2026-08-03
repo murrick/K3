@@ -8,6 +8,7 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IReactor;
 
 /**
@@ -52,15 +53,19 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
         if (login != null && password != null) {
             final String authenticatedLogin = login;
             final String authenticatedPassword = password;
-            return UserFactory.executeWithAuthenticatedUserIfPresent(
-                    authenticatedLogin,
-                    authenticatedPassword,
-                    new SessionRegistry.Work<Object>() {
-                        @Override
-                        public Object run() throws Exception {
-                            return invoke(packet, parameters);
-                        }
-                    });
+            try {
+                return UserFactory.executeWithAuthenticatedUserIfPresent(
+                        authenticatedLogin,
+                        authenticatedPassword,
+                        new SessionRegistry.Work<Object>() {
+                            @Override
+                            public Object run() throws Exception {
+                                return invoke(packet, parameters);
+                            }
+                        });
+            } catch (AuthenticationErrorException rejected) {
+                return authenticationRejected(rejected);
+            }
         }
 
         return invoke(packet, parameters);
@@ -72,6 +77,12 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
             return violation;
         }
         return delegate.run(packet);
+    }
+
+    static JSONObject authenticationRejected(AuthenticationErrorException rejected) {
+        return new JSONObject()
+                .put("result", "error")
+                .put("description", rejected.toString());
     }
 
     static JSONObject parameters(JSONObject packet) {
