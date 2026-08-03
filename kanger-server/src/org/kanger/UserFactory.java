@@ -28,11 +28,18 @@ package org.kanger;
 import org.kanger.enums.Enums;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IUser;
+import org.kanger.security.ConfirmationTokenStore;
+import org.kanger.security.CredentialStore;
+import org.kanger.security.SecureTokens;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -41,18 +48,28 @@ import java.util.concurrent.ConcurrentHashMap;
 public class UserFactory {
     public static final int MAX_HISTORY_SIZE = 512;
     public static final long INACTIVITY_TIME = 1000L * 60 * 60 * 3;    // 3 hours
+    public static final long CONFIRMATION_TIME = 1000L * 60 * 60 * 24; // 24 hours
 
     public static String rootDir = "KANGER";
 
-    private static Map<String, IUser> users = new ConcurrentHashMap<>();
-    private static Map<Long, List<String>> history = new ConcurrentHashMap<>();
-    private static Map<Long, Long> activity = new ConcurrentHashMap<>();
-    private static TimerThread timerThread = new TimerThread(activity);
+    private static final Map<String, IUser> users = new ConcurrentHashMap<String, IUser>();
+    private static final Map<Long, List<String>> history = new ConcurrentHashMap<Long, List<String>>();
+    private static final Map<Long, Long> activity = new ConcurrentHashMap<Long, Long>();
+    private static final TimerThread timerThread = new TimerThread(activity);
+    private static final ThreadLocal<String> pendingConfirmationToken = new ThreadLocal<String>();
+
+    private static CredentialStore credentialStore;
+    private static ConfirmationTokenStore confirmationTokenStore;
 
     static {
         if (System.getenv().containsKey("KANGER_HOME")) {
             rootDir = System.getenv().get("KANGER_HOME");
         }
+
+        String credentialFile = resolveCredentialFile();
+        credentialStore = new CredentialStore(Paths.get(credentialFile));
+        confirmationTokenStore = new ConfirmationTokenStore(Paths.get(
+                new File(credentialFile).getParent(), "confirmations.conf"));
 
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(timerThread, 0, INACTIVITY_TIME / 10);
@@ -63,19 +80,18 @@ public class UserFactory {
             IUser user = users.get(token);
             activity.put(user.getId(), System.currentTimeMillis());
             return user;
-        } else {
-            throw new AuthenticationErrorException("token " + token);
         }
+        throw new AuthenticationErrorException("token " + token);
     }
 
     public static String addUser(IUser user) {
-        for (Map.Entry<String, IUser> e : users.entrySet()) {
-            if (e.getValue().getId() == user.getId()) {
-                users.remove(e.getKey());
+        for (Map.Entry<String, IUser> entry : users.entrySet()) {
+            if (entry.getValue().getId() == user.getId()) {
+                users.remove(entry.getKey());
                 break;
             }
         }
-        String token = token();
+        String token = SecureTokens.random256();
         users.put(token, user);
         activity.put(user.getId(), System.currentTimeMillis());
         return token;
@@ -85,102 +101,44 @@ public class UserFactory {
         dropUser(user.getId());
     }
 
+    /**
+     * Issues a new one-time confirmation token. Any previous token for this
+     * user is invalidated.
+     */
     public static String getUserToken(IUser user) throws Exception {
-        String confName = getDir("users.conf");
-        if (!new File(confName).exists()) {
-            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
-        }
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2 && (user.getId() + "").equalsIgnoreCase(sCurrentLine.split("\\=")[1])) {
-                        return sCurrentLine.split("\\=")[0];
-                    }
-                }
-            }
-        }
-        throw new AuthenticationErrorException();
+        return confirmationTokenStore.issue(user.getId(), CONFIRMATION_TIME);
     }
 
     public static void updateUserToken(IUser user, String login, String password) throws Exception {
-        String token = token(login, password);
-        String confName = getDir("users.conf");
-        if (!new File(confName).exists()) {
-            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
-        }
-
-        List<String> list = new ArrayList<>();
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2 && token.equalsIgnoreCase(sCurrentLine.split("\\=")[0])) {
-                        if (user.getId() != Long.parseLong(sCurrentLine.split("\\=")[1])) {
-                            throw new Exception("Login and password used by another user");
-                        }
-                    } else {
-                        list.add(sCurrentLine);
-                    }
-                }
-            }
-            list.add(token + "=" + user.getId());
-        } else {
-            new File(confName).createNewFile();
-        }
-
-        String tmp = confName + "temp";
-        new File(tmp).createNewFile();
-
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(tmp, true))) {
-            for (String s : list) {
-                bw.write(s);
-                bw.newLine();
-            }
-        }
-
-        new File(confName).delete();
-        new File(tmp).renameTo(new File(confName));
-
+        credentialStore.update(user.getId(), login, password);
     }
 
+    /**
+     * Consumes a one-time confirmation token and resolves its user.
+     */
     public static IUser getUserByToken(String token) throws Exception {
-        IUser user = new User();
-        user.setProperty("user.home", getHome());
+        long userId = confirmationTokenStore.consume(token);
+        return getUserById(userId);
+    }
 
-        String confName = getDir("users.conf");
-        if (!new File(confName).exists()) {
-            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
-        }
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2 && token.equalsIgnoreCase(sCurrentLine.split("\\=")[0])) {
-                        user.setId(Long.parseLong(sCurrentLine.split("\\=")[1]));
-                        break;
-                    }
-                }
+    private static IUser getUserById(long userId) throws Exception {
+        IUser user = null;
+        for (Map.Entry<String, IUser> entry : users.entrySet()) {
+            if (entry.getValue().getId() == userId) {
+                user = entry.getValue();
+                break;
             }
         }
 
-        if (user.getId() == -1L) {
-            throw new AuthenticationErrorException();
-        }
+        if (user == null) {
+            user = new User();
+            user.setProperty("user.home", getHome());
+            user.setId(userId);
 
-        boolean found = false;
-        for (Map.Entry<String, IUser> e : users.entrySet()) {
-            if (e.getValue().getId() == user.getId()) {
-                user = e.getValue();
-                found = true;
-            }
-        }
-
-        if (!found) {
-            String userDir = getDir(rootDir + Enums.FILE_SEPARATOR + user.getId() + Enums.FILE_SEPARATOR);
+            String userDir = getDir(rootDir + Enums.FILE_SEPARATOR + user.getId()
+                    + Enums.FILE_SEPARATOR);
             Files.createDirectories(Paths.get(userDir));
             user.setProperty("user.dir", userDir);
-
             user.loadProperties();
 
             if (!user.containsProperty("sources.dir")) {
@@ -190,63 +148,41 @@ public class UserFactory {
             }
 
             if (!user.containsProperty("database.dir")) {
-                String sourcesDir = userDir + "DB" + Enums.FILE_SEPARATOR;
-                user.setProperty("database.dir", sourcesDir);
-                Files.createDirectories(Paths.get(sourcesDir));
+                String databaseDir = userDir + "DB" + Enums.FILE_SEPARATOR;
+                user.setProperty("database.dir", databaseDir);
+                Files.createDirectories(Paths.get(databaseDir));
             }
         }
-
         return user;
     }
 
     public static IUser getUser(String login, String password) throws Exception {
-
-        String token = token(login, password);
-        return getUserByToken(token);
+        long userId = credentialStore.authenticate(login, password);
+        return getUserById(userId);
     }
-
 
     public static IUser createUser(String login, String password) throws Exception {
-
-        String token = token(login, password);
-        String confName = getDir("users.conf");
-        if (!new File(confName).exists()) {
-            Files.createDirectories(Paths.get(getDir(rootDir)));
-            confName = getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
-        }
-        long id = 0;
-        if (new File(confName).exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    if (sCurrentLine.split("\\=").length == 2) {
-                        if (token.equalsIgnoreCase(sCurrentLine.split("\\=")[0])) {
-                            throw new AuthenticationErrorException("User already exists");
-                        }
-                        long idx = Long.parseLong(sCurrentLine.split("\\=")[1]);
-                        if (idx > id) {
-                            id = idx;
-                        }
-                    }
-                }
+        String pendingToken = pendingConfirmationToken.get();
+        try {
+            long userId = credentialStore.create(login, password);
+            if (pendingToken != null) {
+                confirmationTokenStore.bind(pendingToken, userId, CONFIRMATION_TIME);
             }
-        } else {
-            new File(confName).createNewFile();
+            return getUserById(userId);
+        } finally {
+            pendingConfirmationToken.remove();
         }
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(confName, true))) {
-            bw.write(token + "=" + (++id));
-            bw.newLine();
-        }
-
-        return getUser(login, password);
     }
 
+    /**
+     * Transitional registration hook preserving the historical QueryProcessor
+     * call order. The returned value is now an opaque one-time confirmation
+     * token and is never derived from login or password.
+     */
     public static String token(String login, String password) {
-        return String.format("%04x%04x", login.hashCode(), password.hashCode());
-    }
-
-    private static String token() {
-        return String.format("%04x%04x", UUID.randomUUID().hashCode(), UUID.randomUUID().hashCode());
+        String token = SecureTokens.random256();
+        pendingConfirmationToken.set(token);
+        return token;
     }
 
     public static String getHome() {
@@ -257,9 +193,8 @@ public class UserFactory {
                 String tmp = "/storage/emulated/0";
                 if (Files.exists(Paths.get(tmp))) {
                     return tmp;
-                } else {
-                    return home;
                 }
+                return home;
             }
         }
         return home;
@@ -275,10 +210,11 @@ public class UserFactory {
 
     public static void addHistory(IUser user, String record) throws Exception {
         if (!history.containsKey(user.getId())) {
-            history.put(user.getId(), new ArrayList<>());
+            history.put(user.getId(), new ArrayList<String>());
         }
         history.get(user.getId()).add(record);
-        while (history.get(user.getId()).size() > Integer.parseInt(user.getProperty("user.history.size", MAX_HISTORY_SIZE + ""))) {
+        while (history.get(user.getId()).size() > Integer.parseInt(
+                user.getProperty("user.history.size", MAX_HISTORY_SIZE + ""))) {
             history.get(user.getId()).remove(0);
         }
     }
@@ -286,15 +222,14 @@ public class UserFactory {
     public static List<String> getHistory(IUser user) {
         if (history.containsKey(user.getId())) {
             return history.get(user.getId());
-        } else {
-            return new ArrayList<>();
         }
+        return new ArrayList<String>();
     }
 
     public static void dropUser(Long id) {
-        for (Map.Entry<String, IUser> e : users.entrySet()) {
-            if (e.getValue().getId() == id) {
-                users.remove(e.getKey());
+        for (Map.Entry<String, IUser> entry : users.entrySet()) {
+            if (entry.getValue().getId() == id.longValue()) {
+                users.remove(entry.getKey());
                 break;
             }
         }
@@ -306,5 +241,13 @@ public class UserFactory {
         while (!users.isEmpty()) {
             dropUser(users.values().iterator().next().getId());
         }
+    }
+
+    private static String resolveCredentialFile() {
+        String direct = getDir("users.conf");
+        if (new File(direct).exists()) {
+            return direct;
+        }
+        return getDir(rootDir) + Enums.FILE_SEPARATOR + "users.conf";
     }
 }
