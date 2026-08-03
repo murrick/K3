@@ -143,6 +143,7 @@ final class MailTransport implements MailBoundaryReactor.MailGateway {
             properties.setProperty(prefix + "connectiontimeout", Integer.toString(connectionTimeoutMillis));
             properties.setProperty(prefix + "timeout", Integer.toString(readTimeoutMillis));
             properties.setProperty(prefix + "writetimeout", Integer.toString(writeTimeoutMillis));
+            properties.setProperty(prefix + "ssl.checkserveridentity", "true");
             properties.setProperty("mail.debug", Boolean.toString(debug));
 
             if (mode == Mode.STARTTLS) {
