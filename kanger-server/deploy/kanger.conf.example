@@ -1,0 +1,21 @@
+# KANGER Server production configuration
+# Installed as /etc/kanger-server/kanger.conf and linked into the service state home.
+
+server.bind.address=127.0.0.1
+server.port=1964
+server.backlog=128
+server.maxthreads=32
+server.queue.capacity=128
+server.request.max.body.bytes=1048576
+server.watchdog.period=1000
+
+# Browser clients require exact origins. Keep CORS disabled until the final
+# public application origin is known.
+# server.cors.allowed.origin.1=https://kanger.example.org
+# server.cors.allow.credentials=false
+
+# Public URL used in generated links.
+# server.url=https://kanger.example.org
+
+# SMTP remains intentionally unconfigured until the dedicated mail-transport
+# hardening slice is deployed.
