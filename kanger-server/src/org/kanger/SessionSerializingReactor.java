@@ -37,7 +37,7 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                     new SessionRegistry.Work<Object>() {
                         @Override
                         public Object run() throws Exception {
-                            return delegate.run(packet);
+                            return invoke(packet, parameters);
                         }
                     });
         }
@@ -58,11 +58,19 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                     new SessionRegistry.Work<Object>() {
                         @Override
                         public Object run() throws Exception {
-                            return delegate.run(packet);
+                            return invoke(packet, parameters);
                         }
                     });
         }
 
+        return invoke(packet, parameters);
+    }
+
+    private Object invoke(JSONObject packet, JSONObject parameters) throws Exception {
+        JSONObject violation = ApiInputPolicy.violation(parameters);
+        if (violation != null) {
+            return violation;
+        }
         return delegate.run(packet);
     }
 
