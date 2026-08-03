@@ -66,7 +66,8 @@ public class Kanger {
 
                 Watchdog.log("HTTP Server starting...");
                 httpServer = new HttpServer();
-                httpServer.start(new SessionSerializingReactor(new QueryProcessor()));
+                httpServer.start(new SessionSerializingReactor(
+                        new MailBoundaryReactor(new QueryProcessor())));
             } finally {
                 shutdownServer();
                 System.out.println("FORCE REBOOT Server");
@@ -168,6 +169,13 @@ public class Kanger {
             if (current != null) {
                 current.stop();
             }
+        } catch (Exception error) {
+            System.err.println(new Date());
+            error.printStackTrace(System.err);
+        }
+
+        try {
+            MailTransport.shutdownRuntime();
         } catch (Exception error) {
             System.err.println(new Date());
             error.printStackTrace(System.err);
