@@ -450,6 +450,15 @@ Configure Cloudflare SSL/TLS mode as:
 Full (strict)
 ```
 
+This branch is intentionally self-contained. Render or re-render the API nginx
+configuration before replacing its default Let's Encrypt certificate paths:
+
+```bash
+sudo sed 's/KANGER_DOMAIN/api.kanger.org/g' \
+  /tmp/kanger-deploy/nginx/kanger-server.conf.template \
+  | sudo tee /etc/nginx/sites-available/kanger-server.conf >/dev/null
+```
+
 The certificate files deliberately use the base-domain names even though this
 nginx virtual host serves `api.kanger.org`:
 
@@ -540,6 +549,22 @@ sudo sed -i \
   /etc/nginx/sites-available/kanger-server.conf
 ```
 
+Enable this rendered site immediately, validate it and start nginx:
+
+```bash
+sudo ln -sfn \
+  /etc/nginx/sites-available/kanger-server.conf \
+  /etc/nginx/sites-enabled/kanger-server.conf
+
+sudo nginx -t
+sudo systemctl restart nginx
+sudo systemctl status nginx --no-pager
+sudo ss -ltnp | grep -E ':(80|443)\b'
+```
+
+Do not continue to HTTPS checks unless nginx owns public TCP ports `80` and
+`443`.
+
 Remove temporary copies after installation:
 
 ```bash
@@ -559,7 +584,8 @@ host for `kanger.org` and `www.kanger.org`.
 
 ## 10. Enable API HTTPS
 
-Enable the API site:
+For Let's Encrypt, enable the API site now. For Cloudflare Origin CA, these
+commands were already run inside option 2 and are safe to repeat:
 
 ```bash
 sudo ln -sfn \
